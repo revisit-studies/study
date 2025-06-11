@@ -2,90 +2,70 @@ import {
   Flex, Paper, Table, Text, Title,
 } from '@mantine/core';
 import { ParticipantData } from '../../../storage/types';
-// import { getCleanedDuration } from '../../../utils/getCleanedDuration';
+import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 
-interface ComponentStatsProps {
-  participantData: ParticipantData[];
-}
-
-interface TaskStats {
+interface ComponentStats {
   name: string;
   avgTime: number;
   avgCleanTime: number;
-  attempts: number;
+  participantCount: number;
   correctness: number;
 }
 
-function toDisplayData(milliseconds: number) {
-  if (!Number.isFinite(milliseconds)) return 'N/A';
-  const minutes = Math.floor(milliseconds / (1000 * 60));
-  const seconds = ((milliseconds % (1000 * 60)) / 1000).toFixed(1);
-  return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-}
+function calculateComponentStats(visibleParticipants: ParticipantData[]): ComponentStats[] {
+  const stats: Record<string, ComponentStats> = {};
 
-function calculateTaskStats(participants: ParticipantData[]): TaskStats[] {
-  const stats: Record<string, TaskStats> = {};
-
-  participants.forEach((participant) => {
+  visibleParticipants.forEach((participant) => {
     Object.entries(participant.answers).forEach(([taskId, answer]) => {
-      const [taskName, trialNumber] = taskId.split('_');
-      const displayName = `${taskName}_${trialNumber}`;
+      const displayName = `${taskId.split('_')[0]}`;
 
       if (!stats[displayName]) {
         stats[displayName] = {
           name: displayName,
           avgTime: 0,
           avgCleanTime: 0,
-          attempts: 0,
+          participantCount: 0,
           correctness: 0,
         };
       }
+      // In progress participants are not included in the stats
+      if (answer.endTime === -1) {
+        return;
+      }
+      const stat = stats[displayName];
+      const time = (answer.endTime - answer.startTime) / 1000;
+      const cleanTime = getCleanedDuration(answer as never);
 
-      if (answer.endTime !== -1) {
-        const time = answer.endTime - answer.startTime;
-        const cleanTime = Math.max(0, time - (answer.windowEvents?.length || 0) * 100);
+      stat.avgTime += time;
+      stat.avgCleanTime += cleanTime ? cleanTime / 1000 : 0;
+      stat.participantCount += 1;
 
-        stats[displayName].avgTime += time;
-        stats[displayName].avgCleanTime += cleanTime;
-        stats[displayName].attempts += 1;
-
-        // Calculate correctness if correctAnswer exists
-        if (answer.correctAnswer && answer.correctAnswer.length > 0) {
-          const isCorrect = answer.correctAnswer.some((ca) => JSON.stringify(ca.answer) === JSON.stringify(answer.answer[ca.id]));
-          stats[displayName].correctness += isCorrect ? 1 : 0;
-        }
+      if (answer.correctAnswer.length > 0) {
+        const isCorrect = answer.correctAnswer.every((correctAnswer) => {
+          const participantAnswer = answer.answer[correctAnswer.id];
+          return correctAnswer.answer === participantAnswer;
+        });
+        stat.correctness += isCorrect ? 1 : 0;
       }
     });
   });
 
-  // Calculate averages
-  Object.values(stats).forEach((stat) => {
-    if (stat.attempts > 0) {
-      stat.avgTime /= stat.attempts;
-      stat.avgCleanTime /= stat.attempts;
-      stat.correctness = (stat.correctness / stat.attempts) * 100;
-    }
-  });
-
-  return Object.values(stats).sort((a, b) => {
-    const [aComponent] = a.name.split('_');
-    const [bComponent] = b.name.split('_');
-    if (aComponent !== bComponent) {
-      return aComponent.localeCompare(bComponent);
-    }
-    const [, aTrial] = a.name.split('_');
-    const [, bTrial] = b.name.split('_');
-    return Number.parseInt(aTrial, 10) - Number.parseInt(bTrial, 10);
-  });
+  return Object.values(stats)
+    .map((stat) => ({
+      ...stat,
+      avgTime: stat.participantCount ? stat.avgTime / stat.participantCount : 0,
+      avgCleanTime: stat.participantCount ? stat.avgCleanTime / stat.participantCount : 0,
+      correctness: stat.participantCount ? (stat.correctness / stat.participantCount) * 100 : 0,
+    }));
 }
 
-export function ComponentStats({ participantData }: ComponentStatsProps) {
-  const taskStats = calculateTaskStats(participantData);
+export function ComponentStats({ visibleParticipants }: { visibleParticipants: ParticipantData[] }) {
+  const stats = calculateComponentStats(visibleParticipants);
 
   return (
-    <Paper withBorder p="md" radius="md">
+    <Paper shadow="sm" p="md" withBorder>
       <Title order={4} mb="md">Component Timing Statistics</Title>
-      {participantData.length === 0 ? (
+      {visibleParticipants.length === 0 ? (
         <Flex justify="center" align="center" pt="lg" pb="md">
           <Text>No data available</Text>
         </Flex>
@@ -94,20 +74,40 @@ export function ComponentStats({ participantData }: ComponentStatsProps) {
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Component</Table.Th>
+              <Table.Th>Participants</Table.Th>
               <Table.Th>Avg Time</Table.Th>
               <Table.Th>Avg Clean Time</Table.Th>
-              <Table.Th>Attempts</Table.Th>
               <Table.Th>Correctness</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {taskStats.map((stat) => (
+            {stats.map((stat) => (
               <Table.Tr key={stat.name}>
                 <Table.Td>{stat.name}</Table.Td>
-                <Table.Td>{toDisplayData(stat.avgTime)}</Table.Td>
-                <Table.Td>{toDisplayData(stat.avgCleanTime)}</Table.Td>
-                <Table.Td>{stat.attempts}</Table.Td>
-                <Table.Td>{`${stat.correctness.toFixed(1)}%`}</Table.Td>
+                <Table.Td>{stat.participantCount}</Table.Td>
+                {Number.isFinite(stat.avgTime) ? (
+                  <Table.Td>
+                    {stat.avgTime.toFixed(1)}
+                    s
+                  </Table.Td>
+                )
+                  : (
+                    <Table.Td>
+                      N/A
+                    </Table.Td>
+                  )}
+                {Number.isFinite(stat.avgCleanTime) ? (
+                  <Table.Td>
+                    {stat.avgCleanTime.toFixed(1)}
+                    s
+                  </Table.Td>
+                )
+                  : (
+                    <Table.Td>
+                      N/A
+                    </Table.Td>
+                  )}
+                {Number.isNaN(stat.correctness) ? <Table.Td>{`${stat.correctness.toFixed(1)}%`}</Table.Td> : <Table.Td>N/A</Table.Td>}
               </Table.Tr>
             ))}
           </Table.Tbody>

@@ -56,7 +56,7 @@ function calculateDateStats(visibleParticipants: ParticipantData[]): { startDate
 function calculateCorrectnessStats(visibleParticipants: ParticipantData[]): { avgCorrectness: number } {
   const correctness = visibleParticipants.reduce((acc, participant) => {
     const answers = Object.values(participant.answers)
-      .filter((answer) => answer.correctAnswer);
+      .filter((answer) => answer.correctAnswer?.length > 0);
 
     if (answers.length > 0) {
       const correctCount = answers.filter((answer) => {
