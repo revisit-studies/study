@@ -2,46 +2,71 @@ import {
   Flex, Paper, Text, Title,
 } from '@mantine/core';
 import { ParticipantData } from '../../../storage/types';
+import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 
-interface TimeStats {
-  avgTime: number;
-  avgCleanTime: number;
+function calculateParticipantCounts(visibleParticipants: ParticipantData[]): { total: number; completed: number; inProgress: number; rejected: number } {
+  return {
+    total: visibleParticipants.length,
+    completed: visibleParticipants.filter((p) => p.completed).length,
+    inProgress: visibleParticipants.filter((p) => !p.completed && !p.rejected).length,
+    rejected: visibleParticipants.filter((p) => p.rejected).length,
+  };
 }
 
-interface CorrectnessStats {
-  avgCorrectness: number;
-}
-
-function calculateTimeStats(participants: ParticipantData[]): TimeStats {
-  const stats = participants.reduce((acc, participant) => {
-    const times = Object.values(participant.answers)
+function calculateTimeStats(visibleParticipants: ParticipantData[]): { avgTime: number; avgCleanTime: number } {
+  const time = visibleParticipants.reduce((acc, participant) => {
+    const timeStats = Object.values(participant.answers)
       .filter((answer) => answer.endTime !== -1)
       .map((answer) => ({
-        totalTime: answer.endTime - answer.startTime,
-        cleanTime: Math.max(0, answer.endTime - answer.startTime - (answer.windowEvents || []).length * 100),
+        totalTime: (answer.endTime - answer.startTime) / 1000,
+        cleanTime: getCleanedDuration(answer as never) || 0,
       }));
-
-    if (times.length > 0) {
-      acc.totalTimeSum += times.reduce((sum, t) => sum + t.totalTime, 0);
-      acc.cleanTimeSum += times.reduce((sum, t) => sum + t.cleanTime, 0);
-      acc.count += times.length;
+    if (timeStats.length > 0) {
+      acc.count += timeStats.length;
+      acc.totalTimeSum += timeStats.reduce((sum, t) => sum + t.totalTime, 0);
+      acc.cleanTimeSum += timeStats.reduce((sum, t) => sum + t.cleanTime, 0);
     }
     return acc;
   }, { totalTimeSum: 0, cleanTimeSum: 0, count: 0 });
 
   return {
-    avgTime: stats.count > 0 ? stats.totalTimeSum / stats.count : 0,
-    avgCleanTime: stats.count > 0 ? stats.cleanTimeSum / stats.count : 0,
+    avgTime: time.count > 0 ? time.totalTimeSum / time.count : NaN,
+    avgCleanTime: time.count > 0 ? time.cleanTimeSum / time.count : NaN,
   };
 }
 
-function calculateCorrectnessStats(participants: ParticipantData[]): CorrectnessStats {
-  const stats = participants.reduce((acc, participant) => {
+function calculateDateStats(visibleParticipants: ParticipantData[]): { startDate: Date | null; endDate: Date | null } {
+  const dates = visibleParticipants.map((participant) => {
     const answers = Object.values(participant.answers)
-      .filter((answer) => answer.correctAnswer && answer.correctAnswer.length > 0);
+      .filter((data) => data.startTime)
+      .sort((a, b) => a.startTime - b.startTime);
+    return {
+      startTime: answers.length > 0 ? answers[0].startTime : undefined,
+      endTime: answers.length > 0 ? answers[answers.length - 1].endTime : undefined,
+    };
+  });
+  const startTimes = dates.map((d) => d.startTime).filter((t): t is number => t != null);
+  const endTimes = dates.map((d) => d.endTime).filter((t): t is number => t != null);
+  return {
+    startDate: startTimes.length > 0 ? new Date(Math.min(...startTimes)) : null,
+    endDate: endTimes.length > 0 ? new Date(Math.max(...endTimes)) : null,
+  };
+}
+
+function calculateCorrectnessStats(visibleParticipants: ParticipantData[]): { avgCorrectness: number } {
+  const correctness = visibleParticipants.reduce((acc, participant) => {
+    const answers = Object.values(participant.answers)
+      .filter((answer) => answer.correctAnswer);
 
     if (answers.length > 0) {
-      const correctCount = answers.filter((answer) => answer.correctAnswer.some((ca) => JSON.stringify(ca.answer) === JSON.stringify(answer.answer[ca.id]))).length;
+      const correctCount = answers.filter((answer) => {
+        const isCorrect = answer.correctAnswer.every((correctAnswer) => {
+          const participantAnswer = answer.answer[correctAnswer.id];
+          return correctAnswer.answer === participantAnswer;
+        });
+        return isCorrect;
+      }).length;
+
       acc.correctSum += correctCount;
       acc.totalSum += answers.length;
     }
@@ -49,36 +74,15 @@ function calculateCorrectnessStats(participants: ParticipantData[]): Correctness
   }, { correctSum: 0, totalSum: 0 });
 
   return {
-    avgCorrectness: stats.totalSum > 0 ? (stats.correctSum / stats.totalSum) * 100 : 0,
-  };
-}
-
-function calculateStudyTimes(participants: ParticipantData[]): { startTime: Date | null; endTime: Date | null } {
-  const studyTimes = participants.reduce((acc, participant) => {
-    Object.values(participant.answers).forEach((answer) => {
-      if (answer.startTime > 0) acc.startTimes.push(answer.startTime);
-      if (answer.endTime > 0) acc.endTimes.push(answer.endTime);
-    });
-    return acc;
-  }, { startTimes: [] as number[], endTimes: [] as number[] });
-
-  return {
-    startTime: studyTimes.startTimes.length > 0 ? new Date(Math.min(...studyTimes.startTimes)) : null,
-    endTime: studyTimes.endTimes.length > 0 ? new Date(Math.max(...studyTimes.endTimes)) : null,
+    avgCorrectness: correctness.totalSum > 0 ? (correctness.correctSum / correctness.totalSum) * 100 : NaN,
   };
 }
 
 export function OverviewStats({ visibleParticipants }: { visibleParticipants: ParticipantData[] }) {
-  const participantCounts = {
-    total: visibleParticipants.length,
-    completed: visibleParticipants.filter((p) => p.completed).length,
-    inProgress: visibleParticipants.filter((p) => !p.completed && !p.rejected).length,
-    rejected: visibleParticipants.filter((p) => p.rejected).length,
-  };
-
-  const timeStats = calculateTimeStats(visibleParticipants);
+  const participantCounts = calculateParticipantCounts(visibleParticipants);
+  const { avgTime, avgCleanTime } = calculateTimeStats(visibleParticipants);
+  const { startDate, endDate } = calculateDateStats(visibleParticipants);
   const correctnessStats = calculateCorrectnessStats(visibleParticipants);
-  const { startTime, endTime } = calculateStudyTimes(visibleParticipants);
 
   return (
     <Paper shadow="sm" p="md" withBorder>
@@ -101,33 +105,28 @@ export function OverviewStats({ visibleParticipants }: { visibleParticipants: Pa
           <Text size="sm" c="dimmed">Rejected</Text>
         </div>
         <div>
-          <Text size="xl" fw="bold">{startTime?.toLocaleDateString() || 'N/A'}</Text>
+          <Text size="xl" fw="bold">{startDate?.toLocaleDateString() || 'N/A'}</Text>
           <Text size="sm" c="dimmed">Start Date</Text>
         </div>
         <div>
-          <Text size="xl" fw="bold">
-            {participantCounts.inProgress > 0 ? 'N/A' : endTime?.toLocaleDateString() || 'N/A'}
-          </Text>
+          <Text size="xl" fw="bold">{endDate?.toLocaleDateString() || 'N/A'}</Text>
           <Text size="sm" c="dimmed">End Date</Text>
         </div>
         <div>
           <Text size="xl" fw="bold">
-            {(timeStats.avgTime / 1000).toFixed(1)}
-            s
+            {Number.isFinite(avgTime) ? `${(avgTime).toFixed(1)} s` : 'N/A'}
           </Text>
           <Text size="sm" c="dimmed">Average Time</Text>
         </div>
         <div>
           <Text size="xl" fw="bold">
-            {(timeStats.avgCleanTime / 1000).toFixed(1)}
-            s
+            {Number.isFinite(avgCleanTime) ? `${(avgCleanTime / 1000).toFixed(1)} s` : 'N/A'}
           </Text>
           <Text size="sm" c="dimmed">Average Clean Time</Text>
         </div>
         <div>
           <Text size="xl" fw="bold">
-            {correctnessStats.avgCorrectness.toFixed(1)}
-            %
+            {!Number.isNaN(correctnessStats.avgCorrectness) ? `${correctnessStats.avgCorrectness.toFixed(1)}%` : 'N/A'}
           </Text>
           <Text size="sm" c="dimmed">Correctness</Text>
         </div>
