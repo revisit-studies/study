@@ -17,7 +17,7 @@ export function SummaryView({ visibleParticipants, studyConfig }: StudyStatsProp
       {studyConfig && (
         <Group align="flex-start" gap="md" grow>
           <ComponentStats visibleParticipants={visibleParticipants} />
-          <ResponseStats participantData={visibleParticipants} studyConfig={studyConfig} />
+          <ResponseStats visibleParticipants={visibleParticipants} studyConfig={studyConfig} />
         </Group>
       )}
     </Stack>

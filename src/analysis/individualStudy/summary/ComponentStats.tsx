@@ -17,11 +17,11 @@ function calculateComponentStats(visibleParticipants: ParticipantData[]): Compon
 
   visibleParticipants.forEach((participant) => {
     Object.entries(participant.answers).forEach(([taskId, answer]) => {
-      const displayName = `${taskId.split('_')[0]}`;
+      const component = `${taskId.split('_')[0]}`;
 
-      if (!stats[displayName]) {
-        stats[displayName] = {
-          name: displayName,
+      if (!stats[component]) {
+        stats[component] = {
+          name: component,
           avgTime: 0,
           avgCleanTime: 0,
           participantCount: 0,
@@ -32,7 +32,7 @@ function calculateComponentStats(visibleParticipants: ParticipantData[]): Compon
       if (answer.endTime === -1) {
         return;
       }
-      const stat = stats[displayName];
+      const stat = stats[component];
       const time = (answer.endTime - answer.startTime) / 1000;
       const cleanTime = getCleanedDuration(answer as never);
 
@@ -85,29 +85,15 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
               <Table.Tr key={stat.name}>
                 <Table.Td>{stat.name}</Table.Td>
                 <Table.Td>{stat.participantCount}</Table.Td>
-                {Number.isFinite(stat.avgTime) ? (
-                  <Table.Td>
-                    {stat.avgTime.toFixed(1)}
-                    s
-                  </Table.Td>
-                )
-                  : (
-                    <Table.Td>
-                      N/A
-                    </Table.Td>
-                  )}
-                {Number.isFinite(stat.avgCleanTime) ? (
-                  <Table.Td>
-                    {stat.avgCleanTime.toFixed(1)}
-                    s
-                  </Table.Td>
-                )
-                  : (
-                    <Table.Td>
-                      N/A
-                    </Table.Td>
-                  )}
-                {Number.isNaN(stat.correctness) ? <Table.Td>{`${stat.correctness.toFixed(1)}%`}</Table.Td> : <Table.Td>N/A</Table.Td>}
+                <Table.Td>
+                  {Number.isFinite(stat.avgTime) ? `${stat.avgTime.toFixed(1)} s` : 'N/A'}
+                </Table.Td>
+                <Table.Td>
+                  {Number.isFinite(stat.avgCleanTime) ? `${stat.avgCleanTime.toFixed(1)} s` : 'N/A'}
+                </Table.Td>
+                <Table.Td>
+                  {Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A'}
+                </Table.Td>
               </Table.Tr>
             ))}
           </Table.Tbody>

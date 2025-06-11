@@ -1,166 +1,107 @@
 import {
-  Paper, Table, Title, Text,
+  Paper, Table, Title, Text, Flex,
 } from '@mantine/core';
 import { ParticipantData } from '../../../storage/types';
 import { Response, StudyConfig } from '../../../parser/types';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
-interface ResponseStatsProps {
-  participantData: ParticipantData[];
-  studyConfig: StudyConfig;
-}
-
 interface TaskStats {
   name: string;
   correctness: number;
-  attempts: number;
-  responseCorrectness: Record<string, { correct: number; total: number }>;
+  participantCount: number;
 }
 
 function getResponseOptions(response: Response): string {
+  // Dropdown, Checkbox, Radio, Button, Slider
   if ('options' in response) {
     return JSON.stringify(response.options);
   }
+  // Matrix Radio, Matrix Checkbox
   if ('answerOptions' in response && 'questionOptions' in response) {
-    return `Answers: ${JSON.stringify(response.answerOptions)}\nQuestions: ${JSON.stringify(response.questionOptions)}`;
+    return `Questions: ${JSON.stringify(response.questionOptions)} \n Answers: ${JSON.stringify(response.answerOptions)}}`;
   }
+  // Likert Scale
   if ('numItems' in response) {
-    return `${response.numItems} items${response.leftLabel ? ` (${response.leftLabel} - ${response.rightLabel})` : ''}`;
+    return `${response.leftLabel ? ` ${response.leftLabel} - ${response.rightLabel}` : ''} (${response.numItems} items)`;
   }
   return 'N/A';
 }
 
-function calculateTaskStats(participants: ParticipantData[]): TaskStats[] {
+function calculateTaskStats(visibleParticipants: ParticipantData[]): TaskStats[] {
   const stats: Record<string, TaskStats> = {};
 
-  participants.forEach((participant) => {
+  visibleParticipants.forEach((participant) => {
     Object.entries(participant.answers).forEach(([taskId, answer]) => {
-      const [taskName, trialNumber] = taskId.split('_');
-      const displayName = `${taskName}_${trialNumber}`;
+      const component = `${taskId.split('_')[0]}`;
 
-      if (!stats[displayName]) {
-        stats[displayName] = {
-          name: displayName,
+      if (!stats[component]) {
+        stats[component] = {
+          name: component,
           correctness: 0,
-          attempts: 0,
-          responseCorrectness: {},
+          participantCount: 0,
         };
       }
+      // In progress participants are not included in the stats
+      if (answer.endTime === -1) {
+        return;
+      }
+      const stat = stats[component];
+      stat.participantCount += 1;
 
-      if (answer.endTime !== -1) {
-        stats[displayName].attempts += 1;
-
-        if (answer.correctAnswer?.length > 0) {
-          answer.correctAnswer.forEach((ca) => {
-            if (!stats[displayName].responseCorrectness[ca.id]) {
-              stats[displayName].responseCorrectness[ca.id] = { correct: 0, total: 0 };
-            }
-            stats[displayName].responseCorrectness[ca.id].total += 1;
-
-            const participantAnswer = answer.answer[ca.id];
-            if (participantAnswer !== undefined && JSON.stringify(ca.answer) === JSON.stringify(participantAnswer)) {
-              stats[displayName].correctness += 1;
-              stats[displayName].responseCorrectness[ca.id].correct += 1;
-            }
-          });
-        }
+      if (answer.correctAnswer.length > 0) {
+        const isCorrect = answer.correctAnswer.every((correctAnswer) => {
+          const participantAnswer = answer.answer[correctAnswer.id];
+          return correctAnswer.answer === participantAnswer;
+        });
+        stat.correctness += isCorrect ? 1 : 0;
       }
     });
   });
 
-  // Calculate averages
-  Object.values(stats).forEach((stat) => {
-    if (stat.attempts > 0) {
-      stat.correctness = (stat.correctness / stat.attempts) * 100;
-    }
-  });
-
-  return Object.values(stats).sort((a, b) => {
-    const [aComponent] = a.name.split('_');
-    const [bComponent] = b.name.split('_');
-    if (aComponent !== bComponent) {
-      return aComponent.localeCompare(bComponent);
-    }
-    const [, aTrial] = a.name.split('_');
-    const [, bTrial] = b.name.split('_');
-    return Number.parseInt(aTrial, 10) - Number.parseInt(bTrial, 10);
-  });
+  return Object.values(stats)
+    .map((stat) => ({
+      ...stat,
+      correctness: stat.participantCount ? (stat.correctness / stat.participantCount) * 100 : 0,
+    }));
 }
 
-export function ResponseStats({ participantData, studyConfig }: ResponseStatsProps) {
-  const taskStats = calculateTaskStats(participantData);
+export function ResponseStats({ visibleParticipants, studyConfig }: { visibleParticipants: ParticipantData[]; studyConfig: StudyConfig }) {
+  const stats = calculateTaskStats(visibleParticipants);
 
   return (
-    <Paper withBorder p="md" radius="md">
+    <Paper shadow="sm" p="md" withBorder>
       <Title order={4} mb="md">Response Statistics</Title>
-      {participantData.length === 0 ? (
-        <Text ta="center" py="lg">No data available</Text>
+      {visibleParticipants.length === 0 ? (
+        <Flex justify="center" align="center" pt="lg" pb="md">
+          <Text>No data available</Text>
+        </Flex>
       ) : (
         <Table>
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Component</Table.Th>
               <Table.Th>Type</Table.Th>
-              <Table.Th>Prompt</Table.Th>
+              <Table.Th>Question</Table.Th>
               <Table.Th>Options</Table.Th>
               <Table.Th>Correctness</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {taskStats.map((stat) => {
-              try {
-                const [componentName] = stat.name.split('_');
-                const componentConfig = studyConfig.components[componentName];
-                if (!componentConfig) {
-                  return (
-                    <Table.Tr key={stat.name}>
-                      <Table.Td>{stat.name}</Table.Td>
-                      <Table.Td>N/A</Table.Td>
-                      <Table.Td>N/A</Table.Td>
-                      <Table.Td>N/A</Table.Td>
-                      <Table.Td>{stat.attempts > 0 ? `${stat.correctness.toFixed(1)}%` : 'N/A'}</Table.Td>
-                    </Table.Tr>
-                  );
-                }
-                const resolvedComponent = studyComponentToIndividualComponent(componentConfig, studyConfig);
-                const responses = resolvedComponent.response || [];
+            {stats.map((stat) => {
+              const component = studyConfig.components[stat.name];
+              const responses = studyComponentToIndividualComponent(component, studyConfig).response;
 
-                return responses.map((response, index) => {
-                  const responseStats = stat.responseCorrectness[response.id] || { correct: 0, total: 0 };
-                  const responseCorrectness = responseStats.total > 0
-                    ? (responseStats.correct / responseStats.total) * 100
-                    : 0;
-
-                  return (
-                    <Table.Tr key={`${stat.name}_${index}`}>
-                      <Table.Td>{index === 0 ? stat.name : ''}</Table.Td>
-                      <Table.Td>{response.type || 'N/A'}</Table.Td>
-                      <Table.Td>
-                        <Text size="xs" style={{ whiteSpace: 'pre-wrap' }}>
-                          {response.prompt || 'N/A'}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="xs" style={{ whiteSpace: 'pre-wrap' }}>
-                          {getResponseOptions(response)}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>{responseStats.total > 0 ? `${responseCorrectness.toFixed(1)}%` : 'N/A'}</Table.Td>
-                    </Table.Tr>
-                  );
-                });
-              } catch (error) {
-                console.error('Error rendering component stats:', error);
-                return (
-                  <Table.Tr key={stat.name}>
-                    <Table.Td>{stat.name}</Table.Td>
-                    <Table.Td>Error</Table.Td>
-                    <Table.Td>Error</Table.Td>
-                    <Table.Td>Error</Table.Td>
-                    <Table.Td>{stat.attempts > 0 ? `${stat.correctness.toFixed(1)}%` : 'N/A'}</Table.Td>
-                  </Table.Tr>
-                );
-              }
+              return responses.map((response) => (
+                <Table.Tr key={stat.name}>
+                  <Table.Td>{stat.name}</Table.Td>
+                  <Table.Td>{response.type}</Table.Td>
+                  <Table.Td>{response.prompt}</Table.Td>
+                  <Table.Td>{getResponseOptions(response)}</Table.Td>
+                  <Table.Td>
+                    {Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A'}
+                  </Table.Td>
+                </Table.Tr>
+              ));
             })}
           </Table.Tbody>
         </Table>
