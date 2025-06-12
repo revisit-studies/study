@@ -126,7 +126,7 @@ export function GlobalConfigParser() {
             />
             <Route
               path="/analysis/stats/:studyId"
-              element={<NavigateWithParams to="./table" replace />}
+              element={<NavigateWithParams to="./summary" replace />}
             />
             <Route
               path="/settings"
