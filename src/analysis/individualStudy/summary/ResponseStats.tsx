@@ -13,17 +13,26 @@ interface TaskStats {
 }
 
 function getResponseOptions(response: Response): string {
-  // Dropdown, Checkbox, Radio, Button, Slider
+  // Slider
+  // example: Bad (0), Mid (50), Good (100)
+  if (response.type === 'slider') {
+    return response.options.map((option) => `${option.label} (${option.value})`).join(', ');
+  }
+  // Dropdown, Checkbox, Radio, Button
+  // example: Option 1, Option 2, Option 3
   if ('options' in response) {
-    return JSON.stringify(response.options);
+    return response.options.join(', ');
   }
   // Matrix Radio, Matrix Checkbox
+  // example: Questions: Question 1, Question 2, Question 3
+  // example: Answers: Answer 1, Answer 2, Answer 3
   if ('answerOptions' in response && 'questionOptions' in response) {
-    return `Questions: ${JSON.stringify(response.questionOptions)} \n Answers: ${JSON.stringify(response.answerOptions)}}`;
+    return `Questions: ${response.questionOptions.join(', ')} \n Answers: ${Array.isArray(response.answerOptions) ? response.answerOptions.join(', ') : response.answerOptions}`;
   }
   // Likert Scale
+  // example: Dislike ~ Like (9 items)
   if ('numItems' in response) {
-    return `${response.leftLabel ? ` ${response.leftLabel} - ${response.rightLabel}` : ''} (${response.numItems} items)`;
+    return `${response.leftLabel ? ` ${response.leftLabel} ~ ${response.rightLabel}` : ''} (${response.numItems} items)`;
   }
   return 'N/A';
 }
