@@ -86,7 +86,7 @@ export function OverviewStats({ visibleParticipants }: { visibleParticipants: Pa
 
   return (
     <Paper shadow="sm" p="md" withBorder>
-      <Title order={4} mb="md">Overview Stats</Title>
+      <Title order={4} mb="md">Overview Statistics</Title>
       {visibleParticipants.length === 0 ? (
         <Flex justify="center" align="center" pt="lg" pb="md">
           <Text>No data available</Text>
