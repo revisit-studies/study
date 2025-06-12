@@ -95,7 +95,7 @@ export function OverviewStats({ visibleParticipants }: { visibleParticipants: Pa
           <Text>No data available</Text>
         </Flex>
       ) : (
-        <Flex justify="space-between" m="xs">
+        <Flex justify="space-between" m="xs" gap="xl" wrap="wrap">
           <div>
             <Text size="xl" fw="bold">{participantCounts.total}</Text>
             <Text size="sm" c="dimmed">Total Participants</Text>
