@@ -69,14 +69,15 @@ libraries.forEach((library) => {
     fs.mkdirSync(assetsPath);
     // eslint-disable-next-line no-console
     console.log(`Created ${exampleFolderName}/assets directory`);
+
+    // Create config.json
+    const configPath = path.join(examplePath, 'config.json');
+    const configContent = createExampleConfig(library);
+    fs.writeFileSync(configPath, JSON.stringify(configContent, null, 2));
+    // eslint-disable-next-line no-console
+    console.log(`Created/Updated ${exampleFolderName}/config.json`);
   }
 
-  // Create config.json
-  const configPath = path.join(examplePath, 'config.json');
-  const configContent = createExampleConfig(library);
-  fs.writeFileSync(configPath, JSON.stringify(configContent, null, 2));
-  // eslint-disable-next-line no-console
-  console.log(`Created/Updated ${exampleFolderName}/config.json`);
 });
 
 // eslint-disable-next-line no-console
