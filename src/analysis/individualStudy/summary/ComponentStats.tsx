@@ -40,7 +40,7 @@ function calculateComponentStats(visibleParticipants: ParticipantData[]): Compon
       stat.avgCleanTime += cleanTime ? cleanTime / 1000 : 0;
       stat.participantCount += 1;
 
-      if (answer.correctAnswer.length > 0) {
+      if (answer.correctAnswer && answer.correctAnswer.length > 0) {
         const isCorrect = answer.correctAnswer.every((correctAnswer) => {
           const participantAnswer = answer.answer[correctAnswer.id];
           return correctAnswer.answer === participantAnswer;
@@ -51,12 +51,15 @@ function calculateComponentStats(visibleParticipants: ParticipantData[]): Compon
   });
 
   return Object.values(stats)
-    .map((stat) => ({
-      ...stat,
-      avgTime: stat.participantCount ? stat.avgTime / stat.participantCount : 0,
-      avgCleanTime: stat.participantCount ? stat.avgCleanTime / stat.participantCount : 0,
-      correctness: stat.participantCount ? (stat.correctness / stat.participantCount) * 100 : 0,
-    }));
+    .map((stat) => {
+      const hasCorrectAnswers = Object.values(visibleParticipants).some((participant) => Object.values(participant.answers).some((answer) => answer.correctAnswer && answer.correctAnswer.length > 0));
+      return {
+        ...stat,
+        avgTime: stat.participantCount ? stat.avgTime / stat.participantCount : 0,
+        avgCleanTime: stat.participantCount ? stat.avgCleanTime / stat.participantCount : 0,
+        correctness: hasCorrectAnswers ? (stat.correctness / stat.participantCount) * 100 : NaN,
+      };
+    });
 }
 
 export function ComponentStats({ visibleParticipants }: { visibleParticipants: ParticipantData[] }) {
@@ -92,7 +95,7 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
                   {Number.isFinite(stat.avgCleanTime) ? `${stat.avgCleanTime.toFixed(1)} s` : 'N/A'}
                 </Table.Td>
                 <Table.Td>
-                  {Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A'}
+                  {!Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A'}
                 </Table.Td>
               </Table.Tr>
             ))}

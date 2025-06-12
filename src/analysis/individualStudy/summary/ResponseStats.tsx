@@ -9,6 +9,7 @@ interface TaskStats {
   name: string;
   correctness: number;
   participantCount: number;
+
 }
 
 function getResponseOptions(response: Response): string {
@@ -48,7 +49,7 @@ function calculateTaskStats(visibleParticipants: ParticipantData[]): TaskStats[]
       const stat = stats[component];
       stat.participantCount += 1;
 
-      if (answer.correctAnswer.length > 0) {
+      if (answer.correctAnswer && answer.correctAnswer.length > 0) {
         const isCorrect = answer.correctAnswer.every((correctAnswer) => {
           const participantAnswer = answer.answer[correctAnswer.id];
           return correctAnswer.answer === participantAnswer;
@@ -59,10 +60,13 @@ function calculateTaskStats(visibleParticipants: ParticipantData[]): TaskStats[]
   });
 
   return Object.values(stats)
-    .map((stat) => ({
-      ...stat,
-      correctness: stat.participantCount ? (stat.correctness / stat.participantCount) * 100 : 0,
-    }));
+    .map((stat) => {
+      const hasCorrectAnswers = Object.values(visibleParticipants).some((participant) => Object.values(participant.answers).some((answer) => answer.correctAnswer && answer.correctAnswer.length > 0));
+      return {
+        ...stat,
+        correctness: hasCorrectAnswers ? (stat.correctness / stat.participantCount) * 100 : NaN,
+      };
+    });
 }
 
 export function ResponseStats({ visibleParticipants, studyConfig }: { visibleParticipants: ParticipantData[]; studyConfig: StudyConfig }) {
@@ -98,7 +102,7 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
                   <Table.Td>{response.prompt}</Table.Td>
                   <Table.Td>{getResponseOptions(response)}</Table.Td>
                   <Table.Td>
-                    {Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A'}
+                    {!Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A'}
                   </Table.Td>
                 </Table.Tr>
               ));

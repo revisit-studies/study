@@ -54,27 +54,30 @@ function calculateDateStats(visibleParticipants: ParticipantData[]): { startDate
 }
 
 function calculateCorrectnessStats(visibleParticipants: ParticipantData[]): { avgCorrectness: number } {
+  const hasCorrectAnswer = visibleParticipants.some((participant) => Object.values(participant.answers).some((answer) => answer.correctAnswer && answer.correctAnswer.length > 0));
+
+  let totalQuestions = 0;
   const correctness = visibleParticipants.reduce((acc, participant) => {
     const answers = Object.values(participant.answers)
-      .filter((answer) => answer.correctAnswer?.length > 0);
+      .filter((answer) => answer.correctAnswer && answer.correctAnswer.length > 0);
 
     if (answers.length > 0) {
-      const correctCount = answers.filter((answer) => {
+      answers.forEach((answer) => {
+        totalQuestions += answer.correctAnswer.length;
         const isCorrect = answer.correctAnswer.every((correctAnswer) => {
           const participantAnswer = answer.answer[correctAnswer.id];
           return correctAnswer.answer === participantAnswer;
         });
-        return isCorrect;
-      }).length;
-
-      acc.correctSum += correctCount;
-      acc.totalSum += answers.length;
+        if (isCorrect) {
+          acc.correctSum += answer.correctAnswer.length;
+        }
+      });
     }
     return acc;
-  }, { correctSum: 0, totalSum: 0 });
+  }, { correctSum: 0 });
 
   return {
-    avgCorrectness: correctness.totalSum > 0 ? (correctness.correctSum / correctness.totalSum) * 100 : NaN,
+    avgCorrectness: hasCorrectAnswer ? (correctness.correctSum / totalQuestions) * 100 : NaN,
   };
 }
 
@@ -131,7 +134,7 @@ export function OverviewStats({ visibleParticipants }: { visibleParticipants: Pa
           </div>
           <div>
             <Text size="xl" fw="bold">
-              {!Number.isNaN(correctnessStats.avgCorrectness) ? `${correctnessStats.avgCorrectness.toFixed(1)}%` : 'N/A'}
+              {Number.isFinite(correctnessStats.avgCorrectness) ? `${correctnessStats.avgCorrectness.toFixed(1)}%` : 'N/A'}
             </Text>
             <Text size="sm" c="dimmed">Correctness</Text>
           </div>
