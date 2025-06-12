@@ -29,6 +29,8 @@
     "library-previs",
     "library-sus",
     "library-vlat",
+    "library-berlin-num",
+    "library-quis",
     "test-audio",
     "test-library",
     "test-likert-matrix",
@@ -136,6 +138,14 @@
     },
     "library-vlat": {
       "path": "library-vlat/config.json",
+      "test": true
+    },
+    "library-berlin-num": {
+      "path": "library-berlin-num/config.json",
+      "test": true
+    },
+    "library-quis": {
+      "path": "library-quis/config.json",
       "test": true
     },
     "test-likert-matrix": {

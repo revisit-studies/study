@@ -1,64 +1,90 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/LibraryConfigSchema.json",
-  "description": "The Questionnaire for User Interaction Satisfaction (QUIS) is a measurement tool designed to assess a computer user's subjective satisfaction with the human-computer interface.  It was developed at the Human-Computer Interaction Laboratory (HCIL), University of Maryland at College Park.  The QUIS contains a demographic questionnaire, a measure of overall system satisfaction, and a measure of specific interface factors such as screen visibility, terminology and system information, learning factors, and system capabilities. This library includes four components, one for each individual scale, as well as a sequence containing all four scales (the full PREVis).",
-  "reference": "B. D. Harper and K. L. Norman, “Improving user satisfaction: The Questionnaire for User Interaction Satisfaction version 5.5,” Proc. 1st Annu. Mid-Atlantic Human Factors Conf., pp. 224–228, Virginia Beach, VA, 1993.",
-  "externalLink": "https://isr.umd.edu/news/story/quis-questionnaire-for-user-interaction-satisfaction-70-isr-ip",
+  "description": "The Berlin Numeracy Test is a psychometrically sound instrument that quickly assesses statistical numeracy and risk literacy. It contains 4 questions. This library contains four components, each is a question from the Berlin Numeracy Test. There are two sequences: a four-item sequence and a single-item sequence. The four-item sequence is the traditional Berlin Numeracy Test and contains all 4 questions. The single-item sequence is the single question version and contains only question 1.",
+  "reference": "Cokely ET, Galesic M, Schulz E, Ghazal S, Garcia-Retamero R. Measuring Risk Literacy: The Berlin Numeracy Test. Judgment and Decision Making. 2012;7(1):25-47.",
+  "doi": "10.1017/S1930297500001819",
   "components": {
-      "choir-probability": {
+      "q1-choir-probability": {
           "type": "questionnaire",
           "response": [{
-            "id": "choir-probability",
-            "prompt": "Out of 1,000 people in a small town 500 are members of a choir. Out of these 500 members in the choir 100 are men. Out of the 500 inhabitants that are not in the choir 300 are men. What is the probability that a randomly drawn man is a member of the choir? Please indicate the probability in percentage.",
+            "id": "q1-choir-probability",
+            "prompt": "Out of 1,000 people in a small town 500 are members of a choir. Out of these 500 members in the choir 100 are men. Out of the 500 inhabitants that are not in the choir 300 are men. What is the probability that a randomly drawn man is a member of the choir? Please indicate the probability in percent. ___%",
             "required": true,
             "location": "aboveStimulus",
             "type": "numerical"
-          }]
+          }],
+          "correctAnswer": [
+          {
+            "id": "q1-choir-probability",
+            "answer": "25"
+          }
+        ]
         },
-        "dice-odd-numbers": {
+        "q2a-dice-odd-numbers": {
           "type": "questionnaire", 
           "response": [{
-            "id": "dice-odd-numbers",
-            "prompt": "Imagine we are throwing a five-sided die 50 times. On average, out of these 50 throws how many times would this five-sided die show an odd number (1, 3 or 5)?",
+            "id": "q2a-dice-odd-numbers",
+            "prompt": "Imagine we are throwing a five-sided die 50 times. On average, out of these 50 throws how many times would this five-sided die show an odd number (1, 3 or 5)?__ out of 50 throws.",
             "required": true,
             "location": "aboveStimulus",
             "type": "numerical"
-          }]
+          }],
+          "correctAnswer": [
+          {
+            "id": "q2a-dice-odd-numbers",
+            "answer": 30
+          }
+        ]
         },
-        "poisonous-mushrooms": {
+        "q2b-loaded-dice": {
           "type": "questionnaire",
           "response": [{
-            "id": "poisonous-mushrooms", 
-            "prompt": "In a forest 20% of mushrooms are red, 50% brown and 30% white. A red mushroom is poisonous with a probability of 20%. A mushroom that is not red is poisonous with a probability of 5%. What is the probability that a poisonous mushroom in the forest is red? Please indicate the probability in percentage.",
+            "id": "q2b-loaded-dice",
+            "prompt": "Imagine you are throwing a loaded die (6 sides). The probability that the die shows a 6 is twice as high as the probability of each of the other numbers. On average, out of these 70 throws how many times would the die show the number 6? ___out of 70 throws",
             "required": true,
             "location": "aboveStimulus",
             "type": "numerical"
-          }]
+          }],
+          "correctAnswer": [
+          {
+            "id": "q2b-loaded-dice",
+            "answer": 20
+          }
+        ]
         },
-        "loaded-dice": {
+        "q3-poisonous-mushrooms": {
           "type": "questionnaire",
           "response": [{
-            "id": "loaded-dice",
-            "prompt": "Imagine you are throwing a loaded die (6 sides). The probability that the die shows a 6 is twice as high as the probability of each of the other numbers. On average, out of these 70 throws how many times would the die show the number 6?",
+            "id": "q3-poisonous-mushrooms", 
+            "prompt": "In a forest 20% of mushrooms are red, 50% brown and 30% white. A red mushroom is poisonous with a probability of 20%. A mushroom that is not red is poisonous with a probability of 5%. What is the probability that a poisonous mushroom in the forest is red? Please indicate the probability in percentage. ___%",
             "required": true,
             "location": "aboveStimulus",
             "type": "numerical"
-          }]
+          }],
+          "correctAnswer": [
+          {
+            "id": "q3-poisonous-mushrooms",
+            "answer": 50
+          }
+        ]
         }
       },
   "sequences": {
-    "berlin-num-classic": {
+    "four-items": {
+      "id": "berlin-num-four-items",
       "order": "fixed",
       "components": [
-        "choir-probability",
-        "dice-odd-numbers",
-        "poisonous-mushrooms",
-        "loaded-dice"
+        "q1-choir-probability",
+        "q2a-dice-odd-numbers",
+        "q2b-loaded-dice",
+        "q3-poisonous-mushrooms"
       ]
     },
-    "berlin-num-single": {
+    "single-item": {
+      "id": "berlin-num-single-item",
       "order": "fixed",
       "components": [
-        "dice-odd-numbers"
+        "q1-choir-probability"
       ]
     }
   }

@@ -15,6 +15,7 @@ const { exec } = require('child_process');
 const librariesPath = path.join(__dirname, './public/libraries');
 const publicPath = path.join(__dirname, './public');
 
+
 // Create example study config template
 const createExampleConfig = (libraryName) => ({
   $schema: 'https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json',
@@ -52,7 +53,11 @@ const createExampleConfig = (libraryName) => ({
 const libraries = fs.readdirSync(librariesPath);
 libraries.forEach((library) => {
   // Skip hidden folders and files, and libraries in skip list
-  if (library.startsWith('.')) return;
+  if (library.startsWith('.') || skipLibraries.includes(library)) {
+    // eslint-disable-next-line no-console
+    console.log(`Skipping ${library} library`);
+    return;
+  }
 
   const exampleFolderName = `library-${library}`;
   const examplePath = path.join(publicPath, exampleFolderName);
