@@ -408,6 +408,8 @@ export interface SliderResponse extends BaseResponse {
   withBar?: boolean;
   /** Whether to render the slider with a NASA-tlx style. Defaults to false. */
   tlxStyle?: boolean;
+  /** Whether to render the slider with a SMEQ style. Defaults to false. */
+  smeqStyle?: boolean;
 }
 
 /**
