@@ -14,7 +14,9 @@ function calculateParticipantCounts(visibleParticipants: ParticipantData[]): { t
 }
 
 function calculateTimeStats(visibleParticipants: ParticipantData[]): { avgTime: number; avgCleanTime: number } {
-  const time = visibleParticipants.reduce((acc, participant) => {
+  // Filter out rejected participants
+  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
+  const time = validParticipants.reduce((acc, participant) => {
     const timeStats = Object.values(participant.answers)
       .filter((answer) => answer.endTime !== -1)
       .map((answer) => ({
@@ -36,7 +38,9 @@ function calculateTimeStats(visibleParticipants: ParticipantData[]): { avgTime: 
 }
 
 function calculateDateStats(visibleParticipants: ParticipantData[]): { startDate: Date | null; endDate: Date | null } {
-  const dates = visibleParticipants.map((participant) => {
+  // Filter out rejected participants
+  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
+  const dates = validParticipants.map((participant) => {
     const answers = Object.values(participant.answers)
       .filter((data) => data.startTime)
       .sort((a, b) => a.startTime - b.startTime);
@@ -54,10 +58,12 @@ function calculateDateStats(visibleParticipants: ParticipantData[]): { startDate
 }
 
 function calculateCorrectnessStats(visibleParticipants: ParticipantData[]): { avgCorrectness: number } {
-  const hasCorrectAnswer = visibleParticipants.some((participant) => Object.values(participant.answers).some((answer) => answer.correctAnswer && answer.correctAnswer.length > 0));
+  // Filter out rejected participants
+  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
+  const hasCorrectAnswer = validParticipants.some((participant) => Object.values(participant.answers).some((answer) => answer.correctAnswer && answer.correctAnswer.length > 0));
 
   let totalQuestions = 0;
-  const correctness = visibleParticipants.reduce((acc, participant) => {
+  const correctness = validParticipants.reduce((acc, participant) => {
     const answers = Object.values(participant.answers)
       .filter((answer) => answer.correctAnswer && answer.correctAnswer.length > 0);
 

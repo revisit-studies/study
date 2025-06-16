@@ -38,9 +38,12 @@ function getResponseOptions(response: Response): string {
 }
 
 function calculateTaskStats(visibleParticipants: ParticipantData[]): TaskStats[] {
+  // Filter out rejected participants
+  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
+
   const stats: Record<string, TaskStats> = {};
 
-  visibleParticipants.forEach((participant) => {
+  validParticipants.forEach((participant) => {
     Object.entries(participant.answers).forEach(([taskId, answer]) => {
       const component = `${taskId.split('_')[0]}`;
 

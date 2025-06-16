@@ -13,9 +13,11 @@ interface ComponentStats {
 }
 
 function calculateComponentStats(visibleParticipants: ParticipantData[]): ComponentStats[] {
+  // Filter out rejected participants
+  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
   const stats: Record<string, ComponentStats> = {};
 
-  visibleParticipants.forEach((participant) => {
+  validParticipants.forEach((participant) => {
     Object.entries(participant.answers).forEach(([taskId, answer]) => {
       const component = `${taskId.split('_')[0]}`;
 
