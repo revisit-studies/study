@@ -7,7 +7,8 @@ import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 function calculateParticipantCounts(visibleParticipants: ParticipantData[]): { total: number; completed: number; inProgress: number; rejected: number } {
   return {
     total: visibleParticipants.length,
-    completed: visibleParticipants.filter((p) => p.completed).length,
+    // Include !p.rejected to exclude participants rejected manually after completing the study
+    completed: visibleParticipants.filter((p) => p.completed && !p.rejected).length,
     inProgress: visibleParticipants.filter((p) => !p.completed && !p.rejected).length,
     rejected: visibleParticipants.filter((p) => p.rejected).length,
   };
