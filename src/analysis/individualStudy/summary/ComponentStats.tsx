@@ -70,7 +70,7 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
   return (
     <Paper shadow="sm" p="md" withBorder>
       <Title order={4} mb="md">Component Statistics</Title>
-      {visibleParticipants.length === 0 ? (
+      {visibleParticipants.length === 0 || stats.length === 0 ? (
         <Flex justify="center" align="center" pt="lg" pb="md">
           <Text>No data available</Text>
         </Flex>
