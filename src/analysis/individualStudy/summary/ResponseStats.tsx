@@ -106,10 +106,12 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
             <Table.Tbody>
               {stats.map((stat) => {
                 const component = studyConfig.components[stat.name];
+                // Filter out components that have no responses
+                if (!component) return null;
                 const responses = studyComponentToIndividualComponent(component, studyConfig).response;
 
                 return responses.map((response) => (
-                  <Table.Tr key={stat.name}>
+                  <Table.Tr key={`${stat.name}`}>
                     <Table.Td>{stat.name}</Table.Td>
                     <Table.Td>{response.type}</Table.Td>
                     <Table.Td>{response.prompt}</Table.Td>
