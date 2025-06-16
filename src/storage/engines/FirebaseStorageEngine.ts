@@ -95,7 +95,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   private firestore: Firestore;
 
-  private collectionPrefix = import.meta.env.DEV ? 'dev-' : 'prod-';
+  private collectionPrefix = 'prod-';
 
   private studyCollection:
     | CollectionReference<DocumentData, DocumentData>
@@ -525,6 +525,35 @@ export class FirebaseStorageEngine extends StorageEngine {
     const participantsData: ParticipantData[] = [];
 
     const participantPulls = participants.items.map(async (participant) => {
+      const participantData = await this._getFromFirebaseStorageByRef(
+        participant,
+        'participantData',
+      );
+
+      if (isParticipantData(participantData)) {
+        participantsData.push(participantData);
+      }
+    });
+
+    await Promise.all(participantPulls);
+
+    return participantsData;
+  }
+
+  async getAllParticipantsVirtualizedData(start: number, end: number) {
+    if (!this._verifyStudyDatabase(this.studyCollection)) {
+      throw new Error('Study database not initialized');
+    }
+
+    // Get all participants
+    const participantRefs = ref(
+      this.storage,
+      `${this.collectionPrefix}${this.studyId}/participants`,
+    );
+    const participants = await listAll(participantRefs);
+    const participantsData: ParticipantData[] = [];
+
+    const participantPulls = participants.items.slice(start, end).map(async (participant) => {
       const participantData = await this._getFromFirebaseStorageByRef(
         participant,
         'participantData',

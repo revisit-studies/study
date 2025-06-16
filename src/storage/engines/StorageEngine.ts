@@ -69,6 +69,8 @@ export abstract class StorageEngine {
 
   abstract getAllParticipantsData(): Promise<ParticipantData[]>;
 
+  abstract getAllParticipantsVirtualizedData(start: number, end: number): Promise<ParticipantData[]>;
+
   abstract getAllParticipantsDataByStudy(studyId:string): Promise<ParticipantData[]>;
 
   abstract getParticipantData(participantid?: string): Promise<ParticipantData | null>;

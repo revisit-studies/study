@@ -244,13 +244,11 @@ export function AllTasksTimeline({
           </Button>
         </Group>
 
-        { participantData.completed ? (
-          <svg style={{ width, height, overflow: 'visible' }}>
-            {tasks.map((t) => t.line)}
-            {tasks.map((t) => t.label)}
-            {browsedAway}
-          </svg>
-        ) : null}
+        <svg style={{ width, height, overflow: 'visible' }}>
+          {tasks.map((t) => t.line)}
+          {tasks.map((t) => t.label)}
+          {browsedAway}
+        </svg>
       </Stack>
     </Center>
 

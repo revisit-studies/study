@@ -7,8 +7,10 @@ import {
   IconInfoCircle,
 } from '@tabler/icons-react';
 import React, {
-  useCallback, useEffect, useMemo, useState,
+  useCallback,
+  useEffect, useMemo, useState,
 } from 'react';
+import { useThrottledState } from '@mantine/hooks';
 import { AppHeader } from '../interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
@@ -19,6 +21,8 @@ import { useAuth } from '../../store/hooks/useAuth';
 import { StatsView } from './stats/StatsView';
 import { AllReplays } from './replay/AllReplays';
 import { parseStudyConfig } from '../../parser/parser';
+import { StorageEngine } from '../../storage/engines/StorageEngine';
+import { useAsync } from '../../store/hooks/useAsync';
 
 function sortByStartTime(a: ParticipantData, b: ParticipantData) {
   const aStartTimes = Object.values(a.answers).map((answer) => answer.startTime).filter((startTime) => startTime !== undefined).sort();
@@ -35,15 +39,44 @@ function sortByStartTime(a: ParticipantData, b: ParticipantData) {
   return bStartTimes[0] - aStartTimes[0];
 }
 
+export function getVirtualizedParticipantData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined, start: number, end: number) : Promise<ParticipantData[]> {
+  if (!studyConfig || !storageEngine || !studyId) return Promise.resolve([]);
+
+  console.log(start, end);
+  storageEngine.initializeStudyDb(studyId, studyConfig);
+  return storageEngine.getAllParticipantsVirtualizedData(start, end);
+}
+
+export function getParticipantList(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined) : Promise<string[]> {
+  if (!studyConfig || !storageEngine || !studyId) return Promise.resolve([]);
+  storageEngine.initializeStudyDb(studyId, studyConfig);
+  return storageEngine.getAllParticipantNames();
+}
+
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
   const { studyId } = useParams();
-  const [expData, setExpData] = useState<ParticipantData[]>([]);
   const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
   const { analysisTab } = useParams();
   const { user } = useAuth();
+
+  // 0-1 percentage of scroll height
+  const [scrollHeight, setScrollHeight] = useThrottledState<number>(0, 500);
+
+  const { value: participantList, status: loadingParticipantList } = useAsync(getParticipantList, [studyConfig, storageEngine, studyId]);
+
+  const { value: expData, status: loadingVirtualized } = useAsync(getVirtualizedParticipantData, [studyConfig, storageEngine, studyId, Math.max(0, Math.round((participantList?.length || 0) * scrollHeight) - 10), Math.min(Math.round((participantList?.length || 0) * scrollHeight) + 10, participantList?.length || 0)]);
+
+  const visibleParticipants = useMemo(() => {
+    if (!expData) return [];
+
+    const comp = expData.filter((d) => !d.rejected && d.completed);
+    const prog = expData.filter((d) => !d.rejected && !d.completed);
+    const rej = expData.filter((d) => d.rejected);
+    return [...comp, ...prog, ...rej].sort(sortByStartTime);
+  }, [expData]);
 
   useEffect(() => {
     if (!studyId) return () => { };
@@ -70,43 +103,23 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     return () => { };
   }, [studyId, globalConfig, storageEngine]);
 
-  const getData = useCallback(async () => {
-    setLoading(true);
-    if (studyId) {
-      if (!studyConfig || !storageEngine) return;
-      await storageEngine.initializeStudyDb(studyId, studyConfig);
-      const data = (await storageEngine.getAllParticipantsData());
-      setExpData(data);
-      setLoading(false);
-    }
-  }, [storageEngine, studyId, studyConfig]);
+  // const handleCheckboxChange = useCallback((value: string[]) => {
+  //   const participants = [];
+  //   if (value.includes('completed')) {
+  //     participants.push(...completed);
+  //   }
+  //   if (value.includes('inprogress')) {
+  //     participants.push(...inProgress);
+  //   }
+  //   if (value.includes('rejected')) {
+  //     participants.push(...rejected);
+  //   }
+  //   setVisibleParticipants(participants);
+  // }, [completed, inProgress, rejected]);
 
-  useEffect(() => {
-    getData();
-  }, [globalConfig, storageEngine, studyId, getData]);
-
-  const [visibleParticipants, setVisibleParticipants] = useState<ParticipantData[]>([]);
-  const [completed, inProgress, rejected] = useMemo(() => {
-    const comp = expData.filter((d) => !d.rejected && d.completed);
-    const prog = expData.filter((d) => !d.rejected && !d.completed);
-    const rej = expData.filter((d) => d.rejected);
-    setVisibleParticipants([...comp, ...prog, ...rej].sort(sortByStartTime));
-    return [comp, prog, rej];
-  }, [expData]);
-
-  const handleCheckboxChange = useCallback((value: string[]) => {
-    const participants = [];
-    if (value.includes('completed')) {
-      participants.push(...completed);
-    }
-    if (value.includes('inprogress')) {
-      participants.push(...inProgress);
-    }
-    if (value.includes('rejected')) {
-      participants.push(...rejected);
-    }
-    setVisibleParticipants(participants.sort(sortByStartTime));
-  }, [completed, inProgress, rejected]);
+  const onScroll = useCallback((num: number) => {
+    setScrollHeight(num);
+  }, [setScrollHeight]);
 
   return (
     <>
@@ -122,7 +135,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               <Text mt={-2} size="sm">Participants: </Text>
               <Checkbox.Group
                 defaultValue={['completed', 'inprogress', 'rejected']}
-                onChange={handleCheckboxChange}
+                onChange={() => console.log('Checkbox changed')}
                 mb="xs"
                 mt={8}
                 ml="xs"
@@ -146,16 +159,16 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="table" pt="xs">
-              {studyConfig && <TableView visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={getData} />}
+              {studyConfig && <TableView visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => console.log('refrshing accordion')} />}
             </Tabs.Panel>
             <Tabs.Panel value="stats" pt="xs">
               {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
             </Tabs.Panel>
             <Tabs.Panel value="replay" pt="xs">
-              <AllReplays visibleParticipants={visibleParticipants} studyConfig={studyConfig} />
+              <AllReplays visibleParticipants={visibleParticipants} studyConfig={studyConfig} participantCount={participantList?.length || 0} onScroll={onScroll} />
             </Tabs.Panel>
             <Tabs.Panel value="manage" pt="xs">
-              {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={getData} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
+              {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={() => console.log('refrshing accordion')} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
             </Tabs.Panel>
           </Tabs>
         </Container>
