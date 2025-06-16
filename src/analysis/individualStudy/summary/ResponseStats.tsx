@@ -1,5 +1,5 @@
 import {
-  Paper, Table, Title, Text, Flex,
+  Paper, Table, Title, Text, Flex, ScrollArea,
 } from '@mantine/core';
 import { ParticipantData } from '../../../storage/types';
 import { Response, StudyConfig } from '../../../parser/types';
@@ -89,35 +89,37 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
           <Text>No data available</Text>
         </Flex>
       ) : (
-        <Table>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Component</Table.Th>
-              <Table.Th>Type</Table.Th>
-              <Table.Th>Question</Table.Th>
-              <Table.Th>Options</Table.Th>
-              <Table.Th>Correctness</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {stats.map((stat) => {
-              const component = studyConfig.components[stat.name];
-              const responses = studyComponentToIndividualComponent(component, studyConfig).response;
+        <ScrollArea>
+          <Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Component</Table.Th>
+                <Table.Th>Type</Table.Th>
+                <Table.Th>Question</Table.Th>
+                <Table.Th>Options</Table.Th>
+                <Table.Th>Correctness</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {stats.map((stat) => {
+                const component = studyConfig.components[stat.name];
+                const responses = studyComponentToIndividualComponent(component, studyConfig).response;
 
-              return responses.map((response) => (
-                <Table.Tr key={stat.name}>
-                  <Table.Td>{stat.name}</Table.Td>
-                  <Table.Td>{response.type}</Table.Td>
-                  <Table.Td>{response.prompt}</Table.Td>
-                  <Table.Td>{getResponseOptions(response)}</Table.Td>
-                  <Table.Td>
-                    {!Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A'}
-                  </Table.Td>
-                </Table.Tr>
-              ));
-            })}
-          </Table.Tbody>
-        </Table>
+                return responses.map((response) => (
+                  <Table.Tr key={stat.name}>
+                    <Table.Td>{stat.name}</Table.Td>
+                    <Table.Td>{response.type}</Table.Td>
+                    <Table.Td>{response.prompt}</Table.Td>
+                    <Table.Td>{getResponseOptions(response)}</Table.Td>
+                    <Table.Td>
+                      {!Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A'}
+                    </Table.Td>
+                  </Table.Tr>
+                ));
+              })}
+            </Table.Tbody>
+          </Table>
+        </ScrollArea>
       )}
     </Paper>
   );

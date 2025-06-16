@@ -1,5 +1,5 @@
 import {
-  Flex, Paper, Table, Text, Title,
+  Flex, Paper, Table, Text, Title, ScrollArea,
 } from '@mantine/core';
 import { ParticipantData } from '../../../storage/types';
 import { getCleanedDuration } from '../../../utils/getCleanedDuration';
@@ -73,34 +73,36 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
           <Text>No data available</Text>
         </Flex>
       ) : (
-        <Table>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Component</Table.Th>
-              <Table.Th>Participants</Table.Th>
-              <Table.Th>Avg Time</Table.Th>
-              <Table.Th>Avg Clean Time</Table.Th>
-              <Table.Th>Correctness</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {stats.map((stat) => (
-              <Table.Tr key={stat.name}>
-                <Table.Td>{stat.name}</Table.Td>
-                <Table.Td>{stat.participantCount}</Table.Td>
-                <Table.Td>
-                  {Number.isFinite(stat.avgTime) ? `${stat.avgTime.toFixed(1)} s` : 'N/A'}
-                </Table.Td>
-                <Table.Td>
-                  {Number.isFinite(stat.avgCleanTime) ? `${stat.avgCleanTime.toFixed(1)} s` : 'N/A'}
-                </Table.Td>
-                <Table.Td>
-                  {!Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A'}
-                </Table.Td>
+        <ScrollArea>
+          <Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Component</Table.Th>
+                <Table.Th>Participants</Table.Th>
+                <Table.Th>Avg Time</Table.Th>
+                <Table.Th>Avg Clean Time</Table.Th>
+                <Table.Th>Correctness</Table.Th>
               </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
+            </Table.Thead>
+            <Table.Tbody>
+              {stats.map((stat) => (
+                <Table.Tr key={stat.name}>
+                  <Table.Td>{stat.name}</Table.Td>
+                  <Table.Td>{stat.participantCount}</Table.Td>
+                  <Table.Td>
+                    {Number.isFinite(stat.avgTime) ? `${stat.avgTime.toFixed(1)} s` : 'N/A'}
+                  </Table.Td>
+                  <Table.Td>
+                    {Number.isFinite(stat.avgCleanTime) ? `${stat.avgCleanTime.toFixed(1)} s` : 'N/A'}
+                  </Table.Td>
+                  <Table.Td>
+                    {!Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A'}
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </ScrollArea>
       )}
     </Paper>
   );
