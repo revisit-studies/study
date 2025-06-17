@@ -109,7 +109,7 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
         </Flex>
       ) : (
         <ScrollArea>
-          <Table>
+          <Table striped withTableBorder withColumnBorders highlightOnHover>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Component</Table.Th>

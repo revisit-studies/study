@@ -92,7 +92,7 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
         </Flex>
       ) : (
         <ScrollArea>
-          <Table>
+          <Table striped withTableBorder withColumnBorders highlightOnHover>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Component</Table.Th>
