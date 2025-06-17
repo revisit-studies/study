@@ -45,7 +45,10 @@ function calculateTaskStats(visibleParticipants: ParticipantData[]): TaskStats[]
 
   validParticipants.forEach((participant) => {
     Object.entries(participant.answers).forEach(([taskId, answer]) => {
-      const component = `${taskId.split('_')[0]}`;
+      // For dynamic blocks: blockId_stepNumber_componentName_index
+      // For regular components: componentName_index
+      const parts = taskId.split('_');
+      const component = parts.length === 4 ? parts[2] : parts[0];
 
       if (!stats[component]) {
         stats[component] = {
@@ -73,7 +76,12 @@ function calculateTaskStats(visibleParticipants: ParticipantData[]): TaskStats[]
 
   return Object.values(stats)
     .map((stat) => {
-      const hasCorrectAnswers = Object.values(visibleParticipants).some((participant) => Object.values(participant.answers).some((answer) => answer.correctAnswer && answer.correctAnswer.length > 0));
+      // Check if any participant has correct answers defined for this component
+      const hasCorrectAnswers = Object.values(validParticipants).some((participant) => Object.entries(participant.answers).some(([key, answer]) => {
+        const parts = key.split('_');
+        const component = parts.length === 4 ? parts[2] : parts[0];
+        return component === stat.name && answer.correctAnswer && answer.correctAnswer.length > 0;
+      }));
       return {
         ...stat,
         correctness: hasCorrectAnswers ? (stat.correctness / stat.participantCount) * 100 : NaN,
@@ -84,10 +92,18 @@ function calculateTaskStats(visibleParticipants: ParticipantData[]): TaskStats[]
 export function ResponseStats({ visibleParticipants, studyConfig }: { visibleParticipants: ParticipantData[]; studyConfig: StudyConfig }) {
   const stats = calculateTaskStats(visibleParticipants);
 
+  // Check if any component has responses
+  const hasResponses = stats.some((stat) => {
+    const component = studyConfig.components[stat.name];
+    if (!component) return false;
+    const responses = studyComponentToIndividualComponent(component, studyConfig).response;
+    return responses.length > 0;
+  });
+
   return (
     <Paper shadow="sm" p="md" withBorder>
       <Title order={4} mb="md">Response Statistics</Title>
-      {visibleParticipants.length === 0 || stats.length === 0 ? (
+      {visibleParticipants.length === 0 || stats.length === 0 || !hasResponses ? (
         <Flex justify="center" align="center" pt="lg" pb="md">
           <Text>No data available</Text>
         </Flex>
@@ -109,6 +125,7 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
                 // Filter out components that have no responses
                 if (!component) return null;
                 const responses = studyComponentToIndividualComponent(component, studyConfig).response;
+                if (responses.length === 0) return null;
 
                 return responses.map((response) => (
                   <Table.Tr key={`${stat.name}`}>
