@@ -60,13 +60,22 @@ function calculateComponentStats(visibleParticipants: ParticipantData[]): Compon
 
   return Object.values(stats)
     .map((stat) => {
-      const hasCorrectAnswers = Object.values(visibleParticipants).some((participant) => Object.values(participant.answers).some((answer) => answer.correctAnswer && answer.correctAnswer.length > 0));
+      // Get all questions that belong to this component and have correct answers defined
+      const questions = Object.values(validParticipants).flatMap((participant) => Object.keys(participant.answers).filter((key) => key.startsWith(stat.name) && participant.answers[key]?.correctAnswer?.length > 0));
+
+      // Count total attempts for this component
+      const totalAttempts = Object.values(validParticipants).reduce((count, participant) => count + Object.keys(participant.answers).filter((key) => key.startsWith(stat.name) && participant.answers[key].endTime !== -1).length, 0);
+
+      // Check if any participant has correct answers defined for this component
+      const hasCorrectAnswers = questions.length > 0;
 
       return {
         ...stat,
-        avgTime: stat.participantCount ? stat.avgTime / stat.participantCount : 0,
-        avgCleanTime: stat.participantCount ? stat.avgCleanTime / stat.participantCount : 0,
-        correctness: hasCorrectAnswers ? (stat.correctness / stat.participantCount) * 100 : NaN,
+        // Calculate average time per attempt
+        avgTime: totalAttempts ? stat.avgTime / totalAttempts : 0,
+        avgCleanTime: totalAttempts ? stat.avgCleanTime / totalAttempts : 0,
+        // Calculate correctness as percentage of correct answers out of questions with correct answers defined
+        correctness: hasCorrectAnswers ? (stat.correctness / questions.length) * 100 : NaN,
       };
     });
 }
