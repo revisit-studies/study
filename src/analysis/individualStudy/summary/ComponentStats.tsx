@@ -18,6 +18,7 @@ function calculateComponentStats(visibleParticipants: ParticipantData[]): Compon
   const stats: Record<string, ComponentStats> = {};
 
   validParticipants.forEach((participant) => {
+    const components = new Set<string>();
     Object.entries(participant.answers).forEach(([taskId, answer]) => {
       const component = `${taskId.split('_')[0]}`;
 
@@ -40,7 +41,12 @@ function calculateComponentStats(visibleParticipants: ParticipantData[]): Compon
 
       stat.avgTime += time;
       stat.avgCleanTime += cleanTime ? cleanTime / 1000 : 0;
-      stat.participantCount += 1;
+
+      // This is to avoid counting the same participant multiple times for dynamic blocks and latin squares
+      if (!components.has(component)) {
+        components.add(component);
+        stat.participantCount += 1;
+      }
 
       if (answer.correctAnswer && answer.correctAnswer.length > 0) {
         const isCorrect = answer.correctAnswer.every((correctAnswer) => {
@@ -55,6 +61,7 @@ function calculateComponentStats(visibleParticipants: ParticipantData[]): Compon
   return Object.values(stats)
     .map((stat) => {
       const hasCorrectAnswers = Object.values(visibleParticipants).some((participant) => Object.values(participant.answers).some((answer) => answer.correctAnswer && answer.correctAnswer.length > 0));
+
       return {
         ...stat,
         avgTime: stat.participantCount ? stat.avgTime / stat.participantCount : 0,
