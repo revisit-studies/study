@@ -29,6 +29,7 @@ export function SliderInput({
     step,
     withBar,
     tlxStyle,
+    smeqStyle,
   } = response;
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
@@ -75,7 +76,7 @@ export function SliderInput({
           },
           // Red line thumb style
           thumb: {
-            ...(tlxStyle ? {
+            ...(tlxStyle || smeqStyle ? {
               borderColor: 'var(--mantine-color-red-6)',
               width: 1,
               borderWidth: 1,
