@@ -1,0 +1,180 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/jk/library/src/parser/LibraryConfigSchema.json",
+  "description": "SMEQ Description",
+  "reference": "reference",
+  "doi": "N/A",
+  "components": {
+    "smeq": {
+      "type": "markdown",
+      "path": "libraries/smeq/assets/smeq.md",
+      "response": [
+        {
+          "id": "smeq",
+          "prompt": "smeq style",
+          "type": "slider",
+          "smeqStyle": true,
+          "withBar": false,
+          "options": [
+            {
+              "label": "0",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "A little effort",
+              "value": 27.5
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "Some effort",
+              "value": 32.5
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "50",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "Reasonable amount of effort",
+              "value": 57.5
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "Fair amount of effort",
+              "value": 72.5
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "A lot of effort",
+              "value": 87.5
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "100",
+              "value": 100
+            },
+            {
+              "label": "Very much effort",
+              "value": 102.5
+            },
+            {
+              "label": "",
+              "value": 105
+            },
+            {
+              "label": "",
+              "value": 110
+            },
+            {
+              "label": "Exceptional amount of effort",
+              "value": 112.5
+            },
+            {
+              "label": "",
+              "value": 115
+            },
+            {
+              "label": "",
+              "value": 120  
+            },
+            {
+              "label": "",
+              "value": 125
+            },
+            {
+              "label": "",
+              "value": 130
+            },
+            {
+              "label": "",
+              "value": 135
+            },
+            {
+              "label": "",
+              "value": 140
+            },
+            {
+              "label": "",
+              "value": 145
+            },
+            {
+              "label": "150",
+              "value": 150
+            }
+          ],
+          "step": 1,
+          "startingValue": 0,
+          "required": true
+        }
+      ]
+    }
+  },
+  "sequences": {
+  }
+}
