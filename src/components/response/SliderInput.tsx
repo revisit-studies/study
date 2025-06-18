@@ -40,6 +40,14 @@ export function SliderInput({
   // For smeq style (vertical slider)
   const [val, setVal] = useState((answer as { value?: number }).value ?? (min + max) / 2);
   const normalizedValue = (val - min) / (max - min);
+
+  // Numeric labels of multiples of 50 for smeq style
+  const labelValues = useMemo(() => {
+    const start = Math.ceil(min / 50) * 50;
+    const count = Math.floor((max - start) / 50) + 1;
+    return Array.from({ length: count }, (_, i) => start + i * 50);
+  }, [min, max]);
+
   const { ref } = useMove(({ y }) => {
     // Convert y position to slider value
     const rawValue = Math.max(min, Math.min(max, min + (1 - y) * (max - min)));
@@ -67,6 +75,31 @@ export function SliderInput({
       {/* Vertical slider for SMEQ style */}
       {smeqStyle ? (
         <Flex direction="row" align="flex-start" gap="md" mt="xs">
+          {/* Numeric labels (multiples of 50 within min-max range) ex: 0, 50, 100, 150 */}
+          <Box style={{
+            height: 400, position: 'relative', minWidth: 50, textAlign: 'right',
+          }}
+          >
+            {labelValues.map((label) => {
+              const labelPosition = ((label - min) / (max - min)) * 100;
+              return (
+                <Box
+                  key={label}
+                  style={{
+                    position: 'absolute',
+                    bottom: `${labelPosition}%`,
+                    fontSize: 'var(--mantine-font-size-sm)',
+                    color: 'var(--mantine-color-gray-7)',
+                    right: 0,
+                    transform: 'translateY(50%)',
+                  }}
+                >
+                  {label}
+                </Box>
+              );
+            })}
+          </Box>
+
           {/* Slider track */}
           <Box
             ref={ref}

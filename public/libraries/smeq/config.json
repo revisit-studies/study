@@ -16,7 +16,7 @@
           "withBar": false,
           "options": [
             {
-              "label": "0",
+              "label": "",
               "value": 0
             },
             {
@@ -53,7 +53,7 @@
             },
             {
               "label": "Some effort",
-              "value": 32.5
+              "value": 37.5
             },
             {
               "label": "",
@@ -64,7 +64,7 @@
               "value": 45
             },
             {
-              "label": "50",
+              "label": "",
               "value": 50
             },
             {
@@ -116,7 +116,7 @@
               "value": 95
             },
             {
-              "label": "100",
+              "label": "",
               "value": 100
             },
             {
@@ -164,7 +164,7 @@
               "value": 145
             },
             {
-              "label": "150",
+              "label": "",
               "value": 150
             }
           ],
