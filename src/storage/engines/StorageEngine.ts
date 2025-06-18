@@ -3,6 +3,7 @@ import { Timestamp } from 'firebase/firestore';
 import { StudyConfig } from '../../parser/types';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
+import { EditedText } from '../../analysis/individualStudy/thinkAloud/types';
 
 export interface StoredUser {
   email: string,
@@ -52,6 +53,14 @@ export abstract class StorageEngine {
   abstract initializeParticipantSession(studyId: string, searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string): Promise<ParticipantData>;
 
   abstract getCurrentConfigHash(): Promise<string>;
+
+  abstract getEditedTranscript(participantId: string, authEmail: string, taskName: string): Promise<EditedText[] | null>;
+
+  abstract saveEditedTranscript(participantId: string, authEmail: string, taskName: string, editedText: EditedText[]): Promise<string | null>;
+
+  abstract getAllParticipantAndTaskTags(): Promise<string | null>;
+
+  abstract getTags(tagType: 'participant' | 'task' | 'text'): Promise<string[]>;
 
   abstract getAllConfigsFromHash(hashes: string[], studyId: string): Promise<Record<string, StudyConfig>>;
 

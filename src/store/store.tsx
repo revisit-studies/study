@@ -117,8 +117,8 @@ export async function studyStoreCreator(
       belowStimulus: undefined,
       stimulus: undefined,
       sidebar: undefined,
-
     },
+    analysisPlaybackTrial: '',
     analysisIsPlaying: false,
     analysisHasAudio: false,
     analysisHasProvenance: false,

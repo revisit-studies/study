@@ -19,6 +19,7 @@ import { useAuth } from '../../store/hooks/useAuth';
 import { StatsView } from './stats/StatsView';
 import { AllReplays } from './replay/AllReplays';
 import { parseStudyConfig } from '../../parser/parser';
+import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 
 function sortByStartTime(a: ParticipantData, b: ParticipantData) {
   const aStartTimes = Object.values(a.answers).map((answer) => answer.startTime).filter((startTime) => startTime !== undefined).sort();
@@ -138,11 +139,12 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
           <Space h="xs" />
 
-          <Tabs variant="outline" value={analysisTab} onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)} style={{ height: '100%' }}>
+          <Tabs variant="outline" keepMounted={false} value={analysisTab} onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)} style={{ height: '100%' }}>
             <Tabs.List>
               <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Table View</Tabs.Tab>
               <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
               <Tabs.Tab value="replay" leftSection={<IconPlayerPlay size={16} />}>Participant Replay</Tabs.Tab>
+              <Tabs.Tab value="thinkAloud" leftSection={<IconPlayerPlay size={16} />}>Think Aloud</Tabs.Tab>
               <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="table" pt="xs">
@@ -153,6 +155,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
             </Tabs.Panel>
             <Tabs.Panel value="replay" pt="xs">
               <AllReplays visibleParticipants={visibleParticipants} studyConfig={studyConfig} />
+            </Tabs.Panel>
+            <Tabs.Panel value="thinkAloud" pt="xs">
+              <ThinkAloudAnalysis visibleParticipants={visibleParticipants} studyConfig={studyConfig} />
             </Tabs.Panel>
             <Tabs.Panel value="manage" pt="xs">
               {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={getData} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
