@@ -1,7 +1,8 @@
 import {
   Box, Flex, Input, Slider, SliderProps,
 } from '@mantine/core';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useMove } from '@mantine/hooks';
 import { SliderResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
@@ -36,6 +37,19 @@ export function SliderInput({
   const hasLabels = options.some((opt) => opt.label !== '');
   const errorMessage = generateErrorMessage(response, answer);
 
+  // For smeq style (vertical slider)
+  const [val, setVal] = useState((answer as { value?: number }).value ?? (min + max) / 2);
+  const normalizedValue = (val - min) / (max - min);
+  const { ref } = useMove(({ y }) => {
+    // Convert y position to slider value
+    const rawValue = Math.max(min, Math.min(max, min + (1 - y) * (max - min)));
+    const stepSize = step ?? (snap ? 0.001 : (max - min) / 100);
+    // Round to nearest step
+    const snappedValue = Math.round((rawValue - min) / stepSize) * stepSize + min;
+    setVal(snappedValue);
+    (answer as { onChange?: (value: number) => void })?.onChange?.(snappedValue);
+  });
+
   return (
     <Input.Wrapper
       label={(
@@ -50,46 +64,134 @@ export function SliderInput({
       error={errorMessage}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
-      <Slider
-        disabled={disabled}
-        marks={options as SliderProps['marks']}
-        min={min}
-        max={max}
-        step={step ?? (snap ? 0.001 : (max - min) / 100)}
-        h={hasLabels ? 40 : undefined}
-        {...answer}
-        classNames={{ track: tlxStyle ? classes.track : '', bar: classes.fixDisabled }}
-        restrictToMarks={snap}
-        label={(value) => (snap ? null : value)}
-        styles={(theme) => ({
-          mark: {
-            ...(tlxStyle ? {
-              height: 20, width: 1, marginTop: -6, marginLeft: 2, borderRadius: 0,
-            } : {}),
-            ...(withBar === false ? { borderColor: 'var(--mantine-color-gray-2)' } : {}),
-          },
-          bar: withBar === false || tlxStyle ? { display: 'none' } : {},
-          markLabel: {
-            fontSize: theme.fontSizes.sm,
-            color: theme.colors.gray[7],
-            transform: 'translate(calc((var(--mark-offset) * -1) + (var(--slider-size) / 2)), calc(var(--mantine-spacing-xs) / 2)',
-          },
-          // Red line thumb style
-          thumb: {
-            ...(tlxStyle || smeqStyle ? {
-              borderColor: 'var(--mantine-color-red-6)',
-              width: 1,
-              borderWidth: 1,
-              height: 22,
-              borderRadius: 0,
-              backgroundColor: 'var(--mantine-color-red-6)',
-              transform: 'translate(-50%, -62%)',
-            } : {}),
-          },
-        })}
-        flex={1}
-        mt={tlxStyle ? 'sm' : 'xs'}
-      />
+      {/* Vertical slider for SMEQ style */}
+      {smeqStyle ? (
+        <Flex direction="row" align="flex-start" gap="md" mt="xs">
+          {/* Slider track */}
+          <Box
+            ref={ref}
+            style={{
+              width: 22,
+              height: 400,
+              position: 'relative',
+            }}
+          >
+            {/* Marks */}
+            {options.map((option) => {
+              const markPosition = ((option.value - min) / (max - min)) * 100;
+              return (
+                <Box
+                  key={option.value}
+                  style={{
+                    position: 'absolute',
+                    bottom: `${markPosition}%`,
+                    left: 0,
+                    width: 20,
+                    height: 1,
+                    backgroundColor: 'var(--mantine-color-gray-6)',
+                    transform: 'translateY(50%)',
+                  }}
+                />
+              );
+            })}
+
+            {/* Thumb */}
+            <Box
+              style={{
+                backgroundColor: 'var(--mantine-color-red-6)',
+                width: 20,
+                height: 1,
+                border: '1px solid var(--mantine-color-red-6)',
+                position: 'absolute',
+                // -1px to account for the border
+                bottom: `calc(${normalizedValue * 100}% - 1px)`,
+              }}
+            />
+          </Box>
+
+          {/* Thumb Label */}
+          <Box
+            style={{
+              height: 400,
+              position: 'relative',
+              minWidth: 200,
+            }}
+          >
+            {options.map((option) => {
+              if (!option.label) return null;
+              const markPosition = ((option.value - min) / (max - min)) * 100;
+              return (
+                <Box
+                  key={option.value}
+                  style={{
+                    fontSize: 'var(--mantine-font-size-sm)',
+                    color: 'var(--mantine-color-gray-7)',
+                    position: 'absolute',
+                    bottom: `${markPosition}%`,
+                    transform: 'translateY(50%)',
+                  }}
+                >
+                  {option.label}
+                </Box>
+              );
+            })}
+          </Box>
+
+          {/* Value Label */}
+          <Box style={{
+            fontSize: 'var(--mantine-font-size-sm)',
+            color: 'var(--mantine-color-gray-7)',
+            position: 'relative',
+            fontWeight: 500,
+          }}
+          >
+            Value:
+            {' '}
+            {Math.round(val)}
+          </Box>
+        </Flex>
+      ) : (
+        <Slider
+          disabled={disabled}
+          marks={options as SliderProps['marks']}
+          min={min}
+          max={max}
+          step={step ?? (snap ? 0.001 : (max - min) / 100)}
+          h={hasLabels ? 40 : undefined}
+          {...answer}
+          classNames={{ track: tlxStyle ? classes.track : '', bar: classes.fixDisabled }}
+          restrictToMarks={snap}
+          label={(value) => (snap ? null : value)}
+          styles={(theme) => ({
+            mark: {
+              ...(tlxStyle ? {
+                height: 20, width: 1, marginTop: -6, marginLeft: 2, borderRadius: 0,
+              } : {}),
+              ...(withBar === false ? { borderColor: 'var(--mantine-color-gray-2)' } : {}),
+            },
+            bar: withBar === false || tlxStyle ? { display: 'none' } : {},
+            markLabel: {
+              fontSize: theme.fontSizes.sm,
+              color: theme.colors.gray[7],
+              transform: 'translate(calc((var(--mark-offset) * -1) + (var(--slider-size) / 2)), calc(var(--mantine-spacing-xs) / 2)',
+            },
+            // Red line thumb style
+            thumb: {
+              ...(tlxStyle ? {
+                borderColor: 'var(--mantine-color-red-6)',
+                width: 1,
+                borderWidth: 1,
+                height: 22,
+                borderRadius: 0,
+                backgroundColor: 'var(--mantine-color-red-6)',
+                transform: 'translate(-50%, -62%)',
+              } : {}),
+            },
+          })}
+          flex={1}
+          mt={tlxStyle ? 'sm' : 'xs'}
+        />
+      )}
     </Input.Wrapper>
   );
 }
