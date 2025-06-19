@@ -1,0 +1,1 @@
+This is a simple demo of using video stimuli, simply type your answer in input field and click **Next**.
