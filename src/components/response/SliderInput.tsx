@@ -75,7 +75,7 @@ export function SliderInput({
     >
       {/* Vertical slider for SMEQ style */}
       {smeqStyle ? (
-        <Flex direction="row" align="flex-start" gap="md" mt="xs">
+        <Flex direction="row" align="flex-start" gap="md" mt="md" justify="center">
           {/* Numeric labels (multiples of 10 within min-max range) ex: 0, 10, 20, 30, ... */}
           <Box style={{
             height: 450, position: 'relative', minWidth: 50, textAlign: 'right',
