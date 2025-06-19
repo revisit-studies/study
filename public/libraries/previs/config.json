@@ -19,7 +19,6 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
-          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -30,7 +29,6 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
-          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -41,7 +39,6 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
-          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -51,6 +48,7 @@
     "Layout": {
       "type": "image",
       "path": "libraries/previs/assets/vis-example.png",
+      "responseOrder": "random",
       "style": {
         "width": "800px"
       },
@@ -61,7 +59,6 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
-          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -72,7 +69,6 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
-          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -83,7 +79,6 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
-          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -93,6 +88,7 @@
     "ReadingData": {
       "type": "image",
       "path": "libraries/previs/assets/vis-example.png",
+      "responseOrder": "random",
       "style": {
         "width": "800px"
       },
@@ -103,7 +99,6 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
-          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -114,7 +109,6 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
-          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -125,7 +119,6 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
-          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -135,6 +128,7 @@
     "ReadingFeatures": {
       "type": "image",
       "path": "libraries/previs/assets/vis-example.png",
+      "responseOrder": "random",
       "style": {
         "width": "800px"
       },
@@ -145,7 +139,6 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
-          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -156,7 +149,6 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
-          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
