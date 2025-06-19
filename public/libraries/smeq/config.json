@@ -19,12 +19,20 @@
               "value": 0
             },
             {
+              "label": "Not at all hard to do",
+              "value": 2
+            },
+            {
               "label": "",
               "value": 5
             },
             {
               "label": "",
               "value": 10
+            },
+            {
+              "label": "Not very hard to do",
+              "value": 13
             },
             {
               "label": "",
@@ -39,8 +47,8 @@
               "value": 25
             },
             {
-              "label": "A little effort",
-              "value": 27.5
+              "label": "A bit hard to do",
+              "value": 26
             },
             {
               "label": "",
@@ -51,8 +59,8 @@
               "value": 35
             },
             {
-              "label": "Some effort",
-              "value": 37.5
+              "label": "Fairly hard to do",
+              "value": 37
             },
             {
               "label": "",
@@ -71,8 +79,8 @@
               "value": 55
             },
             {
-              "label": "Reasonable amount of effort",
-              "value": 57.5
+              "label": "Rather hard to do",
+              "value": 57
             },
             {
               "label": "",
@@ -87,8 +95,8 @@
               "value": 70
             },
             {
-              "label": "Fair amount of effort",
-              "value": 72.5
+              "label": "Pretty hard to do",
+              "value": 71
             },
             {
               "label": "",
@@ -103,8 +111,8 @@
               "value": 85
             },
             {
-              "label": "A lot of effort",
-              "value": 87.5
+              "label": "Very hard to do",
+              "value": 86
             },
             {
               "label": "",
@@ -119,8 +127,8 @@
               "value": 100
             },
             {
-              "label": "Very much effort",
-              "value": 102.5
+              "label": "Very, very hard to do",
+              "value": 102
             },
             {
               "label": "",
@@ -131,8 +139,8 @@
               "value": 110
             },
             {
-              "label": "Exceptional amount of effort",
-              "value": 112.5
+              "label": "Tremendously hard to do",
+              "value": 114
             },
             {
               "label": "",
