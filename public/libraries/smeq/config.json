@@ -1,16 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/jk/library/src/parser/LibraryConfigSchema.json",
-  "description": "SMEQ Description",
-  "reference": "reference",
-  "doi": "N/A",
+  "description": "The Subjective Mental Effort Questionnaire (SMEQ) is a single-item scale designed to measure perceived mental effort during a task. This library includes a single component, the SMEQ.",
+  "reference": "Zijlstra, F. R. H., and L. Van Doorn. The Construction of a Scale to Measure Perceived Effort. Delft University of Technology, 1985.",
   "components": {
     "smeq": {
-      "type": "markdown",
-      "path": "libraries/smeq/assets/smeq.md",
+      "type": "questionnaire",
       "response": [
         {
           "id": "smeq",
-          "prompt": "smeq style",
+          "prompt": "Please indicate how much mental effort you felt was required to complete the task you just finished.",
           "type": "slider",
           "smeqStyle": true,
           "options": [
