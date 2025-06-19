@@ -24,10 +24,6 @@
             },
             {
               "label": "",
-              "value": 5
-            },
-            {
-              "label": "",
               "value": 10
             },
             {
@@ -36,15 +32,7 @@
             },
             {
               "label": "",
-              "value": 15
-            },
-            {
-              "label": "",
               "value": 20
-            },
-            {
-              "label": "",
-              "value": 25
             },
             {
               "label": "A bit hard to do",
@@ -53,10 +41,6 @@
             {
               "label": "",
               "value": 30
-            },
-            {
-              "label": "",
-              "value": 35
             },
             {
               "label": "Fairly hard to do",
@@ -68,15 +52,7 @@
             },
             {
               "label": "",
-              "value": 45
-            },
-            {
-              "label": "",
               "value": 50
-            },
-            {
-              "label": "",
-              "value": 55
             },
             {
               "label": "Rather hard to do",
@@ -88,10 +64,6 @@
             },
             {
               "label": "",
-              "value": 65
-            },
-            {
-              "label": "",
               "value": 70
             },
             {
@@ -100,15 +72,7 @@
             },
             {
               "label": "",
-              "value": 75
-            },
-            {
-              "label": "",
               "value": 80
-            },
-            {
-              "label": "",
-              "value": 85
             },
             {
               "label": "Very hard to do",
@@ -120,19 +84,11 @@
             },
             {
               "label": "",
-              "value": 95
-            },
-            {
-              "label": "",
               "value": 100
             },
             {
               "label": "Very, very hard to do",
               "value": 102
-            },
-            {
-              "label": "",
-              "value": 105
             },
             {
               "label": "",
@@ -144,31 +100,16 @@
             },
             {
               "label": "",
-              "value": 115
-            },
-            {
-              "label": "",
               "value": 120  
-            },
-            {
-              "label": "",
-              "value": 125
             },
             {
               "label": "",
               "value": 130
             },
-            {
-              "label": "",
-              "value": 135
-            },
+
             {
               "label": "",
               "value": 140
-            },
-            {
-              "label": "",
-              "value": 145
             },
             {
               "label": "",

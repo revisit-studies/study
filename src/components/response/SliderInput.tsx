@@ -41,11 +41,11 @@ export function SliderInput({
   const [val, setVal] = useState((answer as { value?: number }).value ?? (min + max) / 2);
   const normalizedValue = (val - min) / (max - min);
 
-  // Numeric labels of multiples of 50 for smeq style
+  // Numeric labels of multiples of 10 for smeq style
   const labelValues = useMemo(() => {
-    const start = Math.ceil(min / 50) * 50;
-    const count = Math.floor((max - start) / 50) + 1;
-    return Array.from({ length: count }, (_, i) => start + i * 50);
+    const start = Math.ceil(min / 10) * 10;
+    const count = Math.floor((max - start) / 10) + 1;
+    return Array.from({ length: count }, (_, i) => start + i * 10);
   }, [min, max]);
 
   const { ref } = useMove(({ y }) => {
@@ -132,7 +132,7 @@ export function SliderInput({
                     bottom: `${markPosition}%`,
                     left: option.label !== '' ? 20 : 2,
                     width: option.label !== '' ? 30 : 20,
-                    height: option.value % 50 === 0 ? 4 : option.value % 10 === 0 ? 2 : 1,
+                    height: 1,
                     backgroundColor: 'var(--mantine-color-gray-7)',
                     transform: 'translateY(50%)',
                   }}
