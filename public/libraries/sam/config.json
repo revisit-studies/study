@@ -1,12 +1,12 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/LibraryConfigSchema.json",
-  "description": "The Questionnaire for User Interaction Satisfaction (QUIS) is a measurement tool designed to assess a computer user's subjective satisfaction with the human-computer interface. The QUIS contains measures of overall system satisfaction and specific interface factors such as screen visibility, terminology and system information, learning factors, and system capabilities. This library includes six components, one for each individual dimension, as well as a sequence containing all dimensions.",
+  "description": "The Self-Assessment Manikin (SAM) is a non-verbal pictorial assessment technique that directly measures the pleasure, arousal, and dominance associated with a person's affective reaction to a wide variety of stimuli. This library includes three components, one for each individual dimension, as well as a sequence containing all dimensions.",
   "reference": "Bradley, M. M., & Lang, P. J. (1994). Measuring emotion: The Self-Assessment Manikin and the semantic differential. Journal of Behavior Therapy and Experimental Psychiatry, 25(1), 49–59.",
   "doi": "10.1016/0005-7916(94)90063-9",
   "components": {
     "pleasure": {
       "type": "markdown",
-      "path": "libraries/sam/assets/test.md",
+      "path": "libraries/sam/assets/pleasure.md",
       "response": [
         {
           "id": "pleasure",
@@ -19,6 +19,36 @@
           "leftLabel": ""
         }
       ]
+    },
+    "arousal": {
+      "type": "markdown",
+      "path": "libraries/sam/assets/arousal.md",
+      "response": [
+        {
+          "id": "arousal",
+          "prompt": "",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "radio",
+          "horizontal": true,
+          "options": ["", "", "", "", "", "", "","",""]
+        }
+      ]
+    },
+    "dominance": {
+      "type": "markdown",
+      "path": "libraries/sam/assets/dominance.md",
+      "response": [
+        {
+          "id": "dominance",
+          "prompt": "",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "radio",
+          "horizontal": true,
+          "options": ["", "", "", "", "", "", "","",""]
+        }  
+      ]
     }
   },
   "sequences": {
@@ -26,7 +56,9 @@
       "id": "sam-3-dimensions",
       "order": "fixed",
       "components": [
-        "pleasure"
+        "pleasure",
+        "arousal",
+        "dominance"
       ]
     }
   }
