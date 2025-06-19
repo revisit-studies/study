@@ -50,10 +50,12 @@ const createExampleConfig = (libraryName) => ({
 });
 
 // Process each library
-const libraries = fs.readdirSync(librariesPath);
+const libraries = fs.readdirSync(librariesPath)
+  .filter(library => !library.startsWith('.') && !library.endsWith('.DS_Store'));
+
 libraries.forEach((library) => {
   // Skip hidden folders and files, and libraries in skip list
-  if (library.startsWith('.') || skipLibraries.includes(library)) {
+  if (library.startsWith('.')) {
     // eslint-disable-next-line no-console
     console.log(`Skipping ${library} library`);
     return;
