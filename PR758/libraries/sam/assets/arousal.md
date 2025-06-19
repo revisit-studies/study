@@ -1,1 +1,0 @@
-![arousal](/libraries/sam/assets/arousal.png)
