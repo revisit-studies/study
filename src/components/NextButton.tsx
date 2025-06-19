@@ -1,36 +1,30 @@
 import { Alert, Button, Group } from '@mantine/core';
-import {
-  useCallback, useEffect, useMemo, useState,
-} from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { useNextStep } from '../store/hooks/useNextStep';
-import { IndividualComponent } from '../parser/types';
+import { IndividualComponent, ResponseBlockLocation } from '../parser/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
+import { PreviousButton } from './PreviousButton';
 
 type Props = {
   label?: string;
   disabled?: boolean;
-  onClick?: null | (() => void | Promise<void>);
   configInUse?: IndividualComponent;
+  location?: ResponseBlockLocation;
+  checkAnswer: JSX.Element | null;
 };
 
 export function NextButton({
   label = 'Next',
   disabled = false,
-  onClick,
   configInUse,
+  location,
+  checkAnswer,
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep();
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
-
-  const handleClick = useCallback(() => {
-    if (onClick) {
-      onClick();
-    }
-    goToNextStep();
-  }, [goToNextStep, onClick]);
 
   const nextButtonDisableTime = configInUse?.nextButtonDisableTime;
   const nextButtonEnableTime = configInUse?.nextButtonEnableTime || 0;
@@ -74,45 +68,62 @@ export function NextButton({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-    return () => {};
+    return () => { };
   }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, studyConfig.uiConfig.nextOnEnter]);
+
+  const nextButtonDisabled = useMemo(() => disabled || isNextDisabled || !buttonTimerSatisfied, [disabled, isNextDisabled, buttonTimerSatisfied]);
 
   return (
     <>
-      <Button
-        type="submit"
-        disabled={disabled || isNextDisabled || !buttonTimerSatisfied}
-        onClick={handleClick}
-      >
-        {label}
-      </Button>
-      {nextButtonEnableTime > 0 && timer && timer < nextButtonEnableTime && (
-      <Alert mt="md" title="Please wait" color="blue" icon={<IconInfoCircle />}>
-        The next button will be enabled in
-        {' '}
-        {Math.ceil((nextButtonEnableTime - timer) / 1000)}
-        {' '}
-        seconds.
-      </Alert>
-      )}
-      {nextButtonDisableTime && timer && (nextButtonDisableTime - timer) < 10000 && (
-        (nextButtonDisableTime - timer) > 0
-          ? (
-            <Alert mt="md" title="Next button disables soon" color="yellow" icon={<IconAlertTriangle />}>
-              The next button disables in
+      <Group justify="right" gap="xs">
+        {configInUse?.previousButton && (
+          <PreviousButton
+            label={configInUse.previousButtonText || 'Previous'}
+            px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+          />
+        )}
+        {checkAnswer}
+        <Button
+          type="submit"
+          disabled={nextButtonDisabled}
+          onClick={() => goToNextStep()}
+          px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+        >
+          {label}
+        </Button>
+      </Group>
+      {timer && (
+        <>
+          {nextButtonEnableTime > 0 && timer < nextButtonEnableTime && (
+            <Alert mt="md" title="Please wait" color="blue" icon={<IconInfoCircle />}>
+              The next button will be enabled in
               {' '}
-              {Math.ceil((nextButtonDisableTime - timer) / 1000)}
+              {Math.ceil((nextButtonEnableTime - timer) / 1000)}
               {' '}
               seconds.
             </Alert>
-          ) : !studyConfig.uiConfig.timeoutReject && (
-            <Alert mt="md" title="Next button disabled" color="red" icon={<IconAlertTriangle />}>
-              The next button has timed out and is now disabled.
-              <Group justify="right" mt="sm">
-                <Button onClick={() => goToNextStep(false)} variant="link" color="red">Proceed</Button>
-              </Group>
-            </Alert>
-          ))}
+          )}
+          {nextButtonDisableTime && timer && (nextButtonDisableTime - timer) < 10000 && (
+            (nextButtonDisableTime - timer) > 0
+              ? (
+                <Alert mt="md" title="Next button disables soon" color="yellow" icon={<IconAlertTriangle />}>
+                  The next button disables in
+                  {' '}
+                  {Math.ceil((nextButtonDisableTime - timer) / 1000)}
+                  {' '}
+                  seconds.
+                </Alert>
+              ) : !studyConfig.uiConfig.timeoutReject && (
+                <Alert mt="md" title="Next button disabled" color="red" icon={<IconAlertTriangle />}>
+                  The next button has timed out and is now disabled.
+                  <Group justify="right" mt="sm">
+                    <Button onClick={() => goToNextStep(false)} variant="link" color="red">Proceed</Button>
+                  </Group>
+                </Alert>
+              ))}
+        </>
+
+      )}
     </>
   );
 }
