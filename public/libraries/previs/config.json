@@ -19,6 +19,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
+          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -29,6 +30,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
+          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -39,6 +41,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
+          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -58,6 +61,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
+          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -68,6 +72,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
+          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -78,6 +83,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
+          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -97,6 +103,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
+          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -107,6 +114,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
+          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -117,6 +125,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
+          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -136,6 +145,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
+          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
@@ -146,6 +156,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "likert",
+          "responseOrder": "random",
           "numItems": 7,
           "rightLabel": "Strongly agree",
           "leftLabel": "Strongly disagree"
