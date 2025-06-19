@@ -40,6 +40,7 @@ export function SliderInput({
   // For smeq style (vertical slider)
   const [val, setVal] = useState((answer as { value?: number }).value ?? (min + max) / 2);
   const normalizedValue = (val - min) / (max - min);
+  const [hovered, setHovered] = useState(false);
 
   // Numeric labels of multiples of 10 for smeq style
   const labelValues = useMemo(() => {
@@ -108,6 +109,8 @@ export function SliderInput({
               height: 450,
               position: 'relative',
             }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
           >
             {/* smeq vertical bar will always be withBar = true */}
             <Box
@@ -151,7 +154,26 @@ export function SliderInput({
                 // -1px to account for the border
                 bottom: `calc(${normalizedValue * 100}% - 1px)`,
               }}
-            />
+            >
+              {/* Thumb value label */}
+              {hovered && (
+                <Box
+                  style={{
+                    position: 'absolute',
+                    left: 40,
+                    top: -10,
+                    transform: 'translateX(-50%)',
+                    background: 'var(--mantine-color-gray-8)',
+                    color: 'white',
+                    fontSize: 12,
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                  }}
+                >
+                  {Math.round(val)}
+                </Box>
+              )}
+            </Box>
           </Box>
 
           {/* Thumb Label */}
@@ -181,19 +203,6 @@ export function SliderInput({
                 </Box>
               );
             })}
-          </Box>
-
-          {/* Value Label */}
-          <Box style={{
-            fontSize: 'var(--mantine-font-size-sm)',
-            color: 'var(--mantine-color-gray-7)',
-            position: 'relative',
-            fontWeight: 500,
-          }}
-          >
-            Value:
-            {' '}
-            {Math.round(val)}
           </Box>
         </Flex>
       ) : (
