@@ -35,7 +35,8 @@ ${Object.keys(libraryConfig.sequences).length > 0
 const librariesPath = path.join(__dirname, './public/libraries');
 const docsLibrariesPath = path.join(__dirname, './docsLibraries');
 
-const libraries = fs.readdirSync(librariesPath);
+const libraries = fs.readdirSync(librariesPath)
+  .filter(library => !library.startsWith('.') && !library.endsWith('.DS_Store'));
 
 if (!fs.existsSync(docsLibrariesPath)) {
   fs.mkdirSync(docsLibrariesPath);

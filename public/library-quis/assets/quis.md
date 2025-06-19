@@ -9,9 +9,9 @@ The Questionnaire for User Interaction Satisfaction (QUIS) is a measurement tool
 
 Chin, J. P., Diehl, V. A. and Norman, K. L. (1988). Development of an instrument measuring user satisfaction of the human-computer interface. Proceedings of SIGCHI '88, (pp. 213-218), New York: ACM/SIGCHI. 
 
-Chin, J. P., Norman, K. L., and Shneiderman, B. (1987). Subjective user evaluation of CF PASCAL programming tools.  Technical Report (CAR-TR-304).  College Park, MD:  Human-Computer Interaction Laboratory, Center for Automation Research, University of Maryland. 
+ Chin, J. P., Norman, K. L., and Shneiderman, B. (1987). Subjective user evaluation of CF PASCAL programming tools.  Technical Report (CAR-TR-304).  College Park, MD:  Human-Computer Interaction Laboratory, Center for Automation Research, University of Maryland. 
 
-Harper, B. D. and Norman, K. L. (1993). Improving User Satisfaction: The Questionnaire for User Interaction Satisfaction Version 5.5. Proceedings of the 1st Annual Mid-Atlantic Human Factors Conference, (pp. 224-228), Virginia Beach, VA.
+ Harper, B. D. and Norman, K. L. (1993). Improving User Satisfaction: The Questionnaire for User Interaction Satisfaction Version 5.5. Proceedings of the 1st Annual Mid-Atlantic Human Factors Conference, (pp. 224-228), Virginia Beach, VA.
 
 
 

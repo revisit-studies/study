@@ -2120,6 +2120,10 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "smeqStyle": {
+          "description": "Whether to render the slider with a SMEQ style. Defaults to false.",
+          "type": "boolean"
+        },
         "snap": {
           "description": "Whether the slider should snap between values. Defaults to false. Slider snapping disables the label above the handle.",
           "type": "boolean"
