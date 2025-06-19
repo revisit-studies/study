@@ -77,7 +77,7 @@ export function SliderInput({
         <Flex direction="row" align="flex-start" gap="md" mt="xs">
           {/* Numeric labels (multiples of 50 within min-max range) ex: 0, 50, 100, 150 */}
           <Box style={{
-            height: 400, position: 'relative', minWidth: 50, textAlign: 'right',
+            height: 450, position: 'relative', minWidth: 50, textAlign: 'right',
           }}
           >
             {labelValues.map((label) => {
@@ -105,7 +105,7 @@ export function SliderInput({
             ref={ref}
             style={{
               width: 22,
-              height: 400,
+              height: 450,
               position: 'relative',
             }}
           >
@@ -118,10 +118,10 @@ export function SliderInput({
                   style={{
                     position: 'absolute',
                     bottom: `${markPosition}%`,
-                    left: 0,
-                    width: 20,
-                    height: 1,
-                    backgroundColor: 'var(--mantine-color-gray-6)',
+                    left: option.label !== '' ? 20 : 0,
+                    width: option.label !== '' ? 30 : 20,
+                    height: option.value % 50 === 0 ? 4 : option.value % 10 === 0 ? 2 : 1,
+                    backgroundColor: 'var(--mantine-color-gray-7)',
                     transform: 'translateY(50%)',
                   }}
                 />
@@ -145,7 +145,7 @@ export function SliderInput({
           {/* Thumb Label */}
           <Box
             style={{
-              height: 400,
+              height: 450,
               position: 'relative',
               minWidth: 200,
             }}
@@ -162,6 +162,7 @@ export function SliderInput({
                     position: 'absolute',
                     bottom: `${markPosition}%`,
                     transform: 'translateY(50%)',
+                    left: 20,
                   }}
                 >
                   {option.label}
