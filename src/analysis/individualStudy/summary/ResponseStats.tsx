@@ -1,15 +1,19 @@
-import {
-  Paper, Table, Title, Text, Flex, ScrollArea,
-} from '@mantine/core';
+import { useMemo } from 'react';
+import { Text } from '@mantine/core';
+import { IconSearch } from '@tabler/icons-react';
+// eslint-disable-next-line camelcase
+import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from 'mantine-react-table';
 import { ParticipantData } from '../../../storage/types';
 import { Response, StudyConfig } from '../../../parser/types';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
+import 'mantine-react-table/styles.css';
 
-interface TaskStats {
-  name: string;
-  correctness: number;
-  participantCount: number;
-
+interface TableRow {
+  component: string;
+  type: string;
+  question: string;
+  options: string;
+  correctness: string;
 }
 
 function getResponseOptions(response: Response): string {
@@ -37,16 +41,12 @@ function getResponseOptions(response: Response): string {
   return 'N/A';
 }
 
-function calculateTaskStats(visibleParticipants: ParticipantData[]): TaskStats[] {
-  // Filter out rejected participants
+function calculateTaskStats(visibleParticipants: ParticipantData[]) {
   const validParticipants = visibleParticipants.filter((p) => !p.rejected);
-
-  const stats: Record<string, TaskStats> = {};
+  const stats: Record<string, { name: string; correctness: number; participantCount: number }> = {};
 
   validParticipants.forEach((participant) => {
     Object.entries(participant.answers).forEach(([taskId, answer]) => {
-      // For dynamic blocks: blockId_stepNumber_componentName_index
-      // For regular components: componentName_index
       const parts = taskId.split('_');
       const component = parts.length === 4 ? parts[2] : parts[0];
 
@@ -90,59 +90,78 @@ function calculateTaskStats(visibleParticipants: ParticipantData[]): TaskStats[]
 }
 
 export function ResponseStats({ visibleParticipants, studyConfig }: { visibleParticipants: ParticipantData[]; studyConfig: StudyConfig }) {
-  const stats = calculateTaskStats(visibleParticipants);
+  const tableData: TableRow[] = useMemo(() => {
+    const stats = calculateTaskStats(visibleParticipants);
+    const data: TableRow[] = [];
 
-  // Check if any component has responses
-  const hasResponses = stats.some((stat) => {
-    const component = studyConfig.components[stat.name];
-    if (!component) return false;
-    const responses = studyComponentToIndividualComponent(component, studyConfig).response;
-    return responses.length > 0;
+    stats.forEach((stat) => {
+      const component = studyConfig.components[stat.name];
+      if (!component) return;
+
+      const responses = studyComponentToIndividualComponent(component, studyConfig).response;
+      if (responses.length === 0) return;
+
+      responses.forEach((response) => {
+        const correctnessStr = !Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A';
+        data.push({
+          component: stat.name,
+          type: response.type,
+          question: response.prompt,
+          options: getResponseOptions(response),
+          correctness: correctnessStr,
+        });
+      });
+    });
+
+    return data;
+  }, [visibleParticipants, studyConfig]);
+
+  // eslint-disable-next-line camelcase
+  const columns = useMemo<MRT_ColumnDef<TableRow>[]>(
+    () => [
+      {
+        accessorKey: 'component',
+        header: 'Component',
+      },
+      {
+        accessorKey: 'type',
+        header: 'Type',
+      },
+      {
+        accessorKey: 'question',
+        header: 'Question',
+      },
+      {
+        accessorKey: 'options',
+        header: 'Options',
+      },
+      {
+        accessorKey: 'correctness',
+        header: 'Correctness',
+      },
+    ],
+    [],
+  );
+
+  const table = useMantineReactTable({
+    columns,
+    data: tableData,
+    enableGlobalFilter: true,
+    enableColumnFilters: false,
+    enableSorting: true,
+    enablePagination: true,
+    initialState: {
+      pagination: { pageSize: 10, pageIndex: 0 },
+    },
+    mantineSearchTextInputProps: {
+      placeholder: 'Search responses...',
+      leftSection: <IconSearch size={16} />,
+    },
   });
 
-  return (
-    <Paper shadow="sm" p="md" withBorder>
-      <Title order={4} mb="md">Response Statistics</Title>
-      {visibleParticipants.length === 0 || stats.length === 0 || !hasResponses ? (
-        <Flex justify="center" align="center" pt="lg" pb="md">
-          <Text>No data available</Text>
-        </Flex>
-      ) : (
-        <ScrollArea>
-          <Table striped withTableBorder withColumnBorders highlightOnHover>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Component</Table.Th>
-                <Table.Th>Type</Table.Th>
-                <Table.Th>Question</Table.Th>
-                <Table.Th>Options</Table.Th>
-                <Table.Th>Correctness</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {stats.map((stat) => {
-                const component = studyConfig.components[stat.name];
-                // Filter out components that have no responses
-                if (!component) return null;
-                const responses = studyComponentToIndividualComponent(component, studyConfig).response;
-                if (responses.length === 0) return null;
+  if (visibleParticipants.length === 0 || tableData.length === 0) {
+    return <Text>No data available</Text>;
+  }
 
-                return responses.map((response) => (
-                  <Table.Tr key={`${stat.name}`}>
-                    <Table.Td>{stat.name}</Table.Td>
-                    <Table.Td>{response.type}</Table.Td>
-                    <Table.Td>{response.prompt}</Table.Td>
-                    <Table.Td>{getResponseOptions(response)}</Table.Td>
-                    <Table.Td>
-                      {!Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A'}
-                    </Table.Td>
-                  </Table.Tr>
-                ));
-              })}
-            </Table.Tbody>
-          </Table>
-        </ScrollArea>
-      )}
-    </Paper>
-  );
+  return <MantineReactTable table={table} />;
 }
