@@ -109,6 +109,18 @@ export function SliderInput({
               position: 'relative',
             }}
           >
+            {/* smeq vertical bar will always be withBar = true */}
+            <Box
+              style={{
+                position: 'absolute',
+                left: 20,
+                top: 0,
+                width: 2,
+                height: '100%',
+                backgroundColor: 'var(--mantine-color-gray-5)',
+              }}
+            />
+
             {/* Marks */}
             {options.map((option) => {
               const markPosition = ((option.value - min) / (max - min)) * 100;
@@ -118,7 +130,7 @@ export function SliderInput({
                   style={{
                     position: 'absolute',
                     bottom: `${markPosition}%`,
-                    left: option.label !== '' ? 20 : 0,
+                    left: option.label !== '' ? 20 : 2,
                     width: option.label !== '' ? 30 : 20,
                     height: option.value % 50 === 0 ? 4 : option.value % 10 === 0 ? 2 : 1,
                     backgroundColor: 'var(--mantine-color-gray-7)',

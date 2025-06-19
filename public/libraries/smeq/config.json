@@ -13,7 +13,6 @@
           "prompt": "smeq style",
           "type": "slider",
           "smeqStyle": true,
-          "withBar": false,
           "options": [
             {
               "label": "",
