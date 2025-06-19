@@ -15,12 +15,12 @@ Link: [http://www.riskliteracy.org/](http://www.riskliteracy.org/)
 
 ## Available Components
 
-- choir-probability
-- dice-odd-numbers
-- loaded-dice
-- poisonous-mushrooms
+- q1-choir-probability
+- q2a-dice-odd-numbers
+- q2b-loaded-dice
+- q3-poisonous-mushrooms
 
 ## Available Sequences
 
-- berlin-num-classic
-- berlin-num-single
+- four-items
+- single-item

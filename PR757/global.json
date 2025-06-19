@@ -31,6 +31,7 @@
     "library-vlat",
     "library-berlin-num",
     "library-quis",
+    "library-smeq",
     "test-audio",
     "test-library",
     "test-likert-matrix",
@@ -38,7 +39,6 @@
     "test-randomization",
     "test-skip-logic",
     "test-step-logic"
-
   ],
   "configs": {
     "tutorial": {
@@ -146,6 +146,10 @@
     },
     "library-quis": {
       "path": "library-quis/config.json",
+      "test": true
+    },
+    "library-smeq": {
+      "path": "library-smeq/config.json",
       "test": true
     },
     "test-likert-matrix": {
