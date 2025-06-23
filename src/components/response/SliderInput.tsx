@@ -75,136 +75,139 @@ export function SliderInput({
     >
       {/* Vertical slider for SMEQ style */}
       {smeqStyle ? (
-        <Flex direction="row" align="flex-start" gap="md" mt="md" justify="center">
-          {/* Numeric labels (multiples of 10 within min-max range) ex: 0, 10, 20, 30, ... */}
-          <Box style={{
-            height: 450, position: 'relative', minWidth: 50, textAlign: 'right',
-          }}
-          >
-            {labelValues.map((label) => {
-              const labelPosition = ((label - min) / (max - min)) * 100;
-              return (
-                <Box
-                  key={label}
-                  style={{
-                    position: 'absolute',
-                    bottom: `${labelPosition}%`,
-                    fontSize: 'var(--mantine-font-size-sm)',
-                    color: 'var(--mantine-color-gray-7)',
-                    right: 0,
-                    transform: 'translateY(50%)',
-                  }}
-                >
-                  {label}
-                </Box>
-              );
-            })}
-          </Box>
-
-          {/* Slider track */}
-          <Box
-            ref={ref}
-            style={{
-              width: 22,
-              height: 450,
-              position: 'relative',
+        <Box style={{ overflow: 'hidden' }}>
+          <Flex direction="row" align="flex-start" gap="sm" m="md" justify="center" wrap="nowrap">
+            {/* Numeric labels (multiples of 10 within min-max range) ex: 0, 10, 20, 30, ... */}
+            <Box style={{
+              height: 450, position: 'relative', minWidth: 30, textAlign: 'right', flexShrink: 0,
             }}
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-          >
-            {/* smeq vertical bar will always be withBar = true */}
+            >
+              {labelValues.map((label) => {
+                const labelPosition = ((label - min) / (max - min)) * 100;
+                return (
+                  <Box
+                    key={label}
+                    style={{
+                      position: 'absolute',
+                      bottom: `${labelPosition}%`,
+                      fontSize: 'var(--mantine-font-size-xs)',
+                      color: 'var(--mantine-color-gray-7)',
+                      right: 0,
+                      transform: 'translateY(50%)',
+                    }}
+                  >
+                    {label}
+                  </Box>
+                );
+              })}
+            </Box>
+
+            {/* Slider track */}
             <Box
+              ref={ref}
               style={{
-                position: 'absolute',
-                left: 20,
-                top: 0,
-                width: 2,
-                height: '100%',
-                backgroundColor: 'var(--mantine-color-gray-5)',
+                width: 22,
+                height: 450,
+                position: 'relative',
+                flexShrink: 0,
               }}
-            />
+              onMouseEnter={() => setHovered(true)}
+              onMouseLeave={() => setHovered(false)}
+            >
+              {/* smeq vertical bar will always be withBar = true */}
+              <Box
+                style={{
+                  position: 'absolute',
+                  left: 20,
+                  top: 0,
+                  width: 2,
+                  height: '100%',
+                  backgroundColor: 'var(--mantine-color-gray-5)',
+                }}
+              />
 
-            {/* Marks */}
-            {options.map((option) => {
-              const markPosition = ((option.value - min) / (max - min)) * 100;
-              return (
-                <Box
-                  key={option.value}
-                  style={{
-                    position: 'absolute',
-                    bottom: `${markPosition}%`,
-                    left: option.label !== '' ? 20 : 2,
-                    width: option.label !== '' ? 30 : 20,
-                    height: 1,
-                    backgroundColor: 'var(--mantine-color-gray-7)',
-                    transform: 'translateY(50%)',
-                  }}
-                />
-              );
-            })}
+              {/* Marks */}
+              {options.map((option) => {
+                const markPosition = ((option.value - min) / (max - min)) * 100;
+                return (
+                  <Box
+                    key={option.value}
+                    style={{
+                      position: 'absolute',
+                      bottom: `${markPosition}%`,
+                      left: option.label !== '' ? 20 : 2,
+                      width: option.label !== '' ? 20 : 20,
+                      height: 1,
+                      backgroundColor: 'var(--mantine-color-gray-7)',
+                      transform: 'translateY(50%)',
+                    }}
+                  />
+                );
+              })}
 
-            {/* Thumb */}
+              {/* Thumb */}
+              <Box
+                style={{
+                  backgroundColor: 'var(--mantine-color-red-6)',
+                  width: 20,
+                  height: 1,
+                  border: '1px solid var(--mantine-color-red-6)',
+                  position: 'absolute',
+                  // -1px to account for the border
+                  bottom: `calc(${normalizedValue * 100}% - 1px)`,
+                }}
+              >
+                {/* Thumb value */}
+                {hovered && (
+                  <Box
+                    style={{
+                      position: 'absolute',
+                      left: 40,
+                      top: -10,
+                      transform: 'translateX(-50%)',
+                      background: 'var(--mantine-color-gray-8)',
+                      color: 'white',
+                      fontSize: 12,
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                    }}
+                  >
+                    {Math.round(val)}
+                  </Box>
+                )}
+              </Box>
+            </Box>
+
+            {/* Mark labels */}
             <Box
               style={{
-                backgroundColor: 'var(--mantine-color-red-6)',
-                width: 20,
-                height: 1,
-                border: '1px solid var(--mantine-color-red-6)',
-                position: 'absolute',
-                // -1px to account for the border
-                bottom: `calc(${normalizedValue * 100}% - 1px)`,
+                height: 450,
+                position: 'relative',
+                minWidth: 200,
               }}
             >
-              {/* Thumb value label */}
-              {hovered && (
-                <Box
-                  style={{
-                    position: 'absolute',
-                    left: 40,
-                    top: -10,
-                    transform: 'translateX(-50%)',
-                    background: 'var(--mantine-color-gray-8)',
-                    color: 'white',
-                    fontSize: 12,
-                    padding: '2px 6px',
-                    borderRadius: 4,
-                  }}
-                >
-                  {Math.round(val)}
-                </Box>
-              )}
+              {options.map((option) => {
+                if (!option.label) return null;
+                const markPosition = ((option.value - min) / (max - min)) * 100;
+                return (
+                  <Box
+                    key={option.value}
+                    style={{
+                      fontSize: 'var(--mantine-font-size-xs)',
+                      color: 'var(--mantine-color-gray-7)',
+                      position: 'absolute',
+                      bottom: `${markPosition}%`,
+                      transform: 'translateY(50%)',
+                      left: 20,
+                    }}
+                  >
+                    {option.label}
+                  </Box>
+                );
+              })}
             </Box>
-          </Box>
-
-          {/* Thumb Label */}
-          <Box
-            style={{
-              height: 450,
-              position: 'relative',
-              minWidth: 200,
-            }}
-          >
-            {options.map((option) => {
-              if (!option.label) return null;
-              const markPosition = ((option.value - min) / (max - min)) * 100;
-              return (
-                <Box
-                  key={option.value}
-                  style={{
-                    fontSize: 'var(--mantine-font-size-sm)',
-                    color: 'var(--mantine-color-gray-7)',
-                    position: 'absolute',
-                    bottom: `${markPosition}%`,
-                    transform: 'translateY(50%)',
-                    left: 20,
-                  }}
-                >
-                  {option.label}
-                </Box>
-              );
-            })}
-          </Box>
-        </Flex>
+          </Flex>
+        </Box>
       ) : (
         <Slider
           disabled={disabled}
