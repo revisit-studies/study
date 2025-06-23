@@ -82,12 +82,10 @@ export function AppAside() {
               Next Participant
             </Button>
           </Tooltip>
-          {!isAnalysis && (
-            <CloseButton
-              onClick={() => dispatch(toggleStudyBrowser())}
-              mt={1}
-            />
-          )}
+          <CloseButton
+            onClick={() => dispatch(toggleStudyBrowser())}
+            mt={1}
+          />
         </Flex>
         <Flex direction="row" justify="space-between" mt="xs" opacity={0.7}>
           <Text size="sm">
