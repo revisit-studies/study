@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
-import { Text } from '@mantine/core';
+import {
+  Text, Paper, Title,
+} from '@mantine/core';
 // eslint-disable-next-line camelcase
 import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from 'mantine-react-table';
 import { ParticipantData } from '../../../storage/types';
@@ -66,8 +68,18 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
   });
 
   if (visibleParticipants.length === 0 || tableData.length === 0) {
-    return <Text>No data available</Text>;
+    return (
+      <Paper shadow="sm" p="md" withBorder>
+        <Title order={4} mb="md">Response Statistics</Title>
+        <Text ta="center" mb="md">No data available</Text>
+      </Paper>
+    );
   }
 
-  return <MantineReactTable table={table} />;
+  return (
+    <Paper shadow="sm" p="md" withBorder>
+      <Title order={4} mb="md">Response Statistics</Title>
+      <MantineReactTable table={table} />
+    </Paper>
+  );
 }

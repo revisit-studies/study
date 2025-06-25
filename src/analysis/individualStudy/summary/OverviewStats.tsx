@@ -8,9 +8,7 @@ export function OverviewStats({ overviewData }: { overviewData: OverviewData | n
     <Paper shadow="sm" p="md" withBorder>
       <Title order={4} mb="md">Overview Statistics</Title>
       {overviewData === null ? (
-        <Flex justify="center" align="center" pt="lg" pb="md">
-          <Text>No data available</Text>
-        </Flex>
+        <Text ta="center" mb="md">No data available</Text>
       ) : (
         <Flex justify="space-between" m="xs" gap="xl" wrap="wrap">
           <div>
