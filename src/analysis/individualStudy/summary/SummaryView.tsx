@@ -1,21 +1,27 @@
 import { Stack, Group } from '@mantine/core';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
+import { useOverviewData } from '../../../store/hooks/useOverviewData';
 import { OverviewStats } from './OverviewStats';
 import { ComponentStats } from './ComponentStats';
 import { ResponseStats } from './ResponseStats';
 import {
-  calculateParticipantCounts, calculateCorrectnessStats, calculateTimeStats, calculateDateStats,
+  calculateParticipantCounts, calculateCorrectnessStats, calculateTimeStats, calculateDateStats, calculateComponentStats, calculateTaskStats,
+  getResponseOptions,
 } from './utils';
-import { OverviewData } from './types';
+import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
+import { OverviewData, ResponseData } from './types';
 
 interface StudyStatsProps {
   visibleParticipants: ParticipantData[];
   studyConfig?: StudyConfig;
+  studyId: string;
 }
 
-export function SummaryView({ visibleParticipants, studyConfig }: StudyStatsProps) {
+export function SummaryView({ visibleParticipants, studyConfig, studyId }: StudyStatsProps) {
+  const { saveOverviewData } = useOverviewData(studyId);
+
   const overviewData: OverviewData | null = useMemo(() => {
     if (visibleParticipants.length === 0) return null;
 
@@ -24,6 +30,43 @@ export function SummaryView({ visibleParticipants, studyConfig }: StudyStatsProp
     const { startDate, endDate } = calculateDateStats(visibleParticipants);
     const correctnessStats = calculateCorrectnessStats(visibleParticipants);
 
+    // Calculate component data
+    const componentStats = calculateComponentStats(visibleParticipants);
+    const componentData = componentStats.map((stat) => ({
+      component: stat.name,
+      participants: stat.participantCount,
+      avgTime: Number.isFinite(stat.avgTime) ? `${stat.avgTime.toFixed(1)}s` : 'N/A',
+      avgCleanTime: Number.isFinite(stat.avgCleanTime) ? `${stat.avgCleanTime.toFixed(1)}s` : 'N/A',
+      correctness: !Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A',
+    }));
+
+    // Calculate response data
+    const responseData = studyConfig ? (() => {
+      const taskStats = calculateTaskStats(visibleParticipants);
+      const data: ResponseData[] = [];
+
+      taskStats.forEach((stat) => {
+        const component = studyConfig.components[stat.name];
+        if (!component) return;
+
+        const responses = studyComponentToIndividualComponent(component, studyConfig).response;
+        if (responses.length === 0) return;
+
+        responses.forEach((response) => {
+          const correctnessStr = !Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A';
+          data.push({
+            component: stat.name,
+            type: response.type,
+            question: response.prompt,
+            options: getResponseOptions(response),
+            correctness: correctnessStr,
+          });
+        });
+      });
+
+      return data;
+    })() : [];
+
     return {
       participantCounts,
       avgTime,
@@ -31,10 +74,16 @@ export function SummaryView({ visibleParticipants, studyConfig }: StudyStatsProp
       startDate,
       endDate,
       correctnessStats,
-      responseData: [],
-      componentData: [],
+      responseData,
+      componentData,
     };
-  }, [visibleParticipants]);
+  }, [visibleParticipants, studyConfig]);
+
+  useEffect(() => {
+    if (overviewData) {
+      saveOverviewData(overviewData);
+    }
+  }, [overviewData, saveOverviewData]);
 
   return (
     <Stack gap="md">

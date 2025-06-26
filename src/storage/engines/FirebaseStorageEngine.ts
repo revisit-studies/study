@@ -45,6 +45,7 @@ import { ParticipantMetadata, Sequence } from '../../store/types';
 import { RevisitNotification } from '../../utils/notifications';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
+import { OverviewData } from '../../analysis/individualStudy/summary/types';
 
 export interface FirebaseError {
   title: string;
@@ -75,7 +76,7 @@ export interface SnapshotNameItem {
   alternateName: string;
 }
 
-type FirebaseStorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
+type FirebaseStorageObjectType = 'sequenceArray' | 'participantData' | 'config' | 'overviewData' | string;
 type FirebaseStorageObject<T extends FirebaseStorageObjectType> =
   T extends 'sequenceArray'
     ? Sequence[]
@@ -83,6 +84,8 @@ type FirebaseStorageObject<T extends FirebaseStorageObjectType> =
     ? ParticipantData
     : T extends 'config'
     ? StudyConfig
+    : T extends 'overviewData'
+    ? OverviewData
     : object; // Fallback for any random string
 
 function isParticipantData(obj: unknown): obj is ParticipantData {
@@ -593,6 +596,27 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     return participantData.participantTags;
+  }
+
+  async getOverviewData(studyId: string): Promise<OverviewData | null> {
+    try {
+      const overviewData = await this._getFromFirebaseStorage(
+        `overview/${studyId}`,
+        'overviewData',
+      );
+      return overviewData as OverviewData;
+    } catch {
+      return null;
+    }
+  }
+
+  async saveOverviewData(studyId: string, overviewData: OverviewData): Promise<void> {
+    await this._pushToFirebaseStorage(
+      `overview/${studyId}`,
+      'overviewData',
+      overviewData,
+      true,
+    );
   }
 
   async addParticipantTags(tags: string[]): Promise<void> {

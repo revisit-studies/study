@@ -149,7 +149,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="summary" pt="xs">
-              {studyConfig && <SummaryView visibleParticipants={visibleParticipants} studyConfig={studyConfig} />}
+              {studyConfig && studyId && <SummaryView visibleParticipants={visibleParticipants} studyConfig={studyConfig} studyId={studyId} />}
             </Tabs.Panel>
             <Tabs.Panel value="table" pt="xs">
               {studyConfig && <TableView visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={getData} />}

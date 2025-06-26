@@ -3,6 +3,7 @@ import { Timestamp } from 'firebase/firestore';
 import { StudyConfig } from '../../parser/types';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
+import { OverviewData } from '../../analysis/individualStudy/summary/types';
 
 export interface StoredUser {
   email: string,
@@ -104,4 +105,8 @@ export abstract class StorageEngine {
   abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean>>;
 
   abstract getParticipantsStatusCounts(studyId: string): Promise<{completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null}>;
+
+  abstract getOverviewData(studyId: string): Promise<OverviewData | null>;
+
+  abstract saveOverviewData(studyId: string, overviewData: OverviewData): Promise<void>;
 }
