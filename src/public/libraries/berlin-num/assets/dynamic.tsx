@@ -1,67 +1,39 @@
 import { JumpFunctionParameters, JumpFunctionReturnVal } from '../../../../store/types';
 
-export default function dynamic({
-  answers, customParameters: _customParameters, currentStep: _currentStep, currentBlock: _currentBlock,
-}: JumpFunctionParameters<never>): JumpFunctionReturnVal {
-  const answeredQuestions = Object.keys(answers).filter((key) => {
-    const hasEndTime = answers[key].endTime > -1;
-    const isBerlinQuestion = key.includes('berlin-num') || key.includes('q1-choir') || key.includes('q2a-dice') || key.includes('q2b-loaded') || key.includes('q3-poisonous');
-    return hasEndTime && isBerlinQuestion;
+function getCompletedBerlinAnswers(answers: Record<string, { endTime: number; answer: Record<string, string> }>): string[] {
+  return Object.keys(answers).filter((key) => {
+    const answer = answers[key];
+    return answer?.endTime > -1
+           && (key.includes('berlin-num')
+            || key.includes('q1-choir')
+            || key.includes('q2a-dice')
+            || key.includes('q2b-loaded')
+            || key.includes('q3-poisonous'))
+           && answer?.answer;
   });
+}
 
-  if (answeredQuestions.length === 0) {
+export default function dynamic({ answers }: JumpFunctionParameters<never>): JumpFunctionReturnVal {
+  const completedAnswers = getCompletedBerlinAnswers(answers as Record<string, { endTime: number; answer: Record<string, string> }>);
+
+  if (completedAnswers.length === 0) {
+    return { component: '$berlin-num.components.q1-choir-probability' };
+  }
+
+  if (completedAnswers.length === 1) {
+    const q1Answer = answers[completedAnswers[0]]?.answer?.['q1-choir-probability'];
     return {
-      component: '$berlin-num.components.q1-choir-probability',
+      component: q1Answer === '25' ? '$berlin-num.components.q2b-loaded-dice' : '$berlin-num.components.q2a-dice-odd-numbers',
     };
   }
 
-  const lastAnswer = answers[answeredQuestions[answeredQuestions.length - 1]];
+  if (completedAnswers.length === 2) {
+    const q1Answer = answers[completedAnswers[0]]?.answer?.['q1-choir-probability'];
 
-  if (!lastAnswer || !lastAnswer.answer) {
-    return { component: null };
-  }
-
-  if (answeredQuestions.length === 1) {
-    const lastQuestionAnswer = lastAnswer.answer['q1-choir-probability'];
-    if (lastQuestionAnswer === undefined) {
-      return { component: null };
+    if (q1Answer === '25') {
+      const q2bAnswer = answers[completedAnswers[1]]?.answer?.['q2b-loaded-dice'];
+      return { component: q2bAnswer === '20' ? null : '$berlin-num.components.q3-poisonous-mushrooms' };
     }
-
-    const isQ1Correct = String(lastQuestionAnswer) === '25';
-
-    if (isQ1Correct) {
-      return { component: '$berlin-num.components.q2b-loaded-dice' };
-    }
-    return { component: '$berlin-num.components.q2a-dice-odd-numbers' };
-  } if (answeredQuestions.length === 2) {
-    const firstAnswer = answers[answeredQuestions[0]];
-    if (!firstAnswer || !firstAnswer.answer) {
-      return { component: null };
-    }
-
-    const wasQ1Correct = String(firstAnswer.answer['q1-choir-probability']) === '25';
-
-    if (wasQ1Correct) {
-      const lastQuestionAnswer = lastAnswer.answer['q2b-loaded-dice'];
-      if (lastQuestionAnswer === undefined) {
-        return { component: null };
-      }
-
-      if (String(lastQuestionAnswer) === '20') {
-        return { component: null };
-      }
-      return { component: '$berlin-num.components.q3-poisonous-mushrooms' };
-    }
-    const lastQuestionAnswer = lastAnswer.answer['q2a-dice-odd-numbers'];
-    if (lastQuestionAnswer === undefined) {
-      return { component: null };
-    }
-
-    return { component: null };
-  }
-
-  if (answeredQuestions.length >= 3) {
-    return { component: null };
   }
 
   return { component: null };
