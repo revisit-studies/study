@@ -21,10 +21,10 @@ export function AppHeader({ studyIds }: { studyIds: string[] }) {
       <Grid mt={-7} align="center">
         <Grid.Col span={6}>
           <Flex align="center" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-            <Image w={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
+            <Image w={40} src={`${PREFIX}revisitAssets/icon-defake.svg`} alt="DeFake ProjectLogo" />
             <Space w="md" />
             <Title order={4} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {inAnalysis ? 'ReVISit Analytics Platform' : 'ReVISit Studies'}
+              {inAnalysis ? 'DeFake Project Analytics Platform | Powered by ReVISit' : 'DeFake Project Studies | Powered by ReVISit'}
             </Title>
           </Flex>
         </Grid.Col>

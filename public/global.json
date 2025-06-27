@@ -1,43 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/GlobalConfigSchema.json",
   "configsList": [
-    "tutorial",
-    "example-brush-interactions",
-    "example-cleveland",
-    "example-mvnv",
-    "example-VLAT-full-randomized",
-    "example-VLAT-mini-randomized",
-    "demo-html",
-    "demo-html-input",
-    "demo-survey",
-    "demo-training",
-    "demo-html-trrack",
-    "demo-click-accuracy-test",
-    "demo-image",
-    "demo-upset",
-    "demo-vega",
-    "demo-video-slider",
-    "demo-video",
-    "library-beauvis",
-    "library-color-blindness",
-    "library-demographics",
-    "library-mic-check",
-    "library-mini-vlat",
-    "library-previs",
-    "library-sus",
-    "library-vlat",
-    "test-audio",
-    "test-library",
-    "test-likert-matrix",
-    "test-parser-errors",
-    "test-randomization",
-    "test-skip-logic",
-    "test-step-logic"
-
+    "varuna-sme-eval-ontology"
   ],
   "configs": {
     "tutorial": {
       "path": "tutorial/config.json"
+    },
+    "varuna-sme-eval-ontology": {
+      "path": "sme-eval-ontology/config.json"
     },
     "example-brush-interactions": {
       "path": "example-brush-interactions/config.json"

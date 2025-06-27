@@ -22,7 +22,7 @@ import { useAuth } from '../store/hooks/useAuth';
 function StudyCard({ configName, config, url }: { configName: string; config: ParsedConfig<StudyConfig>; url: string }) {
   const { storageEngine } = useStorageEngine();
 
-  const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null} | null>(null);
+  const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
   useEffect(() => {
     if (!storageEngine) return;
 
@@ -138,21 +138,21 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
                 {currentMode}
               </Text>
               {studyStatusAndTiming
-              && <ParticipantStatusBadges completed={studyStatusAndTiming.completed} inProgress={studyStatusAndTiming.inProgress} rejected={studyStatusAndTiming.rejected} />}
+                && <ParticipantStatusBadges completed={studyStatusAndTiming.completed} inProgress={studyStatusAndTiming.inProgress} rejected={studyStatusAndTiming.rejected} />}
             </Flex>
 
             {minTime && maxTime
-            && (
-            <Text c="dimmed" mt={4}>
-              Activity:
-              {' '}
-              {minTime}
-              {' '}
-              –
-              {' '}
-              {maxTime}
-            </Text>
-            )}
+              && (
+                <Text c="dimmed" mt={4}>
+                  Activity:
+                  {' '}
+                  {minTime}
+                  {' '}
+                  –
+                  {' '}
+                  {maxTime}
+                </Text>
+              )}
 
             <Flex direction="row" align="end" gap="sm" mt="md">
               <Button
@@ -178,7 +178,7 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
   );
 }
 
-function StudyCards({ configNames, studyConfigs } : { configNames: string[]; studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> }) {
+function StudyCards({ configNames, studyConfigs }: { configNames: string[]; studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> }) {
   return configNames.map((configName) => {
     const config = studyConfigs[configName];
     if (!config) {
@@ -200,35 +200,95 @@ export function ConfigSwitcher({
   const { storageEngine } = useStorageEngine();
   const { configsList } = globalConfig;
 
-  const demos = configsList.filter((configName) => configName.startsWith('demo-'));
-  const tutorials = configsList.filter((configName) => configName.startsWith('tutorial'));
-  const examples = configsList.filter((configName) => configName.startsWith('example-'));
-  const tests = configsList.filter((configName) => configName.startsWith('test-'));
-  const libraries = configsList.filter((configName) => configName.startsWith('library-'));
-  const others = useMemo(() => configsList.filter((configName) => !configName.startsWith('demo-') && !configName.startsWith('tutorial') && !configName.startsWith('example-') && !configName.startsWith('test-') && !configName.startsWith('library-')), [configsList]);
+  // Extract unique prefixes from study names and create dynamic categories
+  const studyCategories = useMemo(() => {
+    const categories: Record<string, string[]> = {};
+    const otherStudies: string[] = [];
 
-  const [otherStudyVisibility, setOtherStudyVisibility] = useState<Record<string, boolean>>({});
+    configsList.forEach((configName) => {
+      const dashIndex = configName.indexOf('-');
+      if (dashIndex === -1) {
+        // No dash found, put in "Other"
+        otherStudies.push(configName);
+      } else {
+        // Extract prefix (everything before first dash)
+        const prefix = configName.substring(0, dashIndex);
+        if (!categories[prefix]) {
+          categories[prefix] = [];
+        }
+        categories[prefix].push(configName);
+      }
+    });
+
+    // Add "Other" category if there are studies without prefixes
+    if (otherStudies.length > 0) {
+      categories.other = otherStudies;
+    }
+
+    return categories;
+  }, [configsList]);
+
+  // Get visibility for all studies and filter by admin status and public accessibility
+  const [categoryVisibility, setCategoryVisibility] = useState<Record<string, Record<string, boolean>>>({});
   useEffect(() => {
     async function getVisibilities() {
-      const visibility: Record<string, boolean> = {};
+      const visibility: Record<string, Record<string, boolean>> = {};
+
       await Promise.all(
-        others.map(async (configName) => {
-          if (storageEngine instanceof FirebaseStorageEngine) {
-            const modes = await storageEngine.getModes(configName);
-            visibility[configName] = modes.analyticsInterfacePubliclyAccessible;
-          }
+        Object.entries(studyCategories).map(async ([category, studies]) => {
+          visibility[category] = {};
+          await Promise.all(
+            studies.map(async (configName) => {
+              if (storageEngine instanceof FirebaseStorageEngine) {
+                const modes = await storageEngine.getModes(configName);
+                visibility[category][configName] = modes.analyticsInterfacePubliclyAccessible;
+              } else {
+                // For non-Firebase storage, show all studies
+                visibility[category][configName] = true;
+              }
+            }),
+          );
         }),
       );
-      setOtherStudyVisibility(visibility);
+
+      setCategoryVisibility(visibility);
     }
     getVisibilities();
-  }, [others, storageEngine]);
+  }, [studyCategories, storageEngine]);
 
   const { user } = useAuth();
-  const othersFiltered = useMemo(() => others.filter((configName) => otherStudyVisibility[configName] || user.isAdmin), [others, otherStudyVisibility, user]);
+
+  // Filter studies based on visibility and admin status for each category
+  const filteredCategories = useMemo(() => {
+    const filtered: Record<string, string[]> = {};
+
+    Object.entries(studyCategories).forEach(([category, studies]) => {
+      const categoryVisibilityMap = categoryVisibility[category] || {};
+      filtered[category] = studies.filter((configName) => categoryVisibilityMap[configName] || user.isAdmin);
+    });
+
+    // Remove empty categories
+    Object.keys(filtered).forEach((category) => {
+      if (filtered[category].length === 0) {
+        delete filtered[category];
+      }
+    });
+
+    return filtered;
+  }, [studyCategories, categoryVisibility, user]);
+
+  // Helper function to convert category name to title case
+  const toTitleCase = (str: string) => {
+    if (str === 'other') return 'Other';
+    return str.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
+  // Get available categories for tabs
+  const availableCategories = Object.keys(filteredCategories);
+  const defaultTab = availableCategories.length > 0 ? availableCategories[0] : 'other';
 
   const [searchParams] = useSearchParams();
-  const tab = useMemo(() => searchParams.get('tab') || (othersFiltered.length > 0 ? 'Others' : 'Demos'), [othersFiltered.length, searchParams]);
+  const tab = useMemo(() => searchParams.get('tab') || defaultTab, [searchParams, defaultTab]);
   const navigate = useNavigate();
 
   return (
@@ -238,52 +298,35 @@ export function ConfigSwitcher({
           maw={150}
           mx="auto"
           mb="xl"
-          radius="md"
-          src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`}
+          radius="none"
+          src={`${PREFIX}revisitAssets/defake.svg`}
           alt="reVISit"
         />
-        <Tabs variant="outline" defaultValue={others.length > 0 ? 'Others' : 'Demos'} value={tab} onChange={(value) => navigate(`/?tab=${value}`)}>
+        <Tabs variant="outline" value={tab} onChange={(value) => navigate(`/?tab=${value}`)}>
           <Tabs.List>
-            {othersFiltered.length > 0 && (
-              <Tabs.Tab value="Others">Your Studies</Tabs.Tab>
-            )}
-            <Tabs.Tab value="Demos">Demo Studies</Tabs.Tab>
-            <Tabs.Tab value="Examples">Example Studies</Tabs.Tab>
-            <Tabs.Tab value="Tutorials">Tutorials</Tabs.Tab>
-            <Tabs.Tab value="Tests">Tests</Tabs.Tab>
-            <Tabs.Tab value="Libraries">Libraries</Tabs.Tab>
+            {availableCategories.map((category) => (
+              <Tabs.Tab key={category} value={category}>
+                {toTitleCase(category)}
+              </Tabs.Tab>
+            ))}
           </Tabs.List>
 
-          {othersFiltered.length > 0 && (
-            <Tabs.Panel value="Others">
-              <StudyCards configNames={othersFiltered} studyConfigs={studyConfigs} />
+          {availableCategories.map((category) => (
+            <Tabs.Panel key={category} value={category}>
+              {category === 'other' ? (
+                <Text c="dimmed" mt="sm">Studies without a category prefix.</Text>
+              ) : (
+                <Text c="dimmed" mt="sm">
+                  Studies in the
+                  {' '}
+                  {toTitleCase(category)}
+                  {' '}
+                  category.
+                </Text>
+              )}
+              <StudyCards configNames={filteredCategories[category]} studyConfigs={studyConfigs} />
             </Tabs.Panel>
-          )}
-
-          <Tabs.Panel value="Demos">
-            <Text c="dimmed" mt="sm">These studies show off individual features of the reVISit platform.</Text>
-            <StudyCards configNames={demos} studyConfigs={studyConfigs} />
-          </Tabs.Panel>
-
-          <Tabs.Panel value="Examples">
-            <Text c="dimmed" mt="sm">These are full studies that demonstrate the capabilities of the reVISit platform.</Text>
-            <StudyCards configNames={examples} studyConfigs={studyConfigs} />
-          </Tabs.Panel>
-
-          <Tabs.Panel value="Tutorials">
-            <Text c="dimmed" mt="sm">These studies are designed to help you learn how to use the reVISit platform.</Text>
-            <StudyCards configNames={tutorials} studyConfigs={studyConfigs} />
-          </Tabs.Panel>
-
-          <Tabs.Panel value="Tests">
-            <Text c="dimmed" mt="sm">These studies exist for testing purposes.</Text>
-            <StudyCards configNames={tests} studyConfigs={studyConfigs} />
-          </Tabs.Panel>
-
-          <Tabs.Panel value="Libraries">
-            <Text c="dimmed" mt="sm">Here you can see an example of every library that we publish.</Text>
-            <StudyCards configNames={libraries} studyConfigs={studyConfigs} />
-          </Tabs.Panel>
+          ))}
         </Tabs>
       </Container>
     </AppShell.Main>

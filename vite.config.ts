@@ -16,5 +16,8 @@ export default defineConfig(({ command, mode }) => {
         '@tabler/icons-react': '@tabler/icons-react/dist/esm/icons/index.mjs',
       },
     },
+    server: {
+      allowedHosts: ['localhost', 'survey.defake.app'],
+    },
   };
 });

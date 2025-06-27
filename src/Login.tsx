@@ -41,7 +41,7 @@ export function Login() {
     if (!user.determiningStatus && !user.isAdmin && user.adminVerification) {
       showNotification({ title: 'Unauthorized', message: 'You are not authorized to use this application.', color: 'red' });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.adminVerification]);
 
   if (!user.determiningStatus && user.isAdmin) {
@@ -52,7 +52,7 @@ export function Login() {
     <Container>
       <Card padding="lg">
         <Flex align="center" direction="column" justify="center">
-          <Image maw={200} mt={50} mb={100} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
+          <Image maw={200} mt={50} mb={100} src={`${PREFIX}revisitAssets/defake.svg`} alt="Revisit Logo" />
           <>
             <Text mb={20}>To access admin settings, please sign in using your Google account.</Text>
             <Button onClick={() => signInWithGoogle(storageEngine, setLoading)} leftSection={<IconBrandGoogleFilled />} variant="filled">Sign In With Google</Button>
