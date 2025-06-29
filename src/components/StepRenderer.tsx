@@ -13,6 +13,7 @@ import { WindowEventsContext } from '../store/hooks/useWindowEvents';
 import { useStoreSelector } from '../store/store';
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { useAuth } from '../store/hooks/useAuth';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -23,6 +24,7 @@ export function StepRenderer() {
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
   const modes = useStoreSelector((state) => state.modes);
+  const { user } = useAuth();
 
   // Attach event listeners
   useEffect(() => {
@@ -101,9 +103,15 @@ export function StepRenderer() {
 
   const sidebarWidth = studyConfig.uiConfig.sidebarWidth ?? 300;
 
-  const { studyNavigatorEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
+  const { studyNavigatorEnabled, studyNavigatorPubliclyAccessible, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
-  const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
+  // Compute final study navigator visibility based on mode settings and admin status
+  const finalStudyNavigatorVisible = useMemo(
+    () => studyNavigatorEnabled && (studyNavigatorPubliclyAccessible || user.isAdmin),
+    [studyNavigatorEnabled, studyNavigatorPubliclyAccessible, user.isAdmin],
+  );
+
+  const asideOpen = useMemo(() => finalStudyNavigatorVisible && showStudyBrowser, [finalStudyNavigatorVisible, showStudyBrowser]);
 
   const isAnalysis = useIsAnalysis();
 
@@ -118,14 +126,17 @@ export function StepRenderer() {
       >
         <AppNavBar />
         <AppAside />
-        <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
+        <AppHeader
+          studyNavigatorEnabled={finalStudyNavigatorVisible}
+          dataCollectionEnabled={dataCollectionEnabled}
+        />
         <HelpModal />
         <AlertModal />
         <AppShell.Main>
           <Outlet />
         </AppShell.Main>
         {isAnalysis && (
-        <AnalysisFooter />
+          <AnalysisFooter />
         )}
       </AppShell>
     </WindowEventsContext.Provider>

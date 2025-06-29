@@ -21,10 +21,10 @@ export interface UserWrapped {
   user: UserOptions,
   determiningStatus: boolean,
   isAdmin: boolean,
-  adminVerification:boolean
+  adminVerification: boolean
 }
 
-export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
+export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'studyNavigatorPubliclyAccessible' | 'analyticsInterfacePubliclyAccessible';
 
 export abstract class StorageEngine {
   protected engine: string;
@@ -65,11 +65,11 @@ export abstract class StorageEngine {
 
   abstract getSequenceArray(): Promise<Sequence[] | null>;
 
-  abstract getSequence(): Promise<{creationIndex: number, currentRow: Sequence}>;
+  abstract getSequence(): Promise<{ creationIndex: number, currentRow: Sequence }>;
 
   abstract getAllParticipantsData(): Promise<ParticipantData[]>;
 
-  abstract getAllParticipantsDataByStudy(studyId:string): Promise<ParticipantData[]>;
+  abstract getAllParticipantsDataByStudy(studyId: string): Promise<ParticipantData[]>;
 
   abstract getParticipantData(participantid?: string): Promise<ParticipantData | null>;
 
@@ -103,5 +103,5 @@ export abstract class StorageEngine {
 
   abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean>>;
 
-  abstract getParticipantsStatusCounts(studyId: string): Promise<{completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null}>;
+  abstract getParticipantsStatusCounts(studyId: string): Promise<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null }>;
 }

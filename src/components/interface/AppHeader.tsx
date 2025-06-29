@@ -152,10 +152,10 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 <Menu.Item
                   component="a"
                   href={
-                      studyConfig !== null
-                        ? `mailto:${studyConfig.uiConfig.contactEmail}`
-                        : undefined
-                    }
+                    studyConfig !== null
+                      ? `mailto:${studyConfig.uiConfig.contactEmail}`
+                      : undefined
+                  }
                   leftSection={<IconMail size={14} />}
                 >
                   Contact

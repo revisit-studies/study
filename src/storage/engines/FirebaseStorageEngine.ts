@@ -77,12 +77,12 @@ export interface SnapshotNameItem {
 type FirebaseStorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 type FirebaseStorageObject<T extends FirebaseStorageObjectType> =
   T extends 'sequenceArray'
-    ? Sequence[]
-    : T extends 'participantData'
-    ? ParticipantData
-    : T extends 'config'
-    ? StudyConfig
-    : object; // Fallback for any random string
+  ? Sequence[]
+  : T extends 'participantData'
+  ? ParticipantData
+  : T extends 'config'
+  ? StudyConfig
+  : object; // Fallback for any random string
 
 function isParticipantData(obj: unknown): obj is ParticipantData {
   const potentialParticipantData = obj as ParticipantData;
@@ -920,6 +920,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     const defaultModes = {
       dataCollectionEnabled: true,
       studyNavigatorEnabled: true,
+      studyNavigatorPubliclyAccessible: true,
       analyticsInterfacePubliclyAccessible: true,
     };
     await setDoc(revisitModesDoc, defaultModes);

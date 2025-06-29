@@ -8,6 +8,7 @@ export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
   const [asyncStatus, setAsyncStatus] = useState(false);
   const [dataCollectionEnabled, setDataCollectionEnabled] = useState(false);
   const [studyNavigatorEnabled, setStudyNavigatorEnabled] = useState(false);
+  const [studyNavigatorPubliclyAccessible, setStudyNavigatorPubliclyAccessible] = useState(false);
   const [analyticsInterfacePubliclyAccessible, setAnalyticsInterfacePubliclyAccessible] = useState(false);
 
   useEffect(() => {
@@ -16,6 +17,7 @@ export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
         const modes = await storageEngine.getModes(studyId);
         setDataCollectionEnabled(modes.dataCollectionEnabled);
         setStudyNavigatorEnabled(modes.studyNavigatorEnabled);
+        setStudyNavigatorPubliclyAccessible(modes.studyNavigatorPubliclyAccessible);
         setAnalyticsInterfacePubliclyAccessible(modes.analyticsInterfacePubliclyAccessible);
         setAsyncStatus(true);
       }
@@ -23,7 +25,7 @@ export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
     fetchData();
   }, [storageEngine, studyId]);
 
-  const handleSwitch = async (key: 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible', value: boolean) => {
+  const handleSwitch = async (key: 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'studyNavigatorPubliclyAccessible' | 'analyticsInterfacePubliclyAccessible', value: boolean) => {
     if (storageEngine) {
       await storageEngine.setMode(studyId, key, value);
 
@@ -31,6 +33,8 @@ export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
         setDataCollectionEnabled(value);
       } else if (key === 'studyNavigatorEnabled') {
         setStudyNavigatorEnabled(value);
+      } else if (key === 'studyNavigatorPubliclyAccessible') {
+        setStudyNavigatorPubliclyAccessible(value);
       } else if (key === 'analyticsInterfacePubliclyAccessible') {
         setAnalyticsInterfacePubliclyAccessible(value);
       }
@@ -49,6 +53,12 @@ export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
           label="Study Navigator Enabled"
           checked={studyNavigatorEnabled}
           onChange={(event) => handleSwitch('studyNavigatorEnabled', event.currentTarget.checked)}
+        />
+        <Switch
+          label="Study Navigator Publicly Accessible"
+          disabled={!studyNavigatorEnabled}
+          checked={studyNavigatorPubliclyAccessible}
+          onChange={(event) => handleSwitch('studyNavigatorPubliclyAccessible', event.currentTarget.checked)}
         />
         <Switch
           label="Analytics Interface Publicly Accessible"
