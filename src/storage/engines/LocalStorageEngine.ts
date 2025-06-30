@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
-import { REVISIT_MODE, StorageEngine, UserWrapped } from './StorageEngine';
+import { REVISIT_MODE, StorageEngine, UserWrapped } from './types';
 import { ParticipantData } from '../types';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { hash } from './utils';

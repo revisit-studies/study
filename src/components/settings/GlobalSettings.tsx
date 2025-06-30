@@ -7,7 +7,7 @@ import { IconUserPlus, IconAt, IconTrashX } from '@tabler/icons-react';
 import { useAuth } from '../../store/hooks/useAuth';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
-import { StoredUser } from '../../storage/engines/StorageEngine';
+import { StoredUser } from '../../storage/engines/types';
 import { signInWithGoogle } from '../../Login';
 
 export function GlobalSettings() {

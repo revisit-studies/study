@@ -39,7 +39,7 @@ import {
   UserWrapped,
   StoredUser,
   REVISIT_MODE,
-} from './StorageEngine';
+} from './types';
 import { ParticipantData } from '../types';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { RevisitNotification } from '../../utils/notifications';

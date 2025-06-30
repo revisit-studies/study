@@ -15,7 +15,7 @@ import { PREFIX } from '../utils/Prefix';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatusBadges';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { REVISIT_MODE } from '../storage/engines/StorageEngine';
+import { REVISIT_MODE } from '../storage/engines/types';
 import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine';
 import { useAuth } from '../store/hooks/useAuth';
 
