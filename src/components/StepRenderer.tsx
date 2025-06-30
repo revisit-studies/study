@@ -107,9 +107,12 @@ export function StepRenderer() {
 
   const { studyNavigatorEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
-  const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
-
   const isAnalysis = useIsAnalysis();
+
+  const asideOpen = useMemo(() => {
+    if (isAnalysis) return true;
+    return studyNavigatorEnabled && showStudyBrowser;
+  }, [studyNavigatorEnabled, showStudyBrowser, isAnalysis]);
 
   return (
     <WindowEventsContext.Provider value={windowEvents}>
