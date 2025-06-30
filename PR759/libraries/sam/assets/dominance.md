@@ -1,1 +1,0 @@
-![dominance](/libraries/sam/assets/dominance.png)
