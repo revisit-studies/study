@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { OverviewData } from '../../analysis/individualStudy/summary/types';
+import { showNotification } from '../../utils/notifications';
 
 export function useOverviewData(studyId: string) {
   const { storageEngine } = useStorageEngine();
@@ -25,6 +26,20 @@ export function useOverviewData(studyId: string) {
     if (!storageEngine || !studyId) return;
 
     try {
+      const currentCounts = await storageEngine.getParticipantsStatusCounts(studyId);
+
+      if (
+        data.participantCounts.completed !== currentCounts.completed
+        || data.participantCounts.inProgress !== currentCounts.inProgress
+        || data.participantCounts.rejected !== currentCounts.rejected
+      ) {
+        showNotification({
+          title: 'Participant Count Mismatch',
+          message: `Calculated participant counts don't match current counts. Completed: ${data.participantCounts.completed} vs ${currentCounts.completed}, In Progress: ${data.participantCounts.inProgress} vs ${currentCounts.inProgress}, Rejected: ${data.participantCounts.rejected} vs ${currentCounts.rejected}`,
+          color: 'yellow',
+        });
+      }
+
       const dataToSave = {
         ...data,
         avgCleanTime: data.avgCleanTime / 1000,
