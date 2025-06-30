@@ -25,8 +25,12 @@ export function useOverviewData(studyId: string) {
     if (!storageEngine || !studyId) return;
 
     try {
-      await storageEngine.saveOverviewData(studyId, data);
-      setOverviewData(data);
+      const dataToSave = {
+        ...data,
+        avgCleanTime: data.avgCleanTime / 1000,
+      };
+      await storageEngine.saveOverviewData(studyId, dataToSave);
+      setOverviewData(dataToSave);
     } catch (error) {
       console.error('Failed to save overview data:', error);
       throw error;
