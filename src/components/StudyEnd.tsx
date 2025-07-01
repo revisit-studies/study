@@ -100,12 +100,34 @@ export function StudyEnd() {
     checkDataCollectionEnabled();
   }, [storageEngine, studyId]);
 
+  let { studyEndMsg } = studyConfig.uiConfig;
+
+  if (studyConfig.uiConfig.urlParticipantIdParam) {
+    const serviceName = studyConfig.uiConfig.urlParticipantIdParam;
+    const screenerComponent = Object.keys(answers).find((key) => key.toLowerCase().startsWith('screener'));
+
+    if (screenerComponent) {
+      const screenerAnswers = answers[screenerComponent].answer;
+      const participantIdField = Object.keys(screenerAnswers).find((key) => key.toLowerCase().includes(serviceName.toLowerCase())
+         || key.toLowerCase().includes('id'));
+
+      if (participantIdField && screenerAnswers[participantIdField]) {
+        const externalServiceId = String(screenerAnswers[participantIdField]);
+        const returnUrl = studyConfig.uiConfig.returnUrlTemplate
+          ? studyConfig.uiConfig.returnUrlTemplate.replaceAll('{id}', externalServiceId)
+          : `https://app.prolific.com/submissions/complete?cc=${externalServiceId}`;
+
+        studyEndMsg = `Thank you for completing the study.\n\n [Please click here to return to ${serviceName} and receive credit.](${returnUrl})`;
+      }
+    }
+  }
+
   return (
     <Center style={{ height: '100%' }}>
       <Flex direction="column">
         {completed || !dataCollectionEnabled
-          ? (studyConfig.uiConfig.studyEndMsg
-            ? <ReactMarkdownWrapper text={studyConfig.uiConfig.studyEndMsg} />
+          ? (studyEndMsg
+            ? <ReactMarkdownWrapper text={studyEndMsg} />
             : <Text size="xl" display="block">Thank you for completing the study. You may close this window now.</Text>)
           : (
             <>
