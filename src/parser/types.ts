@@ -111,6 +111,10 @@ export interface UIConfig {
    * If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers.
    */
   urlParticipantIdParam?: string;
+  /** The return url template for the study. This is used to redirect the participant to a specific url after the study is completed. */
+  returnUrlTemplate?: string;
+  /** The screener return message for the study. This is used to display a message to the participant after the study is completed. */
+  screenerReturnMessage?: string;
   /**
    * The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.
    */
