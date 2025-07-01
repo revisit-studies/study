@@ -2334,10 +2334,6 @@
           "description": "The return url template for the study. This is used to redirect the participant to a specific url after the study is completed.",
           "type": "string"
         },
-        "screenerReturnMessage": {
-          "description": "The screener return message for the study. This is used to display a message to the participant after the study is completed.",
-          "type": "string"
-        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study.",
           "type": "boolean"

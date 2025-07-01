@@ -113,8 +113,6 @@ export interface UIConfig {
   urlParticipantIdParam?: string;
   /** The return url template for the study. This is used to redirect the participant to a specific url after the study is completed. */
   returnUrlTemplate?: string;
-  /** The screener return message for the study. This is used to display a message to the participant after the study is completed. */
-  screenerReturnMessage?: string;
   /**
    * The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.
    */
