@@ -97,7 +97,7 @@ export interface UIConfig {
   autoDownloadStudy?: boolean;
   /** The time in milliseconds to wait before automatically downloading the study data. */
   autoDownloadTime?: number;
-  /** The message to display when the study ends. */
+  /** The message to display when the study ends. Supports templating with variables in curly braces. Available variables include {PARTICIPANT_ID} for the internal participant ID, and any URL parameter names (e.g., {PROLIFIC_ID}, {SONA_ID}, etc.). */
   studyEndMsg?: string;
   /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.  */
   recordStudyAudio?: boolean;
@@ -111,8 +111,7 @@ export interface UIConfig {
    * If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers.
    */
   urlParticipantIdParam?: string;
-  /** The return url template for the study. This is used to redirect the participant to a specific url after the study is completed. */
-  returnUrlTemplate?: string;
+
   /**
    * The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.
    */

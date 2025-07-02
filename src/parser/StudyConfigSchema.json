@@ -2330,10 +2330,6 @@
           "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
           "type": "boolean"
         },
-        "returnUrlTemplate": {
-          "description": "The return url template for the study. This is used to redirect the participant to a specific url after the study is completed.",
-          "type": "string"
-        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study.",
           "type": "boolean"
@@ -2351,7 +2347,7 @@
           "type": "number"
         },
         "studyEndMsg": {
-          "description": "The message to display when the study ends.",
+          "description": "The message to display when the study ends. Supports templating with variables in curly braces. Available variables include {PARTICIPANT_ID} for the internal participant ID, and any URL parameter names (e.g., {PROLIFIC_ID}, {SONA_ID}, etc.).",
           "type": "string"
         },
         "timeoutReject": {
