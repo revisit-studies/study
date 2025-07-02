@@ -36,7 +36,6 @@ import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 
 export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
-  const metadata = useStoreSelector((state) => state.metadata);
 
   const answers = useStoreSelector((state) => state.answers);
   const flatSequence = useFlatSequence();
@@ -165,7 +164,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 {studyNavigatorEnabled && (
                   <Menu.Item
                     leftSection={<IconUserPlus size={14} />}
-                    onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
+                    onClick={() => getNewParticipant(storageEngine, studyHref)}
                   >
                     Next Participant
                   </Menu.Item>

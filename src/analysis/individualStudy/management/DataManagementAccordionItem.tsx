@@ -135,8 +135,9 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
 
   const fetchParticipants = async (snapshotName: string) => {
     const strippedFilename = snapshotName.slice(snapshotName.indexOf('-') + 1);
-    return await storageEngine.getAllParticipantsDataByStudy(strippedFilename);
+    return await storageEngine.getAllParticipantsData(strippedFilename);
   };
+
   return (
     <>
       <LoadingOverlay visible={loading} />

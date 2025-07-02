@@ -1,9 +1,7 @@
-import { StudyConfig } from '../parser/types';
 import { StorageEngine } from '../storage/engines/types';
-import { ParticipantMetadata } from '../store/types';
 
-export function getNewParticipant(storageEngine: StorageEngine | undefined, studyConfig: StudyConfig, metadata: ParticipantMetadata, studyHref: string) {
-  storageEngine?.nextParticipant()
+export function getNewParticipant(storageEngine: StorageEngine | undefined, studyHref: string) {
+  storageEngine?.clearCurrentParticipantId()
     .then(() => {
       window.location.href = studyHref;
     })

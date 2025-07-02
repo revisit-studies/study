@@ -8,7 +8,6 @@ import {
   uploadBytes,
   listAll,
   FirebaseStorage,
-  StorageReference,
   updateMetadata,
 } from 'firebase/storage';
 import {
@@ -31,20 +30,15 @@ import {
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
-import localforage from 'localforage';
-import { v4 as uuidv4 } from 'uuid';
-import throttle from 'lodash.throttle';
 import {
-  StorageEngine,
   UserWrapped,
   StoredUser,
   REVISIT_MODE,
+  StorageObjectType,
+  StorageObject,
+  StorageEngine,
 } from './types';
-import { ParticipantData } from '../types';
-import { ParticipantMetadata, Sequence } from '../../store/types';
 import { RevisitNotification } from '../../utils/notifications';
-import { hash } from './utils';
-import { StudyConfig } from '../../parser/types';
 
 export interface FirebaseError {
   title: string;
@@ -75,21 +69,6 @@ export interface SnapshotNameItem {
   alternateName: string;
 }
 
-type FirebaseStorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
-type FirebaseStorageObject<T extends FirebaseStorageObjectType> =
-  T extends 'sequenceArray'
-    ? Sequence[]
-    : T extends 'participantData'
-    ? ParticipantData
-    : T extends 'config'
-    ? StudyConfig
-    : object; // Fallback for any random string
-
-function isParticipantData(obj: unknown): obj is ParticipantData {
-  const potentialParticipantData = obj as ParticipantData;
-  return potentialParticipantData.participantId !== undefined;
-}
-
 export class FirebaseStorageEngine extends StorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
 
@@ -97,20 +76,9 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   private collectionPrefix = import.meta.env.DEV ? 'dev-' : 'prod-';
 
-  private studyCollection:
-    | CollectionReference<DocumentData, DocumentData>
-    | undefined = undefined;
+  private studyCollection: CollectionReference<DocumentData, DocumentData>;
 
   private storage: FirebaseStorage;
-
-  private studyId = '';
-
-  // localForage instance for storing currentParticipantId
-  private localForage = localforage.createInstance({
-    name: 'currentParticipantId',
-  });
-
-  private participantData: ParticipantData | null = null;
 
   constructor() {
     super('firebase');
@@ -118,6 +86,10 @@ export class FirebaseStorageEngine extends StorageEngine {
     const firebaseConfig = hjsonParse(import.meta.env.VITE_FIREBASE_CONFIG);
     const firebaseApp = initializeApp(firebaseConfig);
     this.firestore = initializeFirestore(firebaseApp, {});
+    this.studyCollection = collection(
+      this.firestore,
+      '_revisit',
+    );
     this.storage = getStorage();
 
     // Check if we're in dev, if so use a debug token
@@ -135,6 +107,79 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
+  protected async _getFromStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    studyId?: string,
+  ) {
+    const storageRef = ref(
+      this.storage,
+      `${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`,
+    );
+
+    let storageObj: StorageObject<T> = {} as StorageObject<T>;
+    try {
+      const url = await getDownloadURL(storageRef);
+      const response = await fetch(url);
+      const fullProvStr = await response.text();
+      storageObj = JSON.parse(fullProvStr);
+    } catch {
+      console.warn(
+        `${prefix} does not have ${type} for ${this.collectionPrefix}${this.studyId}.`,
+      );
+    }
+
+    return storageObj;
+  }
+
+  protected async _cacheStorageObject<T extends StorageObjectType>(prefix: string, type: T) {
+    const storageRef = ref(
+      this.storage,
+      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
+    );
+    await updateMetadata(storageRef, {
+      cacheControl: 'public,max-age=31536000',
+    });
+  }
+
+  protected async _pushToStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    objectToUpload: StorageObject<T>,
+  ) {
+    const storageRef = ref(
+      this.storage,
+      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
+    );
+
+    if (objectToUpload instanceof Blob) {
+      await uploadBytes(storageRef, objectToUpload);
+    } else if (Object.keys(objectToUpload).length > 0) {
+      const blob = new Blob([JSON.stringify(objectToUpload)], {
+        type: 'application/json',
+      });
+      await uploadBytes(storageRef, blob);
+    }
+  }
+
+  protected async _deleteFromStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+  ) {
+    const storageRef = ref(
+      this.storage,
+      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
+    );
+    await deleteObject(storageRef);
+  }
+
+  protected async _verifyStudyDatabase() {
+    // Throw an error if the db does not exist
+    if (!this.studyCollection) {
+      throw new Error('Study database not initialized');
+    }
+  }
+
   async connect() {
     try {
       await enableNetwork(this.firestore);
@@ -145,7 +190,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async initializeStudyDb(studyId: string, config: StudyConfig) {
+  async initializeStudyDb(studyId: string) {
     try {
       const auth = getAuth();
       if (!auth.currentUser) {
@@ -159,100 +204,13 @@ export class FirebaseStorageEngine extends StorageEngine {
         `${this.collectionPrefix}${studyId}`,
       );
       this.studyId = studyId;
-
-      const currentConfigHash = await this.getCurrentConfigHash();
-      // Hash the config
-      const configHash = await hash(JSON.stringify(config));
-
-      // Push the config ref in storage
-      await this._pushToFirebaseStorage(
-        `configs/${configHash}`,
-        'config',
-        config,
-        true,
-      );
-
-      // Clear sequence array and current participant data if the config has changed
-      if (currentConfigHash && currentConfigHash !== configHash) {
-        try {
-          await this._deleteFromFirebaseStorage('', 'sequenceArray');
-        } catch {
-          // pass, if this happens, we didn't have a sequence array yet
-        }
-        await this.clearCurrentParticipantId();
-      }
-
-      await this._setCurrentConfigHash(configHash);
-
-      return Promise.resolve();
-    } catch (error) {
+    } catch {
       console.warn('Failed to connect to Firebase.');
-      return Promise.reject(error);
     }
   }
 
-  async initializeParticipantSession(
-    studyId: string,
-    searchParams: Record<string, string>,
-    config: StudyConfig,
-    metadata: ParticipantMetadata,
-    urlParticipantId?: string,
-  ) {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
-    // Ensure that we have a participantId
-    await this.getCurrentParticipantId(urlParticipantId);
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
-
-    // Check if the participant has already been initialized
-    const participant = await this._getFromFirebaseStorage(
-      `participants/${this.currentParticipantId}`,
-      'participantData',
-    );
-
-    // Get modes
-    const modes = await this.getModes(studyId);
-
-    if (isParticipantData(participant)) {
-      // Participant already initialized
-      this.participantData = participant;
-      return participant;
-    }
-    // Initialize participant
-    const participantConfigHash = await hash(JSON.stringify(config));
-    const { currentRow, creationIndex } = await this.getSequence();
-    this.participantData = {
-      participantId: this.currentParticipantId,
-      participantConfigHash,
-      sequence: currentRow,
-      participantIndex: creationIndex,
-      answers: {},
-      searchParams,
-      metadata,
-      completed: false,
-      rejected: false,
-      participantTags: [],
-    };
-
-    if (modes.dataCollectionEnabled) {
-      await this._pushToFirebaseStorage(
-        `participants/${this.currentParticipantId}`,
-        'participantData',
-        this.participantData,
-      );
-    }
-
-    return this.participantData;
-  }
-
-  async getCurrentConfigHash() {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
+  async _getCurrentConfigHash() {
+    await this.verifyStudyDatabase();
     const configHashDoc = doc(
       this.studyCollection,
       'configHash',
@@ -262,9 +220,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async _setCurrentConfigHash(configHash: string) {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
+    await this.verifyStudyDatabase();
     const configHashDoc = doc(
       this.studyCollection,
       'configHash',
@@ -272,151 +228,22 @@ export class FirebaseStorageEngine extends StorageEngine {
     await setDoc(configHashDoc, { configHash });
   }
 
-  async getAllConfigsFromHash(tempHashes: string[], studyId: string) {
-    const allConfigs = tempHashes.map((singleHash) => {
-      const participantRef = ref(
-        this.storage,
-        `${this.collectionPrefix}${studyId}/configs/${singleHash}_config`,
-      );
-      return this._getFromFirebaseStorageByRef(participantRef, 'config');
-    });
-    const configs = (await Promise.all(allConfigs)) as StudyConfig[];
-
-    const obj: Record<string, StudyConfig> = {};
-
-    // eslint-disable-next-line no-return-assign
-    tempHashes.forEach((singleHash, i) => (obj[singleHash] = configs[i]));
-
-    return obj;
-  }
-
-  async getCurrentParticipantId(urlParticipantId?: string) {
-    // Get currentParticipantId from localForage
-    const currentParticipantId = await this.localForage.getItem(
-      'currentParticipantId',
-    );
-
-    // Prioritize urlParticipantId, then currentParticipantId, then generate a new participantId
-    if (urlParticipantId) {
-      this.currentParticipantId = urlParticipantId;
-      await this.localForage.setItem('currentParticipantId', urlParticipantId);
-      return urlParticipantId;
-    }
-    if (currentParticipantId) {
-      this.currentParticipantId = currentParticipantId as string;
-      return currentParticipantId as string;
-    }
-    // Create new participant doc inside study collection and get the currentParticipantId from that new participant
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
-    // Generate new participant id
-    this.currentParticipantId = uuidv4();
-
-    // Set currentParticipantId in localForage
-    await this.localForage.setItem(
-      'currentParticipantId',
-      this.currentParticipantId,
-    );
-
-    return this.currentParticipantId;
-  }
-
-  async clearCurrentParticipantId() {
-    return await this.localForage.removeItem('currentParticipantId');
-  }
-
-  async saveAudio(
-    audioStream: MediaRecorder,
-    taskName: string,
-  ) {
-    let debounceTimeout: NodeJS.Timeout | null = null;
-
-    const listener = async (data: BlobEvent) => {
-      if (debounceTimeout) {
-        return;
-      }
-
-      debounceTimeout = setTimeout(async () => {
-        this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data, true);
-      }, 500);
-    };
-
-    audioStream.addEventListener('dataavailable', listener);
-    audioStream.requestData();
-
-    // Don't clean up the listener. The stream will be destroyed.
-  }
-
-  private throttleSaveAnswers = throttle(async () => { await this._saveAnswers(); }, 3000);
-
-  async saveAnswers(answers: ParticipantData['answers']): Promise<void> {
-    if (!this.currentParticipantId || this.participantData === null) {
-      throw new Error('Participant not initialized');
-    }
-    // Update the local copy of the participant data
-    this.participantData = {
-      ...this.participantData,
-      answers,
-    };
-
-    await this.throttleSaveAnswers(answers);
-  }
-
-  async _saveAnswers() {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
-    if (!this.currentParticipantId || this.participantData === null) {
-      throw new Error('Participant not initialized');
-    }
-
-    // Push the updated participant data to Firebase
-    await this._pushToFirebaseStorage(
-      `participants/${this.currentParticipantId}`,
-      'participantData',
-      this.participantData,
-    );
-  }
-
-  async setSequenceArray(latinSquare: Sequence[]) {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
-    await this._pushToFirebaseStorage('', 'sequenceArray', latinSquare);
-  }
-
-  async getSequenceArray() {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
-    const sequenceArrayDocData = await this._getFromFirebaseStorage(
-      '',
-      'sequenceArray',
-    );
-
-    return Array.isArray(sequenceArrayDocData) ? sequenceArrayDocData : null;
-  }
-
-  async getSequence() {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
+  async _getSequence() {
+    await this.verifyStudyDatabase();
 
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
 
     // Get the latin square
-    const sequenceArray: Sequence[] | null = await this.getSequenceArray();
+    const sequenceArray = await this.getSequenceArray();
     if (!sequenceArray) {
       throw new Error('Latin square not initialized');
     }
 
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
     // Get modes
     const modes = await this.getModes(this.studyId);
 
@@ -497,9 +324,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async getAllParticipantNames() {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
+    await this.verifyStudyDatabase();
 
     const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
     const sequenceAssignmentCollection = collection(
@@ -508,193 +333,35 @@ export class FirebaseStorageEngine extends StorageEngine {
     );
     const allAssignmentDocs = await getDocs(sequenceAssignmentCollection);
 
-    return allAssignmentDocs.docs.map((d) => d.id);
+    return allAssignmentDocs.docs.map((d) => d.data().participantId);
   }
 
-  async getAllParticipantsData() {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
-    // Get all participants
-    const participantRefs = ref(
-      this.storage,
-      `${this.collectionPrefix}${this.studyId}/participants`,
-    );
-    const participants = await listAll(participantRefs);
-    const participantsData: ParticipantData[] = [];
-
-    const participantPulls = participants.items.map(async (participant) => {
-      const participantData = await this._getFromFirebaseStorageByRef(
-        participant,
-        'participantData',
-      );
-
-      if (isParticipantData(participantData)) {
-        participantsData.push(participantData);
-      }
-    });
-
-    await Promise.all(participantPulls);
-
-    return participantsData;
-  }
-
-  async getAudio(
+  async _getAudioUrl(
     task: string,
     participantId: string,
-  ) {
+  ): Promise<string | null> {
     const storage = getStorage();
+    const audioRef = ref(storage, `${this.collectionPrefix}${this.studyId}/audio/${participantId}_${task}`);
 
-    const url = await getDownloadURL(ref(storage, `${this.collectionPrefix}${this.studyId}/audio/${participantId}_${task}`));
-
-    const allAudioList = new Promise<string>((resolve) => {
-      const xhr = new XMLHttpRequest();
-      xhr.responseType = 'blob';
-      xhr.onload = () => {
-        const blob = xhr.response;
-
-        const _url = URL.createObjectURL(blob);
-
-        resolve(_url);
-      };
-      xhr.open('GET', url);
-      xhr.send();
-    });
-
-    return allAudioList;
+    try {
+      return await getDownloadURL(audioRef);
+    } catch {
+      console.warn(`Audio for task ${task} and participant ${participantId} not found.`);
+      return null;
+    }
   }
 
-  async getParticipantData(participantId?: string) {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
-    if (this.currentParticipantId === null && !participantId) {
-      throw new Error('Participant not initialized');
-    }
-
-    const participantData = await this._getFromFirebaseStorage(
-      `participants/${participantId || this.currentParticipantId}`,
-      'participantData',
+  async _setCompletedRealtime() {
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
     );
-
-    return isParticipantData(participantData) ? participantData : null;
-  }
-
-  async getParticipantTags(): Promise<string[]> {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
-    const participantData = await this.getParticipantData();
-    if (!participantData) {
-      throw new Error('Participant not initialized');
-    }
-
-    return participantData.participantTags;
-  }
-
-  async addParticipantTags(tags: string[]): Promise<void> {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
-    const participantData = await this.getParticipantData();
-    if (!participantData) {
-      throw new Error('Participant not initialized');
-    }
-
-    participantData.participantTags = [...new Set([...participantData.participantTags, ...tags])];
-
-    await this._pushToFirebaseStorage(
-      `participants/${this.currentParticipantId}`,
-      'participantData',
-      participantData,
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      this.currentParticipantId,
     );
-  }
-
-  async removeParticipantTags(tags: string[]): Promise<void> {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
-    const participantData = await this.getParticipantData();
-    if (!participantData) {
-      throw new Error('Participant not initialized');
-    }
-
-    participantData.participantTags = participantData.participantTags.filter((tag) => !tags.includes(tag));
-
-    await this._pushToFirebaseStorage(
-      `participants/${this.currentParticipantId}`,
-      'participantData',
-      participantData,
-    );
-  }
-
-  async nextParticipant() {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
-    // Generate a new participant id
-    const newParticipantId = uuidv4();
-
-    // Set current participant id
-    await this.localForage.setItem('currentParticipantId', newParticipantId);
-  }
-
-  async verifyCompletion() {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
-
-    // Get the participantData
-    const participantData = await this.getParticipantData();
-    if (!participantData) {
-      throw new Error('Participant not initialized');
-    }
-
-    // Get modes
-    const modes = await this.getModes(this.studyId);
-
-    if (participantData.completed) {
-      return true;
-    }
-
-    const serverEndTime = Object.values(participantData.answers).map((answer) => answer.endTime).reduce((a, b) => Math.max(a, b), 0);
-    const localEndTime = Object.values(this.participantData?.answers || {}).map((answer) => answer.endTime).reduce((a, b) => Math.max(a, b), 0);
-    if (this.participantData && serverEndTime === localEndTime) {
-      this.participantData.completed = true;
-      if (modes.dataCollectionEnabled) {
-        await this._pushToFirebaseStorage(
-          `participants/${this.currentParticipantId}`,
-          'participantData',
-          this.participantData,
-          true,
-        );
-      }
-
-      const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
-      const sequenceAssignmentCollection = collection(
-        sequenceAssignmentDoc,
-        'sequenceAssignment',
-      );
-      const participantSequenceAssignmentDoc = doc(
-        sequenceAssignmentCollection,
-        this.currentParticipantId,
-      );
-      await updateDoc(participantSequenceAssignmentDoc, { completed: serverTimestamp() });
-
-      return true;
-    }
-
-    return false;
+    await updateDoc(participantSequenceAssignmentDoc, { completed: serverTimestamp() });
   }
 
   private userManagementData: Record<string, unknown> = {};
@@ -812,97 +479,30 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async getAllParticipantsDataByStudy(studyId: string) {
-    const currentStorageRef = ref(
-      this.storage,
-      `${this.collectionPrefix}${studyId}/participants`,
-    );
-
-    // Get all participants
-    const participants = await listAll(currentStorageRef);
-    const participantsData: ParticipantData[] = [];
-
-    const participantPulls = participants.items.map(async (participant) => {
-      const participantData = await this._getFromFirebaseStorageByRef(
-        participant,
-        'participantData',
-      );
-
-      if (isParticipantData(participantData)) {
-        participantsData.push(participantData);
-      }
-    });
-
-    await Promise.all(participantPulls);
-
-    return participantsData;
-  }
-
-  async rejectParticipant(studyId: string, participantId: string, reason: string) {
+  async _rejectParticipantRealtime(participantId: string) {
     const studyCollection = collection(
       this.firestore,
-      `${this.collectionPrefix}${studyId}`,
-    );
-    const participantRef = ref(
-      this.storage,
-      `${this.collectionPrefix}${studyId}/participants/${participantId}_participantData`,
-    );
-    const participant = await this._getFromFirebaseStorageByRef(
-      participantRef,
-      'participantData',
+      `${this.collectionPrefix}${this.studyId}`,
     );
 
-    try {
-      // If the user doesn't exist or is already rejected, return
-      if (
-        !participant
-        || !isParticipantData(participant)
-        || participant.rejected
-      ) {
-        return;
-      }
-
-      // set reject flag
-      participant.rejected = {
-        reason,
-        timestamp: new Date().getTime(),
-      };
-      await this._pushToFirebaseStorageByRef(
-        participantRef,
-        'participantData',
-        participant,
-        true,
-      );
-
-      // set sequence assignment to empty string, keep the timestamp
-      const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
-      const sequenceAssignmentCollection = collection(
-        sequenceAssignmentDoc,
-        'sequenceAssignment',
-      );
-      const participantSequenceAssignmentDoc = doc(
-        sequenceAssignmentCollection,
-        participantId,
-      );
-      await updateDoc(participantSequenceAssignmentDoc, { rejected: true });
-    } catch {
-      console.warn('Failed to reject the participant.');
-    }
-  }
-
-  async rejectCurrentParticipant(studyId: string, reason: string) {
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
-
-    return await this.rejectParticipant(studyId, this.currentParticipantId, reason);
+    // set sequence assignment to empty string, keep the timestamp
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      participantId,
+    );
+    await updateDoc(participantSequenceAssignmentDoc, { rejected: true });
   }
 
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
     const revisitModesDoc = doc(
       this.firestore,
-      'metadata',
       `${this.collectionPrefix}${studyId}`,
+      'metadata',
     );
 
     return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
@@ -911,8 +511,8 @@ export class FirebaseStorageEngine extends StorageEngine {
   async getModes(studyId: string) {
     const revisitModesDoc = doc(
       this.firestore,
-      'metadata',
       `${this.collectionPrefix}${studyId}`,
+      'metadata',
     );
     const revisitModesSnapshot = await getDoc(revisitModesDoc);
 
@@ -1075,7 +675,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async getSnapshots(studyId: string) {
     try {
-      const metadataDoc = doc(this.firestore, 'metadata', 'collections');
+      const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'metadata', 'collections');
       const metadataSnapshot = await getDoc(metadataDoc);
 
       if (metadataSnapshot.exists()) {
@@ -1175,7 +775,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   // Function to add collection name to metadata
   async _addDirectoryNameToMetadata(directoryName: string) {
     try {
-      const metadataDoc = doc(this.firestore, 'metadata', 'collections');
+      const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
       await setDoc(
         metadataDoc,
         { [directoryName]: { enabled: true, name: directoryName } },
@@ -1192,7 +792,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     newName: string,
   ): Promise<FirebaseActionResponse> {
     try {
-      const metadataDoc = doc(this.firestore, 'metadata', 'collections');
+      const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
       await setDoc(
         metadataDoc,
         { [directoryName]: { enabled: true, name: newName } },
@@ -1222,7 +822,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async _removeNameFromMetadata(directoryName: string) {
     try {
-      const metadataDoc = doc(this.firestore, 'metadata', 'collections');
+      const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
       const metadataSnapshot = await getDoc(metadataDoc);
 
       if (metadataSnapshot.exists()) {
@@ -1373,111 +973,5 @@ export class FirebaseStorageEngine extends StorageEngine {
       console.error('Error checking if directory exists:', error);
       throw error;
     }
-  }
-
-  private _verifyStudyDatabase(
-    db: CollectionReference<DocumentData, DocumentData> | undefined,
-  ): db is CollectionReference<DocumentData, DocumentData> {
-    return db !== undefined;
-  }
-
-  // Firebase storage helpers
-  private async _getFromFirebaseStorage<T extends FirebaseStorageObjectType>(
-    prefix: string,
-    type: T,
-  ) {
-    const storageRef = ref(
-      this.storage,
-      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
-    );
-
-    let storageObj: FirebaseStorageObject<T> = {} as FirebaseStorageObject<T>;
-    try {
-      const url = await getDownloadURL(storageRef);
-      const response = await fetch(url);
-      const fullProvStr = await response.text();
-      storageObj = JSON.parse(fullProvStr);
-    } catch {
-      console.warn(
-        `${prefix} does not have ${type} for ${this.collectionPrefix}${this.studyId}.`,
-      );
-    }
-
-    return storageObj;
-  }
-
-  private async _getFromFirebaseStorageByRef<T extends FirebaseStorageObjectType>(storageRef: StorageReference, type: T) {
-    let storageObj: FirebaseStorageObject<T> = {} as FirebaseStorageObject<T>;
-
-    try {
-      const url = await getDownloadURL(storageRef);
-      const response = await fetch(url);
-      const fullProvStr = await response.text();
-      storageObj = JSON.parse(fullProvStr);
-    } catch {
-      console.warn(`${storageRef} with type ${type} not found.`);
-    }
-
-    return storageObj;
-  }
-
-  private async _cacheFirebaseStorage1Year(storageRef: StorageReference) {
-    await updateMetadata(storageRef, {
-      cacheControl: 'public,max-age=31536000',
-    });
-  }
-
-  private async _pushToFirebaseStorage<T extends FirebaseStorageObjectType>(
-    prefix: string,
-    type: T,
-    objectToUpload: FirebaseStorageObject<T>,
-    cache?: boolean,
-  ) {
-    const storageRef = ref(
-      this.storage,
-      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
-    );
-
-    if (objectToUpload instanceof Blob) {
-      await uploadBytes(storageRef, objectToUpload);
-    } else if (Object.keys(objectToUpload).length > 0) {
-      const blob = new Blob([JSON.stringify(objectToUpload)], {
-        type: 'application/json',
-      });
-      await uploadBytes(storageRef, blob);
-    }
-
-    if (cache) {
-      await this._cacheFirebaseStorage1Year(storageRef);
-    }
-  }
-
-  private async _pushToFirebaseStorageByRef<T extends FirebaseStorageObjectType>(
-    storageRef: StorageReference,
-    type: T,
-    objectToUpload: FirebaseStorageObject<T>,
-    cache?: boolean,
-  ) {
-    if (Object.keys(objectToUpload).length > 0) {
-      const blob = new Blob([JSON.stringify(objectToUpload)], {
-        type: 'application/json',
-      });
-      await uploadBytes(storageRef, blob);
-    }
-
-    if (cache) {
-      await this._cacheFirebaseStorage1Year(storageRef);
-    }
-  }
-
-  private async _deleteFromFirebaseStorage<T extends 'sequenceArray'>(
-    prefix: string,
-    type: T,
-  ) {
-    const storageRef = ref(
-      this.storage,
-      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
-    );
-    await deleteObject(storageRef);
   }
 }
