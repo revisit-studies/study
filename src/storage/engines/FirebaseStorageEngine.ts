@@ -27,6 +27,7 @@ import {
   where,
   updateDoc,
   writeBatch,
+  Timestamp,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -37,6 +38,7 @@ import {
   StorageObjectType,
   StorageObject,
   UserManagementData,
+  SequenceAssignment,
 } from './types';
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
@@ -203,12 +205,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    // Get the latin square
-    const sequenceArray = await this.getSequenceArray();
-    if (!sequenceArray) {
-      throw new Error('Latin square not initialized');
-    }
-
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
@@ -241,25 +237,28 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const firstReject = rejectedDocs.docs[0];
       const firstRejectTime = firstReject.data().timestamp;
       if (modes.dataCollectionEnabled) {
-        await setDoc(firstReject.ref, { claimed: true });
-        await setDoc(participantSequenceAssignmentDoc, {
+        // Make the sequence assignment document for the participant
+        const participantSequenceAssignmentData: SequenceAssignment = {
           participantId: this.currentParticipantId,
           timestamp: firstRejectTime, // Use the timestamp of the first reject
-          rejected: false,
+          rejected: true,
           claimed: false,
           completed: null,
-          createdTime: serverTimestamp(),
-        });
+          createdTime: serverTimestamp() as unknown as Timestamp,
+        };
+        await setDoc(firstReject.ref, { claimed: true });
+        await setDoc(participantSequenceAssignmentDoc, participantSequenceAssignmentData);
       }
     } else if (modes.dataCollectionEnabled) {
-      await setDoc(participantSequenceAssignmentDoc, {
+      const participantSequenceAssignmentData: SequenceAssignment = {
         participantId: this.currentParticipantId,
-        timestamp: serverTimestamp(),
+        timestamp: serverTimestamp() as unknown as Timestamp,
         rejected: false,
         claimed: false,
         completed: null,
-        createdTime: serverTimestamp(),
-      });
+        createdTime: serverTimestamp() as unknown as Timestamp,
+      };
+      await setDoc(participantSequenceAssignmentDoc, participantSequenceAssignmentData);
     }
 
     // Query all the intents to get a sequence and find our position in the queue
@@ -271,14 +270,20 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const intentDocs = await getDocs(intentsQuery);
     const intents = intentDocs.docs.map((intent) => intent.data());
 
+    // Get the latin square
+    const sequenceArray = await this.getSequenceArray();
+    if (!sequenceArray) {
+      throw new Error('Latin square not initialized');
+    }
+
     // Get the current row
     const intentIndex = intents.filter((intent) => !intent.rejected).findIndex(
       (intent) => intent.participantId === this.currentParticipantId,
     ) % sequenceArray.length;
-    const selectedIndex = intentIndex === -1
-      ? Math.floor(Math.random() * sequenceArray.length - 1)
-      : intentIndex;
-    const currentRow = sequenceArray[selectedIndex];
+    if (intentIndex === -1 && sequenceArray.length === 0) {
+      throw new Error('Something really bad happened with sequence assignment');
+    }
+    const currentRow = sequenceArray[intentIndex];
 
     if (!currentRow) {
       throw new Error('Latin square is empty');
@@ -301,7 +306,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     );
     const allAssignmentDocs = await getDocs(sequenceAssignmentCollection);
 
-    return allAssignmentDocs.docs.map((d) => d.data().participantId);
+    return allAssignmentDocs.docs.map((d) => d.id);
   }
 
   async _getAudioUrl(

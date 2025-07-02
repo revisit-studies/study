@@ -29,6 +29,15 @@ export interface UserWrapped {
   adminVerification:boolean
 }
 
+export type SequenceAssignment = {
+  participantId: string;
+  timestamp: Timestamp | number; // Use Timestamp for Firebase, number for local storage
+  rejected: boolean;
+  claimed: boolean;
+  completed: Timestamp | number | null;
+  createdTime: Timestamp | number;
+};
+
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
