@@ -31,50 +31,18 @@ import {
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
 import {
-  UserWrapped,
+  CloudStorageEngine,
   StoredUser,
   REVISIT_MODE,
   StorageObjectType,
   StorageObject,
-  StorageEngine,
+  UserManagementData,
 } from './types';
-import { RevisitNotification } from '../../utils/notifications';
 
-export interface FirebaseError {
-  title: string;
-  message: string;
-  details?: string;
-}
-
-// Success response always has list of notifications which are then presented to user. Notifications can contain pieces which are individual errors from upstream functions.
-interface FirebaseActionResponseSuccess {
-  status: 'SUCCESS';
-  error?: undefined;
-  notifications?: RevisitNotification[];
-}
-
-// Failed responses never take notifications, only report error. Notifications will be handled in downstream functions.
-interface FirebaseActionResponseFailed {
-  status: 'FAILED';
-  error: FirebaseError;
-  notifications?: undefined;
-}
-
-export type FirebaseActionResponse =
-  | FirebaseActionResponseSuccess
-  | FirebaseActionResponseFailed;
-
-export interface SnapshotNameItem {
-  originalName: string;
-  alternateName: string;
-}
-
-export class FirebaseStorageEngine extends StorageEngine {
+export class FirebaseStorageEngine extends CloudStorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
 
   private firestore: Firestore;
-
-  private collectionPrefix = import.meta.env.DEV ? 'dev-' : 'prod-';
 
   private studyCollection: CollectionReference<DocumentData, DocumentData>;
 
@@ -323,7 +291,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return { currentRow, creationIndex };
   }
 
-  async getAllParticipantNames() {
+  async getAllParticipantIds() {
     await this.verifyStudyDatabase();
 
     const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
@@ -364,10 +332,14 @@ export class FirebaseStorageEngine extends StorageEngine {
     await updateDoc(participantSequenceAssignmentDoc, { completed: serverTimestamp() });
   }
 
-  private userManagementData: Record<string, unknown> = {};
-
   // Gets data from the user-management collection based on the inputted string
-  async getUserManagementData<T extends 'authentication' | 'adminUsers'>(key: T): Promise<(T extends 'authentication' ? { isEnabled: boolean } : { adminUsersList: StoredUser[] }) | null> {
+  async getUserManagementData(key: 'authentication'): Promise<{ isEnabled: boolean } | undefined>;
+
+  async getUserManagementData(key: 'adminUsers'): Promise<{ adminUsersList: StoredUser[] } | undefined>;
+
+  async getUserManagementData(
+    key: 'authentication' | 'adminUsers',
+  ): Promise<{ isEnabled: boolean } | { adminUsersList: StoredUser[] } | undefined> {
     if (Object.keys(this.userManagementData).length === 0) {
       // Get the user-management collection in Firestore
       const userManagementCollection = collection(
@@ -380,59 +352,32 @@ export class FirebaseStorageEngine extends StorageEngine {
       const docsObject = Object.fromEntries(
         querySnapshot.docs.map((queryDoc) => [queryDoc.id, queryDoc.data()]),
       );
-      this.userManagementData = docsObject;
+      this.userManagementData = docsObject as UserManagementData;
     }
     if (key in this.userManagementData) {
-      return this.userManagementData[key] as T extends 'authentication' ? { isEnabled: boolean } : { adminUsersList: StoredUser[] };
-    }
-    return null;
-  }
-
-  async validateUser(user: UserWrapped | null, refresh = false) {
-    if (refresh) {
-      this.userManagementData = {};
-    }
-
-    if (user?.user) {
-      // Case 1: Database exists
-      const authInfo = await this.getUserManagementData('authentication');
-      if (authInfo?.isEnabled) {
-        const adminUsers = await this.getUserManagementData('adminUsers');
-        if (adminUsers && adminUsers.adminUsersList) {
-          const adminUsersObject = Object.fromEntries(
-            adminUsers.adminUsersList.map((storedUser: StoredUser) => [
-              storedUser.email,
-              storedUser.uid,
-            ]),
-          );
-          // Verifies that, if the user has signed in and thus their UID is added to the Firestore, that the current UID matches the Firestore entries UID. Prevents impersonation (otherwise, users would be able to alter email to impersonate).
-          const isAdmin = user.user.email
-            && (adminUsersObject[user.user.email] === user.user.uid
-              || adminUsersObject[user.user.email] === null);
-          if (isAdmin) {
-            // Add UID to user in collection if not existent.
-            if (user.user.email && adminUsersObject[user.user.email] === null) {
-              const adminUser: StoredUser | undefined = adminUsers.adminUsersList.find(
-                (u: StoredUser) => u.email === user.user!.email,
-              );
-              if (adminUser) {
-                adminUser.uid = user.user.uid;
-              }
-              await setDoc(
-                doc(this.firestore, 'user-management', 'adminUsers'),
-                {
-                  adminUsersList: adminUsers.adminUsersList,
-                },
-              );
-            }
-            return true;
-          }
-          return false;
+      // Type narrowing to ensure correct return type
+      if (key === 'authentication') {
+        const value = this.userManagementData[key];
+        if (value && typeof value === 'object' && 'isEnabled' in value) {
+          return value as { isEnabled: boolean };
+        }
+      } else if (key === 'adminUsers') {
+        const value = this.userManagementData[key];
+        if (value && typeof value === 'object' && 'adminUsersList' in value) {
+          return value as { adminUsersList: StoredUser[] };
         }
       }
-      return true;
     }
-    return false;
+    return undefined;
+  }
+
+  async _updateAdminUsersList(adminUsers: { adminUsersList: StoredUser[] }) {
+    await setDoc(
+      doc(this.firestore, 'user-management', 'adminUsers'),
+      {
+        adminUsersList: adminUsers.adminUsersList,
+      },
+    );
   }
 
   async changeAuth(bool: boolean) {
@@ -563,116 +508,6 @@ export class FirebaseStorageEngine extends StorageEngine {
     };
   }
 
-  async createSnapshot(
-    studyId: string,
-    deleteData: boolean,
-  ): Promise<FirebaseActionResponse> {
-    const sourceName = `${this.collectionPrefix}${studyId}`;
-
-    if (!(await this._directoryExists(sourceName))) {
-      console.warn(`Source directory ${sourceName} does not exist.`);
-
-      return {
-        status: 'FAILED',
-        error: {
-          message:
-            'There is currently no data in your study. A snapshot could not be created.',
-          title: 'Failed to Create Snapshot.',
-        },
-      };
-    }
-
-    const today = new Date();
-    const year = today.getUTCFullYear();
-    const month = (today.getUTCMonth() + 1).toString().padStart(2, '0');
-    const date = today.getUTCDate().toString().padStart(2, '0');
-    const hours = today.getUTCHours().toString().padStart(2, '0');
-    const minutes = today.getUTCMinutes().toString().padStart(2, '0');
-    const seconds = today.getUTCSeconds().toString().padStart(2, '0');
-
-    const formattedDate = `${year}-${month}-${date}T${hours}:${minutes}:${seconds}`;
-
-    const targetName = `${this.collectionPrefix}${studyId}-snapshot-${formattedDate}`;
-
-    await this._copyDirectory(`${sourceName}/configs`, `${targetName}/configs`);
-    await this._copyDirectory(
-      `${sourceName}/participants`,
-      `${targetName}/participants`,
-    );
-    await this._copyDirectory(sourceName, targetName);
-    await this._copyCollection(sourceName, targetName);
-    await this._addDirectoryNameToMetadata(targetName);
-
-    const createSnapshotSuccessNotifications: RevisitNotification[] = [];
-    if (deleteData) {
-      const removeSnapshotResponse = await this.removeSnapshotOrLive(
-        sourceName,
-        false,
-      );
-      if (removeSnapshotResponse.status === 'FAILED') {
-        createSnapshotSuccessNotifications.push({
-          title: removeSnapshotResponse.error.title,
-          message: removeSnapshotResponse.error.message,
-          color: 'red',
-        });
-      } else {
-        createSnapshotSuccessNotifications.push({
-          title: 'Success!',
-          message: 'Successfully deleted live data.',
-          color: 'green',
-        });
-      }
-    }
-    createSnapshotSuccessNotifications.push({
-      message: 'Successfully created snapshot',
-      title: 'Success!',
-      color: 'green',
-    });
-    return {
-      status: 'SUCCESS',
-      notifications: createSnapshotSuccessNotifications,
-    };
-  }
-
-  async removeSnapshotOrLive(
-    targetName: string,
-    includeMetadata: boolean,
-  ): Promise<FirebaseActionResponse> {
-    try {
-      const targetNameWithPrefix = targetName.startsWith(this.collectionPrefix)
-        ? targetName
-        : `${this.collectionPrefix}${targetName}`;
-
-      await this._deleteDirectory(`${targetNameWithPrefix}/configs`);
-      await this._deleteDirectory(`${targetNameWithPrefix}/participants`);
-      await this._deleteDirectory(targetNameWithPrefix);
-      await this._deleteCollection(targetNameWithPrefix);
-
-      if (includeMetadata) {
-        await this._removeNameFromMetadata(targetNameWithPrefix);
-      }
-      return {
-        status: 'SUCCESS',
-        notifications: [
-          {
-            message: 'Successfully deleted snapshot or live data.',
-            title: 'Success!',
-            color: 'green',
-          },
-        ],
-      };
-    } catch {
-      return {
-        status: 'FAILED',
-        error: {
-          title: 'Failed to delete live data or snapshot',
-          message:
-            'There was an unspecified error when trying to remove a snapshot or live data.',
-        },
-      };
-    }
-  }
-
   async getSnapshots(studyId: string) {
     try {
       const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'metadata', 'collections');
@@ -694,7 +529,7 @@ export class FirebaseStorageEngine extends StorageEngine {
               && typeof value === 'object'
               && value.enabled === true
             ) {
-              transformedValue = value.name;
+              transformedValue = value.name as string;
             } else {
               transformedValue = null;
             }
@@ -716,62 +551,6 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async restoreSnapshot(
-    studyId: string,
-    snapshotName: string,
-  ): Promise<FirebaseActionResponse> {
-    const originalName = `${this.collectionPrefix}${studyId}`;
-    // Snapshot current collection
-    const successNotifications: RevisitNotification[] = [];
-    try {
-      const createSnapshotResponse = await this.createSnapshot(studyId, true);
-      if (createSnapshotResponse.status === 'FAILED') {
-        console.warn('No live data to capture.');
-        successNotifications.push({
-          title: createSnapshotResponse.error.title,
-          message: createSnapshotResponse.error.message,
-          color: 'yellow',
-        });
-      } else {
-        successNotifications.push({
-          title: 'Success!',
-          message: 'Successfully created snapshot of live data.',
-          color: 'green',
-        });
-      }
-
-      await this._copyDirectory(
-        `${snapshotName}/configs`,
-        `${originalName}/configs`,
-      );
-      await this._copyDirectory(
-        `${snapshotName}/participants`,
-        `${originalName}/participants`,
-      );
-      await this._copyDirectory(snapshotName, originalName);
-      await this._copyCollection(snapshotName, originalName);
-      successNotifications.push({
-        message: 'Successfully restored snapshot to live data.',
-        title: 'Success!',
-        color: 'green',
-      });
-      return {
-        status: 'SUCCESS',
-        notifications: successNotifications,
-      };
-    } catch (error) {
-      console.error('Error trying to delete a snapshot', error);
-      return {
-        status: 'FAILED',
-        error: {
-          title: 'Failed to restore a snapshot fully.',
-          message:
-            'There was an unspecified error when trying to restore this snapshot.',
-        },
-      };
-    }
-  }
-
   // Function to add collection name to metadata
   async _addDirectoryNameToMetadata(directoryName: string) {
     try {
@@ -784,39 +563,6 @@ export class FirebaseStorageEngine extends StorageEngine {
     } catch (error) {
       console.error('Error adding collection to metadata:', error);
       throw error;
-    }
-  }
-
-  async renameSnapshot(
-    directoryName: string,
-    newName: string,
-  ): Promise<FirebaseActionResponse> {
-    try {
-      const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
-      await setDoc(
-        metadataDoc,
-        { [directoryName]: { enabled: true, name: newName } },
-        { merge: true },
-      );
-      return {
-        status: 'SUCCESS',
-        notifications: [
-          {
-            message: 'Successfully renamed snapshot.',
-            title: 'Success!',
-            color: 'green',
-          },
-        ],
-      };
-    } catch (error) {
-      console.error('Error renaming collection in metadata', error);
-      return {
-        status: 'FAILED',
-        error: {
-          title: 'Failed to Rename Snapshot.',
-          message: 'There was an error when trying to rename the snapshot.',
-        },
-      };
     }
   }
 
@@ -840,6 +586,15 @@ export class FirebaseStorageEngine extends StorageEngine {
       console.error('Error removing collection from metadata:', error);
       throw error;
     }
+  }
+
+  async _changeNameInMetadata(oldName: string, newName: string) {
+    const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
+    await setDoc(
+      metadataDoc,
+      { [oldName]: { enabled: true, name: newName } },
+      { merge: true },
+    );
   }
 
   async _deleteDirectory(directoryPath: string) {
@@ -885,7 +640,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async _copyCollection(
+  async _copyRealtimeData(
     sourceCollectionName: string,
     targetCollectionName: string,
   ) {
@@ -932,7 +687,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     await batch.commit();
   }
 
-  async _deleteCollection(sourceCollectionName: string) {
+  async _deleteRealtimeData(sourceCollectionName: string) {
     const sourceCollectionRef = collection(
       this.firestore,
       sourceCollectionName,

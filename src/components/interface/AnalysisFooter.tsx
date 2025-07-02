@@ -20,7 +20,7 @@ import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
 
 function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
-    return storageEngine.getAllParticipantNames();
+    return storageEngine.getAllParticipantIds();
   }
   return null;
 }
