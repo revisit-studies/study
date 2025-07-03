@@ -84,7 +84,7 @@ export function AppAside() {
           </Tooltip>
           {isAnalysis ? (
             <Tooltip
-              label="Study Browser cannot be closed during replay mode"
+              label="The study browser cannot be closed in replay mode"
               withinPortal
             >
               <CloseButton
