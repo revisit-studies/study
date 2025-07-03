@@ -1,4 +1,5 @@
 import { ParticipantData } from '../types';
+import type { CloudStorageEngine, StorageEngine } from './types';
 
 export async function hash(input: string) {
   const msgUint8 = new TextEncoder().encode(input);
@@ -11,4 +12,8 @@ export async function hash(input: string) {
 export function isParticipantData(obj: unknown): obj is ParticipantData {
   const potentialParticipantData = obj as ParticipantData;
   return potentialParticipantData.participantId !== undefined;
+}
+
+export function isCloudStorageEngine(engine: StorageEngine): engine is CloudStorageEngine {
+  return engine.isCloudEngine();
 }

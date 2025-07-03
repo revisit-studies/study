@@ -456,10 +456,11 @@ export abstract class StorageEngine {
   }
 
   // Rejects a participant with the given participantId and reason.
-  async rejectParticipant(participantId: string, reason: string) {
+  async rejectParticipant(participantId: string, reason: string, studyId?: string) {
     const participant = await this._getFromStorage(
       `participants/${participantId}`,
       'participantData',
+      studyId,
     );
 
     try {

@@ -9,6 +9,7 @@ import { LoadingOverlay } from '@mantine/core';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { UserWrapped } from '../../storage/engines/types';
+import { isCloudStorageEngine } from '../../storage/engines/utils';
 
 // Defines default AuthContextValue
 interface AuthContextValue {
@@ -86,7 +87,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   };
 
   const verifyAdminStatus = async (inputUser: UserWrapped) => {
-    if (storageEngine) {
+    if (storageEngine && isCloudStorageEngine(storageEngine)) {
       return await storageEngine.validateUser(inputUser, true);
     }
     return false;

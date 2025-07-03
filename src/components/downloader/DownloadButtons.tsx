@@ -11,7 +11,7 @@ type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData
 
 export function DownloadButtons({
   visibleParticipants, studyId, gap, fileName,
-}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string }) {
+}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null }) {
   const [openDownload, { open, close }] = useDisclosure(false);
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
 
