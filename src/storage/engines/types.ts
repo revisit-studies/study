@@ -306,8 +306,15 @@ export abstract class StorageEngine {
     const intentIndex = intents.filter((intent) => !intent.rejected).findIndex(
       (intent) => intent.participantId === this.currentParticipantId,
     ) % sequenceArray.length;
-    if (intentIndex === -1 && sequenceArray.length === 0) {
+    if (sequenceArray.length === 0) {
       throw new Error('Something really bad happened with sequence assignment');
+    }
+    // If index = -1, we probably have data collection disabled. Give a random assignment.
+    if (intentIndex === -1) {
+      return {
+        currentRow: sequenceArray[Math.floor(Math.random() * sequenceArray.length)],
+        creationIndex: 1,
+      };
     }
     const currentRow = sequenceArray[intentIndex];
 
@@ -720,7 +727,7 @@ export interface SnapshotNameItem {
 
 export type UserManagementData = { authentication?: { isEnabled: boolean }; adminUsers?: { adminUsersList: StoredUser[] } };
 
-// A StorageEngine that is specifically designed to work with cloud storage solutions like , Supabase, etc.
+// A StorageEngine that is specifically designed to work with cloud storage solutions like Firebase, Supabase, etc.
 // It extends the StorageEngine class and provides additional methods for cloud storage operations (such as authentication, snapshots, etc.).
 export abstract class CloudStorageEngine extends StorageEngine {
   protected cloudEngine = true;
