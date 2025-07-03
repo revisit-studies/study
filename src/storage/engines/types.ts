@@ -103,21 +103,30 @@ export abstract class StorageEngine {
   protected abstract _cacheStorageObject<T extends StorageObjectType>(prefix: string, type: T): Promise<void>;
 
   /* Realtime database --------------------------------------------------- */
-  // Sets the current config hash in the storage engine using the engine's realtime database.
-  protected abstract _setCurrentConfigHash(configHash: string): Promise<void>;
+  // Verifies that the realtime study database and storage is set up correctly.
+  protected abstract _verifyStudyDatabase(): Promise<void>;
 
   // Gets the current config hash from the storage engine using the engine's realtime database.
   protected abstract _getCurrentConfigHash(): Promise<string>;
 
-  // Verifies that the realtime study database and storage is set up correctly.
-  protected abstract _verifyStudyDatabase(): Promise<void>;
+  // Sets the current config hash in the storage engine using the engine's realtime database.
+  protected abstract _setCurrentConfigHash(configHash: string): Promise<void>;
 
   /* General/Realtime ---------------------------------------------------- */
-  // Sets the participant to completed in the sequence assignments in the realtime database.
-  abstract _setCompletedRealtime(): Promise<void>;
+  // Gets all sequence assignments for the given studyId.
+  protected abstract _getAllSequenceAssignments(studyId: string): Promise<Record<string, SequenceAssignment>>;
 
-  // Look through sequence assignments to find the current sequence for the participant. This should reuse a returned sequence to help ensure balanced assignments.
-  abstract _getSequence(): Promise<{creationIndex: number, currentRow: Sequence}>;
+  // Creates a sequence assignment for the given participantId and sequenceAssignment.
+  protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment): Promise<void>;
+
+  // Sets the participant to completed in the sequence assignments in the realtime database.
+  protected abstract _completeCurrentParticipantRealtime(): Promise<void>;
+
+  // Rejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments. TODO
+  protected abstract _rejectParticipantRealtime(participantId: string): Promise<void>;
+
+  // Helper function to claim a sequence assignment of the given participant in the realtime database.
+  protected abstract _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment): Promise<void>;
 
   // Sets up the study database (firestore, indexedDB, etc.) for the given studyId. Also sets the studyId in the storage engine.
   abstract initializeStudyDb(studyId: string): Promise<void>;
@@ -132,17 +141,8 @@ export abstract class StorageEngine {
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
 
-  // Gets all participant IDs for the given studyId
-  abstract getAllParticipantIds(): Promise<string[]>;
-
-  // Rejects the participant in the realtime database sequence assignments.
-  abstract _rejectParticipantRealtime(participantId: string): Promise<void>;
-
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
-  abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
-
-  // Gets the status counts for participants in the given studyId from the realtime sequence assignments.
-  abstract getParticipantsStatusCounts(studyId: string): Promise<{completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null}>;
+  protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
 
   /*
   * THROTTLED METHODS
@@ -211,8 +211,11 @@ export abstract class StorageEngine {
     }
 
     // Next check localForage for currentParticipantId
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
     const currentParticipantId = await this.localForage.getItem(
-      'currentParticipantId',
+      `currentParticipantId-${this.studyId}`,
     );
     if (currentParticipantId) {
       this.currentParticipantId = currentParticipantId as string;
@@ -222,7 +225,7 @@ export abstract class StorageEngine {
     // Else, generate new participant id and save it in localForage
     this.currentParticipantId = uuidv4();
     await this.localForage.setItem(
-      'currentParticipantId',
+      `currentParticipantId-${this.studyId}`,
       this.currentParticipantId,
     );
 
@@ -233,7 +236,90 @@ export abstract class StorageEngine {
   // This is used in the next participant logic and triggers a reload after clearing the participant ID.
   async clearCurrentParticipantId() {
     this.currentParticipantId = undefined;
-    return await this.localForage.removeItem('currentParticipantId');
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    return await this.localForage.removeItem(`currentParticipantId-${this.studyId}`);
+  }
+
+  // This function is one of the most critical functions in the storage engine.
+  // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
+  // It handles rejected participants and allows for reusing a rejected participant's sequence.
+  protected async _getSequence() {
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+    let sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
+
+    const modes = await this.getModes(this.studyId);
+
+    // Find all rejected documents
+    const rejectedDocs = Object.entries(sequenceAssignments)
+      .sort((a, b) => (a[1].timestamp as number) - (b[1].timestamp as number))
+      .filter(([_, doc]) => doc.rejected && !doc.claimed);
+    if (rejectedDocs.length > 0) {
+      const firstReject = rejectedDocs[0];
+      const firstRejectTime = firstReject[1].timestamp;
+      if (modes.dataCollectionEnabled) {
+        // Make the sequence assignment document for the participant
+        const participantSequenceAssignmentData: SequenceAssignment = {
+          participantId: this.currentParticipantId,
+          timestamp: firstRejectTime, // Use the timestamp of the first reject
+          rejected: true,
+          claimed: false,
+          completed: null,
+          createdTime: new Date().getTime(),
+        };
+        // Mark the first reject as claimed
+        await this._claimSequenceAssignment(firstReject[0], firstReject[1]);
+        // Set the participant's sequence assignment document
+        await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData);
+      }
+    } else if (modes.dataCollectionEnabled) {
+      const timestamp = new Date().getTime();
+      const participantSequenceAssignmentData: SequenceAssignment = {
+        participantId: this.currentParticipantId,
+        timestamp,
+        rejected: false,
+        claimed: false,
+        completed: null,
+        createdTime: timestamp,
+      };
+      await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData);
+    }
+
+    // Query all the intents to get a sequence and find our position in the queue
+    sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
+    const intents = Object.values(sequenceAssignments)
+      .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
+
+    // Get the latin square
+    const sequenceArray = await this.getSequenceArray();
+    if (!sequenceArray) {
+      throw new Error('Latin square not initialized');
+    }
+
+    // Get the current row
+    const intentIndex = intents.filter((intent) => !intent.rejected).findIndex(
+      (intent) => intent.participantId === this.currentParticipantId,
+    ) % sequenceArray.length;
+    if (intentIndex === -1 && sequenceArray.length === 0) {
+      throw new Error('Something really bad happened with sequence assignment');
+    }
+    const currentRow = sequenceArray[intentIndex];
+
+    if (!currentRow) {
+      throw new Error('Latin square is empty');
+    }
+
+    const creationSorted = intents.sort((a, b) => (a.createdTime as number) - (b.createdTime as number));
+
+    const creationIndex = creationSorted.findIndex((intent) => intent.participantId === this.currentParticipantId) + 1;
+
+    return { currentRow, creationIndex };
   }
 
   // Initializes or resumes a participant session for the given studyId. This will create a new participant data object if it does not exist, or update the existing one.
@@ -294,6 +380,15 @@ export abstract class StorageEngine {
     }
 
     return this.participantData;
+  }
+
+  // Gets all participant IDs for the given studyId
+  async getAllParticipantIds() {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
+    return Object.keys(sequenceAssignments);
   }
 
   // Gets the participant data for the current participant or a specific participantId.
@@ -426,8 +521,28 @@ export abstract class StorageEngine {
     return participantsData;
   }
 
+  async getParticipantsStatusCounts(studyId: string) {
+    const sequenceAssignments = this._getAllSequenceAssignments(studyId);
+    const sequenceAssignmentsData = Object.values(sequenceAssignments)
+      .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
+
+    const completed = sequenceAssignmentsData.filter((assignment) => assignment.completed && !assignment.rejected).length;
+    const rejected = sequenceAssignmentsData.filter((assignment) => assignment.rejected).length;
+    const inProgress = sequenceAssignmentsData.length - completed - rejected;
+    const minTime = sequenceAssignmentsData.length > 0 ? sequenceAssignmentsData[0].timestamp : null;
+    const maxTime = sequenceAssignmentsData.length > 0 ? sequenceAssignmentsData.at(-1)!.timestamp : null;
+
+    return {
+      completed,
+      rejected,
+      inProgress,
+      minTime,
+      maxTime,
+    };
+  }
+
   // The actual logic to save the answers to storage, called by the throttled saveAnswers method
-  async _saveAnswers() {
+  protected async _saveAnswers() {
     await this.verifyStudyDatabase();
 
     if (!this.currentParticipantId || this.participantData === undefined) {
@@ -497,7 +612,7 @@ export abstract class StorageEngine {
           'participantData',
         );
 
-        await this._setCompletedRealtime();
+        await this._completeCurrentParticipantRealtime();
       }
 
       return true;
@@ -625,7 +740,7 @@ export abstract class CloudStorageEngine extends StorageEngine {
   abstract getUserManagementData<T extends 'authentication' | 'adminUsers'>(key: T): Promise<(T extends 'authentication' ? { isEnabled: boolean } : { adminUsersList: StoredUser[] }) | undefined>;
 
   // Updates the user management data for the given key. This is used to update the authentication state or admin users list.
-  abstract _updateAdminUsersList(adminUsers: { adminUsersList: StoredUser[] }): Promise<void>;
+  protected abstract _updateAdminUsersList(adminUsers: { adminUsersList: StoredUser[] }): Promise<void>;
 
   // Changes the authentication state of the storage engine. This will enable or disable authentication for the storage engine.
   abstract changeAuth(bool: boolean): Promise<void>;
@@ -637,32 +752,32 @@ export abstract class CloudStorageEngine extends StorageEngine {
   abstract removeAdminUser(email: string): Promise<void>;
 
   /* Snapshots ----------------------------------------------------------- */
-  // Gets all snapshots for the given studyId. This will return an array of objects with the original name and alternate name (if available) of the snapshots.
+  // Gets all snapshots for the given studyId. This will return an array of objects with the original name and alternate name (if available) of the snapshots. TODO
   abstract getSnapshots(studyId: string): Promise<SnapshotNameItem[]>;
 
   // Checks if the storage directory for the given source exists.
-  abstract _directoryExists(source: string): Promise<boolean>;
+  protected abstract _directoryExists(source: string): Promise<boolean>;
 
   // Copies a storage directory and all its contents.
-  abstract _copyDirectory(source: string, target: string): Promise<void>;
+  protected abstract _copyDirectory(source: string, target: string): Promise<void>;
 
   // Deletes a storage directory and all its contents.
-  abstract _deleteDirectory(target: string): Promise<void>;
+  protected abstract _deleteDirectory(target: string): Promise<void>;
 
   // Copies the realtime data from the source to the target. This is used by createSnapshot to copy the realtime data associated with a snapshot.
-  abstract _copyRealtimeData(source: string, target: string): Promise<void>;
+  protected abstract _copyRealtimeData(source: string, target: string): Promise<void>;
 
   // Deletes the realtime data for the given target. This is used by removeSnapshotOrLive to delete the realtime data associated with a snapshot or live data.
-  abstract _deleteRealtimeData(target: string): Promise<void>;
+  protected abstract _deleteRealtimeData(target: string): Promise<void>;
 
   // Adds a directory name to the metadata. This is used by createSnapshot
-  abstract _addDirectoryNameToMetadata(target: string): Promise<void>;
+  protected abstract _addDirectoryNameToMetadata(target: string): Promise<void>;
 
   // Removes a snapshot from the metadata. This is used by removeSnapshotOrLive
-  abstract _removeNameFromMetadata(target: string): Promise<void>;
+  protected abstract _removeNameFromMetadata(target: string): Promise<void>;
 
   // Updates a snapshot in the metadata. This is used by renameSnapshot
-  abstract _changeNameInMetadata(oldName: string, newName: string): Promise<void>;
+  protected abstract _changeNameInMetadata(oldName: string, newName: string): Promise<void>;
 
   /*
   * HIGHER-LEVEL METHODS

@@ -20,14 +20,10 @@ import {
   getDoc,
   getDocs,
   initializeFirestore,
-  orderBy,
-  query,
   serverTimestamp,
   setDoc,
-  where,
   updateDoc,
   writeBatch,
-  Timestamp,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -102,16 +98,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return storageObj;
   }
 
-  protected async _cacheStorageObject<T extends StorageObjectType>(prefix: string, type: T) {
-    const storageRef = ref(
-      this.storage,
-      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
-    );
-    await updateMetadata(storageRef, {
-      cacheControl: 'public,max-age=31536000',
-    });
-  }
-
   protected async _pushToStorage<T extends StorageObjectType>(
     prefix: string,
     type: T,
@@ -143,6 +129,16 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await deleteObject(storageRef);
   }
 
+  protected async _cacheStorageObject<T extends StorageObjectType>(prefix: string, type: T) {
+    const storageRef = ref(
+      this.storage,
+      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
+    );
+    await updateMetadata(storageRef, {
+      cacheControl: 'public,max-age=31536000',
+    });
+  }
+
   protected async _verifyStudyDatabase() {
     // Throw an error if the db does not exist
     if (!this.studyCollection) {
@@ -150,14 +146,102 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  async connect() {
-    try {
-      await enableNetwork(this.firestore);
+  protected async _getCurrentConfigHash() {
+    await this.verifyStudyDatabase();
+    const configHashDoc = doc(
+      this.studyCollection,
+      'configHash',
+    );
+    const configHashDocData = await getDoc(configHashDoc);
+    return configHashDocData.exists() ? configHashDocData.data().configHash : null;
+  }
 
-      this.connected = true;
-    } catch {
-      console.warn('Failed to connect to Firebase');
+  protected async _setCurrentConfigHash(configHash: string) {
+    await this.verifyStudyDatabase();
+    const configHashDoc = doc(
+      this.studyCollection,
+      'configHash',
+    );
+    await setDoc(configHashDoc, { configHash });
+  }
+
+  protected async _getAllSequenceAssignments(studyId: string) {
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+    );
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+
+    const sequenceAssignments = await getDocs(sequenceAssignmentCollection);
+    return Object.fromEntries(sequenceAssignments.docs.map((d) => [d.id, d.data() as SequenceAssignment]));
+  }
+
+  protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
     }
+
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      participantId,
+    );
+
+    await setDoc(participantSequenceAssignmentDoc, sequenceAssignment);
+  }
+
+  protected async _completeCurrentParticipantRealtime() {
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      this.currentParticipantId,
+    );
+    await updateDoc(participantSequenceAssignmentDoc, { completed: serverTimestamp() });
+  }
+
+  protected async _rejectParticipantRealtime(participantId: string) {
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${this.studyId}`,
+    );
+
+    // set sequence assignment to empty string, keep the timestamp
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      participantId,
+    );
+    await updateDoc(participantSequenceAssignmentDoc, { rejected: true });
+  }
+
+  protected async _claimSequenceAssignment(participantId: string) {
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      participantId,
+    );
+
+    await setDoc(participantSequenceAssignmentDoc, { claimed: true }, { merge: true });
   }
 
   async initializeStudyDb(studyId: string) {
@@ -179,137 +263,49 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  async _getCurrentConfigHash() {
-    await this.verifyStudyDatabase();
-    const configHashDoc = doc(
-      this.studyCollection,
-      'configHash',
-    );
-    const configHashDocData = await getDoc(configHashDoc);
-    return configHashDocData.exists() ? configHashDocData.data().configHash : null;
+  async connect() {
+    try {
+      await enableNetwork(this.firestore);
+
+      this.connected = true;
+    } catch {
+      console.warn('Failed to connect to Firebase');
+    }
   }
 
-  async _setCurrentConfigHash(configHash: string) {
-    await this.verifyStudyDatabase();
-    const configHashDoc = doc(
-      this.studyCollection,
-      'configHash',
+  async getModes(studyId: string) {
+    const revisitModesDoc = doc(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+      'metadata',
     );
-    await setDoc(configHashDoc, { configHash });
+    const revisitModesSnapshot = await getDoc(revisitModesDoc);
+
+    if (revisitModesSnapshot.exists()) {
+      return revisitModesSnapshot.data() as Record<REVISIT_MODE, boolean>;
+    }
+
+    // Else set to default values
+    const defaultModes = {
+      dataCollectionEnabled: true,
+      studyNavigatorEnabled: true,
+      analyticsInterfacePubliclyAccessible: true,
+    };
+    await setDoc(revisitModesDoc, defaultModes);
+    return defaultModes;
   }
 
-  async _getSequence() {
-    await this.verifyStudyDatabase();
-
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
-
-    if (this.studyId === undefined) {
-      throw new Error('Study ID is not set');
-    }
-    // Get modes
-    const modes = await this.getModes(this.studyId);
-
-    // Note intent to get a sequence in the sequenceAssignment collection
-    const sequenceAssignmentDoc = doc(
-      this.studyCollection,
-      'sequenceAssignment',
-    );
-    // Initializes document
-    await setDoc(sequenceAssignmentDoc, {});
-    const sequenceAssignmentCollection = collection(
-      sequenceAssignmentDoc,
-      'sequenceAssignment',
-    );
-    const participantSequenceAssignmentDoc = doc(
-      sequenceAssignmentCollection,
-      this.currentParticipantId,
+  async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
+    const revisitModesDoc = doc(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+      'metadata',
     );
 
-    const rejectedQuery = query(
-      sequenceAssignmentCollection,
-      where('rejected', '==', true),
-      where('claimed', '==', false),
-    );
-    const rejectedDocs = await getDocs(rejectedQuery);
-    if (rejectedDocs.docs.length > 0) {
-      const firstReject = rejectedDocs.docs[0];
-      const firstRejectTime = firstReject.data().timestamp;
-      if (modes.dataCollectionEnabled) {
-        // Make the sequence assignment document for the participant
-        const participantSequenceAssignmentData: SequenceAssignment = {
-          participantId: this.currentParticipantId,
-          timestamp: firstRejectTime, // Use the timestamp of the first reject
-          rejected: true,
-          claimed: false,
-          completed: null,
-          createdTime: serverTimestamp() as unknown as Timestamp,
-        };
-        await setDoc(firstReject.ref, { claimed: true });
-        await setDoc(participantSequenceAssignmentDoc, participantSequenceAssignmentData);
-      }
-    } else if (modes.dataCollectionEnabled) {
-      const participantSequenceAssignmentData: SequenceAssignment = {
-        participantId: this.currentParticipantId,
-        timestamp: serverTimestamp() as unknown as Timestamp,
-        rejected: false,
-        claimed: false,
-        completed: null,
-        createdTime: serverTimestamp() as unknown as Timestamp,
-      };
-      await setDoc(participantSequenceAssignmentDoc, participantSequenceAssignmentData);
-    }
-
-    // Query all the intents to get a sequence and find our position in the queue
-    const intentsQuery = query(
-      sequenceAssignmentCollection,
-      // where('rejected', '==', false),
-      orderBy('timestamp', 'asc'),
-    );
-    const intentDocs = await getDocs(intentsQuery);
-    const intents = intentDocs.docs.map((intent) => intent.data());
-
-    // Get the latin square
-    const sequenceArray = await this.getSequenceArray();
-    if (!sequenceArray) {
-      throw new Error('Latin square not initialized');
-    }
-
-    // Get the current row
-    const intentIndex = intents.filter((intent) => !intent.rejected).findIndex(
-      (intent) => intent.participantId === this.currentParticipantId,
-    ) % sequenceArray.length;
-    if (intentIndex === -1 && sequenceArray.length === 0) {
-      throw new Error('Something really bad happened with sequence assignment');
-    }
-    const currentRow = sequenceArray[intentIndex];
-
-    if (!currentRow) {
-      throw new Error('Latin square is empty');
-    }
-
-    const creationSorted = intents.sort((a, b) => a.createdTime - b.createdTime);
-
-    const creationIndex = creationSorted.findIndex((intent) => intent.participantId === this.currentParticipantId) + 1;
-
-    return { currentRow, creationIndex };
+    return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
   }
 
-  async getAllParticipantIds() {
-    await this.verifyStudyDatabase();
-
-    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
-    const sequenceAssignmentCollection = collection(
-      sequenceAssignmentDoc,
-      'sequenceAssignment',
-    );
-    const allAssignmentDocs = await getDocs(sequenceAssignmentCollection);
-
-    return allAssignmentDocs.docs.map((d) => d.id);
-  }
-
-  async _getAudioUrl(
+  protected async _getAudioUrl(
     task: string,
     participantId: string,
   ): Promise<string | null> {
@@ -322,19 +318,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       console.warn(`Audio for task ${task} and participant ${participantId} not found.`);
       return null;
     }
-  }
-
-  async _setCompletedRealtime() {
-    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
-    const sequenceAssignmentCollection = collection(
-      sequenceAssignmentDoc,
-      'sequenceAssignment',
-    );
-    const participantSequenceAssignmentDoc = doc(
-      sequenceAssignmentCollection,
-      this.currentParticipantId,
-    );
-    await updateDoc(participantSequenceAssignmentDoc, { completed: serverTimestamp() });
   }
 
   // Gets data from the user-management collection based on the inputted string
@@ -376,7 +359,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return undefined;
   }
 
-  async _updateAdminUsersList(adminUsers: { adminUsersList: StoredUser[] }) {
+  protected async _updateAdminUsersList(adminUsers: { adminUsersList: StoredUser[] }) {
     await setDoc(
       doc(this.firestore, 'user-management', 'adminUsers'),
       {
@@ -429,90 +412,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  async _rejectParticipantRealtime(participantId: string) {
-    const studyCollection = collection(
-      this.firestore,
-      `${this.collectionPrefix}${this.studyId}`,
-    );
-
-    // set sequence assignment to empty string, keep the timestamp
-    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
-    const sequenceAssignmentCollection = collection(
-      sequenceAssignmentDoc,
-      'sequenceAssignment',
-    );
-    const participantSequenceAssignmentDoc = doc(
-      sequenceAssignmentCollection,
-      participantId,
-    );
-    await updateDoc(participantSequenceAssignmentDoc, { rejected: true });
-  }
-
-  async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
-    const revisitModesDoc = doc(
-      this.firestore,
-      `${this.collectionPrefix}${studyId}`,
-      'metadata',
-    );
-
-    return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
-  }
-
-  async getModes(studyId: string) {
-    const revisitModesDoc = doc(
-      this.firestore,
-      `${this.collectionPrefix}${studyId}`,
-      'metadata',
-    );
-    const revisitModesSnapshot = await getDoc(revisitModesDoc);
-
-    if (revisitModesSnapshot.exists()) {
-      return revisitModesSnapshot.data() as Record<REVISIT_MODE, boolean>;
-    }
-
-    // Else set to default values
-    const defaultModes = {
-      dataCollectionEnabled: true,
-      studyNavigatorEnabled: true,
-      analyticsInterfacePubliclyAccessible: true,
-    };
-    await setDoc(revisitModesDoc, defaultModes);
-    return defaultModes;
-  }
-
-  async getParticipantsStatusCounts(studyId: string) {
-    const studyCollection = collection(
-      this.firestore,
-      `${this.collectionPrefix}${studyId}`,
-    );
-    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
-    const sequenceAssignmentCollection = collection(
-      sequenceAssignmentDoc,
-      'sequenceAssignment',
-    );
-    const sequenceAssignmentsQuery = query(
-      sequenceAssignmentCollection,
-      orderBy('timestamp', 'asc'),
-    );
-
-    const sequenceAssignments = await getDocs(sequenceAssignmentsQuery);
-    const sequenceAssignmentsData = sequenceAssignments.docs.map((d) => d.data());
-
-    const completed = sequenceAssignmentsData.filter((assignment) => assignment.completed && !assignment.rejected).length;
-    const rejected = sequenceAssignmentsData.filter((assignment) => assignment.rejected).length;
-    const inProgress = sequenceAssignmentsData.length - completed - rejected;
-    const minTime = sequenceAssignmentsData.length > 0 ? sequenceAssignmentsData[0].timestamp : null;
-    const maxTime = sequenceAssignmentsData.length > 0 ? sequenceAssignmentsData.at(-1)!.timestamp : null;
-
-    return {
-      completed,
-      rejected,
-      inProgress,
-      minTime,
-      maxTime,
-    };
-  }
-
   async getSnapshots(studyId: string) {
     try {
       const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'metadata', 'collections');
@@ -556,65 +455,22 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  // Function to add collection name to metadata
-  async _addDirectoryNameToMetadata(directoryName: string) {
-    try {
-      const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
-      await setDoc(
-        metadataDoc,
-        { [directoryName]: { enabled: true, name: directoryName } },
-        { merge: true },
-      );
-    } catch (error) {
-      console.error('Error adding collection to metadata:', error);
-      throw error;
-    }
-  }
-
-  async _removeNameFromMetadata(directoryName: string) {
-    try {
-      const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
-      const metadataSnapshot = await getDoc(metadataDoc);
-
-      if (metadataSnapshot.exists()) {
-        const metadata = metadataSnapshot.data();
-        if (metadata[directoryName]) {
-          delete metadata[directoryName];
-          await setDoc(metadataDoc, metadata);
-        } else {
-          console.warn(`${directoryName} does not exist in metadata.`);
-        }
-      } else {
-        console.warn('No metadata found.');
-      }
-    } catch (error) {
-      console.error('Error removing collection from metadata:', error);
-      throw error;
-    }
-  }
-
-  async _changeNameInMetadata(oldName: string, newName: string) {
-    const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
-    await setDoc(
-      metadataDoc,
-      { [oldName]: { enabled: true, name: newName } },
-      { merge: true },
-    );
-  }
-
-  async _deleteDirectory(directoryPath: string) {
+  protected async _directoryExists(directoryPath: string) {
     try {
       const directoryRef = ref(this.storage, directoryPath);
       const directorySnapshot = await listAll(directoryRef);
-
-      const deletePromises = directorySnapshot.items.map((fileRef) => deleteObject(fileRef));
-      await Promise.all(deletePromises);
-    } catch (error) {
-      console.error('Error deleting files in directory:', error);
+      return directorySnapshot.items.length > 0;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      if (error.code === 'storage/object-not-found') {
+        return false;
+      }
+      console.error('Error checking if directory exists:', error);
+      throw error;
     }
   }
 
-  async _copyDirectory(sourceDir: string, targetDir: string) {
+  protected async _copyDirectory(sourceDir: string, targetDir: string) {
     try {
       const sourceDirRef = ref(this.storage, sourceDir);
       const sourceDirSnapshot = await listAll(sourceDirRef);
@@ -630,22 +486,19 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  async _copyFile(sourceFilePath: string, targetFilePath: string) {
+  protected async _deleteDirectory(directoryPath: string) {
     try {
-      const sourceFileRef = ref(this.storage, sourceFilePath);
-      const targetFileRef = ref(this.storage, targetFilePath);
+      const directoryRef = ref(this.storage, directoryPath);
+      const directorySnapshot = await listAll(directoryRef);
 
-      const sourceFileURL = await getDownloadURL(sourceFileRef);
-      const response = await fetch(sourceFileURL);
-      const blob = await response.blob();
-
-      await uploadBytes(targetFileRef, blob);
+      const deletePromises = directorySnapshot.items.map((fileRef) => deleteObject(fileRef));
+      await Promise.all(deletePromises);
     } catch (error) {
-      console.error('Error copying file:', error);
+      console.error('Error deleting files in directory:', error);
     }
   }
 
-  async _copyRealtimeData(
+  protected async _copyRealtimeData(
     sourceCollectionName: string,
     targetCollectionName: string,
   ) {
@@ -692,7 +545,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await batch.commit();
   }
 
-  async _deleteRealtimeData(sourceCollectionName: string) {
+  protected async _deleteRealtimeData(sourceCollectionName: string) {
     const sourceCollectionRef = collection(
       this.firestore,
       sourceCollectionName,
@@ -720,18 +573,64 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await batch.commit();
   }
 
-  async _directoryExists(directoryPath: string) {
+  // Function to add collection name to metadata
+  protected async _addDirectoryNameToMetadata(directoryName: string) {
     try {
-      const directoryRef = ref(this.storage, directoryPath);
-      const directorySnapshot = await listAll(directoryRef);
-      return directorySnapshot.items.length > 0;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      if (error.code === 'storage/object-not-found') {
-        return false;
-      }
-      console.error('Error checking if directory exists:', error);
+      const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
+      await setDoc(
+        metadataDoc,
+        { [directoryName]: { enabled: true, name: directoryName } },
+        { merge: true },
+      );
+    } catch (error) {
+      console.error('Error adding collection to metadata:', error);
       throw error;
+    }
+  }
+
+  protected async _removeNameFromMetadata(directoryName: string) {
+    try {
+      const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
+      const metadataSnapshot = await getDoc(metadataDoc);
+
+      if (metadataSnapshot.exists()) {
+        const metadata = metadataSnapshot.data();
+        if (metadata[directoryName]) {
+          delete metadata[directoryName];
+          await setDoc(metadataDoc, metadata);
+        } else {
+          console.warn(`${directoryName} does not exist in metadata.`);
+        }
+      } else {
+        console.warn('No metadata found.');
+      }
+    } catch (error) {
+      console.error('Error removing collection from metadata:', error);
+      throw error;
+    }
+  }
+
+  protected async _changeNameInMetadata(oldName: string, newName: string) {
+    const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
+    await setDoc(
+      metadataDoc,
+      { [oldName]: { enabled: true, name: newName } },
+      { merge: true },
+    );
+  }
+
+  protected async _copyFile(sourceFilePath: string, targetFilePath: string) {
+    try {
+      const sourceFileRef = ref(this.storage, sourceFilePath);
+      const targetFileRef = ref(this.storage, targetFilePath);
+
+      const sourceFileURL = await getDownloadURL(sourceFileRef);
+      const response = await fetch(sourceFileURL);
+      const blob = await response.blob();
+
+      await uploadBytes(targetFileRef, blob);
+    } catch (error) {
+      console.error('Error copying file:', error);
     }
   }
 }
