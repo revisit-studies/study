@@ -1,7 +1,9 @@
 import {
   Center, Flex, Loader, Space, Text,
 } from '@mantine/core';
-import { useEffect, useState, useCallback } from 'react';
+import {
+  useEffect, useState, useCallback, useMemo,
+} from 'react';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
@@ -11,6 +13,7 @@ import { ParticipantData } from '../storage/types';
 import { download } from './downloader/DownloadTidy';
 import { useStudyId } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import type { Response } from '../parser/types';
 
 export function StudyEnd() {
   const studyConfig = useStudyConfig();
@@ -20,6 +23,7 @@ export function StudyEnd() {
   const isAnalysis = useIsAnalysis();
 
   const [completed, setCompleted] = useState(false);
+
   useEffect(() => {
     // Don't save to the storage engine in analysis
     if (isAnalysis) {
@@ -85,7 +89,7 @@ export function StudyEnd() {
 
       return () => clearInterval(interval);
     }
-    return () => {};
+    return () => { };
   }, [autoDownload, completed, delayCounter, downloadParticipant]);
 
   const studyId = useStudyId();
@@ -100,34 +104,42 @@ export function StudyEnd() {
     checkDataCollectionEnabled();
   }, [storageEngine, studyId]);
 
-  let { studyEndMsg } = studyConfig.uiConfig;
+  const processedStudyEndMsg = useMemo(() => {
+    const { studyEndMsg } = studyConfig.uiConfig;
+    const { urlParticipantIdParam } = studyConfig.uiConfig;
 
-  if (studyConfig.uiConfig.urlParticipantIdParam) {
-    const serviceName = studyConfig.uiConfig.urlParticipantIdParam;
-    const screenerComponent = Object.keys(answers).find((key) => key.toLowerCase().startsWith('screener'));
-
-    if (screenerComponent) {
-      const screenerAnswers = answers[screenerComponent].answer;
-      const participantIdField = Object.keys(screenerAnswers).find((key) => key.toLowerCase().includes(serviceName.toLowerCase())
-         || key.toLowerCase().includes('id'));
-
-      if (participantIdField && screenerAnswers[participantIdField]) {
-        const externalServiceId = String(screenerAnswers[participantIdField]);
-        const returnUrl = studyConfig.uiConfig.returnUrlTemplate
-          ? studyConfig.uiConfig.returnUrlTemplate.replaceAll('{id}', externalServiceId)
-          : `https://app.prolific.com/submissions/complete?cc=${externalServiceId}`;
-
-        studyEndMsg = `Thank you for completing the study.\n\n [Please click here to return to ${serviceName} and receive credit.](${returnUrl})`;
-      }
+    if (!urlParticipantIdParam || !studyEndMsg?.includes('{')) {
+      return studyEndMsg;
     }
-  }
+
+    const templateData: Record<string, string> = { PARTICIPANT_ID: participantId };
+
+    const responses = Object.values(studyConfig.components)
+      .flatMap((component) => (
+        Array.isArray((component as { response?: Response[] }).response)
+          ? (component as { response: Response[] }).response
+          : []
+      ));
+
+    const fieldId = responses.find((r: Response) => r.paramCapture === urlParticipantIdParam)?.id;
+
+    const allAnswers = Object.values(answers).reduce<Record<string, unknown>>((acc, storedAnswer) => ({
+      ...acc,
+      ...storedAnswer?.answer,
+    }), {});
+
+    const val = fieldId && allAnswers[fieldId];
+    if (val) templateData[urlParticipantIdParam] = String(val);
+
+    return studyEndMsg.replace(/\{(\w+)\}/, (_, key) => templateData[key]);
+  }, [studyConfig, participantId, answers]);
 
   return (
     <Center style={{ height: '100%' }}>
       <Flex direction="column">
         {completed || !dataCollectionEnabled
-          ? (studyEndMsg
-            ? <ReactMarkdownWrapper text={studyEndMsg} />
+          ? (processedStudyEndMsg
+            ? <ReactMarkdownWrapper text={processedStudyEndMsg} />
             : <Text size="xl" display="block">Thank you for completing the study. You may close this window now.</Text>)
           : (
             <>
