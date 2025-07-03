@@ -13,20 +13,20 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
-    this._verifyStudyDatabase();
+    await this._verifyStudyDatabase();
     const storageKey = `${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`;
     const storedObject = await this.studyDatabase.getItem<StorageObject<T>>(storageKey);
     return storedObject;
   }
 
   protected async _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>) {
-    this._verifyStudyDatabase();
+    await this._verifyStudyDatabase();
     const storageKey = `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`;
     await this.studyDatabase.setItem(storageKey, objectToUpload);
   }
 
   protected async _deleteFromStorage<T extends StorageObjectType>(prefix: string, type: T) {
-    this._verifyStudyDatabase();
+    await this._verifyStudyDatabase();
     const storageKey = `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`;
     await this.studyDatabase.removeItem(storageKey);
   }
@@ -42,19 +42,19 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   protected async _getCurrentConfigHash() {
-    this._verifyStudyDatabase();
+    await this._verifyStudyDatabase();
     const key = `${this.collectionPrefix}${this.studyId}/configHash`;
     return await this.studyDatabase.getItem<string>(key) || '';
   }
 
   protected async _setCurrentConfigHash(configHash: string) {
-    this._verifyStudyDatabase();
+    await this._verifyStudyDatabase();
     const key = `${this.collectionPrefix}${this.studyId}/configHash`;
     await this.studyDatabase.setItem(key, configHash);
   }
 
   protected async _getAllSequenceAssignments(studyId: string) {
-    this._verifyStudyDatabase();
+    await this._verifyStudyDatabase();
     const sequenceAssignmentPath = `${this.collectionPrefix}${studyId}/sequenceAssignment`;
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath);
     if (!sequenceAssignments) {
@@ -64,7 +64,7 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
-    this._verifyStudyDatabase();
+    await this._verifyStudyDatabase();
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
@@ -97,18 +97,41 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   protected async _rejectParticipantRealtime(participantId: string) {
-    this._verifyStudyDatabase();
+    await this._verifyStudyDatabase();
     const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
 
-    if (sequenceAssignments[participantId]) {
-      sequenceAssignments[participantId].rejected = true;
+    const participantSequenceAssignment = sequenceAssignments[participantId];
+
+    // If this was a claimed sequence assignment, we need to mark it as available again
+    // Find the sequence assignment that was claimed
+    const claimedAssignmentData = Object.values(sequenceAssignments).find((assignment) => assignment.claimed && assignment.timestamp === participantSequenceAssignment.timestamp);
+    if (participantSequenceAssignment && claimedAssignmentData) {
+      // Mark the claimed assignment as available again
+      claimedAssignmentData.claimed = false;
+      claimedAssignmentData.rejected = true; // Mark it as rejected
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+
+      // Delete the participant's sequence assignment
+      // delete sequenceAssignments[participantId];
+      sequenceAssignments[participantId] = {
+        ...participantSequenceAssignment,
+        timestamp: new Date().getTime(),
+        rejected: true,
+      };
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+      return;
+    }
+
+    // Handle the original participant's sequence assignment
+    if (participantSequenceAssignment) {
+      participantSequenceAssignment.rejected = true;
       await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
     }
   }
 
   protected async _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
-    this._verifyStudyDatabase();
+    await this._verifyStudyDatabase();
     const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
     if (sequenceAssignments[participantId]) {
@@ -168,8 +191,7 @@ export class LocalStorageEngine extends StorageEngine {
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
-    const storageKey = `${this.collectionPrefix}${this.studyId}/audio/${task}/${participantId || this.currentParticipantId}`;
-    const audioBlob = await this.studyDatabase.getItem<Blob>(storageKey);
+    const audioBlob = await this._getFromStorage(`audio/${participantId || this.currentParticipantId}`, task);
     if (!audioBlob) {
       throw new Error(`Audio for task ${task} and participant ${participantId || this.currentParticipantId} not found`);
     }

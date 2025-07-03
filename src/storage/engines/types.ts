@@ -48,7 +48,7 @@ export type StorageObject<T extends StorageObjectType> =
     ? ParticipantData
     : T extends 'config'
     ? StudyConfig
-    : object; // Fallback for any random string
+    : Blob; // Fallback for any random string
 
 export abstract class StorageEngine {
   protected engine: string;
@@ -191,7 +191,7 @@ export abstract class StorageEngine {
 
   // Gets all configs from the storage engine based on the provided temporary hashes and studyId.
   async getAllConfigsFromHash(tempHashes: string[], studyId: string) {
-    const allConfigs = tempHashes.map((singleHash) => [singleHash, this._getFromStorage(`configs/${singleHash}`, 'config', studyId)]);
+    const allConfigs = tempHashes.map(async (singleHash) => [singleHash, await this._getFromStorage(`configs/${singleHash}`, 'config', studyId)]);
     const configs = (await Promise.all(allConfigs)) as [string, StudyConfig][];
     return Object.fromEntries(configs);
   }
@@ -268,7 +268,7 @@ export abstract class StorageEngine {
         const participantSequenceAssignmentData: SequenceAssignment = {
           participantId: this.currentParticipantId,
           timestamp: firstRejectTime, // Use the timestamp of the first reject
-          rejected: true,
+          rejected: false,
           claimed: false,
           completed: null,
           createdTime: new Date().getTime(),
@@ -662,8 +662,8 @@ export abstract class StorageEngine {
       }
 
       debounceTimeout = setTimeout(async () => {
-        await this._pushToStorage(`/audio/${this.currentParticipantId}`, taskName, data.data);
-        await this._cacheStorageObject(`/audio/${this.currentParticipantId}`, taskName);
+        await this._pushToStorage(`audio/${this.currentParticipantId}`, taskName, data.data);
+        await this._cacheStorageObject(`audio/${this.currentParticipantId}`, taskName);
       }, 500);
     };
 
@@ -671,13 +671,6 @@ export abstract class StorageEngine {
     audioStream.requestData();
 
     // Don't clean up the listener. The stream will be destroyed.
-  }
-
-  // Sets the sequence array in the storage engine.
-  async setSequenceArray(latinSquare: Sequence[]) {
-    await this.verifyStudyDatabase();
-
-    await this._pushToStorage('', 'sequenceArray', latinSquare);
   }
 
   // Gets the sequence array from the storage engine.
@@ -690,6 +683,13 @@ export abstract class StorageEngine {
     );
 
     return Array.isArray(sequenceArrayDocData) ? sequenceArrayDocData : null;
+  }
+
+  // Sets the sequence array in the storage engine.
+  async setSequenceArray(latinSquare: Sequence[]) {
+    await this.verifyStudyDatabase();
+
+    await this._pushToStorage('', 'sequenceArray', latinSquare);
   }
 }
 
