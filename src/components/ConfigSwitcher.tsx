@@ -211,35 +211,35 @@ export function ConfigSwitcher({
   const { storageEngine } = useStorageEngine();
   const { configsList } = globalConfig;
 
-  const demos = configsList.filter((configName) => configName.startsWith('demo-'));
-  const tutorials = configsList.filter((configName) => configName.startsWith('tutorial'));
-  const examples = configsList.filter((configName) => configName.startsWith('example-'));
-  const tests = configsList.filter((configName) => configName.startsWith('test-'));
-  const libraries = configsList.filter((configName) => configName.startsWith('library-'));
-  const others = useMemo(() => configsList.filter((configName) => !configName.startsWith('demo-') && !configName.startsWith('tutorial') && !configName.startsWith('example-') && !configName.startsWith('test-') && !configName.startsWith('library-')), [configsList]);
-
-  const [otherStudyVisibility, setOtherStudyVisibility] = useState<Record<string, boolean>>({});
+  const [studyVisibility, setStudyVisibility] = useState<Record<string, boolean>>({});
   useEffect(() => {
     async function getVisibilities() {
       const visibility: Record<string, boolean> = {};
       await Promise.all(
-        others.map(async (configName) => {
+        configsList.map(async (configName) => {
           if (storageEngine && isCloudStorageEngine(storageEngine)) {
             const modes = await storageEngine.getModes(configName);
             visibility[configName] = modes.analyticsInterfacePubliclyAccessible;
           }
         }),
       );
-      setOtherStudyVisibility(visibility);
+      setStudyVisibility(visibility);
     }
     getVisibilities();
-  }, [others, storageEngine]);
+  }, [configsList, storageEngine]);
 
   const { user } = useAuth();
-  const othersFiltered = useMemo(() => others.filter((configName) => otherStudyVisibility[configName] || user.isAdmin), [others, otherStudyVisibility, user]);
+  const configsFiltered = useMemo(() => configsList.filter((configName) => studyVisibility[configName] || user.isAdmin), [configsList, studyVisibility, user]);
+
+  const demos = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('demo-')), [configsFiltered]);
+  const tutorials = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('tutorial')), [configsFiltered]);
+  const examples = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('example-')), [configsFiltered]);
+  const tests = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('test-')), [configsFiltered]);
+  const libraries = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('library-')), [configsFiltered]);
+  const others = useMemo(() => configsFiltered.filter((configName) => !configName.startsWith('demo-') && !configName.startsWith('tutorial') && !configName.startsWith('example-') && !configName.startsWith('test-') && !configName.startsWith('library-')), [configsFiltered]);
 
   const [searchParams] = useSearchParams();
-  const tab = useMemo(() => searchParams.get('tab') || (othersFiltered.length > 0 ? 'Others' : 'Demos'), [othersFiltered.length, searchParams]);
+  const tab = useMemo(() => searchParams.get('tab') || (others.length > 0 ? 'Others' : 'Demos'), [others.length, searchParams]);
   const navigate = useNavigate();
 
   return (
@@ -255,7 +255,7 @@ export function ConfigSwitcher({
         />
         <Tabs variant="outline" defaultValue={others.length > 0 ? 'Others' : 'Demos'} value={tab} onChange={(value) => navigate(`/?tab=${value}`)}>
           <Tabs.List>
-            {othersFiltered.length > 0 && (
+            {others.length > 0 && (
               <Tabs.Tab value="Others">Your Studies</Tabs.Tab>
             )}
             <Tabs.Tab value="Demos">Demo Studies</Tabs.Tab>
@@ -265,9 +265,9 @@ export function ConfigSwitcher({
             <Tabs.Tab value="Libraries">Libraries</Tabs.Tab>
           </Tabs.List>
 
-          {othersFiltered.length > 0 && (
+          {others.length > 0 && (
             <Tabs.Panel value="Others">
-              <StudyCards configNames={othersFiltered} studyConfigs={studyConfigs} />
+              <StudyCards configNames={others} studyConfigs={studyConfigs} />
             </Tabs.Panel>
           )}
 
