@@ -16,8 +16,8 @@ import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatusBadges';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { REVISIT_MODE } from '../storage/engines/types';
-import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine';
 import { useAuth } from '../store/hooks/useAuth';
+import { isCloudStorageEngine } from '../storage/engines/utils';
 
 function StudyCard({ configName, config, url }: { configName: string; config: ParsedConfig<StudyConfig>; url: string }) {
   const { storageEngine } = useStorageEngine();
@@ -224,7 +224,7 @@ export function ConfigSwitcher({
       const visibility: Record<string, boolean> = {};
       await Promise.all(
         others.map(async (configName) => {
-          if (storageEngine instanceof FirebaseStorageEngine) {
+          if (storageEngine && isCloudStorageEngine(storageEngine)) {
             const modes = await storageEngine.getModes(configName);
             visibility[configName] = modes.analyticsInterfacePubliclyAccessible;
           }
