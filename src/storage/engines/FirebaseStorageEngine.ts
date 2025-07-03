@@ -269,7 +269,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const revisitModesDoc = doc(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
-      'metadata',
+      'modes',
     );
     const revisitModesData = await getDoc(revisitModesDoc);
 
@@ -291,7 +291,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const revisitModesDoc = doc(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
-      'metadata',
+      'modes',
     );
 
     return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
@@ -406,11 +406,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
   async getSnapshots(studyId: string) {
     try {
-      const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'metadata', 'collections');
-      const metadataSnapshot = await getDoc(metadataDoc);
+      const snapshotsDoc = doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'snapshots');
+      const snapshotsData = await getDoc(snapshotsDoc);
 
-      if (metadataSnapshot.exists()) {
-        const collections = metadataSnapshot.data();
+      if (snapshotsData.exists()) {
+        const collections = snapshotsData.data();
         const matchingCollections = Object.keys(collections)
           .filter((directoryName) => directoryName.startsWith(
             `${this.collectionPrefix}${studyId}-snapshot`,
@@ -568,9 +568,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   // Function to add collection name to metadata
   protected async _addDirectoryNameToMetadata(directoryName: string) {
     try {
-      const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
+      const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'snapshots');
       await setDoc(
-        metadataDoc,
+        snapshotDoc,
         { [directoryName]: { enabled: true, name: directoryName } },
         { merge: true },
       );
@@ -582,14 +582,14 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
   protected async _removeNameFromMetadata(directoryName: string) {
     try {
-      const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
-      const metadataSnapshot = await getDoc(metadataDoc);
+      const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'snapshots');
+      const snapshotData = await getDoc(snapshotDoc);
 
-      if (metadataSnapshot.exists()) {
-        const metadata = metadataSnapshot.data();
+      if (snapshotData.exists()) {
+        const metadata = snapshotData.data();
         if (metadata[directoryName]) {
           delete metadata[directoryName];
-          await setDoc(metadataDoc, metadata);
+          await setDoc(snapshotDoc, metadata);
         } else {
           console.warn(`${directoryName} does not exist in metadata.`);
         }
@@ -603,9 +603,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _changeNameInMetadata(oldName: string, newName: string) {
-    const metadataDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'metadata', 'collections');
+    const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'snapshots');
     await setDoc(
-      metadataDoc,
+      snapshotDoc,
       { [oldName]: { enabled: true, name: newName } },
       { merge: true },
     );
