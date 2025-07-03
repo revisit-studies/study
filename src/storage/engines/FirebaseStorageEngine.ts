@@ -73,11 +73,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _getFromStorage<T extends StorageObjectType>(
-    prefix: string,
-    type: T,
-    studyId?: string,
-  ) {
+  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
     const storageRef = ref(
       this.storage,
       `${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`,
@@ -98,11 +94,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return storageObj;
   }
 
-  protected async _pushToStorage<T extends StorageObjectType>(
-    prefix: string,
-    type: T,
-    objectToUpload: StorageObject<T>,
-  ) {
+  protected async _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>) {
     const storageRef = ref(
       this.storage,
       `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
@@ -241,7 +233,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       participantId,
     );
 
-    await setDoc(participantSequenceAssignmentDoc, { claimed: true }, { merge: true });
+    await updateDoc(participantSequenceAssignmentDoc, { claimed: true });
   }
 
   async initializeStudyDb(studyId: string) {
@@ -279,10 +271,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       `${this.collectionPrefix}${studyId}`,
       'metadata',
     );
-    const revisitModesSnapshot = await getDoc(revisitModesDoc);
+    const revisitModesData = await getDoc(revisitModesDoc);
 
-    if (revisitModesSnapshot.exists()) {
-      return revisitModesSnapshot.data() as Record<REVISIT_MODE, boolean>;
+    if (revisitModesData.exists()) {
+      return revisitModesData.data() as Record<REVISIT_MODE, boolean>;
     }
 
     // Else set to default values
