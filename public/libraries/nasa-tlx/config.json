@@ -6,6 +6,7 @@
   "components": {
     "source-of-load":{
       "type": "questionnaire",
+      "description": "Source of load evaluation, a pairwise weighting procedure to assess the relative importance of different factors that contribute to a person's experience of workload during a task. It should be presented before the NASA-TLX.",
       "responseOrder": "random",
       "response": [
         {
@@ -187,6 +188,7 @@
       ]
     },
     "nasa-tlx": {
+      "description": "The NASA-TLX questionnaire.",
       "type": "markdown",
       "path": "libraries/nasa-tlx/assets/tlx.md",
       "response": [
