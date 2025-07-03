@@ -426,23 +426,27 @@ export abstract class StorageEngine {
       throw new Error('Participant data not initialized');
     }
     this.participantData.participantTags = [...new Set([...this.participantData.participantTags, ...tags])];
+
+    await this._pushToStorage(
+      `participants/${this.currentParticipantId}`,
+      'participantData',
+      this.participantData,
+    );
   }
 
   // Removes participant tags from the current participant.
   async removeParticipantTags(tags: string[]): Promise<void> {
     await this.verifyStudyDatabase();
 
-    const participantData = await this.getParticipantData();
-    if (!participantData) {
-      throw new Error('Participant not initialized');
+    if (!this.participantData) {
+      throw new Error('Participant data not initialized');
     }
-
-    participantData.participantTags = participantData.participantTags.filter((tag) => !tags.includes(tag));
+    this.participantData.participantTags = this.participantData.participantTags.filter((tag) => !tags.includes(tag));
 
     await this._pushToStorage(
       `participants/${this.currentParticipantId}`,
       'participantData',
-      participantData,
+      this.participantData,
     );
   }
 
