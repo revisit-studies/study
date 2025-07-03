@@ -58,7 +58,7 @@ export abstract class StorageEngine {
   protected connected = false;
 
   protected localForage = localforage.createInstance({
-    name: 'revisitMetadata',
+    name: 'revisit',
   });
 
   protected collectionPrefix = import.meta.env.DEV ? 'dev-' : 'prod-';
@@ -122,7 +122,7 @@ export abstract class StorageEngine {
   // Sets the participant to completed in the sequence assignments in the realtime database.
   protected abstract _completeCurrentParticipantRealtime(): Promise<void>;
 
-  // Rejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments. TODO
+  // Rejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments.
   protected abstract _rejectParticipantRealtime(participantId: string): Promise<void>;
 
   // Helper function to claim a sequence assignment of the given participant in the realtime database.
@@ -215,7 +215,7 @@ export abstract class StorageEngine {
       throw new Error('Study ID is not set');
     }
     const currentParticipantId = await this.localForage.getItem(
-      `currentParticipantId-${this.studyId}`,
+      `${this.collectionPrefix}${this.studyId}/currentParticipantId`,
     );
     if (currentParticipantId) {
       this.currentParticipantId = currentParticipantId as string;
@@ -225,7 +225,7 @@ export abstract class StorageEngine {
     // Else, generate new participant id and save it in localForage
     this.currentParticipantId = uuidv4();
     await this.localForage.setItem(
-      `currentParticipantId-${this.studyId}`,
+      `${this.collectionPrefix}${this.studyId}/currentParticipantId`,
       this.currentParticipantId,
     );
 
@@ -239,7 +239,7 @@ export abstract class StorageEngine {
     if (!this.studyId) {
       throw new Error('Study ID is not set');
     }
-    return await this.localForage.removeItem(`currentParticipantId-${this.studyId}`);
+    return await this.localForage.removeItem(`${this.collectionPrefix}${this.studyId}/currentParticipantId`);
   }
 
   // This function is one of the most critical functions in the storage engine.
@@ -422,19 +422,10 @@ export abstract class StorageEngine {
   // Adds a participant tag to the current participant.
   async addParticipantTags(tags: string[]) {
     await this.verifyStudyDatabase();
-
-    const participantData = await this.getParticipantData();
-    if (!participantData) {
-      throw new Error('Participant not initialized');
+    if (!this.participantData) {
+      throw new Error('Participant data not initialized');
     }
-
-    participantData.participantTags = [...new Set([...participantData.participantTags, ...tags])];
-
-    await this._pushToStorage(
-      `participants/${this.currentParticipantId}`,
-      'participantData',
-      participantData,
-    );
+    this.participantData.participantTags = [...new Set([...this.participantData.participantTags, ...tags])];
   }
 
   // Removes participant tags from the current participant.
@@ -753,7 +744,7 @@ export abstract class CloudStorageEngine extends StorageEngine {
   abstract removeAdminUser(email: string): Promise<void>;
 
   /* Snapshots ----------------------------------------------------------- */
-  // Gets all snapshots for the given studyId. This will return an array of objects with the original name and alternate name (if available) of the snapshots. TODO
+  // Gets all snapshots for the given studyId. This will return an array of objects with the original name and alternate name (if available) of the snapshots.
   abstract getSnapshots(studyId: string): Promise<SnapshotNameItem[]>;
 
   // Checks if the storage directory for the given source exists.
