@@ -11,7 +11,7 @@ export async function hash(input: string) {
 
 export function isParticipantData(obj: unknown): obj is ParticipantData {
   const potentialParticipantData = obj as ParticipantData;
-  return potentialParticipantData.participantId !== undefined;
+  return typeof potentialParticipantData === 'object' && potentialParticipantData && potentialParticipantData.participantId !== undefined;
 }
 
 export function isCloudStorageEngine(engine: StorageEngine): engine is CloudStorageEngine {
