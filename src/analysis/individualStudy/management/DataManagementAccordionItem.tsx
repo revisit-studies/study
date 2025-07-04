@@ -7,9 +7,8 @@ import { openConfirmModal } from '@mantine/modals';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { showNotification, RevisitNotification } from '../../../utils/notifications';
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
-import {
-  FirebaseStorageEngine, FirebaseActionResponse, SnapshotNameItem,
-} from '../../../storage/engines/FirebaseStorageEngine';
+import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
+import { ActionResponse, SnapshotNameItem } from '../../../storage/engines/types';
 
 export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
@@ -43,13 +42,13 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
   }, [refreshSnapshots]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  type FirebaseAction = (...args: any[]) => Promise<FirebaseActionResponse>;
+  type FirebaseAction = (...args: any[]) => Promise<ActionResponse>;
 
   // Generalized snapshot action handler
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const snapshotAction = async (action: FirebaseAction, ...args: any[]) => {
     setLoading(true);
-    const response: FirebaseActionResponse = await action(...args);
+    const response: ActionResponse = await action(...args);
     if (response.status === 'SUCCESS') {
       refreshSnapshots();
       setLoading(false);
@@ -135,8 +134,9 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
 
   const fetchParticipants = async (snapshotName: string) => {
     const strippedFilename = snapshotName.slice(snapshotName.indexOf('-') + 1);
-    return await storageEngine.getAllParticipantsDataByStudy(strippedFilename);
+    return await storageEngine.getAllParticipantsData(strippedFilename);
   };
+
   return (
     <>
       <LoadingOverlay visible={loading} />

@@ -189,6 +189,9 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
       wavesurfer.current = waveSurfer;
       if (waveSurfer && isAnalysis && identifier && storageEngine) {
         try {
+          if (!participantId) {
+            throw new Error('Participant ID is required to load audio');
+          }
           const url = await storageEngine.getAudio(identifier, participantId);
           await waveSurfer.load(url!);
           setWaveSurferLoading(false);

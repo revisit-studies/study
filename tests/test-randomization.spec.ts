@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 import { getSequenceFlatMap } from '../src/utils/getSequenceFlatMap';
-import { ParticipantData } from '../src/storage/types';
 
 test('test', async ({ page }) => {
   await page.goto('/test-randomization');
@@ -12,7 +11,7 @@ test('test', async ({ page }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sequenceArray: any[] = await page.evaluate(async () => {
     let db;
-    const request = indexedDB.open('test-randomization');
+    const request = indexedDB.open('revisit');
 
     return new Promise((resolve) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,38 +19,17 @@ test('test', async ({ page }) => {
         db = event.target.result;
         const transaction = db.transaction(['keyvaluepairs'], 'readonly');
         const store = transaction.objectStore('keyvaluepairs');
-        const sequenceArrayInternal = store.get('sequenceArray');
+        const sequenceArrayInternal = store.get('dev-test-randomization/_sequenceArray');
         sequenceArrayInternal.onsuccess = () => resolve(sequenceArrayInternal.result);
       };
     });
   });
 
-  const currentParticipant: ParticipantData = await page.evaluate(async () => {
-    let db;
-    const request = indexedDB.open('test-randomization');
-
-    return new Promise((resolve) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      request.onsuccess = async (event: any) => {
-        db = event.target.result;
-        const transaction = db.transaction(['keyvaluepairs'], 'readonly');
-        const store = transaction.objectStore('keyvaluepairs');
-        const currentParticipantInternal = store.get('currentParticipant');
-        currentParticipantInternal.onsuccess = () => {
-          const currentParticipantData = store.get(currentParticipantInternal.result);
-          currentParticipantData.onsuccess = () => resolve(currentParticipantData.result);
-        };
-      };
-    });
-  });
-
-  const allSequenceArray = [currentParticipant.sequence, ...sequenceArray];
-
-  expect(allSequenceArray).not.toContain(undefined);
-  expect(allSequenceArray.length).toBe(1000);
+  expect(sequenceArray).not.toContain(undefined);
+  expect(sequenceArray.length).toBe(1000);
 
   // Flatten the sequence array
-  const flattenedSequenceArray = allSequenceArray.map((x) => getSequenceFlatMap(x));
+  const flattenedSequenceArray = sequenceArray.map((x) => getSequenceFlatMap(x));
 
   // Check that each sequence is as expected
   const sequenceOccurences = flattenedSequenceArray.map((sequence) => {

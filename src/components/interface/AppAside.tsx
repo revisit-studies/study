@@ -35,7 +35,6 @@ function InfoHover({ text }: { text: string }) {
 
 export function AppAside() {
   const sequence = useStoreSelector((state) => state.sequence);
-  const metadata = useStoreSelector((state) => state.metadata);
   const { toggleStudyBrowser } = useStoreActions();
 
   const studyConfig = useStudyConfig();
@@ -75,7 +74,7 @@ export function AppAside() {
             <Button
               variant="light"
               leftSection={<IconUserPlus size={14} />}
-              onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
+              onClick={() => getNewParticipant(storageEngine, studyHref)}
               size="xs"
               disabled={nextParticipantDisabled}
             >

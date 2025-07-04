@@ -1,6 +1,6 @@
 import { LocalStorageEngine } from './engines/LocalStorageEngine';
 import { FirebaseStorageEngine } from './engines/FirebaseStorageEngine';
-import { StorageEngine } from './engines/StorageEngine';
+import { StorageEngine } from './engines/types';
 
 export async function initializeStorageEngine() {
   let storageEngine: StorageEngine | undefined;

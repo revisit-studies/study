@@ -7,8 +7,8 @@ import {
 } from 'firebase/auth';
 import { LoadingOverlay } from '@mantine/core';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
-import { UserWrapped } from '../../storage/engines/StorageEngine';
+import { UserWrapped } from '../../storage/engines/types';
+import { isCloudStorageEngine } from '../../storage/engines/utils';
 
 // Defines default AuthContextValue
 interface AuthContextValue {
@@ -86,7 +86,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   };
 
   const verifyAdminStatus = async (inputUser: UserWrapped) => {
-    if (storageEngine) {
+    if (storageEngine && isCloudStorageEngine(storageEngine)) {
       return await storageEngine.validateUser(inputUser, true);
     }
     return false;
@@ -98,7 +98,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
 
     // Get authentication
     let auth: Auth;
-    if (storageEngine instanceof FirebaseStorageEngine) {
+    if (storageEngine && isCloudStorageEngine(storageEngine)) {
       try {
         auth = getAuth();
       } catch {
@@ -133,7 +133,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
 
     // Determine authentication listener based on storageEngine and authEnabled variable
     const determineAuthentication = async () => {
-      if (storageEngine instanceof FirebaseStorageEngine) {
+      if (storageEngine && isCloudStorageEngine(storageEngine)) {
         const authInfo = await storageEngine?.getUserManagementData('authentication');
         if (authInfo?.isEnabled) {
           // Define unsubscribe function for listening to authentication state changes when using Firebase with authentication

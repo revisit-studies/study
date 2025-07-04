@@ -6,7 +6,6 @@ import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { useStoreSelector } from '../store/store';
 import { ParticipantData } from '../storage/types';
 import { download } from './downloader/DownloadTidy';
 import { useStudyId } from '../routes/utils';
@@ -15,7 +14,6 @@ import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 export function StudyEnd() {
   const studyConfig = useStudyConfig();
   const { storageEngine } = useStorageEngine();
-  const answers = useStoreSelector((state) => state.answers);
 
   const isAnalysis = useIsAnalysis();
 
@@ -29,7 +27,7 @@ export function StudyEnd() {
 
     // verify that storageEngine.verifyCompletion() returns true, loop until it does
     const interval = setInterval(async () => {
-      const isComplete = await storageEngine!.verifyCompletion(answers);
+      const isComplete = await storageEngine!.verifyCompletion();
       if (isComplete) {
         setCompleted(true);
         clearInterval(interval);
