@@ -6,8 +6,8 @@ import {
 export class SupabaseStorageEngine extends StorageEngine {
   private supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 
-  constructor() {
-    super('supabase');
+  constructor(testing: boolean = false) {
+    super('supabase', testing);
   }
 
   protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
@@ -19,7 +19,8 @@ export class SupabaseStorageEngine extends StorageEngine {
       return {} as StorageObject<T>;
     }
 
-    const text = await data.text();
+    const dataToParse = this.testing ? new Blob([data as unknown as string], { type: 'application/json' }) : data;
+    const text = await dataToParse.text();
     return JSON.parse(text) as StorageObject<T>;
   }
 
@@ -27,9 +28,13 @@ export class SupabaseStorageEngine extends StorageEngine {
     const blob = new Blob([JSON.stringify(objectToUpload)], {
       type: 'application/json',
     });
+
+    // Have to use buffers in testing mode, blob otherwise
+    const uploadObject = this.testing ? Buffer.from(JSON.stringify(objectToUpload)) : blob;
+
     const { error } = await this.supabase.storage
       .from('revisit')
-      .upload(`${this.studyId}/${prefix}_${type}`, blob, {
+      .upload(`${this.studyId}/${prefix}_${type}`, uploadObject, {
         upsert: true,
       });
 
@@ -117,7 +122,7 @@ export class SupabaseStorageEngine extends StorageEngine {
       .from('revisit')
       .select('data')
       .eq('studyId', studyId)
-      .like('docId', '%sequenceAssignment%');
+      .like('docId', 'sequenceAssignment_%');
     if (error) {
       throw new Error('Failed to get sequence assignments');
     }
@@ -166,7 +171,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     const sequenceAssignmentPath = `sequenceAssignment_${this.currentParticipantId}`;
     await this.supabase
       .from('revisit')
-      .update({ ...data.data, completed: new Date().getTime() })
+      .update({ data: { ...data.data, completed: new Date().getTime() } })
       .eq('studyId', this.studyId)
       .eq('docId', sequenceAssignmentPath);
   }
@@ -196,9 +201,28 @@ export class SupabaseStorageEngine extends StorageEngine {
     // Update the sequence assignment for the participant to mark it as rejected
     await this.supabase
       .from('revisit')
-      .update({ ...data.data, rejected: true })
+      .update({ data: { ...data.data, rejected: true, timestamp: new Date().getTime() } })
       .eq('studyId', this.studyId)
       .eq('docId', sequenceAssignmentPath);
+
+    // Get the sequence assignment for the initial participant if we are rejecting a claimed assignment
+    // select on data->timestamp to find the claimed assignment
+    const { data: claimedData, error: claimedError } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', this.studyId)
+      .eq('data->timestamp', data.data.timestamp)
+      .single();
+
+    if (claimedError || !claimedData) {
+      throw new Error('Failed to retrieve claimed sequence assignment for rejection');
+    }
+    // Update the claimed sequence assignment to mark it as available again
+    await this.supabase
+      .from('revisit')
+      .update({ data: { ...claimedData.data, claimed: false } })
+      .eq('studyId', this.studyId)
+      .eq('docId', `sequenceAssignment_${claimedData.data.participantId}`);
   }
 
   protected async _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
@@ -214,13 +238,13 @@ export class SupabaseStorageEngine extends StorageEngine {
     // Update the sequence assignment for the participant to mark it as claimed
     await this.supabase
       .from('revisit')
-      .update({ ...sequenceAssignment, claimed: true })
+      .update({ data: { ...sequenceAssignment, claimed: true } })
       .eq('studyId', this.studyId)
       .eq('docId', sequenceAssignmentPath);
   }
 
   async initializeStudyDb(studyId: string) {
-    const { error } = await this.supabase.auth.signInAnonymously(); // TODO: Fix logins
+    const { error } = await this.supabase.auth.signInAnonymously();
 
     // Write a row into the revisit table for the study
     const { error: schemaError } = await this.supabase
@@ -235,7 +259,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     // Error if login failed or if there was a SQL issue that was not a duplicate record
     // (23505 is the code for unique constraint violation in PostgreSQL)
     if (error || (schemaError && schemaError.code !== '23505')) {
-      // console.error('Error initializing study DB:', error || schemaError); TODO: Fix logins
+      console.error('Error initializing study DB:', error || schemaError);
       // throw new Error('Failed to initialize study DB');
     }
   }
@@ -318,5 +342,38 @@ export class SupabaseStorageEngine extends StorageEngine {
       return URL.createObjectURL(new Blob([JSON.stringify(audio)], { type: 'application/json' }));
     }
     return null;
+  }
+
+  protected async _testingReset(studyId: string) {
+    // Delete all rows with studyId matching the studyId
+    const { error } = await this.supabase
+      .from('revisit')
+      .delete()
+      .eq('studyId', studyId);
+    if (error) {
+      throw new Error('Failed to reset study database');
+    }
+
+    // Delete the storage bucket folder for the study
+    const { data: filePaths, error: filePathsError } = await this.supabase
+      .schema('storage')
+      .from('objects')
+      .select('name')
+      .eq('bucket_id', 'revisit')
+      .like('name', `${studyId}%`); // remove or keep the % based on your needs
+
+    if (filePathsError) {
+      throw new Error('Failed to retrieve file paths for reset');
+    }
+
+    if (filePaths && filePaths.length > 0) {
+      const { error: deleteError } = await this.supabase.storage
+        .from('revisit')
+        .remove(filePaths.map((file) => file.name));
+
+      if (deleteError) {
+        throw new Error('Failed to delete files from storage during reset');
+      }
+    }
   }
 }

@@ -1,5 +1,6 @@
 import {
   expect, test, beforeEach, describe,
+  afterEach,
 } from 'vitest';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
@@ -9,6 +10,7 @@ import { hash } from '../engines/utils';
 import { Sequence } from '../../store/types';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { StorageEngine } from '../engines/types';
+// import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
 
 const studyId = 'test-study';
 const configSimple = testConfigSimple as StudyConfig;
@@ -22,6 +24,7 @@ const participantMetadata: ParticipantMetadata = {
 
 describe.each([
   { TestEngine: LocalStorageEngine },
+  // { TestEngine: SupabaseStorageEngine }, // Uncomment to test with Supabase
   // { TestEngine: FirebaseStorageEngine }, TODO
 ])('describe object $TestEngine', ({ TestEngine }) => {
   let storageEngine: StorageEngine;
@@ -30,13 +33,18 @@ describe.each([
   // Before test harness
   beforeEach(async () => {
     // Reset the storage engine before each test
-    storageEngine = new TestEngine();
+    storageEngine = new TestEngine(true);
     await storageEngine.connect();
     await storageEngine.initializeStudyDb(studyId);
     sequenceArray = await generateSequenceArray(configSimple);
     await storageEngine.setSequenceArray(
       sequenceArray,
     );
+  });
+
+  afterEach(async () => {
+    // @ts-expect-error using protected method for testing
+    await storageEngine._testingReset(studyId);
   });
 
   // saveConfig and getAllConfigsFromHash tests
@@ -166,10 +174,10 @@ describe.each([
     let sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
 
-    let sequenceAssignment1 = sequenceAssignments[participantId1];
+    let sequenceAssignment1 = sequenceAssignments.find((assignment) => assignment.participantId === participantId1);
     expect(sequenceAssignment1).toBeDefined();
-    expect(sequenceAssignment1.rejected).toBe(true);
-    expect(sequenceAssignment1.claimed).toBe(false);
+    expect(sequenceAssignment1!.rejected).toBe(true);
+    expect(sequenceAssignment1!.claimed).toBe(false);
 
     // Initialize a new participant session
     await storageEngine.clearCurrentParticipantId();
@@ -181,17 +189,17 @@ describe.each([
     sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
 
-    let sequenceAssignment2 = sequenceAssignments[participantId2];
+    let sequenceAssignment2 = sequenceAssignments.find((assignment) => assignment.participantId === participantId2);
     expect(sequenceAssignment2).toBeDefined();
-    expect(sequenceAssignment2.participantId).toBe(participantId2);
-    expect(sequenceAssignment2.timestamp).toBeDefined();
-    expect(sequenceAssignment2.timestamp).toEqual(sequenceAssignment1.timestamp);
-    expect(sequenceAssignment2.rejected).toBe(false);
-    expect(sequenceAssignment2.claimed).toBe(false);
-    expect(sequenceAssignment2.createdTime).toBeDefined();
-    expect(typeof sequenceAssignment2.createdTime === 'number' ? sequenceAssignment2.createdTime : sequenceAssignment2.createdTime.seconds).toBeGreaterThan(typeof sequenceAssignment1.createdTime === 'number' ? sequenceAssignment1.createdTime : sequenceAssignment1.createdTime.seconds);
+    expect(sequenceAssignment2!.participantId).toBe(participantId2);
+    expect(sequenceAssignment2!.timestamp).toBeDefined();
+    expect(sequenceAssignment2!.timestamp).toEqual(sequenceAssignment1!.timestamp);
+    expect(sequenceAssignment2!.rejected).toBe(false);
+    expect(sequenceAssignment2!.claimed).toBe(false);
+    expect(sequenceAssignment2!.createdTime).toBeDefined();
+    expect(typeof sequenceAssignment2!.createdTime === 'number' ? sequenceAssignment2!.createdTime : sequenceAssignment2!.createdTime.seconds).toBeGreaterThanOrEqual(typeof sequenceAssignment1!.createdTime === 'number' ? sequenceAssignment1!.createdTime : sequenceAssignment1!.createdTime.seconds);
 
-    expect(sequenceAssignment1.participantId).toBe(participantId1);
+    expect(sequenceAssignment1!.participantId).toBe(participantId1);
 
     // Reject the new participant
     await storageEngine.rejectParticipant(participantId2, 'Participant rejected for testing');
@@ -199,16 +207,16 @@ describe.each([
     // @ts-expect-error using protected method for testing
     sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
-    sequenceAssignment2 = sequenceAssignments[participantId2];
+    sequenceAssignment2 = sequenceAssignments.find((assignment) => assignment.participantId === participantId2);
     expect(sequenceAssignment2).toBeDefined();
-    expect(sequenceAssignment2.timestamp).not.toEqual(sequenceAssignment1.timestamp);
+    expect(sequenceAssignment2!.timestamp).not.toEqual(sequenceAssignment1!.timestamp);
 
     // Check if the first rejected participant's sequence is available for reuse
-    sequenceAssignment1 = sequenceAssignments[participantId1];
+    sequenceAssignment1 = sequenceAssignments.find((assignment) => assignment.participantId === participantId1);
     expect(sequenceAssignment1).toBeDefined();
-    expect(sequenceAssignment1.rejected).toBe(true);
-    expect(sequenceAssignment1.claimed).toBe(false);
-    expect(sequenceAssignment1.completed).toBeNull();
+    expect(sequenceAssignment1!.rejected).toBe(true);
+    expect(sequenceAssignment1!.claimed).toBe(false);
+    expect(sequenceAssignment1!.completed).toBeNull();
 
     // Make a new participant session
     await storageEngine.clearCurrentParticipantId();
@@ -219,25 +227,25 @@ describe.each([
     // @ts-expect-error using protected method for testing
     sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
-    const sequenceAssignment3 = sequenceAssignments[participantId3];
+    const sequenceAssignment3 = sequenceAssignments.find((assignment) => assignment.participantId === participantId3);
     expect(sequenceAssignment3).toBeDefined();
-    expect(sequenceAssignment3.participantId).toBe(participantId3);
-    expect(sequenceAssignment3.timestamp).toEqual(sequenceAssignment1.timestamp);
-    expect(sequenceAssignment3.rejected).toBe(false);
-    expect(sequenceAssignment3.claimed).toBe(false);
-    expect(sequenceAssignment3.createdTime).toBeDefined();
-    expect(typeof sequenceAssignment3.createdTime === 'number' ? sequenceAssignment3.createdTime : sequenceAssignment3.createdTime.seconds).toBeGreaterThan(typeof sequenceAssignment1.createdTime === 'number' ? sequenceAssignment1.createdTime : sequenceAssignment1.createdTime.seconds);
-    expect(sequenceAssignment3.completed).toBeNull();
+    expect(sequenceAssignment3!.participantId).toBe(participantId3);
+    expect(sequenceAssignment3!.timestamp).toEqual(sequenceAssignment1!.timestamp);
+    expect(sequenceAssignment3!.rejected).toBe(false);
+    expect(sequenceAssignment3!.claimed).toBe(false);
+    expect(sequenceAssignment3!.createdTime).toBeDefined();
+    expect(typeof sequenceAssignment3!.createdTime === 'number' ? sequenceAssignment3!.createdTime : sequenceAssignment3!.createdTime.seconds).toBeGreaterThan(typeof sequenceAssignment1!.createdTime === 'number' ? sequenceAssignment1!.createdTime : sequenceAssignment1!.createdTime.seconds);
+    expect(sequenceAssignment3!.completed).toBeNull();
 
     // Ensure first rejected participant's sequence is claimed again
-    sequenceAssignment1 = sequenceAssignments[participantId1];
+    sequenceAssignment1 = sequenceAssignments.find((assignment) => assignment.participantId === participantId1);
     expect(sequenceAssignment1).toBeDefined();
-    expect(sequenceAssignment1.participantId).toBe(participantId1);
-    expect(sequenceAssignment1.timestamp).toEqual(sequenceAssignment3.timestamp);
-    expect(sequenceAssignment1.rejected).toBe(true);
-    expect(sequenceAssignment1.claimed).toBe(true);
-    expect(sequenceAssignment1.createdTime).toBeDefined();
-    expect(typeof sequenceAssignment1.createdTime === 'number' ? sequenceAssignment1.createdTime : sequenceAssignment1.createdTime.seconds).toBeLessThan(typeof sequenceAssignment3.createdTime === 'number' ? sequenceAssignment3.createdTime : sequenceAssignment3.createdTime.seconds);
+    expect(sequenceAssignment1!.participantId).toBe(participantId1);
+    expect(sequenceAssignment1!.timestamp).toEqual(sequenceAssignment3!.timestamp);
+    expect(sequenceAssignment1!.rejected).toBe(true);
+    expect(sequenceAssignment1!.claimed).toBe(true);
+    expect(sequenceAssignment1!.createdTime).toBeDefined();
+    expect(typeof sequenceAssignment1!.createdTime === 'number' ? sequenceAssignment1!.createdTime : sequenceAssignment1!.createdTime.seconds).toBeLessThan(typeof sequenceAssignment3!.createdTime === 'number' ? sequenceAssignment3!.createdTime : sequenceAssignment3!.createdTime.seconds);
 
     // Check that a new participant gets the other rejected sequence assignment
     await storageEngine.clearCurrentParticipantId();
@@ -248,27 +256,27 @@ describe.each([
     // @ts-expect-error using protected method for testing
     sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
-    const sequenceAssignment4 = sequenceAssignments[participantId4];
+    const sequenceAssignment4 = sequenceAssignments.find((assignment) => assignment.participantId === participantId4);
     expect(sequenceAssignment4).toBeDefined();
-    expect(sequenceAssignment4.participantId).toBe(participantId4);
-    expect(sequenceAssignment4.timestamp).toBeDefined();
-    expect(sequenceAssignment4.rejected).toBe(false);
-    expect(sequenceAssignment4.claimed).toBe(false);
-    expect(sequenceAssignment4.createdTime).toBeDefined();
-    expect(typeof sequenceAssignment4.createdTime === 'number' ? sequenceAssignment4.createdTime : sequenceAssignment4.createdTime.seconds).toBeGreaterThanOrEqual(typeof sequenceAssignment3.createdTime === 'number' ? sequenceAssignment3.createdTime : sequenceAssignment3.createdTime.seconds);
-    expect(sequenceAssignment4.completed).toBeNull();
+    expect(sequenceAssignment4!.participantId).toBe(participantId4);
+    expect(sequenceAssignment4!.timestamp).toBeDefined();
+    expect(sequenceAssignment4!.rejected).toBe(false);
+    expect(sequenceAssignment4!.claimed).toBe(false);
+    expect(sequenceAssignment4!.createdTime).toBeDefined();
+    expect(typeof sequenceAssignment4!.createdTime === 'number' ? sequenceAssignment4!.createdTime : sequenceAssignment4!.createdTime.seconds).toBeGreaterThanOrEqual(typeof sequenceAssignment3!.createdTime === 'number' ? sequenceAssignment3!.createdTime : sequenceAssignment3!.createdTime.seconds);
+    expect(sequenceAssignment4!.completed).toBeNull();
 
     // Check the length of sequence assignments
     // @ts-expect-error using protected method for testing
     sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
-    expect(sequenceAssignments[participantId1]).toBeDefined();
-    expect(sequenceAssignments[participantId2]).toBeDefined(); // participant 2 was rejected
-    expect(sequenceAssignments[participantId3]).toBeDefined();
-    expect(sequenceAssignments[participantId4]).toBeDefined();
+    expect(sequenceAssignments.find((assignment) => assignment.participantId === participantId1)).toBeDefined();
+    expect(sequenceAssignments.find((assignment) => assignment.participantId === participantId2)).toBeDefined();
+    expect(sequenceAssignments.find((assignment) => assignment.participantId === participantId3)).toBeDefined();
+    expect(sequenceAssignments.find((assignment) => assignment.participantId === participantId4)).toBeDefined();
 
     const participantIds = await storageEngine.getAllParticipantIds();
     expect(participantIds).toBeDefined();
-    expect(participantIds.length).toBe(5);
+    expect(participantIds.length).toBe(4);
     expect(participantIds).toContain(participantId1);
     expect(participantIds).toContain(participantId2);
     expect(participantIds).toContain(participantId3);

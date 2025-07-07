@@ -53,6 +53,8 @@ export type StorageObject<T extends StorageObjectType> =
 export abstract class StorageEngine {
   protected engine: string;
 
+  protected testing: boolean;
+
   protected cloudEngine: boolean = false;
 
   protected connected = false;
@@ -69,8 +71,9 @@ export abstract class StorageEngine {
 
   protected participantData: ParticipantData | undefined;
 
-  constructor(engine: string) {
+  constructor(engine: string, testing: boolean) {
     this.engine = engine;
+    this.testing = testing;
   }
 
   isConnected() {
@@ -143,6 +146,9 @@ export abstract class StorageEngine {
 
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
+
+  // Resets the entire study database for testing purposes. This is used to reset the study database to a clean state for testing.
+  protected abstract _testingReset(studyId: string): Promise<void>;
 
   /*
   * THROTTLED METHODS

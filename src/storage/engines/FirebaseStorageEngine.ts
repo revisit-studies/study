@@ -46,8 +46,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
   private storage: FirebaseStorage;
 
-  constructor() {
-    super('firebase');
+  constructor(testing: boolean = false) {
+    super('firebase', testing);
 
     const firebaseConfig = hjsonParse(import.meta.env.VITE_FIREBASE_CONFIG);
     const firebaseApp = initializeApp(firebaseConfig);
@@ -335,6 +335,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       console.warn(`Audio for task ${task} and participant ${participantId} not found.`);
       return null;
     }
+  }
+
+  protected async _testingReset() {
+    throw new Error('Testing reset not implemented for FirebaseStorageEngine');
   }
 
   // Gets data from the user-management collection based on the inputted string

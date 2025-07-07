@@ -8,8 +8,8 @@ export class LocalStorageEngine extends StorageEngine {
     name: 'revisit',
   });
 
-  constructor() {
-    super('localStorage');
+  constructor(testing: boolean = false) {
+    super('localStorage', testing);
   }
 
   protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
@@ -44,7 +44,7 @@ export class LocalStorageEngine extends StorageEngine {
   protected async _getCurrentConfigHash() {
     await this._verifyStudyDatabase();
     const key = `${this.collectionPrefix}${this.studyId}/configHash`;
-    return await this.studyDatabase.getItem<string>(key) || '';
+    return await this.studyDatabase.getItem<string>(key) || null;
   }
 
   protected async _setCurrentConfigHash(configHash: string) {
@@ -196,5 +196,16 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error(`Audio for task ${task} and participant ${participantId || this.currentParticipantId} not found`);
     }
     return URL.createObjectURL(audioBlob);
+  }
+
+  protected async _testingReset(studyId: string) {
+    await this._verifyStudyDatabase();
+    if (!studyId) {
+      throw new Error('Study ID is required for reset');
+    }
+    // Clear the entire study database
+    const keys = await this.studyDatabase.keys();
+    const studyKeys = keys.filter((key) => key.startsWith(`${this.collectionPrefix}${studyId}/`));
+    await Promise.all(studyKeys.map((key) => this.studyDatabase.removeItem(key)));
   }
 }
