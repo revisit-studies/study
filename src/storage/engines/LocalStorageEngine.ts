@@ -5,6 +5,7 @@ import { ParticipantData } from '../types';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
+import { OverviewData } from '../../analysis/individualStudy/summary/types';
 
 export class LocalStorageEngine extends StorageEngine {
   private studyDatabase: LocalForage | undefined = undefined;
@@ -450,6 +451,26 @@ export class LocalStorageEngine extends StorageEngine {
       minTime: minTime === Infinity ? null : minTime,
       maxTime: maxTime === -Infinity ? null : maxTime,
     };
+  }
+
+  async getOverviewData(): Promise<OverviewData | null> {
+    if (!this._verifyStudyDatabase(this.studyDatabase)) {
+      throw new Error('Study database not initialized');
+    }
+
+    try {
+      return await this.studyDatabase.getItem('overviewData') as OverviewData | null;
+    } catch {
+      return null;
+    }
+  }
+
+  async saveOverviewData(overviewData: OverviewData): Promise<void> {
+    if (!this._verifyStudyDatabase(this.studyDatabase)) {
+      throw new Error('Study database not initialized');
+    }
+
+    await this.studyDatabase.setItem('overviewData', overviewData);
   }
 
   private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage {
