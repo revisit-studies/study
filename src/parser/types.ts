@@ -97,7 +97,7 @@ export interface UIConfig {
   autoDownloadStudy?: boolean;
   /** The time in milliseconds to wait before automatically downloading the study data. */
   autoDownloadTime?: number;
-  /** The message to display when the study ends. Supports templating with variables in curly braces. Available variables include {PARTICIPANT_ID} for the internal participant ID, and any URL parameter names (e.g., {PROLIFIC_ID}, {SONA_ID}, etc.). */
+  /** The message to display when the study ends. Supports templating with the {PARTICIPANT_ID} variable. e.g. "Thank you for completing the study. You may click this link and return to Prolific: [Go to Prolific](https://app.prolific.com/submissions/complete?cc=StudyID&PROLIFIC_ID={PROLIFIC_ID}))" */
   studyEndMsg?: string;
   /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.  */
   recordStudyAudio?: boolean;
