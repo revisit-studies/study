@@ -112,6 +112,7 @@
     "overall_structure": {
       "type": "website",
       "path": "sme-eval-ontology/assets/ontology.html",
+      "previousButton": true,
       "response": [
         {
           "id": "exploration_instructions",
@@ -154,6 +155,7 @@
     "branch_modality": {
       "type": "website",
       "path": "sme-eval-ontology/assets/ontology.html",
+      "previousButton": true,
       "response": [
         {
           "id": "modality_organization",
@@ -245,6 +247,7 @@
     "branch_manipulation": {
       "type": "website",
       "path": "sme-eval-ontology/assets/ontology.html",
+      "previousButton": true,
       "response": [
         {
           "id": "manipulation_organization",
@@ -336,6 +339,7 @@
     "branch_feature": {
       "type": "website",
       "path": "sme-eval-ontology/assets/ontology.html",
+      "previousButton": true,
       "response": [
         {
           "id": "feature_organization",
@@ -427,6 +431,7 @@
     "branch_scope": {
       "type": "website",
       "path": "sme-eval-ontology/assets/ontology.html",
+      "previousButton": true,
       "response": [
         {
           "id": "scope_organization",
@@ -518,6 +523,7 @@
     "viewer_feedback": {
       "type": "website",
       "path": "sme-eval-ontology/assets/ontology.html",
+      "previousButton": true,
       "response": [
         {
           "id": "viewer_most_helpful_view",
@@ -552,6 +558,7 @@
     "final_assessment": {
       "type": "website",
       "path": "sme-eval-ontology/assets/ontology.html",
+      "previousButton": true,
       "response": [
         {
           "id": "ontology_gap",
