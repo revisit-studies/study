@@ -30,11 +30,14 @@ export function useOverviewData() {
     try {
       const currentCounts = await storageEngine.getParticipantsStatusCounts(studyId);
 
-      if (
+      const calculatedTotal = data.participantCounts.completed + data.participantCounts.inProgress + data.participantCounts.rejected;
+      const currentTotal = currentCounts.completed + currentCounts.inProgress + currentCounts.rejected;
+
+      if (calculatedTotal === currentTotal && (
         data.participantCounts.completed !== currentCounts.completed
         || data.participantCounts.inProgress !== currentCounts.inProgress
         || data.participantCounts.rejected !== currentCounts.rejected
-      ) {
+      )) {
         showNotification({
           title: 'Participant Count Mismatch',
           message: `Calculated participant counts don't match current counts. Completed: ${data.participantCounts.completed} vs ${currentCounts.completed}, In Progress: ${data.participantCounts.inProgress} vs ${currentCounts.inProgress}, Rejected: ${data.participantCounts.rejected} vs ${currentCounts.rejected}`,
