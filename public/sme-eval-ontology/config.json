@@ -2,19 +2,21 @@
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "SME Evaluation Survey: Digital Visual Media Forensics Ontology",
-    "version": "pilot",
+    "version": "v1.0",
     "authors": [
-      "Your Name or Team"
+      "Y. Kelly Wu",
+      "Saniat J. Sohrawardi",
+      "Matthew Wright"
     ],
-    "date": "2024-06-01",
+    "date": "2024-07-07",
     "description": "A survey to evaluate the structure, completeness, and utility of a Digital Visual Media Forensics ontology.",
     "organizations": [
-      "Your Organization"
+      "Rochester Institute of Technology"
     ]
   },
   "uiConfig": {
-    "contactEmail": "your@email.com",
-    "helpTextPath": "",
+    "contactEmail": "kellywu@mail.rit.edu",
+    "helpTextPath": "sme-eval-ontology/assets/help.md",
     "logoPath": "revisitAssets/icon-varuna.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -49,7 +51,7 @@
         {
           "id": "years_experience",
           "prompt": "How many years of experience do you have in the field of digital media forensics or a related area?",
-          "location": "aboveStimulus",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
             "0-2 years",
@@ -63,7 +65,7 @@
         {
           "id": "modalities_specialize",
           "prompt": "Which of the following modalities do you specialize in? (Select all that apply)",
-          "location": "aboveStimulus",
+          "location": "belowStimulus",
           "type": "checkbox",
           "options": [
             "Still Image",
@@ -76,9 +78,16 @@
           "required": false
         },
         {
+          "id": "modalities_elaborate",
+          "prompt": "If you would like to elaborate more on your specialized modalities, please use the text box below.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        },
+        {
           "id": "familiarity_manipulation_types",
           "prompt": "Please rate your familiarity with the following general manipulation types:",
-          "location": "aboveStimulus",
+          "location": "belowStimulus",
           "type": "matrix-radio",
           "answerOptions": [
             "Very Unfamiliar",
@@ -88,8 +97,10 @@
             "Very Familiar"
           ],
           "questionOptions": [
-            "Synthetic Generation (e.g. GANs, Diffusion-generated, Text-to-Image, Deepfakes)",
+            "Synthetic Generation (e.g. GANs, Diffusion-generated, Text-to-Image/Video, Deepfakes)",
             "Manual Editing (e.g. Splicing, Copy-move, Removal)",
+            "Steganography",
+            "Mis-contextualized Media",
             "File & Metadata Tampering"
           ],
           "required": false
@@ -105,20 +116,28 @@
           "prompt": "Please explore the interactive ontology above using the Tree View, Graph View, and Sunburst View to familiarize yourself with the structure before answering the questions below. You can click on any node to see its reasoning and examples.",
           "location": "belowStimulus",
           "type": "longText",
-          "placeholder": "Type 'done' when you have finished exploring the ontology"
+          "placeholder": "Type 'done' when you have finished exploring the ontology",
+          "required": false
         },
         {
           "id": "four_branch_division",
-          "prompt": "The ontology is divided into four main branches: (1) Target Modality, (2) Manipulation / Task, (3) Feature / Cue, and (4) Search / Analysis Scope. On a scale of 1 to 5, how logical and intuitive do you find this overall four-branch division?",
+          "prompt": "The ontology is divided into four main branches: (1) Modality, (2) Forensic Goal & Task, (3) Evidentiary Features, and (4) Search & Analysis Scope. And the overall four-branch division is logical and intuitive.",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
-            "1 Very illogical",
-            "2 Illogical",
+            "1 Strongly Disagree",
+            "2 Disagree",
             "3 Neutral",
-            "4 Logical",
-            "5 Very Logical"
+            "4 Agree",
+            "5 Strongly Agree"
           ],
+          "required": false
+        },
+        {
+          "id": "four_branch_division_explain",
+          "prompt": "Please explain your rating.",
+          "location": "belowStimulus",
+          "type": "longText",
           "required": false
         },
         {
@@ -131,344 +150,377 @@
       ]
     },
     "branch_modality": {
-      "type": "questionnaire",
+      "type": "website",
+      "path": "sme-eval-ontology/assets/ontology.html",
       "response": [
         {
           "id": "modality_organization",
-          "prompt": "How logical is the internal structure and grouping of nodes within this branch? (Example: Does it make sense for 'Multimodal' to be a top-level modality?)",
-          "location": "aboveStimulus",
+          "prompt": "The structure and grouping of nodes within the Target Modality branch is logical and effective. (Example: Should there be a \"multimodal\" node in this branch?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
-            "1 Very Illogical",
-            "2 Illogical",
+            "1 Strongly Disagree",
+            "2 Disagree",
             "3 Neutral",
-            "4 Logical",
-            "5 Very Logical"
+            "4 Agree",
+            "5 Strongly Agree"
           ],
           "required": false
         },
         {
           "id": "modality_organization_explain",
-          "prompt": "If you select 1 or 2, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "Please explain your rating.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "modality_completeness",
-          "prompt": "Are there any significant media types or modalities missing from this branch? (Example: Should 'Audio' be included as a top-level modality?)",
-          "location": "aboveStimulus",
+          "prompt": "Are there any significant media types or modalities missing from this branch? (Example: Should \"3D/Spatial Media\" be added as a distinct modality to reflect emerging technologies like AR/VR)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
             "Yes",
-            "No"
-          ]
+            "No",
+            "Unsure"
+          ],
+          "required": false
         },
         {
           "id": "modality_completeness_explain",
-          "prompt": "If you select No, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "If you select Yes, please explain what is missing and why.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "modality_correctness",
-          "prompt": "Is anything in this branch misplaced? Does any node belong in a different branch entirely? (Example: 'Deepfake Video' was previously listed under 'Video' but was moved to the Manipulation/Task branch because it describes a manipulation type, not a modality. Do you see any other similar issues?)",
-          "location": "aboveStimulus",
+          "prompt": "Is anything in this branch misplaced? Does any node belong in a different branch entirely? (Example: As supportive modalities for visual media analysis, should \"text\" and \"audio\" be standalone modalites in this branch?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
             "Yes",
-            "No"
-          ]
+            "No",
+            "Unsure"
+          ],
+          "required": false
         },
         {
           "id": "modality_correctness_explain",
-          "prompt": "If you select No, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "If you select Yes, please explain what is misplaced and why.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "modality_naming_clarity",
-          "prompt": "Are any of the node names within this branch ambiguous, incorrect, or confusing? (Example: Is the term 'Still Image' clear, or should it just be 'Image'? Is 'Text-only' too confusing?)",
-          "location": "aboveStimulus",
+          "prompt": "Are any of the node names within this branch ambiguous, incorrect, or confusing? (Example: Does the label \"Video\" clearly convey its intended scope? Would \"Moving Image\" be more precise to avoid conflating it with associated audio content?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
-            "1 Very Unclear",
-            "2 Unclear",
-            "3 Neutral",
-            "4 Clear",
-            "5 Very Clear"
-          ]
+            "Yes",
+            "No",
+            "Unsure"
+          ],
+          "required": false
         },
         {
           "id": "modality_naming_clarity_explain",
-          "prompt": "If you select 1 or 2, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "If you select Yes, please explain what is unclear and why.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "modality_additional_comments",
           "prompt": "If there's anything about this branch you'd like to comment on that wasn't addressed in the previous questions, please use the text box below.",
-          "location": "aboveStimulus",
+          "location": "belowStimulus",
           "type": "longText",
           "required": false
         }
       ]
     },
     "branch_manipulation": {
-      "type": "questionnaire",
+      "type": "website",
+      "path": "sme-eval-ontology/assets/ontology.html",
       "response": [
         {
           "id": "manipulation_organization",
-          "prompt": "How logical is the internal structure and grouping of nodes within this branch? (Example: Does the separation of 'Synthetic Generation' from 'Compositional Forgeries' make sense to you?)",
-          "location": "aboveStimulus",
+          "prompt": "The structure and grouping of nodes within the Forensic Goal & Task branch is logical and effective. (Example: Should modality be considered as a factor when organizing this branch? For example, splitting \"Forgery & Manipulation Detection\" based on if the media is a video or an image.)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
-            "1 Very Illogical",
-            "2 Illogical",
+            "1 Strongly Disagree",
+            "2 Disagree",
             "3 Neutral",
-            "4 Logical",
-            "5 Very Logical"
+            "4 Agree",
+            "5 Strongly Agree"
           ],
           "required": false
         },
         {
           "id": "manipulation_organization_explain",
-          "prompt": "If you select 1 or 2, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "Please explain your rating.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "manipulation_completeness",
-          "prompt": "Are there any significant manipulation techniques or forensic tasks for visual media missing from this branch? (Example: Should 'Steganography Detection' have its own node? Is the concept of an 'Anomaly Detection' task missing?)",
-          "location": "aboveStimulus",
+          "prompt": "Are there any significant manipulation techniques or forensic tasks for digital visual media missing from this branch? (Example: Any \"Signal-level Post-processing\" other than \"Compression\" is missing? \"Cheapfake\" should be added to this branch somewhere?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
             "Yes",
-            "No"
-          ]
+            "No",
+            "Unsure"
+          ],
+          "required": false
         },
         {
           "id": "manipulation_completeness_explain",
-          "prompt": "If you select No, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "If you select Yes, please explain what is missing and why.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "manipulation_correctness",
-          "prompt": "Is anything in this branch misplaced? Does any node belong in a different branch? (Example: Does 'Re-encoding & Recompression History Analysis' feel more like a 'Feature / Cue' than a 'Task'? Why or why not?)",
-          "location": "aboveStimulus",
+          "prompt": "Is anything in this branch misplaced? Does any node belong in a different branch? (Example: Does it make sense to place \"Steganography\" under \"Forgery & Manipulation Detection\"?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
             "Yes",
-            "No"
-          ]
+            "No",
+            "Unsure"
+          ],
+          "required": false
         },
         {
           "id": "manipulation_correctness_explain",
-          "prompt": "If you select No, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "If you select Yes, please explain what is misplaced and why.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "manipulation_naming_clarity",
-          "prompt": "Are any of the node names within this branch ambiguous, incorrect, or confusing? (Example: Is 'Pixel Content Editing' a clear name for its category? Is the distinction between 'Splicing' and 'Copy-Move' clear?)",
-          "location": "aboveStimulus",
+          "prompt": "Are any of the node names within this branch ambiguous, incorrect, or confusing? (Example: Should it be \"Content Synthesis\" or \"Content Generation\"? Are \"Content Rearrangement\" and \"Content Synthesis\" intuitive namings for understanding the splitting logic?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
-            "1 Very Unclear",
-            "2 Unclear",
-            "3 Neutral",
-            "4 Clear",
-            "5 Very Clear"
-          ]
+            "Yes",
+            "No",
+            "Unsure"
+          ],
+          "required": false
         },
         {
           "id": "manipulation_naming_clarity_explain",
-          "prompt": "If you select 1 or 2, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "If you select Yes, please explain what is unclear and why.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "manipulation_additional_comments",
           "prompt": "If there's anything about this branch you'd like to comment on that wasn't addressed in the previous questions, please use the text box below.",
-          "location": "aboveStimulus",
+          "location": "belowStimulus",
           "type": "longText",
           "required": false
         }
       ]
     },
     "branch_feature": {
-      "type": "questionnaire",
+      "type": "website",
+      "path": "sme-eval-ontology/assets/ontology.html",
       "response": [
         {
           "id": "feature_organization",
-          "prompt": "How logical is the internal structure and grouping of nodes within this branch?",
-          "location": "aboveStimulus",
+          "prompt": "The structure and grouping of nodes within the Evidentiary Features branch is logical and effective. (Example: Is it reasonable to split this branch into features that model ingest and signs that humans can identify?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
-            "1 Very Illogical",
-            "2 Illogical",
+            "1 Strongly Disagree",
+            "2 Disagree",
             "3 Neutral",
-            "4 Logical",
-            "5 Very Logical"
+            "4 Agree",
+            "5 Strongly Agree"
           ],
           "required": false
         },
         {
           "id": "feature_organization_explain",
-          "prompt": "If you select 1 or 2, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "Please explain your rating.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "feature_completeness",
-          "prompt": "Are there any significant feature families or specific forensic cues for visual media missing from this branch? (Example: Are there important statistical features that don't fit into the current structure?)",
-          "location": "aboveStimulus",
+          "prompt": "Are there any significant feature families or specific forensic cues for digital visual media missing from this branch? (Example: Should there be a dedicated category for \"Scene Semantics,\" especially for detecting inconsistencies in scene composition? Any \"Temporal Domain Features\" other than \"Optical Flow Field\"?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
             "Yes",
-            "No"
-          ]
+            "No",
+            "Unsure"
+          ],
+          "required": false
         },
         {
           "id": "feature_completeness_explain",
-          "prompt": "If you select No, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "If you select Yes, please explain what is missing and why.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "feature_correctness",
-          "prompt": "Is anything in this branch misplaced? Does any node belong in a different branch? (Example: We moved 'Demosaicing & CFA Traces' to the Pixel-Domain. Do you agree with this, or do you see it belonging elsewhere?)",
-          "location": "aboveStimulus",
+          "prompt": "Is anything in this branch misplaced? Does any node belong in a different branch? (Example: Should \"Compression Artifacts\" be a standalone node under \"Hand-crafted Features\"? Should \"MFCC\" be placed under \"Frequency Domain Features\" or \"Temporal Domain Features\"?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
             "Yes",
-            "No"
-          ]
+            "No",
+            "Unsure"
+          ],
+          "required": false
         },
         {
           "id": "feature_correctness_explain",
-          "prompt": "If you select No, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "If you select Yes, please explain what is misplaced and why.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "feature_naming_clarity",
-          "prompt": "Are any of the node names within this branch ambiguous, incorrect, or confusing? (Example: Is the distinction between 'Noise & Residual Features' and 'Generative Model Fingerprints (Learned)' clear?)",
-          "location": "aboveStimulus",
+          "prompt": "Are any of the node names within this branch ambiguous, incorrect, or confusing? (Example: Should \"Deep Features\" be changed to \"Deep Learning Features\"? Does \"High-level Semantic Features\" vs \"Low-level Signal Features\" sound clearer?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
-            "1 Very Unclear",
-            "2 Unclear",
-            "3 Neutral",
-            "4 Clear",
-            "5 Very Clear"
-          ]
+            "Yes",
+            "No",
+            "Unsure"
+          ],
+          "required": false
         },
         {
           "id": "feature_naming_clarity_explain",
-          "prompt": "If you select 1 or 2, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "If you select Yes, please explain what is unclear and why.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "feature_additional_comments",
           "prompt": "If there's anything about this branch you'd like to comment on that wasn't addressed in the previous questions, please use the text box below.",
-          "location": "aboveStimulus",
+          "location": "belowStimulus",
           "type": "longText",
           "required": false
         }
       ]
     },
     "branch_scope": {
-      "type": "questionnaire",
+      "type": "website",
+      "path": "sme-eval-ontology/assets/ontology.html",
       "response": [
         {
           "id": "scope_organization",
-          "prompt": "How logical is the internal structure and grouping of nodes within this branch?",
-          "location": "aboveStimulus",
+          "prompt": "The structure and grouping of nodes within the Search & Analysis Scope branch is logical and effective. (Example: Does it make sense to have one spatial branch and one temporal branch?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
-            "1 Very Illogical",
-            "2 Illogical",
+            "1 Strongly Disagree",
+            "2 Disagree",
             "3 Neutral",
-            "4 Logical",
-            "5 Very Logical"
+            "4 Agree",
+            "5 Strongly Agree"
           ],
           "required": false
         },
         {
           "id": "scope_organization_explain",
-          "prompt": "If you select 1 or 2, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "Please explain your rating.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "scope_completeness",
-          "prompt": "Are there any particular analysis scopes for visual media missing from this branch? (Example: Is there a need for a 'Cross-Object' scope for analyzing relationships between two different faces in an image?)",
-          "location": "aboveStimulus",
+          "prompt": "Are there any particular analysis scopes for digital visual media missing from this branch? (Example: Should we consider \"Captions\", \"Transcripts\", and so on from supportive modalities (Text & Audio) here in this branch? Patch/Block is not included in the current branch, should it be added back under \"Spatial Granularity\"?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
             "Yes",
-            "No"
-          ]
+            "No",
+            "Unsure"
+          ],
+          "required": false
         },
         {
           "id": "scope_completeness_explain",
-          "prompt": "If you select No, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "If you select Yes, please explain what is missing and why.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "scope_correctness",
-          "prompt": "Is anything in this branch misplaced? Does any node belong in a different branch? (Example: We recently merged 'Object-Level' analysis under 'Localized/Regional Scope'. Does this feel correct, or should it be a parallel concept?)",
-          "location": "aboveStimulus",
+          "prompt": "Is anything in this branch misplaced? Does any node belong in a different branch? (Example: Should \"Full Face\" be a standalone node as a \"ROI\"?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
             "Yes",
-            "No"
-          ]
+            "No",
+            "Unsure"
+          ],
+          "required": false
         },
         {
           "id": "scope_correctness_explain",
-          "prompt": "If you select No, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "If you select Yes, please explain what you believe is misplaced and why.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "scope_naming_clarity",
-          "prompt": "Are any of the node names within this branch ambiguous, incorrect, or confusing? (Example: Is 'Salient / Suspected ROI' a clear and standard term?)",
-          "location": "aboveStimulus",
+          "prompt": "Are any of the node names within this branch ambiguous, incorrect, or confusing? (Example: Is \"Short Window/Segment\" intuitive enough? What if the selection is not consecutive frames?)",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
-            "1 Very Unclear",
-            "2 Unclear",
-            "3 Neutral",
-            "4 Clear",
-            "5 Very Clear"
-          ]
+            "Yes",
+            "No",
+            "Unsure"
+          ],
+          "required": false
         },
         {
           "id": "scope_naming_clarity_explain",
-          "prompt": "If you select 1 or 2, please explain the reason.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "If you select Yes, please explain what is unclear.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "scope_additional_comments",
           "prompt": "If there's anything about this branch you'd like to comment on that wasn't addressed in the previous questions, please use the text box below.",
-          "location": "aboveStimulus",
+          "location": "belowStimulus",
           "type": "longText",
           "required": false
         }
       ]
     },
     "viewer_feedback": {
-      "type": "questionnaire",
+      "type": "website",
+      "path": "sme-eval-ontology/assets/ontology.html",
       "response": [
         {
           "id": "viewer_most_helpful_view",
-          "prompt": "Which view did you find most helpful for understanding the ontology's structure? Why?",
-          "location": "aboveStimulus",
+          "prompt": "Which view did you find most helpful for understanding the ontology's structure?",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
             "Tree View",
@@ -476,44 +528,47 @@
             "Sunburst View",
             "A combination of views",
             "None were particularly helpful"
-          ]
+          ],
+          "required": false
         },
         {
           "id": "viewer_most_helpful_view_reason",
-          "prompt": "[Optional] Please provide reasons behind your selection.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "Please explain your selection.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "viewer_suggestions",
-          "prompt": "Do you have any suggestions for improving the usability or features of the interactive viewer?",
-          "location": "aboveStimulus",
+          "prompt": "Do you have any suggestions for improving the usability or features of the interactive viewer? Please describe anything that was confusing, hard to use, or could be made more efficient.",
+          "location": "belowStimulus",
           "type": "longText",
           "required": false
         }
       ]
     },
     "final_assessment": {
-      "type": "questionnaire",
+      "type": "website",
+      "path": "sme-eval-ontology/assets/ontology.html",
       "response": [
         {
           "id": "ontology_gap",
-          "prompt": "Based on your expertise, what is the single most significant gap or missing area in this ontology as a whole?",
-          "location": "aboveStimulus",
+          "prompt": "Based on your expertise, what do you see as the most significant gap or missing element in this ontology as a whole?",
+          "location": "belowStimulus",
           "type": "longText",
           "required": false
         },
         {
           "id": "ontology_applications",
-          "prompt": "How useful could this ontology be for the following applications?",
-          "location": "aboveStimulus",
+          "prompt": "The ontology could be useful for the following applications:",
+          "location": "belowStimulus",
           "type": "matrix-radio",
           "answerOptions": [
-            "Not Useful",
-            "Slightly Useful",
+            "Strongly Disagree",
+            "Disagree",
             "Neutral",
-            "Very Useful",
-            "Extremely Useful"
+            "Agree",
+            "Strongly Agree"
           ],
           "questionOptions": [
             "Identifying gaps in academic research",
@@ -521,12 +576,20 @@
             "Structuring a forensic tool's capabilities",
             "Improving tool interpretability",
             "Onboarding/Training new digital forensics analysts"
-          ]
+          ],
+          "required": false
+        },
+        {
+          "id": "ontology_other_applications",
+          "prompt": "Do you foresee any other applications for this ontology? Please explain.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "ontology_extendability",
-          "prompt": "A key goal is for this ontology to be a living framework that can be extended by the community. How easy or difficult do you believe it would be to extend the current structure as new technologies emerge?",
-          "location": "aboveStimulus",
+          "prompt": "A key goal for this ontology is to be a living framework that can be extended by the community. How easy or difficult do you believe it would be to extend the current structure as new technologies emerge?",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
             "1 Very Difficult",
@@ -534,18 +597,20 @@
             "3 Neutral",
             "4 Easy",
             "5 Very Easy"
-          ]
+          ],
+          "required": false
         },
         {
           "id": "ontology_extendability_reason",
-          "prompt": "[Optional] Please explain your rating.",
-          "location": "aboveStimulus",
-          "type": "longText"
+          "prompt": "Please explain your rating.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
         },
         {
           "id": "ontology_final_comments",
-          "prompt": "Do you have any final thoughts, comments, or suggestions for the future development of this ontology?",
-          "location": "aboveStimulus",
+          "prompt": "Do you have any final thoughts, concerns, or suggestions for improving the ontology or its use?",
+          "location": "belowStimulus",
           "type": "longText",
           "required": false
         }
@@ -554,7 +619,15 @@
     "thank_you": {
       "type": "markdown",
       "path": "sme-eval-ontology/assets/thank_you.md",
-      "response": []
+      "response": [
+        {
+          "id": "optional_name",
+          "prompt": "The study is anonymous, but if you'd like to provide your name for us to contact you later, please enter it below. We will de-identified the data when performing the analysis.",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "required": false
+        }
+      ]
     }
   },
   "sequence": {
