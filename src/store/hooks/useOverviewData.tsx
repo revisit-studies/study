@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'react-router';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { OverviewData } from '../../analysis/individualStudy/summary/types';
 import { showNotification } from '../../utils/notifications';
 
-export function useOverviewData(studyId: string) {
+export function useOverviewData() {
+  const { studyId } = useParams();
   const { storageEngine } = useStorageEngine();
   const [overviewData, setOverviewData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -13,7 +15,7 @@ export function useOverviewData(studyId: string) {
 
     setLoading(true);
     try {
-      const data = await storageEngine.getOverviewData(studyId);
+      const data = await storageEngine.getOverviewData();
       setOverviewData(data);
     } catch (error) {
       console.error('Failed to load overview data:', error);
@@ -44,7 +46,7 @@ export function useOverviewData(studyId: string) {
         ...data,
         avgCleanTime: data.avgCleanTime / 1000,
       };
-      await storageEngine.saveOverviewData(studyId, dataToSave);
+      await storageEngine.saveOverviewData(dataToSave);
       setOverviewData(dataToSave);
     } catch (error) {
       console.error('Failed to save overview data:', error);

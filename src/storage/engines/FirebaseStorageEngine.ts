@@ -598,10 +598,10 @@ export class FirebaseStorageEngine extends StorageEngine {
     return participantData.participantTags;
   }
 
-  async getOverviewData(studyId: string): Promise<OverviewData | null> {
+  async getOverviewData(): Promise<OverviewData | null> {
     try {
       const overviewData = await this._getFromFirebaseStorage(
-        `overview/${studyId}`,
+        `overview/${this.studyId}`,
         'overviewData',
       );
       return overviewData as OverviewData;
@@ -610,9 +610,9 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async saveOverviewData(studyId: string, overviewData: OverviewData): Promise<void> {
+  async saveOverviewData(overviewData: OverviewData): Promise<void> {
     await this._pushToFirebaseStorage(
-      `overview/${studyId}`,
+      `overview/${this.studyId}`,
       'overviewData',
       overviewData,
       true,

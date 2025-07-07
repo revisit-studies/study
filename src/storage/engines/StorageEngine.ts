@@ -106,7 +106,7 @@ export abstract class StorageEngine {
 
   abstract getParticipantsStatusCounts(studyId: string): Promise<{completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null}>;
 
-  abstract getOverviewData(studyId: string): Promise<OverviewData | null>;
+  abstract getOverviewData(): Promise<OverviewData | null>;
 
-  abstract saveOverviewData(studyId: string, overviewData: OverviewData): Promise<void>;
+  abstract saveOverviewData(overviewData: OverviewData): Promise<void>;
 }
