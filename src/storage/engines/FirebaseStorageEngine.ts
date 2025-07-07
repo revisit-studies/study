@@ -606,6 +606,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       );
       return overviewData as OverviewData;
     } catch {
+      console.warn('No overview data found');
       return null;
     }
   }

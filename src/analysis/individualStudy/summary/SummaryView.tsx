@@ -1,6 +1,5 @@
 import { Stack, Group } from '@mantine/core';
 import { useMemo, useEffect } from 'react';
-import { useParams } from 'react-router';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { useOverviewData } from '../../../store/hooks/useOverviewData';
@@ -20,7 +19,6 @@ interface StudyStatsProps {
 }
 
 export function SummaryView({ visibleParticipants, studyConfig }: StudyStatsProps) {
-  const { studyId } = useParams();
   const { saveOverviewData } = useOverviewData();
 
   const overviewData: OverviewData | null = useMemo(() => {
@@ -85,8 +83,6 @@ export function SummaryView({ visibleParticipants, studyConfig }: StudyStatsProp
       saveOverviewData(overviewData);
     }
   }, [overviewData, saveOverviewData]);
-
-  if (!studyId) return null;
 
   return (
     <Stack gap="md">

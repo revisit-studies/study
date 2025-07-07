@@ -458,11 +458,7 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
-    try {
-      return await this.studyDatabase.getItem('overviewData') as OverviewData | null;
-    } catch {
-      return null;
-    }
+    return await this.studyDatabase.getItem('overviewData') as OverviewData | null;
   }
 
   async saveOverviewData(overviewData: OverviewData): Promise<void> {
