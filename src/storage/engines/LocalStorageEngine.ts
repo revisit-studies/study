@@ -58,9 +58,9 @@ export class LocalStorageEngine extends StorageEngine {
     const sequenceAssignmentPath = `${this.collectionPrefix}${studyId}/sequenceAssignment`;
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath);
     if (!sequenceAssignments) {
-      return {};
+      return [];
     }
-    return sequenceAssignments;
+    return Object.values(sequenceAssignments);
   }
 
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {

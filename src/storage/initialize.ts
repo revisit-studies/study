@@ -20,7 +20,6 @@ export async function initializeStorageEngine() {
     }
   }
 
-
   if (storageEngineName === 'firebase') {
     const firebaseStorageEngine = new FirebaseStorageEngine();
     await firebaseStorageEngine.connect();

@@ -107,14 +107,14 @@ export abstract class StorageEngine {
   protected abstract _verifyStudyDatabase(): Promise<void>;
 
   // Gets the current config hash from the storage engine using the engine's realtime database.
-  protected abstract _getCurrentConfigHash(): Promise<string>;
+  protected abstract _getCurrentConfigHash(): Promise<string | null>;
 
   // Sets the current config hash in the storage engine using the engine's realtime database.
   protected abstract _setCurrentConfigHash(configHash: string): Promise<void>;
 
   /* General/Realtime ---------------------------------------------------- */
   // Gets all sequence assignments for the given studyId.
-  protected abstract _getAllSequenceAssignments(studyId: string): Promise<Record<string, SequenceAssignment>>;
+  protected abstract _getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
 
   // Creates a sequence assignment for the given participantId and sequenceAssignment.
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment): Promise<void>;
@@ -257,12 +257,12 @@ export abstract class StorageEngine {
     const modes = await this.getModes(this.studyId);
 
     // Find all rejected documents
-    const rejectedDocs = Object.entries(sequenceAssignments)
-      .sort((a, b) => (a[1].timestamp as number) - (b[1].timestamp as number))
-      .filter(([_, doc]) => doc.rejected && !doc.claimed);
+    const rejectedDocs = sequenceAssignments
+      .sort((a, b) => (a.timestamp as number) - (b.timestamp as number))
+      .filter((doc) => doc.rejected && !doc.claimed);
     if (rejectedDocs.length > 0) {
       const firstReject = rejectedDocs[0];
-      const firstRejectTime = firstReject[1].timestamp;
+      const firstRejectTime = firstReject.timestamp;
       if (modes.dataCollectionEnabled) {
         // Make the sequence assignment document for the participant
         const participantSequenceAssignmentData: SequenceAssignment = {
@@ -274,7 +274,7 @@ export abstract class StorageEngine {
           createdTime: new Date().getTime(),
         };
         // Mark the first reject as claimed
-        await this._claimSequenceAssignment(firstReject[0], firstReject[1]);
+        await this._claimSequenceAssignment(firstReject.participantId, firstReject);
         // Set the participant's sequence assignment document
         await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData);
       }
@@ -293,7 +293,7 @@ export abstract class StorageEngine {
 
     // Query all the intents to get a sequence and find our position in the queue
     sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
-    const intents = Object.values(sequenceAssignments)
+    const intents = sequenceAssignments
       .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
 
     // Get the latin square
@@ -395,7 +395,7 @@ export abstract class StorageEngine {
       throw new Error('Study ID is not set');
     }
     const sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
-    return Object.keys(sequenceAssignments);
+    return sequenceAssignments.map((assignment) => assignment.participantId);
   }
 
   // Gets the participant data for the current participant or a specific participantId.
@@ -525,8 +525,8 @@ export abstract class StorageEngine {
   }
 
   async getParticipantsStatusCounts(studyId: string) {
-    const sequenceAssignments = this._getAllSequenceAssignments(studyId);
-    const sequenceAssignmentsData = Object.values(sequenceAssignments)
+    const sequenceAssignments = await this._getAllSequenceAssignments(studyId);
+    const sequenceAssignmentsData = sequenceAssignments
       .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
 
     const completed = sequenceAssignmentsData.filter((assignment) => assignment.completed && !assignment.rejected).length;
