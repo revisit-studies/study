@@ -88,10 +88,10 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "globals": "^15.14.0",
     "husky": "^9.1.7",
-    "jsdom": "^26.1.0",
     "lint-staged": "^15.4.1",
     "typescript": "^5.7.3",
     "vite": "^6.2.7",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "vitest-localstorage-mock": "^0.1.2"
   }
 }
