@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router';
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
-import { useResizeObserver, useThrottledState } from '@mantine/hooks';
+import { useResizeObserver, useThrottledCallback } from '@mantine/hooks';
 import { WaveForm, WaveSurfer } from 'wavesurfer-react';
 import * as d3 from 'd3';
 import {
@@ -62,7 +62,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
 
   const answers = useStoreSelector((state) => state.answers);
 
-  const [playTime, setPlayTime] = useThrottledState<number>(0, 100); // 100ms throttle to prevent re-rendering the AnalysisPopout too often
+  const [playTime, setPlayTime] = useState<number>(0);
 
   const waveSurferDiv = useRef(null);
 
@@ -189,6 +189,9 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
       wavesurfer.current = waveSurfer;
       if (waveSurfer && isAnalysis && identifier && storageEngine) {
         try {
+          if (!participantId) {
+            throw new Error('Participant ID is required to load audio');
+          }
           const url = await storageEngine.getAudio(identifier, participantId);
           await waveSurfer.load(url!);
           setWaveSurferLoading(false);
@@ -210,9 +213,10 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
     [isAnalysis, identifier, storageEngine, participantId, storeDispatch, setAnalysisHasAudio],
   );
 
-  const _setPlayTime = useCallback((n: number, percent: number | undefined) => {
+  const _setPlayTime = useThrottledCallback((n: number, percent: number | undefined) => {
     // if were past the end, pause the timer
-    if (n > totalAudioLength * 1000 + startTime) {
+    const audioEndTime = totalAudioLength * 1000 + startTime;
+    if (n > audioEndTime) {
       storeDispatch(setAnalysisIsPlaying(false));
       setPlayTime(n);
 
@@ -226,7 +230,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
         wavesurfer.current?.seekTo(percent);
       });
     }
-  }, [setAnalysisIsPlaying, setPlayTime, startTime, storeDispatch, totalAudioLength]);
+  }, 100); // 100ms throttle
 
   useEffect(() => {
     if (wavesurfer.current) {

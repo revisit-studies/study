@@ -1,8 +1,8 @@
 import {
-  Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text,
+  Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
-  IconAlertTriangle, IconChartHistogram, IconExternalLink, IconListCheck,
+  IconAlertTriangle, IconChartHistogram, IconDatabase, IconExternalLink, IconFlame, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -15,9 +15,9 @@ import { PREFIX } from '../utils/Prefix';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatusBadges';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { REVISIT_MODE } from '../storage/engines/StorageEngine';
-import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine';
+import { REVISIT_MODE } from '../storage/engines/types';
 import { useAuth } from '../store/hooks/useAuth';
+import { isCloudStorageEngine } from '../storage/engines/utils';
 
 function StudyCard({ configName, config, url }: { configName: string; config: ParsedConfig<StudyConfig>; url: string }) {
   const { storageEngine } = useStorageEngine();
@@ -139,6 +139,17 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
               </Text>
               {studyStatusAndTiming
                 && <ParticipantStatusBadges completed={studyStatusAndTiming.completed} inProgress={studyStatusAndTiming.inProgress} rejected={studyStatusAndTiming.rejected} />}
+              <Flex ml="auto" gap="sm" opacity={0.7}>
+                {modes?.studyNavigatorEnabled
+                  ? <Tooltip label="Study navigator enabled" withinPortal><IconSchema size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Study navigator disabled" withinPortal><IconSchemaOff size={16} color="red" /></Tooltip>}
+                {modes?.analyticsInterfacePubliclyAccessible
+                  ? <Tooltip label="Analytics interface publicly accessible" withinPortal><IconGraph size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Analytics interface not publicly accessible" withinPortal><IconGraphOff size={16} color="red" /></Tooltip>}
+                {storageEngine?.getEngine() === 'localStorage'
+                  ? <Tooltip label="Local storage enabled" withinPortal><IconDatabase size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Firebase enabled" withinPortal><IconFlame size={16} color="green" /></Tooltip>}
+              </Flex>
             </Flex>
 
             {minTime && maxTime
@@ -239,7 +250,7 @@ export function ConfigSwitcher({
           visibility[category] = {};
           await Promise.all(
             studies.map(async (configName) => {
-              if (storageEngine instanceof FirebaseStorageEngine) {
+              if (storageEngine && isCloudStorageEngine(storageEngine)) {
                 const modes = await storageEngine.getModes(configName);
                 visibility[category][configName] = modes.analyticsInterfacePubliclyAccessible;
               } else {

@@ -1,13 +1,14 @@
 import {
   Box, Flex, Group, Input, Radio, rem, Text,
 } from '@mantine/core';
-import { useState } from 'react';
-import { RadioResponse } from '../../parser/types';
+import { useState, useMemo } from 'react';
+import { RadioResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Radio.module.css';
 import inputClasses from './css/Input.module.css';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 
 export function RadioInput({
   response,
@@ -29,17 +30,22 @@ export function RadioInput({
   const {
     prompt,
     required,
-    options,
     leftLabel,
     rightLabel,
     secondaryText,
     horizontal,
     withOther,
+    options,
   } = response;
 
-  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const storedAnswer = useStoredAnswer();
+  const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
+
+  const orderedOptions = useMemo(() => optionOrders[response.id] || options.map((option) => (typeof (option) === 'string' ? { label: option, value: option } : option)), [optionOrders, options, response.id]);
 
   const [otherSelected, setOtherSelected] = useState(false);
+
+  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 
   return (
     <Radio.Group
@@ -56,13 +62,13 @@ export function RadioInput({
       key={response.id}
       {...answer}
       // This overrides the answers error. Which..is bad?
-      error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+      error={error}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Group gap="lg" align="flex-end" mt={horizontal ? 0 : 'sm'}>
         {leftLabel ? <Text>{leftLabel}</Text> : null}
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
-          {optionsAsStringOptions.map((radio) => (
+          {orderedOptions.map((radio) => (
             <div
               key={`${radio.value}-${response.id}`}
               style={{

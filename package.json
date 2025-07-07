@@ -13,7 +13,8 @@
     "generate-schema:GlobalConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/GlobalConfigSchema.json --type GlobalConfig",
     "generate-schema:LibraryConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/LibraryConfigSchema.json --type LibraryConfig",
     "generate-schemas": "yarn generate-schema:StudyConfig && yarn generate-schema:GlobalConfig && yarn generate-schema:LibraryConfig",
-    "test": "playwright test"
+    "test": "playwright test",
+    "unittest": "vitest"
   },
   "lint-staged": {
     "*.{tsx,jsx,ts,js}": "yarn lint"
@@ -52,7 +53,7 @@
     "react-dom": "^18.3.1",
     "react-markdown": "^9.0.3",
     "react-redux": "^9.2.0",
-    "react-router": "^7.1.2",
+    "react-router": "^7.5.2",
     "react-timer-hook": "^3.0.8",
     "react-vega": "^7.6.0",
     "rehype-raw": "^7.0.0",
@@ -86,8 +87,10 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "globals": "^15.14.0",
     "husky": "^9.1.7",
+    "jsdom": "^26.1.0",
     "lint-staged": "^15.4.1",
     "typescript": "^5.7.3",
-    "vite": "^6.0.12"
+    "vite": "^6.2.7",
+    "vitest": "^3.2.4"
   }
 }

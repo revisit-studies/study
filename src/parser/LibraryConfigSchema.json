@@ -132,6 +132,14 @@
             ],
             "description": "The path to the markdown file. This should be a relative path from the public folder."
           },
+          "previousButton": {
+            "description": "Whether to show the previous button.",
+            "type": "boolean"
+          },
+          "previousButtonText": {
+            "description": "The text that is displayed on the previous button.",
+            "type": "string"
+          },
           "provideFeedback": {
             "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
             "type": "boolean"
@@ -150,6 +158,14 @@
           "responseDividers": {
             "description": "Whether to show the response dividers. Defaults to false.",
             "type": "boolean"
+          },
+          "responseOrder": {
+            "description": "The order of the responses. Defaults to 'fixed'.",
+            "enum": [
+              "fixed",
+              "random"
+            ],
+            "type": "string"
           },
           "style": {
             "additionalProperties": {
@@ -199,6 +215,14 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "optionOrder": {
+          "description": "The order in which the buttons are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "options": {
           "items": {
@@ -284,6 +308,14 @@
         "minSelections": {
           "description": "The minimum number of selections that are required.",
           "type": "number"
+        },
+        "optionOrder": {
+          "description": "The order in which the checkboxes are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
@@ -636,6 +668,14 @@
           "description": "The path to the image. This could be a relative path from the public folder or a url to an external image.",
           "type": "string"
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonText": {
+          "description": "The text that is displayed on the previous button.",
+          "type": "string"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -654,6 +694,14 @@
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
+        },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "style": {
           "additionalProperties": {
@@ -882,6 +930,14 @@
           ],
           "description": "The path to the markdown file. This should be a relative path from the public folder."
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonText": {
+          "description": "The text that is displayed on the previous button.",
+          "type": "string"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -900,6 +956,14 @@
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
+        },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "style": {
           "additionalProperties": {
@@ -1202,6 +1266,14 @@
           "description": "The path to the markdown file. This should be a relative path from the public folder.",
           "type": "string"
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonText": {
+          "description": "The text that is displayed on the previous button.",
+          "type": "string"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -1220,6 +1292,14 @@
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
+        },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
@@ -1294,6 +1374,14 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "questionOrder": {
+          "description": "The order in which the questions are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "required": {
           "description": "Controls whether the response is required to be answered. Defaults to true.",
@@ -1477,6 +1565,14 @@
           "description": "The text that is displayed on the next button.",
           "type": "string"
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonText": {
+          "description": "The text that is displayed on the previous button.",
+          "type": "string"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -1495,6 +1591,14 @@
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
+        },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
@@ -1534,6 +1638,14 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "optionOrder": {
+          "description": "The order in which the radio buttons are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
@@ -1603,7 +1715,7 @@
     },
     "RandomInterruption": {
       "additionalProperties": false,
-      "description": "The RandomInterruption interface is used to define an interruption that will be shown randomly in the block.\n\nFor example, if you want to show a single interruption randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 1. If you want to show 3 interruptions randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 3.\n\nThe components property is an array of the components that will be inserted randomly in the block. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the RandomInterruption:\n\n```js { \"order\": \"fixed\", \"components\": [ \"component1\", \"component2\", \"component3\", \"component4\", \"component5\", \"component6\" ], \"interruptions\": [ {   \"spacing\": \"random\",   \"numInterruptions\": 3,   \"components\": [     \"interruption1\",     \"interruption2\"   ] } ] } ```\n\nThe resulting sequence array could be:\n\n```js [ [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6], [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"interruption1\", \"interruption2\", \"component5\", \"component6], [\"component1\", \"component2\" \"interruption1\", \"interruption2\", \"component3\", \"interruption1\", \"interruption2\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6], ... ] ```",
+      "description": "The RandomInterruption interface is used to define an interruption that will be shown randomly in the block.\n\nFor example, if you want to show a single interruption randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 1. If you want to show 3 interruptions randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 3.\n\nThe components property is an array of the components that will be inserted randomly in the block. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the RandomInterruption:\n\n```js { \"order\": \"fixed\", \"components\": [ \"component1\", \"component2\", \"component3\", \"component4\", \"component5\", \"component6\" ], \"interruptions\": [ {   \"spacing\": \"random\",   \"numInterruptions\": 3,   \"components\": [     \"interruption1\",     \"interruption2\"   ] } ] } ```\n\nThe resulting sequence array could be:\n\n```js [ [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6\"], [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"interruption1\", \"interruption2\", \"component5\", \"component6\"], [\"component1\", \"component2\" \"interruption1\", \"interruption2\", \"component3\", \"interruption1\", \"interruption2\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6\"], ... ] ```",
       "properties": {
         "components": {
           "description": "The components that are included in the interruption. These reference components in the StudyConfig.components section of the config.",
@@ -1690,6 +1802,14 @@
           "description": "The path to the react component. This should be a relative path from the src/public folder.",
           "type": "string"
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonText": {
+          "description": "The text that is displayed on the previous button.",
+          "type": "string"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -1708,6 +1828,14 @@
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
+        },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
@@ -1857,6 +1985,9 @@
         },
         {
           "$ref": "#/definitions/ButtonsResponse"
+        },
+        {
+          "$ref": "#/definitions/TextOnlyResponse"
         }
       ]
     },
@@ -2049,6 +2180,63 @@
       ],
       "type": "object"
     },
+    "TextOnlyResponse": {
+      "additionalProperties": false,
+      "description": "The TextOnlyResponse interface is used to define the properties of a text only response. TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information. It does not accept any input from the user.\n\nExample: ```js {   \"id\": \"textOnlyResponse\",   \"type\": \"textOnly\",   \"prompt\": \"This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.\",   \"location\": \"belowStimulus\",   \"restartEnumeration\": true } ```\n\nIn this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.",
+      "properties": {
+        "hidden": {
+          "not": {}
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "not": {}
+        },
+        "prompt": {
+          "description": "The markdown text that is displayed to the user.",
+          "type": "string"
+        },
+        "required": {
+          "not": {}
+        },
+        "requiredLabel": {
+          "not": {}
+        },
+        "requiredValue": {
+          "not": {}
+        },
+        "restartEnumeration": {
+          "description": "Whether to restart the enumeration of the questions. Defaults to false.",
+          "type": "boolean"
+        },
+        "secondaryText": {
+          "not": {}
+        },
+        "type": {
+          "const": "textOnly",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "not": {}
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
     "VegaComponent": {
       "anyOf": [
         {
@@ -2115,6 +2303,14 @@
           "description": "The text that is displayed on the next button.",
           "type": "string"
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonText": {
+          "description": "The text that is displayed on the previous button.",
+          "type": "string"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -2133,6 +2329,14 @@
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
+        },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
@@ -2206,6 +2410,14 @@
           "description": "The path to the vega file. This should be a relative path from the public folder.",
           "type": "string"
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonText": {
+          "description": "The text that is displayed on the previous button.",
+          "type": "string"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -2224,6 +2436,14 @@
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
+        },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
@@ -2301,6 +2521,14 @@
           "description": "The path to the video. This could be a relative path from the public folder or might be a url to an external website.",
           "type": "string"
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonText": {
+          "description": "The text that is displayed on the previous button.",
+          "type": "string"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -2319,6 +2547,14 @@
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
+        },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
@@ -2401,6 +2637,14 @@
           "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
           "type": "string"
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonText": {
+          "description": "The text that is displayed on the previous button.",
+          "type": "string"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -2419,6 +2663,14 @@
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
+        },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",

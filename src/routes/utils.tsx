@@ -49,11 +49,11 @@ export function useCurrentComponent(): string {
 
   const [indexWhenSettingComponentName, setIndexWhenSettingComponentName] = useState<number | null>(null);
 
-  const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : currentStep.includes('reviewer-') ? currentStep : null), [currentStep, flatSequence, studyConfig]);
+  const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : currentStep.includes('reviewer-') || currentStep.startsWith('__') ? currentStep : null), [currentStep, flatSequence, studyConfig]);
 
   const [compName, setCompName] = useState('__dynamicLoading');
 
-  const nextFunc:(({ components, answers, sequenceSoFar }: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
+  const nextFunc:((params: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
     if (typeof currentStep === 'number' && !currentComponent) {
       const block = findFuncBlock(flatSequence[currentStep], studyConfig.sequence);
 
@@ -94,7 +94,10 @@ export function useCurrentComponent(): string {
       // in a func component
       if (!component && nextFunc !== null) {
         const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
-          components: [], answers: _answers, sequenceSoFar: [], customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
+          answers: _answers,
+          customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
+          currentStep,
+          currentBlock: flatSequence[currentStep],
         });
 
         if (currCompName !== null) {
@@ -119,7 +122,8 @@ export function useCurrentComponent(): string {
         }
       }
     }
-  }, [_answers, currentStep, flatSequence, funcIndex, navigate, nextFunc, pushToFuncSequence, storeDispatch, studyConfig, studyId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, funcIndex]);
 
   if (typeof currentStep === 'number' && flatSequence[currentStep] === 'end') {
     return 'end';

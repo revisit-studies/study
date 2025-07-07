@@ -1,9 +1,9 @@
 import {
-  Badge, Box, NavLink, HoverCard, Text, Tooltip, Code,
+  Badge, Box, NavLink, HoverCard, Text, Tooltip, Code, Flex, Button,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
-  IconArrowsShuffle, IconBrain, IconCheck, IconPackageImport, IconX,
+  IconArrowsShuffle, IconBrain, IconCheck, IconPackageImport, IconX, IconDice3,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import {
@@ -152,11 +152,28 @@ function StepItem({
     : (step.includes('.components.') ? '.components.' : false);
   const cleanedStep = step.includes('$') && coOrComponents && step.includes(coOrComponents) ? step.split(coOrComponents).at(-1) : step;
 
-  const matchingAnswer = parentBlock.order === 'dynamic' ? Object.entries(answers).find(([key, _]) => key === `${parentBlock.id}_${flatSequence.indexOf(parentBlock.id!)}_${cleanedStep}_${startIndex}`) : Object.entries(answers).find(([key, _]) => key === `${cleanedStep}_${startIndex}`);
+  const matchingAnswer = parentBlock.order === 'dynamic' ? Object.entries(answers).find(([key, _]) => key === `${parentBlock.id}_${flatSequence.indexOf(parentBlock.id!)}_${cleanedStep}_${startIndex}`) : Object.entries(answers).find(([key, _]) => key === `${cleanedStep}_${startIndex}` || key === `${step}_${startIndex}`);
   const taskAnswer: StoredAnswer | null = matchingAnswer ? matchingAnswer[1] : null;
 
   const correctAnswer = taskAnswer && taskAnswer.correctAnswer.length > 0 && Object.keys(taskAnswer.answer).length > 0 && taskAnswer.correctAnswer;
   const correct = correctAnswer && taskAnswer && Object.values(correctAnswer).every((value) => taskAnswer.answer[value.id] === value.answer);
+
+  const correctIncorrectIcon = taskAnswer && correctAnswer ? (
+    correct
+      ? <IconCheck size={16} style={{ marginRight: 4, marginBottom: -3 }} color="green" />
+      : <IconX size={16} style={{ marginRight: 4, marginBottom: -3 }} color="red" />
+  ) : null;
+
+  const INITIAL_CLAMP = 6;
+  const responseJSONText = task && JSON.stringify(task.response, null, 2);
+  const [responseClamp, setResponseClamp] = useState<number | undefined>(INITIAL_CLAMP);
+
+  const correctAnswerJSONText = taskAnswer && taskAnswer.correctAnswer.length > 0
+    ? JSON.stringify(taskAnswer.correctAnswer, null, 2)
+    : task && task.correctAnswer
+      ? JSON.stringify(task.correctAnswer, null, 2)
+      : undefined;
+  const [correctAnswerClamp, setCorrectAnswerClamp] = useState<number | undefined>(INITIAL_CLAMP);
 
   return (
     <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0}>
@@ -169,18 +186,22 @@ function StepItem({
           }}
           label={(
             <Box>
-              {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
-              {step !== cleanedStep && (
-                <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="blue" />
+              {interruption && (
+                <Tooltip label="Interruption" position="right" withArrow>
+                  <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />
+                </Tooltip>
               )}
-              {taskAnswer && correctAnswer ? (
-                correct ? (
-                  <IconCheck size={16} style={{ marginRight: 4, marginBottom: -2 }} color="green" />
-                )
-                  : (
-                    <IconX size={16} style={{ marginRight: 4, marginBottom: -2 }} color="red" />
-                  )
-              ) : null}
+              {step !== cleanedStep && (
+                <Tooltip label="Package import" position="right" withArrow>
+                  <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="blue" />
+                </Tooltip>
+              )}
+              {task?.responseOrder === 'random' && (
+                <Tooltip label="Random responses" position="right" withArrow>
+                  <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, marginTop: -4, verticalAlign: 'middle' }} color="black" />
+                </Tooltip>
+              )}
+              {correctIncorrectIcon}
               <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline" style={{ textWrap: 'nowrap' }}>{cleanedStep}</Text>
             </Box>
           )}
@@ -190,7 +211,7 @@ function StepItem({
       </HoverCard.Target>
       {task && (
         <HoverCard.Dropdown>
-          <Box mah={700} style={{ overflow: 'auto' }}>
+          <Box mah={700} maw={500} style={{ overflow: 'auto' }}>
             <Box>
               <Text fw={900} display="inline-block" mr={2}>
                 Name:
@@ -220,22 +241,54 @@ function StepItem({
                 <Code block>{taskAnswer && JSON.stringify(Object.keys(taskAnswer).length > 0 ? taskAnswer.parameters : ('parameters' in task ? task.parameters : {}), null, 2)}</Code>
               </Box>
             )}
-            <Box>
-              <Text fw={900} display="inline-block" mr={2}>
-                Response:
-              </Text>
-              {' '}
-              <Code block>{JSON.stringify(task.response, null, 2)}</Code>
-            </Box>
-            {task.correctAnswer && (
+            {taskAnswer && Object.keys(taskAnswer.answer).length > 0 && (
+              <Box>
+                <Text fw={900} display="inline-block" mr={2}>
+                  {correctIncorrectIcon}
+                  Participant Answer:
+                </Text>
+                {' '}
+                <Code block>{JSON.stringify(taskAnswer.answer, null, 2)}</Code>
+              </Box>
+            )}
+            {correctAnswerJSONText && (
               <Box>
                 <Text fw={900} display="inline-block" mr={2}>
                   Correct Answer:
                 </Text>
                 {' '}
-                <Code block>{JSON.stringify(task.correctAnswer, null, 2)}</Code>
+                <Code block>
+                  <Text size="xs" lineClamp={correctAnswerClamp}>{correctAnswerJSONText}</Text>
+                  {correctAnswerJSONText.split('\n').length > INITIAL_CLAMP && (
+                    <Flex justify="flex-end">
+                      {(correctAnswerClamp === undefined || correctAnswerJSONText.split('\n').length > correctAnswerClamp) && (
+                      <Button variant="light" size="xs" onClick={() => { setCorrectAnswerClamp((prev) => (prev === INITIAL_CLAMP ? undefined : INITIAL_CLAMP)); }}>
+                        {correctAnswerClamp !== undefined ? 'Show more' : 'Show less'}
+                      </Button>
+                      )}
+                    </Flex>
+                  )}
+                </Code>
               </Box>
             )}
+            <Box>
+              <Text fw={900} display="inline-block" mr={2}>
+                Response:
+              </Text>
+              {' '}
+              <Code block>
+                <Text size="xs" lineClamp={responseClamp}>{responseJSONText}</Text>
+                {responseJSONText.split('\n').length > INITIAL_CLAMP && (
+                  <Flex justify="flex-end">
+                    {(responseClamp === undefined || responseJSONText.split('\n').length > responseClamp) && (
+                    <Button variant="light" size="xs" onClick={() => { setResponseClamp((prev) => (prev === INITIAL_CLAMP ? undefined : INITIAL_CLAMP)); }}>
+                      {responseClamp !== undefined ? 'Show more' : 'Show less'}
+                    </Button>
+                    )}
+                  </Flex>
+                )}
+              </Code>
+            </Box>
             {task.meta && (
             <Box>
               <Text fw="900" component="span">Task Meta: </Text>

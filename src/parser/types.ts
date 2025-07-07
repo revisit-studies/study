@@ -81,6 +81,10 @@ uiConfig:{
 In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)
  */
 export interface UIConfig {
+  /** Controls whether the title should be hidden in the study. */
+  showTitle?: boolean;
+  /** Controls whether the title bar should be hidden in the study. */
+  showTitleBar?: boolean;
   /** The email address that used during the study if a participant clicks contact. */
   contactEmail: string;
   /** The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. */
@@ -121,6 +125,10 @@ export interface UIConfig {
   participantNameField?: string;
   /** Whether enter key should move to the next question. Defaults to false. */
   nextOnEnter?: boolean;
+  /** The minimum screen width size for the study */
+  minWidthSize?: number;
+  /** The minimum screen height size for the study */
+  minHeightSize?: number;
 }
 
 /**
@@ -331,6 +339,8 @@ export interface MatrixResponse extends BaseResponse {
   answerOptions: string[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
   /** The question options (rows) are the prompts for each response you'd like to record. */
   questionOptions: string[];
+  /** The order in which the questions are displayed. Defaults to fixed. */
+  questionOrder?: 'fixed' | 'random';
 }
 
 /**
@@ -424,6 +434,8 @@ export interface RadioResponse extends BaseResponse {
   type: 'radio';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
+  /** The order in which the radio buttons are displayed. Defaults to fixed. */
+  optionOrder?: 'fixed' | 'random';
   /** The left label of the radio group. Used in Likert scales for example */
   leftLabel?: string;
   /** The right label of the radio group. Used in Likert scales for example */
@@ -452,6 +464,8 @@ export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
+  /** The order in which the checkboxes are displayed. Defaults to fixed. */
+  optionOrder?: 'fixed' | 'random';
   /** The minimum number of selections that are required. */
   minSelections?: number;
   /** The maximum number of selections that are required. */
@@ -503,9 +517,45 @@ export interface ReactiveResponse extends BaseResponse {
 export interface ButtonsResponse extends BaseResponse {
   type: 'buttons';
   options: (StringOption | string)[];
+  /** The order in which the buttons are displayed. Defaults to fixed. */
+  optionOrder?: 'fixed' | 'random';
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse | ButtonsResponse;
+/**
+ * The TextOnlyResponse interface is used to define the properties of a text only response.
+ * TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information.
+ * It does not accept any input from the user.
+ *
+ * Example:
+ * ```js
+ * {
+ *   "id": "textOnlyResponse",
+ *   "type": "textOnly",
+ *   "prompt": "This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.",
+ *   "location": "belowStimulus",
+ *   "restartEnumeration": true
+ * }
+ * ```
+ *
+ * In this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.
+ */
+export interface TextOnlyResponse extends Omit<BaseResponse, 'secondaryText' | 'required' | 'requiredValue' | 'requiredLabel' | 'paramCapture' | 'hidden' | 'withDontKnow'> {
+  type: 'textOnly';
+  /** The markdown text that is displayed to the user. */
+  prompt: string;
+  /** Whether to restart the enumeration of the questions. Defaults to false. */
+  restartEnumeration?: boolean;
+
+  secondaryText?: undefined;
+  required?: undefined;
+  requiredValue?: undefined;
+  requiredLabel?: undefined;
+  paramCapture?: undefined;
+  hidden?: undefined;
+  withDontKnow?: undefined;
+}
+
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
@@ -564,6 +614,10 @@ export interface BaseIndividualComponent {
   nextButtonText?: string;
   /** The location of the next button. */
   nextButtonLocation?: ConfigResponseBlockLocation;
+  /** Whether to show the previous button. */
+  previousButton?: boolean;
+  /** The text that is displayed on the previous button. */
+  previousButtonText?:string;
   /** The location of the instructions. */
   instructionLocation?: ConfigResponseBlockLocation;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
@@ -590,6 +644,8 @@ export interface BaseIndividualComponent {
   responseDividers?: boolean;
   /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */
   helpTextPathOverride?: string;
+  /** The order of the responses. Defaults to 'fixed'. */
+  responseOrder?: 'fixed' | 'random';
 }
 
 /**
@@ -958,9 +1014,9 @@ export interface DeterministicInterruption {
  *
 ```js
 [
-  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "component5", "interruption1", "interruption2", "component6],
-  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "interruption1", "interruption2", "component5", "component6],
-  ["component1", "component2" "interruption1", "interruption2", "component3", "interruption1", "interruption2", "component4", "component5", "interruption1", "interruption2", "component6],
+  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "component5", "interruption1", "interruption2", "component6"],
+  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "interruption1", "interruption2", "component5", "component6"],
+  ["component1", "component2" "interruption1", "interruption2", "component3", "interruption1", "interruption2", "component4", "component5", "interruption1", "interruption2", "component6"],
   ...
 ]
 ```

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Question Types and Form Elements Demo",
     "version": "pilot",
@@ -24,9 +24,21 @@
     "enumerateQuestions": true
   },
   "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-survey/assets/introduction.md",
+      "response": []
+    },
     "survey": {
       "type": "questionnaire",
       "response": [
+        {
+          "id": "textField2",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# Question Types and Form Element\n\n This page shows all the question types and form elements that are supported in the reVISit platform.",
+          "restartEnumeration": true
+        },
         {
           "id": "q-dropdown",
           "prompt": "Dropdown example – which chart do you like best?",
@@ -40,6 +52,13 @@
             "Pie",
             "Stacked Bar"
           ]
+        },
+        {
+          "id": "textField",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# This is a header that is text only with some text below\n\n## This is a subheader\n\nThis is some text that is not a question, but just some information to help the user understand what they are doing. You can use markdown to format this text. For example, you can make it **bold** or *italic*. You can also add links like [this](https://revisit.dev)",
+          "restartEnumeration": true
         },
         {
           "id": "q-numerical",
@@ -203,12 +222,206 @@
           ]
         }
       ]
+    },
+    "survey_randomized_options": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "textField",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# Randomize Question and Randomize Option\n\n This shows how to randomize the order of questions for matrix questions and options for buttons, checkboxes and radio questions.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "q-multi-satisfaction",
+          "prompt": "Matrix Radio Example",
+          "secondaryText": "The question order is randomized",
+          "location": "aboveStimulus",
+          "type": "matrix-radio",
+          "answerOptions": "satisfaction5",
+          "questionOptions": [
+            "Question 1",
+            "Question 2",
+            "Question 3"
+          ],
+          "questionOrder": "random"
+        },
+        {
+          "id": "multi-custom",
+          "prompt": "Matrix Checkbox Example",
+          "secondaryText": "The question order is randomized",
+          "location": "aboveStimulus",
+          "type": "matrix-checkbox",
+          "answerOptions": [
+            "Answer 1",
+            "Answer 2",
+            "Answer 3"
+          ],
+          "questionOptions": [
+            "Question 1",
+            "Question 2",
+            "Question 3"
+          ],
+          "questionOrder": "random"
+        },
+        {
+          "id": "q-checkbox",
+          "prompt": "Checkbox example",
+          "secondaryText": "The option order is randomized",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "location": "aboveStimulus",
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "optionOrder": "random",
+          "withOther": true
+        },
+        {
+          "id": "q-checkbox-horizontal",
+          "prompt": "Horizontal Checkbox example",
+          "secondaryText": "The option order is randomized",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "location": "aboveStimulus",
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "optionOrder": "random",
+          "horizontal": true,
+          "withOther": true
+        },
+        {
+          "id": "q-radio",
+          "prompt": "Radio button example",
+          "secondaryText": "The option order is randomized",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "optionOrder": "random"
+        },
+        {
+          "id": "q-radio-horizontal",
+          "prompt": "Horizontal Radio button example",
+          "secondaryText": "The option order is randomized",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "horizontal": true,
+          "optionOrder": "random"
+        },
+        {
+          "id": "q-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "The option order is randomized",
+          "location": "aboveStimulus",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "optionOrder": "random"
+        }
+      ]
+    },
+    "survey_randomized_form": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "textField",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# Randomize Form\n\n This shows how to randomize the order of questions in the form.",
+          "restartEnumeration": false
+        },
+        {
+          "id": "q-dropdown",
+          "prompt": "Question 1 Dropdown example",
+          "location": "aboveStimulus",
+          "type": "dropdown",
+          "placeholder": "Select an option",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ]
+        },
+        {
+          "id": "q-likert",
+          "prompt": "Question 2 Likert scale example",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "q-short-text",
+          "prompt": "Question 3 Short text example",
+          "location": "aboveStimulus",
+          "type": "shortText",
+          "placeholder": "Enter your answer here"
+        },
+        {
+          "id": "q-radio",
+          "prompt": "Question 4 Radio button example",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ]
+        },
+        {
+          "id": "q-slider",
+          "prompt": "Question 5 Slider example",
+          "location": "aboveStimulus",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "Bad",
+              "value": 0
+            },
+            {
+              "label": "Mid",
+              "value": 50
+            },
+            {
+              "label": "Good",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "responseOrder": "random"
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
-      "survey"
+      "introduction",
+      "survey",
+      "survey_randomized_options",
+      "survey_randomized_form"
     ]
   }
 }

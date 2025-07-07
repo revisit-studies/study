@@ -141,7 +141,7 @@ async function goToCheck(page, check: 'response' | 'responses' | 'attention-chec
 async function getTags(page: Page) {
   return page.evaluate(async () => {
     let db;
-    const request = indexedDB.open('test-skip-logic');
+    const request = indexedDB.open('revisit');
 
     return new Promise((resolve) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -151,9 +151,9 @@ async function getTags(page: Page) {
         const store = transaction.objectStore('keyvaluepairs');
         // const sequenceArrayInternal = store.get('sequenceArray');
         // sequenceArrayInternal.onsuccess = () => resolve(sequenceArrayInternal.result);
-        const currentParticipant = store.get('currentParticipant');
+        const currentParticipant = store.get('dev-test-skip-logic/currentParticipantId');
         currentParticipant.onsuccess = () => {
-          const participantData = store.get(currentParticipant.result);
+          const participantData = store.get(`dev-test-skip-logic/participants/${currentParticipant.result}_participantData`);
           participantData.onsuccess = () => {
             const { participantTags } = participantData.result;
             resolve(participantTags);
@@ -173,6 +173,7 @@ test('test', async ({ page }) => {
 
   // ***** All questions are correct *****
   await goToCheck(page, 'end');
+  await page.getByText('Thank you for completing the study. You may close this window now.').click();
   // Verify that the participant data has the block id as a tag
   const tags = await getTags(page);
   expect(tags).toContain('testBlockId');
@@ -233,6 +234,7 @@ test('test', async ({ page }) => {
   await answerTrial1(page, 'Red', 'Cat'); // incorrect
   await verifyTargetComponent(page);
   await verifyStudyEnd(page);
+  await page.getByText('Thank you for completing the study. You may close this window now.').click();
   const tags2 = await getTags(page);
   expect(tags2).toHaveLength(0);
 });

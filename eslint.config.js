@@ -18,7 +18,7 @@ const compat = new FlatCompat({
 });
 
 export default [{
-  ignores: ['public/*'],
+  ignores: ['public/*', '**/*.spec.ts', '**/*.test.ts', 'tests/*'],
 }, ...fixupConfigRules(compat.extends(
   'airbnb-base',
   'airbnb/rules/react',

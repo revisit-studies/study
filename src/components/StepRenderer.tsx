@@ -1,7 +1,8 @@
-import { AppShell } from '@mantine/core';
+import { AppShell, Button } from '@mantine/core';
 import { Outlet } from 'react-router';
 import { useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash.debounce';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { AppAside } from './interface/AppAside';
 import { AppHeader } from './interface/AppHeader';
 import { AppNavBar } from './interface/AppNavBar';
@@ -10,13 +11,16 @@ import { AlertModal } from './interface/AlertModal';
 import { EventType } from '../store/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { WindowEventsContext } from '../store/hooks/useWindowEvents';
-import { useStoreSelector } from '../store/store';
+import { useStoreSelector, useStoreDispatch, useStoreActions } from '../store/store';
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { useAuth } from '../store/hooks/useAuth';
+import { ResolutionWarning } from './interface/ResolutionWarning';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
+  const dispatch = useStoreDispatch();
+  const { toggleStudyBrowser } = useStoreActions();
 
   const studyConfig = useStudyConfig();
   const windowEventDebounceTime = studyConfig.uiConfig.windowEventDebounceTime ?? 100;
@@ -103,7 +107,8 @@ export function StepRenderer() {
 
   const sidebarWidth = studyConfig.uiConfig.sidebarWidth ?? 300;
 
-  const { studyNavigatorEnabled, studyNavigatorPubliclyAccessible, dataCollectionEnabled } = useMemo(() => modes, [modes]);
+  // Safely destructure modes, handling potential missing properties
+  const { studyNavigatorEnabled, dataCollectionEnabled, studyNavigatorPubliclyAccessible } = useMemo(() => modes, [modes]);
 
   // Compute final study navigator visibility based on mode settings and admin status
   const finalStudyNavigatorVisible = useMemo(
@@ -111,28 +116,45 @@ export function StepRenderer() {
     [studyNavigatorEnabled, studyNavigatorPubliclyAccessible, user.isAdmin],
   );
 
-  const asideOpen = useMemo(() => finalStudyNavigatorVisible && showStudyBrowser, [finalStudyNavigatorVisible, showStudyBrowser]);
-
   const isAnalysis = useIsAnalysis();
+
+  const asideOpen = useMemo(() => {
+    if (isAnalysis) return true;
+    return finalStudyNavigatorVisible && showStudyBrowser;
+  }, [isAnalysis, finalStudyNavigatorVisible, showStudyBrowser]);
 
   return (
     <WindowEventsContext.Provider value={windowEvents}>
       <AppShell
         padding="md"
-        header={{ height: 70 }}
+        header={{ height: studyConfig.uiConfig.showTitleBar === false ? 0 : 70 }}
         navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
         footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
       >
         <AppNavBar />
         <AppAside />
-        <AppHeader
-          studyNavigatorEnabled={finalStudyNavigatorVisible}
-          dataCollectionEnabled={dataCollectionEnabled}
-        />
+        {studyConfig.uiConfig.showTitleBar !== false && (
+          <AppHeader
+            studyNavigatorEnabled={finalStudyNavigatorVisible}
+            dataCollectionEnabled={dataCollectionEnabled}
+          />
+        )}
+        <ResolutionWarning />
         <HelpModal />
         <AlertModal />
         <AppShell.Main>
+          {studyConfig.uiConfig.showTitleBar === false && !showStudyBrowser && studyNavigatorEnabled && (
+            <Button
+              variant="transparent"
+              leftSection={<IconArrowLeft size={14} />}
+              onClick={() => dispatch(toggleStudyBrowser())}
+              size="xs"
+              style={{ position: 'fixed', top: '10px', right: '10px' }}
+            >
+              Study Browser
+            </Button>
+          )}
           <Outlet />
         </AppShell.Main>
         {isAnalysis && (

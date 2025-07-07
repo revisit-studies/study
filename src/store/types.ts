@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import type {
-  Answer, ComponentBlock, ConfigResponseBlockLocation, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
+  Answer, ConfigResponseBlockLocation, ParticipantData, ResponseBlockLocation, SkipConditions, StringOption, StudyConfig, ValueOf,
 } from '../parser/types';
-import { type REVISIT_MODE } from '../storage/engines/StorageEngine';
+import { type REVISIT_MODE } from '../storage/engines/types';
 
 /**
  * The ParticipantMetadata object contains metadata about the participant. This includes the user agent, resolution, language, and IP address. This object is used to store information about the participant that is not directly related to the study itself.
@@ -120,13 +120,19 @@ export interface StoredAnswer {
   parameters: Record<string, any>;
   /** The correct answer for the component. */
   correctAnswer: Answer[];
+  /** The order of question options in the component. */
+  optionOrders: Record<string, StringOption[]>;
+  /** The order of the questions in a matrix component. */
+  questionOrders: Record<string, string[]>;
+  /** The order of the form elements in a base response. */
+  formOrder?: Record<string, string[]>;
 }
 
 export interface JumpFunctionParameters<T> {
-  components: (string | ComponentBlock)[],
   answers: ParticipantData['answers'],
-  sequenceSoFar: string[],
-  customParameters: T
+  customParameters: T,
+  currentStep: number,
+  currentBlock: string,
 }
 
 export interface JumpFunctionReturnVal {

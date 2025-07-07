@@ -18,7 +18,7 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import { ParticipantData } from '../../storage/types';
 import { Prettify, StudyConfig } from '../../parser/types';
-import { StorageEngine } from '../../storage/engines/StorageEngine';
+import { StorageEngine } from '../../storage/engines/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
 import { getCleanedDuration } from '../../utils/getCleanedDuration';
