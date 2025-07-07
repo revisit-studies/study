@@ -10,6 +10,8 @@ class OntologyApp {
         this.currentView = 'tree';
         this.dendrogramRenderer = null;
         this.sunburstRenderer = null;
+        this.papersDatabase = {}; // Central papers database for O(1) lookups
+        this.papersLoaded = false;
 
         // JSON file mappings
         this.categoryMappings = {
@@ -27,6 +29,7 @@ class OntologyApp {
         this.setInitialState();
         this.showDefaultInfo();
         await this.loadInitialStructure();
+        await this.loadPapersDatabase(); // Load central papers database
         this.renderTree();
         this.initializeDendrogram();
         this.initializeSunburst();
@@ -73,10 +76,16 @@ class OntologyApp {
         // Expand/collapse buttons: enabled by default (tree view)
         const expandBtn = document.getElementById('expandAllBtn');
         const collapseBtn = document.getElementById('collapseAllBtn');
+        const resetZoomBtn = document.getElementById('resetZoomBtn');
+
+        // Tree view is default, so show expand/collapse and hide reset zoom
+        expandBtn.style.display = '';
+        collapseBtn.style.display = '';
         expandBtn.disabled = false;
         collapseBtn.disabled = false;
         expandBtn.classList.remove('disabled');
         collapseBtn.classList.remove('disabled');
+        resetZoomBtn.style.display = 'none';
     }
 
     async loadInitialStructure() {
@@ -137,6 +146,31 @@ class OntologyApp {
                 error: true
             };
         }
+    }
+
+    async loadPapersDatabase() {
+        if (this.papersLoaded) {
+            return;
+        }
+
+        try {
+            const response = await fetch('data/papers.json');
+            if (!response.ok) {
+                throw new Error(`Failed to load papers database: ${response.statusText}`);
+            }
+
+            this.papersDatabase = await response.json();
+            this.papersLoaded = true;
+            console.log(`Loaded papers database with ${Object.keys(this.papersDatabase).length} papers`);
+        } catch (error) {
+            console.error('Error loading papers database:', error);
+            this.papersDatabase = {};
+            this.papersLoaded = false;
+        }
+    }
+
+    getPaperByID(paperId) {
+        return this.papersDatabase[paperId] || null;
     }
 
     setupEventListeners() {
@@ -247,10 +281,12 @@ class OntologyApp {
 
         // Removed sunburst category navigation since we now show all categories together
 
-        // Sunburst reset zoom functionality
-        document.getElementById('sunburstResetBtn').addEventListener('click', () => {
-            if (this.sunburstRenderer) {
+        // Unified reset zoom functionality for dendrogram and sunburst views
+        document.getElementById('resetZoomBtn').addEventListener('click', () => {
+            if (this.currentView === 'sunburst' && this.sunburstRenderer) {
                 this.sunburstRenderer.resetZoom();
+            } else if (this.currentView === 'dendrogram' && this.dendrogramRenderer) {
+                this.dendrogramRenderer.zoomToFit();
             }
         });
     }
@@ -499,20 +535,37 @@ class OntologyApp {
             header.querySelector('span').textContent = `Papers (${data.associated_papers.length})`;
             papersList.innerHTML = '';
 
-            data.associated_papers.forEach(paper => {
-                const paperItem = document.createElement('div');
-                paperItem.className = 'paper-item';
-
-                const paperTitle = document.createElement('div');
-                paperTitle.className = 'paper-title';
-                paperTitle.textContent = paper.title;
-
-                paperItem.appendChild(paperTitle);
-                paperItem.addEventListener('click', () => {
-                    this.showPaperModal(paper);
+            // Check if papers database is loaded
+            if (!this.papersLoaded) {
+                papersList.innerHTML = '<p class="no-results">Loading papers database...</p>';
+                // Try to load papers database if not already loaded
+                this.loadPapersDatabase().then(() => {
+                    // Retry updating papers accordion after database loads
+                    this.updatePapersAccordion(data);
                 });
+                return;
+            }
 
-                papersList.appendChild(paperItem);
+            data.associated_papers.forEach(paperId => {
+                const paper = this.getPaperByID(paperId);
+                if (paper) {
+                    const paperItem = document.createElement('div');
+                    paperItem.className = 'paper-item';
+
+                    const paperTitle = document.createElement('div');
+                    paperTitle.className = 'paper-title';
+                    paperTitle.textContent = paper.title;
+
+                    paperItem.appendChild(paperTitle);
+                    paperItem.addEventListener('click', () => {
+                        this.showPaperModal(paper);
+                    });
+
+                    papersList.appendChild(paperItem);
+                } else {
+                    // Handle case where paper is not found in database
+                    console.warn(`Paper not found in database: ${paperId}`);
+                }
             });
         } else {
             header.querySelector('span').textContent = 'Papers (0)';
@@ -765,20 +818,25 @@ class OntologyApp {
         });
         document.getElementById(`ontology${viewType.charAt(0).toUpperCase() + viewType.slice(1)}`).classList.add('active');
 
-        // Update expand/collapse buttons based on view
+        // Update control buttons based on view
         const expandBtn = document.getElementById('expandAllBtn');
         const collapseBtn = document.getElementById('collapseAllBtn');
+        const resetZoomBtn = document.getElementById('resetZoomBtn');
 
-        if (viewType === 'dendrogram' || viewType === 'sunburst') {
-            expandBtn.disabled = true;
-            collapseBtn.disabled = true;
-            expandBtn.classList.add('disabled');
-            collapseBtn.classList.add('disabled');
-        } else {
+        if (viewType === 'tree') {
+            // Tree view: show expand/collapse, hide reset zoom
+            expandBtn.style.display = '';
+            collapseBtn.style.display = '';
             expandBtn.disabled = false;
             collapseBtn.disabled = false;
             expandBtn.classList.remove('disabled');
             collapseBtn.classList.remove('disabled');
+            resetZoomBtn.style.display = 'none';
+        } else if (viewType === 'dendrogram' || viewType === 'sunburst') {
+            // Dendrogram/Sunburst views: hide expand/collapse, show reset zoom
+            expandBtn.style.display = 'none';
+            collapseBtn.style.display = 'none';
+            resetZoomBtn.style.display = '';
         }
 
         // Render the appropriate view
@@ -888,11 +946,11 @@ class OntologyApp {
     }
 
     collectPapersRecursively(data, paperSet) {
-        // Collect papers from this node
+        // Collect papers from this node (now paperIds instead of full objects)
         if (data.associated_papers && Array.isArray(data.associated_papers)) {
-            data.associated_papers.forEach(paper => {
-                if (paper.title) {
-                    paperSet.add(paper.title);
+            data.associated_papers.forEach(paperId => {
+                if (paperId) {
+                    paperSet.add(paperId);
                 }
             });
         }
@@ -1479,9 +1537,9 @@ class SunburstRenderer {
             this.g.append('text')
                 .attr('class', 'center-text')
                 .attr('text-anchor', 'middle')
-                .attr('font-size', '11px')
+                .attr('font-size', '8px')
                 .attr('opacity', '0.7')
-                .text('Click to zoom out')
+                .text('Click on white space\n to zoom out')
                 .attr('y', 8);
         } else {
             // Show main title
