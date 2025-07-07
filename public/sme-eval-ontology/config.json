@@ -6,12 +6,14 @@
     "authors": [
       "Y. Kelly Wu",
       "Saniat J. Sohrawardi",
-      "Matthew Wright"
+      "Matthew Wright",
+      "Candice Gerstner"
     ],
     "date": "2024-07-07",
     "description": "A survey to evaluate the structure, completeness, and utility of a Digital Visual Media Forensics ontology.",
     "organizations": [
-      "Rochester Institute of Technology"
+      "Rochester Institute of Technology",
+      "National Security Agency"
     ]
   },
   "uiConfig": {
