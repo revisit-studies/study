@@ -43,7 +43,7 @@ export function OverviewStats({ overviewData }: { overviewData: OverviewData | n
           </div>
           <div>
             <Text size="xl" fw="bold">
-              {Number.isFinite(overviewData.avgCleanTime) ? `${(overviewData.avgCleanTime / 1000).toFixed(1)} s` : 'N/A'}
+              {Number.isFinite(overviewData.avgCleanTime) ? `${(overviewData.avgCleanTime).toFixed(1)} s` : 'N/A'}
             </Text>
             <Text size="sm" c="dimmed">Average Clean Time</Text>
           </div>

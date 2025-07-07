@@ -8,12 +8,12 @@ import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import 'mantine-react-table/styles.css';
-import { calculateTaskStats, getResponseOptions } from './utils';
+import { calculateResponseStats, getResponseOptions } from './utils';
 import { ResponseData } from './types';
 
 export function ResponseStats({ visibleParticipants, studyConfig }: { visibleParticipants: ParticipantData[]; studyConfig: StudyConfig }) {
   const tableData: ResponseData[] = useMemo(() => {
-    const stats = calculateTaskStats(visibleParticipants);
+    const stats = calculateResponseStats(visibleParticipants);
     const data: ResponseData[] = [];
 
     stats.forEach((stat) => {

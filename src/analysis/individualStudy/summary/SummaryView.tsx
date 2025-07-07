@@ -8,8 +8,8 @@ import { OverviewStats } from './OverviewStats';
 import { ComponentStats } from './ComponentStats';
 import { ResponseStats } from './ResponseStats';
 import {
-  calculateParticipantCounts, calculateCorrectnessStats, calculateTimeStats, calculateDateStats, calculateComponentStats, calculateTaskStats,
-  getResponseOptions,
+  calculateParticipantCounts, calculateCorrectnessStats, calculateTimeStats, calculateDateStats, calculateComponentStats,
+  calculateResponseStats, getResponseOptions,
 } from './utils';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { OverviewData, ResponseData } from './types';
@@ -43,7 +43,7 @@ export function SummaryView({ visibleParticipants, studyConfig }: StudyStatsProp
 
     // Calculate response data
     const responseData = studyConfig ? (() => {
-      const taskStats = calculateTaskStats(visibleParticipants);
+      const taskStats = calculateResponseStats(visibleParticipants);
       const data: ResponseData[] = [];
 
       taskStats.forEach((stat) => {

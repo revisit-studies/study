@@ -28,6 +28,6 @@ export interface OverviewData {
   startDate: Date | null;
   endDate: Date | null;
   correctnessStats: number;
-  responseData: ResponseData[];
   componentData: ComponentData[];
+  responseData: ResponseData[];
 }

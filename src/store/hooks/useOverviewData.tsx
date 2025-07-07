@@ -47,7 +47,7 @@ export function useOverviewData() {
 
       const dataToSave = {
         ...data,
-        avgCleanTime: data.avgCleanTime / 1000,
+        avgCleanTime: data.avgCleanTime,
       };
       await storageEngine.saveOverviewData(dataToSave);
       setOverviewData(dataToSave);
