@@ -11,6 +11,10 @@ import 'plyr-react/plyr.css';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 
+const defaultStyle = {
+  width: '100%',
+};
+
 // eslint-disable-next-line react/display-name
 const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() => void; errorCallback: () => void }>(
   (props, ref) => {
@@ -133,10 +137,11 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
   }, []);
 
   const ref = useRef<APITypes>(null);
+  const videoStyle = { ...defaultStyle, ...currentConfig.style };
 
   return loading || assetFound
     ? (
-      <Box mb="md">
+      <Box mb="md" style={videoStyle}>
         <CustomPlyrInstance
           ref={ref}
           source={{ type: 'video', sources }}

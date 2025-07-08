@@ -22,6 +22,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
   const [height, setHeight] = useState(800);
+  const iframeStyle = { ...defaultStyle, ...currentConfig.style, height: `${height}px` };
 
   const ref = useRef<HTMLIFrameElement>(null);
 
@@ -116,7 +117,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
           ? currentConfig.path
           : `${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`
       }
-      style={{ ...defaultStyle, height }}
+      style={iframeStyle}
       onLoad={() => setHeight((ref.current?.contentWindow?.document.body.scrollHeight || 750) + 20)}
     />
   );

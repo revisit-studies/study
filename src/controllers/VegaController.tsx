@@ -20,6 +20,10 @@ export interface VegaProvState {
   };
 }
 
+const defaultStyle = {
+  width: '100%',
+};
+
 const InternalVega = Vega as unknown as React.FC<VegaProps>;
 
 export function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
@@ -31,6 +35,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
   const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
   const [view, setView] = useState<View>();
+  const vegaStyle = { ...defaultStyle, ...currentConfig.style };
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -143,5 +148,9 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     return <div>Failed to load vega config</div>;
   }
 
-  return (<InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={(v) => setView(v)} />);
+  return (
+    <div style={vegaStyle}>
+      <InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={(v) => setView(v)} />
+    </div>
+  );
 }

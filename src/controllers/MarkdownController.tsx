@@ -5,7 +5,12 @@ import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { PREFIX } from '../utils/Prefix';
 
+const defaultStyle = {
+  width: '100%',
+};
+
 export function MarkdownController({ currentConfig }: { currentConfig: MarkdownComponent; }) {
+  const markdownStyle = { ...defaultStyle, ...currentConfig.style };
   const [importedText, setImportedText] = useState<string>('');
 
   const [loading, setLoading] = useState(true);
@@ -22,6 +27,6 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
   }, [currentConfig.path]);
 
   return loading || importedText
-    ? <ReactMarkdownWrapper text={importedText} />
+    ? <div style={markdownStyle}><ReactMarkdownWrapper text={importedText} /></div>
     : <ResourceNotFound path={currentConfig.path} />;
 }
