@@ -646,6 +646,7 @@ export interface BaseIndividualComponent {
   helpTextPathOverride?: string;
   /** The order of the responses. Defaults to 'fixed'. */
   responseOrder?: 'fixed' | 'random';
+  stylesheetPath?: string;
 }
 
 /**
