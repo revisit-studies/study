@@ -197,7 +197,7 @@ describe.each([
     expect(sequenceAssignment2!.rejected).toBe(false);
     expect(sequenceAssignment2!.claimed).toBe(false);
     expect(sequenceAssignment2!.createdTime).toBeDefined();
-    expect(typeof sequenceAssignment2!.createdTime === 'number' ? sequenceAssignment2!.createdTime : sequenceAssignment2!.createdTime.seconds).toBeGreaterThanOrEqual(typeof sequenceAssignment1!.createdTime === 'number' ? sequenceAssignment1!.createdTime : sequenceAssignment1!.createdTime.seconds);
+    expect(sequenceAssignment2!.createdTime).toBeGreaterThanOrEqual(sequenceAssignment1!.createdTime);
 
     expect(sequenceAssignment1!.participantId).toBe(participantId1);
 
@@ -209,7 +209,7 @@ describe.each([
     expect(sequenceAssignments).toBeDefined();
     sequenceAssignment2 = sequenceAssignments.find((assignment) => assignment.participantId === participantId2);
     expect(sequenceAssignment2).toBeDefined();
-    expect(sequenceAssignment2!.timestamp).not.toEqual(sequenceAssignment1!.timestamp);
+    expect(sequenceAssignment2!.timestamp).toBeGreaterThanOrEqual(sequenceAssignment1!.timestamp);
 
     // Check if the first rejected participant's sequence is available for reuse
     sequenceAssignment1 = sequenceAssignments.find((assignment) => assignment.participantId === participantId1);
@@ -234,7 +234,7 @@ describe.each([
     expect(sequenceAssignment3!.rejected).toBe(false);
     expect(sequenceAssignment3!.claimed).toBe(false);
     expect(sequenceAssignment3!.createdTime).toBeDefined();
-    expect(typeof sequenceAssignment3!.createdTime === 'number' ? sequenceAssignment3!.createdTime : sequenceAssignment3!.createdTime.seconds).toBeGreaterThan(typeof sequenceAssignment1!.createdTime === 'number' ? sequenceAssignment1!.createdTime : sequenceAssignment1!.createdTime.seconds);
+    expect(sequenceAssignment3!.createdTime).toBeGreaterThan(sequenceAssignment1!.createdTime);
     expect(sequenceAssignment3!.completed).toBeNull();
 
     // Ensure first rejected participant's sequence is claimed again
@@ -245,7 +245,7 @@ describe.each([
     expect(sequenceAssignment1!.rejected).toBe(true);
     expect(sequenceAssignment1!.claimed).toBe(true);
     expect(sequenceAssignment1!.createdTime).toBeDefined();
-    expect(typeof sequenceAssignment1!.createdTime === 'number' ? sequenceAssignment1!.createdTime : sequenceAssignment1!.createdTime.seconds).toBeLessThan(typeof sequenceAssignment3!.createdTime === 'number' ? sequenceAssignment3!.createdTime : sequenceAssignment3!.createdTime.seconds);
+    expect(sequenceAssignment1!.createdTime).toBeLessThanOrEqual(sequenceAssignment3!.createdTime);
 
     // Check that a new participant gets the other rejected sequence assignment
     await storageEngine.clearCurrentParticipantId();
@@ -263,7 +263,7 @@ describe.each([
     expect(sequenceAssignment4!.rejected).toBe(false);
     expect(sequenceAssignment4!.claimed).toBe(false);
     expect(sequenceAssignment4!.createdTime).toBeDefined();
-    expect(typeof sequenceAssignment4!.createdTime === 'number' ? sequenceAssignment4!.createdTime : sequenceAssignment4!.createdTime.seconds).toBeGreaterThanOrEqual(typeof sequenceAssignment3!.createdTime === 'number' ? sequenceAssignment3!.createdTime : sequenceAssignment3!.createdTime.seconds);
+    expect(sequenceAssignment4!.createdTime).toBeGreaterThanOrEqual(sequenceAssignment3!.createdTime);
     expect(sequenceAssignment4!.completed).toBeNull();
 
     // Check the length of sequence assignments

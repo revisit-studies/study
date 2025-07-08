@@ -139,7 +139,7 @@ describe.each([
     expect(updatedSequenceAssignment).toBeDefined();
     expect(updatedSequenceAssignment!.participantId).toBe(participantId);
     expect(updatedSequenceAssignment!.completed).toBeDefined();
-    expect(updatedSequenceAssignment!.completed).toBeGreaterThanOrEqual(typeof updatedSequenceAssignment!.createdTime === 'number' ? updatedSequenceAssignment!.createdTime : updatedSequenceAssignment!.createdTime.seconds);
+    expect(updatedSequenceAssignment!.completed).toBeGreaterThanOrEqual(updatedSequenceAssignment!.createdTime);
   });
 
   // Reject assignment and claim assignment tested by high-level tests
