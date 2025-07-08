@@ -14,6 +14,7 @@ import { download } from './downloader/DownloadTidy';
 import { useStudyId } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import type { Response } from '../parser/types';
+import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 
 export function StudyEnd() {
   const studyConfig = useStudyConfig();
@@ -115,11 +116,8 @@ export function StudyEnd() {
     const templateData: Record<string, string> = { PARTICIPANT_ID: participantId };
 
     const responses = Object.values(studyConfig.components)
-      .flatMap((component) => (
-        Array.isArray((component as { response?: Response[] }).response)
-          ? (component as { response: Response[] }).response
-          : []
-      ));
+      .map((component) => studyComponentToIndividualComponent(component, studyConfig))
+      .flatMap((component) => (Array.isArray(component.response) ? component.response : []));
 
     const fieldId = responses.find((r: Response) => r.paramCapture === urlParticipantIdParam)?.id;
 
