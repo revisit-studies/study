@@ -172,8 +172,13 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     const sequenceAssignments = await getDocs(sequenceAssignmentCollection);
     return sequenceAssignments.docs
-      .map((d) => d.data() as SequenceAssignment)
-      .sort((a, b) => (a.timestamp as Timestamp).toMillis() - (b.timestamp as Timestamp).toMillis());
+      .map((d) => d.data())
+      .map((data) => ({
+        ...data,
+        timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
+        createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
+      } as SequenceAssignment))
+      .sort((a, b) => a.timestamp - b.timestamp);
   }
 
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean = false) {

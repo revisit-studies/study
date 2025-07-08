@@ -1,5 +1,4 @@
 import { User } from '@firebase/auth';
-import { Timestamp } from 'firebase/firestore';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import throttle from 'lodash.throttle';
@@ -31,11 +30,11 @@ export interface UserWrapped {
 
 export type SequenceAssignment = {
   participantId: string;
-  timestamp: Timestamp | number; // Use Timestamp for Firebase, number for local storage
+  timestamp: number; // Use Timestamp for Firebase, number for local storage
   rejected: boolean;
   claimed: boolean;
-  completed: Timestamp | number | null;
-  createdTime: Timestamp | number;
+  completed: number | null;
+  createdTime: number;
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
