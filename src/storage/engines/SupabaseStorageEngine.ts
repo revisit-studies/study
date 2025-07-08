@@ -121,7 +121,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     const { data, error } = await this.supabase
       .from('revisit')
       // select data and created_at
-      .select('data, created_at')
+      .select('data, createdAt')
       .eq('studyId', studyId)
       .like('docId', 'sequenceAssignment_%');
     if (error) {
@@ -130,8 +130,8 @@ export class SupabaseStorageEngine extends StorageEngine {
     return data
       .map((item) => ({
         ...item.data,
-        timestamp: item.data.withServerTimestamp ? new Date(item.created_at).getTime() : item.data.timestamp,
-        createdTime: new Date(item.created_at).getTime(),
+        timestamp: item.data.withServerTimestamp ? new Date(item.createdAt).getTime() : item.data.timestamp,
+        createdTime: new Date(item.createdAt).getTime(),
       } as SequenceAssignment))
       .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
   }
