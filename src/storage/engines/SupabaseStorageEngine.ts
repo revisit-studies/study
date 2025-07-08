@@ -383,5 +383,7 @@ export class SupabaseStorageEngine extends StorageEngine {
         throw new Error('Failed to delete files from storage during reset');
       }
     }
+
+    await super.__testingReset();
   }
 }

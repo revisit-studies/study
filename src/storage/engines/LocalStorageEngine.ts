@@ -207,5 +207,7 @@ export class LocalStorageEngine extends StorageEngine {
     const keys = await this.studyDatabase.keys();
     const studyKeys = keys.filter((key) => key.startsWith(`${this.collectionPrefix}${studyId}/`));
     await Promise.all(studyKeys.map((key) => this.studyDatabase.removeItem(key)));
+
+    await super.__testingReset();
   }
 }

@@ -698,6 +698,16 @@ export abstract class StorageEngine {
 
     await this._pushToStorage('', 'sequenceArray', latinSquare);
   }
+
+  protected async __testingReset() {
+    this.currentParticipantId = undefined;
+    this.participantData = undefined;
+
+    this.localForage.setItem(
+      `${this.collectionPrefix}${this.studyId}/currentParticipantId`,
+      undefined,
+    );
+  }
 }
 
 export interface CloudStorageEngineError {
