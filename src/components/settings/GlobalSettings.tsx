@@ -113,7 +113,7 @@ export function GlobalSettings() {
     setLoading(false);
   };
 
-  const storageEngineIsFirebase = useMemo(() => storageEngine && isCloudStorageEngine(storageEngine), [storageEngine]);
+  const storageEngineIsCloud = useMemo(() => storageEngine && isCloudStorageEngine(storageEngine), [storageEngine]);
 
   return (
     <>
@@ -127,11 +127,11 @@ export function GlobalSettings() {
                 <Box>
                   <Text>Authentication is currently disabled.</Text>
                 </Box>
-                <Tooltip label="You can only enable auth when using Firebase" disabled={storageEngineIsFirebase}>
+                <Tooltip label="You can only enable auth when using Firebase" disabled={storageEngineIsCloud}>
                   <Button
-                    onClick={(event) => (!storageEngineIsFirebase ? event.preventDefault() : handleEnableAuth())}
+                    onClick={(event) => (!storageEngineIsCloud ? event.preventDefault() : handleEnableAuth())}
                     color="green"
-                    data-disabled={!storageEngineIsFirebase ? true : undefined}
+                    data-disabled={!storageEngineIsCloud ? true : undefined}
                     style={{ '&[dataDisabled]': { pointerEvents: 'all' } }}
                   >
                     Enable Authentication

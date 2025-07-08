@@ -1,5 +1,5 @@
 import {
-  expect, test, beforeEach, describe,
+  expect, test, beforeEach, describe, afterEach,
 } from 'vitest';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
@@ -7,6 +7,7 @@ import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { StorageEngine } from '../engines/types';
 import { hash } from '../engines/utils';
+// import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
 
 const studyId = 'test-study';
 const configSimple = testConfigSimple as StudyConfig;
@@ -19,6 +20,7 @@ const participantMetadata: ParticipantMetadata = {
 
 describe.each([
   { TestEngine: LocalStorageEngine },
+  // { TestEngine: SupabaseStorageEngine }, // Uncomment to test with Supabase
   // { TestEngine: FirebaseStorageEngine }, TODO
 ])('describe object $TestEngine', ({ TestEngine }) => {
   let storageEngine: StorageEngine;
@@ -26,7 +28,7 @@ describe.each([
   // Before test harness
   beforeEach(async () => {
     // Reset the storage engine before each test
-    storageEngine = new TestEngine();
+    storageEngine = new TestEngine(true);
     await storageEngine.connect();
     await storageEngine.initializeStudyDb(studyId);
     const sequenceArray = await generateSequenceArray(configSimple);
@@ -35,11 +37,16 @@ describe.each([
     );
   });
 
+  afterEach(async () => {
+    // @ts-expect-error using protected method for testing
+    await storageEngine._testingReset(studyId);
+  });
+
   // _pushToStorage, _getFromStorage, and _removeFromStorage tests
   test('_pushToStorage, _getFromStorage, and _removeFromStorage work correctly', async () => {
     const sequenceArray = generateSequenceArray(configSimple);
     const participantData = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-    const randomBlob = new Blob(['test data'], { type: 'text/plain' });
+    const randomBuffer = { test: 1 };
 
     // @ts-expect-error using protected method for testing
     await storageEngine._pushToStorage('', 'sequenceArray', sequenceArray);
@@ -56,11 +63,11 @@ describe.each([
     expect(storedParticipantData!.participantId).toBe(participantData.participantId);
 
     // @ts-expect-error using protected method for testing
-    await storageEngine._pushToStorage('testBlob', 'blob', randomBlob);
+    await storageEngine._pushToStorage('testBlob', 'blob', randomBuffer);
     // @ts-expect-error using protected method for testing
     const storedBlob = await storageEngine._getFromStorage('testBlob', 'blob');
     expect(storedBlob).toBeDefined();
-    expect(storedBlob instanceof Blob).toBe(true);
+    expect(storedBlob).toBeInstanceOf(Object);
   });
 
   // Cache storage object not testable in local storage environment
@@ -76,7 +83,7 @@ describe.each([
   test('_getCurrentConfigHash and _setCurrentConfigHash work correctly', async () => {
     // @ts-expect-error using protected method for testing
     const initialHash = await storageEngine._getCurrentConfigHash();
-    expect(initialHash).toBe('');
+    expect(initialHash).toBeNull();
 
     const configHash = await hash(JSON.stringify(configSimple));
     // @ts-expect-error using protected method for testing
@@ -95,15 +102,15 @@ describe.each([
     const sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
 
-    const sequenceAssignment = sequenceAssignments[participantId];
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantId);
     expect(sequenceAssignment).toBeDefined();
-    expect(sequenceAssignment.participantId).toBe(participantId);
-    expect(sequenceAssignment.timestamp).toBeDefined();
-    expect(sequenceAssignment.rejected).toBe(false);
-    expect(sequenceAssignment.claimed).toBe(false);
-    expect(sequenceAssignment.completed).toBeNull();
-    expect(sequenceAssignment.createdTime).toBeDefined();
-    expect(sequenceAssignment.createdTime).equal(sequenceAssignment.timestamp);
+    expect(sequenceAssignment!.participantId).toBe(participantId);
+    expect(sequenceAssignment!.timestamp).toBeDefined();
+    expect(sequenceAssignment!.rejected).toBe(false);
+    expect(sequenceAssignment!.claimed).toBe(false);
+    expect(sequenceAssignment!.completed).toBeNull();
+    expect(sequenceAssignment!.createdTime).toBeDefined();
+    expect(sequenceAssignment!.createdTime).equal(sequenceAssignment!.timestamp);
   });
 
   // _completeCurrentParticipantRealtime test
@@ -115,10 +122,10 @@ describe.each([
     let sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
 
-    const sequenceAssignment = sequenceAssignments[participantId];
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantId);
     expect(sequenceAssignment).toBeDefined();
-    expect(sequenceAssignment.participantId).toBe(participantId);
-    expect(sequenceAssignment.completed).toBeNull();
+    expect(sequenceAssignment!.participantId).toBe(participantId);
+    expect(sequenceAssignment!.completed).toBeNull();
 
     // Complete the participant
     // @ts-expect-error using protected method for testing
@@ -128,11 +135,11 @@ describe.each([
     sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
 
-    const updatedSequenceAssignment = sequenceAssignments[participantId];
+    const updatedSequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantId);
     expect(updatedSequenceAssignment).toBeDefined();
-    expect(updatedSequenceAssignment.participantId).toBe(participantId);
-    expect(updatedSequenceAssignment.completed).toBeDefined();
-    expect(updatedSequenceAssignment.completed).toBeGreaterThan(typeof updatedSequenceAssignment.createdTime === 'number' ? updatedSequenceAssignment.createdTime : updatedSequenceAssignment.createdTime.seconds);
+    expect(updatedSequenceAssignment!.participantId).toBe(participantId);
+    expect(updatedSequenceAssignment!.completed).toBeDefined();
+    expect(updatedSequenceAssignment!.completed).toBeGreaterThanOrEqual(updatedSequenceAssignment!.createdTime);
   });
 
   // Reject assignment and claim assignment tested by high-level tests

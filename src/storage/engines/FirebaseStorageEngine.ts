@@ -14,6 +14,7 @@ import {
   CollectionReference,
   DocumentData,
   Firestore,
+  Timestamp,
   collection,
   doc,
   enableNetwork,
@@ -46,8 +47,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
   private storage: FirebaseStorage;
 
-  constructor() {
-    super('firebase');
+  constructor(testing: boolean = false) {
+    super('firebase', testing);
 
     const firebaseConfig = hjsonParse(import.meta.env.VITE_FIREBASE_CONFIG);
     const firebaseApp = initializeApp(firebaseConfig);
@@ -145,7 +146,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       'configHash',
     );
     const configHashDocData = await getDoc(configHashDoc);
-    return configHashDocData.exists() ? configHashDocData.data().configHash : null;
+    return configHashDocData.exists() ? configHashDocData.data().configHash as string : null;
   }
 
   protected async _setCurrentConfigHash(configHash: string) {
@@ -169,10 +170,18 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     );
 
     const sequenceAssignments = await getDocs(sequenceAssignmentCollection);
-    return Object.fromEntries(sequenceAssignments.docs.map((d) => [d.id, d.data() as SequenceAssignment]));
+    return sequenceAssignments.docs
+      .map((d) => d.data())
+      .map((data) => ({
+        ...data,
+        timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
+        createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
+        completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+      } as SequenceAssignment))
+      .sort((a, b) => a.timestamp - b.timestamp);
   }
 
-  protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
+  protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean = false) {
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
@@ -187,10 +196,19 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       participantId,
     );
 
-    await setDoc(participantSequenceAssignmentDoc, sequenceAssignment);
+    const toUpload = withServerTimestamp ? { ...sequenceAssignment, timestamp: serverTimestamp() } : sequenceAssignment;
+    await setDoc(participantSequenceAssignmentDoc, { ...toUpload, createdTime: serverTimestamp() });
   }
 
   protected async _completeCurrentParticipantRealtime() {
+    await this.verifyStudyDatabase();
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
     const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
     const sequenceAssignmentCollection = collection(
       sequenceAssignmentDoc,
@@ -204,6 +222,14 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _rejectParticipantRealtime(participantId: string) {
+    await this.verifyStudyDatabase();
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
     const studyCollection = collection(
       this.firestore,
       `${this.collectionPrefix}${this.studyId}`,
@@ -223,6 +249,14 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _claimSequenceAssignment(participantId: string) {
+    await this.verifyStudyDatabase();
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
     const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
     const sequenceAssignmentCollection = collection(
       sequenceAssignmentDoc,
@@ -310,6 +344,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       console.warn(`Audio for task ${task} and participant ${participantId} not found.`);
       return null;
     }
+  }
+
+  protected async _testingReset() {
+    throw new Error('Testing reset not implemented for FirebaseStorageEngine');
   }
 
   // Gets data from the user-management collection based on the inputted string

@@ -9,6 +9,7 @@ import { showNotification, RevisitNotification } from '../../../utils/notificati
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
 import { ActionResponse, SnapshotNameItem } from '../../../storage/engines/types';
+import { isCloudStorageEngine } from '../../../storage/engines/utils';
 
 export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
@@ -31,6 +32,9 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
 
   // Used to fetch archived datasets
   const refreshSnapshots = useCallback(async () => {
+    if (!isCloudStorageEngine(storageEngine)) {
+      return;
+    }
     setSnapshotListLoading(true);
     const currSnapshots = await storageEngine.getSnapshots(studyId);
     setSnapshots(currSnapshots);

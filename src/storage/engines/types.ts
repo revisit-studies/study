@@ -1,5 +1,4 @@
 import { User } from '@firebase/auth';
-import { Timestamp } from 'firebase/firestore';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import throttle from 'lodash.throttle';
@@ -31,11 +30,11 @@ export interface UserWrapped {
 
 export type SequenceAssignment = {
   participantId: string;
-  timestamp: Timestamp | number; // Use Timestamp for Firebase, number for local storage
+  timestamp: number; // Use Timestamp for Firebase, number for local storage
   rejected: boolean;
   claimed: boolean;
-  completed: Timestamp | number | null;
-  createdTime: Timestamp | number;
+  completed: number | null;
+  createdTime: number;
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
@@ -53,6 +52,8 @@ export type StorageObject<T extends StorageObjectType> =
 export abstract class StorageEngine {
   protected engine: string;
 
+  protected testing: boolean;
+
   protected cloudEngine: boolean = false;
 
   protected connected = false;
@@ -69,8 +70,9 @@ export abstract class StorageEngine {
 
   protected participantData: ParticipantData | undefined;
 
-  constructor(engine: string) {
+  constructor(engine: string, testing: boolean) {
     this.engine = engine;
+    this.testing = testing;
   }
 
   isConnected() {
@@ -107,17 +109,17 @@ export abstract class StorageEngine {
   protected abstract _verifyStudyDatabase(): Promise<void>;
 
   // Gets the current config hash from the storage engine using the engine's realtime database.
-  protected abstract _getCurrentConfigHash(): Promise<string>;
+  protected abstract _getCurrentConfigHash(): Promise<string | null>;
 
   // Sets the current config hash in the storage engine using the engine's realtime database.
   protected abstract _setCurrentConfigHash(configHash: string): Promise<void>;
 
   /* General/Realtime ---------------------------------------------------- */
-  // Gets all sequence assignments for the given studyId.
-  protected abstract _getAllSequenceAssignments(studyId: string): Promise<Record<string, SequenceAssignment>>;
+  // Gets all sequence assignments for the given studyId. The sequence assignments are sorted ascending by timestamp.
+  protected abstract _getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
 
-  // Creates a sequence assignment for the given participantId and sequenceAssignment.
-  protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment): Promise<void>;
+  // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
+  protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
 
   // Sets the participant to completed in the sequence assignments in the realtime database.
   protected abstract _completeCurrentParticipantRealtime(): Promise<void>;
@@ -143,6 +145,9 @@ export abstract class StorageEngine {
 
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
+
+  // Resets the entire study database for testing purposes. This is used to reset the study database to a clean state for testing.
+  protected abstract _testingReset(studyId: string): Promise<void>;
 
   /*
   * THROTTLED METHODS
@@ -257,12 +262,11 @@ export abstract class StorageEngine {
     const modes = await this.getModes(this.studyId);
 
     // Find all rejected documents
-    const rejectedDocs = Object.entries(sequenceAssignments)
-      .sort((a, b) => (a[1].timestamp as number) - (b[1].timestamp as number))
-      .filter(([_, doc]) => doc.rejected && !doc.claimed);
+    const rejectedDocs = sequenceAssignments
+      .filter((doc) => doc.rejected && !doc.claimed);
     if (rejectedDocs.length > 0) {
       const firstReject = rejectedDocs[0];
-      const firstRejectTime = firstReject[1].timestamp;
+      const firstRejectTime = firstReject.timestamp;
       if (modes.dataCollectionEnabled) {
         // Make the sequence assignment document for the participant
         const participantSequenceAssignmentData: SequenceAssignment = {
@@ -271,30 +275,28 @@ export abstract class StorageEngine {
           rejected: false,
           claimed: false,
           completed: null,
-          createdTime: new Date().getTime(),
+          createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
         };
         // Mark the first reject as claimed
-        await this._claimSequenceAssignment(firstReject[0], firstReject[1]);
+        await this._claimSequenceAssignment(firstReject.participantId, firstReject);
         // Set the participant's sequence assignment document
-        await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData);
+        await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, false);
       }
     } else if (modes.dataCollectionEnabled) {
       const timestamp = new Date().getTime();
       const participantSequenceAssignmentData: SequenceAssignment = {
         participantId: this.currentParticipantId,
-        timestamp,
+        timestamp, // Placeholder, will be set to server timestamp in cloud engines
         rejected: false,
         claimed: false,
         completed: null,
-        createdTime: timestamp,
+        createdTime: timestamp, // Placeholder, will be set to server timestamp in cloud engines
       };
-      await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData);
+      await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
     }
 
     // Query all the intents to get a sequence and find our position in the queue
     sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
-    const intents = Object.values(sequenceAssignments)
-      .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
 
     // Get the latin square
     const sequenceArray = await this.getSequenceArray();
@@ -303,8 +305,8 @@ export abstract class StorageEngine {
     }
 
     // Get the current row
-    const intentIndex = intents.filter((intent) => !intent.rejected).findIndex(
-      (intent) => intent.participantId === this.currentParticipantId,
+    const intentIndex = sequenceAssignments.filter((assignment) => !assignment.rejected).findIndex(
+      (assignment) => assignment.participantId === this.currentParticipantId,
     ) % sequenceArray.length;
     if (sequenceArray.length === 0) {
       throw new Error('Something really bad happened with sequence assignment');
@@ -322,9 +324,9 @@ export abstract class StorageEngine {
       throw new Error('Latin square is empty');
     }
 
-    const creationSorted = intents.sort((a, b) => (a.createdTime as number) - (b.createdTime as number));
+    const creationSorted = sequenceAssignments.sort((a, b) => a.createdTime - b.createdTime);
 
-    const creationIndex = creationSorted.findIndex((intent) => intent.participantId === this.currentParticipantId) + 1;
+    const creationIndex = creationSorted.findIndex((assignment) => assignment.participantId === this.currentParticipantId) + 1;
 
     return { currentRow, creationIndex };
   }
@@ -395,7 +397,7 @@ export abstract class StorageEngine {
       throw new Error('Study ID is not set');
     }
     const sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
-    return Object.keys(sequenceAssignments);
+    return sequenceAssignments.map((assignment) => assignment.participantId);
   }
 
   // Gets the participant data for the current participant or a specific participantId.
@@ -525,15 +527,13 @@ export abstract class StorageEngine {
   }
 
   async getParticipantsStatusCounts(studyId: string) {
-    const sequenceAssignments = this._getAllSequenceAssignments(studyId);
-    const sequenceAssignmentsData = Object.values(sequenceAssignments)
-      .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
+    const sequenceAssignments = await this._getAllSequenceAssignments(studyId);
 
-    const completed = sequenceAssignmentsData.filter((assignment) => assignment.completed && !assignment.rejected).length;
-    const rejected = sequenceAssignmentsData.filter((assignment) => assignment.rejected).length;
-    const inProgress = sequenceAssignmentsData.length - completed - rejected;
-    const minTime = sequenceAssignmentsData.length > 0 ? sequenceAssignmentsData[0].timestamp : null;
-    const maxTime = sequenceAssignmentsData.length > 0 ? sequenceAssignmentsData.at(-1)!.timestamp : null;
+    const completed = sequenceAssignments.filter((assignment) => assignment.completed && !assignment.rejected).length;
+    const rejected = sequenceAssignments.filter((assignment) => assignment.rejected).length;
+    const inProgress = sequenceAssignments.length - completed - rejected;
+    const minTime = sequenceAssignments.length > 0 ? sequenceAssignments[0].timestamp : null;
+    const maxTime = sequenceAssignments.length > 0 ? sequenceAssignments.at(-1)!.timestamp : null;
 
     return {
       completed,
@@ -692,6 +692,16 @@ export abstract class StorageEngine {
     await this.verifyStudyDatabase();
 
     await this._pushToStorage('', 'sequenceArray', latinSquare);
+  }
+
+  protected async __testingReset() {
+    this.currentParticipantId = undefined;
+    this.participantData = undefined;
+
+    this.localForage.setItem(
+      `${this.collectionPrefix}${this.studyId}/currentParticipantId`,
+      undefined,
+    );
   }
 }
 

@@ -14,6 +14,6 @@ export function isParticipantData(obj: unknown): obj is ParticipantData {
   return typeof potentialParticipantData === 'object' && potentialParticipantData && potentialParticipantData.participantId !== undefined;
 }
 
-export function isCloudStorageEngine(engine: StorageEngine): engine is CloudStorageEngine {
-  return engine.isCloudEngine();
+export function isCloudStorageEngine(engine: StorageEngine | undefined): engine is CloudStorageEngine {
+  return !!engine && engine.isCloudEngine();
 }
