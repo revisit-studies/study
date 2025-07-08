@@ -21,8 +21,7 @@
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "sidebar": true,
-    "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [https://app.prolific.com/submissions/complete?cc=CE96X7ST&PROLIFIC_ID={PROLIFIC_ID}](https://app.prolific.com/submissions/complete?cc=CE96X7ST&PROLIFIC_ID={PROLIFIC_ID})",
-
+    "studyEndMsg": "Thank you for completing the study. You may click this link and return to Prolific: [https://app.prolific.com/submissions/complete?cc=CE96X7ST&PROLIFIC_ID={PROLIFIC_ID}](https://app.prolific.com/submissions/complete?cc=CE96X7ST&PROLIFIC_ID={PROLIFIC_ID})",
     "urlParticipantIdParam": "PROLIFIC_ID"
   },
   "importedLibraries": ["vlat"],
