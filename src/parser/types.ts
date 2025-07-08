@@ -647,6 +647,17 @@ export interface BaseIndividualComponent {
   /** The order of the responses. Defaults to 'fixed'. */
   responseOrder?: 'fixed' | 'random';
   stylesheetPath?: string;
+  style?: {
+    width?: string;
+    height?: string;
+    fontSize?: string;
+    fontWeight?: string | number;
+    textAlign?: 'left' | 'center' | 'right';
+    color?: string;
+    backgroundColor?: string;
+    margin?: string;
+    padding?: string;
+  }
 }
 
 /**
