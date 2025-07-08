@@ -13,7 +13,7 @@ export class SupabaseStorageEngine extends StorageEngine {
   protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
     const { data, error } = await this.supabase.storage
       .from('revisit')
-      .download(`${studyId || this.studyId}/${prefix}_${type}`);
+      .download(`${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`);
 
     if (error) {
       return {} as StorageObject<T>;
@@ -34,7 +34,7 @@ export class SupabaseStorageEngine extends StorageEngine {
 
     const { error } = await this.supabase.storage
       .from('revisit')
-      .upload(`${this.studyId}/${prefix}_${type}`, uploadObject, {
+      .upload(`${this.collectionPrefix}${this.studyId}/${prefix}_${type}`, uploadObject, {
         upsert: true,
       });
 
@@ -46,7 +46,7 @@ export class SupabaseStorageEngine extends StorageEngine {
   protected async _deleteFromStorage<T extends StorageObjectType>(prefix: string, type: T) {
     const { error } = await this.supabase.storage
       .from('revisit')
-      .remove([`${this.studyId}/${prefix}_${type}`]);
+      .remove([`${this.collectionPrefix}${this.studyId}/${prefix}_${type}`]);
 
     if (error) {
       throw new Error('Failed to delete from Supabase');
@@ -57,7 +57,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     // Download the existing object
     const { data, error: downloadError } = await this.supabase.storage
       .from('revisit')
-      .download(`${this.studyId}/${prefix}_${type}`);
+      .download(`${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
 
     if (downloadError || !data) {
       throw new Error('Failed to download object for cache update');
@@ -67,7 +67,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     const { error: uploadError } = await this.supabase.storage
       .from('revisit')
       .upload(
-        `${this.studyId}/${prefix}_${type}`,
+        `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
         data,
         {
           upsert: true,
@@ -81,11 +81,11 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   protected async _verifyStudyDatabase() {
-    const { data, error } = await this.supabase
+    const { error } = await this.supabase
       .from('revisit')
       .select('*')
-      .eq('studyId', this.studyId);
-    if (error || data.length === 0) {
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`);
+    if (error || !this.studyId) {
       throw new Error('Study database not initialized or does not exist');
     }
   }
@@ -95,7 +95,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     const { data } = await this.supabase
       .from('revisit')
       .select('data')
-      .eq('studyId', this.studyId)
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', 'currentConfigHash')
       .single();
     return data?.data?.configHash as string || null;
@@ -107,11 +107,11 @@ export class SupabaseStorageEngine extends StorageEngine {
     await this.supabase
       .from('revisit')
       .upsert({
-        studyId: this.studyId,
+        studyId: `${this.collectionPrefix}${this.studyId}`,
         docId: 'currentConfigHash',
         data: { configHash },
       })
-      .eq('studyId', this.studyId)
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', 'currentConfigHash');
   }
 
@@ -122,7 +122,7 @@ export class SupabaseStorageEngine extends StorageEngine {
       .from('revisit')
       // select data and created_at
       .select('data, createdAt')
-      .eq('studyId', studyId)
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .like('docId', 'sequenceAssignment_%');
     if (error) {
       throw new Error('Failed to get sequence assignments');
@@ -146,11 +146,11 @@ export class SupabaseStorageEngine extends StorageEngine {
     await this.supabase
       .from('revisit')
       .upsert({
-        studyId: this.studyId,
+        studyId: `${this.collectionPrefix}${this.studyId}`,
         docId: `sequenceAssignment_${participantId}`,
         data: { ...sequenceAssignment, withServerTimestamp },
       })
-      .eq('studyId', this.studyId)
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${participantId}`);
   }
 
@@ -167,7 +167,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     const { data, error } = await this.supabase
       .from('revisit')
       .select('data')
-      .eq('studyId', this.studyId)
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${this.currentParticipantId}`)
       .single();
 
@@ -180,7 +180,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     await this.supabase
       .from('revisit')
       .update({ data: { ...data.data, completed: new Date().getTime() } })
-      .eq('studyId', this.studyId)
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', sequenceAssignmentPath);
   }
 
@@ -198,7 +198,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     const { data, error } = await this.supabase
       .from('revisit')
       .select('data')
-      .eq('studyId', this.studyId)
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', sequenceAssignmentPath)
       .single();
 
@@ -210,7 +210,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     await this.supabase
       .from('revisit')
       .update({ data: { ...data.data, rejected: true, timestamp: new Date().getTime() } })
-      .eq('studyId', this.studyId)
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', sequenceAssignmentPath);
 
     // Get the sequence assignment for the initial participant if we are rejecting a claimed assignment
@@ -218,7 +218,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     const { data: claimedData, error: claimedError } = await this.supabase
       .from('revisit')
       .select('data')
-      .eq('studyId', this.studyId)
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('data->timestamp', data.data.timestamp)
       .single();
 
@@ -229,7 +229,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     await this.supabase
       .from('revisit')
       .update({ data: { ...claimedData.data, claimed: false } })
-      .eq('studyId', this.studyId)
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${claimedData.data.participantId}`);
   }
 
@@ -247,7 +247,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     await this.supabase
       .from('revisit')
       .update({ data: { ...sequenceAssignment, claimed: true } })
-      .eq('studyId', this.studyId)
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', sequenceAssignmentPath);
   }
 
@@ -258,7 +258,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     const { error: schemaError } = await this.supabase
       .from('revisit')
       .upsert({
-        studyId,
+        studyId: `${this.collectionPrefix}${studyId}`,
         docId: 'connect',
         data: {},
       });
@@ -289,7 +289,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     const { data, error } = await this.supabase
       .from('revisit')
       .select('data')
-      .eq('studyId', studyId)
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
     if (error) {
       throw new Error('Failed to get modes');
@@ -310,11 +310,11 @@ export class SupabaseStorageEngine extends StorageEngine {
     await this.supabase
       .from('revisit')
       .upsert({
-        studyId,
+        studyId: `${this.collectionPrefix}${studyId}`,
         docId: 'metadata',
         data: defaultModes,
       })
-      .eq('studyId', studyId)
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
     return defaultModes;
   }
@@ -328,11 +328,11 @@ export class SupabaseStorageEngine extends StorageEngine {
     await this.supabase
       .from('revisit')
       .upsert({
-        studyId,
+        studyId: `${this.collectionPrefix}${studyId}`,
         docId: 'metadata',
         data: modes,
       })
-      .eq('studyId', studyId)
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
   }
 
@@ -357,7 +357,7 @@ export class SupabaseStorageEngine extends StorageEngine {
     const { error } = await this.supabase
       .from('revisit')
       .delete()
-      .eq('studyId', studyId);
+      .eq('studyId', `${this.collectionPrefix}${studyId}`);
     if (error) {
       throw new Error('Failed to reset study database');
     }
@@ -368,7 +368,7 @@ export class SupabaseStorageEngine extends StorageEngine {
       .from('objects')
       .select('name')
       .eq('bucket_id', 'revisit')
-      .like('name', `${studyId}%`); // remove or keep the % based on your needs
+      .like('name', `${this.collectionPrefix}${studyId}%`); // remove or keep the % based on your needs
 
     if (filePathsError) {
       throw new Error('Failed to retrieve file paths for reset');
