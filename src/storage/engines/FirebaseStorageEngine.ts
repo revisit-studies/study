@@ -14,6 +14,7 @@ import {
   CollectionReference,
   DocumentData,
   Firestore,
+  Timestamp,
   collection,
   doc,
   enableNetwork,
@@ -170,10 +171,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     );
 
     const sequenceAssignments = await getDocs(sequenceAssignmentCollection);
-    return sequenceAssignments.docs.map((d) => d.data() as SequenceAssignment);
+    return sequenceAssignments.docs
+      .map((d) => d.data() as SequenceAssignment)
+      .sort((a, b) => (a.timestamp as Timestamp).toMillis() - (b.timestamp as Timestamp).toMillis());
   }
 
-  protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
+  protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean = false) {
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
@@ -188,7 +191,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       participantId,
     );
 
-    await setDoc(participantSequenceAssignmentDoc, sequenceAssignment);
+    const toUpload = withServerTimestamp ? { ...sequenceAssignment, timestamp: serverTimestamp() } : sequenceAssignment;
+    await setDoc(participantSequenceAssignmentDoc, { ...toUpload, createdTime: serverTimestamp() });
   }
 
   protected async _completeCurrentParticipantRealtime() {

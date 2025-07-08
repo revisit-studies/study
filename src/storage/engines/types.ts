@@ -116,11 +116,11 @@ export abstract class StorageEngine {
   protected abstract _setCurrentConfigHash(configHash: string): Promise<void>;
 
   /* General/Realtime ---------------------------------------------------- */
-  // Gets all sequence assignments for the given studyId.
+  // Gets all sequence assignments for the given studyId. The sequence assignments are sorted ascending by timestamp.
   protected abstract _getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
 
-  // Creates a sequence assignment for the given participantId and sequenceAssignment.
-  protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment): Promise<void>;
+  // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
+  protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
 
   // Sets the participant to completed in the sequence assignments in the realtime database.
   protected abstract _completeCurrentParticipantRealtime(): Promise<void>;
@@ -277,24 +277,24 @@ export abstract class StorageEngine {
           rejected: false,
           claimed: false,
           completed: null,
-          createdTime: new Date().getTime(),
+          createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
         };
         // Mark the first reject as claimed
         await this._claimSequenceAssignment(firstReject.participantId, firstReject);
         // Set the participant's sequence assignment document
-        await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData);
+        await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, false);
       }
     } else if (modes.dataCollectionEnabled) {
       const timestamp = new Date().getTime();
       const participantSequenceAssignmentData: SequenceAssignment = {
         participantId: this.currentParticipantId,
-        timestamp,
+        timestamp, // Placeholder, will be set to server timestamp in cloud engines
         rejected: false,
         claimed: false,
         completed: null,
-        createdTime: timestamp,
+        createdTime: timestamp, // Placeholder, will be set to server timestamp in cloud engines
       };
-      await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData);
+      await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
     }
 
     // Query all the intents to get a sequence and find our position in the queue

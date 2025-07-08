@@ -120,27 +120,35 @@ export class SupabaseStorageEngine extends StorageEngine {
     // get all sequence assignments from the study collection
     const { data, error } = await this.supabase
       .from('revisit')
-      .select('data')
+      // select data and created_at
+      .select('data, created_at')
       .eq('studyId', studyId)
       .like('docId', 'sequenceAssignment_%');
     if (error) {
       throw new Error('Failed to get sequence assignments');
     }
-    return data.map((item) => item.data as SequenceAssignment);
+    return data
+      .map((item) => ({
+        ...item.data,
+        timestamp: item.data.withServerTimestamp ? new Date(item.created_at).getTime() : item.data.timestamp,
+        createdTime: new Date(item.created_at).getTime(),
+      } as SequenceAssignment))
+      .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
   }
 
-  protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
+  protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean = false) {
     await this.verifyStudyDatabase();
     if (!this.studyId) {
       throw new Error('Study ID is not set');
     }
+
     // Create a sequence assignment for the participant in the study collection
     await this.supabase
       .from('revisit')
       .upsert({
         studyId: this.studyId,
         docId: `sequenceAssignment_${participantId}`,
-        data: sequenceAssignment,
+        data: { ...sequenceAssignment, withServerTimestamp },
       })
       .eq('studyId', this.studyId)
       .eq('docId', `sequenceAssignment_${participantId}`);

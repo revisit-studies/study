@@ -60,7 +60,7 @@ export class LocalStorageEngine extends StorageEngine {
     if (!sequenceAssignments) {
       return [];
     }
-    return Object.values(sequenceAssignments);
+    return Object.values(sequenceAssignments).sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
   }
 
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
