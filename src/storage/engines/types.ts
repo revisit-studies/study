@@ -324,9 +324,9 @@ export abstract class StorageEngine {
       throw new Error('Latin square is empty');
     }
 
-    const creationSorted = sequenceAssignments.sort((a, b) => (a.createdTime as number) - (b.createdTime as number));
+    const creationSorted = sequenceAssignments.sort((a, b) => a.createdTime - b.createdTime);
 
-    const creationIndex = creationSorted.findIndex((intent) => intent.participantId === this.currentParticipantId) + 1;
+    const creationIndex = creationSorted.findIndex((assignment) => assignment.participantId === this.currentParticipantId) + 1;
 
     return { currentRow, creationIndex };
   }
