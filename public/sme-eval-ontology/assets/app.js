@@ -25,10 +25,10 @@ class OntologyApp {
     }
 
     async init() {
-        this.setupEventListeners();
         this.setInitialState();
         this.showDefaultInfo();
         await this.loadInitialStructure();
+        this.setupEventListeners();
         await this.loadPapersDatabase(); // Load central papers database
         this.renderTree();
         this.initializeDendrogram();
@@ -141,7 +141,7 @@ class OntologyApp {
             // Fallback to error state
             this.ontologyData[categoryName] = {
                 name: categoryName,
-                description: `Failed to load ${categoryName} data`,
+                description: `Failed to load ${categoryName} data. Please check the file path and network connection.`,
                 children: [],
                 error: true
             };
@@ -305,6 +305,48 @@ class OntologyApp {
         const nodeDiv = document.createElement('div');
         nodeDiv.className = 'tree-node';
 
+        const fullPath = [...path, name];
+        const nodeId = fullPath.join('.');
+        const isExpanded = this.expandedNodes.has(nodeId);
+
+        const contentDiv = this.createTreeNodeHeader(name, data, path, rootCategory);
+        nodeDiv.appendChild(contentDiv);
+
+        // If node is loading, show a loading message
+        if (data.loading && isExpanded) {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'tree-children expanded';
+            loadingDiv.style.paddingLeft = '20px';
+            loadingDiv.textContent = 'Loading...';
+            nodeDiv.appendChild(loadingDiv);
+        }
+
+        // Children
+        if (this.hasChildren(data) && isExpanded && !data.loading) {
+            const childrenDiv = document.createElement('div');
+            childrenDiv.className = 'tree-children expanded';
+
+            if (data.children && Array.isArray(data.children)) {
+                // Handle array-based children (from JSON files)
+                data.children.forEach(child => {
+                    const childNode = this.createTreeNode(child.name, child, fullPath, rootCategory);
+                    childrenDiv.appendChild(childNode);
+                });
+            } else if (data.children && typeof data.children === 'object') {
+                // Handle object-based children
+                Object.keys(data.children).forEach(childKey => {
+                    const childNode = this.createTreeNode(childKey, data.children[childKey], fullPath, rootCategory);
+                    childrenDiv.appendChild(childNode);
+                });
+            }
+
+            nodeDiv.appendChild(childrenDiv);
+        }
+
+        return nodeDiv;
+    }
+
+    createTreeNodeHeader(name, data, path, rootCategory) {
         const contentDiv = document.createElement('div');
         contentDiv.className = 'tree-node-content';
         contentDiv.setAttribute('data-category', rootCategory);
@@ -321,7 +363,7 @@ class OntologyApp {
         // Check if this node or its children match the search term
         const matchesSearch = this.nodeMatchesSearch(name, data);
         if (this.searchTerm && !matchesSearch) {
-            nodeDiv.style.display = 'none';
+            contentDiv.style.display = 'none';
         }
 
         // Toggle button
@@ -347,49 +389,16 @@ class OntologyApp {
             labelSpan.innerHTML = this.highlightText(name, this.searchTerm);
         }
 
-        // Count (for leaf nodes with associated_terms)
-        if (data.associated_terms && data.associated_terms.length > 0) {
-            const countSpan = document.createElement('span');
-            countSpan.className = 'tree-node-count';
-            countSpan.textContent = data.associated_terms.length;
-            contentDiv.appendChild(toggleBtn);
-            contentDiv.appendChild(labelSpan);
-            contentDiv.appendChild(countSpan);
-        } else {
-            contentDiv.appendChild(toggleBtn);
-            contentDiv.appendChild(labelSpan);
-        }
+        // Add toggle button and label only
+        contentDiv.appendChild(toggleBtn);
+        contentDiv.appendChild(labelSpan);
 
         // Click handler for selection
         contentDiv.addEventListener('click', async () => {
             await this.selectNode(nodeId, name, data, rootCategory);
         });
 
-        nodeDiv.appendChild(contentDiv);
-
-        // Children
-        if (hasChildren && isExpanded) {
-            const childrenDiv = document.createElement('div');
-            childrenDiv.className = 'tree-children expanded';
-
-            if (data.children && Array.isArray(data.children)) {
-                // Handle array-based children (from JSON files)
-                data.children.forEach(child => {
-                    const childNode = this.createTreeNode(child.name, child, fullPath, rootCategory);
-                    childrenDiv.appendChild(childNode);
-                });
-            } else if (data.children && typeof data.children === 'object') {
-                // Handle object-based children
-                Object.keys(data.children).forEach(childKey => {
-                    const childNode = this.createTreeNode(childKey, data.children[childKey], fullPath, rootCategory);
-                    childrenDiv.appendChild(childNode);
-                });
-            }
-
-            nodeDiv.appendChild(childrenDiv);
-        }
-
-        return nodeDiv;
+        return contentDiv;
     }
 
     hasChildren(data) {
@@ -456,7 +465,17 @@ class OntologyApp {
     async toggleNode(nodeId, rootCategory) {
         // Load category data if it's a root category and not loaded yet
         if (nodeId.split('.').length === 1 && !this.loadedCategories.has(nodeId)) {
+            // Set loading state and expand the node to show the loading indicator
+            this.ontologyData[nodeId].loading = true;
+            this.expandedNodes.add(nodeId);
+            this.renderTree(); // Re-render to show loading indicator
+
             await this.loadCategoryData(nodeId);
+            delete this.ontologyData[nodeId].loading; // Remove loading state
+            
+            // Re-render after loading is complete
+            this.renderTree();
+            return; // Exit here because renderTree is already called
         }
 
         if (this.expandedNodes.has(nodeId)) {
@@ -472,6 +491,11 @@ class OntologyApp {
         if (nodeId.split('.').length === 1 && !this.loadedCategories.has(nodeId)) {
             await this.loadCategoryData(nodeId);
             data = this.ontologyData[nodeId]; // Update data reference
+        }
+
+        // Do not proceed if data failed to load
+        if (data.error) {
+            return;
         }
 
         // Remove previous selection

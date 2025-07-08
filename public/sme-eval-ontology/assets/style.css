@@ -1259,6 +1259,7 @@ select.form-control {
   font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-standard);
+  color: var(--color-text);
 }
 
 .tree-node-toggle:hover {
@@ -1273,20 +1274,6 @@ select.form-control {
 .tree-node-label {
   font-weight: var(--font-weight-medium);
   flex: 1;
-}
-
-.tree-node-count {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  background: var(--color-secondary);
-  padding: var(--space-2) var(--space-6);
-  border-radius: var(--radius-full);
-  margin-left: var(--space-8);
-}
-
-.tree-node-content.selected .tree-node-count {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--color-btn-primary-text);
 }
 
 .tree-children {
