@@ -263,7 +263,6 @@ export abstract class StorageEngine {
 
     // Find all rejected documents
     const rejectedDocs = sequenceAssignments
-      .sort((a, b) => (a.timestamp as number) - (b.timestamp as number))
       .filter((doc) => doc.rejected && !doc.claimed);
     if (rejectedDocs.length > 0) {
       const firstReject = rejectedDocs[0];
@@ -298,8 +297,6 @@ export abstract class StorageEngine {
 
     // Query all the intents to get a sequence and find our position in the queue
     sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
-    const intents = sequenceAssignments
-      .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
 
     // Get the latin square
     const sequenceArray = await this.getSequenceArray();
@@ -308,8 +305,8 @@ export abstract class StorageEngine {
     }
 
     // Get the current row
-    const intentIndex = intents.filter((intent) => !intent.rejected).findIndex(
-      (intent) => intent.participantId === this.currentParticipantId,
+    const intentIndex = sequenceAssignments.filter((assignment) => !assignment.rejected).findIndex(
+      (assignment) => assignment.participantId === this.currentParticipantId,
     ) % sequenceArray.length;
     if (sequenceArray.length === 0) {
       throw new Error('Something really bad happened with sequence assignment');
@@ -327,7 +324,7 @@ export abstract class StorageEngine {
       throw new Error('Latin square is empty');
     }
 
-    const creationSorted = intents.sort((a, b) => (a.createdTime as number) - (b.createdTime as number));
+    const creationSorted = sequenceAssignments.sort((a, b) => (a.createdTime as number) - (b.createdTime as number));
 
     const creationIndex = creationSorted.findIndex((intent) => intent.participantId === this.currentParticipantId) + 1;
 
@@ -531,14 +528,12 @@ export abstract class StorageEngine {
 
   async getParticipantsStatusCounts(studyId: string) {
     const sequenceAssignments = await this._getAllSequenceAssignments(studyId);
-    const sequenceAssignmentsData = sequenceAssignments
-      .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
 
-    const completed = sequenceAssignmentsData.filter((assignment) => assignment.completed && !assignment.rejected).length;
-    const rejected = sequenceAssignmentsData.filter((assignment) => assignment.rejected).length;
-    const inProgress = sequenceAssignmentsData.length - completed - rejected;
-    const minTime = sequenceAssignmentsData.length > 0 ? sequenceAssignmentsData[0].timestamp : null;
-    const maxTime = sequenceAssignmentsData.length > 0 ? sequenceAssignmentsData.at(-1)!.timestamp : null;
+    const completed = sequenceAssignments.filter((assignment) => assignment.completed && !assignment.rejected).length;
+    const rejected = sequenceAssignments.filter((assignment) => assignment.rejected).length;
+    const inProgress = sequenceAssignments.length - completed - rejected;
+    const minTime = sequenceAssignments.length > 0 ? sequenceAssignments[0].timestamp : null;
+    const maxTime = sequenceAssignments.length > 0 ? sequenceAssignments.at(-1)!.timestamp : null;
 
     return {
       completed,

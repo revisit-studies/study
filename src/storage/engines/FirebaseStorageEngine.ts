@@ -177,6 +177,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         ...data,
         timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
         createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
+        completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
       } as SequenceAssignment))
       .sort((a, b) => a.timestamp - b.timestamp);
   }

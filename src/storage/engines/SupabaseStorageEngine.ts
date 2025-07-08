@@ -137,7 +137,7 @@ export class SupabaseStorageEngine extends StorageEngine {
         timestamp: item.data.withServerTimestamp ? new Date(item.createdAt).getTime() : item.data.timestamp,
         createdTime: new Date(item.createdAt).getTime(),
       } as SequenceAssignment))
-      .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
+      .sort((a, b) => a.timestamp - b.timestamp);
   }
 
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean = false) {
