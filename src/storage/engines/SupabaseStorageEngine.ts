@@ -20,18 +20,27 @@ export class SupabaseStorageEngine extends StorageEngine {
     }
 
     const dataToParse = this.testing ? new Blob([data as unknown as string], { type: 'application/json' }) : data;
-    const text = await dataToParse.text();
-    return JSON.parse(text) as StorageObject<T>;
+    try {
+      const text = await dataToParse.text();
+      return JSON.parse(text) as StorageObject<T>;
+    } catch {
+      // Return the Blob directly if parsing fails
+      return dataToParse as StorageObject<T>;
+    }
   }
 
   protected async _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>) {
     await this.verifyStudyDatabase();
-    const blob = new Blob([JSON.stringify(objectToUpload)], {
-      type: 'application/json',
-    });
 
-    // Have to use buffers in testing mode, blob otherwise
-    const uploadObject = this.testing ? Buffer.from(JSON.stringify(objectToUpload)) : blob;
+    let uploadObject: Blob | Buffer<ArrayBuffer> = new Blob();
+    if (objectToUpload instanceof Blob) {
+    // Have to use buffers in testing mode
+      uploadObject = this.testing ? Buffer.from(JSON.stringify(objectToUpload)) : objectToUpload;
+    } else {
+      uploadObject = new Blob([JSON.stringify(objectToUpload)], {
+        type: 'application/json',
+      });
+    }
 
     const { error } = await this.supabase.storage
       .from('revisit')
@@ -347,10 +356,7 @@ export class SupabaseStorageEngine extends StorageEngine {
 
     // Get the audio from the storage
     const audio = await this._getFromStorage(`/audio/${id}`, task);
-    if (audio) {
-      return URL.createObjectURL(new Blob([JSON.stringify(audio)], { type: 'application/json' }));
-    }
-    return null;
+    return audio ? URL.createObjectURL(audio) : null;
   }
 
   protected async _testingReset(studyId: string) {
