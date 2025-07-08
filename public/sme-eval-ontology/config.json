@@ -22,7 +22,7 @@
     "logoPath": "revisitAssets/icon-varuna.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true
+    "sidebar": false
   },
   "components": {
     "introduction": {
@@ -37,7 +37,7 @@
         {
           "id": "consent_agree",
           "prompt": "Statement of Consent",
-          "location": "sidebar",
+          "location": "belowStimulus",
           "type": "radio",
           "options": [
             "I have read the information and agree to participate in this study.",
