@@ -11,6 +11,7 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
+    await this.verifyStudyDatabase();
     const { data, error } = await this.supabase.storage
       .from('revisit')
       .download(`${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`);
@@ -25,6 +26,7 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   protected async _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>) {
+    await this.verifyStudyDatabase();
     const blob = new Blob([JSON.stringify(objectToUpload)], {
       type: 'application/json',
     });
@@ -44,6 +46,7 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   protected async _deleteFromStorage<T extends StorageObjectType>(prefix: string, type: T) {
+    await this.verifyStudyDatabase();
     const { error } = await this.supabase.storage
       .from('revisit')
       .remove([`${this.collectionPrefix}${this.studyId}/${prefix}_${type}`]);
@@ -54,6 +57,7 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   protected async _cacheStorageObject<T extends StorageObjectType>(prefix: string, type: T) {
+    await this.verifyStudyDatabase();
     // Download the existing object
     const { data, error: downloadError } = await this.supabase.storage
       .from('revisit')
@@ -285,6 +289,7 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   async getModes(studyId: string) {
+    await this.verifyStudyDatabase();
     // get the modes from the study collection
     const { data, error } = await this.supabase
       .from('revisit')
@@ -353,6 +358,7 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   protected async _testingReset(studyId: string) {
+    await this.verifyStudyDatabase();
     // Delete all rows with studyId matching the studyId
     const { error } = await this.supabase
       .from('revisit')
