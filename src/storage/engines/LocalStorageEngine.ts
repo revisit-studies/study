@@ -13,7 +13,6 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
-    await this.verifyStudyDatabase();
     const storageKey = `${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`;
     const storedObject = await this.studyDatabase.getItem<StorageObject<T>>(storageKey);
     return storedObject;
@@ -54,7 +53,6 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   protected async _getAllSequenceAssignments(studyId: string) {
-    await this.verifyStudyDatabase();
     const sequenceAssignmentPath = `${this.collectionPrefix}${studyId}/sequenceAssignment`;
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath);
     if (!sequenceAssignments) {
@@ -155,7 +153,6 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   async getModes(studyId: string) {
-    await this.verifyStudyDatabase();
     const key = `${this.collectionPrefix}${studyId}/modes`;
 
     // Get the modes
@@ -175,7 +172,6 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
-    await this.verifyStudyDatabase();
     const key = `${this.collectionPrefix}${studyId}/modes`;
 
     // Get the modes
@@ -202,7 +198,6 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   protected async _testingReset(studyId: string) {
-    await this.verifyStudyDatabase();
     if (!studyId) {
       throw new Error('Study ID is required for reset');
     }

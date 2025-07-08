@@ -11,7 +11,6 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
-    await this.verifyStudyDatabase();
     const { data, error } = await this.supabase.storage
       .from('revisit')
       .download(`${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`);
@@ -120,7 +119,6 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   protected async _getAllSequenceAssignments(studyId: string) {
-    await this.verifyStudyDatabase();
     // get all sequence assignments from the study collection
     const { data, error } = await this.supabase
       .from('revisit')
@@ -289,7 +287,6 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   async getModes(studyId: string) {
-    await this.verifyStudyDatabase();
     // get the modes from the study collection
     const { data, error } = await this.supabase
       .from('revisit')
@@ -325,7 +322,6 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
-    await this.verifyStudyDatabase();
     const modes = await this.getModes(studyId);
     // Update the mode
     modes[mode] = value;
@@ -358,7 +354,6 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   protected async _testingReset(studyId: string) {
-    await this.verifyStudyDatabase();
     // Delete all rows with studyId matching the studyId
     const { error } = await this.supabase
       .from('revisit')

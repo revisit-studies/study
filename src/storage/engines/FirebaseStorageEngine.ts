@@ -159,7 +159,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _getAllSequenceAssignments(studyId: string) {
-    await this.verifyStudyDatabase();
     const studyCollection = collection(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
