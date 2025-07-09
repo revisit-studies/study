@@ -7,9 +7,7 @@ import { openConfirmModal } from '@mantine/modals';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { showNotification, RevisitNotification } from '../../../utils/notifications';
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
-import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
-import { ActionResponse, SnapshotNameItem } from '../../../storage/engines/types';
-import { isCloudStorageEngine } from '../../../storage/engines/utils';
+import { ActionResponse, SnapshotDocContent } from '../../../storage/engines/types';
 
 export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
@@ -19,7 +17,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
 
   const [currentSnapshot, setCurrentSnapshot] = useState<string>('');
 
-  const [snapshots, setSnapshots] = useState<SnapshotNameItem[]>([]);
+  const [snapshots, setSnapshots] = useState<SnapshotDocContent>({});
 
   const [deleteValue, setDeleteValue] = useState<string>('');
   const [renameValue, setRenameValue] = useState<string>('');
@@ -27,12 +25,11 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
   const [loading, setLoading] = useState<boolean>(false);
   const [snapshotListLoading, setSnapshotListLoading] = useState<boolean>(false);
 
-  const { storageEngine: storageEngineBadType } = useStorageEngine();
-  const storageEngine = storageEngineBadType as FirebaseStorageEngine; // We're guaranteed to have a FirebaseStorageEngine here
+  const { storageEngine } = useStorageEngine();
 
   // Used to fetch archived datasets
   const refreshSnapshots = useCallback(async () => {
-    if (!isCloudStorageEngine(storageEngine)) {
+    if (!storageEngine) {
       return;
     }
     setSnapshotListLoading(true);
@@ -46,11 +43,15 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
   }, [refreshSnapshots]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  type FirebaseAction = (...args: any[]) => Promise<ActionResponse>;
+  type StorageAction = (...args: any[]) => Promise<ActionResponse>;
+
+  if (!storageEngine) {
+    return null;
+  }
 
   // Generalized snapshot action handler
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const snapshotAction = async (action: FirebaseAction, ...args: any[]) => {
+  const snapshotAction = async (action: StorageAction, ...args: any[]) => {
     setLoading(true);
     const response: ActionResponse = await action(...args);
     if (response.status === 'SUCCESS') {
@@ -219,7 +220,8 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
         {/* Position relative keeps the loading overlay only on the list */}
         <Box style={{ position: 'relative' }}>
           <LoadingOverlay visible={snapshotListLoading} />
-          {snapshots.length > 0
+          {JSON.stringify(snapshots)}
+          {Object.keys(snapshots).length > 0
             ? (
               <Table>
                 <Table.Thead>
@@ -230,11 +232,11 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {snapshots.map(
-                    (snapshotItem: SnapshotNameItem) => (
-                      <Table.Tr key={snapshotItem.originalName}>
-                        <Table.Td>{snapshotItem.alternateName}</Table.Td>
-                        <Table.Td>{getDateFromSnapshotName(snapshotItem.originalName)}</Table.Td>
+                  {Object.entries(snapshots).map(
+                    ([key, snapshotItem]) => (
+                      <Table.Tr key={key}>
+                        <Table.Td>{snapshotItem.name}</Table.Td>
+                        <Table.Td>{getDateFromSnapshotName(key)}</Table.Td>
                         <Table.Td>
                           <Flex>
                             <Tooltip label="Rename">
@@ -243,7 +245,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
                                 variant="light"
                                 px={4}
                                 style={{ margin: '0px 5px' }}
-                                onClick={() => { setModalRenameSnapshotOpened(true); setCurrentSnapshot(snapshotItem.originalName); }}
+                                onClick={() => { setModalRenameSnapshotOpened(true); setCurrentSnapshot(key); }}
                               >
                                 <IconPencil />
                               </Button>
@@ -254,7 +256,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
                                 variant="light"
                                 px={4}
                                 style={{ margin: '0px 5px' }}
-                                onClick={() => { openRestoreSnapshotModal(snapshotItem.originalName); }}
+                                onClick={() => { openRestoreSnapshotModal(key); }}
                               >
                                 <IconRefresh />
                               </Button>
@@ -266,12 +268,12 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
                                 px={4}
                                 variant="light"
                                 style={{ margin: '0px 10px 0px 5px' }}
-                                onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(snapshotItem.originalName); }}
+                                onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(key); }}
                               >
                                 <IconTrashX />
                               </Button>
                             </Tooltip>
-                            <DownloadButtons visibleParticipants={() => fetchParticipants(snapshotItem.originalName)} studyId={studyId} gap="10px" fileName={snapshotItem.alternateName} />
+                            <DownloadButtons visibleParticipants={() => fetchParticipants(key)} studyId={studyId} gap="10px" fileName={snapshotItem.name} />
                           </Flex>
                         </Table.Td>
                       </Table.Tr>
