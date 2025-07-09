@@ -1,0 +1,484 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Styling Demo Study",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-07-09",
+    "description": "A comprehensive demo of styled components and responses.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-style/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true,
+    "windowEventDebounceTime": 200
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-style/assets/introduction.md",
+      "response": []
+    },
+    "markdown-component": {
+      "type": "markdown",
+      "path": "demo-style/assets/test.md",
+      "style": {
+        "width": "800px",
+        "margin": "20px auto",
+        "padding": "30px",
+        "backgroundColor": "#deeff5",
+        "fontSize": "16px"
+      },
+      "response": [
+        {
+          "id": "markdown-feedback",
+          "prompt": "How readable is this styled markdown content?",
+          "type": "radio",
+          "location": "belowStimulus",
+          "options": ["Excellent", "Good", "Fair", "Poor"],
+          "required": true
+        }
+      ]
+    },
+    "react-component": {
+      "type": "react-component",
+      "path": "demo-click-accuracy-test/assets/ClickAccuracyTest.tsx",
+      "parameters": {
+        "speed": 100
+      },
+      "style": {
+        "backgroundColor": "#9abddc"
+      },
+      "response": [
+        {
+          "id": "react-difficulty",
+          "prompt": "Do you like the background color of this component?",
+          "type": "buttons",
+          "location": "belowStimulus",
+          "options": ["Yes", "No"],
+          "required": true
+        }
+      ]
+    },
+    "image-component": {
+      "type": "image",
+      "path": "demo-image/assets/uncertainty-1.png",
+      "instruction": "This is an image component. The style of this component is width: 500px. ",
+      "style": {
+        "width": "600px"
+      },
+      "response": [
+        {
+          "id": "image-clarity",
+          "prompt": "Rate the clarity of this image:",
+          "type": "likert",
+          "location": "belowStimulus",
+          "numItems": 5,
+          "leftLabel": "Very unclear",
+          "rightLabel": "Very clear",
+          "required": true
+        }
+      ]
+    },
+    "website-component": {
+      "type": "website",
+      "path": "https://revisit.dev/docs/introduction/",
+      "style": {
+        "width": "80%",
+        "height": "500px",
+        "margin": "15px auto",
+        "padding": "10px",
+        "backgroundColor": "#f3e5f5"
+      },
+      "response": [
+        {
+          "id": "website-interaction",
+          "prompt": "How intuitive was the website interaction?",
+          "type": "buttons",
+          "location": "belowStimulus",
+          "options": ["Not intuitive", "Somewhat intuitive", "Very intuitive"],
+          "required": true
+        }
+      ]
+    },
+    "questionnaire-component": {
+      "type": "questionnaire",
+      "style": {
+        "width": "700px",
+        "margin": "20px auto",
+        "padding": "25px",
+        "backgroundColor": "blue",
+        "fontSize": "18px",
+        "textAlign": "left"
+      },
+      "response": [
+        {
+          "id": "questionnaire-example",
+          "prompt": "This is a styled questionnaire component. How does it look?",
+          "type": "radio",
+          "location": "belowStimulus",
+          "options": ["Good styling", "Needs improvement", "Excellent"],
+          "required": true
+        }
+      ]
+    },
+    "vega-path-component": {
+      "type": "vega",
+      "path": "demo-vega/specs/vegademo1.specs.json",
+      "style": {
+        "width": "650px",
+        "height": "450px",
+        "margin": "20px auto",
+        "padding": "20px",
+        "backgroundColor": "#fff8e1"
+      },
+      "response": [
+        {
+          "id": "vega-path-feedback",
+          "prompt": "Rate this Vega visualization loaded from a file:",
+          "type": "dropdown",
+          "location": "belowStimulus",
+          "placeholder": "Select rating",
+          "options": ["Poor", "Fair", "Good", "Excellent"],
+          "required": true
+        }
+      ]
+    },
+    "vega-config-component": {
+      "type": "vega",
+      "config": {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "description": "Simple bar chart with inline config",
+        "data": {
+          "values": [
+            {"category": "A", "value": 28}, 
+            {"category": "B", "value": 55},
+            {"category": "C", "value": 43}, 
+            {"category": "D", "value": 91}
+          ]
+        },
+        "mark": "bar",
+        "encoding": {
+          "x": {"field": "category", "type": "nominal"},
+          "y": {"field": "value", "type": "quantitative"}
+        }
+      },
+      "style": {
+        "width": "400px",
+        "height": "300px",
+        "margin": "25px auto",
+        "padding": "15px",
+        "backgroundColor": "#fce4ec"
+      },
+      "response": [
+        {
+          "id": "vega-config-feedback",
+          "prompt": "How effective is this inline Vega configuration?",
+          "type": "checkbox",
+          "location": "belowStimulus",
+          "options": ["Clear", "Informative", "Well-designed", "Easy to read"],
+          "required": true
+        }
+      ]
+    },
+    "video-component": {
+      "type": "video",
+      "path": "demo-video/assets/venice.mp4",
+      "style": {
+        "width": "640px",
+        "height": "360px",
+        "margin": "20px auto",
+        "padding": "10px",
+        "backgroundColor": "#263238"
+      },
+      "forceCompletion": false,
+      "withTimeline": true,
+      "response": [
+        {
+          "id": "video-quality",
+          "prompt": "Rate the video quality and styling:",
+          "type": "matrix-radio",
+          "location": "belowStimulus",
+          "answerOptions": ["Excellent", "Good", "Fair", "Poor"],
+          "questionOptions": ["Video clarity", "Styling appearance"],
+          "required": true
+        }
+      ]
+    },
+    "responses": {
+      "type": "questionnaire",
+      "style": {
+        "width": "800px",
+        "margin": "30px auto",
+        "padding": "40px",
+        "backgroundColor": "#f5f5f5",
+        "fontSize": "16px"
+      },
+      "response": [
+        {
+          "id": "numerical-response",
+          "prompt": "Enter your age (Numerical Response):",
+          "type": "numerical",
+          "location": "belowStimulus",
+          "min": 18,
+          "max": 99,
+          "placeholder": "Age",
+          "required": true,
+          "style": {
+            "backgroundColor": "#ffeb3b",
+            "padding": "10px",
+            "margin": "5px 0",
+            "fontSize": "14px"
+          }
+        },
+        {
+          "id": "short-text-response",
+          "prompt": "Your name (Short Text Response):",
+          "type": "shortText",
+          "location": "belowStimulus",
+          "placeholder": "Enter name",
+          "required": true,
+          "style": {
+            "backgroundColor": "#e8f5e8",
+            "padding": "12px",
+            "margin": "8px 0",
+            "fontSize": "16px"
+          }
+        },
+        {
+          "id": "long-text-response",
+          "prompt": "Comments (Long Text Response):",
+          "type": "longText",
+          "location": "belowStimulus",
+          "placeholder": "Enter detailed comments",
+          "required": false,
+          "style": {
+            "backgroundColor": "#f0f8ff",
+            "padding": "15px",
+            "margin": "10px 0",
+            "fontSize": "15px"
+          }
+        },
+        {
+          "id": "likert-response",
+          "prompt": "Rate satisfaction (Likert Response):",
+          "type": "likert",
+          "location": "belowStimulus",
+          "numItems": 7,
+          "leftLabel": "Very dissatisfied",
+          "rightLabel": "Very satisfied",
+          "required": true,
+          "style": {
+            "backgroundColor": "#fff3e0",
+            "padding": "18px",
+            "margin": "12px 0",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "matrix-response",
+          "prompt": "Rate these aspects (Matrix Response):",
+          "type": "matrix-radio",
+          "location": "belowStimulus",
+          "answerOptions": ["Poor", "Fair", "Good", "Excellent"],
+          "questionOptions": ["Design", "Usability", "Performance"],
+          "required": true,
+          "style": {
+            "backgroundColor": "#f8bbd9",
+            "padding": "20px",
+            "margin": "15px 0"
+          }
+        },
+        {
+          "id": "dropdown-response",
+          "prompt": "Select country (Dropdown Response):",
+          "type": "dropdown",
+          "location": "belowStimulus",
+          "placeholder": "Choose country",
+          "options": ["USA", "Canada", "UK", "Germany", "Other"],
+          "required": true,
+          "style": {
+            "backgroundColor": "#e1f5fe",
+            "padding": "14px",
+            "margin": "10px 0",
+            "fontWeight": "bold"
+          }
+        },
+        {
+          "id": "slider-response",
+          "prompt": "Experience level (Slider Response):",
+          "type": "slider",
+          "location": "belowStimulus",
+          "options": [
+            {"label": "Beginner", "value": 1},
+            {"label": "Expert", "value": 10}
+          ],
+          "required": true,
+          "style": {
+            "backgroundColor": "#f3e5f5",
+            "padding": "16px",
+            "margin": "12px 0"
+          }
+        },
+        {
+          "id": "radio-response",
+          "prompt": "Preferred option (Radio Response):",
+          "type": "radio",
+          "location": "belowStimulus",
+          "options": ["Option A", "Option B", "Option C"],
+          "required": true,
+          "style": {
+            "backgroundColor": "#e8f5e8",
+            "padding": "15px",
+            "margin": "10px 0",
+            "fontSize": "17px"
+          }
+        },
+        {
+          "id": "checkbox-response",
+          "prompt": "Select all that apply (Checkbox Response):",
+          "type": "checkbox",
+          "location": "belowStimulus",
+          "options": ["Feature 1", "Feature 2", "Feature 3", "Feature 4"],
+          "required": true,
+          "style": {
+            "backgroundColor": "#fff8e1",
+            "padding": "18px",
+            "margin": "12px 0"
+          }
+        },
+        {
+          "id": "reactive-response",
+          "prompt": "Interactive response (Reactive Response):",
+          "type": "reactive",
+          "location": "belowStimulus",
+          "style": {
+            "backgroundColor": "#fce4ec",
+            "padding": "20px",
+            "margin": "15px 0",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "buttons-response",
+          "prompt": "Quick selection (Buttons Response):",
+          "type": "buttons",
+          "location": "belowStimulus",
+          "options": ["Yes", "No", "Maybe"],
+          "required": true,
+          "style": {
+            "backgroundColor": "#e0f2f1",
+            "padding": "16px",
+            "margin": "10px 0",
+            "textAlign": "center",
+            "fontWeight": "600"
+          }
+        },
+        {
+          "id": "text-only-response",
+          "prompt": "**This is a Text-Only Response** - no input required, just styled information display.",
+          "type": "textOnly",
+          "location": "belowStimulus",
+          "style": {
+            "backgroundColor": "#ffccbc",
+            "padding": "25px",
+            "margin": "20px 0",
+            "textAlign": "center",
+            "fontSize": "18px",
+            "fontWeight": "bold"
+          }
+        }
+      ]
+    },
+    "component": {
+      "type": "markdown",
+      "path": "demo-style/assets/help.md",
+      "stylesheetPath": "demo-style/assets/style.css",
+      "response": [
+        {
+          "id": "stylesheet-demo-1",
+          "prompt": "This component uses external CSS (stylesheetPath). How does it look?",
+          "type": "radio",
+          "location": "belowStimulus",
+          "options": ["Great styling", "Good styling", "Needs work"],
+          "required": true
+        }
+      ]
+    },
+    "response": {
+      "type": "questionnaire",
+      "stylesheetPath": "demo-style/assets/style.css",
+      "response": [
+        {
+          "id": "stylesheet-demo-2",
+          "prompt": "This questionnaire also uses external CSS. Rate the styling:",
+          "type": "likert",
+          "location": "belowStimulus",
+          "numItems": 5,
+          "leftLabel": "Poor",
+          "rightLabel": "Excellent",
+          "required": true
+        },
+        {
+          "id": "final-feedback",
+          "prompt": "Any final thoughts on the styling demonstration?",
+          "type": "longText",
+          "location": "belowStimulus",
+          "placeholder": "Share your thoughts...",
+          "required": false
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "id": "componentStyle",
+        "order": "fixed",
+        "components": [
+          "markdown-component",
+          "react-component",
+          "image-component",
+          "website-component",
+          "questionnaire-component",
+          "vega-path-component",
+          "vega-config-component",
+          "video-component"
+        ]
+      },
+      {
+        "id": "responseStyle",
+        "order": "fixed",
+        "components": [
+          "responses"
+        ]
+      },
+      {
+        "id": "componentStylesheet",
+        "order": "fixed",
+        "components": [
+          "component"
+        ]
+      },
+      {
+        "id": "responseStylesheet",
+        "order": "fixed",
+        "components": [
+          "response"
+        ]
+      }
+    ]
+  }
+}
