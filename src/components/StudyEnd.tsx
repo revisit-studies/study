@@ -104,8 +104,7 @@ export function StudyEnd() {
   }, [storageEngine, studyId]);
 
   const processedStudyEndMsg = useMemo(() => {
-    const studyEndMsg = studyConfig.uiConfig.studyEndMsg;
-    const urlParticipantIdParam = studyConfig.uiConfig.urlParticipantIdParam;
+    const { studyEndMsg, urlParticipantIdParam } = studyConfig.uiConfig;
 
     if (!urlParticipantIdParam || !studyEndMsg?.includes('{PARTICIPANT_ID}')) {
       return studyEndMsg;
