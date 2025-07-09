@@ -49,6 +49,33 @@ export type StorageObject<T extends StorageObjectType> =
     ? StudyConfig
     : Blob; // Fallback for any random string
 
+export interface CloudStorageEngineError {
+  title: string;
+  message: string;
+  details?: string;
+}
+
+// Success response always has list of notifications which are then presented to user. Notifications can contain pieces which are individual errors from upstream functions.
+interface ActionResponseSuccess {
+  status: 'SUCCESS';
+  error?: undefined;
+  notifications?: RevisitNotification[];
+}
+
+// Failed responses never take notifications, only report error. Notifications will be handled in downstream functions.
+interface ActionResponseFailed {
+  status: 'FAILED';
+  error: CloudStorageEngineError;
+  notifications?: undefined;
+}
+
+export type ActionResponse =
+  | ActionResponseSuccess
+  | ActionResponseFailed;
+
+// Represents a snapshot name item with an original name and an optional alternate (renamed) name.
+export type SnapshotDocContent = Record<string, { name: string; }>;
+
 export abstract class StorageEngine {
   protected engine: string;
 
@@ -148,6 +175,34 @@ export abstract class StorageEngine {
 
   // Resets the entire study database for testing purposes. This is used to reset the study database to a clean state for testing.
   protected abstract _testingReset(studyId: string): Promise<void>;
+
+  /* Snapshots ----------------------------------------------------------- */
+  // Gets the snapshot doc for the given studyId.
+  abstract getSnapshots(studyId: string): Promise<SnapshotDocContent>;
+
+  // Checks if the storage directory to see if the given path exists.
+  protected abstract _directoryExists(path: string): Promise<boolean>;
+
+  // Copies a storage directory and all its contents.
+  protected abstract _copyDirectory(source: string, target: string): Promise<void>;
+
+  // Deletes a storage directory and all its contents.
+  protected abstract _deleteDirectory(path: string): Promise<void>;
+
+  // Copies the realtime data from the source to the target. This is used by createSnapshot to copy the realtime data associated with a snapshot.
+  protected abstract _copyRealtimeData(source: string, target: string): Promise<void>;
+
+  // Deletes the realtime data for the given target. This is used by removeSnapshotOrLive to delete the realtime data associated with a snapshot or live data.
+  protected abstract _deleteRealtimeData(path: string): Promise<void>;
+
+  // Adds a directory name to the metadata. This is used by createSnapshot
+  protected abstract _addDirectoryNameToSnapshots(directoryName: string, studyId: string): Promise<void>;
+
+  // Removes a snapshot from the metadata. This is used by removeSnapshotOrLive
+  protected abstract _removeDirectoryNameFromSnapshots(directoryName: string, studyId: string): Promise<void>;
+
+  // Updates a snapshot in the metadata. This is used by renameSnapshot
+  protected abstract _changeDirectoryNameInSnapshots(oldName: string, newName: string, studyId: string): Promise<void>;
 
   /*
   * THROTTLED METHODS
@@ -703,143 +758,6 @@ export abstract class StorageEngine {
       undefined,
     );
   }
-}
-
-export interface CloudStorageEngineError {
-  title: string;
-  message: string;
-  details?: string;
-}
-
-// Success response always has list of notifications which are then presented to user. Notifications can contain pieces which are individual errors from upstream functions.
-interface ActionResponseSuccess {
-  status: 'SUCCESS';
-  error?: undefined;
-  notifications?: RevisitNotification[];
-}
-
-// Failed responses never take notifications, only report error. Notifications will be handled in downstream functions.
-interface ActionResponseFailed {
-  status: 'FAILED';
-  error: CloudStorageEngineError;
-  notifications?: undefined;
-}
-
-export type ActionResponse =
-  | ActionResponseSuccess
-  | ActionResponseFailed;
-
-// Represents a snapshot name item with an original name and an optional alternate (renamed) name.
-export interface SnapshotNameItem {
-  originalName: string;
-  alternateName: string | null;
-}
-
-export type UserManagementData = { authentication?: { isEnabled: boolean }; adminUsers?: { adminUsersList: StoredUser[] } };
-
-// A StorageEngine that is specifically designed to work with cloud storage solutions like Firebase, Supabase, etc.
-// It extends the StorageEngine class and provides additional methods for cloud storage operations (such as authentication, snapshots, etc.).
-export abstract class CloudStorageEngine extends StorageEngine {
-  protected cloudEngine = true;
-
-  protected userManagementData: UserManagementData = {};
-
-  /*
-  * PRIMITIVE METHODS
-  * These methods are provided by the storage engine implementation and are used by the higher-level methods.
-  */
-  /* User management ----------------------------------------------------- */
-  // Gets the user management data for the given key. This is used to get the authentication state or admin users list.
-  abstract getUserManagementData<T extends 'authentication' | 'adminUsers'>(key: T): Promise<(T extends 'authentication' ? { isEnabled: boolean } : { adminUsersList: StoredUser[] }) | undefined>;
-
-  // Updates the user management data for the given key. This is used to update the authentication state or admin users list.
-  protected abstract _updateAdminUsersList(adminUsers: { adminUsersList: StoredUser[] }): Promise<void>;
-
-  // Changes the authentication state of the storage engine. This will enable or disable authentication for the storage engine.
-  abstract changeAuth(bool: boolean): Promise<void>;
-
-  // Adds an admin user to the storage engine. The user is identified by their email and UID.
-  abstract addAdminUser(user: StoredUser): Promise<void>;
-
-  // Removes the admin user with the given email from the storage engine.
-  abstract removeAdminUser(email: string): Promise<void>;
-
-  /* Snapshots ----------------------------------------------------------- */
-  // Gets all snapshots for the given studyId. This will return an array of objects with the original name and alternate name (if available) of the snapshots.
-  abstract getSnapshots(studyId: string): Promise<SnapshotNameItem[]>;
-
-  // Checks if the storage directory for the given source exists.
-  protected abstract _directoryExists(source: string): Promise<boolean>;
-
-  // Copies a storage directory and all its contents.
-  protected abstract _copyDirectory(source: string, target: string): Promise<void>;
-
-  // Deletes a storage directory and all its contents.
-  protected abstract _deleteDirectory(target: string): Promise<void>;
-
-  // Copies the realtime data from the source to the target. This is used by createSnapshot to copy the realtime data associated with a snapshot.
-  protected abstract _copyRealtimeData(source: string, target: string): Promise<void>;
-
-  // Deletes the realtime data for the given target. This is used by removeSnapshotOrLive to delete the realtime data associated with a snapshot or live data.
-  protected abstract _deleteRealtimeData(target: string): Promise<void>;
-
-  // Adds a directory name to the metadata. This is used by createSnapshot
-  protected abstract _addDirectoryNameToMetadata(target: string): Promise<void>;
-
-  // Removes a snapshot from the metadata. This is used by removeSnapshotOrLive
-  protected abstract _removeNameFromMetadata(target: string): Promise<void>;
-
-  // Updates a snapshot in the metadata. This is used by renameSnapshot
-  protected abstract _changeNameInMetadata(oldName: string, newName: string): Promise<void>;
-
-  /*
-  * HIGHER-LEVEL METHODS
-  * These methods are used by the application to interact with the storage engine and provide consistent behavior across different storage engines.
-  * They are built on top of the primitive methods and provide a more user-friendly interface.
-  */
-  /* User management --------------------------------------------------- */
-  // Gets the user management data for the given key. This is used to get the authentication
-  async validateUser(user: UserWrapped | null, refresh = false) {
-    if (refresh) {
-      this.userManagementData = {};
-    }
-
-    if (user?.user) {
-      // Case 1: Database exists
-      const authInfo = await this.getUserManagementData('authentication');
-      if (authInfo?.isEnabled) {
-        const adminUsers = await this.getUserManagementData('adminUsers');
-        if (adminUsers && adminUsers.adminUsersList) {
-          const adminUsersObject = Object.fromEntries(
-            adminUsers.adminUsersList.map((storedUser: StoredUser) => [
-              storedUser.email,
-              storedUser.uid,
-            ]),
-          );
-          // Verifies that, if the user has signed in and thus their UID is added to the Firestore, that the current UID matches the Firestore entries UID. Prevents impersonation (otherwise, users would be able to alter email to impersonate).
-          const isAdmin = user.user.email
-            && (adminUsersObject[user.user.email] === user.user.uid
-              || adminUsersObject[user.user.email] === null);
-          if (isAdmin) {
-            // Add UID to user in collection if not existent.
-            if (user.user.email && adminUsersObject[user.user.email] === null) {
-              const adminUser: StoredUser | undefined = adminUsers.adminUsersList.find(
-                (u: StoredUser) => u.email === user.user!.email,
-              );
-              if (adminUser) {
-                adminUser.uid = user.user.uid;
-              }
-              await this._updateAdminUsersList(adminUsers);
-            }
-            return true;
-          }
-          return false;
-        }
-      }
-      return true;
-    }
-    return false;
-  }
 
   /* Snapshots --------------------------------------------------------- */
   // Creates a snapshot of the current study data. This will copy the current study data to a new directory with a timestamp.
@@ -848,7 +766,6 @@ export abstract class CloudStorageEngine extends StorageEngine {
     deleteData: boolean,
   ): Promise<ActionResponse> {
     const sourceName = `${this.collectionPrefix}${studyId}`;
-
     if (!(await this._directoryExists(sourceName))) {
       console.warn(`Source directory ${sourceName} does not exist.`);
 
@@ -875,20 +792,15 @@ export abstract class CloudStorageEngine extends StorageEngine {
     const targetName = `${this.collectionPrefix}${studyId}-snapshot-${formattedDate}`;
 
     await this._copyDirectory(`${sourceName}/configs`, `${targetName}/configs`);
-    await this._copyDirectory(
-      `${sourceName}/participants`,
-      `${targetName}/participants`,
-    );
+    await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
+    await this._copyDirectory(`${sourceName}/audio`, `${targetName}/audio`);
     await this._copyDirectory(sourceName, targetName);
     await this._copyRealtimeData(sourceName, targetName);
-    await this._addDirectoryNameToMetadata(targetName);
+    await this._addDirectoryNameToSnapshots(targetName, studyId);
 
     const createSnapshotSuccessNotifications: RevisitNotification[] = [];
     if (deleteData) {
-      const removeSnapshotResponse = await this.removeSnapshotOrLive(
-        sourceName,
-        false,
-      );
+      const removeSnapshotResponse = await this.removeSnapshotOrLive(sourceName, studyId);
       if (removeSnapshotResponse.status === 'FAILED') {
         createSnapshotSuccessNotifications.push({
           title: removeSnapshotResponse.error.title,
@@ -917,21 +829,16 @@ export abstract class CloudStorageEngine extends StorageEngine {
   // Removes a snapshot or live data from the storage engine. This will delete the directory and all its contents, including the configs and participants directories.
   async removeSnapshotOrLive(
     targetName: string,
-    includeMetadata: boolean,
+    studyId: string,
   ): Promise<ActionResponse> {
     try {
-      const targetNameWithPrefix = targetName.startsWith(this.collectionPrefix)
-        ? targetName
-        : `${this.collectionPrefix}${targetName}`;
+      await this._deleteDirectory(`${targetName}/configs`);
+      await this._deleteDirectory(`${targetName}/participants`);
+      await this._deleteDirectory(targetName);
+      await this._deleteRealtimeData(targetName);
 
-      await this._deleteDirectory(`${targetNameWithPrefix}/configs`);
-      await this._deleteDirectory(`${targetNameWithPrefix}/participants`);
-      await this._deleteDirectory(targetNameWithPrefix);
-      await this._deleteRealtimeData(targetNameWithPrefix);
+      await this._removeDirectoryNameFromSnapshots(targetName, studyId);
 
-      if (includeMetadata) {
-        await this._removeNameFromMetadata(targetNameWithPrefix);
-      }
       return {
         status: 'SUCCESS',
         notifications: [
@@ -1013,11 +920,12 @@ export abstract class CloudStorageEngine extends StorageEngine {
 
   // Renames a snapshot in the metadata
   async renameSnapshot(
-    oldName: string,
+    key: string,
     newName: string,
+    studyId: string,
   ): Promise<ActionResponse> {
     try {
-      await this._changeNameInMetadata(oldName, newName);
+      await this._changeDirectoryNameInSnapshots(key, newName, studyId);
       return {
         status: 'SUCCESS',
         notifications: [
@@ -1038,5 +946,84 @@ export abstract class CloudStorageEngine extends StorageEngine {
         },
       };
     }
+  }
+}
+
+export type UserManagementData = { authentication?: { isEnabled: boolean }; adminUsers?: { adminUsersList: StoredUser[] } };
+
+// A StorageEngine that is specifically designed to work with cloud storage solutions like Firebase, Supabase, etc.
+// It extends the StorageEngine class and provides additional methods for cloud storage operations (such as authentication, snapshots, etc.).
+export abstract class CloudStorageEngine extends StorageEngine {
+  protected cloudEngine = true;
+
+  protected userManagementData: UserManagementData = {};
+
+  /*
+  * PRIMITIVE METHODS
+  * These methods are provided by the storage engine implementation and are used by the higher-level methods.
+  */
+  /* User management ----------------------------------------------------- */
+  // Gets the user management data for the given key. This is used to get the authentication state or admin users list.
+  abstract getUserManagementData<T extends 'authentication' | 'adminUsers'>(key: T): Promise<(T extends 'authentication' ? { isEnabled: boolean } : { adminUsersList: StoredUser[] }) | undefined>;
+
+  // Updates the user management data for the given key. This is used to update the authentication state or admin users list.
+  protected abstract _updateAdminUsersList(adminUsers: { adminUsersList: StoredUser[] }): Promise<void>;
+
+  // Changes the authentication state of the storage engine. This will enable or disable authentication for the storage engine.
+  abstract changeAuth(bool: boolean): Promise<void>;
+
+  // Adds an admin user to the storage engine. The user is identified by their email and UID.
+  abstract addAdminUser(user: StoredUser): Promise<void>;
+
+  // Removes the admin user with the given email from the storage engine.
+  abstract removeAdminUser(email: string): Promise<void>;
+
+  /*
+  * HIGHER-LEVEL METHODS
+  * These methods are used by the application to interact with the storage engine and provide consistent behavior across different storage engines.
+  * They are built on top of the primitive methods and provide a more user-friendly interface.
+  */
+  /* User management --------------------------------------------------- */
+  // Gets the user management data for the given key. This is used to get the authentication
+  async validateUser(user: UserWrapped | null, refresh = false) {
+    if (refresh) {
+      this.userManagementData = {};
+    }
+
+    if (user?.user) {
+      // Case 1: Database exists
+      const authInfo = await this.getUserManagementData('authentication');
+      if (authInfo?.isEnabled) {
+        const adminUsers = await this.getUserManagementData('adminUsers');
+        if (adminUsers && adminUsers.adminUsersList) {
+          const adminUsersObject = Object.fromEntries(
+            adminUsers.adminUsersList.map((storedUser: StoredUser) => [
+              storedUser.email,
+              storedUser.uid,
+            ]),
+          );
+          // Verifies that, if the user has signed in and thus their UID is added to the Firestore, that the current UID matches the Firestore entries UID. Prevents impersonation (otherwise, users would be able to alter email to impersonate).
+          const isAdmin = user.user.email
+            && (adminUsersObject[user.user.email] === user.user.uid
+              || adminUsersObject[user.user.email] === null);
+          if (isAdmin) {
+            // Add UID to user in collection if not existent.
+            if (user.user.email && adminUsersObject[user.user.email] === null) {
+              const adminUser: StoredUser | undefined = adminUsers.adminUsersList.find(
+                (u: StoredUser) => u.email === user.user!.email,
+              );
+              if (adminUser) {
+                adminUser.uid = user.user.uid;
+              }
+              await this._updateAdminUsersList(adminUsers);
+            }
+            return true;
+          }
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 }
