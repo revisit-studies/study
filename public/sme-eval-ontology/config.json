@@ -115,12 +115,42 @@
       "previousButton": true,
       "response": [
         {
-          "id": "exploration_instructions",
-          "prompt": "Please explore the interactive ontology above using the Tree View, Graph View, and Sunburst View to familiarize yourself with the structure before answering the questions below. You can click on any node to see its reasoning and examples.",
+          "id": "exploration_tree",
+          "prompt": " In the Tree View, expand the 'Media Modality' branch. How many main sub-categories do you see directly under 'Media Modality'? (Just count the immediate children, not deeper levels)",
           "location": "belowStimulus",
-          "type": "longText",
-          "placeholder": "Type 'done' when you have finished exploring the ontology",
-          "required": false
+          "type": "radio",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "required": true
+        },
+        {
+          "id": "exploration_graph",
+          "prompt": "Switch to Dendrogram View and look at the overall structure. Which of the four main branches appears to have the most sub-branches radiating from it?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Modality",
+            "Forensic Goal & Task",
+            "Evidentiary Features",
+            "Search & Analysis Scope"
+          ],
+          "required": true
+        },
+        {
+          "id": "exploration_sunburst",
+          "prompt": "Switch to Sunburst View. Click on any colored section to zoom in, then use the breadcrumb trail or reset button to return to the full view. Type 'completed' when you've tried the zoom-in feature.",
+          "location": "belowStimulus",
+          "type": "dropdown",
+          "placeholder": "Select 'completed' when you've tried the zoom-in feature.",
+          "options": [
+            "completed"
+          ],
+          "required": true
         },
         {
           "id": "four_branch_division",
@@ -637,13 +667,34 @@
           "required": false
         }
       ]
+    },
+    "consent_declined": {
+      "type": "markdown",
+      "path": "sme-eval-ontology/assets/consent_declined.md",
+      "response": []
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
       "introduction",
-      "consent",
+      {
+        "id": "consent_block",
+        "order": "fixed",
+        "components": [
+          "consent"
+        ],
+        "skip": [
+          {
+            "name": "consent",
+            "check": "response",
+            "responseId": "consent_agree",
+            "value": "I do not agree to participate in this study.",
+            "comparison": "equal",
+            "to": "consent_declined"
+          }
+        ]
+      },
       "expertise",
       "overall_structure",
       "branch_modality",
@@ -652,7 +703,8 @@
       "branch_scope",
       "viewer_feedback",
       "final_assessment",
-      "thank_you"
+      "thank_you",
+      "consent_declined"
     ]
   }
 }
