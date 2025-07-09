@@ -1,7 +1,15 @@
 // Digital Multimedia Forensics Ontology Application
+// Version 2.2 - Updated with cache busting and safe event listeners
+console.log('🔄 OntologyApp v2.2 loaded - Cache bust successful!');
 
 class OntologyApp {
     constructor() {
+        // Prevent multiple initializations
+        if (window.ontologyAppInitialized) {
+            console.log('OntologyApp already initialized, skipping...');
+            return;
+        }
+
         this.ontologyData = {};
         this.expandedNodes = new Set();
         this.selectedNode = null;
@@ -21,6 +29,7 @@ class OntologyApp {
             'Search Scope': 'data/analysis_scope_extended.json'
         };
 
+        window.ontologyAppInitialized = true;
         this.init();
     }
 
@@ -174,73 +183,97 @@ class OntologyApp {
     }
 
     setupEventListeners() {
+        console.log('Setting up event listeners...');
+
         // Search functionality
         const searchInput = document.getElementById('searchInput');
         const clearBtn = document.getElementById('clearSearchBtn');
 
-        searchInput.addEventListener('input', async (e) => {
-            this.searchTerm = e.target.value.toLowerCase();
+        if (searchInput) {
+            searchInput.addEventListener('input', async (e) => {
+                this.searchTerm = e.target.value.toLowerCase();
 
-            // Render the appropriate view based on current view type
-            if (this.currentView === 'tree') {
-                this.renderTree();
-            } else if (this.currentView === 'dendrogram') {
-                await this.renderDendrogram();
-            } else if (this.currentView === 'sunburst') {
-                await this.renderSunburst();
-            }
+                // Render the appropriate view based on current view type
+                if (this.currentView === 'tree') {
+                    this.renderTree();
+                } else if (this.currentView === 'dendrogram') {
+                    await this.renderDendrogram();
+                } else if (this.currentView === 'sunburst') {
+                    await this.renderSunburst();
+                }
 
-            // Show/hide clear button based on input content
-            if (e.target.value.length > 0) {
-                clearBtn.classList.remove('hidden');
-            } else {
-                clearBtn.classList.add('hidden');
-            }
-        });
+                // Show/hide clear button based on input content
+                if (clearBtn && e.target.value.length > 0) {
+                    clearBtn.classList.remove('hidden');
+                } else if (clearBtn) {
+                    clearBtn.classList.add('hidden');
+                }
+            });
+        }
 
         // Clear search functionality
-        clearBtn.addEventListener('click', async () => {
-            searchInput.value = '';
-            this.searchTerm = '';
-            clearBtn.classList.add('hidden');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', async () => {
+                if (searchInput) {
+                    searchInput.value = '';
+                    this.searchTerm = '';
+                    clearBtn.classList.add('hidden');
 
-            // Render the appropriate view based on current view type
-            if (this.currentView === 'tree') {
-                this.renderTree();
-            } else if (this.currentView === 'dendrogram') {
-                await this.renderDendrogram();
-            } else if (this.currentView === 'sunburst') {
-                await this.renderSunburst();
+                    // Render the appropriate view based on current view type
+                    if (this.currentView === 'tree') {
+                        this.renderTree();
+                    } else if (this.currentView === 'dendrogram') {
+                        await this.renderDendrogram();
+                    } else if (this.currentView === 'sunburst') {
+                        await this.renderSunburst();
+                    }
+
+                    searchInput.focus(); // Return focus to input
+                }
+            });
+        }
+
+        // Helper function to safely add event listeners
+        const safeAddEventListener = (elementId, event, handler) => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.addEventListener(event, handler);
+                return true;
+            } else {
+                console.error(`Element ${elementId} not found when adding event listener`);
+                return false;
             }
-
-            searchInput.focus(); // Return focus to input
-        });
+        };
 
         // Expand/Collapse all buttons
-        document.getElementById('expandAllBtn').addEventListener('click', () => {
+        safeAddEventListener('expandAllBtn', 'click', () => {
             this.expandAll();
         });
 
-        document.getElementById('collapseAllBtn').addEventListener('click', () => {
+        safeAddEventListener('collapseAllBtn', 'click', () => {
             this.collapseAll();
         });
 
         // Accordion functionality
-        document.getElementById('termsAccordionHeader').addEventListener('click', () => {
+        safeAddEventListener('termsAccordionHeader', 'click', () => {
             this.toggleAccordion('terms');
         });
 
-        document.getElementById('papersAccordionHeader').addEventListener('click', () => {
+        safeAddEventListener('examplesAccordionHeader', 'click', () => {
+            this.toggleAccordion('examples');
+        });
+
+        safeAddEventListener('papersAccordionHeader', 'click', () => {
             this.toggleAccordion('papers');
         });
 
         // Modal functionality
-        document.getElementById('modalCloseBtn').addEventListener('click', () => {
+        safeAddEventListener('modalCloseBtn', 'click', () => {
             this.closeModal();
         });
 
         // Close modal on background click
-        document.getElementById('paperModal').addEventListener('click', (e) => {
+        safeAddEventListener('paperModal', 'click', (e) => {
             if (e.target.id === 'paperModal') {
                 this.closeModal();
             }
@@ -254,35 +287,33 @@ class OntologyApp {
         });
 
         // Toggle button functionality
-        document.getElementById('statsToggleBtn').addEventListener('click', async () => {
+        safeAddEventListener('statsToggleBtn', 'click', async () => {
             await this.toggleStats();
         });
 
-        document.getElementById('themeToggleBtn').addEventListener('click', () => {
+        safeAddEventListener('themeToggleBtn', 'click', () => {
             this.toggleTheme();
         });
 
-        document.getElementById('sidebarToggleBtn').addEventListener('click', () => {
+        safeAddEventListener('sidebarToggleBtn', 'click', () => {
             this.toggleSidebar();
         });
 
         // View switching functionality
-        document.getElementById('treeViewBtn').addEventListener('click', async () => {
+        safeAddEventListener('treeViewBtn', 'click', async () => {
             await this.switchView('tree');
         });
 
-        document.getElementById('dendrogramViewBtn').addEventListener('click', async () => {
+        safeAddEventListener('dendrogramViewBtn', 'click', async () => {
             await this.switchView('dendrogram');
         });
 
-        document.getElementById('sunburstViewBtn').addEventListener('click', async () => {
+        safeAddEventListener('sunburstViewBtn', 'click', async () => {
             await this.switchView('sunburst');
         });
 
-        // Removed sunburst category navigation since we now show all categories together
-
         // Unified reset zoom functionality for dendrogram and sunburst views
-        document.getElementById('resetZoomBtn').addEventListener('click', () => {
+        safeAddEventListener('resetZoomBtn', 'click', () => {
             if (this.currentView === 'sunburst' && this.sunburstRenderer) {
                 this.sunburstRenderer.resetZoom();
             } else if (this.currentView === 'dendrogram' && this.dendrogramRenderer) {
@@ -293,6 +324,11 @@ class OntologyApp {
 
     renderTree() {
         const treeContainer = document.getElementById('ontologyTree');
+        if (!treeContainer) {
+            console.error('ontologyTree container not found');
+            return;
+        }
+
         treeContainer.innerHTML = '';
 
         Object.keys(this.ontologyData).forEach(rootKey => {
@@ -472,7 +508,7 @@ class OntologyApp {
 
             await this.loadCategoryData(nodeId);
             delete this.ontologyData[nodeId].loading; // Remove loading state
-            
+
             // Re-render after loading is complete
             this.renderTree();
             return; // Exit here because renderTree is already called
@@ -525,6 +561,7 @@ class OntologyApp {
 
         // Update accordion content
         this.updateTermsAccordion(data);
+        this.updateExamplesAccordion(data);
         this.updatePapersAccordion(data);
 
         // Close all accordions initially
@@ -548,6 +585,31 @@ class OntologyApp {
         } else {
             header.querySelector('span').textContent = 'Associated Terms (0)';
             termsList.innerHTML = '<p class="no-results">No associated terms available.</p>';
+        }
+    }
+
+    updateExamplesAccordion(data) {
+        const examplesList = document.getElementById('examplesList');
+        const header = document.getElementById('examplesAccordionHeader');
+
+        if (data.examples && data.examples.length > 0) {
+            header.querySelector('span').textContent = `Examples (${data.examples.length})`;
+            examplesList.innerHTML = '';
+
+            data.examples.forEach(example => {
+                const exampleItem = document.createElement('div');
+                exampleItem.className = 'example-item';
+
+                const exampleText = document.createElement('p');
+                exampleText.className = 'example-text';
+                exampleText.textContent = example;
+
+                exampleItem.appendChild(exampleText);
+                examplesList.appendChild(exampleItem);
+            });
+        } else {
+            header.querySelector('span').textContent = 'Examples (0)';
+            examplesList.innerHTML = '<p class="no-results">No examples available.</p>';
         }
     }
 
@@ -613,7 +675,7 @@ class OntologyApp {
     }
 
     closeAllAccordions() {
-        ['terms', 'papers'].forEach(type => {
+        ['terms', 'papers', 'examples'].forEach(type => {
             const header = document.getElementById(`${type}AccordionHeader`);
             const content = document.getElementById(`${type}AccordionContent`);
             header.classList.remove('active');
@@ -1604,6 +1666,32 @@ class SunburstRenderer {
 }
 
 // Initialize the application when the DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new OntologyApp();
-});
+function initializeApp() {
+    console.log('Initializing OntologyApp...');
+    try {
+        new OntologyApp();
+    } catch (error) {
+        console.error('Error initializing OntologyApp:', error);
+        // Retry once after a delay
+        setTimeout(() => {
+            try {
+                new OntologyApp();
+            } catch (retryError) {
+                console.error('Failed to initialize OntologyApp after retry:', retryError);
+            }
+        }, 500);
+    }
+}
+
+// Handle different loading scenarios
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        // Additional delay for iframe context
+        const delay = window.self !== window.top ? 300 : 100;
+        setTimeout(initializeApp, delay);
+    });
+} else {
+    // DOM already loaded
+    const delay = window.self !== window.top ? 300 : 100;
+    setTimeout(initializeApp, delay);
+}
