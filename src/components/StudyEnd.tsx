@@ -13,8 +13,6 @@ import { ParticipantData } from '../storage/types';
 import { download } from './downloader/DownloadTidy';
 import { useStudyId } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
-import type { Response } from '../parser/types';
-import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 
 export function StudyEnd() {
   const studyConfig = useStudyConfig();
@@ -106,31 +104,15 @@ export function StudyEnd() {
   }, [storageEngine, studyId]);
 
   const processedStudyEndMsg = useMemo(() => {
-    const { studyEndMsg } = studyConfig.uiConfig;
-    const { urlParticipantIdParam } = studyConfig.uiConfig;
+    const studyEndMsg = studyConfig.uiConfig.studyEndMsg;
+    const urlParticipantIdParam = studyConfig.uiConfig.urlParticipantIdParam;
 
     if (!urlParticipantIdParam || !studyEndMsg?.includes('{')) {
       return studyEndMsg;
     }
 
-    const templateData: Record<string, string> = { PARTICIPANT_ID: participantId };
-
-    const responses = Object.values(studyConfig.components)
-      .map((component) => studyComponentToIndividualComponent(component, studyConfig))
-      .flatMap((component) => (Array.isArray(component.response) ? component.response : []));
-
-    const fieldId = responses.find((r: Response) => r.paramCapture === urlParticipantIdParam)?.id;
-
-    const allAnswers = Object.values(answers).reduce<Record<string, unknown>>((acc, storedAnswer) => ({
-      ...acc,
-      ...storedAnswer?.answer,
-    }), {});
-
-    const val = fieldId && allAnswers[fieldId];
-    if (val) templateData[urlParticipantIdParam] = String(val);
-
-    return studyEndMsg.replace(/\{(\w+)\}/, (_, key) => templateData[key]);
-  }, [studyConfig, participantId, answers]);
+    return studyEndMsg.replace(/\{(\w+)\}/g, () => participantId);
+  }, [studyConfig, participantId]);
 
   return (
     <Center style={{ height: '100%' }}>
