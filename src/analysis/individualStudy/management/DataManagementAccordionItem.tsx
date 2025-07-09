@@ -9,6 +9,13 @@ import { showNotification, RevisitNotification } from '../../../utils/notificati
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 import { ActionResponse, SnapshotDocContent } from '../../../storage/engines/types';
 
+type SnapshotAction =
+  | { type: 'create', archive: boolean }
+  | { type: 'rename', snapshot: string, newName: string }
+  | { type: 'restore', snapshot: string }
+  | { type: 'deleteSnapshot', snapshot: string }
+  | { type: 'deleteLive' };
+
 export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
   const [modalDeleteSnapshotOpened, setModalDeleteSnapshotOpened] = useState<boolean>(false);
@@ -42,65 +49,56 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
     refreshSnapshots();
   }, [refreshSnapshots]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  type StorageAction = (...args: any[]) => Promise<ActionResponse>;
-
   if (!storageEngine) {
     return null;
   }
 
   // Generalized snapshot action handler
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const snapshotAction = async (action: StorageAction, ...args: any[]) => {
+  // Strongly-typed action dispatcher
+  const snapshotAction = async (action: SnapshotAction) => {
     setLoading(true);
-    const response: ActionResponse = await action(...args);
+    let response: ActionResponse;
+
+    switch (action.type) {
+      case 'create':
+        response = await storageEngine.createSnapshot(studyId, action.archive);
+        break;
+      case 'rename':
+        response = await storageEngine.renameSnapshot(action.snapshot, action.newName, studyId);
+        break;
+      case 'restore':
+        response = await storageEngine.restoreSnapshot(studyId, action.snapshot);
+        break;
+      case 'deleteSnapshot':
+        response = await storageEngine.removeSnapshotOrLive(action.snapshot, studyId);
+        break;
+      case 'deleteLive':
+        response = await storageEngine.removeSnapshotOrLive(studyId, studyId);
+        break;
+      default:
+        setLoading(false);
+        throw new Error('Unknown action');
+    }
+
     if (response.status === 'SUCCESS') {
-      refreshSnapshots();
+      await refreshSnapshots();
       setLoading(false);
       await refresh();
-      // Show all notifications from success.
-      if (response.notifications) {
-        response.notifications.forEach((notification: RevisitNotification) => {
-          showNotification(notification);
-        });
-      }
+      response.notifications?.forEach((notification: RevisitNotification) => showNotification(notification));
     } else {
-      // Show returned error as a notification in red.
       setLoading(false);
       showNotification({ title: response.error.title, message: response.error.message, color: 'red' });
     }
   };
 
-  const handleCreateSnapshot = async () => {
-    await snapshotAction(storageEngine.createSnapshot.bind(storageEngine), studyId, false);
-  };
-
-  const handleArchiveData = async () => {
-    setDeleteValue('');
-    setModalArchiveOpened(false);
-    await snapshotAction(storageEngine.createSnapshot.bind(storageEngine), studyId, true);
-  };
-
-  const handleRenameSnapshot = async () => {
-    setModalRenameSnapshotOpened(false);
-    await snapshotAction(storageEngine.renameSnapshot.bind(storageEngine), currentSnapshot, renameValue);
-  };
-
-  const handleRestoreSnapshot = async (snapshot: string) => {
-    await snapshotAction(storageEngine.restoreSnapshot.bind(storageEngine), studyId, snapshot);
-  };
-
-  const handleDeleteSnapshot = async () => {
-    setDeleteValue('');
-    setModalDeleteSnapshotOpened(false);
-    await snapshotAction(storageEngine.removeSnapshotOrLive.bind(storageEngine), currentSnapshot, true);
-  };
-
-  const handleDeleteLive = async () => {
-    setDeleteValue('');
-    setModalDeleteLiveOpened(false);
-    await snapshotAction(storageEngine.removeSnapshotOrLive.bind(storageEngine), studyId, true);
-  };
+  // Handlers
+  const handleCreateSnapshot = () => snapshotAction({ type: 'create', archive: false });
+  const handleArchiveData = () => { setDeleteValue(''); setModalArchiveOpened(false); snapshotAction({ type: 'create', archive: true }); };
+  const handleRenameSnapshot = () => { setModalRenameSnapshotOpened(false); snapshotAction({ type: 'rename', snapshot: currentSnapshot, newName: renameValue }); };
+  const handleRestoreSnapshot = (snapshot: string) => snapshotAction({ type: 'restore', snapshot });
+  const handleDeleteSnapshot = () => { setDeleteValue(''); setModalDeleteSnapshotOpened(false); snapshotAction({ type: 'deleteSnapshot', snapshot: currentSnapshot }); };
+  const handleDeleteLive = () => { setDeleteValue(''); setModalDeleteLiveOpened(false); snapshotAction({ type: 'deleteLive' }); };
 
   const openCreateSnapshotModal = () => openConfirmModal({
     title: 'Create a Snapshot',
