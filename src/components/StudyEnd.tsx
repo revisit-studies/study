@@ -107,12 +107,12 @@ export function StudyEnd() {
     const studyEndMsg = studyConfig.uiConfig.studyEndMsg;
     const urlParticipantIdParam = studyConfig.uiConfig.urlParticipantIdParam;
 
-    if (!urlParticipantIdParam || !studyEndMsg?.includes('{')) {
+    if (!urlParticipantIdParam || !studyEndMsg?.includes('{PARTICIPANT_ID}')) {
       return studyEndMsg;
     }
 
     // return the study end message with the participant ID
-    return studyEndMsg.replace(/\{(\w+)\}/, () => participantId);
+    return studyEndMsg.replace(/\{PARTICIPANT_ID\}/g, () => participantId);
   }, [studyConfig, participantId]);
 
   return (
