@@ -842,6 +842,7 @@ export abstract class StorageEngine {
       } else {
         await this._deleteDirectory(`${deletionTarget}/configs`);
         await this._deleteDirectory(`${deletionTarget}/participants`);
+        await this._deleteDirectory(`${deletionTarget}/audio`);
         await this._deleteDirectory(deletionTarget);
         await this._deleteRealtimeData(deletionTarget);
       }
@@ -902,6 +903,10 @@ export abstract class StorageEngine {
       await this._copyDirectory(
         `${snapshotName}/participants`,
         `${originalName}/participants`,
+      );
+      await this._copyDirectory(
+        `${snapshotName}/audio`,
+        `${originalName}/audio`,
       );
       await this._copyDirectory(snapshotName, originalName);
       await this._copyRealtimeData(snapshotName, originalName);
