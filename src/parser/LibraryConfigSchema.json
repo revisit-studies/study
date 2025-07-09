@@ -308,6 +308,50 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "style": {
+          "additionalProperties": false,
+          "properties": {
+            "backgroundColor": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "height": {
+              "type": "string"
+            },
+            "margin": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "string"
+            },
+            "textAlign": {
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "stylesheetPath": {
+          "type": "string"
+        },
         "type": {
           "const": "buttons",
           "type": "string"
@@ -400,6 +444,50 @@
         },
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "additionalProperties": false,
+          "properties": {
+            "backgroundColor": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "height": {
+              "type": "string"
+            },
+            "margin": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "string"
+            },
+            "textAlign": {
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "stylesheetPath": {
           "type": "string"
         },
         "type": {
@@ -607,6 +695,50 @@
         },
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "additionalProperties": false,
+          "properties": {
+            "backgroundColor": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "height": {
+              "type": "string"
+            },
+            "margin": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "string"
+            },
+            "textAlign": {
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "stylesheetPath": {
           "type": "string"
         },
         "type": {
@@ -1225,6 +1357,50 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "style": {
+          "additionalProperties": false,
+          "properties": {
+            "backgroundColor": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "height": {
+              "type": "string"
+            },
+            "margin": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "string"
+            },
+            "textAlign": {
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "stylesheetPath": {
+          "type": "string"
+        },
         "type": {
           "const": "likert",
           "type": "string"
@@ -1287,6 +1463,50 @@
         },
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "additionalProperties": false,
+          "properties": {
+            "backgroundColor": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "height": {
+              "type": "string"
+            },
+            "margin": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "string"
+            },
+            "textAlign": {
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "stylesheetPath": {
           "type": "string"
         },
         "type": {
@@ -1541,6 +1761,50 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "style": {
+          "additionalProperties": false,
+          "properties": {
+            "backgroundColor": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "height": {
+              "type": "string"
+            },
+            "margin": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "string"
+            },
+            "textAlign": {
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "stylesheetPath": {
+          "type": "string"
+        },
         "type": {
           "enum": [
             "matrix-radio",
@@ -1634,6 +1898,50 @@
         },
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "additionalProperties": false,
+          "properties": {
+            "backgroundColor": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "height": {
+              "type": "string"
+            },
+            "margin": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "string"
+            },
+            "textAlign": {
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "stylesheetPath": {
           "type": "string"
         },
         "type": {
@@ -1873,6 +2181,50 @@
         },
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "additionalProperties": false,
+          "properties": {
+            "backgroundColor": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "height": {
+              "type": "string"
+            },
+            "margin": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "string"
+            },
+            "textAlign": {
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "stylesheetPath": {
           "type": "string"
         },
         "type": {
@@ -2123,6 +2475,50 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "style": {
+          "additionalProperties": false,
+          "properties": {
+            "backgroundColor": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "height": {
+              "type": "string"
+            },
+            "margin": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "string"
+            },
+            "textAlign": {
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "stylesheetPath": {
+          "type": "string"
+        },
         "type": {
           "const": "reactive",
           "type": "string"
@@ -2265,6 +2661,50 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "style": {
+          "additionalProperties": false,
+          "properties": {
+            "backgroundColor": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "height": {
+              "type": "string"
+            },
+            "margin": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "string"
+            },
+            "textAlign": {
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "stylesheetPath": {
+          "type": "string"
+        },
         "type": {
           "const": "shortText",
           "type": "string"
@@ -2363,6 +2803,50 @@
           "description": "The step value of the slider. If not provided (and snap not enabled), the step value is calculated as the range of the slider divided by 100.",
           "type": "number"
         },
+        "style": {
+          "additionalProperties": false,
+          "properties": {
+            "backgroundColor": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "height": {
+              "type": "string"
+            },
+            "margin": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "string"
+            },
+            "textAlign": {
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "stylesheetPath": {
+          "type": "string"
+        },
         "tlxStyle": {
           "description": "Whether to render the slider with a NASA-tlx style. Defaults to false.",
           "type": "boolean"
@@ -2448,6 +2932,50 @@
         },
         "secondaryText": {
           "not": {}
+        },
+        "style": {
+          "additionalProperties": false,
+          "properties": {
+            "backgroundColor": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "height": {
+              "type": "string"
+            },
+            "margin": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "string"
+            },
+            "textAlign": {
+              "enum": [
+                "left",
+                "center",
+                "right"
+              ],
+              "type": "string"
+            },
+            "width": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "stylesheetPath": {
+          "type": "string"
         },
         "type": {
           "const": "textOnly",

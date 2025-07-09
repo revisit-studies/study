@@ -187,6 +187,18 @@ export interface BaseResponse {
   withDivider?: boolean;
   /** Renders the response with an option for "I don't know". This counts as a completed answer for the validation. */
   withDontKnow?: boolean;
+  stylesheetPath?: string;
+  style?: {
+    width?: string;
+    height?: string;
+    fontSize?: string;
+    fontWeight?: string | number;
+    textAlign?: 'left' | 'center' | 'right';
+    color?: string;
+    backgroundColor?: string;
+    margin?: string;
+    padding?: string;
+  }
 }
 
 /**
