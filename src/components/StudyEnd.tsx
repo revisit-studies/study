@@ -111,7 +111,8 @@ export function StudyEnd() {
       return studyEndMsg;
     }
 
-    return studyEndMsg.replace(/\{(\w+)\}/g, () => participantId);
+    // return the study end message with the participant ID
+    return studyEndMsg.replace(/\{(\w+)\}/, () => participantId);
   }, [studyConfig, participantId]);
 
   return (
