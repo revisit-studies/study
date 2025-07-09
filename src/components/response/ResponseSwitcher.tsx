@@ -113,8 +113,10 @@ export function ResponseSwitcher({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
 
+  const responseStyle = response.style || {};
+
   return (
-    <Box mb={response.withDivider || configInUse.responseDividers ? 'xl' : 'lg'}>
+    <Box mb={response.withDivider || configInUse.responseDividers ? 'xl' : 'lg'} style={responseStyle}>
       {response.type === 'numerical' && (
         <NumericInput
           response={response}
