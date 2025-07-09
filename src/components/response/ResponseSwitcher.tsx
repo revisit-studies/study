@@ -1,6 +1,6 @@
 import { Box, Checkbox, Divider } from '@mantine/core';
 import { useSearchParams } from 'react-router';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { GetInputPropsReturnType } from '@mantine/form/lib/types';
 import {
   IndividualComponent, MatrixResponse, Response, SliderResponse, StoredAnswer,
@@ -23,6 +23,7 @@ import { useStoreSelector } from '../../store/store';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
+import { fetchStylesheet } from '../../utils/fetchStylesheet';
 
 export function ResponseSwitcher({
   response,
@@ -57,6 +58,12 @@ export function ResponseSwitcher({
   const sequence = useStoreSelector((state) => state.sequence);
   const flatSequence = getSequenceFlatMap(sequence);
   const currentStep = useCurrentStep();
+
+  useEffect(() => {
+    if (response.stylesheetPath) {
+      fetchStylesheet(response.stylesheetPath);
+    }
+  }, [response.stylesheetPath]);
 
   const isDisabled = useMemo(() => {
     // Do not disable if we're at the last element before a dynamic block

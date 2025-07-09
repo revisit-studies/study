@@ -6,6 +6,7 @@ import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { ParticipantData, WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
+import { fetchStylesheet } from '../utils/fetchStylesheet';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -23,6 +24,12 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const identifier = useCurrentIdentifier();
   const [height, setHeight] = useState(800);
   const iframeStyle = { ...defaultStyle, ...currentConfig.style, height: `${height}px` };
+
+  useEffect(() => {
+    if (currentConfig.stylesheetPath) {
+      fetchStylesheet(currentConfig.stylesheetPath);
+    }
+  }, [currentConfig.stylesheetPath]);
 
   const ref = useRef<HTMLIFrameElement>(null);
 

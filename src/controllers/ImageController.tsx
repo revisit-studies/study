@@ -4,6 +4,7 @@ import { ImageComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { fetchStylesheet } from '../utils/fetchStylesheet';
 
 const defaultStyle = {
   maxWidth: '100%',
@@ -21,6 +22,13 @@ export function ImageController({ currentConfig }: { currentConfig: ImageCompone
 
   const [loading, setLoading] = useState(true);
   const [assetFound, setAssetFound] = useState(false);
+
+  useEffect(() => {
+    if (currentConfig.stylesheetPath) {
+      fetchStylesheet(currentConfig.stylesheetPath);
+    }
+  }, [currentConfig.stylesheetPath]);
+
   useEffect(() => {
     async function fetchImage() {
       let asset = await getStaticAssetByPath(url);
