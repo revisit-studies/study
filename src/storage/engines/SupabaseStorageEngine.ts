@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import {
-  REVISIT_MODE, SequenceAssignment, StorageEngine, StorageObject, StorageObjectType,
+  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType,
 } from './types';
 
 export class SupabaseStorageEngine extends StorageEngine {
@@ -392,5 +392,153 @@ export class SupabaseStorageEngine extends StorageEngine {
     }
 
     await super.__testingReset();
+  }
+
+  async getSnapshots(studyId: string) {
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'snapshots')
+      .single();
+    if (error) {
+      return {};
+    }
+    return data?.data as SnapshotDocContent || {};
+  }
+
+  protected async _directoryExists(path: string): Promise<boolean> {
+    const { data, error } = await this.supabase.storage
+      .from('revisit')
+      .list(path, { limit: 1 });
+    if (error) {
+      console.error('Error checking directory existence:', error);
+      return false;
+    }
+    // If data is empty, the directory does not exist
+    return data.length > 0;
+  }
+
+  protected async _copyDirectory(source: string, target: string) {
+    const { data: keys, error } = await this.supabase.storage
+      .from('revisit')
+      .list(source);
+    if (error) {
+      console.error('Error listing directory contents:', error);
+      throw new Error('Failed to copy directory');
+    }
+    const copyPromises = keys.map(async (key) => {
+      const { data: fileData, error: fileError } = await this.supabase.storage
+        .from('revisit')
+        .download(`${source}/${key.name}`);
+      if (fileError) {
+        // We probably have a nested directory, so we can skip this file
+        return;
+      }
+      const { error: uploadError } = await this.supabase.storage
+        .from('revisit')
+        .upload(`${target}/${key.name}`, fileData, { upsert: true });
+      if (uploadError) {
+        console.error(`Error uploading file to ${target}/${key.name}:`, uploadError);
+      }
+    });
+    await Promise.all(copyPromises);
+  }
+
+  protected async _deleteDirectory(path: string) {
+    const { data: keys, error } = await this.supabase.storage
+      .from('revisit')
+      .list(path);
+    if (error) {
+      console.error('Error listing directory contents:', error);
+      throw new Error('Failed to delete directory');
+    }
+    if (keys.length === 0) {
+      // Skip deletion if the directory is empty
+      return;
+    }
+    const toDelete = keys.map((key) => `${path}/${key.name}`);
+    const { error: deleteError } = await this.supabase.storage
+      .from('revisit')
+      .remove(toDelete);
+    if (deleteError) {
+      throw new Error('Failed to delete directory');
+    }
+  }
+
+  protected async _copyRealtimeData(source: string, target: string) {
+    const { data: rows, error } = await this.supabase
+      .from('revisit')
+      .select('createdAt, studyId, docId, data')
+      .eq('studyId', source)
+      .like('docId', 'sequenceAssignment_%');
+    if (error) {
+      throw new Error('Failed to copy realtime data');
+    }
+
+    // Batch upload the rows to the target study
+    const toUpload = rows.map((row) => ({
+      ...row,
+      studyId: target,
+    }));
+    const { error: uploadError } = await this.supabase
+      .from('revisit')
+      .upsert(toUpload);
+    if (uploadError) {
+      console.error('Error uploading realtime data for:', uploadError);
+    }
+  }
+
+  protected async _deleteRealtimeData(target: string) {
+    const { error } = await this.supabase
+      .from('revisit')
+      .delete()
+      .eq('studyId', target)
+      .like('docId', 'sequenceAssignment_%');
+    if (error) {
+      throw new Error('Failed to delete realtime data');
+    }
+  }
+
+  protected async _addDirectoryNameToSnapshots(directoryName: string, studyId: string) {
+    const snapshots = await this.getSnapshots(studyId);
+    if (!snapshots[directoryName]) {
+      snapshots[directoryName] = { name: directoryName };
+      await this.supabase
+        .from('revisit')
+        .upsert({
+          studyId: `${this.collectionPrefix}${studyId}`,
+          docId: 'snapshots',
+          data: snapshots,
+        });
+    }
+  }
+
+  protected async _removeDirectoryNameFromSnapshots(directoryName: string, studyId: string) {
+    const snapshots = await this.getSnapshots(studyId);
+    if (snapshots[directoryName]) {
+      delete snapshots[directoryName];
+      await this.supabase
+        .from('revisit')
+        .upsert({
+          studyId: `${this.collectionPrefix}${studyId}`,
+          docId: 'snapshots',
+          data: snapshots,
+        });
+    }
+  }
+
+  protected async _changeDirectoryNameInSnapshots(oldName: string, newName: string, studyId: string) {
+    const snapshots = await this.getSnapshots(studyId);
+    if (snapshots[oldName]) {
+      snapshots[oldName] = { name: newName };
+      await this.supabase
+        .from('revisit')
+        .upsert({
+          studyId: `${this.collectionPrefix}${studyId}`,
+          docId: 'snapshots',
+          data: snapshots,
+        });
+    }
   }
 }

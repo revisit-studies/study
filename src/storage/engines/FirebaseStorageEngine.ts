@@ -36,6 +36,7 @@ import {
   StorageObject,
   UserManagementData,
   SequenceAssignment,
+  SnapshotDocContent,
 } from './types';
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
@@ -448,37 +449,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const snapshotsData = await getDoc(snapshotsDoc);
 
       if (snapshotsData.exists()) {
-        const collections = snapshotsData.data();
-        const matchingCollections = Object.keys(collections)
-          .filter((directoryName) => directoryName.startsWith(
-            `${this.collectionPrefix}${studyId}-snapshot`,
-          ))
-          .map((directoryName) => {
-            const value = collections[directoryName];
-            let transformedValue;
-            if (typeof value === 'boolean') {
-              transformedValue = directoryName;
-            } else if (
-              value
-              && typeof value === 'object'
-              && value.enabled === true
-            ) {
-              transformedValue = value.name as string;
-            } else {
-              transformedValue = null;
-            }
-            return {
-              originalName: directoryName,
-              alternateName: transformedValue,
-            };
-          })
-          .filter((item) => item.alternateName !== null);
-        const sortedCollections = matchingCollections
-          .sort((a, b) => a.originalName.localeCompare(b.originalName))
-          .reverse(); // Reverse the sorted array if needed
-        return sortedCollections;
+        return snapshotsData.data() as SnapshotDocContent;
       }
-      return [];
+      return {};
     } catch (error) {
       console.error('Error listing collections with prefix:', error);
       throw error;
@@ -604,12 +577,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   // Function to add collection name to metadata
-  protected async _addDirectoryNameToMetadata(directoryName: string) {
+  protected async _addDirectoryNameToSnapshots(directoryName: string) {
     try {
       const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'snapshots');
       await setDoc(
         snapshotDoc,
-        { [directoryName]: { enabled: true, name: directoryName } },
+        { [directoryName]: { name: directoryName } } as SnapshotDocContent,
         { merge: true },
       );
     } catch (error) {
@@ -618,7 +591,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _removeNameFromMetadata(directoryName: string) {
+  protected async _removeDirectoryNameFromSnapshots(directoryName: string) {
     try {
       const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'snapshots');
       const snapshotData = await getDoc(snapshotDoc);
@@ -640,16 +613,16 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _changeNameInMetadata(oldName: string, newName: string) {
+  protected async _changeDirectoryNameInSnapshots(oldName: string, newName: string) {
     const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'snapshots');
     await setDoc(
       snapshotDoc,
-      { [oldName]: { enabled: true, name: newName } },
+      { [oldName]: { name: newName } },
       { merge: true },
     );
   }
 
-  protected async _copyFile(sourceFilePath: string, targetFilePath: string) {
+  private async _copyFile(sourceFilePath: string, targetFilePath: string) {
     try {
       const sourceFileRef = ref(this.storage, sourceFilePath);
       const targetFileRef = ref(this.storage, targetFilePath);

@@ -40,6 +40,8 @@ describe.each([
   afterEach(async () => {
     // @ts-expect-error using protected method for testing
     await storageEngine._testingReset(studyId);
+    // @ts-expect-error using protected method for testing
+    await storageEngine._testingReset('test-realtime-copy');
   });
 
   // _pushToStorage, _getFromStorage, and _removeFromStorage tests
@@ -163,4 +165,177 @@ describe.each([
   });
 
   // cannot test _getAudioUrl in local storage environment
+
+  /* Snapshots ----------------------------------------------------------- */
+  // // Gets the snapshot doc for the given studyId.
+  // protected abstract _getSnapshotData(studyId: string): Promise<SnapshotDocContent>;
+
+  // // Checks if the storage directory for the given source exists.
+  // protected abstract _directoryExists(source: string): Promise<boolean>;
+
+  // // Copies a storage directory and all its contents.
+  // protected abstract _copyDirectory(source: string, target: string): Promise<void>;
+
+  // // Deletes a storage directory and all its contents.
+  // protected abstract _deleteDirectory(target: string): Promise<void>;
+
+  // // Copies the realtime data from the source to the target. This is used by createSnapshot to copy the realtime data associated with a snapshot.
+  // protected abstract _copyRealtimeData(source: string, target: string): Promise<void>;
+
+  // // Deletes the realtime data for the given target. This is used by removeSnapshotOrLive to delete the realtime data associated with a snapshot or live data.
+  // protected abstract _deleteRealtimeData(target: string): Promise<void>;
+
+  // // Adds a directory name to the metadata. This is used by createSnapshot
+  // protected abstract _addDirectoryNameToSnapshots(directoryName: string): Promise<void>;
+
+  // // Removes a snapshot from the metadata. This is used by removeSnapshotOrLive
+  // protected abstract _removeDirectoryNameFromSnapshots(directoryName: string): Promise<void>;
+
+  // // Updates a snapshot in the metadata. This is used by renameSnapshot
+  // protected abstract _changeDirectoryNameInSnapshots(oldName: string, newName: string): Promise<void>;
+
+  /* Snapshots ----------------------------------------------------------- */
+  // _getSnapshotData test
+  test('_getSnapshotData is empty on initialization', async () => {
+    // @ts-expect-error using protected value for testing
+    const snapshotData = await storageEngine.getSnapshots(`${storageEngine.collectionPrefix}${studyId}`);
+    expect(snapshotData).toBeDefined();
+    expect(Object.keys(snapshotData).length).toBe(0);
+  });
+
+  // _directoryExists test
+  test('_directoryExists returns false for non-existent directory', async () => {
+    // @ts-expect-error using protected method for testing
+    const exists = await storageEngine._directoryExists('missing-study');
+    expect(exists).toBe(false);
+  });
+
+  test('_directoryExists returns true for existing directory', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    // @ts-expect-error using protected method and value for testing
+    const exists = await storageEngine._directoryExists(`${storageEngine.collectionPrefix}${studyId}`);
+    expect(exists).toBe(true);
+  });
+
+  // _copyDirectory, _deleteDirectory test
+  test('_copyDirectory copies directory and contents', async () => {
+    // @ts-expect-error using protected value for testing
+    const source = `${storageEngine.collectionPrefix}${studyId}`;
+    // @ts-expect-error using protected value for testing
+    const target = `${storageEngine.collectionPrefix}test-copy`;
+
+    // Ensure source directory exists
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    // @ts-expect-error using protected method for testing
+    const sourceExists = await storageEngine._directoryExists(source);
+    expect(sourceExists).toBe(true);
+
+    // Copy the directory
+    // @ts-expect-error using protected method for testing
+    await storageEngine._copyDirectory(source, target);
+
+    // Check if target directory exists
+    // @ts-expect-error using protected method for testing
+    const targetExists = await storageEngine._directoryExists(target);
+    expect(targetExists).toBe(true);
+
+    // Clean up by deleting the copied directory
+    // @ts-expect-error using protected method for testing
+    await storageEngine._deleteDirectory(target);
+
+    // Verify the target directory is deleted
+    // @ts-expect-error using protected method for testing
+    const targetDeleted = await storageEngine._directoryExists(target);
+    expect(targetDeleted).toBe(false);
+  });
+
+  // _copyRealtimeData, _deleteRealtimeData test
+  test('_copyRealtimeData copies realtime data', async () => {
+    const targetId = 'test-realtime-copy';
+    // @ts-expect-error using protected value for testing
+    const source = `${storageEngine.collectionPrefix}${studyId}`;
+    // @ts-expect-error using protected value for testing
+    const target = `${storageEngine.collectionPrefix}test-realtime-copy`;
+
+    // Ensure source directory exists
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    // @ts-expect-error using protected method for testing
+    const sourceSequenceAssignments1 = await storageEngine._getAllSequenceAssignments(studyId);
+    expect(sourceSequenceAssignments1).toBeDefined();
+    expect(sourceSequenceAssignments1.length).toEqual(1);
+
+    // @ts-expect-error using protected method for testing
+    let targetSequenceAssignments = await storageEngine._getAllSequenceAssignments(targetId);
+    expect(targetSequenceAssignments).toBeDefined();
+    expect(targetSequenceAssignments.length).toBe(0);
+
+    // Copy the realtime data
+    // @ts-expect-error using protected method for testing
+    await storageEngine._copyRealtimeData(source, target);
+
+    // Check if target directory has the copied data
+    // @ts-expect-error using protected method for testing
+    const sourceSequenceAssignments2 = await storageEngine._getAllSequenceAssignments(studyId);
+    expect(sourceSequenceAssignments2).toBeDefined();
+    expect(sourceSequenceAssignments2.length).toEqual(1);
+
+    // @ts-expect-error using protected method for testing
+    targetSequenceAssignments = await storageEngine._getAllSequenceAssignments(targetId);
+    expect(targetSequenceAssignments).toBeDefined();
+    expect(targetSequenceAssignments.length).toEqual(1);
+    expect(targetSequenceAssignments[0].participantId).toBe(sourceSequenceAssignments2[0].participantId);
+
+    // Delete the target realtime data
+    // @ts-expect-error using protected method for testing
+    await storageEngine._deleteRealtimeData(target);
+
+    // Verify the target directory is empty
+    // @ts-expect-error using protected method for testing
+    targetSequenceAssignments = await storageEngine._getAllSequenceAssignments(targetId);
+    expect(targetSequenceAssignments).toBeDefined();
+    expect(targetSequenceAssignments.length).toBe(0);
+  });
+
+  // _addDirectoryNameToSnapshots, removeDirectoryNameFromSnapshots, _changeDirectoryNameInSnapshots tests
+  test('_addDirectoryNameToSnapshots, _removeDirectoryNameFromSnapshots, and _changeDirectoryNameInSnapshots work correctly', async () => {
+    // Ensure the study database is initialized
+    const directoryName = 'test-directory';
+
+    // Make sure the directory name is not already in the snapshots
+    // @ts-expect-error using protected method for testing
+    const snapshotData1 = await storageEngine.getSnapshots(`${storageEngine.collectionPrefix}${studyId}`);
+    expect(snapshotData1).toBeDefined();
+    expect(snapshotData1[directoryName]).not.toBeDefined();
+
+    // @ts-expect-error using protected method for testing
+    await storageEngine._addDirectoryNameToSnapshots(directoryName, studyId);
+
+    // Verify the directory name is added to the snapshot metadata
+    const snapshotData2 = await storageEngine.getSnapshots(studyId);
+    expect(snapshotData2).toBeDefined();
+    expect(snapshotData2[directoryName]).toBeDefined();
+    expect(snapshotData2[directoryName].name).toBe(directoryName);
+
+    // Change the directory name in the snapshot metadata
+    const newDirectoryName = 'renamed-directory';
+    // @ts-expect-error using protected method for testing
+    await storageEngine._changeDirectoryNameInSnapshots(directoryName, newDirectoryName, studyId);
+
+    // Verify the directory name is updated in the snapshot metadata
+    const updatedSnapshotData = await storageEngine.getSnapshots(studyId);
+    expect(updatedSnapshotData).toBeDefined();
+    expect(updatedSnapshotData[directoryName]).toBeDefined();
+    expect(updatedSnapshotData[directoryName].name).toBe(newDirectoryName);
+    expect(updatedSnapshotData[newDirectoryName]).not.toBeDefined();
+
+    // Clean up by removing the directory name
+    // @ts-expect-error using protected method for testing
+    await storageEngine._removeDirectoryNameFromSnapshots(directoryName, studyId);
+
+    // Verify the directory name is removed from the snapshot metadata
+    const snapshotData3 = await storageEngine.getSnapshots(studyId);
+    expect(snapshotData3).toBeDefined();
+    expect(snapshotData3[directoryName]).not.toBeDefined();
+  });
 });

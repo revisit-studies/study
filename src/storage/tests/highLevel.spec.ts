@@ -331,4 +331,95 @@ describe.each([
     const disconnectedStorageEngine = new LocalStorageEngine();
     await expect(disconnectedStorageEngine.setSequenceArray([])).rejects.toThrow('Study database not initialized');
   });
+
+  // createSnapshot, restoreSnapshot, renameSnapshot, removeSnapshotOrLive, getSnapshots tests
+  test('createSnapshot, restoreSnapshot, renameSnapshot, removeSnapshotOrLive, getSnapshots work correctly', async () => {
+    const actionResponse1 = await storageEngine.createSnapshot('non-existent', false);
+    expect(actionResponse1).toBeDefined();
+    expect(actionResponse1.status).toBe('FAILED');
+    expect(actionResponse1.error).toBeDefined();
+    expect(actionResponse1.error!.message).toBe('There is currently no data in your study. A snapshot could not be created.');
+    expect(actionResponse1.error!.title).toBe('Failed to Create Snapshot.');
+    expect(actionResponse1.notifications).not.toBeDefined();
+
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const actionResponse2 = await storageEngine.createSnapshot(studyId, false);
+    expect(actionResponse2).toBeDefined();
+    expect(actionResponse2.status).toBe('SUCCESS');
+    expect(actionResponse2.error).not.toBeDefined();
+    expect(actionResponse2.notifications).toBeDefined();
+    expect(actionResponse2.notifications!.length).toBe(1);
+    expect(actionResponse2.notifications![0].title).toBe('Success!');
+    expect(actionResponse2.notifications![0].message).toBe('Successfully created snapshot');
+    expect(actionResponse2.notifications![0].color).toBe('green');
+
+    // Get the snapshot list
+    let snapshots = await storageEngine.getSnapshots(studyId);
+    expect(snapshots).toBeDefined();
+    expect(Object.keys(snapshots).length).toBe(1);
+    expect(Object.values(snapshots)[0].name).toBeDefined();
+
+    // Rename the snapshot
+    const snapshotKey = Object.keys(snapshots)[0];
+    const newSnapshotName = 'renamed-snapshot';
+    const renameResponse = await storageEngine.renameSnapshot(snapshotKey, newSnapshotName, studyId);
+    expect(renameResponse).toBeDefined();
+    expect(renameResponse.status).toBe('SUCCESS');
+    expect(renameResponse.error).not.toBeDefined();
+    expect(renameResponse.notifications).toBeDefined();
+    expect(renameResponse.notifications!.length).toBe(1);
+    expect(renameResponse.notifications![0].title).toBe('Success!');
+    expect(renameResponse.notifications![0].message).toBe('Successfully renamed snapshot.');
+    expect(renameResponse.notifications![0].color).toBe('green');
+
+    // Remove the snapshot
+    const removeResponse = await storageEngine.removeSnapshotOrLive(Object.keys(snapshots)[0], studyId);
+    expect(removeResponse).toBeDefined();
+    expect(removeResponse.status).toBe('SUCCESS');
+    expect(removeResponse.error).not.toBeDefined();
+    expect(removeResponse.notifications).toBeDefined();
+    expect(removeResponse.notifications!.length).toBe(1);
+    expect(removeResponse.notifications![0].title).toBe('Success!');
+    expect(removeResponse.notifications![0].message).toBe('Successfully deleted snapshot or live data.');
+    expect(removeResponse.notifications![0].color).toBe('green');
+
+    snapshots = await storageEngine.getSnapshots(studyId);
+    expect(snapshots).toBeDefined();
+    expect(Object.keys(snapshots).length).toBe(0);
+
+    const actionResponse3 = await storageEngine.createSnapshot(studyId, true);
+    expect(actionResponse3).toBeDefined();
+    expect(actionResponse3.status).toBe('SUCCESS');
+    expect(actionResponse3.error).not.toBeDefined();
+    expect(actionResponse3.notifications).toBeDefined();
+    expect(actionResponse3.notifications!.length).toBe(2);
+    expect(actionResponse3.notifications![0].title).toBe('Success!');
+    expect(actionResponse3.notifications![0].message).toBe('Successfully deleted live data.');
+    expect(actionResponse3.notifications![0].color).toBe('green');
+    expect(actionResponse3.notifications![1].title).toBe('Success!');
+    expect(actionResponse3.notifications![1].message).toBe('Successfully created snapshot');
+    expect(actionResponse3.notifications![1].color).toBe('green');
+
+    // Get the snapshot list
+    snapshots = await storageEngine.getSnapshots(studyId);
+    expect(snapshots).toBeDefined();
+    expect(Object.keys(snapshots).length).toBe(1);
+    expect(Object.values(snapshots)[0].name).toBeDefined();
+
+    // Restore the snapshot
+    const snapshotName = Object.keys(snapshots)[0];
+    const restoreResponse = await storageEngine.restoreSnapshot(studyId, snapshotName);
+    expect(restoreResponse).toBeDefined();
+    expect(restoreResponse.status).toBe('SUCCESS');
+    expect(restoreResponse.error).not.toBeDefined();
+    expect(restoreResponse.notifications).toBeDefined();
+    expect(restoreResponse.notifications!.length).toBe(2);
+    expect(restoreResponse.notifications![0].title).toBe('Failed to Create Snapshot.');
+    expect(restoreResponse.notifications![0].message).toBe('There is currently no data in your study. A snapshot could not be created.');
+    expect(restoreResponse.notifications![0].color).toBe('yellow');
+    expect(restoreResponse.notifications![1].title).toBe('Success!');
+    expect(restoreResponse.notifications![1].message).toBe('Successfully restored snapshot to live data.');
+    expect(restoreResponse.notifications![1].color).toBe('green');
+  });
 });
