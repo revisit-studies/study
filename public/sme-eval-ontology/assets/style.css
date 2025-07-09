@@ -1027,19 +1027,19 @@ select.form-control {
 }
 
 /* Category-specific colors for dendrogram nodes */
-.dendrogram .node[data-category="Media Modality"] circle {
+.dendrogram .node[data-category="Modality"] circle {
   fill: #3B82F6;
 }
 
-.dendrogram .node[data-category="Manipulation Type"] circle {
+.dendrogram .node[data-category="Forensic Goal"] circle {
   fill: #EF4444;
 }
 
-.dendrogram .node[data-category="Features & Cues"] circle {
+.dendrogram .node[data-category="Evidentiary Features"] circle {
   fill: #10B981;
 }
 
-.dendrogram .node[data-category="Search Scope"] circle {
+.dendrogram .node[data-category="Search & Analysis Scope"] circle {
   fill: #5D878F;
 }
 
@@ -1182,35 +1182,35 @@ select.form-control {
 }
 
 /* Category-specific colors for sunburst slices */
-.sunburst .slice[data-category="Media Modality"] {
+.sunburst .slice[data-category="Modality"] {
   fill: #3B82F6;
 }
 
-.sunburst .slice[data-category="Manipulation Type"] {
+.sunburst .slice[data-category="Forensic Goal"] {
   fill: #EF4444;
 }
 
-.sunburst .slice[data-category="Features & Cues"] {
+.sunburst .slice[data-category="Evidentiary Features"] {
   fill: #10B981;
 }
 
-.sunburst .slice[data-category="Search Scope"] {
+.sunburst .slice[data-category="Search & Analysis Scope"] {
   fill: #5D878F;
 }
 
-.sunburst .slice.child[data-category="Media Modality"] {
+.sunburst .slice.child[data-category="Modality"] {
   fill: #60A5FA;
 }
 
-.sunburst .slice.child[data-category="Manipulation Type"] {
+.sunburst .slice.child[data-category="Forensic Goal"] {
   fill: #F87171;
 }
 
-.sunburst .slice.child[data-category="Features & Cues"] {
+.sunburst .slice.child[data-category="Evidentiary Features"] {
   fill: #34D399;
 }
 
-.sunburst .slice.child[data-category="Search Scope"] {
+.sunburst .slice.child[data-category="Search & Analysis Scope"] {
   fill: #7DD3FC;
 }
 
@@ -1312,19 +1312,19 @@ select.form-control {
 }
 
 /* Color coding for different branches */
-.tree-node-content[data-category="Media Modality"] {
+.tree-node-content[data-category="Modality"] {
   border-left: 4px solid #1FB8CD;
 }
 
-.tree-node-content[data-category="Manipulation Type"] {
+.tree-node-content[data-category="Forensic Goal"] {
   border-left: 4px solid #FFC185;
 }
 
-.tree-node-content[data-category="Features & Cues"] {
+.tree-node-content[data-category="Evidentiary Features"] {
   border-left: 4px solid #B4413C;
 }
 
-.tree-node-content[data-category="Search Scope"] {
+.tree-node-content[data-category="Search & Analysis Scope"] {
   border-left: 4px solid #5D878F;
 }
 
@@ -1511,7 +1511,37 @@ select.form-control {
   line-height: var(--line-height-tight);
 }
 
-/* Examples List */
+/* Examples Section - simplified, non-accordion version */
+.examples-section {
+  margin: var(--space-8) 0;
+}
+
+.examples-heading {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-8) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.examples-list-simple {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.example-item-simple {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-style: italic;
+  line-height: var(--line-height-normal);
+  padding-left: var(--space-12);
+  border-left: 2px solid var(--color-border);
+  position: relative;
+}
+
+/* Examples List - keep existing styles for backward compatibility */
 .examples-list {
   display: flex;
   flex-direction: column;

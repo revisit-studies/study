@@ -22,7 +22,8 @@
     "logoPath": "revisitAssets/icon-varuna.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": false
+    "sidebar": false,
+    "enumerateQuestions": true
   },
   "components": {
     "introduction": {
@@ -73,8 +74,7 @@
             "Still Image",
             "Video",
             "Audio",
-            "Text",
-            "Digital File"
+            "Text"
           ],
           "withOther": true,
           "required": false
@@ -112,12 +112,12 @@
     "overall_structure": {
       "type": "website",
       "path": "sme-eval-ontology/assets/ontology.html",
+      "instruction": "In this section, we will evaluate the overall structure of the ontology. While the study of the ontology is not on the interface, rather the structure of the ontology, it is helpful to understand and make most of it.",
       "previousButton": true,
       "response": [
         {
           "id": "exploration_tree",
-          "prompt": " In the Tree View, expand the 'Media Modality' branch. How many main sub-categories do you see directly under 'Media Modality'? (Just count the immediate children, not deeper levels)",
-          "location": "belowStimulus",
+          "prompt": "Please click **Expand All** on Tree View. How many papers are associated with the **Deepfakes** node?",
           "type": "radio",
           "options": [
             "1",
@@ -130,7 +130,7 @@
         },
         {
           "id": "exploration_graph",
-          "prompt": "Switch to Dendrogram View and look at the overall structure. Which of the four main branches appears to have the most sub-branches radiating from it?",
+          "prompt": "Switch to **Dendrogram View** and look at the overall structure. Which of the four main branches appears to have the most sub-branches radiating from it?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -143,10 +143,10 @@
         },
         {
           "id": "exploration_sunburst",
-          "prompt": "Switch to Sunburst View. Click on any colored section to zoom in, then use the breadcrumb trail or reset button to return to the full view. Type 'completed' when you've tried the zoom-in feature.",
+          "prompt": "Switch to **Sunburst View**. Click on any colored section to zoom in, then use the breadcrumb trail or reset button to return to the full view. Type **completed** when you've tried the zoom-in feature.",
           "location": "belowStimulus",
           "type": "dropdown",
-          "placeholder": "Select 'completed' when you've tried the zoom-in feature.",
+          "placeholder": "Select **completed** when you've tried the zoom-in feature.",
           "options": [
             "completed"
           ],
@@ -185,11 +185,13 @@
     "branch_modality": {
       "type": "website",
       "path": "sme-eval-ontology/assets/ontology.html",
+      "instruction": "In this section, we will evaluate the structure and grouping of nodes within the **Target Modality** branch.",
       "previousButton": true,
       "response": [
         {
           "id": "modality_organization",
-          "prompt": "The structure and grouping of nodes within the Target Modality branch is logical and effective. (Example: Should there be a \"multimodal\" node in this branch?)",
+          "prompt": "**[Organization]** The structure and grouping of nodes within the Target Modality branch is logical and effective.",
+          "secondaryText": "Example: Should there be a \"multimodal\" node in this branch?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -210,7 +212,8 @@
         },
         {
           "id": "modality_completeness",
-          "prompt": "Are there any significant media types or modalities missing from this branch? (Example: Should \"3D/Spatial Media\" be added as a distinct modality to reflect emerging technologies like AR/VR)",
+          "prompt": "**[Completeness]** Are there any significant media types or modalities missing from this branch?",
+          "secondaryText": "Example: Should \"3D/Spatial Media\" be added as a distinct modality to reflect emerging technologies like AR/VR)",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -229,7 +232,8 @@
         },
         {
           "id": "modality_correctness",
-          "prompt": "Is anything in this branch misplaced? Does any node belong in a different branch entirely? (Example: As supportive modalities for visual media analysis, should \"text\" and \"audio\" be standalone modalites in this branch?)",
+          "prompt": "**[Correctness]** Is anything in this branch misplaced? Does any node belong in a different branch entirely?",
+          "secondaryText": "Example: As supportive modalities for visual media analysis, should \"text\" and \"audio\" be standalone modalites in this branch?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -248,7 +252,8 @@
         },
         {
           "id": "modality_naming_clarity",
-          "prompt": "Are any of the node names within this branch ambiguous, incorrect, or confusing? (Example: Does the label \"Video\" clearly convey its intended scope? Would \"Moving Image\" be more precise to avoid conflating it with associated audio content?)",
+          "prompt": "**[Naming & Clarity]** Are any of the node names within this branch ambiguous, incorrect, or confusing?",
+          "secondaryText": "Example: Does the label \"Video\" clearly convey its intended scope? Would \"Moving Image\" be more precise to avoid conflating it with associated audio content?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -267,7 +272,7 @@
         },
         {
           "id": "modality_additional_comments",
-          "prompt": "If there's anything about this branch you'd like to comment on that wasn't addressed in the previous questions, please use the text box below.",
+          "prompt": "**[Additional Comments]** If there's anything about this branch you'd like to comment on that wasn't addressed in the previous questions, please use the text box below.",
           "location": "belowStimulus",
           "type": "longText",
           "required": false
@@ -277,11 +282,13 @@
     "branch_manipulation": {
       "type": "website",
       "path": "sme-eval-ontology/assets/ontology.html",
+      "instruction": "In this section, we will evaluate the structure and grouping of nodes within the **Target Manipulation** branch.",
       "previousButton": true,
       "response": [
         {
           "id": "manipulation_organization",
-          "prompt": "The structure and grouping of nodes within the Forensic Goal & Task branch is logical and effective. (Example: Should modality be considered as a factor when organizing this branch? For example, splitting \"Forgery & Manipulation Detection\" based on if the media is a video or an image.)",
+          "prompt": "**[Organization]** The structure and grouping of nodes within the Forensic Goal & Task branch is logical and effective.",
+          "secondaryText": "Example: Should modality be considered as a factor when organizing this branch? For example, splitting \"Forgery & Manipulation Detection\" based on if the media is a video or an image.",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -302,7 +309,8 @@
         },
         {
           "id": "manipulation_completeness",
-          "prompt": "Are there any significant manipulation techniques or forensic tasks for digital visual media missing from this branch? (Example: Any \"Signal-level Post-processing\" other than \"Compression\" is missing? \"Cheapfake\" should be added to this branch somewhere?)",
+          "prompt": "**[Completeness]** Are there any significant manipulation techniques or forensic tasks for digital visual media missing from this branch?",
+          "secondaryText": "Example: Any \"Signal-level Post-processing\" other than \"Compression\" is missing? \"Cheapfake\" should be added to this branch somewhere?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -321,7 +329,8 @@
         },
         {
           "id": "manipulation_correctness",
-          "prompt": "Is anything in this branch misplaced? Does any node belong in a different branch? (Example: Does it make sense to place \"Steganography\" under \"Forgery & Manipulation Detection\"?)",
+          "prompt": "**[Correctness]** Is anything in this branch misplaced? Does any node belong in a different branch?",
+          "secondaryText": "Example: Does it make sense to place \"Steganography\" under \"Forgery & Manipulation Detection\"?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -340,7 +349,8 @@
         },
         {
           "id": "manipulation_naming_clarity",
-          "prompt": "Are any of the node names within this branch ambiguous, incorrect, or confusing? (Example: Should it be \"Content Synthesis\" or \"Content Generation\"? Are \"Content Rearrangement\" and \"Content Synthesis\" intuitive namings for understanding the splitting logic?)",
+          "prompt": "**[Naming & Clarity]** Are any of the node names within this branch ambiguous, incorrect, or confusing?",
+          "secondaryText": "Example: Should it be \"Content Synthesis\" or \"Content Generation\"? Are \"Content Rearrangement\" and \"Content Synthesis\" intuitive namings for understanding the splitting logic?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -359,7 +369,7 @@
         },
         {
           "id": "manipulation_additional_comments",
-          "prompt": "If there's anything about this branch you'd like to comment on that wasn't addressed in the previous questions, please use the text box below.",
+          "prompt": "**[Additional Comments]** If there's anything about this branch you'd like to comment on that wasn't addressed in the previous questions, please use the text box below.",
           "location": "belowStimulus",
           "type": "longText",
           "required": false
@@ -369,11 +379,13 @@
     "branch_feature": {
       "type": "website",
       "path": "sme-eval-ontology/assets/ontology.html",
+      "instruction": "In this section, we will evaluate the structure and grouping of nodes within the **Target Feature** branch.",
       "previousButton": true,
       "response": [
         {
           "id": "feature_organization",
-          "prompt": "The structure and grouping of nodes within the Evidentiary Features branch is logical and effective. (Example: Is it reasonable to split this branch into features that model ingest and signs that humans can identify?)",
+          "prompt": "**[Organization]** The structure and grouping of nodes within the Evidentiary Features branch is logical and effective.",
+          "secondaryText": "Example: Is it reasonable to split this branch into features that model ingest and signs that humans can identify?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -394,7 +406,8 @@
         },
         {
           "id": "feature_completeness",
-          "prompt": "Are there any significant feature families or specific forensic cues for digital visual media missing from this branch? (Example: Should there be a dedicated category for \"Scene Semantics,\" especially for detecting inconsistencies in scene composition? Any \"Temporal Domain Features\" other than \"Optical Flow Field\"?)",
+          "prompt": "**[Completeness]** Are there any significant feature families or specific forensic cues for digital visual media missing from this branch?",
+          "secondaryText": "Example: Should there be a dedicated category for \"Scene Semantics\", especially for detecting inconsistencies in scene composition? Any \"Temporal Domain Features\" other than \"Optical Flow Field\"?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -413,7 +426,8 @@
         },
         {
           "id": "feature_correctness",
-          "prompt": "Is anything in this branch misplaced? Does any node belong in a different branch? (Example: Should \"Compression Artifacts\" be a standalone node under \"Hand-crafted Features\"? Should \"MFCC\" be placed under \"Frequency Domain Features\" or \"Temporal Domain Features\"?)",
+          "prompt": "**[Correctness]** Is anything in this branch misplaced? Does any node belong in a different branch?",
+          "secondaryText": "Example: Should \"Compression Artifacts\" be a standalone node under \"Hand-crafted Features\"? Should \"MFCC\" be placed under \"Frequency Domain Features\" or \"Temporal Domain Features\"?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -432,7 +446,8 @@
         },
         {
           "id": "feature_naming_clarity",
-          "prompt": "Are any of the node names within this branch ambiguous, incorrect, or confusing? (Example: Should \"Deep Features\" be changed to \"Deep Learning Features\"? Does \"High-level Semantic Features\" vs \"Low-level Signal Features\" sound clearer?)",
+          "prompt": "**[Naming & Clarity]** Are any of the node names within this branch ambiguous, incorrect, or confusing?",
+          "secondaryText": "Example: Should \"Deep Features\" be changed to \"Deep Learning Features\"? Does \"High-level Semantic Features\" vs \"Low-level Signal Features\" sound clearer?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -451,7 +466,7 @@
         },
         {
           "id": "feature_additional_comments",
-          "prompt": "If there's anything about this branch you'd like to comment on that wasn't addressed in the previous questions, please use the text box below.",
+          "prompt": "**[Additional Comments]** If there's anything about this branch you'd like to comment on that wasn't addressed in the previous questions, please use the text box below.",
           "location": "belowStimulus",
           "type": "longText",
           "required": false
@@ -461,11 +476,13 @@
     "branch_scope": {
       "type": "website",
       "path": "sme-eval-ontology/assets/ontology.html",
+      "instruction": "In this section, we will evaluate the structure and grouping of nodes within the **Target Scope** branch.",
       "previousButton": true,
       "response": [
         {
           "id": "scope_organization",
-          "prompt": "The structure and grouping of nodes within the Search & Analysis Scope branch is logical and effective. (Example: Does it make sense to have one spatial branch and one temporal branch?)",
+          "prompt": "**[Organization]** The structure and grouping of nodes within the Search & Analysis Scope branch is logical and effective.",
+          "secondaryText": "Example: Does it make sense to have one spatial branch and one temporal branch?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -486,7 +503,8 @@
         },
         {
           "id": "scope_completeness",
-          "prompt": "Are there any particular analysis scopes for digital visual media missing from this branch? (Example: Should we consider \"Captions\", \"Transcripts\", and so on from supportive modalities (Text & Audio) here in this branch? Patch/Block is not included in the current branch, should it be added back under \"Spatial Granularity\"?)",
+          "prompt": "**[Completeness]** Are there any particular analysis scopes for digital visual media missing from this branch?",
+          "secondaryText": "Example: Should we consider **Captions**, **Transcripts**, and so on from supportive modalities (Text & Audio) here in this branch? Patch/Block is not included in the current branch, should it be added back under **Spatial Granularity**?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -505,7 +523,8 @@
         },
         {
           "id": "scope_correctness",
-          "prompt": "Is anything in this branch misplaced? Does any node belong in a different branch? (Example: Should \"Full Face\" be a standalone node as a \"ROI\"?)",
+          "prompt": "**[Correctness]** Is anything in this branch misplaced? Does any node belong in a different branch?",
+          "secondaryText": "Example: Should **Full Face** be a standalone node as a **ROI**?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -524,7 +543,8 @@
         },
         {
           "id": "scope_naming_clarity",
-          "prompt": "Are any of the node names within this branch ambiguous, incorrect, or confusing? (Example: Is \"Short Window/Segment\" intuitive enough? What if the selection is not consecutive frames?)",
+          "prompt": "**[Naming & Clarity]** Are any of the node names within this branch ambiguous, incorrect, or confusing?",
+          "secondaryText": "Example: Is **Short Window/Segment** intuitive enough? What if the selection is not consecutive frames?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -543,7 +563,7 @@
         },
         {
           "id": "scope_additional_comments",
-          "prompt": "If there's anything about this branch you'd like to comment on that wasn't addressed in the previous questions, please use the text box below.",
+          "prompt": "**[Additional Comments]** If there's anything about this branch you'd like to comment on that wasn't addressed in the previous questions, please use the text box below.",
           "location": "belowStimulus",
           "type": "longText",
           "required": false

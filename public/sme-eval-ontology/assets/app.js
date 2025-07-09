@@ -23,10 +23,10 @@ class OntologyApp {
 
         // JSON file mappings
         this.categoryMappings = {
-            'Media Modality': 'data/modalities_extended.json',
-            'Manipulation Type': 'data/forensic_goal_extended.json',
-            'Features & Cues': 'data/evidentiary_features_extended.json',
-            'Search Scope': 'data/analysis_scope_extended.json'
+            'Modality': 'data/modalities_extended.json',
+            'Forensic Goal': 'data/forensic_goal_extended.json',
+            'Evidentiary Features': 'data/evidentiary_features_extended.json',
+            'Search & Analysis Scope': 'data/analysis_scope_extended.json'
         };
 
         window.ontologyAppInitialized = true;
@@ -100,23 +100,23 @@ class OntologyApp {
     async loadInitialStructure() {
         // Create initial structure with placeholders
         this.ontologyData = {
-            'Media Modality': {
-                name: 'Media Modality',
+            'Modality': {
+                name: 'Modality',
                 description: 'Types of media content analyzed in digital forensics',
                 children: null // Will be loaded lazily
             },
-            'Manipulation Type': {
-                name: 'Manipulation Type',
+            'Forensic Goal': {
+                name: 'Forensic Goal',
                 description: 'Types of manipulations and alterations detected in media',
                 children: null
             },
-            'Features & Cues': {
-                name: 'Features & Cues',
+            'Evidentiary Features': {
+                name: 'Evidentiary Features',
                 description: 'Technical features and cues used for detection and analysis',
                 children: null
             },
-            'Search Scope': {
-                name: 'Search Scope',
+            'Search & Analysis Scope': {
+                name: 'Search & Analysis Scope',
                 description: 'Analysis scope and target areas in multimedia forensics',
                 children: null
             }
@@ -257,10 +257,6 @@ class OntologyApp {
         // Accordion functionality
         safeAddEventListener('termsAccordionHeader', 'click', () => {
             this.toggleAccordion('terms');
-        });
-
-        safeAddEventListener('examplesAccordionHeader', 'click', () => {
-            this.toggleAccordion('examples');
         });
 
         safeAddEventListener('papersAccordionHeader', 'click', () => {
@@ -561,7 +557,7 @@ class OntologyApp {
 
         // Update accordion content
         this.updateTermsAccordion(data);
-        this.updateExamplesAccordion(data);
+        this.updateExamplesSection(data);
         this.updatePapersAccordion(data);
 
         // Close all accordions initially
@@ -588,28 +584,22 @@ class OntologyApp {
         }
     }
 
-    updateExamplesAccordion(data) {
+    updateExamplesSection(data) {
         const examplesList = document.getElementById('examplesList');
-        const header = document.getElementById('examplesAccordionHeader');
+        const examplesSection = document.getElementById('examplesSection');
 
         if (data.examples && data.examples.length > 0) {
-            header.querySelector('span').textContent = `Examples (${data.examples.length})`;
+            examplesSection.style.display = 'block';
             examplesList.innerHTML = '';
 
             data.examples.forEach(example => {
                 const exampleItem = document.createElement('div');
-                exampleItem.className = 'example-item';
-
-                const exampleText = document.createElement('p');
-                exampleText.className = 'example-text';
-                exampleText.textContent = example;
-
-                exampleItem.appendChild(exampleText);
+                exampleItem.className = 'example-item-simple';
+                exampleItem.textContent = example;
                 examplesList.appendChild(exampleItem);
             });
         } else {
-            header.querySelector('span').textContent = 'Examples (0)';
-            examplesList.innerHTML = '<p class="no-results">No examples available.</p>';
+            examplesSection.style.display = 'none';
         }
     }
 
@@ -680,7 +670,7 @@ class OntologyApp {
     }
 
     closeAllAccordions() {
-        ['terms', 'papers', 'examples'].forEach(type => {
+        ['terms', 'papers'].forEach(type => {
             const header = document.getElementById(`${type}AccordionHeader`);
             const content = document.getElementById(`${type}AccordionContent`);
 
@@ -1009,7 +999,7 @@ class OntologyApp {
 
     initializeSunburst() {
         this.sunburstRenderer = new SunburstRenderer(this);
-        this.currentSunburstCategory = 'Media Modality';
+        this.currentSunburstCategory = 'Modality';
     }
 
     async renderSunburst() {
@@ -1018,7 +1008,7 @@ class OntologyApp {
         }
 
         // Load all category data
-        const categories = ["Media Modality", "Manipulation Type", "Features & Cues", "Search Scope"];
+        const categories = ["Modality", "Forensic Goal", "Evidentiary Features", "Search & Analysis Scope"];
         for (const category of categories) {
             if (!this.ontologyData[category]) {
                 await this.loadCategoryData(category);
@@ -1042,10 +1032,10 @@ class OntologyApp {
 
         // Calculate statistics for each category
         const categories = {
-            "Media Modality": "mediaModalityTerms",
-            "Manipulation Type": "manipulationTypeTerms",
-            "Features & Cues": "featuresCuesTerms",
-            "Search Scope": "searchScopeTerms"
+            "Modality": "mediaModalityTerms",
+            "Forensic Goal": "manipulationTypeTerms",
+            "Evidentiary Features": "featuresCuesTerms",
+            "Search & Analysis Scope": "searchScopeTerms"
         };
 
         Object.keys(categories).forEach(categoryName => {
@@ -1311,10 +1301,10 @@ class DendrogramRenderer {
     getNodeColor(data) {
         const category = data.category;
         const colors = {
-            'Media Modality': '#3B82F6',
-            'Manipulation Type': '#EF4444',
-            'Features & Cues': '#10B981',
-            'Search Scope': '#5D878F'
+            'Modality': '#3B82F6',
+            'Forensic Goal': '#EF4444',
+            'Evidentiary Features': '#10B981',
+            'Search & Analysis Scope': '#5D878F'
         };
         return colors[category] || '#6B7280';
     }
@@ -1484,7 +1474,7 @@ class SunburstRenderer {
         };
 
         // Add all categories as top-level children
-        const categories = ["Media Modality", "Manipulation Type", "Features & Cues", "Search Scope"];
+        const categories = ["Modality", "Forensic Goal", "Evidentiary Features", "Search & Analysis Scope"];
 
         categories.forEach(categoryName => {
             const categoryData = data[categoryName];
