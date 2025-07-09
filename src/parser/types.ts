@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 export type { ParticipantData } from '../storage/types';
 export type { StoredAnswer, ParticipantMetadata } from '../store/types';
 
@@ -129,6 +131,8 @@ export interface UIConfig {
   minWidthSize?: number;
   /** The minimum screen height size for the study */
   minHeightSize?: number;
+  /** The path to the external stylesheet file. */
+  stylesheetPath?: string;
 }
 
 /**
@@ -187,18 +191,10 @@ export interface BaseResponse {
   withDivider?: boolean;
   /** Renders the response with an option for "I don't know". This counts as a completed answer for the validation. */
   withDontKnow?: boolean;
+  /** The path to the external stylesheet file. */
   stylesheetPath?: string;
-  style?: {
-    width?: string;
-    height?: string;
-    fontSize?: string;
-    fontWeight?: string | number;
-    textAlign?: 'left' | 'center' | 'right';
-    color?: string;
-    backgroundColor?: string;
-    margin?: string;
-    padding?: string;
-  }
+  /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
+  style?: CSSProperties;
 }
 
 /**
@@ -658,18 +654,10 @@ export interface BaseIndividualComponent {
   helpTextPathOverride?: string;
   /** The order of the responses. Defaults to 'fixed'. */
   responseOrder?: 'fixed' | 'random';
+  /** The path to the external stylesheet file. */
   stylesheetPath?: string;
-  style?: {
-    width?: string;
-    height?: string;
-    fontSize?: string;
-    fontWeight?: string | number;
-    textAlign?: 'left' | 'center' | 'right';
-    color?: string;
-    backgroundColor?: string;
-    margin?: string;
-    padding?: string;
-  }
+  /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
+  style?: CSSProperties;
 }
 
 /**
