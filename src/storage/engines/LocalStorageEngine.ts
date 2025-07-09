@@ -224,7 +224,7 @@ export class LocalStorageEngine extends StorageEngine {
     const keys = await this.studyDatabase.keys();
     const sourceKeys = keys.filter((key) => key.startsWith(source));
     const copyPromises = sourceKeys.map(async (key) => {
-      if (key.endsWith('/snapshots')) {
+      if (key.endsWith('/snapshots') || key.endsWith('modes') || key.endsWith('configHash') || key.endsWith('currentParticipantId')) {
         // Skip copying the snapshots file
         return;
       }
@@ -237,7 +237,7 @@ export class LocalStorageEngine extends StorageEngine {
 
   protected async _deleteDirectory(path: string) {
     const keys = await this.studyDatabase.keys();
-    const targetKeys = keys.filter((key) => key.startsWith(path) && !key.includes('snapshot'));
+    const targetKeys = keys.filter((key) => key.startsWith(path) && !key.includes('snapshots'));
     const deletePromises = targetKeys.map((key) => this.studyDatabase.removeItem(key));
     await Promise.all(deletePromises);
   }
@@ -264,21 +264,21 @@ export class LocalStorageEngine extends StorageEngine {
 
   protected async _removeDirectoryNameFromSnapshots(directoryName: string, studyId: string) {
     await this.verifyStudyDatabase();
-    const metadataKey = `${this.collectionPrefix}${studyId}/snapshots`;
-    const metadata = await this.studyDatabase.getItem<SnapshotDocContent>(metadataKey) || {};
-    if (metadata[directoryName]) {
-      delete metadata[directoryName];
-      await this.studyDatabase.setItem(metadataKey, metadata);
+    const snapshotsKey = `${this.collectionPrefix}${studyId}/snapshots`;
+    const snapshots = await this.studyDatabase.getItem<SnapshotDocContent>(snapshotsKey) || {};
+    if (snapshots[directoryName]) {
+      delete snapshots[directoryName];
+      await this.studyDatabase.setItem(snapshotsKey, snapshots);
     }
   }
 
   protected async _changeDirectoryNameInSnapshots(key: string, newName: string, studyId: string) {
     await this.verifyStudyDatabase();
-    const metadataKey = `${this.collectionPrefix}${studyId}/snapshots`;
-    const metadata = await this.studyDatabase.getItem<SnapshotDocContent>(metadataKey) || {};
-    if (metadata[key]) {
-      metadata[key] = { name: newName };
-      await this.studyDatabase.setItem(metadataKey, metadata);
+    const snapshotsKey = `${this.collectionPrefix}${studyId}/snapshots`;
+    const snapshots = await this.studyDatabase.getItem<SnapshotDocContent>(snapshotsKey) || {};
+    if (snapshots[key]) {
+      snapshots[key] = { name: newName };
+      await this.studyDatabase.setItem(snapshotsKey, snapshots);
     } else {
       throw new Error(`Snapshot with name ${key} does not exist`);
     }

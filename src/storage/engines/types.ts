@@ -77,7 +77,7 @@ export type ActionResponse =
 export type SnapshotDocContent = Record<string, { name: string; }>;
 
 export abstract class StorageEngine {
-  protected engine: string;
+  protected engine: 'localStorage' | 'supabase' | 'firebase';
 
   protected testing: boolean;
 
@@ -97,7 +97,7 @@ export abstract class StorageEngine {
 
   protected participantData: ParticipantData | undefined;
 
-  constructor(engine: string, testing: boolean) {
+  constructor(engine: typeof this.engine, testing: boolean) {
     this.engine = engine;
     this.testing = testing;
   }
@@ -766,7 +766,7 @@ export abstract class StorageEngine {
     deleteData: boolean,
   ): Promise<ActionResponse> {
     const sourceName = `${this.collectionPrefix}${studyId}`;
-    if (!(await this._directoryExists(sourceName))) {
+    if (!(await this._directoryExists(`${sourceName}/participants`))) {
       console.warn(`Source directory ${sourceName} does not exist.`);
 
       return {
@@ -791,11 +791,15 @@ export abstract class StorageEngine {
 
     const targetName = `${this.collectionPrefix}${studyId}-snapshot-${formattedDate}`;
 
-    await this._copyDirectory(`${sourceName}/configs`, `${targetName}/configs`);
-    await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
-    await this._copyDirectory(`${sourceName}/audio`, `${targetName}/audio`);
-    await this._copyDirectory(sourceName, targetName);
-    await this._copyRealtimeData(sourceName, targetName);
+    if (this.getEngine() === 'localStorage') {
+      await this._copyDirectory(`${sourceName}/`, `${targetName}/`);
+    } else {
+      await this._copyDirectory(`${sourceName}/configs`, `${targetName}/configs`);
+      await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
+      await this._copyDirectory(`${sourceName}/audio`, `${targetName}/audio`);
+      await this._copyDirectory(sourceName, targetName);
+      await this._copyRealtimeData(sourceName, targetName);
+    }
     await this._addDirectoryNameToSnapshots(targetName, studyId);
 
     const createSnapshotSuccessNotifications: RevisitNotification[] = [];
@@ -831,13 +835,18 @@ export abstract class StorageEngine {
     targetName: string,
     studyId: string,
   ): Promise<ActionResponse> {
+    const deletionTarget = targetName.startsWith(this.collectionPrefix) ? targetName : `${this.collectionPrefix}${targetName}`;
     try {
-      await this._deleteDirectory(`${targetName}/configs`);
-      await this._deleteDirectory(`${targetName}/participants`);
-      await this._deleteDirectory(targetName);
-      await this._deleteRealtimeData(targetName);
+      if (this.getEngine() === 'localStorage') {
+        await this._deleteDirectory(`${deletionTarget}/`);
+      } else {
+        await this._deleteDirectory(`${deletionTarget}/configs`);
+        await this._deleteDirectory(`${deletionTarget}/participants`);
+        await this._deleteDirectory(deletionTarget);
+        await this._deleteRealtimeData(deletionTarget);
+      }
 
-      await this._removeDirectoryNameFromSnapshots(targetName, studyId);
+      await this._removeDirectoryNameFromSnapshots(deletionTarget, studyId);
 
       return {
         status: 'SUCCESS',
