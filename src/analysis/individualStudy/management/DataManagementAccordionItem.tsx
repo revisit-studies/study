@@ -220,7 +220,6 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
         {/* Position relative keeps the loading overlay only on the list */}
         <Box style={{ position: 'relative' }}>
           <LoadingOverlay visible={snapshotListLoading} />
-          {JSON.stringify(snapshots)}
           {Object.keys(snapshots).length > 0
             ? (
               <Table>
