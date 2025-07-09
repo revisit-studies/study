@@ -76,7 +76,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       if (!studyConfig || !storageEngine) return;
       await storageEngine.initializeStudyDb(studyId);
       await storageEngine.saveConfig(studyConfig);
-      const data = (await storageEngine.getAllParticipantsData());
+      const data = (await storageEngine.getAllParticipantsData(studyId));
       setExpData(data);
       setLoading(false);
     }

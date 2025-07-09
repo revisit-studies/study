@@ -53,8 +53,6 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
     return null;
   }
 
-  // Generalized snapshot action handler
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   // Strongly-typed action dispatcher
   const snapshotAction = async (action: SnapshotAction) => {
     setLoading(true);
