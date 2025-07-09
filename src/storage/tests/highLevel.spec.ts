@@ -415,11 +415,9 @@ describe.each([
     expect(restoreResponse.error).not.toBeDefined();
     expect(restoreResponse.notifications).toBeDefined();
     expect(restoreResponse.notifications!.length).toBe(2);
-    // It doesn't matter what each storage engine does here, so we don't check the first notification
-    // Local will succeed, Supabase will fail because local combines directories and realtime
-    // expect(restoreResponse.notifications![0].title).toBe('Failed to Create Snapshot.');
-    // expect(restoreResponse.notifications![0].message).toBe('There is currently no data in your study. A snapshot could not be created.');
-    // expect(restoreResponse.notifications![0].color).toBe('yellow');
+    expect(restoreResponse.notifications![0].title).toBe('Failed to Create Snapshot.');
+    expect(restoreResponse.notifications![0].message).toBe('There is currently no data in your study. A snapshot could not be created.');
+    expect(restoreResponse.notifications![0].color).toBe('yellow');
     expect(restoreResponse.notifications![1].title).toBe('Success!');
     expect(restoreResponse.notifications![1].message).toBe('Successfully restored snapshot to live data.');
     expect(restoreResponse.notifications![1].color).toBe('green');
