@@ -1,6 +1,6 @@
 // Digital Multimedia Forensics Ontology Application
-// Version 2.2 - Updated with cache busting and safe event listeners
-console.log('🔄 OntologyApp v2.2 loaded - Cache bust successful!');
+// Version 2.3 - Fixed all null DOM element access issues
+console.log('🔄 OntologyApp v2.3 loaded - DOM safety fixes applied!');
 
 class OntologyApp {
     constructor() {
@@ -663,6 +663,11 @@ class OntologyApp {
         const header = document.getElementById(`${type}AccordionHeader`);
         const content = document.getElementById(`${type}AccordionContent`);
 
+        if (!header || !content) {
+            console.warn(`Accordion elements for '${type}' not found (header: ${!!header}, content: ${!!content})`);
+            return;
+        }
+
         const isActive = header.classList.contains('active');
 
         if (isActive) {
@@ -678,8 +683,18 @@ class OntologyApp {
         ['terms', 'papers', 'examples'].forEach(type => {
             const header = document.getElementById(`${type}AccordionHeader`);
             const content = document.getElementById(`${type}AccordionContent`);
-            header.classList.remove('active');
-            content.classList.remove('active');
+
+            if (header) {
+                header.classList.remove('active');
+            } else {
+                console.warn(`Accordion header element '${type}AccordionHeader' not found`);
+            }
+
+            if (content) {
+                content.classList.remove('active');
+            } else {
+                console.warn(`Accordion content element '${type}AccordionContent' not found`);
+            }
         });
     }
 
@@ -769,7 +784,12 @@ class OntologyApp {
     }
 
     closeModal() {
-        document.getElementById('paperModal').classList.add('hidden');
+        const modal = document.getElementById('paperModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        } else {
+            console.warn('Paper modal element not found');
+        }
     }
 
     async expandAll() {
@@ -794,6 +814,15 @@ class OntologyApp {
         const statsContainer = document.getElementById('statsContainer');
         const mainLayout = document.querySelector('.main-layout');
         const toggleBtn = document.getElementById('statsToggleBtn');
+
+        if (!statsContainer || !mainLayout || !toggleBtn) {
+            console.warn('Stats elements not found:', {
+                statsContainer: !!statsContainer,
+                mainLayout: !!mainLayout,
+                toggleBtn: !!toggleBtn
+            });
+            return;
+        }
 
         if (statsContainer.classList.contains('collapsed')) {
             // Expand stats
@@ -827,7 +856,17 @@ class OntologyApp {
     toggleTheme() {
         const html = document.documentElement;
         const toggleBtn = document.getElementById('themeToggleBtn');
+
+        if (!toggleBtn) {
+            console.warn('Theme toggle button not found');
+            return;
+        }
+
         const icon = toggleBtn.querySelector('.btn-icon');
+        if (!icon) {
+            console.warn('Theme toggle icon not found');
+            return;
+        }
 
         const currentTheme = html.getAttribute('data-color-scheme');
 
@@ -846,7 +885,21 @@ class OntologyApp {
         const sidebar = document.getElementById('sidebar');
         const mainLayout = document.querySelector('.main-layout');
         const toggleBtn = document.getElementById('sidebarToggleBtn');
+
+        if (!sidebar || !mainLayout || !toggleBtn) {
+            console.warn('Sidebar elements not found:', {
+                sidebar: !!sidebar,
+                mainLayout: !!mainLayout,
+                toggleBtn: !!toggleBtn
+            });
+            return;
+        }
+
         const icon = toggleBtn.querySelector('.btn-icon');
+        if (!icon) {
+            console.warn('Sidebar toggle icon not found');
+            return;
+        }
 
         if (sidebar.classList.contains('collapsed')) {
             // Expand sidebar
