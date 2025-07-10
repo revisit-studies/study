@@ -2,6 +2,9 @@
 // Version 2.3 - Fixed all null DOM element access issues
 console.log('🔄 OntologyApp v2.3 loaded - DOM safety fixes applied!');
 
+// Import Trrack from node_modules
+import { initializeTrrack, Registry, createAction } from '../../../node_modules/@trrack/core/index.mjs';
+
 class OntologyApp {
     constructor() {
         // Prevent multiple initializations
@@ -21,6 +24,10 @@ class OntologyApp {
         this.papersDatabase = {}; // Central papers database for O(1) lookups
         this.papersLoaded = false;
 
+        // Provenance tracking
+        this.trrack = null;
+        this.actions = null;
+
         // JSON file mappings
         this.categoryMappings = {
             'Modality': 'data/modalities_extended.json',
@@ -37,11 +44,215 @@ class OntologyApp {
         this.setInitialState();
         this.showDefaultInfo();
         await this.loadInitialStructure();
+        this.initializeProvenance();
         this.setupEventListeners();
         await this.loadPapersDatabase(); // Load central papers database
         this.renderTree();
         this.initializeDendrogram();
         this.initializeSunburst();
+    }
+
+    initializeProvenance() {
+        console.log('Initializing provenance tracking...');
+        console.log('Using imported Trrack modules from node_modules');
+
+        // Create initial state
+        const initialState = {
+            // Session metadata
+            sessionId: this.generateSessionId(),
+            startTime: Date.now(),
+            userAgent: navigator.userAgent,
+            screenResolution: { width: screen.width, height: screen.height },
+            
+            // Interface state
+            currentView: 'tree',
+            theme: document.documentElement.getAttribute('data-color-scheme') || 'light',
+            sidebarVisible: !document.getElementById('sidebar').classList.contains('collapsed'),
+            statsVisible: !document.getElementById('statsContainer').classList.contains('collapsed'),
+            
+            // Navigation state
+            selectedCategory: null,
+            selectedNode: null,
+            expandedNodes: [],
+            
+            // Search behavior
+            searchQuery: '',
+            totalSearches: 0,
+            
+            // Content exploration
+            viewedPapers: [],
+            openedAccordions: { terms: false, papers: false },
+            
+            // Interaction tracking
+            totalInteractions: 0,
+            categoriesExplored: [],
+            timeSpentPerCategory: {},
+            interactionSequence: []
+        };
+
+        // Create registry and actions
+        const registry = Registry.create();
+
+        // Define actions
+        this.actions = {
+            // View switching
+            changeView: registry.register('changeView', (state, payload) => {
+                state.currentView = payload.newView;
+                state.totalInteractions++;
+                state.interactionSequence.push({
+                    type: 'view_change',
+                    timestamp: Date.now(),
+                    data: payload
+                });
+                return state;
+            }),
+
+            // UI toggles
+            toggleUI: registry.register('toggleUI', (state, payload) => {
+                if (payload.element === 'sidebar') {
+                    state.sidebarVisible = payload.visible;
+                } else if (payload.element === 'stats') {
+                    state.statsVisible = payload.visible;
+                } else if (payload.element === 'theme') {
+                    state.theme = payload.theme;
+                }
+                state.totalInteractions++;
+                state.interactionSequence.push({
+                    type: 'ui_toggle',
+                    timestamp: Date.now(),
+                    data: payload
+                });
+                return state;
+            }),
+
+            // Node selection
+            selectNode: registry.register('selectNode', (state, payload) => {
+                state.selectedNode = payload.nodeId;
+                state.selectedCategory = payload.category;
+                state.totalInteractions++;
+                
+                // Track category exploration
+                if (payload.category && !state.categoriesExplored.includes(payload.category)) {
+                    state.categoriesExplored.push(payload.category);
+                }
+                
+                state.interactionSequence.push({
+                    type: 'node_selection',
+                    timestamp: Date.now(),
+                    data: payload
+                });
+                return state;
+            }),
+
+            // Node expansion
+            expandNode: registry.register('expandNode', (state, payload) => {
+                if (payload.expanded) {
+                    if (!state.expandedNodes.includes(payload.nodeId)) {
+                        state.expandedNodes.push(payload.nodeId);
+                    }
+                } else {
+                    state.expandedNodes = state.expandedNodes.filter(id => id !== payload.nodeId);
+                }
+                state.totalInteractions++;
+                state.interactionSequence.push({
+                    type: 'node_expansion',
+                    timestamp: Date.now(),
+                    data: payload
+                });
+                return state;
+            }),
+
+            // Search actions
+            performSearch: registry.register('performSearch', (state, payload) => {
+                state.searchQuery = payload.query;
+                state.totalSearches++;
+                state.totalInteractions++;
+                state.interactionSequence.push({
+                    type: 'search',
+                    timestamp: Date.now(),
+                    data: payload
+                });
+                return state;
+            }),
+
+            // Paper interactions
+            viewPaper: registry.register('viewPaper', (state, payload) => {
+                if (!state.viewedPapers.includes(payload.paperId)) {
+                    state.viewedPapers.push(payload.paperId);
+                }
+                state.totalInteractions++;
+                state.interactionSequence.push({
+                    type: 'paper_view',
+                    timestamp: Date.now(),
+                    data: payload
+                });
+                return state;
+            }),
+
+            // Accordion interactions
+            toggleAccordion: registry.register('toggleAccordion', (state, payload) => {
+                state.openedAccordions[payload.type] = payload.isOpen;
+                state.totalInteractions++;
+                state.interactionSequence.push({
+                    type: 'accordion_toggle',
+                    timestamp: Date.now(),
+                    data: payload
+                });
+                return state;
+            })
+        };
+
+        // Initialize trrack
+        this.trrack = initializeTrrack({
+            registry,
+            initialState
+        });
+
+        // Set up state change observer
+        this.trrack.currentChange(() => {
+            // Send to reVISit
+            if (window.Revisit) {
+                window.Revisit.postProvenance(this.trrack.graph.backend);
+                
+                // Also send answers for compatibility
+                const currentState = this.trrack.getState();
+                window.Revisit.postAnswers({
+                    ontologyInteraction: {
+                        currentView: currentState.currentView,
+                        totalInteractions: currentState.totalInteractions,
+                        categoriesExplored: currentState.categoriesExplored.length,
+                        searchCount: currentState.totalSearches,
+                        papersViewed: currentState.viewedPapers.length
+                    }
+                });
+            }
+        });
+
+        console.log('✅ Provenance tracking initialized successfully using imported modules!');
+        console.log('📊 Trrack instance:', this.trrack);
+        console.log('📋 Initial state:', this.trrack.getState());
+        console.log('🔧 Available actions:', Object.keys(this.actions));
+        
+        // Test that reVISit communication is working
+        if (window.Revisit) {
+            console.log('🔗 reVISit communication available');
+            // Send initial state
+            window.Revisit.postProvenance(this.trrack.graph.backend);
+            window.Revisit.postAnswers({
+                ontologyInteraction: {
+                    status: 'initialized',
+                    timestamp: Date.now(),
+                    version: 'es-modules'
+                }
+            });
+            console.log('📤 Initial provenance data sent to reVISit');
+        } else {
+            console.warn('⚠️ reVISit communication not available - running in standalone mode');
+        }
+    }
+
+    generateSessionId() {
+        return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
 
     setInitialState() {
@@ -191,7 +402,20 @@ class OntologyApp {
 
         if (searchInput) {
             searchInput.addEventListener('input', async (e) => {
-                this.searchTerm = e.target.value.toLowerCase();
+                const query = e.target.value.toLowerCase();
+                const previousQuery = this.searchTerm;
+                this.searchTerm = query;
+
+                // Track search with provenance (only for non-empty queries or clearing)
+                if (this.trrack && this.actions && (query.length > 0 || (query.length === 0 && previousQuery.length > 0))) {
+                    const actionLabel = query.length > 0 ? `Search: "${query}"` : 'Clear search';
+                    this.trrack.apply(actionLabel, this.actions.performSearch({
+                        query: query,
+                        previousQuery: previousQuery,
+                        currentView: this.currentView,
+                        timestamp: Date.now()
+                    }));
+                }
 
                 // Render the appropriate view based on current view type
                 if (this.currentView === 'tree') {
@@ -215,6 +439,19 @@ class OntologyApp {
         if (clearBtn) {
             clearBtn.addEventListener('click', async () => {
                 if (searchInput) {
+                    const previousQuery = this.searchTerm;
+                    
+                    // Track clear search with provenance
+                    if (this.trrack && this.actions && previousQuery.length > 0) {
+                        this.trrack.apply('Clear search (button)', this.actions.performSearch({
+                            query: '',
+                            previousQuery: previousQuery,
+                            currentView: this.currentView,
+                            clearMethod: 'button',
+                            timestamp: Date.now()
+                        }));
+                    }
+
                     searchInput.value = '';
                     this.searchTerm = '';
                     clearBtn.classList.add('hidden');
@@ -497,6 +734,18 @@ class OntologyApp {
     async toggleNode(nodeId, rootCategory) {
         // Load category data if it's a root category and not loaded yet
         if (nodeId.split('.').length === 1 && !this.loadedCategories.has(nodeId)) {
+            // Track category loading with provenance
+            if (this.trrack && this.actions) {
+                this.trrack.apply(`Load category: ${nodeId}`, this.actions.expandNode({
+                    nodeId: nodeId,
+                    expanded: true,
+                    category: rootCategory,
+                    depth: nodeId.split('.').length,
+                    isLoading: true,
+                    timestamp: Date.now()
+                }));
+            }
+
             // Set loading state and expand the node to show the loading indicator
             this.ontologyData[nodeId].loading = true;
             this.expandedNodes.add(nodeId);
@@ -508,6 +757,20 @@ class OntologyApp {
             // Re-render after loading is complete
             this.renderTree();
             return; // Exit here because renderTree is already called
+        }
+
+        const wasExpanded = this.expandedNodes.has(nodeId);
+        const willBeExpanded = !wasExpanded;
+
+        // Track node expansion with provenance
+        if (this.trrack && this.actions) {
+            this.trrack.apply(`${willBeExpanded ? 'Expand' : 'Collapse'}: ${nodeId}`, this.actions.expandNode({
+                nodeId: nodeId,
+                expanded: willBeExpanded,
+                category: rootCategory,
+                depth: nodeId.split('.').length,
+                timestamp: Date.now()
+            }));
         }
 
         if (this.expandedNodes.has(nodeId)) {
@@ -528,6 +791,21 @@ class OntologyApp {
         // Do not proceed if data failed to load
         if (data.error) {
             return;
+        }
+
+        // Track node selection with provenance
+        if (this.trrack && this.actions) {
+            this.trrack.apply(`Select: ${name}`, this.actions.selectNode({
+                nodeId: nodeId,
+                nodeName: name,
+                category: rootCategory,
+                hasChildren: this.hasChildren(data),
+                paperCount: data.associated_papers ? data.associated_papers.length : 0,
+                termCount: data.associated_terms ? data.associated_terms.length : 0,
+                depth: nodeId.split('.').length,
+                previousSelection: this.selectedNode,
+                timestamp: Date.now()
+            }));
         }
 
         // Remove previous selection
@@ -659,6 +937,17 @@ class OntologyApp {
         }
 
         const isActive = header.classList.contains('active');
+        const willBeOpen = !isActive;
+
+        // Track accordion toggle with provenance
+        if (this.trrack && this.actions) {
+            this.trrack.apply(`${willBeOpen ? 'Expand' : 'Collapse'} ${type} accordion`, this.actions.toggleAccordion({
+                type: type,
+                isOpen: willBeOpen,
+                selectedNode: this.selectedNode,
+                timestamp: Date.now()
+            }));
+        }
 
         if (isActive) {
             header.classList.remove('active');
@@ -689,6 +978,20 @@ class OntologyApp {
     }
 
     showPaperModal(paper) {
+        // Track paper modal opening with provenance
+        if (this.trrack && this.actions) {
+            this.trrack.apply(`View paper: ${paper.title}`, this.actions.viewPaper({
+                paperId: paper.paperId || paper.title, // Use title as fallback if no ID
+                paperTitle: paper.title,
+                paperYear: paper.year,
+                venue: paper.venue,
+                citationCount: paper.citationCount,
+                selectedNode: this.selectedNode,
+                selectedCategory: this.selectedCategory,
+                timestamp: Date.now()
+            }));
+        }
+
         const modal = document.getElementById('paperModal');
 
         // Update modal content
@@ -814,6 +1117,19 @@ class OntologyApp {
             return;
         }
 
+        const wasCollapsed = statsContainer.classList.contains('collapsed');
+        const willBeVisible = wasCollapsed;
+
+        // Track stats panel toggle with provenance
+        if (this.trrack && this.actions) {
+            this.trrack.apply(`${willBeVisible ? 'Show' : 'Hide'} statistics panel`, this.actions.toggleUI({
+                element: 'stats',
+                visible: willBeVisible,
+                previousState: !wasCollapsed,
+                timestamp: Date.now()
+            }));
+        }
+
         if (statsContainer.classList.contains('collapsed')) {
             // Expand stats
             statsContainer.classList.remove('collapsed');
@@ -859,6 +1175,17 @@ class OntologyApp {
         }
 
         const currentTheme = html.getAttribute('data-color-scheme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+        // Track theme change with provenance
+        if (this.trrack && this.actions) {
+            this.trrack.apply(`Switch to ${newTheme} theme`, this.actions.toggleUI({
+                element: 'theme',
+                theme: newTheme,
+                previousTheme: currentTheme,
+                timestamp: Date.now()
+            }));
+        }
 
         if (currentTheme === 'dark') {
             html.setAttribute('data-color-scheme', 'light');
@@ -889,6 +1216,19 @@ class OntologyApp {
         if (!icon) {
             console.warn('Sidebar toggle icon not found');
             return;
+        }
+
+        const wasCollapsed = sidebar.classList.contains('collapsed');
+        const willBeVisible = wasCollapsed;
+
+        // Track sidebar toggle with provenance
+        if (this.trrack && this.actions) {
+            this.trrack.apply(`${willBeVisible ? 'Show' : 'Hide'} sidebar`, this.actions.toggleUI({
+                element: 'sidebar',
+                visible: willBeVisible,
+                previousState: !wasCollapsed,
+                timestamp: Date.now()
+            }));
         }
 
         if (sidebar.classList.contains('collapsed')) {
@@ -932,6 +1272,17 @@ class OntologyApp {
 
     async switchView(viewType) {
         if (this.currentView === viewType) return;
+
+        const previousView = this.currentView;
+        
+        // Track view change with provenance
+        if (this.trrack && this.actions) {
+            this.trrack.apply(`Switch to ${viewType} view`, this.actions.changeView({
+                newView: viewType,
+                previousView: previousView,
+                timestamp: Date.now()
+            }));
+        }
 
         this.currentView = viewType;
 
