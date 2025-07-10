@@ -1,4 +1,4 @@
-import { CSSProperties, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ReactMarkdownWrapper } from '../components/ReactMarkdownWrapper';
 import { MarkdownComponent } from '../parser/types';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
@@ -6,7 +6,7 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { PREFIX } from '../utils/Prefix';
 import { fetchStylesheet } from '../utils/fetchStylesheet';
 
-const defaultStyle: CSSProperties = {
+const defaultStyle :React.CSSProperties = {
   width: '100%',
 };
 

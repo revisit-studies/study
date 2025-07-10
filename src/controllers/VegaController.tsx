@@ -1,5 +1,4 @@
 import {
-  CSSProperties,
   useCallback, useEffect, useMemo, useState,
 } from 'react';
 import { Vega, VisualizationSpec, View } from 'react-vega';
@@ -22,7 +21,7 @@ export interface VegaProvState {
   };
 }
 
-const defaultStyle: CSSProperties = {
+const defaultStyle: React.CSSProperties = {
   width: '100%',
 };
 

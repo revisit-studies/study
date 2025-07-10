@@ -1,5 +1,3 @@
-import { CSSProperties } from 'react';
-
 export type { ParticipantData } from '../storage/types';
 export type { StoredAnswer, ParticipantMetadata } from '../store/types';
 
@@ -194,7 +192,7 @@ export interface BaseResponse {
   /** The path to the external stylesheet file. */
   stylesheetPath?: string;
   /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
-  style?: CSSProperties;
+  style?: React.CSSProperties;
 }
 
 /**
@@ -657,7 +655,7 @@ export interface BaseIndividualComponent {
   /** The path to the external stylesheet file. */
   stylesheetPath?: string;
   /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
-  style?: CSSProperties;
+  style?: React.CSSProperties;
 }
 
 /**

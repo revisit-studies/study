@@ -1,6 +1,6 @@
 import { Image } from '@mantine/core';
 import {
-  CSSProperties, useEffect, useMemo, useState,
+  useEffect, useMemo, useState,
 } from 'react';
 import { ImageComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
@@ -8,7 +8,7 @@ import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { fetchStylesheet } from '../utils/fetchStylesheet';
 
-const defaultStyle: CSSProperties = {
+const defaultStyle: React.CSSProperties = {
   maxWidth: '100%',
 };
 

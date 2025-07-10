@@ -1,5 +1,5 @@
 import {
-  CSSProperties, Suspense, useCallback, useEffect,
+  Suspense, useCallback, useEffect,
 } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ParticipantData, ReactComponent } from '../parser/types';
@@ -15,7 +15,7 @@ const modules = import.meta.glob(
   { eager: true },
 );
 
-const defaultStyle: CSSProperties = {
+const defaultStyle: React.CSSProperties = {
   width: '100%',
 };
 
