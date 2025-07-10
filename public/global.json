@@ -19,6 +19,7 @@
     "demo-video-slider",
     "demo-video",
     "demo-dynamic",
+    "demo-yaml",
     "library-beauvis",
     "library-calvi",
     "library-color-blindness",
@@ -89,6 +90,9 @@
     },
     "demo-image": {
       "path": "demo-image/config.json"
+    },
+    "demo-yaml": {
+      "path": "demo-yaml/config.yaml"
     },
     "test-audio": {
       "path": "test-audio/config.json",
