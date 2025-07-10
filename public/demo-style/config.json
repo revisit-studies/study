@@ -32,13 +32,6 @@
     "markdown-component": {
       "type": "markdown",
       "path": "demo-style/assets/test.md",
-      "style": {
-        "width": "800px",
-        "margin": "20px auto",
-        "padding": "30px",
-        "backgroundColor": "#deeff5",
-        "fontSize": "16px"
-      },
       "response": [
         {
           "id": "markdown-feedback",
@@ -56,9 +49,6 @@
       "parameters": {
         "speed": 100
       },
-      "style": {
-        "backgroundColor": "#9abddc"
-      },
       "response": [
         {
           "id": "react-difficulty",
@@ -74,9 +64,6 @@
       "type": "image",
       "path": "demo-image/assets/uncertainty-1.png",
       "instruction": "This is an image component. The style of this component is width: 500px. ",
-      "style": {
-        "width": "600px"
-      },
       "response": [
         {
           "id": "image-clarity",
@@ -93,13 +80,6 @@
     "website-component": {
       "type": "website",
       "path": "https://revisit.dev/docs/introduction/",
-      "style": {
-        "width": "80%",
-        "height": "500px",
-        "margin": "15px auto",
-        "padding": "10px",
-        "backgroundColor": "#f3e5f5"
-      },
       "response": [
         {
           "id": "website-interaction",
@@ -113,14 +93,6 @@
     },
     "questionnaire-component": {
       "type": "questionnaire",
-      "style": {
-        "width": "700px",
-        "margin": "20px auto",
-        "padding": "25px",
-        "backgroundColor": "blue",
-        "fontSize": "18px",
-        "textAlign": "left"
-      },
       "response": [
         {
           "id": "questionnaire-example",
@@ -135,13 +107,6 @@
     "vega-path-component": {
       "type": "vega",
       "path": "demo-vega/specs/vegademo1.specs.json",
-      "style": {
-        "width": "650px",
-        "height": "450px",
-        "margin": "20px auto",
-        "padding": "20px",
-        "backgroundColor": "#fff8e1"
-      },
       "response": [
         {
           "id": "vega-path-feedback",
@@ -173,13 +138,6 @@
           "y": {"field": "value", "type": "quantitative"}
         }
       },
-      "style": {
-        "width": "400px",
-        "height": "300px",
-        "margin": "25px auto",
-        "padding": "15px",
-        "backgroundColor": "#fce4ec"
-      },
       "response": [
         {
           "id": "vega-config-feedback",
@@ -194,13 +152,6 @@
     "video-component": {
       "type": "video",
       "path": "demo-video/assets/venice.mp4",
-      "style": {
-        "width": "640px",
-        "height": "360px",
-        "margin": "20px auto",
-        "padding": "10px",
-        "backgroundColor": "#263238"
-      },
       "forceCompletion": false,
       "withTimeline": true,
       "response": [
@@ -217,13 +168,6 @@
     },
     "responses": {
       "type": "questionnaire",
-      "style": {
-        "width": "800px",
-        "margin": "30px auto",
-        "padding": "40px",
-        "backgroundColor": "#f5f5f5",
-        "fontSize": "16px"
-      },
       "response": [
         {
           "id": "numerical-response",
@@ -233,13 +177,7 @@
           "min": 18,
           "max": 99,
           "placeholder": "Age",
-          "required": true,
-          "style": {
-            "backgroundColor": "#ffeb3b",
-            "padding": "10px",
-            "margin": "5px 0",
-            "fontSize": "14px"
-          }
+          "required": true
         },
         {
           "id": "short-text-response",
@@ -247,13 +185,8 @@
           "type": "shortText",
           "location": "belowStimulus",
           "placeholder": "Enter name",
-          "required": true,
-          "style": {
-            "backgroundColor": "#e8f5e8",
-            "padding": "12px",
-            "margin": "8px 0",
-            "fontSize": "16px"
-          }
+          "required": true
+          
         },
         {
           "id": "long-text-response",
@@ -261,13 +194,8 @@
           "type": "longText",
           "location": "belowStimulus",
           "placeholder": "Enter detailed comments",
-          "required": false,
-          "style": {
-            "backgroundColor": "#f0f8ff",
-            "padding": "15px",
-            "margin": "10px 0",
-            "fontSize": "15px"
-          }
+          "required": false
+         
         },
         {
           "id": "likert-response",
@@ -277,13 +205,7 @@
           "numItems": 7,
           "leftLabel": "Very dissatisfied",
           "rightLabel": "Very satisfied",
-          "required": true,
-          "style": {
-            "backgroundColor": "#fff3e0",
-            "padding": "18px",
-            "margin": "12px 0",
-            "textAlign": "center"
-          }
+          "required": true
         },
         {
           "id": "matrix-response",
@@ -292,12 +214,7 @@
           "location": "belowStimulus",
           "answerOptions": ["Poor", "Fair", "Good", "Excellent"],
           "questionOptions": ["Design", "Usability", "Performance"],
-          "required": true,
-          "style": {
-            "backgroundColor": "#f8bbd9",
-            "padding": "20px",
-            "margin": "15px 0"
-          }
+          "required": true
         },
         {
           "id": "dropdown-response",
@@ -306,13 +223,7 @@
           "location": "belowStimulus",
           "placeholder": "Choose country",
           "options": ["USA", "Canada", "UK", "Germany", "Other"],
-          "required": true,
-          "style": {
-            "backgroundColor": "#e1f5fe",
-            "padding": "14px",
-            "margin": "10px 0",
-            "fontWeight": "bold"
-          }
+          "required": true
         },
         {
           "id": "slider-response",
@@ -323,12 +234,7 @@
             {"label": "Beginner", "value": 1},
             {"label": "Expert", "value": 10}
           ],
-          "required": true,
-          "style": {
-            "backgroundColor": "#f3e5f5",
-            "padding": "16px",
-            "margin": "12px 0"
-          }
+          "required": true
         },
         {
           "id": "radio-response",
@@ -336,13 +242,8 @@
           "type": "radio",
           "location": "belowStimulus",
           "options": ["Option A", "Option B", "Option C"],
-          "required": true,
-          "style": {
-            "backgroundColor": "#e8f5e8",
-            "padding": "15px",
-            "margin": "10px 0",
-            "fontSize": "17px"
-          }
+          "required": true
+          
         },
         {
           "id": "checkbox-response",
@@ -350,24 +251,13 @@
           "type": "checkbox",
           "location": "belowStimulus",
           "options": ["Feature 1", "Feature 2", "Feature 3", "Feature 4"],
-          "required": true,
-          "style": {
-            "backgroundColor": "#fff8e1",
-            "padding": "18px",
-            "margin": "12px 0"
-          }
+          "required": true
         },
         {
           "id": "reactive-response",
           "prompt": "Interactive response (Reactive Response):",
           "type": "reactive",
-          "location": "belowStimulus",
-          "style": {
-            "backgroundColor": "#fce4ec",
-            "padding": "20px",
-            "margin": "15px 0",
-            "textAlign": "center"
-          }
+          "location": "belowStimulus"
         },
         {
           "id": "buttons-response",
@@ -375,28 +265,13 @@
           "type": "buttons",
           "location": "belowStimulus",
           "options": ["Yes", "No", "Maybe"],
-          "required": true,
-          "style": {
-            "backgroundColor": "#e0f2f1",
-            "padding": "16px",
-            "margin": "10px 0",
-            "textAlign": "center",
-            "fontWeight": "600"
-          }
+          "required": true
         },
         {
           "id": "text-only-response",
           "prompt": "**This is a Text-Only Response** - no input required, just styled information display.",
           "type": "textOnly",
-          "location": "belowStimulus",
-          "style": {
-            "backgroundColor": "#ffccbc",
-            "padding": "25px",
-            "margin": "20px 0",
-            "textAlign": "center",
-            "fontSize": "18px",
-            "fontWeight": "bold"
-          }
+          "location": "belowStimulus"
         }
       ]
     },
