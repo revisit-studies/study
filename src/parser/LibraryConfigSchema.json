@@ -190,6 +190,10 @@
             ],
             "type": "string"
           },
+          "withActions": {
+            "description": "Whether to include vega actions. Defaults to true.",
+            "type": "boolean"
+          },
           "withTimeline": {
             "description": "Whether to show the video timeline. Defaults to false.",
             "type": "boolean"
@@ -987,6 +991,10 @@
             "video"
           ],
           "type": "string"
+        },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
         },
         "withTimeline": {
           "description": "Whether to show the video timeline. Defaults to false.",
@@ -2345,6 +2353,10 @@
         "type": {
           "const": "vega",
           "type": "string"
+        },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2452,6 +2464,10 @@
         "type": {
           "const": "vega",
           "type": "string"
+        },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
         }
       },
       "required": [

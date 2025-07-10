@@ -857,6 +857,8 @@ export interface VegaComponentPath extends BaseIndividualComponent {
   type: 'vega';
   /** The path to the vega file. This should be a relative path from the public folder. */
   path: string;
+  /** Whether to include vega actions. Defaults to true. */
+  withActions?: boolean;
 }
 
 /**
@@ -892,6 +894,8 @@ export interface VegaComponentConfig extends BaseIndividualComponent {
   type: 'vega';
   /** The vega or vega-lite configuration. */
   config: object;
+  /** Whether to include vega actions. Defaults to true. */
+  withActions?: boolean;
 }
 
 export type VegaComponent = VegaComponentPath | VegaComponentConfig;
