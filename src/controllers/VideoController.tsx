@@ -1,4 +1,5 @@
 import {
+  CSSProperties,
   forwardRef, RefObject, useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { Box } from '@mantine/core';
@@ -12,7 +13,7 @@ import { useStoreActions, useStoreDispatch } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 import { fetchStylesheet } from '../utils/fetchStylesheet';
 
-const defaultStyle = {
+const defaultStyle: CSSProperties = {
   width: '100%',
 };
 

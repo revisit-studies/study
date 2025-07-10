@@ -1,5 +1,5 @@
 import {
-  useCallback, useEffect, useMemo, useRef, useState,
+  CSSProperties, useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
@@ -10,7 +10,7 @@ import { fetchStylesheet } from '../utils/fetchStylesheet';
 
 const PREFIX = '@REVISIT_COMMS';
 
-const defaultStyle = {
+const defaultStyle: CSSProperties = {
   width: '100%',
   border: 0,
 };
