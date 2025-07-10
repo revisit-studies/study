@@ -746,8 +746,6 @@ export interface ImageComponent extends BaseIndividualComponent {
   type: 'image';
   /** The path to the image. This could be a relative path from the public folder or a url to an external image. */
   path: string;
-  /** The style of the image. This is an object with css properties as keys and css values as values. */
-  style?: Record<string, string>;
 }
 
 /**

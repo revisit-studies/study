@@ -168,19 +168,7 @@
             "type": "string"
           },
           "style": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/React.CSSProperties",
-                "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
-              },
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "The style of the image. This is an object with css properties as keys and css values as values.",
-                "type": "object"
-              }
-            ],
+            "$ref": "#/definitions/React.CSSProperties",
             "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
           },
           "stylesheetPath": {
@@ -1687,11 +1675,8 @@
           "type": "string"
         },
         "style": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "The style of the image. This is an object with css properties as keys and css values as values.",
-          "type": "object"
+          "$ref": "#/definitions/React.CSSProperties",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1953,19 +1938,7 @@
           "type": "string"
         },
         "style": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/React.CSSProperties",
-              "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
-            },
-            {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "description": "The style of the image. This is an object with css properties as keys and css values as values.",
-              "type": "object"
-            }
-          ],
+          "$ref": "#/definitions/React.CSSProperties",
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
         },
         "stylesheetPath": {
