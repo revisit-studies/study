@@ -1,62 +1,341 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consent Form</title>
+    <title>Informed Consent Document</title>
     <style>
-        body { 
+        body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6; 
+            line-height: 1.6;
             padding: 1em 2em;
             color: #333;
+            max-width: 800px;
+            margin: 0 auto;
         }
-        h1, h2 { 
-            border-bottom: 1px solid #eee; 
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
             padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        h2 {
+            color: #34495e;
+            border-bottom: 1px solid #ecf0f1;
+            padding-bottom: 8px;
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+
+        h3 {
+            color: #2c3e50;
             margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        .investigators {
+            background-color: #f8f9fa;
+            padding: 1em;
+            border-radius: 5px;
+            margin: 1em 0;
+        }
+
+        .investigator {
+            margin-bottom: 1em;
+        }
+
+        .investigator:last-child {
+            margin-bottom: 0;
+        }
+
+        .investigator strong {
+            color: #2c3e50;
+        }
+
+        .investigators-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2em;
+            margin: 1em 0;
+        }
+
+        .contact-investigators-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
+            margin: 1em 0;
+        }
+
+        .contact-info {
+            background-color: #e8f4f8;
+            padding: 1.5em;
+            border-radius: 5px;
+            margin: 0;
+        }
+
+        .contact-info h3 {
+            margin-top: 0;
+            margin-bottom: 0.5em;
+            color: #2c3e50;
+        }
+
+        .contact-info p {
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .highlight {
+            background-color: #fff3cd;
+            padding: 0.5em;
+            border-left: 4px solid #ffc107;
+            margin: 1em 0;
+        }
+
+        .consent-statement {
+            background-color: #f8f9fa;
+            padding: 1.5em;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            margin: 2em 0;
+        }
+
+        ul,
+        ol {
+            margin-left: 1.5em;
+        }
+
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .duration-participants {
+            display: flex;
+            gap: 2em;
+            margin: 1em 0;
+        }
+
+        .duration-participants>div {
+            flex: 1;
+            background-color: #f8f9fa;
+            padding: 1em;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .duration-participants {
+                flex-direction: column;
+                gap: 1em;
+            }
+        }
+
+        @media (max-width: 768px) {
+
+            .investigators-grid,
+            .contact-investigators-grid {
+                grid-template-columns: 1fr;
+                gap: 1em;
+            }
         }
     </style>
 </head>
-<body>
-    <h1>Consent to Participate in Research</h1>
 
-    <h2>Study Title</h2>
-    <p>SME Evaluation Survey: Digital Visual Media Forensics Ontology</p>
+<body>
+    <h1>Informed Consent Document</h1>
+
+    <div class="investigators-grid">
+        <div class="investigators">
+            <h3>Principal Investigators</h3>
+            <div class="investigator">
+                <strong>Saniat J. Sohrawardi</strong><br>
+                Department: B. Thomas Golisano College of Computing and Information Sciences, RIT<br>
+                Office: GCI-3735<br>
+                Email: <a href="mailto:saniat.s@mail.rit.edu">saniat.s@mail.rit.edu</a>
+            </div>
+            <div class="investigator">
+                <strong>Y. Kelly Wu</strong><br>
+                Department: B. Thomas Golisano College of Computing and Information Sciences, RIT<br>
+                Office: GCI-3735<br>
+                Email: <a href="mailto:kellywu@mail.rit.edu">kellywu@mail.rit.edu</a>
+            </div>
+        </div>
+
+        <div class="investigators">
+            <h3>Collaborators</h3>
+            <div class="investigator">
+                <strong>Dr. Matthew Wright</strong><br>
+                Department: Cybersecurity, RIT<br>
+                Office: GCI-1781<br>
+                Email: <a href="mailto:matthew.wright@rit.edu">matthew.wright@rit.edu</a>
+            </div>
+            <div class="investigator">
+                <strong>Candice Gerstner</strong><br>
+                Affiliation: Research Directorate and AI Security Center, National Security Agency<br>
+                Email: <a href="mailto:crgerst@uwe.nsa.gov">crgerst@uwe.nsa.gov</a>
+            </div>
+        </div>
+    </div>
+
+    <h2>Title of Project</h2>
+    <p><strong>Developing an Ontology-based Framework for Digital Media Forensics</strong></p>
 
     <h2>Introduction</h2>
-    <p>You are being asked to participate in a research study. This form provides you with information about the study. The Principal Investigator (the person in charge of this research) or his/her representative will also describe this study to you and answer all of your questions. Please read the information below and ask questions about anything you do not understand before deciding whether or not to take part.</p>
+    <p>You are invited to participate in a survey that evaluates a proposed Digital Visual Media Forensics Ontology. The
+        survey first collects a few background details about your professional experience. You will then be asked to
+        give your views on the ontology's:</p>
+    <ul>
+        <li><strong>Organization</strong> – how well its hierarchy and categories are structured</li>
+        <li><strong>Completeness</strong> – whether important concepts are missing</li>
+        <li><strong>Correctness</strong> – whether any elements are misplaced or inaccurate</li>
+        <li><strong>Clarity</strong> – how clear and unambiguous the terminology is</li>
+    </ul>
+    <p>An interactive viewer lets you explore the ontology in three complementary views while you respond. You will also
+        evaluate how useful each view is and comment on potential real-world applications of the ontology.</p>
+    <p>Participation is entirely voluntary. If any part of this form or the study is unclear, please contact the
+        research team using the e-mail addresses or phone numbers listed at the end of this document.</p>
 
     <h2>Purpose</h2>
-    <p>The purpose of this study is to evaluate the structure, completeness, and utility of a Digital Visual Media Forensics ontology. Your feedback will help improve the ontology and make it more useful for the digital forensics community.</p>
+    <p>The goal of this study is to obtain informed feedback from subject-matter experts on the proposed Digital Visual
+        Media Forensics Ontology. Your insights will help us identify strengths, gaps, and areas for improvement. The
+        aggregated findings will be used to refine the ontology and to guide its future implementation in real-world
+        applications.</p>
+
+    <div class="duration-participants">
+        <div>
+            <h3>Duration</h3>
+            <p>We expect the study session to take <strong>45-60 minutes</strong>.</p>
+        </div>
+        <div>
+            <h3>Number of Participants</h3>
+            <p>The number of anticipated participants in this survey is <strong>up to 50</strong>.</p>
+        </div>
+    </div>
 
     <h2>Procedures</h2>
-    <p>If you agree to participate, you will be asked to:</p>
+    <p>If you decide to participate, you will complete an online survey in either Qualtrics or ReVisit that lasts 45-60
+        minutes. After electronically agreeing to this consent form, you will:</p>
     <ol>
-        <li>Complete a survey about your expertise in digital media forensics</li>
-        <li>Evaluate different aspects of the ontology through a series of questions</li>
-        <li>Provide feedback on the interactive viewer</li>
-        <li>Share your overall assessment of the ontology</li>
+        <li>Answer a brief set of background questions about your professional experience</li>
+        <li>Explore the proposed Digital Visual Media Forensics Ontology through an interactive viewer</li>
+        <li>Provide feedback on its organization, completeness, correctness, and clarity</li>
+        <li>Evaluate the different views presented in the interactive viewer</li>
+        <li>Comment on the ontology's future use cases</li>
+        <li>Optionally schedule a separate 30-minute video conversation to further discuss your answers</li>
     </ol>
-    <p>The survey should take approximately 25-35 minutes to complete.</p>
+    <p>You may skip any question or exit the survey at any time without penalty. All responses will be de-identified
+        before analysis.</p>
 
-    <h2>Risks</h2>
-    <p>There are no known risks associated with participating in this study.</p>
+    <h2>Possible Risks/Discomforts</h2>
+    <p>No personally identifying information will be collected in the survey unless you voluntarily provide your email
+        address. We will only use it if we need to follow up with you regarding your answers in the survey. Your email
+        addresses will not be linked to the study data.</p>
 
-    <h2>Benefits</h2>
-    <p>Your participation will help improve the Digital Visual Media Forensics ontology, which aims to standardize terminology and structure in the field. This could benefit the entire digital forensics community.</p>
+    <div class="highlight">
+        <strong>Important Notice:</strong> For participants who have access to or knowledge of any classified
+        information, please keep your answers to the study questions at the <strong>UNCLASSIFIED</strong> level.
+    </div>
 
-    <h2>Confidentiality</h2>
-    <p>Your responses will be kept confidential. All data will be stored securely and will only be used for research purposes. Your name and any identifying information will not be included in any reports or publications.</p>
+    <p>Should you experience any discomfort, you have the right to quit the study at any time.</p>
+
+    <h2>Possible Benefits</h2>
+    <p>You will not receive any direct personal benefits or compensation for taking part in this study. However, your
+        participation may provide several indirect benefits:</p>
+    <ul>
+        <li>Your expert feedback will help refine a publicly available Digital Visual Media Forensics Ontology,
+            supporting the development of future real-world applications that can be based on this framework</li>
+        <li>By shaping a community resource, you contribute to shared standards that can enhance collaboration among
+            practitioners, investigators, and researchers</li>
+        <li>Upon request, the research team will send you a copy of any resulting publications</li>
+    </ul>
+
+    <h2>Alternative Procedures</h2>
+    <p>If you would rather not complete the online survey, you may instead participate in a video interview (no more
+        than an hour) conducted via Zoom, Google Meet, or Microsoft Teams. The interview will follow the same question
+        set as the survey but in a semi-structured, conversational format.</p>
+    <p>To choose this option, email or call the research team using the contact information provided at the end of this
+        document. There is no penalty for selecting one format over the other.</p>
 
     <h2>Voluntary Participation</h2>
-    <p>Your participation in this study is completely voluntary. You may choose not to participate or to withdraw from the study at any time without penalty.</p>
+    <p>Participation in this research study is voluntary. You have the right to decline participation in any or all
+        study procedures or quit at any time with no consequence.</p>
+    <p>Furthermore, please note that you are not required to answer any questions that you do not feel comfortable
+        answering during the course of this study. Brief explanations, however, make your feedback especially valuable.
+        If you're willing, we would appreciate a sentence or two wherever the survey invites you to share the reasons
+        behind your selections.</p>
 
-    <h2>Contact Information</h2>
-    <p>If you have any questions about this study, please contact [Your Contact Information].</p>
+    <h2>Confidentiality</h2>
+    <p>Only Y. Kelly Wu, Saniat Sohrawardi, and Dr. Matthew Wright will have access to all of the data collected from
+        participants. Unless you specifically give us written permission to identify you directly, in any publications
+        or presentations of our research we will use a coded name instead of your real name and describe your
+        organization in a category (e.g. "a large national TV news operation", "a national-level law enforcement agency
+        in North America", or "Private university in the U.S.") instead of naming it directly.</p>
+    <p>All non-audio data associated with this study will be maintained for 3 years after study procedures are complete
+        and will be stored in the ESL Global Cybersecurity Institute at RIT.</p>
+    <p>If in the unlikely event, it becomes necessary for the RIT Institutional Review Board to review your research
+        records, then Rochester Institute of Technology will protect the confidentiality of those records to the extent
+        permitted by law.</p>
+
+    <h2>Contact for Questions</h2>
+    <p>You are encouraged to contact us with any questions or concerns that you might have, even after leaving this
+        study. Furthermore, we will gladly provide you with a debriefing regarding this form, the program, or the
+        research if you desire.</p>
+
+    <div class="contact-investigators-grid">
+        <div class="contact-info">
+            <h3>Saniat J. Sohrawardi</h3>
+            <p>Phone: 585-465-6427<br>
+                Email: <a href="mailto:saniat.s@mail.rit.edu">saniat.s@mail.rit.edu</a></p>
+        </div>
+        <div class="contact-info">
+            <h3>Y. Kelly Wu</h3>
+            <p>Phone: 267-303-4546<br>
+                Email: <a href="mailto:kellywu@mail.rit.edu">kellywu@mail.rit.edu</a></p>
+        </div>
+        <div class="contact-info">
+            <h3>Dr. Matthew Wright</h3>
+            <p>Phone: 585-475-5432<br>
+                Email: <a href="mailto:matthew.wright@rit.edu">matthew.wright@rit.edu</a></p>
+        </div>
+        <div class="contact-info">
+            <h3>IRB Contact</h3>
+            <p>Heather Foti<br>
+                Assistant Director of the Office of Human Subjects Research<br>
+                Rochester Institute of Technology<br>
+                Phone: 585-475-7673<br>
+                Email: <a href="mailto:hmfsrs@rit.edu">hmfsrs@rit.edu</a></p>
+        </div>
+    </div>
+
+    <div class="consent-statement">
+        <h2>Consent</h2>
+        <p>By accepting this Informed Consent Document, you indicate your consent to participate in this survey
+            study.
+            You also confirm that you are 18 years of age or older, you are the legal guardian of yourself, you have
+            read or had this document read to you, and you are in an appropriate physical and mental state to
+            complete
+            the study procedures.</p>
+        <p>You have been informed about this study's purpose, procedures, possible benefits and risks, and you have
+            received a copy of this form. You have been given the opportunity to ask questions before you sign, and
+            you
+            have been told that you can ask other questions at any time.</p>
+        <p><strong>You voluntarily agree to participate in this study.</strong> By accepting this Informed Consent
+            Document, you are not waiving any of your legal rights. Refusal to participate will involve no penalty
+            or
+            loss of benefits to which you are otherwise entitled. You may discontinue participation at any time
+            without
+            penalty or loss of benefits to which you are otherwise entitled.</p>
+    </div>
 
     <hr>
-    <p>Please answer the consent question in the sidebar to proceed.</p>
+    <p><strong>Please answer the consent question below to proceed.</strong></p>
 
 </body>
-</html> 
+
+</html>
