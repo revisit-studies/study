@@ -46,6 +46,8 @@
     "react-component": {
       "type": "react-component",
       "path": "demo-click-accuracy-test/assets/ClickAccuracyTest.tsx",
+      "instruction": "This is a react component. The style of this component is width: 500px, backgroundColor:... ",
+      "instructionLocation": "aboveStimulus",
       "parameters": {
         "speed": 100
       },
@@ -63,7 +65,7 @@
     "image-component": {
       "type": "image",
       "path": "demo-image/assets/uncertainty-1.png",
-      "instruction": "This is an image component. The style of this component is width: 500px. ",
+      "instruction": "This is an image component. The style of this component is `#stylesheet-demo {background: lightblue;}` ",
       "response": [
         {
           "id": "image-clarity",
@@ -275,13 +277,13 @@
         }
       ]
     },
-    "component": {
+    "markdown": {
       "type": "markdown",
-      "path": "demo-style/assets/help.md",
-      "stylesheetPath": "demo-style/assets/style.css",
+      "path": "demo-style/assets/componentStylesheet.md",
+      "stylesheetPath": "demo-style/assets/componentStylesheet.css",
       "response": [
         {
-          "id": "stylesheet-demo-1",
+          "id": "stylesheet-demo",
           "prompt": "This component uses external CSS (stylesheetPath). How does it look?",
           "type": "radio",
           "location": "belowStimulus",
@@ -290,6 +292,7 @@
         }
       ]
     },
+    
     "response": {
       "type": "questionnaire",
       "stylesheetPath": "demo-style/assets/style.css",
@@ -344,7 +347,7 @@
         "id": "componentStylesheet",
         "order": "fixed",
         "components": [
-          "component"
+          "markdown"
         ]
       },
       {
