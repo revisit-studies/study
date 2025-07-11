@@ -4,7 +4,7 @@ import { MarkdownComponent } from '../parser/types';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { PREFIX } from '../utils/Prefix';
-import { fetchStylesheet } from '../utils/fetchStylesheet';
+import { useFetchStylesheet } from '../utils/fetchStylesheet';
 
 const defaultStyle :React.CSSProperties = {
   width: '100%',
@@ -14,12 +14,7 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
   const markdownStyle = { ...defaultStyle, ...currentConfig.style };
   const [importedText, setImportedText] = useState<string>('');
 
-  // Fetch external stylesheet if specified
-  useEffect(() => {
-    if (currentConfig.stylesheetPath) {
-      fetchStylesheet(currentConfig.stylesheetPath);
-    }
-  }, [currentConfig.stylesheetPath]);
+  useFetchStylesheet(currentConfig.stylesheetPath);
 
   const [loading, setLoading] = useState(true);
   useEffect(() => {

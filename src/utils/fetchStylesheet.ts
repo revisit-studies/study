@@ -1,17 +1,25 @@
+import { useEffect } from 'react';
+
 const PREFIX = '/';
-const fetchedStylesheets = new Set<string>();
 
-export function fetchStylesheet(stylesheetPath: string): void {
-  const url = `${PREFIX}${stylesheetPath}`;
+export const useFetchStylesheet = (stylesheetPath: string | undefined): void => {
+  useEffect(() => {
+    if (!stylesheetPath) {
+      return () => {};
+    }
 
-  const link = document.createElement('link');
-  link.type = 'text/css';
-  link.rel = 'stylesheet';
-  link.href = url;
+    const link = document.createElement('link');
+    link.type = 'text/css';
+    link.rel = 'stylesheet';
+    link.href = `${PREFIX}${stylesheetPath}`;
+    link.dataset.stylesheetPath = stylesheetPath;
 
-  link.onload = () => {
-    fetchedStylesheets.add(stylesheetPath);
-  };
+    document.head.appendChild(link);
 
-  document.head.appendChild(link);
-}
+    return () => {
+      if (link.parentNode) {
+        link.parentNode.removeChild(link);
+      }
+    };
+  }, [stylesheetPath]);
+};

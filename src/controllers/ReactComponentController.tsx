@@ -1,5 +1,5 @@
 import {
-  Suspense, useCallback, useEffect,
+  Suspense, useCallback,
 } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ParticipantData, ReactComponent } from '../parser/types';
@@ -8,7 +8,7 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentIdentifier } from '../routes/utils';
 import { ErrorBoundary } from './ErrorBoundary';
-import { fetchStylesheet } from '../utils/fetchStylesheet';
+import { useFetchStylesheet } from '../utils/fetchStylesheet';
 
 const modules = import.meta.glob(
   '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
@@ -25,11 +25,7 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
   const identifier = useCurrentIdentifier();
   const reactStyle = { ...defaultStyle, ...currentConfig.style };
 
-  useEffect(() => {
-    if (currentConfig.stylesheetPath) {
-      fetchStylesheet(currentConfig.stylesheetPath);
-    }
-  }, [currentConfig.stylesheetPath]);
+  useFetchStylesheet(currentConfig.stylesheetPath);
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
