@@ -43,7 +43,7 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <div id={currentConfig.response[0].type} style={reactStyle}>
+      <div id={currentConfig.type} style={reactStyle}>
         {StimulusComponent
           ? (
             <ErrorBoundary>

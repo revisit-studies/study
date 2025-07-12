@@ -114,7 +114,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   return (
     <iframe
       ref={ref}
-      id={iframeId}
+      id={currentConfig.type}
       src={
         currentConfig.path.startsWith('http')
           ? currentConfig.path
