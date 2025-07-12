@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/jk/stylesheet/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Styling Demo Study",
     "version": "pilot",
@@ -295,17 +295,17 @@
     
     "response": {
       "type": "questionnaire",
-      "stylesheetPath": "demo-style/assets/style.css",
       "response": [
         {
-          "id": "stylesheet-demo-2",
+          "id": "rate-styling",
           "prompt": "This questionnaire also uses external CSS. Rate the styling:",
           "type": "likert",
           "location": "belowStimulus",
           "numItems": 5,
           "leftLabel": "Poor",
           "rightLabel": "Excellent",
-          "required": true
+          "required": true,
+          "stylesheetPath": "demo-style/assets/responseStylesheet.css"
         },
         {
           "id": "final-feedback",
@@ -313,7 +313,8 @@
           "type": "longText",
           "location": "belowStimulus",
           "placeholder": "Share your thoughts...",
-          "required": false
+          "required": false,
+          "stylesheetPath": "demo-style/assets/responseStylesheet.css"
         }
       ]
     }

@@ -1,6 +1,16 @@
-/* Component Stylesheet Demo - External CSS Styling */
+/**
+* This is a stylesheet for components.
+* 
+**/
 
-/* Target the markdown component by its unique structure */
-#stylesheet-demo {
+#markdown {
   background: lightblue;
+}
+
+#markdown code {
+  text-decoration: underline;
+}
+
+#image {
+  background: lightgreen;
 }
