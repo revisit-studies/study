@@ -5,12 +5,13 @@
 
 #markdown {
   background: lightblue;
+  border: 1px solid black;
+  padding: 10px;
+  border-radius: 10px;
+  margin: 10px;
 }
 
 #markdown code {
-  text-decoration: underline;
+  color: navy;
 }
 
-#image {
-  background: lightgreen;
-}
