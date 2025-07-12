@@ -153,7 +153,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
   return (
     <div id={currentConfig.type} style={vegaStyle}>
-      <InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={(v) => setView(v)} />
-    </div>
+      <InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={(v) => setView(v)} actions={currentConfig.withActions} />
+     </div>
   );
 }

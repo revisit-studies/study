@@ -1,7 +1,9 @@
 import {
   Center, Flex, Loader, Space, Text,
 } from '@mantine/core';
-import { useEffect, useState, useCallback } from 'react';
+import {
+  useEffect, useState, useCallback, useMemo,
+} from 'react';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
@@ -18,6 +20,7 @@ export function StudyEnd() {
   const isAnalysis = useIsAnalysis();
 
   const [completed, setCompleted] = useState(false);
+
   useEffect(() => {
     // Don't save to the storage engine in analysis
     if (isAnalysis) {
@@ -83,7 +86,7 @@ export function StudyEnd() {
 
       return () => clearInterval(interval);
     }
-    return () => {};
+    return () => { };
   }, [autoDownload, completed, delayCounter, downloadParticipant]);
 
   const studyId = useStudyId();
@@ -98,12 +101,23 @@ export function StudyEnd() {
     checkDataCollectionEnabled();
   }, [storageEngine, studyId]);
 
+  const processedStudyEndMsg = useMemo(() => {
+    const { studyEndMsg, urlParticipantIdParam } = studyConfig.uiConfig;
+
+    if (!urlParticipantIdParam || !studyEndMsg?.includes('{PARTICIPANT_ID}')) {
+      return studyEndMsg;
+    }
+
+    // return the study end message with the participant ID
+    return studyEndMsg.replace(/\{PARTICIPANT_ID\}/g, () => participantId);
+  }, [studyConfig, participantId]);
+
   return (
     <Center style={{ height: '100%' }}>
       <Flex direction="column">
         {completed || !dataCollectionEnabled
-          ? (studyConfig.uiConfig.studyEndMsg
-            ? <ReactMarkdownWrapper text={studyConfig.uiConfig.studyEndMsg} />
+          ? (processedStudyEndMsg
+            ? <ReactMarkdownWrapper text={processedStudyEndMsg} />
             : <Text size="xl" display="block">Thank you for completing the study. You may close this window now.</Text>)
           : (
             <>

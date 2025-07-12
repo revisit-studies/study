@@ -191,6 +191,10 @@
             ],
             "type": "string"
           },
+          "withActions": {
+            "description": "Whether to include vega actions. Defaults to true.",
+            "type": "boolean"
+          },
           "withTimeline": {
             "description": "Whether to show the video timeline. Defaults to false.",
             "type": "boolean"
@@ -1960,6 +1964,10 @@
             "video"
           ],
           "type": "string"
+        },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
         },
         "withTimeline": {
           "description": "Whether to show the video timeline. Defaults to false.",
@@ -18681,7 +18689,7 @@
           "type": "number"
         },
         "studyEndMsg": {
-          "description": "The message to display when the study ends.",
+          "description": "The message to display when the study ends. Supports templating with the participant ID. e.g. \"Thank you for completing the study. You may click this link and return to Prolific: [Go to Prolific](https://app.prolific.com/submissions/complete?cc=StudyID&PROLIFIC_ID={PROLIFIC_ID}))\"",
           "type": "string"
         },
         "stylesheetPath": {
@@ -18829,6 +18837,10 @@
         "type": {
           "const": "vega",
           "type": "string"
+        },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -18944,6 +18956,10 @@
         "type": {
           "const": "vega",
           "type": "string"
+        },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
         }
       },
       "required": [

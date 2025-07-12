@@ -14,6 +14,7 @@ import {
   CollectionReference,
   DocumentData,
   Firestore,
+  Timestamp,
   collection,
   doc,
   enableNetwork,
@@ -35,6 +36,7 @@ import {
   StorageObject,
   UserManagementData,
   SequenceAssignment,
+  SnapshotDocContent,
 } from './types';
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
@@ -46,8 +48,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
   private storage: FirebaseStorage;
 
-  constructor() {
-    super('firebase');
+  constructor(testing: boolean = false) {
+    super('firebase', testing);
 
     const firebaseConfig = hjsonParse(import.meta.env.VITE_FIREBASE_CONFIG);
     const firebaseApp = initializeApp(firebaseConfig);
@@ -145,7 +147,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       'configHash',
     );
     const configHashDocData = await getDoc(configHashDoc);
-    return configHashDocData.exists() ? configHashDocData.data().configHash : null;
+    return configHashDocData.exists() ? configHashDocData.data().configHash as string : null;
   }
 
   protected async _setCurrentConfigHash(configHash: string) {
@@ -169,10 +171,18 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     );
 
     const sequenceAssignments = await getDocs(sequenceAssignmentCollection);
-    return Object.fromEntries(sequenceAssignments.docs.map((d) => [d.id, d.data() as SequenceAssignment]));
+    return sequenceAssignments.docs
+      .map((d) => d.data())
+      .map((data) => ({
+        ...data,
+        timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
+        createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
+        completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+      } as SequenceAssignment))
+      .sort((a, b) => a.timestamp - b.timestamp);
   }
 
-  protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
+  protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean = false) {
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
@@ -187,10 +197,19 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       participantId,
     );
 
-    await setDoc(participantSequenceAssignmentDoc, sequenceAssignment);
+    const toUpload = withServerTimestamp ? { ...sequenceAssignment, timestamp: serverTimestamp() } : sequenceAssignment;
+    await setDoc(participantSequenceAssignmentDoc, { ...toUpload, createdTime: serverTimestamp() });
   }
 
   protected async _completeCurrentParticipantRealtime() {
+    await this.verifyStudyDatabase();
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
     const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
     const sequenceAssignmentCollection = collection(
       sequenceAssignmentDoc,
@@ -204,6 +223,14 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _rejectParticipantRealtime(participantId: string) {
+    await this.verifyStudyDatabase();
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
     const studyCollection = collection(
       this.firestore,
       `${this.collectionPrefix}${this.studyId}`,
@@ -223,6 +250,14 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _claimSequenceAssignment(participantId: string) {
+    await this.verifyStudyDatabase();
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
     const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
     const sequenceAssignmentCollection = collection(
       sequenceAssignmentDoc,
@@ -310,6 +345,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       console.warn(`Audio for task ${task} and participant ${participantId} not found.`);
       return null;
     }
+  }
+
+  protected async _testingReset() {
+    throw new Error('Testing reset not implemented for FirebaseStorageEngine');
   }
 
   // Gets data from the user-management collection based on the inputted string
@@ -410,37 +449,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const snapshotsData = await getDoc(snapshotsDoc);
 
       if (snapshotsData.exists()) {
-        const collections = snapshotsData.data();
-        const matchingCollections = Object.keys(collections)
-          .filter((directoryName) => directoryName.startsWith(
-            `${this.collectionPrefix}${studyId}-snapshot`,
-          ))
-          .map((directoryName) => {
-            const value = collections[directoryName];
-            let transformedValue;
-            if (typeof value === 'boolean') {
-              transformedValue = directoryName;
-            } else if (
-              value
-              && typeof value === 'object'
-              && value.enabled === true
-            ) {
-              transformedValue = value.name as string;
-            } else {
-              transformedValue = null;
-            }
-            return {
-              originalName: directoryName,
-              alternateName: transformedValue,
-            };
-          })
-          .filter((item) => item.alternateName !== null);
-        const sortedCollections = matchingCollections
-          .sort((a, b) => a.originalName.localeCompare(b.originalName))
-          .reverse(); // Reverse the sorted array if needed
-        return sortedCollections;
+        return snapshotsData.data() as SnapshotDocContent;
       }
-      return [];
+      return {};
     } catch (error) {
       console.error('Error listing collections with prefix:', error);
       throw error;
@@ -566,12 +577,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   // Function to add collection name to metadata
-  protected async _addDirectoryNameToMetadata(directoryName: string) {
+  protected async _addDirectoryNameToSnapshots(directoryName: string) {
     try {
       const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'snapshots');
       await setDoc(
         snapshotDoc,
-        { [directoryName]: { enabled: true, name: directoryName } },
+        { [directoryName]: { name: directoryName } } as SnapshotDocContent,
         { merge: true },
       );
     } catch (error) {
@@ -580,7 +591,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _removeNameFromMetadata(directoryName: string) {
+  protected async _removeDirectoryNameFromSnapshots(directoryName: string) {
     try {
       const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'snapshots');
       const snapshotData = await getDoc(snapshotDoc);
@@ -602,16 +613,16 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _changeNameInMetadata(oldName: string, newName: string) {
+  protected async _changeDirectoryNameInSnapshots(oldName: string, newName: string) {
     const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'snapshots');
     await setDoc(
       snapshotDoc,
-      { [oldName]: { enabled: true, name: newName } },
+      { [oldName]: { name: newName } },
       { merge: true },
     );
   }
 
-  protected async _copyFile(sourceFilePath: string, targetFilePath: string) {
+  private async _copyFile(sourceFilePath: string, targetFilePath: string) {
     try {
       const sourceFileRef = ref(this.storage, sourceFilePath);
       const targetFileRef = ref(this.storage, targetFilePath);

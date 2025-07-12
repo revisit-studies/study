@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import {
-  REVISIT_MODE, SequenceAssignment, StorageEngine, StorageObject, StorageObjectType,
+  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType,
 } from './types';
 
 export class LocalStorageEngine extends StorageEngine {
@@ -8,25 +8,24 @@ export class LocalStorageEngine extends StorageEngine {
     name: 'revisit',
   });
 
-  constructor() {
-    super('localStorage');
+  constructor(testing: boolean = false) {
+    super('localStorage', testing);
   }
 
   protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
-    await this._verifyStudyDatabase();
     const storageKey = `${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`;
     const storedObject = await this.studyDatabase.getItem<StorageObject<T>>(storageKey);
     return storedObject;
   }
 
   protected async _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>) {
-    await this._verifyStudyDatabase();
+    await this.verifyStudyDatabase();
     const storageKey = `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`;
     await this.studyDatabase.setItem(storageKey, objectToUpload);
   }
 
   protected async _deleteFromStorage<T extends StorageObjectType>(prefix: string, type: T) {
-    await this._verifyStudyDatabase();
+    await this.verifyStudyDatabase();
     const storageKey = `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`;
     await this.studyDatabase.removeItem(storageKey);
   }
@@ -42,29 +41,28 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   protected async _getCurrentConfigHash() {
-    await this._verifyStudyDatabase();
+    await this.verifyStudyDatabase();
     const key = `${this.collectionPrefix}${this.studyId}/configHash`;
-    return await this.studyDatabase.getItem<string>(key) || '';
+    return await this.studyDatabase.getItem<string>(key) || null;
   }
 
   protected async _setCurrentConfigHash(configHash: string) {
-    await this._verifyStudyDatabase();
+    await this.verifyStudyDatabase();
     const key = `${this.collectionPrefix}${this.studyId}/configHash`;
     await this.studyDatabase.setItem(key, configHash);
   }
 
   protected async _getAllSequenceAssignments(studyId: string) {
-    await this._verifyStudyDatabase();
     const sequenceAssignmentPath = `${this.collectionPrefix}${studyId}/sequenceAssignment`;
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath);
     if (!sequenceAssignments) {
-      return {};
+      return [];
     }
-    return sequenceAssignments;
+    return Object.values(sequenceAssignments).sort((a, b) => a.timestamp - b.timestamp);
   }
 
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
-    await this._verifyStudyDatabase();
+    await this.verifyStudyDatabase();
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
@@ -97,7 +95,7 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   protected async _rejectParticipantRealtime(participantId: string) {
-    await this._verifyStudyDatabase();
+    await this.verifyStudyDatabase();
     const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
 
@@ -131,7 +129,7 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   protected async _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
-    await this._verifyStudyDatabase();
+    await this.verifyStudyDatabase();
     const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
     if (sequenceAssignments[participantId]) {
@@ -188,6 +186,7 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   protected async _getAudioUrl(task: string, participantId?: string) {
+    await this.verifyStudyDatabase();
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
@@ -196,5 +195,92 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error(`Audio for task ${task} and participant ${participantId || this.currentParticipantId} not found`);
     }
     return URL.createObjectURL(audioBlob);
+  }
+
+  protected async _testingReset(studyId: string) {
+    if (!studyId) {
+      throw new Error('Study ID is required for reset');
+    }
+    // Clear the entire study database
+    const keys = await this.studyDatabase.keys();
+    const studyKeys = keys.filter((key) => key.startsWith(`${this.collectionPrefix}${studyId}/`));
+    await Promise.all(studyKeys.map((key) => this.studyDatabase.removeItem(key)));
+
+    await super.__testingReset();
+  }
+
+  async getSnapshots(studyId: string) {
+    const snapshotsKey = `${this.collectionPrefix}${studyId}/snapshots`;
+    const snapshotsData = await this.studyDatabase.getItem<SnapshotDocContent>(snapshotsKey);
+    return snapshotsData || {};
+  }
+
+  protected async _directoryExists(path: string) {
+    const keys = await this.studyDatabase.keys();
+    return keys.some((key) => key.startsWith(path));
+  }
+
+  protected async _copyDirectory(source: string, target: string) {
+    const keys = await this.studyDatabase.keys();
+    const sourceKeys = keys.filter((key) => key.startsWith(source));
+    const copyPromises = sourceKeys.map(async (key) => {
+      if (key.endsWith('/snapshots') || key.endsWith('modes') || key.endsWith('configHash') || key.endsWith('currentParticipantId')) {
+        // Skip copying the snapshots file
+        return;
+      }
+      const value = await this.studyDatabase.getItem(key);
+      const newKey = key.replace(source, target);
+      await this.studyDatabase.setItem(newKey, value);
+    });
+    await Promise.all(copyPromises);
+  }
+
+  protected async _deleteDirectory(path: string) {
+    const keys = await this.studyDatabase.keys();
+    const targetKeys = keys.filter((key) => key.startsWith(path) && !key.includes('snapshots'));
+    const deletePromises = targetKeys.map((key) => this.studyDatabase.removeItem(key));
+    await Promise.all(deletePromises);
+  }
+
+  protected async _copyRealtimeData(source: string, target: string) {
+    // Since the logic is the same, we'll use the same method as copying a directory
+    await this._copyDirectory(source, target);
+  }
+
+  protected async _deleteRealtimeData(path: string) {
+    // Since the logic is the same, we'll use the same method as deleting a directory
+    await this._deleteDirectory(path);
+  }
+
+  protected async _addDirectoryNameToSnapshots(directoryName: string, studyId: string) {
+    await this.verifyStudyDatabase();
+    const metadataKey = `${this.collectionPrefix}${studyId}/snapshots`;
+    const metadata = await this.studyDatabase.getItem<SnapshotDocContent>(metadataKey) || {};
+    if (!metadata[directoryName]) {
+      metadata[directoryName] = { name: directoryName };
+      await this.studyDatabase.setItem(metadataKey, metadata);
+    }
+  }
+
+  protected async _removeDirectoryNameFromSnapshots(directoryName: string, studyId: string) {
+    await this.verifyStudyDatabase();
+    const snapshotsKey = `${this.collectionPrefix}${studyId}/snapshots`;
+    const snapshots = await this.studyDatabase.getItem<SnapshotDocContent>(snapshotsKey) || {};
+    if (snapshots[directoryName]) {
+      delete snapshots[directoryName];
+      await this.studyDatabase.setItem(snapshotsKey, snapshots);
+    }
+  }
+
+  protected async _changeDirectoryNameInSnapshots(key: string, newName: string, studyId: string) {
+    await this.verifyStudyDatabase();
+    const snapshotsKey = `${this.collectionPrefix}${studyId}/snapshots`;
+    const snapshots = await this.studyDatabase.getItem<SnapshotDocContent>(snapshotsKey) || {};
+    if (snapshots[key]) {
+      snapshots[key] = { name: newName };
+      await this.studyDatabase.setItem(snapshotsKey, snapshots);
+    } else {
+      throw new Error(`Snapshot with name ${key} does not exist`);
+    }
   }
 }

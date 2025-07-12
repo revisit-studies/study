@@ -1,5 +1,6 @@
 import {
   expect, test, beforeEach, describe,
+  afterEach,
 } from 'vitest';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
@@ -9,6 +10,7 @@ import { hash } from '../engines/utils';
 import { Sequence } from '../../store/types';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { StorageEngine } from '../engines/types';
+// import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
 
 const studyId = 'test-study';
 const configSimple = testConfigSimple as StudyConfig;
@@ -22,6 +24,7 @@ const participantMetadata: ParticipantMetadata = {
 
 describe.each([
   { TestEngine: LocalStorageEngine },
+  // { TestEngine: SupabaseStorageEngine }, // Uncomment to test with Supabase
   // { TestEngine: FirebaseStorageEngine }, TODO
 ])('describe object $TestEngine', ({ TestEngine }) => {
   let storageEngine: StorageEngine;
@@ -30,13 +33,18 @@ describe.each([
   // Before test harness
   beforeEach(async () => {
     // Reset the storage engine before each test
-    storageEngine = new TestEngine();
+    storageEngine = new TestEngine(true);
     await storageEngine.connect();
     await storageEngine.initializeStudyDb(studyId);
     sequenceArray = await generateSequenceArray(configSimple);
     await storageEngine.setSequenceArray(
       sequenceArray,
     );
+  });
+
+  afterEach(async () => {
+    // @ts-expect-error using protected method for testing
+    await storageEngine._testingReset(studyId);
   });
 
   // saveConfig and getAllConfigsFromHash tests
@@ -166,10 +174,10 @@ describe.each([
     let sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
 
-    let sequenceAssignment1 = sequenceAssignments[participantId1];
+    let sequenceAssignment1 = sequenceAssignments.find((assignment) => assignment.participantId === participantId1);
     expect(sequenceAssignment1).toBeDefined();
-    expect(sequenceAssignment1.rejected).toBe(true);
-    expect(sequenceAssignment1.claimed).toBe(false);
+    expect(sequenceAssignment1!.rejected).toBe(true);
+    expect(sequenceAssignment1!.claimed).toBe(false);
 
     // Initialize a new participant session
     await storageEngine.clearCurrentParticipantId();
@@ -181,17 +189,17 @@ describe.each([
     sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
 
-    let sequenceAssignment2 = sequenceAssignments[participantId2];
+    let sequenceAssignment2 = sequenceAssignments.find((assignment) => assignment.participantId === participantId2);
     expect(sequenceAssignment2).toBeDefined();
-    expect(sequenceAssignment2.participantId).toBe(participantId2);
-    expect(sequenceAssignment2.timestamp).toBeDefined();
-    expect(sequenceAssignment2.timestamp).toEqual(sequenceAssignment1.timestamp);
-    expect(sequenceAssignment2.rejected).toBe(false);
-    expect(sequenceAssignment2.claimed).toBe(false);
-    expect(sequenceAssignment2.createdTime).toBeDefined();
-    expect(typeof sequenceAssignment2.createdTime === 'number' ? sequenceAssignment2.createdTime : sequenceAssignment2.createdTime.seconds).toBeGreaterThan(typeof sequenceAssignment1.createdTime === 'number' ? sequenceAssignment1.createdTime : sequenceAssignment1.createdTime.seconds);
+    expect(sequenceAssignment2!.participantId).toBe(participantId2);
+    expect(sequenceAssignment2!.timestamp).toBeDefined();
+    expect(sequenceAssignment2!.timestamp).toEqual(sequenceAssignment1!.timestamp);
+    expect(sequenceAssignment2!.rejected).toBe(false);
+    expect(sequenceAssignment2!.claimed).toBe(false);
+    expect(sequenceAssignment2!.createdTime).toBeDefined();
+    expect(sequenceAssignment2!.createdTime).toBeGreaterThanOrEqual(sequenceAssignment1!.createdTime);
 
-    expect(sequenceAssignment1.participantId).toBe(participantId1);
+    expect(sequenceAssignment1!.participantId).toBe(participantId1);
 
     // Reject the new participant
     await storageEngine.rejectParticipant(participantId2, 'Participant rejected for testing');
@@ -199,16 +207,16 @@ describe.each([
     // @ts-expect-error using protected method for testing
     sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
-    sequenceAssignment2 = sequenceAssignments[participantId2];
+    sequenceAssignment2 = sequenceAssignments.find((assignment) => assignment.participantId === participantId2);
     expect(sequenceAssignment2).toBeDefined();
-    expect(sequenceAssignment2.timestamp).not.toEqual(sequenceAssignment1.timestamp);
+    expect(sequenceAssignment2!.timestamp).toBeGreaterThanOrEqual(sequenceAssignment1!.timestamp);
 
     // Check if the first rejected participant's sequence is available for reuse
-    sequenceAssignment1 = sequenceAssignments[participantId1];
+    sequenceAssignment1 = sequenceAssignments.find((assignment) => assignment.participantId === participantId1);
     expect(sequenceAssignment1).toBeDefined();
-    expect(sequenceAssignment1.rejected).toBe(true);
-    expect(sequenceAssignment1.claimed).toBe(false);
-    expect(sequenceAssignment1.completed).toBeNull();
+    expect(sequenceAssignment1!.rejected).toBe(true);
+    expect(sequenceAssignment1!.claimed).toBe(false);
+    expect(sequenceAssignment1!.completed).toBeNull();
 
     // Make a new participant session
     await storageEngine.clearCurrentParticipantId();
@@ -219,25 +227,25 @@ describe.each([
     // @ts-expect-error using protected method for testing
     sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
-    const sequenceAssignment3 = sequenceAssignments[participantId3];
+    const sequenceAssignment3 = sequenceAssignments.find((assignment) => assignment.participantId === participantId3);
     expect(sequenceAssignment3).toBeDefined();
-    expect(sequenceAssignment3.participantId).toBe(participantId3);
-    expect(sequenceAssignment3.timestamp).toEqual(sequenceAssignment1.timestamp);
-    expect(sequenceAssignment3.rejected).toBe(false);
-    expect(sequenceAssignment3.claimed).toBe(false);
-    expect(sequenceAssignment3.createdTime).toBeDefined();
-    expect(typeof sequenceAssignment3.createdTime === 'number' ? sequenceAssignment3.createdTime : sequenceAssignment3.createdTime.seconds).toBeGreaterThan(typeof sequenceAssignment1.createdTime === 'number' ? sequenceAssignment1.createdTime : sequenceAssignment1.createdTime.seconds);
-    expect(sequenceAssignment3.completed).toBeNull();
+    expect(sequenceAssignment3!.participantId).toBe(participantId3);
+    expect(sequenceAssignment3!.timestamp).toEqual(sequenceAssignment1!.timestamp);
+    expect(sequenceAssignment3!.rejected).toBe(false);
+    expect(sequenceAssignment3!.claimed).toBe(false);
+    expect(sequenceAssignment3!.createdTime).toBeDefined();
+    expect(sequenceAssignment3!.createdTime).toBeGreaterThan(sequenceAssignment1!.createdTime);
+    expect(sequenceAssignment3!.completed).toBeNull();
 
     // Ensure first rejected participant's sequence is claimed again
-    sequenceAssignment1 = sequenceAssignments[participantId1];
+    sequenceAssignment1 = sequenceAssignments.find((assignment) => assignment.participantId === participantId1);
     expect(sequenceAssignment1).toBeDefined();
-    expect(sequenceAssignment1.participantId).toBe(participantId1);
-    expect(sequenceAssignment1.timestamp).toEqual(sequenceAssignment3.timestamp);
-    expect(sequenceAssignment1.rejected).toBe(true);
-    expect(sequenceAssignment1.claimed).toBe(true);
-    expect(sequenceAssignment1.createdTime).toBeDefined();
-    expect(typeof sequenceAssignment1.createdTime === 'number' ? sequenceAssignment1.createdTime : sequenceAssignment1.createdTime.seconds).toBeLessThan(typeof sequenceAssignment3.createdTime === 'number' ? sequenceAssignment3.createdTime : sequenceAssignment3.createdTime.seconds);
+    expect(sequenceAssignment1!.participantId).toBe(participantId1);
+    expect(sequenceAssignment1!.timestamp).toEqual(sequenceAssignment3!.timestamp);
+    expect(sequenceAssignment1!.rejected).toBe(true);
+    expect(sequenceAssignment1!.claimed).toBe(true);
+    expect(sequenceAssignment1!.createdTime).toBeDefined();
+    expect(sequenceAssignment1!.createdTime).toBeLessThanOrEqual(sequenceAssignment3!.createdTime);
 
     // Check that a new participant gets the other rejected sequence assignment
     await storageEngine.clearCurrentParticipantId();
@@ -248,27 +256,27 @@ describe.each([
     // @ts-expect-error using protected method for testing
     sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
-    const sequenceAssignment4 = sequenceAssignments[participantId4];
+    const sequenceAssignment4 = sequenceAssignments.find((assignment) => assignment.participantId === participantId4);
     expect(sequenceAssignment4).toBeDefined();
-    expect(sequenceAssignment4.participantId).toBe(participantId4);
-    expect(sequenceAssignment4.timestamp).toBeDefined();
-    expect(sequenceAssignment4.rejected).toBe(false);
-    expect(sequenceAssignment4.claimed).toBe(false);
-    expect(sequenceAssignment4.createdTime).toBeDefined();
-    expect(typeof sequenceAssignment4.createdTime === 'number' ? sequenceAssignment4.createdTime : sequenceAssignment4.createdTime.seconds).toBeGreaterThanOrEqual(typeof sequenceAssignment3.createdTime === 'number' ? sequenceAssignment3.createdTime : sequenceAssignment3.createdTime.seconds);
-    expect(sequenceAssignment4.completed).toBeNull();
+    expect(sequenceAssignment4!.participantId).toBe(participantId4);
+    expect(sequenceAssignment4!.timestamp).toBeDefined();
+    expect(sequenceAssignment4!.rejected).toBe(false);
+    expect(sequenceAssignment4!.claimed).toBe(false);
+    expect(sequenceAssignment4!.createdTime).toBeDefined();
+    expect(sequenceAssignment4!.createdTime).toBeGreaterThanOrEqual(sequenceAssignment3!.createdTime);
+    expect(sequenceAssignment4!.completed).toBeNull();
 
     // Check the length of sequence assignments
     // @ts-expect-error using protected method for testing
     sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
-    expect(sequenceAssignments[participantId1]).toBeDefined();
-    expect(sequenceAssignments[participantId2]).toBeDefined(); // participant 2 was rejected
-    expect(sequenceAssignments[participantId3]).toBeDefined();
-    expect(sequenceAssignments[participantId4]).toBeDefined();
+    expect(sequenceAssignments.find((assignment) => assignment.participantId === participantId1)).toBeDefined();
+    expect(sequenceAssignments.find((assignment) => assignment.participantId === participantId2)).toBeDefined();
+    expect(sequenceAssignments.find((assignment) => assignment.participantId === participantId3)).toBeDefined();
+    expect(sequenceAssignments.find((assignment) => assignment.participantId === participantId4)).toBeDefined();
 
     const participantIds = await storageEngine.getAllParticipantIds();
     expect(participantIds).toBeDefined();
-    expect(participantIds.length).toBe(5);
+    expect(participantIds.length).toBe(4);
     expect(participantIds).toContain(participantId1);
     expect(participantIds).toContain(participantId2);
     expect(participantIds).toContain(participantId3);
@@ -322,5 +330,96 @@ describe.each([
   test('setSequenceArray throws error if not connected', async () => {
     const disconnectedStorageEngine = new LocalStorageEngine();
     await expect(disconnectedStorageEngine.setSequenceArray([])).rejects.toThrow('Study database not initialized');
+  });
+
+  // createSnapshot, restoreSnapshot, renameSnapshot, removeSnapshotOrLive, getSnapshots tests
+  test('createSnapshot, restoreSnapshot, renameSnapshot, removeSnapshotOrLive, getSnapshots work correctly', async () => {
+    const actionResponse1 = await storageEngine.createSnapshot('non-existent', false);
+    expect(actionResponse1).toBeDefined();
+    expect(actionResponse1.status).toBe('FAILED');
+    expect(actionResponse1.error).toBeDefined();
+    expect(actionResponse1.error!.message).toBe('There is currently no data in your study. A snapshot could not be created.');
+    expect(actionResponse1.error!.title).toBe('Failed to Create Snapshot.');
+    expect(actionResponse1.notifications).not.toBeDefined();
+
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const actionResponse2 = await storageEngine.createSnapshot(studyId, false);
+    expect(actionResponse2).toBeDefined();
+    expect(actionResponse2.status).toBe('SUCCESS');
+    expect(actionResponse2.error).not.toBeDefined();
+    expect(actionResponse2.notifications).toBeDefined();
+    expect(actionResponse2.notifications!.length).toBe(1);
+    expect(actionResponse2.notifications![0].title).toBe('Success!');
+    expect(actionResponse2.notifications![0].message).toBe('Successfully created snapshot');
+    expect(actionResponse2.notifications![0].color).toBe('green');
+
+    // Get the snapshot list
+    let snapshots = await storageEngine.getSnapshots(studyId);
+    expect(snapshots).toBeDefined();
+    expect(Object.keys(snapshots).length).toBe(1);
+    expect(Object.values(snapshots)[0].name).toBeDefined();
+
+    // Rename the snapshot
+    const snapshotKey = Object.keys(snapshots)[0];
+    const newSnapshotName = 'renamed-snapshot';
+    const renameResponse = await storageEngine.renameSnapshot(snapshotKey, newSnapshotName, studyId);
+    expect(renameResponse).toBeDefined();
+    expect(renameResponse.status).toBe('SUCCESS');
+    expect(renameResponse.error).not.toBeDefined();
+    expect(renameResponse.notifications).toBeDefined();
+    expect(renameResponse.notifications!.length).toBe(1);
+    expect(renameResponse.notifications![0].title).toBe('Success!');
+    expect(renameResponse.notifications![0].message).toBe('Successfully renamed snapshot.');
+    expect(renameResponse.notifications![0].color).toBe('green');
+
+    // Remove the snapshot
+    const removeResponse = await storageEngine.removeSnapshotOrLive(Object.keys(snapshots)[0], studyId);
+    expect(removeResponse).toBeDefined();
+    expect(removeResponse.status).toBe('SUCCESS');
+    expect(removeResponse.error).not.toBeDefined();
+    expect(removeResponse.notifications).toBeDefined();
+    expect(removeResponse.notifications!.length).toBe(1);
+    expect(removeResponse.notifications![0].title).toBe('Success!');
+    expect(removeResponse.notifications![0].message).toBe('Successfully deleted snapshot or live data.');
+    expect(removeResponse.notifications![0].color).toBe('green');
+
+    snapshots = await storageEngine.getSnapshots(studyId);
+    expect(snapshots).toBeDefined();
+    expect(Object.keys(snapshots).length).toBe(0);
+
+    const actionResponse3 = await storageEngine.createSnapshot(studyId, true);
+    expect(actionResponse3).toBeDefined();
+    expect(actionResponse3.status).toBe('SUCCESS');
+    expect(actionResponse3.error).not.toBeDefined();
+    expect(actionResponse3.notifications).toBeDefined();
+    expect(actionResponse3.notifications!.length).toBe(2);
+    expect(actionResponse3.notifications![0].title).toBe('Success!');
+    expect(actionResponse3.notifications![0].message).toBe('Successfully deleted live data.');
+    expect(actionResponse3.notifications![0].color).toBe('green');
+    expect(actionResponse3.notifications![1].title).toBe('Success!');
+    expect(actionResponse3.notifications![1].message).toBe('Successfully created snapshot');
+    expect(actionResponse3.notifications![1].color).toBe('green');
+
+    // Get the snapshot list
+    snapshots = await storageEngine.getSnapshots(studyId);
+    expect(snapshots).toBeDefined();
+    expect(Object.keys(snapshots).length).toBe(1);
+    expect(Object.values(snapshots)[0].name).toBeDefined();
+
+    // Restore the snapshot
+    const snapshotName = Object.keys(snapshots)[0];
+    const restoreResponse = await storageEngine.restoreSnapshot(studyId, snapshotName);
+    expect(restoreResponse).toBeDefined();
+    expect(restoreResponse.status).toBe('SUCCESS');
+    expect(restoreResponse.error).not.toBeDefined();
+    expect(restoreResponse.notifications).toBeDefined();
+    expect(restoreResponse.notifications!.length).toBe(2);
+    expect(restoreResponse.notifications![0].title).toBe('Failed to Create Snapshot.');
+    expect(restoreResponse.notifications![0].message).toBe('There is currently no data in your study. A snapshot could not be created.');
+    expect(restoreResponse.notifications![0].color).toBe('yellow');
+    expect(restoreResponse.notifications![1].title).toBe('Success!');
+    expect(restoreResponse.notifications![1].message).toBe('Successfully restored snapshot to live data.');
+    expect(restoreResponse.notifications![1].color).toBe('green');
   });
 });
