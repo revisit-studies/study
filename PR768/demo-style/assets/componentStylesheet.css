@@ -1,0 +1,6 @@
+/* Component Stylesheet Demo - External CSS Styling */
+
+/* Target the markdown component by its unique structure */
+#stylesheet-demo {
+  background: lightblue;
+}

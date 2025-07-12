@@ -2,19 +2,21 @@
 
 Welcome to the study. This study demonstrates the styling capabilities that allow study designers to customize the appearance of their research studies. To learn more about styling, please visit our [documentation](https://revisit.dev/docs/introduction/).
 
-## Two Ways to Style Your Study
+## Styling Capabilities
 
 ### 1. External Stylesheets (`stylesheetPath`)
-Load custom CSS files to apply comprehensive styling across multiple components:
-```json
-{
+Load custom CSS files for comprehensive styling across components:
+
+```ts
+"uiConfig": {
   "stylesheetPath": "my-study/assets/styles.css"
 }
 ```
 
 ### 2. Inline Styles (`style`)
-Apply specific styling directly to individual components or responses:
-```json
+Apply specific styling directly to components or responses:
+
+```ts
 {
   "style": {
     "width": "600px",
@@ -24,10 +26,33 @@ Apply specific styling directly to individual components or responses:
 }
 ```
 
-## What Can Be Styled
+## Technical Implementation
 
-**Component Types:** All major component types support styling including Markdown, Images, Videos, React Components, Vega visualizations, Websites/iframes, and Questionnaires.
+**UIConfig Interface:**
+```ts
+export interface UIConfig {
+  stylesheetPath?: string;
+}
+```
 
-**Response Types:** All response types can be styled including text inputs, dropdowns, radio buttons, checkboxes, sliders, Likert scales, and matrix questions.
+**BaseIndividualComponent Interface:**
+```ts
+export interface BaseIndividualComponent {
+  stylesheetPath?: string;
+  style?: React.CSSProperties;
+}
+```
 
-**Supported Properties:** width, height, fontSize, fontWeight, textAlign, color, backgroundColor, margin, and padding.
+**BaseResponse Interface:**
+```ts
+export interface BaseResponse {
+  stylesheetPath?: string;
+  style?: React.CSSProperties;
+}
+```
+
+**UI Elements:** Progress bars, sidebars, logos, contact information, help text, and global stylesheets.
+
+**Component Types:** Markdown, Images, Videos, React Components, Vega visualizations, Websites/iframes, and Questionnaires.
+
+**Response Types:** Text inputs, dropdowns, radio buttons, checkboxes, sliders, Likert scales, and matrix questions.
