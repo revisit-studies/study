@@ -145,7 +145,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
 
   return loading || assetFound
     ? (
-      <Box mb="md" style={videoStyle}>
+      <Box mb="md" id={currentConfig.response[0].type} style={videoStyle}>
         <CustomPlyrInstance
           ref={ref}
           source={{ type: 'video', sources }}

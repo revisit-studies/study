@@ -30,6 +30,6 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
   }, [currentConfig.path]);
 
   return loading || importedText
-    ? <div id={currentConfig.response[0]?.id} style={markdownStyle}><ReactMarkdownWrapper text={importedText} /></div>
+    ? <div id={currentConfig.response[0].type} style={markdownStyle}><ReactMarkdownWrapper text={importedText} /></div>
     : <ResourceNotFound path={currentConfig.path} />;
 }
