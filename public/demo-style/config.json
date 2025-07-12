@@ -370,7 +370,8 @@
     },
     
     "response": {
-      "type": "questionnaire",
+      "type": "markdown",
+      "path": "demo-style/assets/responseStylesheet.md",
       "response": [
         {
           "id": "rate-styling",
