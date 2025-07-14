@@ -1,16 +1,15 @@
 import {
-  Alert, AppShell, Checkbox, Container, Flex, Group, LoadingOverlay, Space, Tabs, Text, Title,
+  Alert, AppShell, Checkbox, Container, Flex, Group, Space, Tabs, Text, Title,
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router';
 import {
-  IconChartDonut2, IconPlayerPlay, IconTable, IconSettings,
+  IconChartDonut2, IconTable, IconSettings,
   IconInfoCircle,
 } from '@tabler/icons-react';
 import React, {
-  useCallback,
   useEffect, useMemo, useState,
 } from 'react';
-import { useThrottledState } from '@mantine/hooks';
+import { useResizeObserver } from '@mantine/hooks';
 import { AppHeader } from '../interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
@@ -19,7 +18,6 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { ManageAccordion } from './management/ManageAccordion';
 import { useAuth } from '../../store/hooks/useAuth';
 import { StatsView } from './stats/StatsView';
-import { AllReplays } from './replay/AllReplays';
 import { parseStudyConfig } from '../../parser/parser';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
 import { useAsync } from '../../store/hooks/useAsync';
@@ -39,44 +37,41 @@ function sortByStartTime(a: ParticipantData, b: ParticipantData) {
   return bStartTimes[0] - aStartTimes[0];
 }
 
-export function getVirtualizedParticipantData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined, start: number, end: number) : Promise<ParticipantData[]> {
+export function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined) : Promise<Record<number, ParticipantData>> {
   if (!studyConfig || !storageEngine || !studyId) return Promise.resolve([]);
 
-  console.log(start, end);
-  storageEngine.initializeStudyDb(studyId, studyConfig);
-  return storageEngine.getAllParticipantsVirtualizedData(start, end);
-}
+  storageEngine?.initializeStudyDb(studyId, studyConfig);
 
-export function getParticipantList(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined) : Promise<string[]> {
-  if (!studyConfig || !storageEngine || !studyId) return Promise.resolve([]);
-  storageEngine.initializeStudyDb(studyId, studyConfig);
-  return storageEngine.getAllParticipantNames();
+  return storageEngine.getAllParticipantsDataByStudy(studyId);
 }
 
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
   const { studyId } = useParams();
   const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
+
+  const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inprogress', 'rejected']);
+
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
   const { analysisTab } = useParams();
   const { user } = useAuth();
+  const [ref, { width, height }] = useResizeObserver();
 
   // 0-1 percentage of scroll height
-  const [scrollHeight, setScrollHeight] = useThrottledState<number>(0, 500);
 
-  const { value: participantList, status: loadingParticipantList } = useAsync(getParticipantList, [studyConfig, storageEngine, studyId]);
+  const { value: expData } = useAsync(getParticipantsData, [studyConfig, storageEngine, studyId]);
 
-  const { value: expData, status: loadingVirtualized } = useAsync(getVirtualizedParticipantData, [studyConfig, storageEngine, studyId, Math.max(0, Math.round((participantList?.length || 0) * scrollHeight) - 10), Math.min(Math.round((participantList?.length || 0) * scrollHeight) + 10, participantList?.length || 0)]);
+  console.log(expData);
 
   const visibleParticipants = useMemo(() => {
     if (!expData) return [];
+    const expList = Object.values(expData);
 
-    const comp = expData.filter((d) => !d.rejected && d.completed);
-    const prog = expData.filter((d) => !d.rejected && !d.completed);
-    const rej = expData.filter((d) => d.rejected);
+    const comp = includedParticipants.includes('completed') ? expList.filter((d) => !d.rejected && d.completed) : [];
+    const prog = includedParticipants.includes('inprogress') ? expList.filter((d) => !d.rejected && !d.completed) : [];
+    const rej = includedParticipants.includes('rejected') ? expList.filter((d) => d.rejected) : [];
     return [...comp, ...prog, ...rej].sort(sortByStartTime);
-  }, [expData]);
+  }, [expData, includedParticipants]);
 
   useEffect(() => {
     if (!studyId) return () => { };
@@ -103,39 +98,20 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     return () => { };
   }, [studyId, globalConfig, storageEngine]);
 
-  // const handleCheckboxChange = useCallback((value: string[]) => {
-  //   const participants = [];
-  //   if (value.includes('completed')) {
-  //     participants.push(...completed);
-  //   }
-  //   if (value.includes('inprogress')) {
-  //     participants.push(...inProgress);
-  //   }
-  //   if (value.includes('rejected')) {
-  //     participants.push(...rejected);
-  //   }
-  //   setVisibleParticipants(participants);
-  // }, [completed, inProgress, rejected]);
-
-  const onScroll = useCallback((num: number) => {
-    setScrollHeight(num);
-  }, [setScrollHeight]);
-
   return (
     <>
       <AppHeader studyIds={globalConfig.configsList} />
 
       <AppShell.Main>
-        <Container fluid style={{ height: '100%', position: 'relative' }}>
-          <LoadingOverlay visible={loading} />
+        <Container ref={ref} fluid style={{ height: '100%', position: 'relative' }}>
 
           <Flex direction="row" align="center" justify="space-between">
             <Title order={5}>{studyId}</Title>
             <Flex direction="row" align="center">
               <Text mt={-2} size="sm">Participants: </Text>
               <Checkbox.Group
-                defaultValue={['completed', 'inprogress', 'rejected']}
-                onChange={() => console.log('Checkbox changed')}
+                value={includedParticipants}
+                onChange={(e) => setIncludedParticipants(e)}
                 mb="xs"
                 mt={8}
                 ml="xs"
@@ -151,21 +127,17 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
           <Space h="xs" />
 
-          <Tabs variant="outline" value={analysisTab} onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)} style={{ height: '100%' }}>
+          <Tabs keepMounted={false} variant="outline" value={analysisTab} onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)} style={{ height: '100%' }}>
             <Tabs.List>
               <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Table View</Tabs.Tab>
               <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
-              <Tabs.Tab value="replay" leftSection={<IconPlayerPlay size={16} />}>Participant Replay</Tabs.Tab>
               <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="table" pt="xs">
-              {studyConfig && <TableView visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => console.log('refrshing accordion')} />}
+              {studyConfig && <TableView width={width} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => console.log('refrshing accordion')} />}
             </Tabs.Panel>
             <Tabs.Panel value="stats" pt="xs">
               {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
-            </Tabs.Panel>
-            <Tabs.Panel value="replay" pt="xs">
-              <AllReplays visibleParticipants={visibleParticipants} studyConfig={studyConfig} participantCount={participantList?.length || 0} onScroll={onScroll} />
             </Tabs.Panel>
             <Tabs.Panel value="manage" pt="xs">
               {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={() => console.log('refrshing accordion')} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}

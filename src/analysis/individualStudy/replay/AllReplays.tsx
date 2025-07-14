@@ -1,9 +1,12 @@
 import {
-  Group, ScrollArea, Stack, Switch,
+  Box,
+  Group, ScrollArea, Skeleton, Stack, Switch,
 } from '@mantine/core';
-import { useResizeObserver } from '@mantine/hooks';
+import { useDebouncedState, useResizeObserver } from '@mantine/hooks';
 import { useParams } from 'react-router';
-import { useMemo, useState } from 'react';
+import {
+  useEffect, useMemo, useState,
+} from 'react';
 import { AllTasksTimeline } from './AllTasksTimeline';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
@@ -12,11 +15,16 @@ const REPLAY_HEIGHT = 269;
 
 // current active stimuli presented to the user
 export function AllReplays({
-  visibleParticipants, studyConfig, participantCount, onScroll,
-}: {visibleParticipants : ParticipantData[], studyConfig: StudyConfig | undefined, participantCount: number, onScroll: (scrollPosition: number) => void}) {
+  virtualizedParticipants, studyConfig, participantList, setVirtualRange,
+}: {virtualizedParticipants : Record<string, ParticipantData>, studyConfig: StudyConfig | undefined, participantList: string[], setVirtualRange: (range: [number, number]) => void}) {
   const { studyId } = useParams();
+  const [scrollHeight, setScrollHeight] = useDebouncedState<number>(0, 200);
 
-  const totalHeight = useMemo(() => participantCount * REPLAY_HEIGHT, [participantCount]);
+  useEffect(() => {
+    setVirtualRange([Math.max(0, Math.round((participantList?.length || 0) * scrollHeight) - 10), Math.min(Math.round((participantList?.length || 0) * scrollHeight) + 10, participantList?.length || 0)]);
+  }, [participantList, scrollHeight, setScrollHeight, setVirtualRange]);
+
+  const totalHeight = useMemo(() => participantList.length * REPLAY_HEIGHT, [participantList]);
 
   const [ref, { width }] = useResizeObserver();
 
@@ -27,7 +35,7 @@ export function AllReplays({
       return undefined;
     }
 
-    const maxDiff = Math.max(...visibleParticipants.map((part) => {
+    const maxDiff = Math.max(...Object.values(virtualizedParticipants).map((part) => {
       const minStart = Math.min(...Object.values(part.answers).map((answer) => answer.startTime || 0));
       const maxEnd = Math.max(...Object.values(part.answers).map((answer) => answer.endTime || 0));
 
@@ -35,9 +43,29 @@ export function AllReplays({
     }));
 
     return maxDiff;
-  }, [scaleByTime, visibleParticipants]);
+  }, [scaleByTime, virtualizedParticipants]);
 
-  const timelines = useMemo(() => visibleParticipants.map((part) => <AllTasksTimeline maxLength={maxLength} studyConfig={studyConfig} studyId={studyId || ''} key={part.participantId} height={200} participantData={part} width={width} />), [maxLength, studyConfig, studyId, visibleParticipants, width]);
+  const timelines = useMemo(
+    () => (
+      <>
+        {participantList.map((part) => {
+          if (virtualizedParticipants[part]) {
+            return (
+              <Box key={part} style={{ width: '100%', height: REPLAY_HEIGHT }}>
+                <AllTasksTimeline maxLength={maxLength} studyConfig={studyConfig} studyId={studyId || ''} height={200} participantData={virtualizedParticipants[part]} width={width} />
+              </Box>
+            );
+          }
+          return (
+            <Box key={part} style={{ width: '100%', height: REPLAY_HEIGHT }}>
+              <Skeleton visible height={REPLAY_HEIGHT} />
+            </Box>
+          );
+        })}
+      </>
+    ),
+    [maxLength, participantList, studyConfig, studyId, virtualizedParticipants, width],
+  );
 
   return (
     <Stack ref={ref} style={{ width: '100%' }}>
@@ -48,7 +76,7 @@ export function AllReplays({
           onChange={(event) => setScaleByTime(event.currentTarget.checked)}
         />
       </Group>
-      <ScrollArea type="auto" h="1000" onScrollPositionChange={(e) => onScroll(e.y / totalHeight)}>
+      <ScrollArea h="100dvh" type="auto" onScrollPositionChange={(e) => { setScrollHeight(e.y / totalHeight); }}>
         <Stack h={totalHeight} style={{ width: '100%' }}>
           {timelines}
         </Stack>
