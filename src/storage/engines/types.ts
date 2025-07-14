@@ -89,7 +89,7 @@ export abstract class StorageEngine {
     name: 'revisit',
   });
 
-  protected collectionPrefix = import.meta.env.DEV ? 'dev-' : 'prod-';
+  protected collectionPrefix = 'prod-';
 
   protected studyId: string | undefined;
 

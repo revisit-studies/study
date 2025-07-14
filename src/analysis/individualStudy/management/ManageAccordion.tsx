@@ -2,7 +2,7 @@ import { Accordion, Container, Title } from '@mantine/core';
 import { DataManagementAccordionItem } from './DataManagementAccordionItem';
 import { RevisitModesAccordionItem } from './RevisitModesAccordionItem';
 
-export function ManageAccordion({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
+export function ManageAccordion({ studyId, refresh }: { studyId: string, refresh: () => Promise<unknown> }) {
   return (
     <Container>
       <Accordion

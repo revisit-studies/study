@@ -2,18 +2,21 @@
 /* eslint-disable camelcase */
 import {
   Text, Flex, Button, LoadingOverlay, Group, Space, Modal, TextInput,
-  Box,
-  Table,
   Tooltip,
+  Container,
+  Badge,
+  RingProgress,
 } from '@mantine/core';
 import React, {
-  useCallback, useEffect, useMemo, useState,
+  useCallback, useMemo, useState,
 } from 'react';
-import { data, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import {
   MantineReactTable, MRT_Cell, MRT_ColumnDef, MRT_RowSelectionState, useMantineReactTable,
 } from 'mantine-react-table';
-import { IconCheck, IconProgress } from '@tabler/icons-react';
+import {
+  IconCheck, IconHourglassEmpty, IconX,
+} from '@tabler/icons-react';
 
 import {
   ParticipantData, StoredAnswer, StudyConfig,
@@ -24,6 +27,9 @@ import { useAuth } from '../../../store/hooks/useAuth';
 import 'mantine-react-table/styles.css';
 import { participantName } from '../../../utils/participantName';
 import { AllTasksTimeline } from '../replay/AllTasksTimeline';
+import { checkAnswerCorrect } from '../../../store/hooks/useNextStep';
+import { humanReadableDuration } from '../../../utils/humanReadableDuration';
+import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 
 function formatDate(date: Date): string | JSX.Element {
   if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
@@ -38,28 +44,6 @@ function formatDate(date: Date): string | JSX.Element {
   return `${month}/${day}/${year} ${hour}:${minute}`;
 }
 
-function formatTimeWithDays(date: Date): string | JSX.Element {
-  if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
-    return <Text size="sm" c="dimmed">Incomplete</Text>;
-  }
-  // Get total milliseconds since epoch (or use any delta duration in ms)
-  const totalMilliseconds = date.getTime();
-
-  // Convert to total seconds (assuming you're dealing with duration, not clock time)
-  const totalSeconds = Math.floor(totalMilliseconds / 1000);
-
-  const days = Math.floor(totalSeconds / 86400);
-  const remainingSecondsAfterDays = totalSeconds % 86400;
-
-  const hours = Math.floor(remainingSecondsAfterDays / 3600);
-  const minutes = Math.floor((remainingSecondsAfterDays % 3600) / 60);
-  const seconds = remainingSecondsAfterDays % 60;
-
-  const totalHours = days * 24 + hours;
-
-  return `${totalHours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
-
 export function TableView({
   visibleParticipants,
   studyConfig,
@@ -68,7 +52,7 @@ export function TableView({
 }: {
   visibleParticipants: ParticipantData[];
   studyConfig: StudyConfig;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<unknown>;
   width: number;
 }) {
   const { storageEngine } = useStorageEngine();
@@ -104,15 +88,42 @@ export function TableView({
 
   const columns = useMemo<MRT_ColumnDef<ParticipantData>[]>(() => [
     {
-      accessorKey: 'completed', header: 'Status', size: 130, Cell: ({ cell }) => (cell.getValue() ? <Tooltip label="Completed"><IconCheck size={16} color="teal" style={{ marginBottom: -3 }} /></Tooltip> : <Tooltip label="In Progress"><IconProgress size={16} color="orange" style={{ marginBottom: -3 }} /></Tooltip>),
+      accessorFn: (row: ParticipantData) => {
+        const incompleteEntries = Object.entries(row.answers || {}).filter((e) => e[1].startTime === 0);
+
+        return (Object.entries(row.answers).length - incompleteEntries.length) / (getSequenceFlatMap(row.sequence).length - 1);
+      },
+      header: 'Status',
+      size: 50,
+      Cell: ({ cell }: { cell: MRT_Cell<ParticipantData, number> }) => (cell.getValue() === 1 ? <Tooltip label="Completed"><IconCheck size={30} color="teal" style={{ marginBottom: -3 }} /></Tooltip> : (
+        <Tooltip label="In Progress">
+          <RingProgress
+            size={30}
+            thickness={4}
+            sections={[{ value: cell.getValue() * 100, color: 'blue' }]}
+          />
+        </Tooltip>
+      )),
     },
-    { accessorKey: 'participantIndex', header: '#', size: 140 },
+    { accessorKey: 'participantIndex', header: '#', size: 50 },
     { accessorKey: 'participantId', header: 'ID' },
     ...(studyConfig.uiConfig.participantNameField ? [{ accessorFn: (row: ParticipantData) => participantName(row, studyConfig), header: 'Name' }] : []),
     {
       accessorFn: (row: ParticipantData) => new Date(Math.max(...Object.values<StoredAnswer>(row.answers).filter((data) => data.endTime > 0).map((s) => s.endTime)) - Math.min(...Object.values<StoredAnswer>(row.answers).filter((data) => data.startTime > 0).map((s) => s.startTime))),
-      header: 'Total Duration',
-      Cell: ({ cell }: {cell: MRT_Cell<ParticipantData, Date>}) => formatTimeWithDays(cell.getValue()) || 'Incomplete',
+      header: 'Duration',
+      Cell: ({ cell }: {cell: MRT_Cell<ParticipantData, Date>}) => (
+        !Number.isNaN(cell.getValue()) ? (
+          <Badge
+            variant="light"
+            size="lg"
+            color="gray"
+            leftSection={<IconHourglassEmpty width={18} height={18} style={{ paddingTop: 1 }} />}
+            pb={1}
+          >
+            {`${humanReadableDuration(+cell.getValue())}`}
+          </Badge>
+        ) : 'Incomplete'
+      ),
 
     },
 
@@ -124,11 +135,31 @@ export function TableView({
       header: 'Start Time',
     },
     {
-      accessorFn: (row: ParticipantData) => new Date(Math.max(...Object.values<StoredAnswer>(row.answers).filter((data) => data.endTime > 0).map((s) => s.endTime))),
-      Cell: ({ cell }) => (
-        formatDate(cell.getValue() as Date)
+      accessorFn: (row: ParticipantData) => Object.values(row.answers).filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0).map((answer) => checkAnswerCorrect(answer.answer, answer.correctAnswer)),
+      header: 'Correct Answers',
+      Cell: ({ cell }: {cell: MRT_Cell<ParticipantData, boolean[]>}) => (
+        <>
+          <Badge
+            variant="light"
+            size="lg"
+            color="green"
+            leftSection={<IconCheck width={18} height={18} style={{ paddingTop: 1 }} />}
+            pb={1}
+          >
+            {cell.getValue().filter((b) => b).length}
+          </Badge>
+          <Badge
+            variant="light"
+            size="lg"
+            color="red"
+            leftSection={<IconX width={18} height={18} style={{ paddingTop: 1 }} />}
+            pb={1}
+          >
+
+            {cell.getValue().length - cell.getValue().filter((b) => b).length}
+          </Badge>
+        </>
       ),
-      header: 'End Time',
     },
 
   ], [studyConfig]);
@@ -146,11 +177,12 @@ export function TableView({
     paginationDisplayMode: 'pages',
     enablePagination: false,
     enableRowVirtualization: true,
+    mantineTableContainerProps: { style: { maxHeight: '75vh' } },
     layoutMode: 'grid',
-    renderDetailPanel: ({ row, table }) => {
+    renderDetailPanel: ({ row }) => {
       const r = row.original;
       return (
-        <AllTasksTimeline maxLength={undefined} studyConfig={studyConfig} studyId={studyId || ''} height={200} participantData={r} width={width - 40} />
+        <AllTasksTimeline maxLength={undefined} studyConfig={studyConfig} studyId={studyId || ''} participantData={r} width={width - 60} />
       );
     },
     defaultColumn: {
@@ -174,12 +206,12 @@ export function TableView({
             </Button>
           </Group>
         </Flex>
-        <Flex direction="column" style={{ width: '100%', overflow: 'auto' }}>
+        <Container fluid style={{ width: '100%', overflow: 'auto', height: '100%' }}>
           <MantineReactTable
             table={table}
 
           />
-        </Flex>
+        </Container>
         <Modal
           opened={modalRejectParticipantsOpened}
           onClose={() => setModalRejectParticipantsOpened(false)}
