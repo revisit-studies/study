@@ -190,7 +190,81 @@ export interface BaseResponse {
   /** The path to the external stylesheet file. */
   stylesheetPath?: string;
   /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
-  style?: React.CSSProperties;
+  style?: {
+    /** Sizing */
+    height?: string;
+    width?: string;
+
+    /** Positioning */
+    position?: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
+    top?: string;
+    bottom?: string;
+    left?: string;
+    right?: string;
+
+    /** Spacing */
+    margin?: string;
+    padding?: string;
+
+    /** Display */
+    display?: 'block' | 'flex' | 'grid' | 'inline' | 'inline-block' | 'inline-flex' | 'grid' | 'inline-grid' | 'none';
+
+    /** Flexbox */
+    flex?: string;
+    flexDirection?: 'row' | 'row-reverse' | 'column' | 'column-reverse';
+    flexWrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
+    alignContent?: 'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly' | 'stretch' | 'normal' | 'flex-start' | 'flex-end';
+    alignItems?: 'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly' | 'stretch' | 'normal' | 'flex-start' | 'flex-end';
+    alignSelf?: 'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly' | 'stretch' | 'normal' | 'flex-start' | 'flex-end';
+    justifyContent?: 'center' | 'start' | 'end' | 'left' | 'right' | 'flex-start' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly' | 'stretch';
+    justifyItems?: 'center' | 'start' | 'end' | 'left' | 'right' | 'flex-start' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly' | 'stretch';
+    justifySelf?: 'center' | 'start' | 'end' | 'left' | 'right' | 'flex-start' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly' | 'stretch';
+
+    /** Grid */
+    grid?: string;
+    gridAutoColumns?: string;
+    gridAutoFlow?: string;
+    gridAutoRows?: string;
+    gridColumn?: string;
+    gridRow?: string;
+    gridTemplate?: string;
+
+    /** Border */
+    border?: string;
+    borderRadius?: string;
+
+    /** Background */
+    background?: string;
+    backgroundColor?: string;
+    backgroundImage?: string;
+    backgroundPosition?: string;
+    backgroundSize?: string;
+
+    /** Filter */
+    filter?: string;
+
+    /** Typography */
+    color?: string;
+    font?: string;
+    fontFamily?: string;
+    fontSize?: string;
+    fontStyle?: 'normal' | 'italic' | 'oblique';
+    fontWeight?: string | number;
+    textAlign?: 'start' | 'center' | 'end' | 'justify' | 'left' | 'right' | 'match-parent';
+    textDecoration?: 'none' | 'underline' | 'overline' | 'line-through' | 'underline-overline';
+    textTransform?: 'capitalize' | 'lowercase' | 'none' | 'uppercase';
+    letterSpacing?: string;
+    lineHeight?: string | number;
+    wordSpacing?: string;
+
+    /** Transform & Transition */
+    transform?: string;
+    transition?: string;
+
+    /** Visibility */
+    visibility?: 'visible' | 'hidden' | 'collapse';
+    zIndex?: number;
+  }
 }
 
 /**
@@ -621,7 +695,7 @@ export interface BaseIndividualComponent {
   /** Whether to show the previous button. */
   previousButton?: boolean;
   /** The text that is displayed on the previous button. */
-  previousButtonText?:string;
+  previousButtonText?: string;
   /** The location of the instructions. */
   instructionLocation?: ConfigResponseBlockLocation;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
@@ -653,7 +727,81 @@ export interface BaseIndividualComponent {
   /** The path to the external stylesheet file. */
   stylesheetPath?: string;
   /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
-  style?: React.CSSProperties;
+  style?: {
+    /** Sizing */
+    height?: string;
+    width?: string;
+
+    /** Positioning */
+    position?: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
+    top?: string;
+    bottom?: string;
+    left?: string;
+    right?: string;
+
+    /** Spacing */
+    margin?: string;
+    padding?: string;
+
+    /** Display */
+    display?: 'block' | 'flex' | 'grid' | 'inline' | 'inline-block' | 'inline-flex' | 'grid' | 'inline-grid' | 'none';
+
+    /** Flexbox */
+    flex?: string;
+    flexDirection?: 'row' | 'row-reverse' | 'column' | 'column-reverse';
+    flexWrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
+    alignContent?: 'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly' | 'stretch' | 'normal' | 'flex-start' | 'flex-end';
+    alignItems?: 'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly' | 'stretch' | 'normal' | 'flex-start' | 'flex-end';
+    alignSelf?: 'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly' | 'stretch' | 'normal' | 'flex-start' | 'flex-end';
+    justifyContent?: 'center' | 'start' | 'end' | 'left' | 'right' | 'flex-start' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly' | 'stretch';
+    justifyItems?: 'center' | 'start' | 'end' | 'left' | 'right' | 'flex-start' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly' | 'stretch';
+    justifySelf?: 'center' | 'start' | 'end' | 'left' | 'right' | 'flex-start' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly' | 'stretch';
+
+    /** Grid */
+    grid?: string;
+    gridAutoColumns?: string;
+    gridAutoFlow?: string;
+    gridAutoRows?: string;
+    gridColumn?: string;
+    gridRow?: string;
+    gridTemplate?: string;
+
+    /** Border */
+    border?: string;
+    borderRadius?: string;
+
+    /** Background */
+    background?: string;
+    backgroundColor?: string;
+    backgroundImage?: string;
+    backgroundPosition?: string;
+    backgroundSize?: string;
+
+    /** Filter */
+    filter?: string;
+
+    /** Typography */
+    color?: string;
+    font?: string;
+    fontFamily?: string;
+    fontSize?: string;
+    fontStyle?: 'normal' | 'italic' | 'oblique';
+    fontWeight?: string | number;
+    textAlign?: 'start' | 'center' | 'end' | 'justify' | 'left' | 'right' | 'match-parent';
+    textDecoration?: 'none' | 'underline' | 'overline' | 'line-through' | 'underline-overline';
+    textTransform?: 'capitalize' | 'lowercase' | 'none' | 'uppercase';
+    letterSpacing?: string;
+    lineHeight?: string | number;
+    wordSpacing?: string;
+
+    /** Transform & Transition */
+    transform?: string;
+    transition?: string;
+
+    /** Visibility */
+    visibility?: 'visible' | 'hidden' | 'collapse';
+    zIndex?: number;
+  }
 }
 
 /**
