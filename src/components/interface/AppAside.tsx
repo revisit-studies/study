@@ -35,7 +35,6 @@ function InfoHover({ text }: { text: string }) {
 
 export function AppAside() {
   const sequence = useStoreSelector((state) => state.sequence);
-  const metadata = useStoreSelector((state) => state.metadata);
   const { toggleStudyBrowser } = useStoreActions();
 
   const studyConfig = useStudyConfig();
@@ -75,17 +74,31 @@ export function AppAside() {
             <Button
               variant="light"
               leftSection={<IconUserPlus size={14} />}
-              onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
+              onClick={() => getNewParticipant(storageEngine, studyHref)}
               size="xs"
               disabled={nextParticipantDisabled}
             >
               Next Participant
             </Button>
           </Tooltip>
-          <CloseButton
-            onClick={() => dispatch(toggleStudyBrowser())}
-            mt={1}
-          />
+          {isAnalysis ? (
+            <Tooltip
+              label="The study browser cannot be closed in replay mode"
+              withinPortal
+            >
+              <CloseButton
+                onClick={() => dispatch(toggleStudyBrowser())}
+                mt={1}
+                disabled={isAnalysis}
+              />
+            </Tooltip>
+          ) : (
+            <CloseButton
+              onClick={() => dispatch(toggleStudyBrowser())}
+              mt={1}
+              disabled={isAnalysis}
+            />
+          )}
         </Flex>
         <Flex direction="row" justify="space-between" mt="xs" opacity={0.7}>
           <Text size="sm">

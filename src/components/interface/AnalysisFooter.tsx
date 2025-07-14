@@ -10,7 +10,7 @@ import {
 import { useAsync } from '../../store/hooks/useAsync';
 
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { StorageEngine } from '../../storage/engines/StorageEngine';
+import { StorageEngine } from '../../storage/engines/types';
 import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import {
@@ -20,7 +20,7 @@ import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
 
 function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
-    return storageEngine.getAllParticipantNames();
+    return storageEngine.getAllParticipantIds();
   }
   return null;
 }

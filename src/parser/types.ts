@@ -97,7 +97,7 @@ export interface UIConfig {
   autoDownloadStudy?: boolean;
   /** The time in milliseconds to wait before automatically downloading the study data. */
   autoDownloadTime?: number;
-  /** The message to display when the study ends. */
+  /** The message to display when the study ends. Supports templating with the participant ID. e.g. "Thank you for completing the study. You may click this link and return to Prolific: [Go to Prolific](https://app.prolific.com/submissions/complete?cc=StudyID&PROLIFIC_ID={PROLIFIC_ID}))" */
   studyEndMsg?: string;
   /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.  */
   recordStudyAudio?: boolean;
@@ -107,9 +107,7 @@ export interface UIConfig {
   sidebarWidth?: number;
   /** Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second  */
   windowEventDebounceTime?: number;
-  /**
-   * If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers.
-   */
+  /** If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers. */
   urlParticipantIdParam?: string;
   /**
    * The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.
@@ -859,6 +857,8 @@ export interface VegaComponentPath extends BaseIndividualComponent {
   type: 'vega';
   /** The path to the vega file. This should be a relative path from the public folder. */
   path: string;
+  /** Whether to include vega actions. Defaults to true. */
+  withActions?: boolean;
 }
 
 /**
@@ -894,6 +894,8 @@ export interface VegaComponentConfig extends BaseIndividualComponent {
   type: 'vega';
   /** The vega or vega-lite configuration. */
   config: object;
+  /** Whether to include vega actions. Defaults to true. */
+  withActions?: boolean;
 }
 
 export type VegaComponent = VegaComponentPath | VegaComponentConfig;

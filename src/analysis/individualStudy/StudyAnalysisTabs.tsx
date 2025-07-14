@@ -19,8 +19,8 @@ import { ManageAccordion } from './management/ManageAccordion';
 import { useAuth } from '../../store/hooks/useAuth';
 import { StatsView } from './stats/StatsView';
 import { parseStudyConfig } from '../../parser/parser';
-import { StorageEngine } from '../../storage/engines/StorageEngine';
 import { useAsync } from '../../store/hooks/useAsync';
+import { StorageEngine } from '../../storage/engines/types';
 
 function sortByStartTime(a: ParticipantData, b: ParticipantData) {
   const aStartTimes = Object.values(a.answers).map((answer) => answer.startTime).filter((startTime) => startTime !== undefined).sort();
@@ -40,9 +40,9 @@ function sortByStartTime(a: ParticipantData, b: ParticipantData) {
 export function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined) : Promise<Record<number, ParticipantData>> {
   if (!studyConfig || !storageEngine || !studyId) return Promise.resolve([]);
 
-  storageEngine?.initializeStudyDb(studyId, studyConfig);
+  storageEngine?.initializeStudyDb(studyId);
 
-  return storageEngine.getAllParticipantsDataByStudy(studyId);
+  return storageEngine.getAllParticipantsData(studyId);
 }
 
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
@@ -55,13 +55,11 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const navigate = useNavigate();
   const { analysisTab } = useParams();
   const { user } = useAuth();
-  const [ref, { width, height }] = useResizeObserver();
+  const [ref, { width }] = useResizeObserver();
 
   // 0-1 percentage of scroll height
 
   const { value: expData } = useAsync(getParticipantsData, [studyConfig, storageEngine, studyId]);
-
-  console.log(expData);
 
   const visibleParticipants = useMemo(() => {
     if (!expData) return [];
