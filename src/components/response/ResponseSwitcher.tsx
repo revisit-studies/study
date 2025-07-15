@@ -53,7 +53,9 @@ export function ResponseSwitcher({
   const [searchParams] = useSearchParams();
 
   const studyConfig = useStudyConfig();
-  const enumerateQuestions = studyConfig.uiConfig.enumerateQuestions ?? false;
+
+  const enumerateQuestions = useMemo(() => configInUse?.enumerateQuestions ?? studyConfig.uiConfig.enumerateQuestions ?? false, [configInUse, studyConfig]);
+
   const sequence = useStoreSelector((state) => state.sequence);
   const flatSequence = getSequenceFlatMap(sequence);
   const currentStep = useCurrentStep();
@@ -113,8 +115,10 @@ export function ResponseSwitcher({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
 
+  const responseDividers = useMemo(() => response.withDivider ?? configInUse?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, configInUse, studyConfig]);
+
   return (
-    <Box mb={response.withDivider || configInUse.responseDividers ? 'xl' : 'lg'}>
+    <Box mb={responseDividers ? 'xl' : 'lg'}>
       {response.type === 'numerical' && (
         <NumericInput
           response={response}
@@ -231,7 +235,7 @@ export function ResponseSwitcher({
         />
       )}
 
-      {(response.withDivider || configInUse.responseDividers) && <Divider mt="xl" mb="xs" />}
+      {responseDividers && <Divider mt="xl" mb="xs" />}
     </Box>
   );
 }
