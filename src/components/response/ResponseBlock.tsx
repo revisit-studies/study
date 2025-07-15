@@ -12,7 +12,7 @@ import {
   ResponseBlockLocation,
   Response,
 } from '../../parser/types';
-import { useCurrentIdentifier, useCurrentStep, useStudyId } from '../../routes/utils';
+import { useCurrentIdentifier, useCurrentStep } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
@@ -60,8 +60,6 @@ export function ResponseBlock({
   const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
   const storedAnswerData = useStoredAnswer();
   const formOrders: Record<string, string[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
-
-  const studyId = useStudyId();
 
   const navigate = useNavigate();
 
@@ -219,7 +217,7 @@ export function ResponseBlock({
 
             // If the user has failed the training, wait 5 seconds and redirect to a fail page
             if (!allowFailedTraining && storageEngine) {
-              storageEngine.rejectCurrentParticipant(studyId, 'Failed training')
+              storageEngine.rejectCurrentParticipant('Failed training')
                 .then(() => {
                   setTimeout(() => {
                     navigate('./../__trainingFailed');
@@ -261,7 +259,7 @@ export function ResponseBlock({
         ),
       );
     }
-  }, [attemptsUsed, responsesWithDefaults, configInUse, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, studyId, navigate, identifier, storeDispatch, answerValidator, alertConfig, saveIncorrectAnswer]);
+  }, [attemptsUsed, responsesWithDefaults, configInUse, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, navigate, identifier, storeDispatch, answerValidator, alertConfig, saveIncorrectAnswer]);
 
   const nextOnEnter = configInUse?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 

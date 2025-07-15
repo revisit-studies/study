@@ -9,11 +9,12 @@
     "build": "tsc && vite build",
     "lint": "eslint src",
     "postinstall": "husky",
-    "generate-schema:StudyConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/StudyConfigSchema.json --type StudyConfig",
-    "generate-schema:GlobalConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/GlobalConfigSchema.json --type GlobalConfig",
-    "generate-schema:LibraryConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/LibraryConfigSchema.json --type LibraryConfig",
+    "generate-schema:StudyConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/StudyConfigSchema.json --type StudyConfig --no-type-check",
+    "generate-schema:GlobalConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/GlobalConfigSchema.json --type GlobalConfig --no-type-check",
+    "generate-schema:LibraryConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/LibraryConfigSchema.json --type LibraryConfig --no-type-check",
     "generate-schemas": "yarn generate-schema:StudyConfig && yarn generate-schema:GlobalConfig && yarn generate-schema:LibraryConfig",
-    "test": "playwright test"
+    "test": "playwright test",
+    "unittest": "vitest"
   },
   "lint-staged": {
     "*.{tsx,jsx,ts,js}": "yarn lint"
@@ -27,6 +28,7 @@
     "@mantine/notifications": "^7.12.0",
     "@quentinroy/latin-square": "^1.1.1",
     "@reduxjs/toolkit": "^2.5.0",
+    "@supabase/supabase-js": "^2.50.3",
     "@tabler/icons-react": "^3.28.1",
     "@trrack/core": "^1.3.0",
     "@trrack/vis-react": "^1.5.0",
@@ -88,6 +90,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.4.1",
     "typescript": "^5.7.3",
-    "vite": "^6.2.7"
+    "vite": "^6.2.7",
+    "vitest": "^3.2.4",
+    "vitest-localstorage-mock": "^0.1.2"
   }
 }

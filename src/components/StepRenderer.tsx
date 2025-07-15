@@ -115,8 +115,12 @@ export function StepRenderer() {
   const sidebarOpen = useMemo(() => componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar, [componentConfig, studyConfig]);
   const sidebarWidth = useMemo(() => componentConfig?.sidebarWidth ?? studyConfig.uiConfig.sidebarWidth ?? 300, [componentConfig, studyConfig]);
   const showTitleBar = useMemo(() => componentConfig.showTitleBar ?? studyConfig.uiConfig.showTitleBar ?? true, [componentConfig, studyConfig]);
-
   const isAnalysis = useIsAnalysis();
+
+  const asideOpen = useMemo(() => {
+    if (isAnalysis) return true;
+    return studyNavigatorEnabled && showStudyBrowser;
+  }, [studyNavigatorEnabled, showStudyBrowser, isAnalysis]);
 
   return (
     <WindowEventsContext.Provider value={windowEvents}>

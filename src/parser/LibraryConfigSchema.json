@@ -222,6 +222,10 @@
             "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
             "type": "boolean"
           },
+          "withActions": {
+            "description": "Whether to include vega actions. Defaults to true.",
+            "type": "boolean"
+          },
           "withTimeline": {
             "description": "Whether to show the video timeline. Defaults to false.",
             "type": "boolean"
@@ -1082,6 +1086,10 @@
         },
         "withSidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+          "type": "boolean"
+         },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
           "type": "boolean"
         },
         "withTimeline": {
@@ -2569,6 +2577,10 @@
         "withSidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
           "type": "boolean"
+         },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2707,6 +2719,10 @@
         },
         "withSidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
           "type": "boolean"
         }
       },

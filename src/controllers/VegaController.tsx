@@ -143,5 +143,5 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     return <div>Failed to load vega config</div>;
   }
 
-  return (<InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={(v) => setView(v)} />);
+  return (<InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={(v) => setView(v)} actions={currentConfig.withActions} />);
 }
