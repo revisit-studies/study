@@ -1,7 +1,7 @@
 import { JSX, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import {
-  Center, Group, Stack, Tooltip, Text,
+  Center, Stack, Tooltip, Text,
 } from '@mantine/core';
 import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
@@ -193,67 +193,6 @@ export function AllTasksTimeline({
   return (
     <Center>
       <Stack gap={15} style={{ width: '100%' }}>
-        {/* <Divider size="md" /> */}
-        <Group justify="space-between">
-          <Group justify="center">
-            {/* {participantData.participantIndex
-              ? (
-                <Text>
-                  {`P-${participantData.participantIndex.toString().padStart(3, '0')}`}
-                </Text>
-              ) : null }
-
-            <Text size="md" fw={700}>
-              {partName || participantData.participantId}
-            </Text>
-
-            <Text size="md">
-              {completionTime}
-            </Text>
-
-            {participantData.completed ? null : <Text size="xl" c="red">Not completed</Text>} */}
-
-            {/* <Group gap={10}>
-              <Badge
-                variant="light"
-                size="lg"
-                color="green"
-                leftSection={<IconCheck width={18} height={18} style={{ paddingTop: 1 }} />}
-                pb={1}
-              >
-                {numComponentsAnsweredCorrectly}
-              </Badge>
-              <Badge
-                variant="light"
-                size="lg"
-                color="red"
-                leftSection={<IconX width={18} height={18} style={{ paddingTop: 1 }} />}
-                pb={1}
-              >
-                {numComponentsWithCorrectAnswer - numComponentsAnsweredCorrectly}
-              </Badge>
-              <Badge
-                variant="light"
-                size="lg"
-                color="gray"
-                leftSection={<IconHourglassEmpty width={18} height={18} style={{ paddingTop: 1 }} />}
-                pb={1}
-              >
-                {humanReadableDuration(duration)}
-              </Badge>
-            </Group> */}
-
-          </Group>
-          {/* <Button
-            rightSection={<IconExternalLink size={14} />}
-            component="a"
-            href={`${PREFIX}${studyId}/${encryptIndex(0)}?participantId=${participantData.participantId}`}
-            target="_blank"
-          >
-            Go to replay
-          </Button> */}
-        </Group>
-
         <svg style={{ width, height: maxHeight, overflow: 'visible' }}>
           {tasks.map((t) => t.line)}
           {tasks.map((t) => t.label)}
