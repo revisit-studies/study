@@ -22,7 +22,7 @@ export function AppNavBar() {
   }, [stepConfig, studyConfig]);
 
   const status = useStoredAnswer();
-  const trialHasSideBar = currentConfig?.withSidebar;
+  const trialHasSideBar = currentConfig?.withSidebar ?? studyConfig.uiConfig.withSidebar;
   const trialHasSideBarResponses = true;
 
   const instruction = currentConfig?.instruction || '';
