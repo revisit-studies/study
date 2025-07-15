@@ -110,7 +110,8 @@ export function StepRenderer() {
 
   const { studyNavigatorEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
-  const sidebarOpen = useMemo(() => componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar ?? true, [componentConfig, studyConfig]);
+  // No default value for withSidebar since it's a required field in uiConfig
+  const sidebarOpen = useMemo(() => componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar, [componentConfig, studyConfig]);
   const sidebarWidth = useMemo(() => componentConfig?.sidebarWidth ?? studyConfig.uiConfig.sidebarWidth ?? 300, [componentConfig, studyConfig]);
   const showTitleBar = useMemo(() => componentConfig.showTitleBar ?? studyConfig.uiConfig.showTitleBar ?? true, [componentConfig, studyConfig]);
   const isAnalysis = useIsAnalysis();
