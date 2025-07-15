@@ -8,9 +8,6 @@ import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
 export function AppNavBar() {
-  const trialHasSideBar = useStudyConfig()?.uiConfig.withSidebar;
-  const trialHasSideBarResponses = true;
-
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentComponent = useCurrentComponent();
@@ -25,6 +22,9 @@ export function AppNavBar() {
   }, [stepConfig, studyConfig]);
 
   const status = useStoredAnswer();
+  const trialHasSideBar = currentConfig?.withSidebar;
+  const trialHasSideBarResponses = true;
+
   const instruction = currentConfig?.instruction || '';
   const instructionLocation = useMemo(() => currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar', [currentConfig, studyConfig]);
   const instructionInSideBar = instructionLocation === 'sidebar';

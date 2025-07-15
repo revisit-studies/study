@@ -45,8 +45,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   const { storageEngine } = useStorageEngine();
 
   const currentComponent = useCurrentComponent();
-  const config = useStoreSelector((state) => state.config);
-  const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
+  const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
 
   const currentStep = useCurrentStep();
 

@@ -118,7 +118,7 @@ export function ResponseSwitcher({
   const responseDividers = useMemo(() => response.withDivider ?? configInUse?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, configInUse, studyConfig]);
 
   return (
-    <Box mb={response.withDivider || responseDividers ? 'xl' : 'lg'}>
+    <Box mb={responseDividers ? 'xl' : 'lg'}>
       {response.type === 'numerical' && (
         <NumericInput
           response={response}
@@ -235,7 +235,7 @@ export function ResponseSwitcher({
         />
       )}
 
-      {(response.withDivider || responseDividers) && <Divider mt="xl" mb="xs" />}
+      {responseDividers && <Divider mt="xl" mb="xs" />}
     </Box>
   );
 }
