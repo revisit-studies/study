@@ -6,6 +6,7 @@ import {
   Container,
   Badge,
   RingProgress,
+  Stack,
 } from '@mantine/core';
 import React, {
   useCallback, useMemo, useState,
@@ -99,10 +100,10 @@ export function TableView({
         return (
           cellValue.completed ? <Tooltip label="Completed"><IconCheck size={30} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
             : cellValue.rejected ? (
-              <>
+              <Stack align="center" justify="center" gap={4} w="100%">
                 <Tooltip label="Rejected"><IconX size={30} color="red" style={{ marginBottom: -3 }} /></Tooltip>
-                <Text>{cellValue.rejected.reason}</Text>
-              </>
+                <Text size="xs" c="dimmed" ta="center">{cellValue.rejected.reason}</Text>
+              </Stack>
             )
               : (
                 <Tooltip label="In Progress">
@@ -200,6 +201,7 @@ export function TableView({
       maxSize: 1000, // allow columns to get larger than default
       size: 180, // make columns wider by default
     },
+    enableDensityToggle: false,
     positionToolbarAlertBanner: 'none',
     renderTopToolbarCustomActions: () => (
       <>
