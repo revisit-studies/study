@@ -119,8 +119,8 @@ export function ResponseSwitcher({
   const responseStyle = response.style || {};
 
   return (
-    <div id={response.id}>
-      <Box mb={response.withDivider || configInUse.responseDividers ? 'xl' : 'lg'} style={responseStyle}>
+    <div id={response.id} style={responseStyle}>
+      <Box mb={response.withDivider || configInUse.responseDividers ? 'xl' : 'lg'}>
         {response.type === 'numerical' && (
         <NumericInput
           response={response}
