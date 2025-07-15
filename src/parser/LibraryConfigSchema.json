@@ -171,51 +171,6 @@
             "additionalProperties": false,
             "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
             "properties": {
-              "alignContent": {
-                "enum": [
-                  "start",
-                  "center",
-                  "end",
-                  "space-between",
-                  "space-around",
-                  "space-evenly",
-                  "stretch",
-                  "normal",
-                  "flex-start",
-                  "flex-end"
-                ],
-                "type": "string"
-              },
-              "alignItems": {
-                "enum": [
-                  "start",
-                  "center",
-                  "end",
-                  "space-between",
-                  "space-around",
-                  "space-evenly",
-                  "stretch",
-                  "normal",
-                  "flex-start",
-                  "flex-end"
-                ],
-                "type": "string"
-              },
-              "alignSelf": {
-                "enum": [
-                  "start",
-                  "center",
-                  "end",
-                  "space-between",
-                  "space-around",
-                  "space-evenly",
-                  "stretch",
-                  "normal",
-                  "flex-start",
-                  "flex-end"
-                ],
-                "type": "string"
-              },
               "background": {
                 "description": "Background",
                 "type": "string"
@@ -246,43 +201,8 @@
                 "description": "Typography",
                 "type": "string"
               },
-              "display": {
-                "description": "Display",
-                "enum": [
-                  "block",
-                  "flex",
-                  "grid",
-                  "inline",
-                  "inline-block",
-                  "inline-flex",
-                  "inline-grid",
-                  "none"
-                ],
-                "type": "string"
-              },
               "filter": {
                 "description": "Filter",
-                "type": "string"
-              },
-              "flex": {
-                "description": "Flexbox",
-                "type": "string"
-              },
-              "flexDirection": {
-                "enum": [
-                  "row",
-                  "row-reverse",
-                  "column",
-                  "column-reverse"
-                ],
-                "type": "string"
-              },
-              "flexWrap": {
-                "enum": [
-                  "nowrap",
-                  "wrap",
-                  "wrap-reverse"
-                ],
                 "type": "string"
               },
               "font": {
@@ -308,78 +228,8 @@
                   "number"
                 ]
               },
-              "grid": {
-                "description": "Grid",
-                "type": "string"
-              },
-              "gridAutoColumns": {
-                "type": "string"
-              },
-              "gridAutoFlow": {
-                "type": "string"
-              },
-              "gridAutoRows": {
-                "type": "string"
-              },
-              "gridColumn": {
-                "type": "string"
-              },
-              "gridRow": {
-                "type": "string"
-              },
-              "gridTemplate": {
-                "type": "string"
-              },
               "height": {
                 "description": "Sizing",
-                "type": "string"
-              },
-              "justifyContent": {
-                "enum": [
-                  "center",
-                  "start",
-                  "end",
-                  "left",
-                  "right",
-                  "flex-start",
-                  "flex-end",
-                  "space-between",
-                  "space-around",
-                  "space-evenly",
-                  "stretch"
-                ],
-                "type": "string"
-              },
-              "justifyItems": {
-                "enum": [
-                  "center",
-                  "start",
-                  "end",
-                  "left",
-                  "right",
-                  "flex-start",
-                  "flex-end",
-                  "space-between",
-                  "space-around",
-                  "space-evenly",
-                  "stretch"
-                ],
-                "type": "string"
-              },
-              "justifySelf": {
-                "enum": [
-                  "center",
-                  "start",
-                  "end",
-                  "left",
-                  "right",
-                  "flex-start",
-                  "flex-end",
-                  "space-between",
-                  "space-around",
-                  "space-evenly",
-                  "stretch"
-                ],
                 "type": "string"
               },
               "left": {
@@ -456,23 +306,11 @@
               "transition": {
                 "type": "string"
               },
-              "visibility": {
-                "description": "Visibility",
-                "enum": [
-                  "visible",
-                  "hidden",
-                  "collapse"
-                ],
-                "type": "string"
-              },
               "width": {
                 "type": "string"
               },
               "wordSpacing": {
                 "type": "string"
-              },
-              "zIndex": {
-                "type": "number"
               }
             },
             "type": "object"
@@ -575,51 +413,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -650,43 +443,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -712,78 +470,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -860,23 +548,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -983,51 +659,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -1058,43 +689,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -1120,78 +716,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -1268,23 +794,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -1504,51 +1018,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -1579,43 +1048,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -1641,78 +1075,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -1789,23 +1153,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -1960,51 +1312,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -2035,43 +1342,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -2097,78 +1369,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -2245,23 +1447,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -2529,51 +1719,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -2604,43 +1749,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -2666,78 +1776,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -2814,23 +1854,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -3001,51 +2029,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -3076,43 +2059,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -3138,78 +2086,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -3286,23 +2164,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -3379,51 +2245,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -3454,43 +2275,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -3516,78 +2302,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -3664,23 +2380,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -3804,51 +2508,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -3879,43 +2538,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -3941,78 +2565,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -4089,23 +2643,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -4215,51 +2757,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -4290,43 +2787,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -4352,78 +2814,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -4500,23 +2892,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -4624,51 +3004,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -4699,43 +3034,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -4761,78 +3061,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -4909,23 +3139,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -5045,51 +3263,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -5120,43 +3293,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -5182,78 +3320,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -5330,23 +3398,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -5447,51 +3503,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -5522,43 +3533,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -5584,78 +3560,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -5732,23 +3638,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -5910,51 +3804,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -5985,43 +3834,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -6047,78 +3861,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -6195,23 +3939,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -6279,51 +4011,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -6354,43 +4041,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -6416,78 +4068,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -6564,23 +4146,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -6735,51 +4305,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -6810,43 +4335,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -6872,78 +4362,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -7020,23 +4440,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -7147,51 +4555,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -7222,43 +4585,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -7284,78 +4612,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -7432,23 +4690,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -7547,51 +4793,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -7622,43 +4823,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -7684,78 +4850,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -7832,23 +4928,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -7981,51 +5065,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -8056,43 +5095,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -8118,78 +5122,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -8266,23 +5200,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -8406,51 +5328,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -8481,43 +5358,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -8543,78 +5385,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -8691,23 +5463,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -8835,51 +5595,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -8910,43 +5625,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -8972,78 +5652,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -9120,23 +5730,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
@@ -9265,51 +5863,6 @@
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
           "properties": {
-            "alignContent": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignItems": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
-            "alignSelf": {
-              "enum": [
-                "start",
-                "center",
-                "end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch",
-                "normal",
-                "flex-start",
-                "flex-end"
-              ],
-              "type": "string"
-            },
             "background": {
               "description": "Background",
               "type": "string"
@@ -9340,43 +5893,8 @@
               "description": "Typography",
               "type": "string"
             },
-            "display": {
-              "description": "Display",
-              "enum": [
-                "block",
-                "flex",
-                "grid",
-                "inline",
-                "inline-block",
-                "inline-flex",
-                "inline-grid",
-                "none"
-              ],
-              "type": "string"
-            },
             "filter": {
               "description": "Filter",
-              "type": "string"
-            },
-            "flex": {
-              "description": "Flexbox",
-              "type": "string"
-            },
-            "flexDirection": {
-              "enum": [
-                "row",
-                "row-reverse",
-                "column",
-                "column-reverse"
-              ],
-              "type": "string"
-            },
-            "flexWrap": {
-              "enum": [
-                "nowrap",
-                "wrap",
-                "wrap-reverse"
-              ],
               "type": "string"
             },
             "font": {
@@ -9402,78 +5920,8 @@
                 "number"
               ]
             },
-            "grid": {
-              "description": "Grid",
-              "type": "string"
-            },
-            "gridAutoColumns": {
-              "type": "string"
-            },
-            "gridAutoFlow": {
-              "type": "string"
-            },
-            "gridAutoRows": {
-              "type": "string"
-            },
-            "gridColumn": {
-              "type": "string"
-            },
-            "gridRow": {
-              "type": "string"
-            },
-            "gridTemplate": {
-              "type": "string"
-            },
             "height": {
               "description": "Sizing",
-              "type": "string"
-            },
-            "justifyContent": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifyItems": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
-              "type": "string"
-            },
-            "justifySelf": {
-              "enum": [
-                "center",
-                "start",
-                "end",
-                "left",
-                "right",
-                "flex-start",
-                "flex-end",
-                "space-between",
-                "space-around",
-                "space-evenly",
-                "stretch"
-              ],
               "type": "string"
             },
             "left": {
@@ -9550,23 +5998,11 @@
             "transition": {
               "type": "string"
             },
-            "visibility": {
-              "description": "Visibility",
-              "enum": [
-                "visible",
-                "hidden",
-                "collapse"
-              ],
-              "type": "string"
-            },
             "width": {
               "type": "string"
             },
             "wordSpacing": {
               "type": "string"
-            },
-            "zIndex": {
-              "type": "number"
             }
           },
           "type": "object"
