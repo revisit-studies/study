@@ -111,18 +111,20 @@ export function ResponseBlock({
 
   const matrixAnswers = useStoreSelector((state) => state.matrixAnswers);
 
-  const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
-  const allowFailedTraining = configInUse?.allowFailedTraining === undefined ? true : configInUse.allowFailedTraining;
+  const studyConfig = useStudyConfig();
+
+  const provideFeedback = useMemo(() => configInUse?.provideFeedback ?? studyConfig.uiConfig.provideFeedback, [configInUse, studyConfig]);
+  const hasCorrectAnswerFeedback = provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
+  const allowFailedTraining = useMemo(() => configInUse?.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [configInUse, studyConfig]);
   const [attemptsUsed, setAttemptsUsed] = useState(0);
-  const trainingAttempts = configInUse?.trainingAttempts || 2;
+  const trainingAttempts = useMemo(() => configInUse?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [configInUse, studyConfig]);
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
-  const studyConfig = useStudyConfig();
+  const showBtnsInLocation = useMemo(() => location === (configInUse?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [configInUse, studyConfig, location]);
   const identifier = useCurrentIdentifier();
 
-  const showBtnsInLocation = location === (configInUse?.nextButtonLocation || 'belowStimulus');
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
     if (reactiveAnswers && ReactiveResponse) {
@@ -189,7 +191,7 @@ export function ResponseBlock({
     setAttemptsUsed(newAttemptsUsed);
 
     const correctAnswers = Object.fromEntries(responsesWithDefaults.map((response) => {
-      const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+      const configCorrectAnswer = configInUse?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
       const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id];
 
       return [response.id, Array.isArray(suppliedAnswer)
@@ -234,7 +236,7 @@ export function ResponseBlock({
             message = `Please try again. You have ${trainingAttempts - newAttemptsUsed} attempts left.`;
           }
           if (response.type === 'checkbox') {
-            const correct = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+            const correct = configInUse?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
 
             const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id] as string[];
             const matches = findMatchingStrings(suppliedAnswer, correct);
@@ -259,8 +261,10 @@ export function ResponseBlock({
     }
   }, [attemptsUsed, responsesWithDefaults, configInUse, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, navigate, identifier, storeDispatch, answerValidator, alertConfig, saveIncorrectAnswer]);
 
+  const nextOnEnter = configInUse?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
+
   useEffect(() => {
-    if (studyConfig.uiConfig.nextOnEnter) {
+    if (nextOnEnter) {
       const handleKeyDown = (event: KeyboardEvent) => {
         if (event.key === 'Enter') {
           checkAnswerProvideFeedback();
@@ -272,8 +276,10 @@ export function ResponseBlock({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-    return () => { };
-  }, [checkAnswerProvideFeedback, studyConfig]);
+    return () => {};
+  }, [checkAnswerProvideFeedback, nextOnEnter]);
+
+  const nextButtonText = useMemo(() => configInUse?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [configInUse, studyConfig]);
 
   let index = 0;
   return (
@@ -339,7 +345,7 @@ export function ResponseBlock({
       {showBtnsInLocation && (
       <NextButton
         disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
-        label={configInUse.nextButtonText || 'Next'}
+        label={nextButtonText}
         configInUse={configInUse}
         location={location}
         checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (

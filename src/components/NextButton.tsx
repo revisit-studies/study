@@ -26,8 +26,9 @@ export function NextButton({
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
 
-  const nextButtonDisableTime = configInUse?.nextButtonDisableTime;
-  const nextButtonEnableTime = configInUse?.nextButtonEnableTime || 0;
+  const nextButtonDisableTime = useMemo(() => configInUse?.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime, [configInUse, studyConfig]);
+  const nextButtonEnableTime = useMemo(() => configInUse?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0, [configInUse, studyConfig]);
+
   const [timer, setTimer] = useState<number | undefined>(undefined);
   // Start a timer on first render, update timer every 100ms
   useEffect(() => {
@@ -55,6 +56,8 @@ export function NextButton({
     [nextButtonDisableTime, nextButtonEnableTime, timer],
   );
 
+  const nextOnEnter = useMemo(() => configInUse?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter, [configInUse, studyConfig]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter' && !disabled && !isNextDisabled && buttonTimerSatisfied) {
@@ -62,23 +65,24 @@ export function NextButton({
       }
     };
 
-    if (studyConfig.uiConfig.nextOnEnter) {
+    if (nextOnEnter) {
       window.addEventListener('keydown', handleKeyDown);
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-    return () => { };
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, studyConfig.uiConfig.nextOnEnter]);
+    return () => {};
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, nextOnEnter]);
 
   const nextButtonDisabled = useMemo(() => disabled || isNextDisabled || !buttonTimerSatisfied, [disabled, isNextDisabled, buttonTimerSatisfied]);
+  const previousButtonText = useMemo(() => configInUse?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous', [configInUse, studyConfig]);
 
   return (
     <>
       <Group justify="right" gap="xs">
         {configInUse?.previousButton && (
           <PreviousButton
-            label={configInUse.previousButtonText || 'Previous'}
+            label={previousButtonText}
             px={location === 'sidebar' && checkAnswer ? 8 : undefined}
           />
         )}
