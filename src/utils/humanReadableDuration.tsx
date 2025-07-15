@@ -1,5 +1,8 @@
-export function humanReadableDuration(msDuration: number): string {
-  if (msDuration <= 0 || Number.isNaN(msDuration as number)) {
+export function humanReadableDuration(msDuration: number) {
+  if (Number.isNaN(msDuration as number)) {
+    return undefined;
+  }
+  if (msDuration <= 0) {
     return '0s';
   }
 

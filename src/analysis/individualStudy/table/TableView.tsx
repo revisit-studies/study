@@ -120,7 +120,7 @@ export function TableView({
             leftSection={<IconHourglassEmpty width={18} height={18} style={{ paddingTop: 1 }} />}
             pb={1}
           >
-            {`${humanReadableDuration(+cell.getValue())}`}
+            {`${humanReadableDuration(+cell.getValue()) || 'N/A'}`}
           </Badge>
         ) : 'Incomplete'
       ),
