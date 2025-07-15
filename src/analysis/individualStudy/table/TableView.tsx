@@ -22,7 +22,6 @@ import {
   ParticipantData, StoredAnswer, StudyConfig,
 } from '../../../parser/types';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
-import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 import { useAuth } from '../../../store/hooks/useAuth';
 import 'mantine-react-table/styles.css';
 import { participantName } from '../../../utils/participantName';
@@ -91,19 +90,30 @@ export function TableView({
       accessorFn: (row: ParticipantData) => {
         const incompleteEntries = Object.entries(row.answers || {}).filter((e) => e[1].startTime === 0);
 
-        return (Object.entries(row.answers).length - incompleteEntries.length) / (getSequenceFlatMap(row.sequence).length - 1);
+        return { percent: (Object.entries(row.answers).length - incompleteEntries.length) / (getSequenceFlatMap(row.sequence).length - 1), completed: row.completed, rejected: row.rejected };
       },
       header: 'Status',
       size: 50,
-      Cell: ({ cell }: { cell: MRT_Cell<ParticipantData, number> }) => (cell.getValue() === 1 ? <Tooltip label="Completed"><IconCheck size={30} color="teal" style={{ marginBottom: -3 }} /></Tooltip> : (
-        <Tooltip label="In Progress">
-          <RingProgress
-            size={30}
-            thickness={4}
-            sections={[{ value: cell.getValue() * 100, color: 'blue' }]}
-          />
-        </Tooltip>
-      )),
+      Cell: ({ cell }: { cell: MRT_Cell<ParticipantData, {percent: number, completed: boolean, rejected: ParticipantData['rejected']}> }) => {
+        const cellValue = cell.getValue();
+        return (
+          cellValue.completed ? <Tooltip label="Completed"><IconCheck size={30} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
+            : cellValue.rejected ? (
+              <>
+                <Tooltip label="Rejected"><IconX size={30} color="red" style={{ marginBottom: -3 }} /></Tooltip>
+                <Text>{cellValue.rejected.reason}</Text>
+              </>
+            )
+              : (
+                <Tooltip label="In Progress">
+                  <RingProgress
+                    size={30}
+                    thickness={4}
+                    sections={[{ value: cellValue.percent * 100, color: 'blue' }]}
+                  />
+                </Tooltip>
+              ));
+      },
     },
     { accessorKey: 'participantIndex', header: '#', size: 50 },
     { accessorKey: 'participantId', header: 'ID' },
@@ -190,15 +200,11 @@ export function TableView({
       maxSize: 1000, // allow columns to get larger than default
       size: 180, // make columns wider by default
     },
-  });
-
-  return (
-    visibleParticipants.length > 0 ? (
+    positionToolbarAlertBanner: 'none',
+    renderTopToolbarCustomActions: () => (
       <>
-        <LoadingOverlay visible={loading} overlayProps={{ blur: 2 }} />
         <Flex justify="space-between" mb={8} p={8}>
           <Group>
-            <DownloadButtons visibleParticipants={visibleParticipants} studyId={studyId || ''} />
             <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
               Reject Participants (
               {Object.keys(checked).length}
@@ -206,22 +212,16 @@ export function TableView({
             </Button>
           </Group>
         </Flex>
-        <Container fluid style={{ width: '100%', overflow: 'auto', height: '100%' }}>
-          <MantineReactTable
-            table={table}
-
-          />
-        </Container>
         <Modal
           opened={modalRejectParticipantsOpened}
           onClose={() => setModalRejectParticipantsOpened(false)}
           title={(
             <Text>
               Reject Participants (
-              {checked.length}
+              {Object.keys(checked).length}
               )
             </Text>
-          )}
+        )}
         >
           <TextInput
             label="Please enter the reason for rejection."
@@ -236,6 +236,19 @@ export function TableView({
             </Button>
           </Flex>
         </Modal>
+      </>
+    ),
+  });
+
+  return (
+    visibleParticipants.length > 0 ? (
+      <>
+        <LoadingOverlay visible={loading} overlayProps={{ blur: 2 }} />
+        <Container fluid style={{ width: '100%', overflow: 'auto', height: '100%' }}>
+          <MantineReactTable
+            table={table}
+          />
+        </Container>
       </>
 
     ) : (

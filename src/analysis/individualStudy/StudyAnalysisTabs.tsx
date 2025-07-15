@@ -21,6 +21,7 @@ import { StatsView } from './stats/StatsView';
 import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
+import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 
 function sortByStartTime(a: ParticipantData, b: ParticipantData) {
   const aStartTimes = Object.values(a.answers).map((answer) => answer.startTime).filter((startTime) => startTime !== undefined).sort();
@@ -105,7 +106,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
         <Stack ref={ref} style={{ height: '80vh' }}>
 
           <Flex direction="row" align="center" justify="space-between">
-            <Title order={5}>{studyId}</Title>
+            <Flex direction="row" align="center">
+              <Title order={5} mr="sm">{studyId}</Title>
+              <DownloadButtons visibleParticipants={visibleParticipants} studyId={studyId || ''} />
+            </Flex>
             <Flex direction="row" align="center">
               <Text mt={-2} size="sm">Participants: </Text>
               <Checkbox.Group
