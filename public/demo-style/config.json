@@ -33,15 +33,18 @@
       "type": "markdown",
       "path": "demo-style/assets/markdownComponent.md",
       "response": [
-        {
-          "id": "markdown-feedback",
-          "prompt": "How readable is this styled markdown content?",
-          "type": "radio",
-          "location": "belowStimulus",
-          "options": ["Excellent", "Good", "Fair", "Poor"],
-          "required": true
-        }
-      ]
+      ],
+      "style": {
+        "width": "800px",
+        "margin": "20px auto",
+        "padding": "30px",
+        "fontFamily": "Georgia, serif", 
+        "lineHeight": "2",
+        "backgroundColor": "#deeff5",
+        "fontSize": "16px",
+        "border": "1px solid #e0e0e0",
+        "borderRadius": "12px"
+      }
     },
     "react-component": {
       "type": "react-component",
@@ -49,20 +52,21 @@
       "parameters": {
         "speed": 100
       },
+      "style": {
+        "display": "flex",
+        "flexDirection": "column",
+        "width": "900px",
+        "margin": "20px auto",
+        "backgroundColor": "#ffe7c7", 
+        "borderRadius": "10px",
+        "padding": "20px"
+      },
       "response": [
         {
           "id": "react-component-style",
-          "prompt": "The style of this react component is `width: 500px`, `backgroundColor: lightblue`.",
-          "type": "textOnly",
+          "prompt": "This is a react component with the following style: `display: flex; flex-direction: column; width: 900px; margin: 20px auto; padding: 20px; background-color: #ffe7c7; border-radius: 10px;`",
+          "type": "textOnly", 
           "location": "aboveStimulus"
-        },
-        {
-          "id": "react-difficulty",
-          "prompt": "Do you like the background color of this component?",
-          "type": "buttons",
-          "location": "belowStimulus",
-          "options": ["Yes", "No"],
-          "required": true
         }
       ]
     },
@@ -72,123 +76,54 @@
       "response": [
         {
           "id": "image-component-style",
-          "prompt": "The style of this image component is `width: 500px`, `backgroundColor: lightblue`, `border: 1px solid black`.",
+          "prompt": "The style of this image component is `width: 500px`, `border: 1px solid black`, `margin: 30px auto`.",
           "type": "textOnly",
           "location": "aboveStimulus"
-        },
-        {
-          "id": "image-clarity",
-          "prompt": "Rate the clarity of this image:",
-          "type": "likert",
-          "location": "belowStimulus",
-          "numItems": 5,
-          "leftLabel": "Very unclear",
-          "rightLabel": "Very clear",
-          "required": true
         }
-      ]
+      ],
+      "style": {
+        "width": "500px",
+        "border": "1px solid black",
+        "margin": "30px auto"
+      }
     },
     "website-component": {
       "type": "website",
       "path": "https://revisit.dev/docs/introduction/",
+      "style": {
+        "height": "500px",
+        "border": "2px solid #e0e0e0",
+        "borderRadius": "10px",
+        "filter": "grayscale(80%)"
+      },
       "response": [
         {
           "id": "website-component-style",
-          "prompt": "The style of this website component is `height: 1000px`.",
+          "prompt": "The style of this website component is `height: 500px`, `border: 2px solid #e0e0e0`, `border-radius: 10px`, `filter: grayscale(80%)`.",
           "type": "textOnly",
           "location": "aboveStimulus"
-        },
-        {
-          "id": "website-interaction",
-          "prompt": "How intuitive was the website interaction?",
-          "type": "buttons",
-          "location": "belowStimulus",
-          "options": ["Not intuitive", "Somewhat intuitive", "Very intuitive"],
-          "required": true
         }
       ]
     },
-    "questionnaire-component": {
-      "type": "questionnaire",
-      "response": [
-        {
-          "id": "questionnaire-component-style",  
-          "prompt": "The style of this questionnaire component is `font-size: 16px`, `color: #003568`.",
-          "type": "textOnly",
-          "location": "aboveStimulus"
-        },
-        {
-          "id": "questionnaire-radio",
-          "prompt": "Please rate the styling of this radio button",
-          "type": "radio",
-          "options": ["Poor", "Fair", "Good", "Excellent"],
-          "required": true
-        },
-        {
-          "id": "questionnaire-dropdown",
-          "prompt": "Please rate the styling of this dropdown",
-          "type": "dropdown",
-          "options": ["Poor", "Fair", "Good", "Excellent"],
-          "required": true
-        }
-      ]
-    },
-    "vega-path-component": {
+    "vega-component": {
       "type": "vega",
       "path": "demo-vega/specs/vegademo1.specs.json",
       "response": [
         {
           "id": "vega-path-component-style",
-          "prompt": "The style of this vega component is `width: 500px`, `backgroundColor: lightblue`, `border: 1px solid black`, `margin: 10px`.",
+          "prompt": "The style of this vega component is `width: 500px`, `margin: 30px auto`, `padding: 16px`, `backgroundColor: #e4f5f7`, `border: 3px solid #ccc`, `border-radius: 10px`.",
           "type": "textOnly",
           "location": "aboveStimulus"
-        },
-        {
-          "id": "vega-path-feedback",
-          "prompt": "Rate this Vega visualization loaded from a file:",
-          "type": "dropdown",
-          "location": "belowStimulus",
-          "placeholder": "Select rating",
-          "options": ["Poor", "Fair", "Good", "Excellent"],
-          "required": true
         }
-      ]
-    },
-    "vega-config-component": {
-      "type": "vega",
-      "config": {
-        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-        "description": "Simple bar chart with inline config",
-        "data": {
-          "values": [
-            {"category": "A", "value": 28}, 
-            {"category": "B", "value": 55},
-            {"category": "C", "value": 43}, 
-            {"category": "D", "value": 91}
-          ]
-        },
-        "mark": "bar",
-        "encoding": {
-          "x": {"field": "category", "type": "nominal"},
-          "y": {"field": "value", "type": "quantitative"}
-        }
-      },
-      "response": [
-        {
-          "id": "vega-config-component-style",
-          "prompt": "The style of this vega component is `width: 500px`, `backgroundColor: lightblue`, `border: 1px solid black`, `margin: 10px`.",
-          "type": "textOnly",
-          "location": "aboveStimulus"
-        },
-        {
-          "id": "vega-config-feedback",
-          "prompt": "How effective is this inline Vega configuration?",
-          "type": "checkbox",
-          "location": "belowStimulus",
-          "options": ["Clear", "Informative", "Well-designed", "Easy to read"],
-          "required": true
-        }
-      ]
+      ],
+      "style": {
+        "width": "500px",
+        "margin": "30px auto",
+        "padding": "16px",
+        "backgroundColor": "#e4f5f7",
+        "border": "3px solid #ccc",
+        "borderRadius": "10px"
+      }
     },
     "video-component": {
       "type": "video",
@@ -198,20 +133,16 @@
       "response": [
         {
           "id": "video-component-style",
-          "prompt": "The style of this video component is `width: 500px`, `height: 300px`.",
+          "prompt": "The style of this video component is `width: 70%`, `margin: 30px auto`, `border: 2px solid black`.",
           "type": "textOnly",
           "location": "aboveStimulus"
-        },
-        {
-          "id": "video-quality",
-          "prompt": "Rate the video quality and styling:",
-          "type": "matrix-radio",
-          "location": "belowStimulus",
-          "answerOptions": ["Excellent", "Good", "Fair", "Poor"],
-          "questionOptions": ["Video clarity", "Styling appearance"],
-          "required": true
         }
-      ]
+      ],
+      "style": {
+        "width": "70%",
+        "margin": "30px auto",
+        "border": "2px solid black"
+      }
     },
     "responses": {
       "type": "questionnaire",
@@ -410,9 +341,7 @@
           "react-component",
           "image-component",
           "website-component",
-          "questionnaire-component",
-          "vega-path-component",
-          "vega-config-component",
+          "vega-component",
           "video-component"
         ]
       },
