@@ -1,8 +1,27 @@
+#parent-response-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 #rate-styling {
   border: 1px solid black;
   padding: 10px;
   border-radius: 10px;
   margin: 10px;
+  width: 60%;
+  background: #f0f0f0;
+  color: #333333;
+  transition: background 0.3s ease-in-out, color 0.3s ease-in-out, width 0.3s ease-in-out;
+}
+
+#rate-styling:hover {
+  width: 100%;
+}
+
+#rate-styling:active {
+  background: #000000;
+  color: #ffffff;
 }
 
 #final-feedback {
