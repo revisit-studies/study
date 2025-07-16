@@ -53,8 +53,6 @@
         "speed": 100
       },
       "style": {
-        "display": "flex",
-        "flexDirection": "column",
         "width": "900px",
         "margin": "20px auto",
         "backgroundColor": "#ffe7c7", 
