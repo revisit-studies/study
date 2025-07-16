@@ -257,31 +257,6 @@
         }
       ]
     },
-    "reactive-response": {
-      "type": "website",
-      "nextButtonLocation": "sidebar",
-      "meta": {
-        "difficulty": "easy"
-      },
-      "description": "Add a total of 10 to 15 circles",
-      "instruction": "Add a total of 10 to 15 circles.",
-      "path": "demo-html-trrack/assets/dots-count.html",
-      "response": [
-        {
-          "id": "reactive-response-style",
-          "prompt": "The style of this reactive component is `width: 500px`, `backgroundColor: lightblue`.",
-          "type": "textOnly",
-          "location": "aboveStimulus"
-        },
-        {
-          "id": "circlesCount",
-          "prompt": "Answer:",
-          "location": "sidebar",
-          "type": "reactive",
-          "hidden": false
-        }
-      ]
-    },
     "markdown": {
       "type": "markdown",
       "path": "demo-style/assets/componentStylesheet.md",
@@ -347,8 +322,7 @@
         "id": "responseStyle",
         "order": "fixed",
         "components": [
-          "responses",
-          "reactive-response"
+          "responses"
         ]
       },
       {
