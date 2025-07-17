@@ -700,7 +700,7 @@ export interface BaseIndividualComponent {
   stylesheetPath?: string;
   /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
   style?: {
-       /** Sizing */
+    /** Sizing */
     height?: string;
     width?: string;
 

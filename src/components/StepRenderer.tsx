@@ -15,6 +15,7 @@ import { useStoreSelector, useStoreDispatch, useStoreActions } from '../store/st
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { ResolutionWarning } from './interface/ResolutionWarning';
+import { useFetchStylesheet } from '../utils/fetchStylesheet';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -23,6 +24,8 @@ export function StepRenderer() {
 
   const studyConfig = useStudyConfig();
   const windowEventDebounceTime = studyConfig.uiConfig.windowEventDebounceTime ?? 100;
+
+  useFetchStylesheet(studyConfig?.uiConfig.stylesheetPath);
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
