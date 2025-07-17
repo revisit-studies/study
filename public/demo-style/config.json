@@ -144,7 +144,7 @@
       "response": [
         {
           "id": "text-only-response",
-          "prompt": "This is a Text-Only Response. <br> The style of this response is: <br> `backgroundColor: #e8f4f8`, `padding: 15px`, `borderRadius: 8px`, `fontSize: 16px`, `fontWeight: 500`, `color: #0f4c75`",
+          "prompt": "The style of this Text-Only response is: <br> `backgroundColor: #e8f4f8`, `padding: 15px`, `borderRadius: 8px`, `fontSize: 16px`, `fontWeight: 500`, `color: #0f4c75`",
           "type": "textOnly",
           "location": "belowStimulus",
           "style": {
@@ -158,31 +158,28 @@
         },
         {
           "id": "short-text-response",
-          "prompt": "Your name (Short Text Response):",
-          "secondaryText": "fontFamily: 'Courier New', monospace; margin: 20px auto; padding: 10px; border: 1px solid black; border-radius: 3px; backgroundColor: lightgray; letterSpacing: 2px;",
+          "prompt": "What's your favorite color?",
+          "secondaryText": "fontFamily: 'Courier New', monospace; margin: 20px auto; padding: 10px; letterSpacing: 2px",
           "type": "shortText",
           "location": "belowStimulus",
-          "placeholder": "Enter name",
+          "placeholder": "Enter your favorite color",
           "required": false,
           "style": {
             "fontFamily": "'Courier New', monospace",
             "margin": "20px auto",
             "padding": "10px",
-            "border": "1px solid #333333",
-            "borderRadius": "3px",
-            "backgroundColor": "#ececec",
             "letterSpacing": "2px"
           }
         },
         {
           "id": "numerical-response",
-          "prompt": "Enter your age (Numerical Response):",
-          "secondaryText": "width: 700px; margin: 10px auto; padding: 12px; border: 2px solid green; border-radius: 6px; font-size: 18px; background-color: #f8fff9; color: green;",
+          "prompt": "How many websites do you visit daily?",
+          "secondaryText": "width: 700px; margin: 10px auto; padding: 12px; border: 2px solid green; border-radius: 6px; background-color: #f8fff9; color: green",
           "type": "numerical",
           "location": "belowStimulus",
-          "min": 18,
-          "max": 99,
-          "placeholder": "Age",
+          "min": 1,
+          "max": 999,
+          "placeholder": "Enter number",
           "required": false,
           "style": {
             "width": "700px",
@@ -190,18 +187,17 @@
             "padding": "12px",
             "border": "2px solid green",
             "borderRadius": "6px",
-            "fontSize": "18px",
             "backgroundColor": "#f8fff9",
             "color": "green"
           }
         },
         {
           "id": "long-text-response",
-          "prompt": "Comments (Long Text Response):",
-          "secondaryText": "width: 700px; height: 120px; margin: 25px auto; padding: 15px; border: 3px dashed #dc3545; border-radius: 10px; background-color: #fff5f5; background-image: linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.1) 25%); background-size: 20px 20px; color: #721c24; font-size: 18px; font-style: italic; font-weight: 600; text-align: center; text-decoration: underline; text-transform: capitalize; letter-spacing: 1px; line-height: 1.8; word-spacing: 3px; position: relative; top: 10px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2)); transform: rotate(0.5deg); transition: all 0.3s ease",
           "type": "longText",
+          "prompt": "What makes a website design effective and visually appealing?",
+          "secondaryText": "width: 700px; margin: 25px auto; padding: 15px; border: 3px dashed #dc3545; border-radius: 10px; background-color: #fff5f5; color: #721c24; fontStyle: italic; fontWeight: 600; textTransform: lowercase", 
           "location": "belowStimulus",
-          "placeholder": "Enter detailed comments",
+          "placeholder": "Enter your answer",
           "required": false,
           "style": {
             "width": "700px",
@@ -211,42 +207,39 @@
             "borderRadius": "10px",
             "backgroundColor": "#fff5f5",
             "color": "#721c24",
-            "fontSize": "18px",
             "fontStyle": "italic",
             "fontWeight": "600",
-            "textTransform": "capitalize"
+            "textTransform": "lowercase"
           }
         },
         {
           "id": "likert-response",
-          "prompt": "Rate satisfaction (Likert Response):",
-          "secondaryText": "width: 700px; margin: 30px auto; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white",
+          "prompt": "How much do you enjoy interactive web elements?",
+          "secondaryText": "width: 700px; margin: 30px auto; padding: 20px; background: linear-gradient(#667eea, #764ba2); borderRadius: 12px; textAlign: center;",
           "type": "likert",
           "location": "belowStimulus",
           "numItems": 7,
-          "leftLabel": "Very dissatisfied",
-          "rightLabel": "Very satisfied",
-          "required": true,
+          "leftLabel": "Not enjoyable at all",
+          "rightLabel": "Extremely enjoyable",
+          "required": false,
           "style": {
             "width": "700px",
             "margin": "30px auto",
             "padding": "20px",
-            "background": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            "background": "linear-gradient(to bottom right, #f5f5f5, #e0e0e0)",
             "borderRadius": "12px",
-            "color": "white",
-            "textAlign": "center",
-            "fontWeight": "bold"
+            "textAlign": "center"
           }
         },
         {
           "id": "matrix-response",
-          "prompt": "Rate these aspects (Matrix Response):",
-          "secondaryText": "width: 700px; margin: 15px auto; border: 3px solid #ffc107; border-radius: 8px; padding: 15px; background-color: #fff8e1; color: #856404; font-size: 14px; font-weight: 500; position: sticky; top: 10px",
+          "prompt": "What is your overall opinion on the use of the following CSS styles?",
+          "secondaryText": "width: 700px; margin: 15px auto; border: 3px solid #ffc107; borderRadius: 8px; padding: 15px; backgroundColor: #fff8e1; color: #856404; fontSize: 14px; fontWeight: 500; top: 10px; left: 10px",
           "type": "matrix-radio",
           "location": "belowStimulus",
-          "answerOptions": ["Poor", "Fair", "Good", "Excellent"],
-          "questionOptions": ["Design", "Usability", "Performance"],
-          "required": true,
+          "answerOptions": ["Needs improvement", "Fair", "Good", "Excellent"],
+          "questionOptions": ["Backgrounds", "Fonts", "Colors"],
+          "required": false,
           "style": {
             "width": "700px",
             "margin": "15px auto",
@@ -262,104 +255,13 @@
           }
         },
         {
-          "id": "dropdown-response",
-          "prompt": "Choose your favorite color",
-          "secondaryText": "width: 700px; margin: 12px auto; padding: 14px; border: 2px solid #17a2b8; border-radius: 25px; font-size: 16px; background-color: #e7f9fc; color: #0c5460; font-weight: 500; position: relative; left: 10px",
-          "type": "dropdown",
-          "location": "belowStimulus",
-          "placeholder": "Choose color",
-          "options": ["Red", "Blue", "Green", "Yellow"],
-          "required": true,
-          "style": {
-            "width": "700px",
-            "margin": "12px auto",
-            "padding": "14px",
-            "border": "2px solid #17a2b8",
-            "borderRadius": "25px",
-            "fontSize": "16px",
-            "backgroundColor": "#e7f9fc",
-            "color": "#0c5460",
-            "fontWeight": "500",
-            "left": "10px"
-          }
-        },
-        {
-          "id": "slider-response",
-          "prompt": "Rate the styling of this slider",
-          "secondaryText": "width: 700px; margin: 18px auto; padding: 18px; border: 2px solid #6610f2; border-radius: 15px; background-color: #f8f4ff; color: #3d0a91; font-size: 15px; font-weight: 600; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); position: relative; top: -5px; left: 5px",
-          "type": "slider",
-          "location": "belowStimulus",
-          "options": [
-            {"label": "Poor", "value": 1},
-            {"label": "Fair", "value": 2},
-            {"label": "Good", "value": 3},
-            {"label": "Excellent", "value": 4}
-          ],
-          "required": true,
-          "style": {
-            "width": "700px",
-            "margin": "18px auto",
-            "padding": "18px",
-            "border": "2px solid #6610f2",
-            "borderRadius": "15px",
-            "backgroundColor": "#f8f4ff",
-            "color": "#3d0a91",
-            "fontSize": "15px",
-            "fontWeight": "600",
-            "top": "-5px",
-            "left": "5px"
-          }
-        },
-        {
-          "id": "radio-response",
-          "prompt": "Preferred option (Radio Response):", 
-          "secondaryText": "width: 700px; margin: 14px auto; padding: 16px; border: 1px solid #e74c3c; border-radius: 4px; background-color: #fdebea; color: #c0392b; font-size: 14px; font-style: italic; text-transform: uppercase; position: relative; right: 15px",
-          "type": "radio",
-          "location": "belowStimulus",
-          "options": ["Option A", "Option B", "Option C"],
-          "required": true,
-          "style": {
-            "width": "700px",
-            "margin": "14px auto",
-            "padding": "16px",
-            "border": "1px solid #e74c3c",
-            "borderRadius": "4px",
-            "backgroundColor": "#fdebea",
-            "color": "#c0392b",
-            "fontSize": "14px",
-            "fontStyle": "italic",
-            "textTransform": "uppercase",
-            "right": "15px"
-          }
-        },
-        {
-          "id": "checkbox-response",
-          "prompt": "Select all that apply (Checkbox Response):", 
-          "secondaryText": "width: 700px; margin: 22px auto; padding: 20px; border: 3px dotted #fd7e14; border-radius: 20px; background: #fff3e0; text-decoration: underline",
-          "type": "checkbox",
-          "location": "belowStimulus",
-          "options": ["Feature 1", "Feature 2", "Feature 3", "Feature 4"],
-          "required": true,
-          "style": {
-            "width": "700px",
-            "margin": "22px auto",
-            "padding": "20px",
-            "border": "3px dotted #fd7e14",
-            "borderRadius": "20px",
-            "backgroundColor": "#fff3e0",
-            "color": "#e65100",
-            "fontSize": "16px",
-            "letterSpacing": "1px"
-          }
-        },
-        {
           "id": "buttons-response",
-          "prompt": "Quick selection (Buttons Response):",
-          "secondaryText": "width: 700px; margin: 25px auto; padding: 25px; border: 4px ridge #20c997; border-radius: 30px; background-color: #e8f8f5; color: #0f5132; font-size: 18px; font-weight: bold; text-align: center; transform: rotate(-1deg); transition: all 0.3s ease; position: relative; bottom: 8px",
+          "prompt": "Would you use this styling approach in your own projects?",
+          "secondaryText": "width: 700px; margin: 25px auto; padding: 25px; border: 4px ridge #20c997; borderRadius: 30px; backgroundColor: #e8f8f5; color: #0f5132; textAlign: right; transform: rotate(-1deg); bottom: 8px",
           "type": "buttons",
           "location": "belowStimulus",
-          "options": ["Yes", "No", "Maybe"],
-          "required": true,
+          "options": ["Never", "Maybe", "Probably not", "Definitely"],
+          "required": false,
           "style": {
             "width": "700px",
             "margin": "25px auto",
@@ -368,11 +270,8 @@
             "borderRadius": "30px",
             "backgroundColor": "#e8f8f5",
             "color": "#0f5132",
-            "fontSize": "18px",
-            "fontWeight": "bold",
-            "textAlign": "center",
+            "textAlign": "right",
             "transform": "rotate(-1deg)",
-            "transition": "all 0.3s ease",
             "bottom": "8px"
           }
         }
@@ -383,40 +282,37 @@
       "path": "demo-style/assets/componentStylesheet.md",
       "stylesheetPath": "demo-style/assets/componentStylesheet.css",
       "response": [
-        {
-          "id": "stylesheet-demo",
-          "prompt": "This component uses external CSS (stylesheetPath). How does it look?",
-          "type": "radio",
-          "location": "belowStimulus",
-          "options": ["Great styling", "Good styling", "Needs work"],
-          "required": true
-        }
       ]
     },
-    
     "response": {
       "type": "markdown",
       "path": "demo-style/assets/responseStylesheet.md",
       "response": [
         {
-          "id": "rate-styling",
-          "prompt": "This questionnaire also uses external CSS. Rate the styling:",
-          "secondaryText": "border: 1px solid black; padding: 10px; border-radius: 10px; margin: 10px;",
+          "id": "likert-response",
+          "prompt": "Try clicking on the background of this response and see what happens.",
           "type": "likert",
           "location": "belowStimulus",
           "numItems": 5,
-          "leftLabel": "Needs work",
-          "rightLabel": "Great styling",
-          "required": true,
+          "leftLabel": "Needs improvement",
+          "rightLabel": "Excellent design",
+          "required": false,
+          "stylesheetPath": "demo-style/assets/responseStylesheet.css"
+        },
+        {
+          "id": "short-text-response",
+          "prompt": "Try hovering on this response block.",
+          "type": "shortText",
+          "location": "belowStimulus",
+          "required": false,
           "stylesheetPath": "demo-style/assets/responseStylesheet.css"
         },
         {
           "id": "final-feedback",
-          "prompt": "Any final thoughts on the styling demonstration?",
-          "secondaryText": "width: 80%; border: 1px solid black; padding: 10px; border-radius: 10px; margin: 10px;",
+          "prompt": "Please provide any feedback on this styling demo.",
           "type": "longText",
           "location": "belowStimulus",
-          "placeholder": "Share your thoughts...",
+          "placeholder": "Your feedback",
           "required": false,
           "stylesheetPath": "demo-style/assets/responseStylesheet.css"
         }

@@ -300,10 +300,7 @@
                 "type": "string"
               },
               "transform": {
-                "description": "Transform & Transition",
-                "type": "string"
-              },
-              "transition": {
+                "description": "Transform",
                 "type": "string"
               },
               "width": {
@@ -542,10 +539,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -788,10 +782,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -1147,10 +1138,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -1441,10 +1429,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -1848,10 +1833,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -2158,10 +2140,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -2374,10 +2353,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -2637,10 +2613,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -2886,10 +2859,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -3133,10 +3103,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -3392,10 +3359,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -3632,10 +3596,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -3933,10 +3894,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -4140,10 +4098,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -4434,10 +4389,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -4684,10 +4636,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -4922,10 +4871,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -5194,10 +5140,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -5457,10 +5400,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -5724,10 +5664,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {
@@ -5992,10 +5929,7 @@
               "type": "string"
             },
             "transform": {
-              "description": "Transform & Transition",
-              "type": "string"
-            },
-            "transition": {
+              "description": "Transform",
               "type": "string"
             },
             "width": {

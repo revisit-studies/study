@@ -231,12 +231,11 @@ export interface BaseResponse {
     textDecoration?: 'none' | 'underline' | 'overline' | 'line-through' | 'underline-overline';
     textTransform?: 'capitalize' | 'lowercase' | 'none' | 'uppercase';
     letterSpacing?: string;
-    lineHeight?: string | number;
     wordSpacing?: string;
+    lineHeight?: string | number;
 
-    /** Transform & Transition */
+    /** Transform */
     transform?: string;
-    transition?: string;
   }
 }
 
@@ -744,9 +743,8 @@ export interface BaseIndividualComponent {
     lineHeight?: string | number;
     wordSpacing?: string;
 
-    /** Transform & Transition */
+    /** Transform */
     transform?: string;
-    transition?: string;
   }
 }
 
