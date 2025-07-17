@@ -52,7 +52,7 @@ export function TableView({
 }: {
   visibleParticipants: ParticipantData[];
   studyConfig: StudyConfig;
-  refresh: () => Promise<unknown>;
+  refresh: () => Promise<Record<number, ParticipantData>>;
   width: number;
 }) {
   const { storageEngine } = useStorageEngine();
