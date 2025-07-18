@@ -1,0 +1,50 @@
+#responses {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 20px;
+}
+
+#short-text-response {
+  grid-row: 1;
+  grid-column: span 2;
+}
+
+#numerical-response {
+  grid-row: 1;
+  grid-column: span 2;
+}
+
+#likert-response {
+  grid-row: 1;
+  grid-column: span 2;
+}
+
+#long-text-response {
+  grid-row: 2;
+  grid-column: span 3;
+}
+
+#buttons-response {
+  grid-row: 2;
+  grid-column: span 3;
+}
+
+#matrix-response {
+  grid-row: 3;
+  grid-column: span 6;
+}
+
+#responses > div {
+    background: #ffffff;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 2px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  #responses > div:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
