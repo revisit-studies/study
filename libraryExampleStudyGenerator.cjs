@@ -30,7 +30,7 @@ const createExampleConfig = (libraryName) => ({
     contactEmail: '',
     logoPath: 'revisitAssets/revisitLogoSquare.svg',
     withProgressBar: true,
-    sidebar: true,
+    withSidebar: true,
   },
   importedLibraries: [libraryName],
   components: {

@@ -33,7 +33,7 @@
         "additionalProperties": false,
         "properties": {
           "allowFailedTraining": {
-            "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+            "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
             "type": "boolean"
           },
           "config": {
@@ -51,12 +51,16 @@
             "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
             "type": "string"
           },
+          "enumerateQuestions": {
+            "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig.",
+            "type": "boolean"
+          },
           "forceCompletion": {
             "description": "Whether to force the video to play until the end. Defaults to true.",
             "type": "boolean"
           },
-          "helpTextPathOverride": {
-            "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+          "helpTextPath": {
+            "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
             "type": "string"
           },
           "instruction": {
@@ -65,7 +69,7 @@
           },
           "instructionLocation": {
             "$ref": "#/definitions/ConfigResponseBlockLocation",
-            "description": "The location of the instructions."
+            "description": "The location of the instructions. If present, will override the instruction location setting in the uiConfig."
           },
           "meta": {
             "additionalProperties": {},
@@ -73,20 +77,24 @@
             "type": "object"
           },
           "nextButtonDisableTime": {
-            "description": "A timeout (in ms) after which the next button will be disabled.",
+            "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
             "type": "number"
           },
           "nextButtonEnableTime": {
-            "description": "A timer (in ms) after which the next button will be enabled.",
+            "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
             "type": "number"
           },
           "nextButtonLocation": {
             "$ref": "#/definitions/ConfigResponseBlockLocation",
-            "description": "The location of the next button."
+            "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
           },
           "nextButtonText": {
-            "description": "The text that is displayed on the next button.",
+            "description": "The text to display on the next button. If present, will override the next button text setting in the uiConfig.",
             "type": "string"
+          },
+          "nextOnEnter": {
+            "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
+            "type": "boolean"
           },
           "parameters": {
             "anyOf": [
@@ -133,19 +141,19 @@
             "description": "The path to the markdown file. This should be a relative path from the public folder."
           },
           "previousButton": {
-            "description": "Whether to show the previous button.",
+            "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
             "type": "boolean"
           },
           "previousButtonText": {
-            "description": "The text that is displayed on the previous button.",
+            "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
             "type": "string"
           },
           "provideFeedback": {
-            "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+            "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
             "type": "boolean"
           },
           "recordAudio": {
-            "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+            "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
             "type": "boolean"
           },
           "response": {
@@ -156,7 +164,7 @@
             "type": "array"
           },
           "responseDividers": {
-            "description": "Whether to show the response dividers. Defaults to false.",
+            "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
             "type": "boolean"
           },
           "responseOrder": {
@@ -166,6 +174,18 @@
               "random"
             ],
             "type": "string"
+          },
+          "showTitle": {
+            "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+            "type": "boolean"
+          },
+          "showTitleBar": {
+            "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+            "type": "boolean"
+          },
+          "sidebarWidth": {
+            "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+            "type": "number"
           },
           "style": {
             "additionalProperties": false,
@@ -317,7 +337,7 @@
             "type": "string"
           },
           "trainingAttempts": {
-            "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+            "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
             "type": "number"
           },
           "type": {
@@ -331,6 +351,18 @@
               "video"
             ],
             "type": "string"
+          },
+          "windowEventDebounceTime": {
+            "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
+            "type": "number"
+          },
+          "withProgressBar": {
+            "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
+            "type": "boolean"
+          },
+          "withSidebar": {
+            "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+            "type": "boolean"
           },
           "withActions": {
             "description": "Whether to include vega actions. Defaults to true.",
@@ -560,7 +592,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -803,7 +835,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -1159,7 +1191,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -1210,7 +1242,7 @@
       "description": "The ImageComponent interface is used to define the properties of an image component. This component is used to render an image with optional styling.\n\nFor example, to render an image with a path of `path/to/study/assets/image.jpg` and a max width of 50%, you would use the following snippet: ```js { \"type\": \"image\", \"path\": \"<study-name>/assets/image.jpg\", \"style\": { \"maxWidth\": \"50%\" } } ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -1224,8 +1256,12 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
-          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+        "enumerateQuestions": {
+          "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
+          "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -1234,7 +1270,7 @@
         },
         "instructionLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the instructions."
+          "description": "The location of the instructions. If present, will override the instruction location setting in the uiConfig."
         },
         "meta": {
           "additionalProperties": {},
@@ -1242,39 +1278,43 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text to display on the next button. If present, will override the next button text setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
+          "type": "boolean"
         },
         "path": {
           "description": "The path to the image. This could be a relative path from the public folder or a url to an external image.",
           "type": "string"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -1285,7 +1325,7 @@
           "type": "array"
         },
         "responseDividers": {
-          "description": "Whether to show the response dividers. Defaults to false.",
+          "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
         "responseOrder": {
@@ -1295,6 +1335,18 @@
             "random"
           ],
           "type": "string"
+        },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
         },
         "style": {
           "additionalProperties": false,
@@ -1446,12 +1498,24 @@
           "type": "string"
         },
         "trainingAttempts": {
-          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
         },
         "type": {
           "const": "image",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1563,7 +1627,7 @@
       "description": "An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component).",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
         "baseComponent": {
@@ -1584,12 +1648,16 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
+        "enumerateQuestions": {
+          "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig.",
+          "type": "boolean"
+        },
         "forceCompletion": {
           "description": "Whether to force the video to play until the end. Defaults to true.",
           "type": "boolean"
         },
-        "helpTextPathOverride": {
-          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+        "helpTextPath": {
+          "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -1598,7 +1666,7 @@
         },
         "instructionLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the instructions."
+          "description": "The location of the instructions. If present, will override the instruction location setting in the uiConfig."
         },
         "meta": {
           "additionalProperties": {},
@@ -1606,20 +1674,24 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text to display on the next button. If present, will override the next button text setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
+          "type": "boolean"
         },
         "parameters": {
           "anyOf": [
@@ -1666,19 +1738,19 @@
           "description": "The path to the markdown file. This should be a relative path from the public folder."
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -1689,7 +1761,7 @@
           "type": "array"
         },
         "responseDividers": {
-          "description": "Whether to show the response dividers. Defaults to false.",
+          "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
         "responseOrder": {
@@ -1699,6 +1771,18 @@
             "random"
           ],
           "type": "string"
+        },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
         },
         "style": {
           "additionalProperties": false,
@@ -1850,7 +1934,7 @@
           "type": "string"
         },
         "trainingAttempts": {
-          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
         },
         "type": {
@@ -1865,6 +1949,18 @@
           ],
           "type": "string"
         },
+        "windowEventDebounceTime": {
+          "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+          "type": "boolean"
+         },
         "withActions": {
           "description": "Whether to include vega actions. Defaults to true.",
           "type": "boolean"
@@ -2095,7 +2191,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -2308,7 +2404,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -2328,7 +2424,7 @@
       "description": "The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text. Markdown components can have responses (e.g. in a consent form), or no responses (e.g. in a help text file). Here's an example with no responses for a simple help text file:\n\n```js { \"type\": \"markdown\", \"path\": \"<study-name>/assets/help.md\", \"response\": [] } ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -2342,8 +2438,12 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
-          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+        "enumerateQuestions": {
+          "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
+          "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -2352,7 +2452,7 @@
         },
         "instructionLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the instructions."
+          "description": "The location of the instructions. If present, will override the instruction location setting in the uiConfig."
         },
         "meta": {
           "additionalProperties": {},
@@ -2360,39 +2460,43 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text to display on the next button. If present, will override the next button text setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
+          "type": "boolean"
         },
         "path": {
           "description": "The path to the markdown file. This should be a relative path from the public folder.",
           "type": "string"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -2403,7 +2507,7 @@
           "type": "array"
         },
         "responseDividers": {
-          "description": "Whether to show the response dividers. Defaults to false.",
+          "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
         "responseOrder": {
@@ -2565,11 +2669,38 @@
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+        },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
         },
         "type": {
           "const": "markdown",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2817,7 +2948,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -3058,7 +3189,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -3078,7 +3209,7 @@
       "description": "A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:\n\n```js { \"type\": \"questionnaire\", \"response\": [  {    \"id\": \"gender\",    \"prompt\": \"Gender:\",    \"location\": \"belowStimulus\",    \"type\": \"checkbox\",    \"options\": [\"Man\", \"Woman\", \"Genderqueer\", \"Third-gender\", ...]  } ] } ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3092,8 +3223,12 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
-          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+        "enumerateQuestions": {
+          "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
+          "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -3102,7 +3237,7 @@
         },
         "instructionLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the instructions."
+          "description": "The location of the instructions. If present, will override the instruction location setting in the uiConfig."
         },
         "meta": {
           "additionalProperties": {},
@@ -3110,35 +3245,39 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text to display on the next button. If present, will override the next button text setting in the uiConfig.",
           "type": "string"
         },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
+          "type": "boolean"
+        },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -3149,7 +3288,7 @@
           "type": "array"
         },
         "responseDividers": {
-          "description": "Whether to show the response dividers. Defaults to false.",
+          "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
         "responseOrder": {
@@ -3309,13 +3448,37 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
-          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
         },
         "type": {
           "const": "questionnaire",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -3551,7 +3714,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -3604,7 +3767,7 @@
       "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts { parameters: T; setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\nparameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config ```js { type: 'react-component'; path: 'my_study/CoolComponent.tsx'; parameters: {  name: 'Zach';  age: 26; } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) { // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v2.1.1/src/public/demo-click-accuracy-test/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.1.1/src/public/example-brush-interactions/assets)",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3618,8 +3781,12 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
-          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+        "enumerateQuestions": {
+          "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
+          "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -3628,7 +3795,7 @@
         },
         "instructionLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the instructions."
+          "description": "The location of the instructions. If present, will override the instruction location setting in the uiConfig."
         },
         "meta": {
           "additionalProperties": {},
@@ -3636,20 +3803,24 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text to display on the next button. If present, will override the next button text setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
+          "type": "boolean"
         },
         "parameters": {
           "additionalProperties": {},
@@ -3661,19 +3832,19 @@
           "type": "string"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -3684,7 +3855,7 @@
           "type": "array"
         },
         "responseDividers": {
-          "description": "Whether to show the response dividers. Defaults to false.",
+          "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
         "responseOrder": {
@@ -3843,14 +4014,38 @@
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"
+         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
         },
         "trainingAttempts": {
-          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
         },
         "type": {
           "const": "react-component",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -4053,7 +4248,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -4344,7 +4539,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -4599,7 +4794,7 @@
           "type": "boolean"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -4933,7 +5128,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -4949,8 +5144,12 @@
     },
     "UIConfig": {
       "additionalProperties": false,
-      "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration (note, there are optional fields that are not shown here): ```js uiConfig:{ \"contactEmail\": \"contact@revisit.dev\", \"helpTextPath\": \"<study-name>/assets/help.md\", \"logoPath\": \"<study-name>/assets/logo.jpg\", \"withProgressBar\": true, \"autoDownloadStudy\": true \"autoDownloadTime\": 5000, \"studyEndMsg\": \"Thank you for completing this study. You're the best!\", \"sidebar\": true, \"windowEventDebounceTime\": 500, \"urlParticipantIdParam\": \"PROLIFIC_ID\", \"numSequences\": 500 } ``` In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)",
+      "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration (note, there are optional fields that are not shown here): ```js uiConfig:{ \"contactEmail\": \"contact@revisit.dev\", \"helpTextPath\": \"<study-name>/assets/help.md\", \"logoPath\": \"<study-name>/assets/logo.jpg\", \"withProgressBar\": true, \"autoDownloadStudy\": true \"autoDownloadTime\": 5000, \"studyEndMsg\": \"Thank you for completing this study. You're the best!\", \"withSidebar\": true, \"windowEventDebounceTime\": 500, \"urlParticipantIdParam\": \"PROLIFIC_ID\", \"numSequences\": 500 } ``` In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)",
       "properties": {
+        "allowFailedTraining": {
+          "description": "Controls whether the component should allow failed training. Defaults to true.",
+          "type": "boolean"
+        },
         "autoDownloadStudy": {
           "description": "Controls whether the study data is automatically downloaded at the end of the study.",
           "type": "boolean"
@@ -4971,6 +5170,10 @@
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported.",
           "type": "string"
         },
+        "instructionLocation": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
         "logoPath": {
           "description": "The path to the logo image. This is displayed on the landing page and the header.",
           "type": "string"
@@ -4983,20 +5186,48 @@
           "description": "The minimum screen width size for the study",
           "type": "number"
         },
+        "nextButtonDisableTime": {
+          "description": "The time in milliseconds to wait before the next button is disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "The time in milliseconds to wait before the next button is enabled.",
+          "type": "number"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text to display on the next button.",
+          "type": "string"
+        },
         "nextOnEnter": {
           "description": "Whether enter key should move to the next question. Defaults to false.",
           "type": "boolean"
         },
         "numSequences": {
-          "description": "The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.",
+          "description": "The number of sequences to generate for the study. This is used to generate the random sequences for the study. Defaults to 1000.",
           "type": "number"
         },
         "participantNameField": {
           "description": "The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId'",
           "type": "string"
         },
-        "recordStudyAudio": {
+        "previousButtonText": {
+          "description": "The text that is displayed on the previous button.",
+          "type": "string"
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. Defaults to false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
+          "type": "boolean"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
         "showTitle": {
@@ -5005,10 +5236,6 @@
         },
         "showTitleBar": {
           "description": "Controls whether the title bar should be hidden in the study.",
-          "type": "boolean"
-        },
-        "sidebar": {
-          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question.",
           "type": "boolean"
         },
         "sidebarWidth": {
@@ -5027,6 +5254,10 @@
           "description": "Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set.",
           "type": "boolean"
         },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "type": "number"
+        },
         "urlParticipantIdParam": {
           "description": "If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers.",
           "type": "string"
@@ -5038,13 +5269,17 @@
         "withProgressBar": {
           "description": "Controls whether the progress bar is rendered in the study.",
           "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question.",
+          "type": "boolean"
         }
       },
       "required": [
-        "contactEmail",
         "logoPath",
+        "contactEmail",
         "withProgressBar",
-        "sidebar"
+        "withSidebar"
       ],
       "type": "object"
     },
@@ -5063,7 +5298,7 @@
       "description": "The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component by adding Vega/Vega-Lite specs within the reVISit config itself.\n\nTo do this, would use the following snippet: ```js { \"type\": \"vega\", \"config\": { ... vega specs here ...}, }\n\nIIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section: ```js { \"signals\": [  {    \"name\": \"revisitAnswer\",    \"value\": {},    \"on\": [      {        \"events\": \"rect:click\",        \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"      }    ]  } ] } In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
         "config": {
@@ -5081,8 +5316,12 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
-          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+        "enumerateQuestions": {
+          "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
+          "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -5091,7 +5330,7 @@
         },
         "instructionLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the instructions."
+          "description": "The location of the instructions. If present, will override the instruction location setting in the uiConfig."
         },
         "meta": {
           "additionalProperties": {},
@@ -5099,35 +5338,39 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text to display on the next button. If present, will override the next button text setting in the uiConfig.",
           "type": "string"
         },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
+          "type": "boolean"
+        },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -5138,7 +5381,7 @@
           "type": "array"
         },
         "responseDividers": {
-          "description": "Whether to show the response dividers. Defaults to false.",
+          "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
         "responseOrder": {
@@ -5298,13 +5541,37 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
-          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
         },
         "type": {
           "const": "vega",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+          "type": "boolean"
         },
         "withActions": {
           "description": "Whether to include vega actions. Defaults to true.",
@@ -5323,7 +5590,7 @@
       "description": "The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.\n\nFor example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet: ```js { \"type\": \"vega\", \"path\": \"<study-name>/assets/vega.spec.json\", } ```\n\nIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section: ```js { \"signals\": [  {    \"name\": \"revisitAnswer\",    \"value\": {},    \"on\": [      {        \"events\": \"rect:click\",        \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"      }    ]  } ] } In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response. ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -5337,8 +5604,12 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
-          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+        "enumerateQuestions": {
+          "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
+          "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -5347,7 +5618,7 @@
         },
         "instructionLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the instructions."
+          "description": "The location of the instructions. If present, will override the instruction location setting in the uiConfig."
         },
         "meta": {
           "additionalProperties": {},
@@ -5355,39 +5626,43 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text to display on the next button. If present, will override the next button text setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
+          "type": "boolean"
         },
         "path": {
           "description": "The path to the vega file. This should be a relative path from the public folder.",
           "type": "string"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -5398,7 +5673,7 @@
           "type": "array"
         },
         "responseDividers": {
-          "description": "Whether to show the response dividers. Defaults to false.",
+          "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
         "responseOrder": {
@@ -5558,14 +5833,38 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
-          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
         },
         "type": {
           "const": "vega",
           "type": "string"
         },
+        "windowEventDebounceTime": {
+          "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+          "type": "boolean"
+         },
         "withActions": {
           "description": "Whether to include vega actions. Defaults to true.",
           "type": "boolean"
@@ -5583,7 +5882,7 @@
       "description": "The VideoComponent interface is used to define the properties of a video component. This component is used to render a video with optional controls.\n\nMost often, video components will be used for trainings, and will have a `forceCompletion` field set to true. This will prevent the participant from moving on until the video has finished playing.\n\nAs such, the `forceCompletion` field is set to true by default, and the `withTimeline` field is set to false by default.\n\nFor example, to render a training video with a path of `<study-name>/assets/video.mp4`, you would use the following snippet: ```js {   \"type\": \"video\",   \"path\": \"<study-name>/assets/video.mp4\", } ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -5597,12 +5896,16 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
+        "enumerateQuestions": {
+          "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig.",
+          "type": "boolean"
+        },
         "forceCompletion": {
           "description": "Whether to force the video to play until the end. Defaults to true.",
           "type": "boolean"
         },
-        "helpTextPathOverride": {
-          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+        "helpTextPath": {
+          "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -5611,7 +5914,7 @@
         },
         "instructionLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the instructions."
+          "description": "The location of the instructions. If present, will override the instruction location setting in the uiConfig."
         },
         "meta": {
           "additionalProperties": {},
@@ -5619,39 +5922,43 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text to display on the next button. If present, will override the next button text setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
+          "type": "boolean"
         },
         "path": {
           "description": "The path to the video. This could be a relative path from the public folder or might be a url to an external website.",
           "type": "string"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -5662,7 +5969,7 @@
           "type": "array"
         },
         "responseDividers": {
-          "description": "Whether to show the response dividers. Defaults to false.",
+          "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
         "responseOrder": {
@@ -5822,13 +6129,37 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
-          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
         },
         "type": {
           "const": "video",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+          "type": "boolean"
         },
         "withTimeline": {
           "description": "Whether to show the video timeline. Defaults to false.",
@@ -5847,7 +6178,7 @@
       "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/assets/website.html\", } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/website.html\", \"parameters\": {  \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3] }, \"response\": [  {    \"id\": \"barChart\",    \"prompt\": \"Your selected answer:\",    \"location\": \"belowStimulus\",    \"type\": \"reactive\"  } ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {  const barData = data['barData'];  ... });\n\n// Call out that 'barChart' needs to match ID in 'response' object Revisit.postAnswers({ barChart: userAnswer }); </script> ```\n\n If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```js const trrack = initializeTrrack({ initialState, registry });\n\n... Revisit.postProvenance(trrack.graph.backend); ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -5861,8 +6192,12 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
-          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+        "enumerateQuestions": {
+          "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
+          "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -5871,7 +6206,7 @@
         },
         "instructionLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the instructions."
+          "description": "The location of the instructions. If present, will override the instruction location setting in the uiConfig."
         },
         "meta": {
           "additionalProperties": {},
@@ -5879,20 +6214,24 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text to display on the next button. If present, will override the next button text setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
+          "type": "boolean"
         },
         "parameters": {
           "additionalProperties": {},
@@ -5904,19 +6243,19 @@
           "type": "string"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -5927,7 +6266,7 @@
           "type": "array"
         },
         "responseDividers": {
-          "description": "Whether to show the response dividers. Defaults to false.",
+          "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
         "responseOrder": {
@@ -6087,13 +6426,37 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
-          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
         },
         "type": {
           "const": "website",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [

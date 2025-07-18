@@ -14,6 +14,8 @@ import { WindowEventsContext } from '../store/hooks/useWindowEvents';
 import { useStoreSelector, useStoreDispatch, useStoreActions } from '../store/store';
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import { useCurrentComponent } from '../routes/utils';
 import { ResolutionWarning } from './interface/ResolutionWarning';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
 
@@ -23,7 +25,10 @@ export function StepRenderer() {
   const { toggleStudyBrowser } = useStoreActions();
 
   const studyConfig = useStudyConfig();
-  const windowEventDebounceTime = studyConfig.uiConfig.windowEventDebounceTime ?? 100;
+  const currentComponent = useCurrentComponent();
+  const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
+
+  const windowEventDebounceTime = useMemo(() => componentConfig.windowEventDebounceTime ?? studyConfig.uiConfig.windowEventDebounceTime ?? 100, [componentConfig, studyConfig]);
 
   useFetchStylesheet(studyConfig?.uiConfig.stylesheetPath);
 
@@ -106,10 +111,12 @@ export function StepRenderer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sidebarWidth = studyConfig.uiConfig.sidebarWidth ?? 300;
-
   const { studyNavigatorEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
+  // No default value for withSidebar since it's a required field in uiConfig
+  const sidebarOpen = useMemo(() => componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar, [componentConfig, studyConfig]);
+  const sidebarWidth = useMemo(() => componentConfig?.sidebarWidth ?? studyConfig.uiConfig.sidebarWidth ?? 300, [componentConfig, studyConfig]);
+  const showTitleBar = useMemo(() => componentConfig.showTitleBar ?? studyConfig.uiConfig.showTitleBar ?? true, [componentConfig, studyConfig]);
   const isAnalysis = useIsAnalysis();
 
   const asideOpen = useMemo(() => {
@@ -121,21 +128,21 @@ export function StepRenderer() {
     <WindowEventsContext.Provider value={windowEvents}>
       <AppShell
         padding="md"
-        header={{ height: studyConfig.uiConfig.showTitleBar === false ? 0 : 70 }}
-        navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
+        header={{ height: showTitleBar ? 70 : 0 }}
+        navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !sidebarOpen, mobile: !sidebarOpen } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
         footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
       >
         <AppNavBar />
         <AppAside />
-        {studyConfig.uiConfig.showTitleBar !== false && (
+        {showTitleBar && (
           <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
         )}
         <ResolutionWarning />
         <HelpModal />
         <AlertModal />
         <AppShell.Main>
-          {studyConfig.uiConfig.showTitleBar === false && !showStudyBrowser && studyNavigatorEnabled && (
+          {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
             <Button
               variant="transparent"
               leftSection={<IconArrowLeft size={14} />}
