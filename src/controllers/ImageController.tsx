@@ -39,6 +39,6 @@ export function ImageController({ currentConfig }: { currentConfig: ImageCompone
   }, [url]);
 
   return loading || assetFound
-    ? <Image mx="auto" src={url} id={currentConfig.type} style={imageStyle} />
+    ? <Image mx="auto" src={url} className={currentConfig.type} style={imageStyle} />
     : <ResourceNotFound path={currentConfig.path} />;
 }
