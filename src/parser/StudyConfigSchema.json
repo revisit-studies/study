@@ -356,16 +356,16 @@
             "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
             "type": "number"
           },
+          "withActions": {
+            "description": "Whether to include vega actions. Defaults to true.",
+            "type": "boolean"
+          },
           "withProgressBar": {
             "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
             "type": "boolean"
           },
           "withSidebar": {
             "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
-            "type": "boolean"
-          },
-          "withActions": {
-            "description": "Whether to include vega actions. Defaults to true.",
             "type": "boolean"
           },
           "withTimeline": {
@@ -1953,16 +1953,16 @@
           "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
           "type": "number"
         },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
+        },
         "withProgressBar": {
           "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
           "type": "boolean"
         },
         "withSidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
-          "type": "boolean"
-         },
-        "withActions": {
-          "description": "Whether to include vega actions. Defaults to true.",
           "type": "boolean"
         },
         "withTimeline": {
@@ -2518,6 +2518,18 @@
           ],
           "type": "string"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "style": {
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
@@ -2666,21 +2678,6 @@
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"
-        },
-        "trainingAttempts": {
-          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
-        },
-        "showTitle": {
-          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "showTitleBar": {
-          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "sidebarWidth": {
-          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
-          "type": "number"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -3299,6 +3296,18 @@
           ],
           "type": "string"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "style": {
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
@@ -3447,18 +3456,6 @@
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"
-        },
-        "showTitle": {
-          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "showTitleBar": {
-          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "sidebarWidth": {
-          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
-          "type": "number"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -3866,6 +3863,18 @@
           ],
           "type": "string"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "style": {
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
@@ -4014,18 +4023,6 @@
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"
-         },
-        "showTitle": {
-          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "showTitleBar": {
-          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "sidebarWidth": {
-          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
-          "type": "number"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -5243,7 +5240,7 @@
           "type": "number"
         },
         "studyEndMsg": {
-          "description": "The message to display when the study ends. Supports templating with the participant ID. e.g. \"Thank you for completing the study. You may click this link and return to Prolific: [Go to Prolific](https://app.prolific.com/submissions/complete?cc=StudyID&PROLIFIC_ID={PROLIFIC_ID}))\"",
+          "description": "The message to display when the study ends.",
           "type": "string"
         },
         "stylesheetPath": {
@@ -5392,6 +5389,18 @@
           ],
           "type": "string"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "style": {
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
@@ -5541,18 +5550,6 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
-        "showTitle": {
-          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "showTitleBar": {
-          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "sidebarWidth": {
-          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
-          "type": "number"
-        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
@@ -5565,16 +5562,16 @@
           "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
           "type": "number"
         },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
+        },
         "withProgressBar": {
           "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
           "type": "boolean"
         },
         "withSidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "withActions": {
-          "description": "Whether to include vega actions. Defaults to true.",
           "type": "boolean"
         }
       },
@@ -5684,6 +5681,18 @@
           ],
           "type": "string"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "style": {
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
@@ -5833,18 +5842,6 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
-        "showTitle": {
-          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "showTitleBar": {
-          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "sidebarWidth": {
-          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
-          "type": "number"
-        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
@@ -5857,16 +5854,16 @@
           "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
           "type": "number"
         },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
+        },
         "withProgressBar": {
           "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
           "type": "boolean"
         },
         "withSidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
-          "type": "boolean"
-         },
-        "withActions": {
-          "description": "Whether to include vega actions. Defaults to true.",
           "type": "boolean"
         }
       },
@@ -5980,6 +5977,18 @@
           ],
           "type": "string"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "style": {
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
@@ -6128,18 +6137,6 @@
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"
-        },
-        "showTitle": {
-          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "showTitleBar": {
-          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "sidebarWidth": {
-          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
-          "type": "number"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -6277,6 +6274,18 @@
           ],
           "type": "string"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "style": {
           "additionalProperties": false,
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}",
@@ -6425,18 +6434,6 @@
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"
-        },
-        "showTitle": {
-          "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "showTitleBar": {
-          "description": "Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "sidebarWidth": {
-          "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
-          "type": "number"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
