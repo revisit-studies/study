@@ -1,0 +1,36 @@
+body {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.6;
+    background-color: #f5f7fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+.image {
+    height: 200px;
+    width: 80%;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin: 0 auto;
+}
+
+.response {
+  background-color: #ffffff;
+  margin: 15px auto 0;
+  padding: 20px;
+  border: 2px solid #e3e8ed;
+  border-radius: 12px;
+  text-align: left;
+  width: 80%;
+  box-sizing: border-box;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: all 0.2s ease;
+}
+
+#responseBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: stretch;
+}

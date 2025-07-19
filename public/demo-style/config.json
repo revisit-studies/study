@@ -20,7 +20,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true,
+    "withSidebar": true,
     "windowEventDebounceTime": 200
   },
   "components": {
@@ -280,7 +280,7 @@
     "markdown": {
       "type": "markdown",
       "path": "demo-style/assets/componentStylesheet.md",
-      "stylesheetPath": "demo-style/assets/componentStylesheet.css",
+      "stylesheetPath": "demo-style/assets/style/componentStylesheet.css",
       "response": [
       ]
     },
@@ -297,7 +297,7 @@
           "leftLabel": "Needs improvement",
           "rightLabel": "Excellent design",
           "required": false,
-          "stylesheetPath": "demo-style/assets/responseStylesheet.css"
+          "stylesheetPath": "demo-style/assets/style/responseStylesheet.css"
         },
         {
           "id": "short-text-response",
@@ -305,7 +305,7 @@
           "type": "shortText",
           "location": "belowStimulus",
           "required": false,
-          "stylesheetPath": "demo-style/assets/responseStylesheet.css"
+          "stylesheetPath": "demo-style/assets/style/responseStylesheet.css"
         },
         {
           "id": "final-feedback",
@@ -314,7 +314,152 @@
           "location": "belowStimulus",
           "placeholder": "Your feedback",
           "required": false,
-          "stylesheetPath": "demo-style/assets/responseStylesheet.css"
+          "stylesheetPath": "demo-style/assets/style/responseStylesheet.css"
+        }
+      ]
+    },
+    "form": {
+      "type": "image",
+      "path": "demo-style/assets/utah.jpg",
+      "stylesheetPath": "demo-style/assets/style/form.css",
+      "response": [
+        {
+          "id": "form-title",
+          "prompt": "Welcome to our study!",
+          "type": "textOnly",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "form-gender",
+          "prompt": "What is your gender?",
+          "type": "radio",
+          "horizontal": true,
+          "location": "belowStimulus",
+          "options": ["Male", "Female", "Other"]
+        },
+        {
+          "id": "form-age",
+          "prompt": "How old are you?",
+          "type": "radio",
+          "horizontal": true,
+          "location": "belowStimulus",
+          "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
+        },
+        {
+          "id": "form-education",
+          "prompt": "What is your highest level of education?",
+          "type": "radio",
+          "horizontal": true,
+          "location": "belowStimulus",
+          "options": ["High School", "Bachelor's", "Master's", "Doctorate"]
+        },
+        {
+          "id": "form-occupation",
+          "prompt": "What is your occupation?",
+          "type": "shortText",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "form-comment",
+          "prompt": "Please give us any feedback on this survey.",
+          "type": "longText",
+          "location": "belowStimulus"
+        }
+      ]
+    },
+    "large-text": {
+      "type": "questionnaire",
+      "stylesheetPath": "demo-style/assets/style/largeText.css",
+      "response": [
+        {
+          "id": "form-title",
+          "prompt": "Welcome to our study!",
+          "type": "textOnly",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "form-gender",
+          "prompt": "What is your gender?",
+          "type": "radio",
+          "horizontal": true,
+          "location": "belowStimulus",
+          "options": ["Male", "Female", "Other"]
+        },
+        {
+          "id": "form-age",
+          "prompt": "How old are you?",
+          "type": "radio",
+          "horizontal": true,
+          "location": "belowStimulus",
+          "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
+        },
+        {
+          "id": "form-education",
+          "prompt": "What is your highest level of education?",
+          "type": "radio",
+          "horizontal": true,
+          "location": "belowStimulus",
+          "options": ["High School", "Bachelor's", "Master's", "Doctorate"]
+        },
+        {
+          "id": "form-occupation",
+          "prompt": "What is your occupation?",
+          "type": "shortText",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "form-comment",
+          "prompt": "Please give us any feedback on this survey.",
+          "type": "longText",
+          "location": "belowStimulus"
+        }
+      ]
+    },
+    "layout": {
+      "type": "questionnaire",
+      "stylesheetPath": "demo-style/assets/style/layout.css",
+      "response": [
+        {
+          "id": "form-title",
+          "prompt": "Welcome to our study!",
+          "type": "textOnly",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "form-gender",
+          "prompt": "What is your gender?",
+          "type": "radio",
+          "horizontal": true,
+          "location": "belowStimulus",
+          "options": ["Male", "Female", "Other"]
+        },
+        {
+          "id": "form-age",
+          "prompt": "How old are you?",
+          "type": "radio",
+          "horizontal": true,
+          "location": "belowStimulus",
+          "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
+        },
+        {
+          "id": "form-education",
+          "prompt": "What is your highest level of education?",
+          "type": "radio",
+          "horizontal": true,
+          "location": "belowStimulus",
+          "options": ["High School", "Bachelor's", "Master's", "Doctorate"]
+        },
+        {
+          "id": "form-occupation",
+          "prompt": "What is your occupation?",
+          "type": "shortText",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "form-comment",
+          "prompt": "Please give us any feedback on this survey.",
+          "type": "longText",
+          "location": "belowStimulus"
         }
       ]
     }
@@ -354,6 +499,15 @@
         "order": "fixed",
         "components": [
           "response"
+        ]
+      },
+      {
+        "id": "demo",
+        "order": "fixed",
+        "components": [
+          "form",
+          "large-text",
+          "layout"
         ]
       }
     ]

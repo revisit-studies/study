@@ -122,7 +122,7 @@ export function ResponseSwitcher({
   const responseDividers = useMemo(() => response.withDivider ?? configInUse?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, configInUse, studyConfig]);
 
   return (
-    <div id={response.id} style={responseStyle}>
+    <div className="response" id={response.id} style={responseStyle}>
       <Box mb={responseDividers ? 'xl' : 'lg'}>
         {response.type === 'numerical' && (
           <NumericInput
