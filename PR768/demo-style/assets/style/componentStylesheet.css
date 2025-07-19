@@ -1,0 +1,20 @@
+/**
+* This is a stylesheet for components.
+* 
+**/
+
+#markdown {
+  background: #e5f3fd;
+  border: 2px solid #999;
+  padding: 10px;
+  border-radius: 10px;
+  margin: 10px auto;
+}
+#markdown h2 {
+  font-family: "Gill Sans", sans-serif;
+  font-weight: 700;
+}
+#markdown code {
+  color: #1a166c;
+}
+
