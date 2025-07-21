@@ -10,6 +10,7 @@
     "demo-html",
     "demo-html-input",
     "demo-survey",
+    "demo-drawing",
     "demo-training",
     "demo-html-trrack",
     "demo-click-accuracy-test",
@@ -53,6 +54,9 @@
     },
     "demo-video-slider": {
       "path": "demo-video-slider/config.json"
+    },
+    "demo-drawing": {
+      "path": "demo-drawing/config.json"
     },
     "demo-html": {
       "path": "demo-html/config.json"
