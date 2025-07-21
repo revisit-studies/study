@@ -1,0 +1,44 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Drawing example",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
+    "organizations": [
+      "University of Utah"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-html/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 200
+  },
+  "components": {
+    "drawing": {
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "meta": {
+        "difficulty": "hard"
+      },
+      "description": "Question that asks users to count the number of bars that have a value greater than 1.",
+      "instruction": "How many bars have a value greater than 1?",
+      "path": "demo-drawing/assets/Canvas.tsx",
+      "response": [
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "drawing"
+    ]
+  }
+}

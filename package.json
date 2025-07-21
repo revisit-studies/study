@@ -92,6 +92,9 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.4.1",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4",
+    "vitest-localstorage-mock": "^0.1.2"
+
   }
 }
