@@ -4,7 +4,6 @@ import { MarkdownComponent } from '../parser/types';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { PREFIX } from '../utils/Prefix';
-import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { useCurrentComponent } from '../routes/utils';
 
 const defaultStyle :React.CSSProperties = {
@@ -15,8 +14,6 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
   const componentId = useCurrentComponent();
   const markdownStyle = { ...defaultStyle, ...currentConfig.style };
   const [importedText, setImportedText] = useState<string>('');
-
-  useFetchStylesheet(currentConfig.stylesheetPath);
 
   const [loading, setLoading] = useState(true);
   useEffect(() => {

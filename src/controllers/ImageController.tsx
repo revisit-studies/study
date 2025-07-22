@@ -6,7 +6,6 @@ import { ImageComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
-import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { useCurrentComponent } from '../routes/utils';
 
 const defaultStyle: React.CSSProperties = {
@@ -26,8 +25,6 @@ export function ImageController({ currentConfig }: { currentConfig: ImageCompone
 
   const [loading, setLoading] = useState(true);
   const [assetFound, setAssetFound] = useState(false);
-
-  useFetchStylesheet(currentConfig.stylesheetPath);
 
   useEffect(() => {
     async function fetchImage() {

@@ -10,7 +10,6 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StimulusParams } from '../store/types';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
-import { useFetchStylesheet } from '../utils/fetchStylesheet';
 
 type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
 
@@ -38,8 +37,6 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const [view, setView] = useState<View>();
   const componentId = useCurrentComponent();
   const vegaStyle = { ...defaultStyle, ...currentConfig.style };
-
-  useFetchStylesheet(currentConfig.stylesheetPath);
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();

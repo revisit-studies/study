@@ -8,7 +8,6 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentIdentifier, useCurrentComponent } from '../routes/utils';
 import { ErrorBoundary } from './ErrorBoundary';
-import { useFetchStylesheet } from '../utils/fetchStylesheet';
 
 const modules = import.meta.glob(
   '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
@@ -25,8 +24,6 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
   const identifier = useCurrentIdentifier();
   const componentId = useCurrentComponent();
   const reactStyle = { ...defaultStyle, ...currentConfig.style };
-
-  useFetchStylesheet(currentConfig.stylesheetPath);
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();

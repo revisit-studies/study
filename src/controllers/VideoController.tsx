@@ -10,7 +10,6 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import 'plyr-react/plyr.css';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
-import { useFetchStylesheet } from '../utils/fetchStylesheet';
 
 const defaultStyle: React.CSSProperties = {
   width: '100%',
@@ -49,8 +48,6 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
 
   const [loading, setLoading] = useState(true);
   const [assetFound, setAssetFound] = useState(false);
-
-  useFetchStylesheet(currentConfig.stylesheetPath);
 
   useEffect(() => {
     async function fetchVideo() {

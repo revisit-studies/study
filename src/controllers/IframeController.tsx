@@ -6,7 +6,6 @@ import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { ParticipantData, WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
-import { useFetchStylesheet } from '../utils/fetchStylesheet';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -25,8 +24,6 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const [height, setHeight] = useState(800);
   const componentId = useCurrentComponent();
   const iframeStyle = { ...defaultStyle, ...currentConfig.style, height: `${height}px` };
-
-  useFetchStylesheet(currentConfig.stylesheetPath);
 
   const ref = useRef<HTMLIFrameElement>(null);
 

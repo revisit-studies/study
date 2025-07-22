@@ -27,6 +27,7 @@ import { VegaController, VegaProvState } from './VegaController';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { VideoController } from './VideoController';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import { useFetchStylesheet } from '../utils/fetchStylesheet';
 
 // current active stimuli presented to the user
 export function ComponentController() {
@@ -151,6 +152,8 @@ export function ComponentController() {
     }
     return toReturn as unknown as IndividualComponent;
   }, [answers, currentComponent, currentIdentifier, stepConfig, studyConfig]);
+
+  useFetchStylesheet(currentConfig?.stylesheetPath);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
