@@ -17,7 +17,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
   const [height, setHeight] = useState(800);
-  const iframeStyle = { height: `${height}px` };
+  const iframeStyle = useMemo(() => ({ height: `${height}px`, width: '100%' }), [height]);
 
   const ref = useRef<HTMLIFrameElement>(null);
 
