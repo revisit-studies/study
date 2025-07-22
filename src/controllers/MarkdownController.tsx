@@ -5,12 +5,14 @@ import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { PREFIX } from '../utils/Prefix';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
+import { useCurrentComponent } from '../routes/utils';
 
 const defaultStyle :React.CSSProperties = {
   width: '100%',
 };
 
 export function MarkdownController({ currentConfig }: { currentConfig: MarkdownComponent; }) {
+  const componentId = useCurrentComponent();
   const markdownStyle = { ...defaultStyle, ...currentConfig.style };
   const [importedText, setImportedText] = useState<string>('');
 
@@ -30,6 +32,6 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
   }, [currentConfig.path]);
 
   return loading || importedText
-    ? <div className={currentConfig.type} style={markdownStyle}><ReactMarkdownWrapper text={importedText} /></div>
+    ? <div className={currentConfig.type} id={componentId} style={markdownStyle}><ReactMarkdownWrapper text={importedText} /></div>
     : <ResourceNotFound path={currentConfig.path} />;
 }

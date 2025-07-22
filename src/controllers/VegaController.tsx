@@ -9,7 +9,7 @@ import { getJsonAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StimulusParams } from '../store/types';
-import { useCurrentIdentifier } from '../routes/utils';
+import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
 
 type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
@@ -36,6 +36,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
   const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
   const [view, setView] = useState<View>();
+  const componentId = useCurrentComponent();
   const vegaStyle = { ...defaultStyle, ...currentConfig.style };
 
   useFetchStylesheet(currentConfig.stylesheetPath);
@@ -152,6 +153,8 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   }
 
   return (
-    <InternalVega className={currentConfig.type} style={vegaStyle} spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={(v) => setView(v)} actions={currentConfig.withActions} />
+    <div className={currentConfig.type} id={componentId} style={vegaStyle}>
+      <InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={(v) => setView(v)} actions={currentConfig.withActions} />
+    </div>
   );
 }

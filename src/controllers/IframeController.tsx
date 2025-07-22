@@ -23,6 +23,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
   const [height, setHeight] = useState(800);
+  const componentId = useCurrentComponent();
   const iframeStyle = { ...defaultStyle, ...currentConfig.style, height: `${height}px` };
 
   useFetchStylesheet(currentConfig.stylesheetPath);
@@ -114,6 +115,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   return (
     <iframe
       className={currentConfig.type}
+      id={componentId}
       style={iframeStyle}
       ref={ref}
       src={

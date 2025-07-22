@@ -7,12 +7,14 @@ import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
+import { useCurrentComponent } from '../routes/utils';
 
 const defaultStyle: React.CSSProperties = {
   maxWidth: '100%',
 };
 
 export function ImageController({ currentConfig }: { currentConfig: ImageComponent; }) {
+  const componentId = useCurrentComponent();
   const imageStyle = { ...defaultStyle, ...currentConfig.style };
 
   const url = useMemo(() => {
@@ -39,6 +41,6 @@ export function ImageController({ currentConfig }: { currentConfig: ImageCompone
   }, [url]);
 
   return loading || assetFound
-    ? <Image className={currentConfig.type} style={imageStyle} mx="auto" src={url} />
+    ? <Image className={currentConfig.type} id={componentId} style={imageStyle} mx="auto" src={url} />
     : <ResourceNotFound path={currentConfig.path} />;
 }
