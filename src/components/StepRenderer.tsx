@@ -141,7 +141,7 @@ export function StepRenderer() {
         <ResolutionWarning />
         <HelpModal />
         <AlertModal />
-        <AppShell.Main>
+        <AppShell.Main className="main">
           {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
             <Button
               variant="transparent"
