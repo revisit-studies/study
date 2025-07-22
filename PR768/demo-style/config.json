@@ -143,7 +143,7 @@
       "type": "questionnaire",
       "response": [
         {
-          "id": "text-only-response",
+          "id": "text-only-response-style",
           "prompt": "The style of this Text-Only response is: <br> `backgroundColor: #e8f4f8`, `padding: 15px`, `borderRadius: 8px`, `fontSize: 16px`, `fontWeight: 500`, `color: #0f4c75`",
           "type": "textOnly",
           "location": "belowStimulus",
@@ -157,7 +157,7 @@
           }
         },
         {
-          "id": "short-text-response",
+          "id": "short-text-response-style",
           "prompt": "What's your favorite color?",
           "secondaryText": "fontFamily: 'Courier New', monospace; margin: 20px auto; padding: 10px; letterSpacing: 2px",
           "type": "shortText",
@@ -172,7 +172,7 @@
           }
         },
         {
-          "id": "numerical-response",
+          "id": "numerical-response-style",
           "prompt": "How many websites do you visit daily?",
           "secondaryText": "width: 700px; margin: 10px auto; padding: 12px; border: 2px solid green; border-radius: 6px; background-color: #f8fff9; color: green",
           "type": "numerical",
@@ -192,7 +192,7 @@
           }
         },
         {
-          "id": "long-text-response",
+          "id": "long-text-response-style",
           "type": "longText",
           "prompt": "What makes a website design effective and visually appealing?",
           "secondaryText": "width: 700px; margin: 25px auto; padding: 15px; border: 3px dashed #dc3545; border-radius: 10px; background-color: #fff5f5; color: #721c24; fontStyle: italic; fontWeight: 600; textTransform: lowercase", 
@@ -213,7 +213,7 @@
           }
         },
         {
-          "id": "likert-response",
+          "id": "likert-response-style",
           "prompt": "How much do you enjoy interactive web elements?",
           "secondaryText": "width: 700px; margin: 30px auto; padding: 20px; background: linear-gradient(#667eea, #764ba2); borderRadius: 12px; textAlign: center;",
           "type": "likert",
@@ -232,7 +232,7 @@
           }
         },
         {
-          "id": "matrix-response",
+          "id": "matrix-response-style",
           "prompt": "What is your overall opinion on the use of the following CSS styles?",
           "secondaryText": "width: 700px; margin: 15px auto; border: 3px solid #ffc107; borderRadius: 8px; padding: 15px; backgroundColor: #fff8e1; color: #856404; fontSize: 14px; fontWeight: 500; top: 10px; left: 10px",
           "type": "matrix-radio",
@@ -255,12 +255,12 @@
           }
         },
         {
-          "id": "buttons-response",
+          "id": "buttons-response-style",
           "prompt": "Would you use this styling approach in your own projects?",
           "secondaryText": "width: 700px; margin: 25px auto; padding: 25px; border: 4px ridge #20c997; borderRadius: 30px; backgroundColor: #e8f8f5; color: #0f5132; textAlign: right; transform: rotate(-1deg); bottom: 8px",
           "type": "buttons",
           "location": "belowStimulus",
-          "options": ["Never", "Maybe", "Probably not", "Definitely"],
+          "options": ["Never", "Probably not", "Maybe", "Definitely"],
           "required": false,
           "style": {
             "width": "700px",
@@ -277,14 +277,14 @@
         }
       ]
     },
-    "markdown": {
+    "markdown-styling": {
       "type": "markdown",
       "path": "demo-style/assets/componentStylesheet.md",
       "stylesheetPath": "demo-style/assets/style/componentStylesheet.css",
       "response": [
       ]
     },
-    "response": {
+    "interactive-responses": {
       "type": "markdown",
       "path": "demo-style/assets/responseStylesheet.md",
       "response": [
@@ -318,7 +318,7 @@
         }
       ]
     },
-    "form": {
+    "survey-form": {
       "type": "image",
       "path": "demo-style/assets/utah.jpg",
       "stylesheetPath": "demo-style/assets/style/form.css",
@@ -331,36 +331,38 @@
         },
         {
           "id": "form-gender",
+          "required": false,  
           "prompt": "What is your gender?",
           "type": "radio",
-          "horizontal": true,
           "location": "belowStimulus",
           "options": ["Male", "Female", "Other"]
         },
         {
           "id": "form-age",
+          "required": false,
           "prompt": "How old are you?",
           "type": "radio",
-          "horizontal": true,
           "location": "belowStimulus",
           "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
         },
         {
           "id": "form-education",
+          "required": false,
           "prompt": "What is your highest level of education?",
           "type": "radio",
-          "horizontal": true,
           "location": "belowStimulus",
           "options": ["High School", "Bachelor's", "Master's", "Doctorate"]
         },
         {
           "id": "form-occupation",
+          "required": false,
           "prompt": "What is your occupation?",
           "type": "shortText",
           "location": "belowStimulus"
         },
         {
           "id": "form-comment",
+          "required": false,
           "prompt": "Please give us any feedback on this survey.",
           "type": "longText",
           "location": "belowStimulus"
@@ -372,13 +374,14 @@
       "stylesheetPath": "demo-style/assets/style/largeText.css",
       "response": [
         {
-          "id": "form-title",
-          "prompt": "Welcome to our study!",
+          "id": "large-text-title",
+          "prompt": "Large Text Style Demo",
           "type": "textOnly",
           "location": "belowStimulus"
         },
         {
-          "id": "form-gender",
+          "id": "large-text-gender",
+          "required": false,
           "prompt": "What is your gender?",
           "type": "radio",
           "horizontal": true,
@@ -386,7 +389,8 @@
           "options": ["Male", "Female", "Other"]
         },
         {
-          "id": "form-age",
+          "id": "large-text-age",
+          "required": false,
           "prompt": "How old are you?",
           "type": "radio",
           "horizontal": true,
@@ -394,7 +398,8 @@
           "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
         },
         {
-          "id": "form-education",
+          "id": "large-text-education",
+          "required": false,
           "prompt": "What is your highest level of education?",
           "type": "radio",
           "horizontal": true,
@@ -402,16 +407,20 @@
           "options": ["High School", "Bachelor's", "Master's", "Doctorate"]
         },
         {
-          "id": "form-occupation",
+          "id": "large-text-occupation",
+          "required": false,
           "prompt": "What is your occupation?",
           "type": "shortText",
-          "location": "belowStimulus"
+          "location": "belowStimulus",
+          "placeholder": "Enter your occupation"
         },
         {
-          "id": "form-comment",
-          "prompt": "Please give us any feedback on this survey.",
+          "id": "large-text-comment",
+          "required": false,
+          "prompt": "Please provide feedback on the large text styling.",
           "type": "longText",
-          "location": "belowStimulus"
+          "location": "belowStimulus",
+          "placeholder": "Your feedback about the large text design"
         }
       ]
     },
@@ -420,46 +429,63 @@
       "stylesheetPath": "demo-style/assets/style/layout.css",
       "response": [
         {
-          "id": "form-title",
-          "prompt": "Welcome to our study!",
+          "id": "layout-title",
+          "prompt": "Layout Style Demo",
           "type": "textOnly",
           "location": "belowStimulus"
         },
         {
-          "id": "form-gender",
-          "prompt": "What is your gender?",
-          "type": "radio",
-          "horizontal": true,
-          "location": "belowStimulus",
-          "options": ["Male", "Female", "Other"]
-        },
-        {
-          "id": "form-age",
-          "prompt": "How old are you?",
-          "type": "radio",
-          "horizontal": true,
-          "location": "belowStimulus",
-          "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
-        },
-        {
-          "id": "form-education",
-          "prompt": "What is your highest level of education?",
-          "type": "radio",
-          "horizontal": true,
-          "location": "belowStimulus",
-          "options": ["High School", "Bachelor's", "Master's", "Doctorate"]
-        },
-        {
-          "id": "form-occupation",
-          "prompt": "What is your occupation?",
+          "id": "layout-color",
+          "required": false,
+          "prompt": "What is your favorite color?",
+          "placeholder": "Enter your favorite color",
           "type": "shortText",
           "location": "belowStimulus"
         },
         {
-          "id": "form-comment",
-          "prompt": "Please give us any feedback on this survey.",
+          "id": "layout-website",
+          "required": false,
+          "prompt": "How many websites do you visit daily?",
+          "type": "numerical",
+          "location": "belowStimulus",
+          "min": 1,
+          "max": 99,
+          "placeholder": "Enter number"
+        },
+        {
+          "id": "layout-web-enjoyment",
+          "required": false,
+          "prompt": "How much do you enjoy interactive web elements?",
+          "type": "likert",
+          "location": "belowStimulus",
+          "numItems": 5,
+          "leftLabel": "Not enjoyable at all",
+          "rightLabel": "Extremely enjoyable"
+        },
+        {
+          "id": "layout-website-design",
+          "required": false,
+          "prompt": "What makes a website design effective and visually appealing?",
           "type": "longText",
-          "location": "belowStimulus"
+          "location": "belowStimulus",
+          "placeholder": "Enter your answer"
+        },
+        {
+          "id": "layout-preference",
+          "required": false,
+          "prompt": "Would you use this styling approach in your own projects?",
+          "type": "buttons",
+          "location": "belowStimulus",
+          "options": ["Never", "Probably not", "Maybe", "Definitely"]
+        },
+        {
+          "id": "layout-opinion",
+          "required": false,
+          "prompt": "What is your overall opinion on the use of the following CSS styles?",
+          "type": "matrix-radio",
+          "location": "belowStimulus",
+          "answerOptions": ["Needs improvement", "Fair", "Good", "Excellent"],
+          "questionOptions": ["Backgrounds", "Fonts", "Colors"]
         }
       ]
     }
@@ -469,7 +495,7 @@
     "components": [
       "introduction",
       {
-        "id": "componentStyle",
+        "id": "style",
         "order": "fixed",
         "components": [
           "markdown-component",
@@ -477,35 +503,23 @@
           "image-component",
           "website-component",
           "vega-component",
-          "video-component"
-        ]
-      },
-      {
-        "id": "responseStyle",
-        "order": "fixed",
-        "components": [
+          "video-component",
           "responses"
         ]
       },
       {
-        "id": "componentStylesheet",
+        "id": "stylesheet",
         "order": "fixed",
         "components": [
-          "markdown"
-        ]
-      },
-      {
-        "id": "responseStylesheet",
-        "order": "fixed",
-        "components": [
-          "response"
+          "markdown-styling",
+          "interactive-responses"
         ]
       },
       {
         "id": "demo",
         "order": "fixed",
         "components": [
-          "form",
+          "survey-form",
           "large-text",
           "layout"
         ]

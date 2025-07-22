@@ -1,50 +1,50 @@
-#responses {
+.responseBlock {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 20px;
 }
 
-#short-text-response {
+#layout-color {
   grid-row: 1;
   grid-column: span 2;
 }
 
-#numerical-response {
+#layout-website {
   grid-row: 1;
   grid-column: span 2;
 }
 
-#likert-response {
+#layout-web-enjoyment {
   grid-row: 1;
   grid-column: span 2;
 }
 
-#long-text-response {
+#layout-website-design {
   grid-row: 2;
   grid-column: span 3;
 }
 
-#buttons-response {
+#layout-preference {
   grid-row: 2;
   grid-column: span 3;
 }
 
-#matrix-response {
+#layout-opinion {
   grid-row: 3;
   grid-column: span 6;
 }
 
-#responses > div {
-    background: #ffffff;
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 15px;
-    margin: 2px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  
-  #responses > div:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
+.responseBlock>.response {
+  background: #ffffff;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 15px;
+  margin: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.responseBlock>.response:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
