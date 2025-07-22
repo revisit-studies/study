@@ -15,7 +15,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  align-items: stretch;
 }
 
 .response {
@@ -24,13 +23,16 @@ body {
   padding: 20px;
   border: 2px solid #e3e8ed;
   border-radius: 12px;
-  text-align: left;
   width: 80%;
   box-sizing: border-box;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
 }
 
 label {
   margin-bottom: 10px;
+}
+
+#form-title p {
+  font-size: 32px;
+  font-weight: bold;
 }
