@@ -1,4 +1,6 @@
-import { Suspense, useCallback } from 'react';
+import {
+  Suspense, useCallback,
+} from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ParticipantData, ReactComponent } from '../parser/types';
 import { StimulusParams } from '../store/types';
