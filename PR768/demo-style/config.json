@@ -399,6 +399,7 @@
         },
         {
           "id": "large-text-fit",
+          "required": false,
           "prompt": "Did the text fit well on your screen?",
           "type": "radio",
           "horizontal": true,
