@@ -139,15 +139,12 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
 
   const ref = useRef<APITypes>(null);
   const componentId = useCurrentComponent();
-  const videoStyle = { ...defaultStyle, ...currentConfig.style };
+  const videoStyle = { ...defaultStyle, ...currentConfig?.style };
 
   return loading || assetFound
     ? (
-      <Box mb="md">
+      <Box mb="md" className={currentConfig.type} id={componentId} style={videoStyle}>
         <CustomPlyrInstance
-          className={currentConfig.type}
-          id={componentId}
-          style={videoStyle}
           ref={ref}
           source={{ type: 'video', sources }}
           options={options}
