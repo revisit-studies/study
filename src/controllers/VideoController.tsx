@@ -9,6 +9,8 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import 'plyr-react/plyr.css';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
+// eslint-disable-next-line import/order
+import { Box } from '@mantine/core';
 
 // eslint-disable-next-line react/display-name
 const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() => void; errorCallback: () => void }>(
@@ -136,13 +138,16 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
 
   return loading || assetFound
     ? (
-      <CustomPlyrInstance
-        ref={ref}
-        source={{ type: 'video', sources }}
-        options={options}
-        endedCallback={endedCallback}
-        errorCallback={errorCallback}
-      />
+      // Box required for proper react node handling in the component tree
+      <Box>
+        <CustomPlyrInstance
+          ref={ref}
+          source={{ type: 'video', sources }}
+          options={options}
+          endedCallback={endedCallback}
+          errorCallback={errorCallback}
+        />
+      </Box>
     )
     : <ResourceNotFound path={currentConfig.path} />;
 }
