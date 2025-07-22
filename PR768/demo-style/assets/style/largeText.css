@@ -1,26 +1,25 @@
-body {
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-#studyTitle {
-  font-size: 24px ;
+.studyTitle {
+  font-size: 24px;
   font-weight: bold;
 }
 
-#progressBar {
-  min-height: 20px;
+.progressBar {
+  min-height: 18px;
 }
 
-#responseBlock {
-  font-size: 18px ;
+#large-text-title p {
+  font-size: 32px;
+  font-weight: bold;
+}
+.response {
+  margin-bottom: 40px;
+}
+.responseBlock p {
+  font-size: 24px;
 }
 
-#markdown, #react-component, #website, #vega, #video, #image {
-  font-size: 24px ;
-}
-
-.mantine-Text-root {
+.responseBlock input,
+.responseBlock textarea,
+.responseBlock button {
   font-size: 22px;
 }
