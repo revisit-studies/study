@@ -260,7 +260,7 @@
           "secondaryText": "width: 700px; margin: 25px auto; padding: 25px; border: 4px ridge #20c997; borderRadius: 30px; backgroundColor: #e8f8f5; color: #0f5132; textAlign: right; transform: rotate(-1deg); bottom: 8px",
           "type": "buttons",
           "location": "belowStimulus",
-          "options": ["Never", "Maybe", "Probably not", "Definitely"],
+          "options": ["Never", "Probably not", "Maybe", "Definitely"],
           "required": false,
           "style": {
             "width": "700px",
@@ -277,7 +277,7 @@
         }
       ]
     },
-    "component": {
+    "markdown-styling": {
       "type": "markdown",
       "path": "demo-style/assets/componentStylesheet.md",
       "stylesheetPath": "demo-style/assets/style/componentStylesheet.css",
@@ -485,7 +485,7 @@
         "id": "stylesheet",
         "order": "fixed",
         "components": [
-          "component",
+          "markdown-styling",
           "interactive-responses"
         ]
       },
