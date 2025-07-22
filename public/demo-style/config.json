@@ -318,7 +318,7 @@
         }
       ]
     },
-    "form": {
+    "survey-form": {
       "type": "image",
       "path": "demo-style/assets/utah.jpg",
       "stylesheetPath": "demo-style/assets/style/form.css",
@@ -331,36 +331,38 @@
         },
         {
           "id": "form-gender",
+          "required": false,  
           "prompt": "What is your gender?",
           "type": "radio",
-          "horizontal": true,
           "location": "belowStimulus",
           "options": ["Male", "Female", "Other"]
         },
         {
           "id": "form-age",
+          "required": false,
           "prompt": "How old are you?",
           "type": "radio",
-          "horizontal": true,
           "location": "belowStimulus",
           "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
         },
         {
           "id": "form-education",
+          "required": false,
           "prompt": "What is your highest level of education?",
           "type": "radio",
-          "horizontal": true,
           "location": "belowStimulus",
           "options": ["High School", "Bachelor's", "Master's", "Doctorate"]
         },
         {
           "id": "form-occupation",
+          "required": false,
           "prompt": "What is your occupation?",
           "type": "shortText",
           "location": "belowStimulus"
         },
         {
           "id": "form-comment",
+          "required": false,
           "prompt": "Please give us any feedback on this survey.",
           "type": "longText",
           "location": "belowStimulus"
@@ -372,13 +374,14 @@
       "stylesheetPath": "demo-style/assets/style/largeText.css",
       "response": [
         {
-          "id": "form-title",
-          "prompt": "Welcome to our study!",
+          "id": "large-text-title",
+          "prompt": "Large Text Style Demo",
           "type": "textOnly",
           "location": "belowStimulus"
         },
         {
-          "id": "form-gender",
+          "id": "large-text-gender",
+          "required": false,
           "prompt": "What is your gender?",
           "type": "radio",
           "horizontal": true,
@@ -386,7 +389,8 @@
           "options": ["Male", "Female", "Other"]
         },
         {
-          "id": "form-age",
+          "id": "large-text-age",
+          "required": false,
           "prompt": "How old are you?",
           "type": "radio",
           "horizontal": true,
@@ -394,7 +398,8 @@
           "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
         },
         {
-          "id": "form-education",
+          "id": "large-text-education",
+          "required": false,
           "prompt": "What is your highest level of education?",
           "type": "radio",
           "horizontal": true,
@@ -402,16 +407,20 @@
           "options": ["High School", "Bachelor's", "Master's", "Doctorate"]
         },
         {
-          "id": "form-occupation",
+          "id": "large-text-occupation",
+          "required": false,
           "prompt": "What is your occupation?",
           "type": "shortText",
-          "location": "belowStimulus"
+          "location": "belowStimulus",
+          "placeholder": "Enter your occupation"
         },
         {
-          "id": "form-comment",
-          "prompt": "Please give us any feedback on this survey.",
+          "id": "large-text-comment",
+          "required": false,
+          "prompt": "Please provide feedback on the large text styling.",
           "type": "longText",
-          "location": "belowStimulus"
+          "location": "belowStimulus",
+          "placeholder": "Your feedback about the large text design"
         }
       ]
     },
@@ -420,13 +429,14 @@
       "stylesheetPath": "demo-style/assets/style/layout.css",
       "response": [
         {
-          "id": "form-title",
-          "prompt": "Welcome to our study!",
+          "id": "layout-title",
+          "prompt": "Layout Style Demo",
           "type": "textOnly",
           "location": "belowStimulus"
         },
         {
-          "id": "form-gender",
+          "id": "layout-gender",
+          "required": false,
           "prompt": "What is your gender?",
           "type": "radio",
           "horizontal": true,
@@ -434,7 +444,8 @@
           "options": ["Male", "Female", "Other"]
         },
         {
-          "id": "form-age",
+          "id": "layout-age",
+          "required": false,
           "prompt": "How old are you?",
           "type": "radio",
           "horizontal": true,
@@ -442,7 +453,8 @@
           "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
         },
         {
-          "id": "form-education",
+          "id": "layout-education",
+          "required": false,
           "prompt": "What is your highest level of education?",
           "type": "radio",
           "horizontal": true,
@@ -450,16 +462,28 @@
           "options": ["High School", "Bachelor's", "Master's", "Doctorate"]
         },
         {
-          "id": "form-occupation",
-          "prompt": "What is your occupation?",
-          "type": "shortText",
-          "location": "belowStimulus"
+          "id": "layout-preference",
+          "required": false,
+          "prompt": "Which layout style do you prefer?",
+          "type": "buttons",
+          "location": "belowStimulus",
+          "options": ["Grid", "Flexbox", "Float", "Table"]
         },
         {
-          "id": "form-comment",
-          "prompt": "Please give us any feedback on this survey.",
+          "id": "layout-occupation",
+          "required": false,
+          "prompt": "What is your occupation?",
+          "type": "shortText",
+          "location": "belowStimulus",
+          "placeholder": "Enter your occupation"
+        },
+        {
+          "id": "layout-comment",
+          "required": false,
+          "prompt": "Please provide feedback on the layout styling.",
           "type": "longText",
-          "location": "belowStimulus"
+          "location": "belowStimulus",
+          "placeholder": "Your thoughts on the layout design"
         }
       ]
     }
@@ -493,7 +517,7 @@
         "id": "demo",
         "order": "fixed",
         "components": [
-          "form",
+          "survey-form",
           "large-text",
           "layout"
         ]
