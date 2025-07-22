@@ -435,55 +435,57 @@
           "location": "belowStimulus"
         },
         {
-          "id": "layout-gender",
+          "id": "layout-color",
           "required": false,
-          "prompt": "What is your gender?",
-          "type": "radio",
-          "horizontal": true,
-          "location": "belowStimulus",
-          "options": ["Male", "Female", "Other"]
+          "prompt": "What is your favorite color?",
+          "placeholder": "Enter your favorite color",
+          "type": "shortText",
+          "location": "belowStimulus"
         },
         {
-          "id": "layout-age",
+          "id": "layout-website",
           "required": false,
-          "prompt": "How old are you?",
-          "type": "radio",
-          "horizontal": true,
+          "prompt": "How many websites do you visit daily?",
+          "type": "numerical",
           "location": "belowStimulus",
-          "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
+          "min": 1,
+          "max": 99,
+          "placeholder": "Enter number"
         },
         {
-          "id": "layout-education",
+          "id": "layout-web-enjoyment",
           "required": false,
-          "prompt": "What is your highest level of education?",
-          "type": "radio",
-          "horizontal": true,
+          "prompt": "How much do you enjoy interactive web elements?",
+          "type": "likert",
           "location": "belowStimulus",
-          "options": ["High School", "Bachelor's", "Master's", "Doctorate"]
+          "numItems": 5,
+          "leftLabel": "Not enjoyable at all",
+          "rightLabel": "Extremely enjoyable"
+        },
+        {
+          "id": "layout-website-design",
+          "required": false,
+          "prompt": "What makes a website design effective and visually appealing?",
+          "type": "longText",
+          "location": "belowStimulus",
+          "placeholder": "Enter your answer"
         },
         {
           "id": "layout-preference",
           "required": false,
-          "prompt": "Which layout style do you prefer?",
+          "prompt": "Would you use this styling approach in your own projects?",
           "type": "buttons",
           "location": "belowStimulus",
-          "options": ["Grid", "Flexbox", "Float", "Table"]
+          "options": ["Never", "Probably not", "Maybe", "Definitely"]
         },
         {
-          "id": "layout-occupation",
+          "id": "layout-opinion",
           "required": false,
-          "prompt": "What is your occupation?",
-          "type": "shortText",
+          "prompt": "What is your overall opinion on the use of the following CSS styles?",
+          "type": "matrix-radio",
           "location": "belowStimulus",
-          "placeholder": "Enter your occupation"
-        },
-        {
-          "id": "layout-comment",
-          "required": false,
-          "prompt": "Please provide feedback on the layout styling.",
-          "type": "longText",
-          "location": "belowStimulus",
-          "placeholder": "Your thoughts on the layout design"
+          "answerOptions": ["Needs improvement", "Fair", "Good", "Excellent"],
+          "questionOptions": ["Backgrounds", "Fonts", "Colors"]
         }
       ]
     }
