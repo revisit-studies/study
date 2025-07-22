@@ -284,7 +284,7 @@ export function ResponseBlock({
   let index = 0;
   return (
     <div style={style}>
-      <div id="responseBlock">
+      <div className="responseBlock">
         {responsesWithDefaults.map((response) => {
           const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
 

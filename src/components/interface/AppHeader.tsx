@@ -89,11 +89,11 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   }, [studyConfig]);
 
   return (
-    <AppShell.Header p="md">
+    <AppShell.Header className="header" p="md">
       <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">
-            <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" id="logoImage" />
+            <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" className="logoImage" />
             <Space w="md" />
             {showTitle ? (
               <Title
@@ -101,7 +101,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 order={4}
                 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                 title={isTruncated ? studyConfig?.studyMetadata.title : undefined}
-                id="studyTitle"
+                className="studyTitle"
               >
                 {studyConfig?.studyMetadata.title}
               </Title>
@@ -111,7 +111,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
 
         <Grid.Col span={4}>
           {withProgressBar && (
-            <Progress radius="md" size="lg" value={progressPercent} id="progressBar" />
+            <Progress radius="md" size="lg" value={progressPercent} className="progressBar" />
           )}
         </Grid.Col>
 

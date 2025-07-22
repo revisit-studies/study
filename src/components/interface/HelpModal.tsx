@@ -41,7 +41,7 @@ export function HelpModal() {
   }, [helpTextPath]);
 
   return (
-    <Modal size="70%" opened={showHelpText} withCloseButton={false} onClose={() => storeDispatch(toggleShowHelpText())}>
+    <Modal className="helpModal" size="70%" opened={showHelpText} withCloseButton={false} onClose={() => storeDispatch(toggleShowHelpText())}>
       {loading || helpText
         ? <ReactMarkdownWrapper text={helpText} />
         : <ResourceNotFound path={config.uiConfig.helpTextPath} />}

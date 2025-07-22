@@ -113,14 +113,14 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   return (
     <iframe
-      ref={ref}
       className={currentConfig.type}
+      style={iframeStyle}
+      ref={ref}
       src={
         currentConfig.path.startsWith('http')
           ? currentConfig.path
           : `${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`
       }
-      style={iframeStyle}
       onLoad={() => setHeight((ref.current?.contentWindow?.document.body.scrollHeight || 750) + 20)}
     />
   );
