@@ -1,5 +1,5 @@
 import {
-  Alert, Anchor, Button,
+  Alert, Anchor, Box, Button,
 } from '@mantine/core';
 
 import React, {
@@ -283,64 +283,66 @@ export function ResponseBlock({
 
   let index = 0;
   return (
-    <div style={style}>
-      {responsesWithDefaults.map((response) => {
-        const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+    <>
+      <Box className={`responseBlock responseBlock-${location}`} style={style}>
+        {responsesWithDefaults.map((response) => {
+          const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
 
-        // Increment index for each response, unless it is a textOnly response
-        if (response.type !== 'textOnly') {
-          index += 1;
-        } else if (response.restartEnumeration) {
-          index = 0;
-        }
+          // Increment index for each response, unless it is a textOnly response
+          if (response.type !== 'textOnly') {
+            index += 1;
+          } else if (response.restartEnumeration) {
+            index = 0;
+          }
 
-        return (
-          <React.Fragment key={`${response.id}-${currentStep}`}>
-            {response.hidden ? (
-              ''
-            ) : (
-              <>
-                <ResponseSwitcher
-                  storedAnswer={storedAnswer}
-                  form={{
-                    ...answerValidator.getInputProps(response.id, {
-                      type: response.type === 'checkbox' ? 'checkbox' : 'input',
-                    }),
-                  }}
-                  dontKnowCheckbox={{
-                    ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
-                  }}
-                  otherInput={{
-                    ...answerValidator.getInputProps(`${response.id}-other`),
-                  }}
-                  response={response}
-                  index={index}
-                  configInUse={configInUse}
-                  disabled={disabledAttempts}
-                />
-                {alertConfig[response.id]?.visible && (
-                  <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
-                    {alertConfig[response.id].message}
-                    {alertConfig[response.id].message.includes('Please try again') && (
-                      <>
-                        <br />
-                        <br />
-                        If you&apos;re unsure
-                        {' '}
-                        <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier })); }}>review the help text.</Anchor>
-                        {' '}
-                      </>
-                    )}
-                    <br />
-                    <br />
-                    {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && configCorrectAnswer && ` The correct answer was: ${configCorrectAnswer}.`}
-                  </Alert>
-                )}
-              </>
-            )}
-          </React.Fragment>
-        );
-      })}
+          return (
+            <React.Fragment key={`${response.id}-${currentStep}`}>
+              {response.hidden ? (
+                ''
+              ) : (
+                <>
+                  <ResponseSwitcher
+                    storedAnswer={storedAnswer}
+                    form={{
+                      ...answerValidator.getInputProps(response.id, {
+                        type: response.type === 'checkbox' ? 'checkbox' : 'input',
+                      }),
+                    }}
+                    dontKnowCheckbox={{
+                      ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
+                    }}
+                    otherInput={{
+                      ...answerValidator.getInputProps(`${response.id}-other`),
+                    }}
+                    response={response}
+                    index={index}
+                    configInUse={configInUse}
+                    disabled={disabledAttempts}
+                  />
+                  {alertConfig[response.id]?.visible && (
+                    <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
+                      {alertConfig[response.id].message}
+                      {alertConfig[response.id].message.includes('Please try again') && (
+                        <>
+                          <br />
+                          <br />
+                          If you&apos;re unsure
+                          {' '}
+                          <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier })); }}>review the help text.</Anchor>
+                          {' '}
+                        </>
+                      )}
+                      <br />
+                      <br />
+                      {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && configCorrectAnswer && ` The correct answer was: ${configCorrectAnswer}.`}
+                    </Alert>
+                  )}
+                </>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </Box>
 
       {showBtnsInLocation && (
       <NextButton
@@ -358,6 +360,6 @@ export function ResponseBlock({
         ) : null}
       />
       )}
-    </div>
+    </>
   );
 }

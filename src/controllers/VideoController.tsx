@@ -1,7 +1,6 @@
 import {
   forwardRef, RefObject, useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
-import { Box } from '@mantine/core';
 import { APITypes, PlyrProps, usePlyr } from 'plyr-react';
 import { VideoComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
@@ -10,6 +9,8 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import 'plyr-react/plyr.css';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
+// eslint-disable-next-line import/order
+import { Box } from '@mantine/core';
 
 // eslint-disable-next-line react/display-name
 const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() => void; errorCallback: () => void }>(
@@ -44,6 +45,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
 
   const [loading, setLoading] = useState(true);
   const [assetFound, setAssetFound] = useState(false);
+
   useEffect(() => {
     async function fetchVideo() {
       if (url.startsWith('http')) {
@@ -136,7 +138,8 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
 
   return loading || assetFound
     ? (
-      <Box mb="md">
+      // Box required for proper react node handling in the component tree
+      <Box>
         <CustomPlyrInstance
           ref={ref}
           source={{ type: 'video', sources }}
