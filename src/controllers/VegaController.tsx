@@ -9,7 +9,7 @@ import { getJsonAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StimulusParams } from '../store/types';
-import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
+import { useCurrentIdentifier } from '../routes/utils';
 
 type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
 
@@ -19,10 +19,6 @@ export interface VegaProvState {
     value: string | object;
   };
 }
-
-const defaultStyle: React.CSSProperties = {
-  width: '100%',
-};
 
 const InternalVega = Vega as unknown as React.FC<VegaProps>;
 
@@ -35,8 +31,6 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
   const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
   const [view, setView] = useState<View>();
-  const componentId = useCurrentComponent();
-  const vegaStyle = { ...defaultStyle, ...currentConfig.style };
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -150,8 +144,6 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   }
 
   return (
-    <div className={currentConfig.type} id={componentId} style={vegaStyle}>
-      <InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={(v) => setView(v)} actions={currentConfig.withActions} />
-    </div>
+    <InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={(v) => setView(v)} actions={currentConfig.withActions} />
   );
 }

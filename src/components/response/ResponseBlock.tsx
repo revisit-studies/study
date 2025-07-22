@@ -1,5 +1,5 @@
 import {
-  Alert, Anchor, Button,
+  Alert, Anchor, Box, Button,
 } from '@mantine/core';
 
 import React, {
@@ -283,8 +283,8 @@ export function ResponseBlock({
 
   let index = 0;
   return (
-    <div style={style}>
-      <div className="responseBlock">
+    <>
+      <Box className={`responseBlock responseBlock-${location}`} style={style}>
         {responsesWithDefaults.map((response) => {
           const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
 
@@ -342,7 +342,7 @@ export function ResponseBlock({
             </React.Fragment>
           );
         })}
-      </div>
+      </Box>
 
       {showBtnsInLocation && (
       <NextButton
@@ -360,6 +360,6 @@ export function ResponseBlock({
         ) : null}
       />
       )}
-    </div>
+    </>
   );
 }

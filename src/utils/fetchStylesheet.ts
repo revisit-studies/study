@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
-
-const PREFIX = '/';
+import { PREFIX } from './Prefix';
 
 export const useFetchStylesheet = (stylesheetPath: string | undefined): void => {
   useEffect(() => {

@@ -2,7 +2,7 @@ import {
   Suspense, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { useSearchParams } from 'react-router';
-import { Center, Loader } from '@mantine/core';
+import { Box, Center, Loader } from '@mantine/core';
 import { ResponseBlock } from '../components/response/ResponseBlock';
 import { IframeController } from './IframeController';
 import { ImageController } from './ImageController';
@@ -199,15 +199,16 @@ export function ComponentController() {
         config={currentConfig}
         location="aboveStimulus"
       />
-
-      <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
-        {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
-        {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-        {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-        {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
-        {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
-      </Suspense>
+      <Box id={currentComponent} className={currentConfig.type} style={{ width: '100%', ...currentConfig.style }}>
+        <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
+          {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
+          {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
+          {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
+          {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
+          {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
+          {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
+        </Suspense>
+      </Box>
 
       {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
       <ResponseBlock

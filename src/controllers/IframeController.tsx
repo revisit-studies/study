@@ -9,11 +9,6 @@ import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 
 const PREFIX = '@REVISIT_COMMS';
 
-const defaultStyle: React.CSSProperties = {
-  width: '100%',
-  border: 0,
-};
-
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const {
     setReactiveAnswers, updateResponseBlockValidation,
@@ -22,8 +17,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
   const [height, setHeight] = useState(800);
-  const componentId = useCurrentComponent();
-  const iframeStyle = { ...defaultStyle, ...currentConfig.style, height: `${height}px` };
+  const iframeStyle = { height: `${height}px` };
 
   const ref = useRef<HTMLIFrameElement>(null);
 
@@ -111,10 +105,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   return (
     <iframe
-      className={currentConfig.type}
-      id={componentId}
-      style={iframeStyle}
       ref={ref}
+      style={iframeStyle}
       src={
         currentConfig.path.startsWith('http')
           ? currentConfig.path

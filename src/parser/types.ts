@@ -65,6 +65,54 @@ export interface StudyMetadata {
 export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
 export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
 
+export type Styles = {
+  /** Sizing */
+  height?: string;
+  width?: string;
+
+  /** Positioning */
+  position?: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
+  top?: string;
+  bottom?: string;
+  left?: string;
+  right?: string;
+
+  /** Spacing */
+  margin?: string;
+  padding?: string;
+
+  /** Border */
+  border?: string;
+  borderRadius?: string;
+
+  /** Background */
+  background?: string;
+  backgroundColor?: string;
+  backgroundImage?: string;
+  backgroundPosition?: string;
+  backgroundSize?: string;
+
+  /** Filter */
+  filter?: string;
+
+  /** Typography */
+  color?: string;
+  font?: string;
+  fontFamily?: string;
+  fontSize?: string;
+  fontStyle?: 'normal' | 'italic' | 'oblique';
+  fontWeight?: string | number;
+  textAlign?: 'start' | 'center' | 'end' | 'justify' | 'left' | 'right' | 'match-parent';
+  textDecoration?: 'none' | 'underline' | 'overline' | 'line-through' | 'underline-overline';
+  textTransform?: 'capitalize' | 'lowercase' | 'none' | 'uppercase';
+  letterSpacing?: string;
+  wordSpacing?: string;
+  lineHeight?: string | number;
+
+  /** Transform */
+  transform?: string;
+};
+
 /**
  * The UIConfig is used to configure the UI of the app.
  * This includes the logo, contact email, and whether to show a progress bar.
@@ -209,53 +257,7 @@ export interface BaseResponse {
   /** The path to the external stylesheet file. */
   stylesheetPath?: string;
   /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
-  style?: {
-    /** Sizing */
-    height?: string;
-    width?: string;
-
-    /** Positioning */
-    position?: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
-    top?: string;
-    bottom?: string;
-    left?: string;
-    right?: string;
-
-    /** Spacing */
-    margin?: string;
-    padding?: string;
-
-    /** Border */
-    border?: string;
-    borderRadius?: string;
-
-    /** Background */
-    background?: string;
-    backgroundColor?: string;
-    backgroundImage?: string;
-    backgroundPosition?: string;
-    backgroundSize?: string;
-
-    /** Filter */
-    filter?: string;
-
-    /** Typography */
-    color?: string;
-    font?: string;
-    fontFamily?: string;
-    fontSize?: string;
-    fontStyle?: 'normal' | 'italic' | 'oblique';
-    fontWeight?: string | number;
-    textAlign?: 'start' | 'center' | 'end' | 'justify' | 'left' | 'right' | 'match-parent';
-    textDecoration?: 'none' | 'underline' | 'overline' | 'line-through' | 'underline-overline';
-    textTransform?: 'capitalize' | 'lowercase' | 'none' | 'uppercase';
-    letterSpacing?: string;
-    wordSpacing?: string;
-    lineHeight?: string | number;
-
-    /** Transform */
-    transform?: string;
-  }
+  style?: Styles;
 }
 
 /**
@@ -734,53 +736,7 @@ export interface BaseIndividualComponent {
   /** The path to the external stylesheet file. */
   stylesheetPath?: string;
   /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
-  style?: {
-    /** Sizing */
-    height?: string;
-    width?: string;
-
-    /** Positioning */
-    position?: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
-    top?: string;
-    bottom?: string;
-    left?: string;
-    right?: string;
-
-    /** Spacing */
-    margin?: string;
-    padding?: string;
-
-    /** Border */
-    border?: string;
-    borderRadius?: string;
-
-    /** Background */
-    background?: string;
-    backgroundColor?: string;
-    backgroundImage?: string;
-    backgroundPosition?: string;
-    backgroundSize?: string;
-
-    /** Filter */
-    filter?: string;
-
-    /** Typography */
-    color?: string;
-    font?: string;
-    fontFamily?: string;
-    fontSize?: string;
-    fontStyle?: 'normal' | 'italic' | 'oblique';
-    fontWeight?: string | number;
-    textAlign?: 'start' | 'center' | 'end' | 'justify' | 'left' | 'right' | 'match-parent';
-    textDecoration?: 'none' | 'underline' | 'overline' | 'line-through' | 'underline-overline';
-    textTransform?: 'capitalize' | 'lowercase' | 'none' | 'uppercase';
-    letterSpacing?: string;
-    lineHeight?: string | number;
-    wordSpacing?: string;
-
-    /** Transform */
-    transform?: string;
-  }
+  style?: Styles;
 }
 
 /**

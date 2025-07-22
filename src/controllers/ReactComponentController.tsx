@@ -6,7 +6,7 @@ import { ParticipantData, ReactComponent } from '../parser/types';
 import { StimulusParams } from '../store/types';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
-import { useCurrentIdentifier, useCurrentComponent } from '../routes/utils';
+import { useCurrentIdentifier } from '../routes/utils';
 import { ErrorBoundary } from './ErrorBoundary';
 
 const modules = import.meta.glob(
@@ -14,16 +14,10 @@ const modules = import.meta.glob(
   { eager: true },
 );
 
-const defaultStyle: React.CSSProperties = {
-  width: '100%',
-};
-
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const reactPath = `../public/${currentConfig.path}`;
   const StimulusComponent = reactPath in modules ? (modules[reactPath] as ModuleNamespace).default : null;
   const identifier = useCurrentIdentifier();
-  const componentId = useCurrentComponent();
-  const reactStyle = { ...defaultStyle, ...currentConfig.style };
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
@@ -41,20 +35,18 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <div className={currentConfig.type} id={componentId} style={reactStyle}>
-        {StimulusComponent
-          ? (
-            <ErrorBoundary>
-              <StimulusComponent
-                parameters={currentConfig.parameters}
-                setAnswer={setAnswer}
-                answers={answers}
-                provenanceState={provState}
-              />
-            </ErrorBoundary>
-          )
-          : <ResourceNotFound path={currentConfig.path} />}
-      </div>
+      {StimulusComponent
+        ? (
+          <ErrorBoundary>
+            <StimulusComponent
+              parameters={currentConfig.parameters}
+              setAnswer={setAnswer}
+              answers={answers}
+              provenanceState={provState}
+            />
+          </ErrorBoundary>
+        )
+        : <ResourceNotFound path={currentConfig.path} />}
     </Suspense>
   );
 }
