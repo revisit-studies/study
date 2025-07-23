@@ -81,24 +81,11 @@ export function AppAside() {
               Next Participant
             </Button>
           </Tooltip>
-          {isAnalysis ? (
-            <Tooltip
-              label="The study browser cannot be closed in replay mode"
-              withinPortal
-            >
-              <CloseButton
-                onClick={() => dispatch(toggleStudyBrowser())}
-                mt={1}
-                disabled={isAnalysis}
-              />
-            </Tooltip>
-          ) : (
-            <CloseButton
-              onClick={() => dispatch(toggleStudyBrowser())}
-              mt={1}
-              disabled={isAnalysis}
-            />
-          )}
+          <CloseButton
+            onClick={() => dispatch(toggleStudyBrowser())}
+            mt={1}
+            disabled={isAnalysis}
+          />
         </Flex>
         <Flex direction="row" justify="space-between" mt="xs" opacity={0.7}>
           <Text size="sm">
