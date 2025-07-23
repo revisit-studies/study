@@ -47,7 +47,7 @@
         "difficulty": "hard"
       },
       "description": "Question that asks users to count the number of bars that have a value greater than 1.",
-      "instruction": "![demo](assets/drawingTasks/networkTask.png)",
+      "instruction": "Below is a list of authors, how many papers each author has published, and how many papers author pairs have published together. ![demo](assets/drawingTasks/networkTask.png) \n\n <br/> Sketch a visualization which shows each author and their paper counts, as well as the collabortion and collaboration counts between authors. \n\n <br/> While doing so, please talk aloud to explain your though process or any challenges you face.",
       "path": "demo-drawing/assets/Canvas.tsx",
       "response": []
     },
@@ -58,7 +58,7 @@
         "difficulty": "hard"
       },
       "description": "Question that asks users to count the number of bars that have a value greater than 1.",
-      "instruction": "![demo](assets/drawingTasks/bpmTask.png)",
+      "instruction": "Below is a small table showing individuals heart beats per minute at three points in time. \n\n <br/> ![demo](assets/drawingTasks/bpmTask.png) \n\n <br/> Sketch a visualization representing this data. \n\n <br/> While doing so, please talk aloud to explain your though process or any challenges you face.",
       "path": "demo-drawing/assets/Canvas.tsx",
       "response": []
     },
@@ -69,7 +69,7 @@
         "difficulty": "hard"
       },
       "description": "Question that asks users to count the number of bars that have a value greater than 1.",
-      "instruction": "![demo](assets/drawingTasks/rankingTask.png)",
+      "instruction": "Below is a table showing the rankings of bundesliga football teams across the first seven weeks of the season. \n\n <br/> ![demo](assets/drawingTasks/rankingTask.png) \n\n <br/> Sketch a visualization showing the teams rankings over time. \n\n <br/> While doing so, please talk aloud to explain your though process or any challenges you face.",
       "path": "demo-drawing/assets/Canvas.tsx",
       "response": []
     },
@@ -80,7 +80,7 @@
         "difficulty": "hard"
       },
       "description": "Question that asks users to count the number of bars that have a value greater than 1.",
-      "instruction": "![demo](assets/drawingTasks/100mTask.png)",
+      "instruction": "Below is a small table showing the 100m sprint times and long jump distance of five athletes. \n\n <br/> ![demo](assets/drawingTasks/100mTask.png) \n\n <br/> Sketch a visualization representing this data. \n\n <br/> While doing so, please talk aloud to explain your though process or any challenges you face.",
       "path": "demo-drawing/assets/Canvas.tsx",
       "response": []
     }

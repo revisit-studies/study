@@ -14,6 +14,8 @@ import {
   Circle, Layer, Line, Stage,
 } from 'react-konva';
 import throttle from 'lodash.throttle';
+import { useResizeObserver } from '@mantine/hooks';
+import { KonvaEventObject } from 'konva/lib/Node';
 import { StimulusParams } from '../../../store/types';
 import { Registry } from './trrack-alpha/core/src/registry/reg';
 import { initializeTrrack } from './trrack-alpha/core/src/provenance/trrack';
@@ -37,7 +39,7 @@ export type KonvaState = {
   penSize: string;
 };
 
-export default function Canvas({ parameters, provenanceState, setAnswer } : StimulusParams<{task: string}, KonvaState>) {
+export default function Canvas({ provenanceState, setAnswer } : StimulusParams<{task: string}, KonvaState>) {
   const [tool, setTool] = useState('pen');
   const [penSize, setPenSize] = useState<string>('5');
   const [lines, setLines] = useState<Lines>([]);
@@ -45,6 +47,8 @@ export default function Canvas({ parameters, provenanceState, setAnswer } : Stim
 
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const isDrawing = useRef(false);
+
+  const [ref, { width }] = useResizeObserver();
 
   useEffect(() => {
     if (provenanceState) {
@@ -92,26 +96,28 @@ export default function Canvas({ parameters, provenanceState, setAnswer } : Stim
     trrack.apply('drawing', actions.draw(structuredClone(l).concat()), { isEphemeral: true, makeCheckpoint: false });
   }, 50), [actions, trrack]);
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = (e: KonvaEventObject<MouseEvent, unknown>) => {
+    if (!e.target || !e.target.getStage()) return;
+
     isDrawing.current = true;
-    const pos = e.target.getStage().getPointerPosition();
+    const pos = e.target.getStage()!.getPointerPosition()!;
     setLines([...lines, {
       tool, points: [pos.x, pos.y], width: tool === 'pen' ? +penSize : +penSize * 8, color,
     }]);
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: KonvaEventObject<TouchEvent, unknown>) => {
     // no drawing - skipping
     if (tool === 'eraser') {
-      const pos = e.target.getStage().getPointerPosition();
+      const pos = e.target.getStage()!.getPointerPosition()!;
       setMousePos({ x: pos.x, y: pos.y });
     }
 
     if (!isDrawing.current) {
       return;
     }
-    const stage = e.target.getStage();
-    const point = stage.getPointerPosition();
+    const stage = e.target.getStage()!;
+    const point = stage.getPointerPosition()!;
     const lastLine = structuredClone(lines[lines.length - 1]);
     // add point
     lastLine.points = lastLine.points.concat([point.x, point.y]);
@@ -121,8 +127,6 @@ export default function Canvas({ parameters, provenanceState, setAnswer } : Stim
     setLines(lines.concat());
 
     debouncedApply(lines.concat());
-
-    console.log(trrack.graph.backend.nodes);
   };
 
   const handleMouseUp = () => {
@@ -137,7 +141,7 @@ export default function Canvas({ parameters, provenanceState, setAnswer } : Stim
   };
 
   return (
-    <Box>
+    <Box ref={ref}>
       <Stack>
         <Group>
           <SegmentedControl
@@ -167,12 +171,12 @@ export default function Canvas({ parameters, provenanceState, setAnswer } : Stim
 
         <Stage
           style={{ cursor: tool === 'eraser' ? `src${IconEraser}` : 'default' }}
-          width={window.innerWidth}
-          height={window.innerHeight}
+          width={width}
+          height={window.innerHeight - 200}
           onMouseDown={handleMouseDown}
           onMousemove={handleMouseMove}
           onMouseup={handleMouseUp}
-          onTouchStart={handleMouseDown}
+          onTouchStart={handleMouseDown as unknown as (e: KonvaEventObject<TouchEvent, unknown>) => void}
           onTouchMove={handleMouseMove}
           onTouchEnd={handleMouseUp}
         >
