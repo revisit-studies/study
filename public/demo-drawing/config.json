@@ -3,14 +3,10 @@
   "studyMetadata": {
     "title": "Drawing example",
     "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
+    "authors": ["The reVISit Team"],
     "date": "2023-04-14",
     "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
-    "organizations": [
-      "University of Utah"
-    ]
+    "organizations": ["University of Utah"]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
@@ -22,23 +18,83 @@
     "windowEventDebounceTime": 200
   },
   "components": {
-    "drawing": {
+    "drawingTree": {
       "type": "react-component",
       "nextButtonLocation": "sidebar",
       "meta": {
         "difficulty": "hard"
       },
       "description": "Question that asks users to count the number of bars that have a value greater than 1.",
-      "instruction": "How many bars have a value greater than 1?",
+      "instruction": "Below is part of a computer directory showing the names and sizes (in megabytes) of files and subdirectories in a folder. \n\n <br/> ![demo](assets/drawingTasks/treeTask.png) \n\n <br/> Sketch a visualization that shows both the structure and the size of the directory. \n\n <br/> While doing so, please talk aloud to explain your though process or any challenges you face.",
       "path": "demo-drawing/assets/Canvas.tsx",
-      "response": [
-      ]
+      "response": []
+    },
+    "drawingTraining": {
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "meta": {
+        "difficulty": "hard"
+      },
+      "path": "demo-drawing/assets/Canvas.tsx",
+      "description": "Question that asks users to count the number of bars that have a value greater than 1.",
+      "instruction": "Something something training",
+      "response": []
+    },
+    "drawingNetwork": {
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "meta": {
+        "difficulty": "hard"
+      },
+      "description": "Question that asks users to count the number of bars that have a value greater than 1.",
+      "instruction": "![demo](assets/drawingTasks/networkTask.png)",
+      "path": "demo-drawing/assets/Canvas.tsx",
+      "response": []
+    },
+    "drawingBpm": {
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "meta": {
+        "difficulty": "hard"
+      },
+      "description": "Question that asks users to count the number of bars that have a value greater than 1.",
+      "instruction": "![demo](assets/drawingTasks/bpmTask.png)",
+      "path": "demo-drawing/assets/Canvas.tsx",
+      "response": []
+    },
+    "drawingRanking": {
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "meta": {
+        "difficulty": "hard"
+      },
+      "description": "Question that asks users to count the number of bars that have a value greater than 1.",
+      "instruction": "![demo](assets/drawingTasks/rankingTask.png)",
+      "path": "demo-drawing/assets/Canvas.tsx",
+      "response": []
+    },
+    "drawing100m": {
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "meta": {
+        "difficulty": "hard"
+      },
+      "description": "Question that asks users to count the number of bars that have a value greater than 1.",
+      "instruction": "![demo](assets/drawingTasks/100mTask.png)",
+      "path": "demo-drawing/assets/Canvas.tsx",
+      "response": []
     }
   },
   "sequence": {
     "order": "fixed",
-    "components": [
-      "drawing"
-    ]
+    "components": [{
+      "id": "critiquePart",
+      "components": [],
+      "order": "fixed"
+    }, "drawingTraining", {
+      "id": "drawingPart",
+      "components": ["drawingTree", "drawingNetwork", "drawingBpm", "drawingRanking", "drawing100m"],
+      "order": "fixed"
+    }]
   }
 }

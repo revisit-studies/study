@@ -12,7 +12,6 @@
     "demo-drawing",
     "demo-training",
     "demo-html-trrack",
-    "demo-click-accuracy-test",
     "demo-image",
     "demo-upset",
     "demo-vega",
@@ -86,9 +85,6 @@
     },
     "demo-html-trrack": {
       "path": "demo-html-trrack/config.json"
-    },
-    "demo-click-accuracy-test": {
-      "path": "demo-click-accuracy-test/config.json"
     },
     "demo-image": {
       "path": "demo-image/config.json"
