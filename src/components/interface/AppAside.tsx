@@ -84,7 +84,6 @@ export function AppAside() {
           <CloseButton
             onClick={() => dispatch(toggleStudyBrowser())}
             mt={1}
-            disabled={isAnalysis}
           />
         </Flex>
         <Flex direction="row" justify="space-between" mt="xs" opacity={0.7}>
