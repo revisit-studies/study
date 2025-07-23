@@ -141,7 +141,12 @@ export default function Canvas({ provenanceState, setAnswer } : StimulusParams<{
   };
 
   return (
-    <Box ref={ref}>
+    <Box
+      ref={ref}
+      style={{
+        overflow: 'hidden', width: '100%', height: '100%', touchAction: 'none', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none',
+      }}
+    >
       <Stack>
         <Group>
           <SegmentedControl
