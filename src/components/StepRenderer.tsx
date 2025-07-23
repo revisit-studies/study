@@ -116,10 +116,7 @@ export function StepRenderer() {
   const showTitleBar = useMemo(() => componentConfig.showTitleBar ?? studyConfig.uiConfig.showTitleBar ?? true, [componentConfig, studyConfig]);
   const isAnalysis = useIsAnalysis();
 
-  const asideOpen = useMemo(() => {
-    if (isAnalysis) return true;
-    return studyNavigatorEnabled && showStudyBrowser;
-  }, [studyNavigatorEnabled, showStudyBrowser, isAnalysis]);
+  const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
 
   return (
     <WindowEventsContext.Provider value={windowEvents}>
