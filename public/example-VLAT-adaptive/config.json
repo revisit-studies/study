@@ -1,0 +1,76 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Adaptive VLAT (Visualization Literacy Assessment Test)",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-04-21",
+    "description": "A replication of the adaptive VLAT questionnaire by Cui et al.,",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "example-VLAT-adaptive/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": false,
+    "studyEndMsg": "Thank you for completing the study. You may close this window",
+    "urlParticipantIdParam": "PROLIFIC_ID"
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "example-VLAT-adaptive/assets/introduction.md",
+      "response": []
+    },
+    "VlatTrial": {
+      "type": "react-component",
+      "path": "example-VLAT-adaptive/assets/VlatTrial.tsx",
+      "response": [
+        {
+          "id": "vlatResp",
+          "prompt": "Your selection is:  ",
+          "location": "belowStimulus",
+          "type": "reactive",
+          "hidden": false
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "vlatResp",
+          "answer": "A"
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": true,
+      "trainingAttempts": 1
+    },
+    "feedback": {
+      "type": "react-component",
+      "path": "example-VLAT-adaptive/assets/Feedback.tsx",
+      "provideFeedback": false,
+      "allowFailedTraining": true,
+      "trainingAttempts": 1,
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "id": "dynamicBlock",
+        "order": "dynamic",
+        "functionPath": "example-VLAT-adaptive/assets/Dynamic.tsx"
+      },
+      "feedback"
+    ]
+  }
+}

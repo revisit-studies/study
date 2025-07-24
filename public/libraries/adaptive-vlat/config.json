@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/LibraryConfigSchema.json",
+  "description": "This library contains the adaptive VLAT questionnaire by Cui et al.,",
+  "components": {
+    "VlatTrial": {
+      "type": "react-component",
+      "path": "libraries/adaptive-vlat/assets/VlatTrial.tsx",
+      "response": [
+        {
+          "id": "vlatResp",
+          "prompt": "Your selection is:  ",
+          "location": "belowStimulus",
+          "type": "reactive",
+          "hidden": false
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "vlatResp",
+          "answer": "A"
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": true,
+      "trainingAttempts": 1
+    }
+  },
+  "sequences": {
+    "adaptive": {
+      "id": "dynamicBlock",
+      "order": "dynamic",
+      "functionPath": "libraries/adaptive-vlat/assets/Dynamic.tsx"
+    }
+  }
+}

@@ -22,7 +22,8 @@
   },
   "importedLibraries": [
     "test",
-    "mini-vlat"
+    "mini-vlat",
+    "adaptive-vlat"
   ],
   "components": {
     "my-test": {
@@ -48,6 +49,9 @@
     "mini-vlat-treemap-modified": {
       "baseComponent": "$mini-vlat.co.treemap",
       "instruction": "new instruction."
+    },
+    "vlat-trial": {
+      "baseComponent": "$adaptive-vlat.co.VlatTrial"
     }
   },
   "sequence": {
@@ -60,7 +64,8 @@
       "my-test",
       "my-test2",
       "$test.components.test-inherited",
-      "mini-vlat-treemap-modified"
+      "mini-vlat-treemap-modified",
+      "$adaptive-vlat.se.adaptive"
     ]
   }
 }

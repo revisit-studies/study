@@ -35,8 +35,8 @@
     "test-parser-errors",
     "test-randomization",
     "test-skip-logic",
-    "test-step-logic"
-
+    "test-step-logic",
+    "example-VLAT-adaptive"
   ],
   "configs": {
     "tutorial": {
@@ -158,6 +158,10 @@
     },
     "test-step-logic": {
       "path": "test-step-logic/config.json",
+      "test": true
+    },
+    "example-VLAT-adaptive": {
+      "path": "example-VLAT-adaptive/config.json",
       "test": true
     }
   }
