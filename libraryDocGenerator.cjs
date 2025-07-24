@@ -23,7 +23,7 @@ ${forDocs ?
         (libraryConfig.doi || libraryConfig.externalLink)
         ? `referenceLinks={[
         ${libraryConfig.doi ? `{name: "DOI", url: "https://dx.doi.org/${libraryConfig.doi}"}` : ''}${libraryConfig.doi && libraryConfig.externalLink ? ',' : ''}
-        ${libraryConfig.externalLink ? `{name: "External Link", url: "${libraryConfig.externalLink}"}` : ''}
+        ${libraryConfig.externalLink ? `{name: "${library}", url: "${libraryConfig.externalLink}"}` : ''}
       ]}`
       : ''}
   />` :  ''}
