@@ -1,20 +1,7 @@
 
 # mini-vlat
 
-import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
 
-<StructuredLinks
-    demoLinks={[
-      {name: "mini-vlat Demo", url: "https://revisit.dev/study/library-mini-vlat"}
-    ]}
-    codeLinks={[
-      {name: "mini-vlat Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-mini-vlat"}
-    ]}
-    referenceLinks={[
-      {name: "DOI", url: "https://dx.doi.org/10.1111/cgf.14809"}
-      
-    ]}
-/>
 
 This is an example study of the library `mini-vlat`.
 

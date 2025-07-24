@@ -1,20 +1,7 @@
 
 # calvi
 
-import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
 
-<StructuredLinks
-    demoLinks={[
-      {name: "calvi Demo", url: "https://revisit.dev/study/library-calvi"}
-    ]}
-    codeLinks={[
-      {name: "calvi Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-calvi"}
-    ]}
-    referenceLinks={[
-      {name: "DOI", url: "https://dx.doi.org/10.1145/3544548.3581406"}
-      
-    ]}
-/>
 
 This is an example study of the library `calvi`.
 

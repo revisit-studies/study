@@ -1,20 +1,7 @@
 
 # beauvis
 
-import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
 
-<StructuredLinks
-    demoLinks={[
-      {name: "beauvis Demo", url: "https://revisit.dev/study/library-beauvis"}
-    ]}
-    codeLinks={[
-      {name: "beauvis Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-beauvis"}
-    ]}
-    referenceLinks={[
-      {name: "DOI", url: "https://dx.doi.org/10.1109/tvcg.2022.3209390"},
-      {name: "External Link", url: "https://www.aviz.fr/Research/BeauVis-Scale"}
-    ]}
-/>
 
 This is an example study of the library `beauvis`.
 

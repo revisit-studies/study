@@ -1,20 +1,7 @@
 
 # nasa-tlx
 
-import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
 
-<StructuredLinks
-    demoLinks={[
-      {name: "nasa-tlx Demo", url: "https://revisit.dev/study/library-nasa-tlx"}
-    ]}
-    codeLinks={[
-      {name: "nasa-tlx Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-nasa-tlx"}
-    ]}
-    referenceLinks={[
-      {name: "DOI", url: "https://dx.doi.org/10.1016/S0166-4115(08)62386-9"}
-      
-    ]}
-/>
 
 This is an example study of the library `nasa-tlx`.
 

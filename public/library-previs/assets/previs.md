@@ -1,20 +1,7 @@
 
 # previs
 
-import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
 
-<StructuredLinks
-    demoLinks={[
-      {name: "previs Demo", url: "https://revisit.dev/study/library-previs"}
-    ]}
-    codeLinks={[
-      {name: "previs Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-previs"}
-    ]}
-    referenceLinks={[
-      {name: "DOI", url: "https://dx.doi.org/10.1109/tvcg.2024.3456318"},
-      {name: "External Link", url: "https://aviz.fr/PREVis/"}
-    ]}
-/>
 
 This is an example study of the library `previs`.
 

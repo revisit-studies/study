@@ -1,20 +1,7 @@
 
 # color-blindness
 
-import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
 
-<StructuredLinks
-    demoLinks={[
-      {name: "color-blindness Demo", url: "https://revisit.dev/study/library-color-blindness"}
-    ]}
-    codeLinks={[
-      {name: "color-blindness Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-color-blindness"}
-    ]}
-    referenceLinks={[
-      
-      {name: "External Link", url: "https://www.colour-blindness.com/colour-blindness-tests/ishihara-colour-test-plates/"}
-    ]}
-/>
 
 This is an example study of the library `color-blindness`.
 

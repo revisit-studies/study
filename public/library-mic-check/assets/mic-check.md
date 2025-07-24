@@ -1,17 +1,7 @@
 
 # mic-check
 
-import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
 
-<StructuredLinks
-    demoLinks={[
-      {name: "mic-check Demo", url: "https://revisit.dev/study/library-mic-check"}
-    ]}
-    codeLinks={[
-      {name: "mic-check Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-mic-check"}
-    ]}
-    
-/>
 
 This is an example study of the library `mic-check`.
 
