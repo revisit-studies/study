@@ -9,6 +9,25 @@ const path = require('path');
 const generateMd = (library, libraryConfig, forDocs) => `
 # ${library}
 
+${
+`import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
+
+<StructuredLinks
+    demoLinks={[
+      {name: "${library} Demo", url: "https://revisit.dev/study/library-${library}"}
+    ]}
+    codeLinks={[
+      {name: "${library} Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-${library}"}
+    ]}
+    ${
+      (libraryConfig.doi || libraryConfig.externalLink)
+      ? `referenceLinks={[
+      ${libraryConfig.doi ? `{name: "DOI", url: "https://dx.doi.org/${libraryConfig.doi}"}` : ''}${libraryConfig.doi && libraryConfig.externalLink ? ',' : ''}
+      ${libraryConfig.externalLink ? `{name: "External Link", url: "${libraryConfig.externalLink}"}` : ''}
+    ]}`
+    : ''}
+/>`}
+
 ${!forDocs ? `This is an example study of the library \`${library}\`.` : ''}
 
 ${libraryConfig.description}
