@@ -17,6 +17,8 @@ import {
   useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../../store/store';
 import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -34,6 +36,7 @@ export function AnalysisFooter() {
   const currentStep = useCurrentStep();
   const { funcIndex } = useParams();
   const navigate = useNavigate();
+  const studyConfig = useStudyConfig();
 
   const { setAnalysisIsPlaying } = useStoreActions();
   const storeDispatch = useStoreDispatch();
@@ -56,6 +59,22 @@ export function AnalysisFooter() {
   }, [allParticipants, currentComponent, currentStep, participantId]);
 
   const [timeString, setTimeString] = useState<string>('');
+
+  const flatSequence = useMemo(() => getSequenceFlatMap(studyConfig.sequence), [studyConfig.sequence]);
+
+  const isStart = useMemo(() => {
+    if (funcIndex) {
+      return decryptIndex(funcIndex) === 0 && +currentStep === 0;
+    }
+    return +currentStep === 0;
+  }, [funcIndex, currentStep]);
+
+  const isEnd = useMemo(() => {
+    if (funcIndex) {
+      return false;
+    }
+    return +currentStep >= flatSequence.length - 1;
+  }, [funcIndex, currentStep, flatSequence.length]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
@@ -82,25 +101,31 @@ export function AnalysisFooter() {
               }}
               data={allParticipants || []}
             />
-            <Button onClick={() => {
-              const newFuncIndex = funcIndex ? decryptIndex(funcIndex) - 1 : -1;
-              if (newFuncIndex >= 0) {
-                navigate(`../${encryptIndex(+currentStep)}/${encryptIndex(newFuncIndex)}?participantId=${participantId}`, { relative: 'path' });
-              } else {
-                navigate(`../${encryptIndex(+currentStep - 1)}?participantId=${participantId}`, { relative: 'path' });
-              }
-            }}
+            <Button
+              disabled={isStart}
+              onClick={() => {
+                if (funcIndex) {
+                  if (decryptIndex(funcIndex) > 0) {
+                    navigate(`../${encryptIndex(decryptIndex(funcIndex) - 1)}?participantId=${participantId}`, { relative: 'path' });
+                  } else {
+                    navigate(`../../${encryptIndex(+currentStep - 1)}?participantId=${participantId}`, { relative: 'path' });
+                  }
+                } else {
+                  navigate(`../${encryptIndex(+currentStep - 1)}?participantId=${participantId}`, { relative: 'path' });
+                }
+              }}
             >
               <IconArrowLeft />
             </Button>
-            <Button onClick={() => {
-              if (funcIndex) {
-                const newFuncIndex = decryptIndex(funcIndex) + 1;
-                navigate(`../${encryptIndex(+currentStep)}/${encryptIndex(newFuncIndex)}?participantId=${participantId}`, { relative: 'path' });
-              } else {
-                navigate(`../${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' });
-              }
-            }}
+            <Button
+              disabled={isEnd}
+              onClick={() => {
+                if (funcIndex) {
+                  navigate(`../${encryptIndex(decryptIndex(funcIndex) + 1)}?participantId=${participantId}`, { relative: 'path' });
+                } else {
+                  navigate(`../${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' });
+                }
+              }}
             >
               <IconArrowRight />
             </Button>
