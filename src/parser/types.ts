@@ -1497,6 +1497,12 @@ export interface LibraryConfig {
   $schema: string;
   /** A description of the library. */
   description: string;
+  /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
+  components: Record<string, IndividualComponent | InheritedComponent>
+  /** The order of the components in the study. This might include some randomness. */
+  sequences: Record<string, StudyConfig['sequence']>;
+  /** Additional description of the library. It accepts markdown formatting. */
+  additionalDescription?: string;
   /** The reference to the paper where the content of the library is based on. */
   reference?: string;
   /** The DOI of the paper where the content of the library is based on. */
@@ -1505,10 +1511,6 @@ export interface LibraryConfig {
   externalLink?: string;
   /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
   baseComponents?: BaseComponents;
-  /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
-  components: Record<string, IndividualComponent | InheritedComponent>
-  /** The order of the components in the study. This might include some randomness. */
-  sequences: Record<string, StudyConfig['sequence']>;
 }
 
 /**

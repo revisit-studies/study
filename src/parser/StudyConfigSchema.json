@@ -214,16 +214,16 @@
             "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
             "type": "number"
           },
+          "withActions": {
+            "description": "Whether to include vega actions. Defaults to true.",
+            "type": "boolean"
+          },
           "withProgressBar": {
             "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
             "type": "boolean"
           },
           "withSidebar": {
             "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
-            "type": "boolean"
-          },
-          "withActions": {
-            "description": "Whether to include vega actions. Defaults to true.",
             "type": "boolean"
           },
           "withTimeline": {
@@ -1080,16 +1080,16 @@
           "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
           "type": "number"
         },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
+        },
         "withProgressBar": {
           "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
           "type": "boolean"
         },
         "withSidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
-          "type": "boolean"
-         },
-        "withActions": {
-          "description": "Whether to include vega actions. Defaults to true.",
           "type": "boolean"
         },
         "withTimeline": {
@@ -2579,7 +2579,7 @@
           "type": "number"
         },
         "studyEndMsg": {
-          "description": "The message to display when the study ends. Supports templating with the participant ID. e.g. \"Thank you for completing the study. You may click this link and return to Prolific: [Go to Prolific](https://app.prolific.com/submissions/complete?cc=StudyID&PROLIFIC_ID={PROLIFIC_ID}))\"",
+          "description": "The message to display when the study ends.",
           "type": "string"
         },
         "timeoutReject": {
@@ -2748,16 +2748,16 @@
           "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
           "type": "number"
         },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
+        },
         "withProgressBar": {
           "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
           "type": "boolean"
         },
         "withSidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "withActions": {
-          "description": "Whether to include vega actions. Defaults to true.",
           "type": "boolean"
         }
       },
@@ -2891,16 +2891,16 @@
           "description": "Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig.",
           "type": "number"
         },
+        "withActions": {
+          "description": "Whether to include vega actions. Defaults to true.",
+          "type": "boolean"
+        },
         "withProgressBar": {
           "description": "Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig.",
           "type": "boolean"
         },
         "withSidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
-          "type": "boolean"
-         },
-        "withActions": {
-          "description": "Whether to include vega actions. Defaults to true.",
           "type": "boolean"
         }
       },
