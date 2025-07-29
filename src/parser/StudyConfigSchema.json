@@ -188,11 +188,12 @@
             "type": "number"
           },
           "style": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "The style of the image. This is an object with css properties as keys and css values as values.",
-            "type": "object"
+            "$ref": "#/definitions/Styles",
+            "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          },
+          "stylesheetPath": {
+            "description": "The path to the external stylesheet file.",
+            "type": "string"
           },
           "trainingAttempts": {
             "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -296,6 +297,14 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
         "type": {
           "const": "buttons",
           "type": "string"
@@ -388,6 +397,14 @@
         },
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
           "type": "string"
         },
         "type": {
@@ -597,6 +614,14 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
         "type": {
           "const": "dropdown",
           "type": "string"
@@ -760,11 +785,12 @@
           "type": "number"
         },
         "style": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "The style of the image. This is an object with css properties as keys and css values as values.",
-          "type": "object"
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -1054,11 +1080,12 @@
           "type": "number"
         },
         "style": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "The style of the image. This is an object with css properties as keys and css values as values.",
-          "type": "object"
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -1164,6 +1191,14 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
         "type": {
           "const": "likert",
           "type": "string"
@@ -1226,6 +1261,14 @@
         },
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
           "type": "string"
         },
         "type": {
@@ -1359,6 +1402,14 @@
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
         },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
@@ -1468,6 +1519,14 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
         "type": {
           "enum": [
             "matrix-radio",
@@ -1561,6 +1620,14 @@
         },
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
           "type": "string"
         },
         "type": {
@@ -1690,6 +1757,14 @@
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
         },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
@@ -1788,6 +1863,14 @@
         },
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
           "type": "string"
         },
         "type": {
@@ -1959,6 +2042,14 @@
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
         },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
@@ -2024,6 +2115,14 @@
         },
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
           "type": "string"
         },
         "type": {
@@ -2168,6 +2267,14 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
         "type": {
           "const": "shortText",
           "type": "string"
@@ -2265,6 +2372,14 @@
         "step": {
           "description": "The step value of the slider. If not provided (and snap not enabled), the step value is calculated as the range of the slider divided by 100.",
           "type": "number"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
         },
         "tlxStyle": {
           "description": "Whether to render the slider with a NASA-tlx style. Defaults to false.",
@@ -2421,6 +2536,150 @@
       ],
       "type": "object"
     },
+    "Styles": {
+      "additionalProperties": false,
+      "properties": {
+        "background": {
+          "description": "Background",
+          "type": "string"
+        },
+        "backgroundColor": {
+          "type": "string"
+        },
+        "backgroundImage": {
+          "type": "string"
+        },
+        "backgroundPosition": {
+          "type": "string"
+        },
+        "backgroundSize": {
+          "type": "string"
+        },
+        "border": {
+          "description": "Border",
+          "type": "string"
+        },
+        "borderRadius": {
+          "type": "string"
+        },
+        "bottom": {
+          "type": "string"
+        },
+        "color": {
+          "description": "Typography",
+          "type": "string"
+        },
+        "filter": {
+          "description": "Filter",
+          "type": "string"
+        },
+        "font": {
+          "type": "string"
+        },
+        "fontFamily": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "string"
+        },
+        "fontStyle": {
+          "enum": [
+            "normal",
+            "italic",
+            "oblique"
+          ],
+          "type": "string"
+        },
+        "fontWeight": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "height": {
+          "description": "Sizing",
+          "type": "string"
+        },
+        "left": {
+          "type": "string"
+        },
+        "letterSpacing": {
+          "type": "string"
+        },
+        "lineHeight": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "margin": {
+          "description": "Spacing",
+          "type": "string"
+        },
+        "padding": {
+          "type": "string"
+        },
+        "position": {
+          "description": "Positioning",
+          "enum": [
+            "static",
+            "relative",
+            "absolute",
+            "fixed",
+            "sticky"
+          ],
+          "type": "string"
+        },
+        "right": {
+          "type": "string"
+        },
+        "textAlign": {
+          "enum": [
+            "start",
+            "center",
+            "end",
+            "justify",
+            "left",
+            "right",
+            "match-parent"
+          ],
+          "type": "string"
+        },
+        "textDecoration": {
+          "enum": [
+            "none",
+            "underline",
+            "overline",
+            "line-through",
+            "underline-overline"
+          ],
+          "type": "string"
+        },
+        "textTransform": {
+          "enum": [
+            "capitalize",
+            "lowercase",
+            "none",
+            "uppercase"
+          ],
+          "type": "string"
+        },
+        "top": {
+          "type": "string"
+        },
+        "transform": {
+          "description": "Transform",
+          "type": "string"
+        },
+        "width": {
+          "type": "string"
+        },
+        "wordSpacing": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "TextOnlyResponse": {
       "additionalProperties": false,
       "description": "The TextOnlyResponse interface is used to define the properties of a text only response. TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information. It does not accept any input from the user.\n\nExample: ```js {   \"id\": \"textOnlyResponse\",   \"type\": \"textOnly\",   \"prompt\": \"This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.\",   \"location\": \"belowStimulus\",   \"restartEnumeration\": true } ```\n\nIn this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.",
@@ -2458,6 +2717,14 @@
         },
         "secondaryText": {
           "not": {}
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
         },
         "type": {
           "const": "textOnly",
@@ -2580,6 +2847,10 @@
         },
         "studyEndMsg": {
           "description": "The message to display when the study ends.",
+          "type": "string"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
           "type": "string"
         },
         "timeoutReject": {
@@ -2736,6 +3007,14 @@
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
         },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
@@ -2878,6 +3157,14 @@
         "sidebarWidth": {
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -3026,6 +3313,14 @@
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
         },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
           "type": "number"
@@ -3173,6 +3468,14 @@
         "sidebarWidth": {
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",

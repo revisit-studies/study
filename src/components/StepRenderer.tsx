@@ -17,6 +17,7 @@ import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { useCurrentComponent } from '../routes/utils';
 import { ResolutionWarning } from './interface/ResolutionWarning';
+import { useFetchStylesheet } from '../utils/fetchStylesheet';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -28,6 +29,8 @@ export function StepRenderer() {
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
 
   const windowEventDebounceTime = useMemo(() => componentConfig.windowEventDebounceTime ?? studyConfig.uiConfig.windowEventDebounceTime ?? 100, [componentConfig, studyConfig]);
+
+  useFetchStylesheet(studyConfig?.uiConfig.stylesheetPath);
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
@@ -138,7 +141,7 @@ export function StepRenderer() {
         <ResolutionWarning />
         <HelpModal />
         <AlertModal />
-        <AppShell.Main>
+        <AppShell.Main className="main">
           {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
             <Button
               variant="transparent"
