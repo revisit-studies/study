@@ -3,13 +3,13 @@ import * as d3 from 'd3';
 import {
   Center, Stack, Tooltip, Text,
 } from '@mantine/core';
+import { _ } from 'ajv';
 import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { StudyConfig } from '../../../parser/types';
 import { PREFIX } from '../../../utils/Prefix';
-import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
@@ -31,8 +31,8 @@ export function AllTasksTimeline({
   const percentComplete = useMemo(() => {
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0);
 
-    return (Object.entries(participantData.answers).length - incompleteEntries.length) / (getSequenceFlatMap(participantData.sequence).length - 1);
-  }, [participantData.answers, participantData.sequence]);
+    return (Object.entries(participantData.answers).length - incompleteEntries.length) / (Object.entries(participantData.answers).length);
+  }, [participantData.answers]);
 
   const xScale = useMemo(() => {
     const allStartTimes = Object.values(participantData.answers || {}).filter((answer) => answer.startTime).map((answer) => [answer.startTime, answer.endTime]).flat();
@@ -72,7 +72,7 @@ export function AllTasksTimeline({
       }
     });
 
-    return _maxHeight * LABEL_GAP + margin.top + margin.bottom;
+    return (_maxHeight + 1) * LABEL_GAP + margin.top + margin.bottom;
   }, [participantData.answers, xScale]);
 
   // Creating labels for the tasks
@@ -80,7 +80,7 @@ export function AllTasksTimeline({
     let currentHeight = 0;
 
     // Think thisll fail with dynamic blocks
-    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort((a, b) => getSequenceFlatMap(participantData.sequence).indexOf(a[0]) - getSequenceFlatMap(participantData.sequence).indexOf(b[0]));
+    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort((a, b) => +a[1].trialOrder - +b[1].trialOrder);
 
     const sortedEntries = Object.entries(participantData.answers || {}).filter((answer) => !!(answer[1].startTime)).sort((a, b) => a[1].startTime - b[1].startTime);
 
@@ -155,7 +155,7 @@ export function AllTasksTimeline({
     });
 
     return allElements;
-  }, [participantData.answers, participantData.sequence, incompleteXScale, xScale, studyConfig?.components, maxHeight, selectedTask, clickTask]);
+  }, [participantData.answers, incompleteXScale, xScale, studyConfig?.components, maxHeight, selectedTask, clickTask]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {

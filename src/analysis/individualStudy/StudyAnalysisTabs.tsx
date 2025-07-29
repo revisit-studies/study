@@ -101,9 +101,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     <>
       <AppHeader studyIds={globalConfig.configsList} />
 
-      <AppShell.Main>
+      <AppShell.Main style={{ height: '100dvh' }}>
 
-        <Stack ref={ref} style={{ height: '80vh' }}>
+        <Stack ref={ref} style={{ height: '100%', maxHeight: '100dvh', overflow: 'hidden' }} justify="space-between">
 
           <Flex direction="row" align="center" justify="space-between">
             <Flex direction="row" align="center">
@@ -130,19 +130,27 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
           <LoadingOverlay visible={status === 'pending'} />
 
           {status === 'success' ? (
-            <Tabs keepMounted={false} variant="outline" value={analysisTab} onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)}>
+            <Tabs
+              style={{
+                flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+              }}
+              keepMounted={false}
+              variant="outline"
+              value={analysisTab}
+              onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)}
+            >
               <Tabs.List>
                 <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Participant View</Tabs.Tab>
                 <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
               </Tabs.List>
-              <Tabs.Panel value="table" pt="xs">
+              <Tabs.Panel style={{ height: 'calc(100% - 37px' }} value="table" pt="xs">
                 {studyConfig && <TableView width={width} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, studyId)} />}
               </Tabs.Panel>
-              <Tabs.Panel value="stats" pt="xs">
+              <Tabs.Panel style={{ height: 'calc(100% - var(--tabs-radius))' }} value="stats" pt="xs">
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
               </Tabs.Panel>
-              <Tabs.Panel value="manage" pt="xs">
+              <Tabs.Panel style={{ flexGrow: 1 }} value="manage" pt="xs">
                 {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={() => execute(studyConfig, storageEngine, studyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
               </Tabs.Panel>
             </Tabs>

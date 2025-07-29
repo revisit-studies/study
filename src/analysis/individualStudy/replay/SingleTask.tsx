@@ -23,17 +23,59 @@ export function SingleTask({
 
   return (
     <g onClick={() => setSelectedTask(name)} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)} style={{ cursor: 'pointer' }}>
-      <rect opacity={1} fill={isHover || isSelected ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'} x={xScale(scaleStart) + TASK_GAP} width={xScale(scaleEnd) - xScale(scaleStart) - TASK_GAP * 2} y={height - TIMELINE_HEIGHT} height={TIMELINE_HEIGHT} />
-      <rect rx={3} opacity={1} x={xScale(scaleStart) - LABEL_MARGIN} width={labelWidth + LABEL_MARGIN * 2 + (hasCorrect ? HAS_CORRECT_MARGIN : 0)} y={height - TIMELINE_HEIGHT - LABEL_DISTANCE - labelHeight} height={LABEL_HEIGHT} fill="whitesmoke" />
-      <line stroke="black" strokeWidth={1} x1={xScale(scaleStart) - LABEL_MARGIN} x2={labelWidth + xScale(scaleStart) + LABEL_MARGIN + (hasCorrect ? HAS_CORRECT_MARGIN : 0)} y1={height - TIMELINE_HEIGHT - LABEL_DISTANCE + LABEL_HEIGHT - labelHeight} y2={height - TIMELINE_HEIGHT - LABEL_DISTANCE + LABEL_HEIGHT - labelHeight} />
-      <foreignObject x={xScale(scaleStart)} width={labelWidth + (hasCorrect ? HAS_CORRECT_MARGIN : 0)} y={height - TIMELINE_HEIGHT - LABEL_DISTANCE - labelHeight} height={LABEL_HEIGHT}>
+      <rect
+        opacity={1}
+        fill={isHover || isSelected ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}
+        x={xScale(scaleStart) + TASK_GAP}
+        width={xScale(scaleEnd) - xScale(scaleStart) - TASK_GAP * 2}
+        y={height - TIMELINE_HEIGHT}
+        height={TIMELINE_HEIGHT}
+      />
+      <rect
+        rx={3}
+        opacity={1}
+        x={xScale(scaleStart) - LABEL_MARGIN}
+        width={labelWidth + LABEL_MARGIN * 2 + (hasCorrect ? HAS_CORRECT_MARGIN : 0)}
+        y={height - TIMELINE_HEIGHT - LABEL_DISTANCE - labelHeight}
+        height={LABEL_HEIGHT}
+        fill="whitesmoke"
+      />
+      <line
+        stroke="black"
+        strokeWidth={1}
+        x1={xScale(scaleStart) - LABEL_MARGIN}
+        x2={labelWidth + xScale(scaleStart) + LABEL_MARGIN + (hasCorrect ? HAS_CORRECT_MARGIN : 0)}
+        y1={height - TIMELINE_HEIGHT - LABEL_DISTANCE + LABEL_HEIGHT - labelHeight}
+        y2={height - TIMELINE_HEIGHT - LABEL_DISTANCE + LABEL_HEIGHT - labelHeight}
+      />
+      <foreignObject
+        x={xScale(scaleStart)}
+        width={labelWidth + (hasCorrect ? HAS_CORRECT_MARGIN : 0)}
+        y={height - TIMELINE_HEIGHT - LABEL_DISTANCE - labelHeight}
+        height={LABEL_HEIGHT}
+      >
         <Center style={{ width: 'fit-content' }}>
           <Group wrap="nowrap" gap={2}>
             <Text lineClamp={1} ref={ref} mx={0} style={{ width: 'fit-content', fontWeight: 600 }} size="12px">
               {name}
             </Text>
-            {(incomplete ? <IconProgress color="orange" size="14" /> : hasCorrect ? isCorrect ? <IconCheck color="var(--mantine-color-green-6)" style={{ marginTop: 2, strokeWidth: 4 }} size="14" /> : (
-              <IconX color="var(--mantine-color-red-6)" style={{ marginTop: 2, strokeWidth: 4 }} size={14} />
+            {(incomplete ? (
+              <IconProgress
+                color="orange"
+                size="14"
+              />
+            ) : hasCorrect ? isCorrect ? (
+              <IconCheck
+                color="var(--mantine-color-green-6)"
+                style={{ marginTop: 2, strokeWidth: 4 }}
+                size="14"
+              />
+            ) : (
+              <IconX
+                color="var(--mantine-color-red-6)"
+                style={{ marginTop: 2, strokeWidth: 4 }}
+                size={14}
+              />
             ) : '')}
           </Group>
 

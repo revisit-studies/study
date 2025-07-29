@@ -9,6 +9,15 @@ export function MetaCell({ metaData }: { metaData: ParticipantMetadata | undefin
       <Spoiler w={200} hideLabel="hide" maxHeight={50} showLabel="more">
         <Stack gap="xs">
           <Box>
+            Resolution:
+            {JSON.stringify(metaData?.resolution)}
+          </Box>
+          <Box>
+            User Agent:
+            {' '}
+            {metaData?.userAgent}
+          </Box>
+          <Box>
             IP:
             {' '}
             {metaData?.ip}
@@ -17,16 +26,6 @@ export function MetaCell({ metaData }: { metaData: ParticipantMetadata | undefin
             Language:
             {' '}
             {metaData?.language}
-          </Box>
-          <Box>
-            Resolution:
-            {' '}
-            {JSON.stringify(metaData?.resolution)}
-          </Box>
-          <Box>
-            User Agent:
-            {' '}
-            {metaData?.userAgent}
           </Box>
         </Stack>
       </Spoiler>
