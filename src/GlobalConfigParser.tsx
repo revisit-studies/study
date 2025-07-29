@@ -19,8 +19,8 @@ import { AppHeader } from './analysis/interface/AppHeader';
 import { fetchStudyConfigs } from './utils/fetchConfig';
 import { initializeStorageEngine } from './storage/initialize';
 import { useStorageEngine } from './storage/storageEngineHooks';
-import { FirebaseStorageEngine } from './storage/engines/FirebaseStorageEngine';
 import { PageTitle } from './utils/PageTitle';
+import { isCloudStorageEngine } from './storage/engines/utils';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -62,7 +62,7 @@ export function GlobalConfigParser() {
   }, [setStorageEngine, storageEngine]);
 
   const analysisProtectedCallback = async (studyId:string) => {
-    if (storageEngine instanceof FirebaseStorageEngine) {
+    if (storageEngine && isCloudStorageEngine(storageEngine)) {
       const modes = await storageEngine.getModes(studyId);
       if (modes.analyticsInterfacePubliclyAccessible) {
         // If accessible, disable
