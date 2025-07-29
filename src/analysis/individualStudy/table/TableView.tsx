@@ -119,7 +119,7 @@ export function TableView({
     if (storageEngine && studyId) {
       if (user.isAdmin) {
         const finalReason = reason === '' ? 'Rejected by admin' : reason;
-        await storageEngine.rejectParticipant(studyId, participantId, finalReason);
+        await storageEngine.rejectParticipant(participantId, finalReason, studyId);
         await refresh();
       } else {
         console.warn('You are not authorized to perform this action.');

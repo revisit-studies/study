@@ -1,10 +1,194 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/LibraryConfigSchema.json",
-  "description": "The NASA-TLX is a widely used subjective workload assessment tool. It consists of six subscales: Mental Demand, Physical Demand, Temporal Demand, Performance, Effort, and Frustration. The NASA-TLX is designed to assess the perceived workload of a task and is commonly used in human factors and ergonomics research.",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+  "description": "The NASA-TLX is a widely used subjective workload assessment tool. It consists of six subscales: Mental Demand, Physical Demand, Temporal Demand, Performance, Effort, and Frustration. The NASA-TLX is designed to assess the perceived workload of a task and is commonly used in human factors and ergonomics research. We provide a component of the NASA-TLX itself, and a sequence that includes a source of load evaluation. The source of load evaluation is based on the pairwise weighting procedure described in the NASA-TLX manual.",
   "reference": "Hart, Sandra G., and Lowell E. Staveland. \"Development of NASA-TLX (Task Load Index): Results of empirical and theoretical research.\" Advances in psychology. Vol. 52. North-Holland, 1988. 139-183.",
   "doi": "10.1016/S0166-4115(08)62386-9",
   "components": {
+    "source-of-load":{
+      "type": "questionnaire",
+      "description": "Source of load evaluation, a pairwise weighting procedure to assess the relative importance of different factors that contribute to a person's experience of workload during a task. It should be presented before the NASA-TLX.",
+      "responseOrder": "random",
+      "response": [
+        {
+          "id": "mental-demand-physical-demand",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Mental demand",
+            "Physical demand"
+          ]
+        },
+        {
+          "id": "effort-temporal-demand",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus", 
+          "type": "radio",
+          "options": [
+            "Effort",
+            "Temporal demand"
+          ]
+        },
+        {
+          "id": "performance-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio", 
+          "options": [
+            "Performance",
+            "Frustration"
+          ]
+        },
+        {
+          "id": "temporal-demand-physical-demand",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Temporal demand",
+            "Physical demand"
+          ]
+        },
+        {
+          "id": "effort-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Effort",
+            "Frustration"
+          ]
+        },
+        {
+          "id": "performance-physical-demand",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Performance",
+            "Physical demand"
+          ]
+        },
+        {
+          "id": "frustration-temporal-demand",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Frustration",
+            "Temporal demand"
+          ]
+        },
+        {
+          "id": "physical-demand-temporal-demand",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Physical demand",
+            "Temporal demand"
+          ]
+        },
+        {
+          "id": "performance-mental-demand",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Performance",
+            "Mental demand"
+          ]
+        },
+        {
+          "id": "frustration-performance",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Frustration",
+            "Performance"
+          ]
+        },
+        {
+          "id": "effort-mental-demand",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Effort",
+            "Mental demand"
+          ]
+        },
+        {
+          "id": "performance-mental-demand-2",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Performance",
+            "Mental demand"
+          ]
+        },
+        {
+          "id": "temporal-demand-effort",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Temporal demand",
+            "Effort"
+          ]
+        },
+        {
+          "id": "mental-demand-effort",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Mental demand",
+            "Effort"
+          ]
+        },
+        {
+          "id": "physical-demand-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Physical demand",
+            "Frustration"
+          ]
+        },
+        {
+          "id": "mental-demand-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Mental demand",
+            "Frustration"
+          ]
+        }
+      ]
+    },
     "nasa-tlx": {
+      "description": "The NASA-TLX questionnaire.",
       "type": "markdown",
       "path": "libraries/nasa-tlx/assets/tlx.md",
       "response": [
@@ -594,5 +778,12 @@
     }
   },
   "sequences": {
+    "nasa-tlx-with-source-of-load-evaluation": {
+      "order": "fixed",
+      "components": [
+        "source-of-load",
+        "nasa-tlx"
+      ]
+    }
   }
 }

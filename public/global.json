@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/GlobalConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/GlobalConfigSchema.json",
   "configsList": [
     "tutorial",
     "example-brush-interactions",
@@ -19,6 +19,8 @@
     "demo-video-slider",
     "demo-video",
     "demo-dynamic",
+    "demo-style",
+    "demo-yaml",
     "library-beauvis",
     "library-calvi",
     "library-color-blindness",
@@ -92,6 +94,12 @@
     },
     "demo-image": {
       "path": "demo-image/config.json"
+    },
+    "demo-style": {
+      "path": "demo-style/config.json"
+    },
+    "demo-yaml": {
+      "path": "demo-yaml/config.yaml"
     },
     "test-audio": {
       "path": "test-audio/config.json",

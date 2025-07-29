@@ -81,7 +81,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       if (!storageEngine || !activeConfig || !studyId) return;
 
       // Make sure that we have a study database and that the study database has a sequence array
-      await storageEngine.initializeStudyDb(studyId, activeConfig);
+      await storageEngine.initializeStudyDb(studyId);
+      await storageEngine.saveConfig(activeConfig);
 
       const sequenceArray = await storageEngine.getSequenceArray();
       if (!sequenceArray) {
@@ -118,7 +119,6 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       };
 
       const participantSession = await storageEngine.initializeParticipantSession(
-        studyId,
         searchParamsObject,
         activeConfig,
         metadata,

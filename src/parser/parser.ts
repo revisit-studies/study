@@ -1,4 +1,5 @@
 import Ajv from 'ajv';
+import { parseDocument } from 'yaml';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
@@ -187,10 +188,18 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
   let data: StudyConfig | undefined;
 
   try {
+    // Try JSON parse first
     data = JSON.parse(fileData);
     validatedData = studyValidate(data) as boolean;
   } catch {
-    validatedData = false;
+    // Try yaml parse
+    try {
+      data = parseDocument(fileData).toJSON() as StudyConfig;
+      validatedData = studyValidate(data) as boolean;
+    } catch (e) {
+      console.error('Error parsing study config file:', e);
+      validatedData = false;
+    }
   }
 
   let errors: Required<ParsedConfig<StudyConfig>>['errors'] = studyValidate.errors || [];

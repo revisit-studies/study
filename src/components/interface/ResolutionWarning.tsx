@@ -51,7 +51,7 @@ export function ResolutionWarning() {
               if (storageEngine && !isRejected) {
                 setIsRejected(true);
                 setIsTimedOut(true);
-                storageEngine.rejectCurrentParticipant(studyId, 'Screen resolution too small')
+                storageEngine.rejectCurrentParticipant('Screen resolution too small')
                   .catch(() => {
                     console.error('Failed to reject participant who failed training');
                   });

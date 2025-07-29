@@ -18,6 +18,9 @@ test('test', async ({ page }) => {
     const img = await page.getByRole('main').getByRole('img');
     await expect(img).toBeVisible();
     await page.locator('input[type="radio"]').nth(0).click();
+    await page.locator('input[type="radio"]').nth(0).click();
+    await page.locator('input[type="radio"]').nth(0).click();
+    await page.locator('input[type="radio"]').nth(0).click();
     await page.getByRole('button', { name: 'Next', exact: true }).click();
   }
 
