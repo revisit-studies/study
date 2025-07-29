@@ -6,6 +6,7 @@ import { useResizeObserver } from '@mantine/hooks';
 import {
   IconCheck, IconProgress, IconX,
 } from '@tabler/icons-react';
+import { useNavigateToTrial } from '../../../utils/useNavigateToTrial';
 
 const LABEL_MARGIN = 3;
 const TIMELINE_HEIGHT = 25;
@@ -15,17 +16,19 @@ const TASK_GAP = 1;
 const HAS_CORRECT_MARGIN = 15;
 
 export function SingleTask({
-  xScale, name, height, setSelectedTask, isSelected, labelHeight = 0, isCorrect, hasCorrect, scaleStart, scaleEnd, incomplete,
-} : {name: string, height: number, xScale: d3.ScaleLinear<number, number>, setSelectedTask: (task: string) => void, isSelected: boolean, labelHeight?: number, isCorrect: boolean, hasCorrect: boolean, scaleStart: number, scaleEnd: number, incomplete: boolean}) {
+  xScale, name, height, labelHeight = 0, isCorrect, hasCorrect, scaleStart, scaleEnd, incomplete, trialOrder, participantId, studyId,
+} : { name: string, height: number, xScale: d3.ScaleLinear<number, number>, labelHeight?: number, isCorrect: boolean, hasCorrect: boolean, scaleStart: number, scaleEnd: number, incomplete: boolean, trialOrder: string, participantId: string, studyId: string }) {
   const [isHover, setIsHover] = useState(false);
 
   const [ref, { width: labelWidth }] = useResizeObserver();
 
+  const navigateToTrial = useNavigateToTrial();
+
   return (
-    <g onClick={() => setSelectedTask(name)} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)} style={{ cursor: 'pointer' }}>
+    <g onClick={() => navigateToTrial(trialOrder, participantId, studyId)} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)} style={{ cursor: 'pointer' }}>
       <rect
         opacity={1}
-        fill={isHover || isSelected ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}
+        fill={isHover ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}
         x={xScale(scaleStart) + TASK_GAP}
         width={xScale(scaleEnd) - xScale(scaleStart) - TASK_GAP * 2}
         y={height - TIMELINE_HEIGHT}
