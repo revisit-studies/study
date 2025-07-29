@@ -24,8 +24,7 @@ DOI: [10.1016/S0166-4115(08)62386-9](https://dx.doi.org/10.1016/S0166-4115(08)62
 
 - nasa-tlx-with-source-of-load-evaluation
 
-
-## Description
+## Additional Description
 
 ### Source of Workload Evaluation (Pairwise Weighting Procedure)
 

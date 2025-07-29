@@ -49,6 +49,8 @@ ${Object.keys(libraryConfig.components).map((component) => `- ${component}`).sor
 ${Object.keys(libraryConfig.sequences).length > 0
     ? Object.keys(libraryConfig.sequences).map((sequence) => `- ${sequence}`).sort((a, b) => a.localeCompare(b)).join('\n')
     : 'None'}
+
+${libraryConfig.additionalDescription ? `## Additional Description\n\n${libraryConfig.additionalDescription}` : ''}
 `;
 
 const librariesPath = path.join(__dirname, './public/libraries');
