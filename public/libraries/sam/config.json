@@ -5,8 +5,8 @@
   "doi": "10.1016/0005-7916(94)90063-9",
   "components": {
     "pleasure": {
-      "type": "markdown",
-      "path": "libraries/sam/assets/pleasure.md",
+      "type": "image",
+      "path": "libraries/sam/assets/pleasure.png",
       "response": [
         {
           "id": "pleasure",
@@ -21,32 +21,34 @@
       ]
     },
     "arousal": {
-      "type": "markdown",
-      "path": "libraries/sam/assets/arousal.md",
+      "type": "image",
+      "path": "libraries/sam/assets/arousal.png",
       "response": [
         {
           "id": "arousal",
           "prompt": "",
           "required": true,
           "location": "belowStimulus",
-          "type": "radio",
-          "horizontal": true,
-          "options": ["", "", "", "", "", "", "","",""]
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "",
+          "leftLabel": ""
         }
       ]
     },
     "dominance": {
-      "type": "markdown",
-      "path": "libraries/sam/assets/dominance.md",
+      "type": "image",
+      "path": "libraries/sam/assets/dominance.png",
       "response": [
         {
           "id": "dominance",
           "prompt": "",
           "required": true,
           "location": "belowStimulus",
-          "type": "radio",
-          "horizontal": true,
-          "options": ["", "", "", "", "", "", "","",""]
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "",
+          "leftLabel": ""
         }  
       ]
     }
