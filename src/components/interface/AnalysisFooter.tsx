@@ -118,11 +118,11 @@ export function AnalysisFooter() {
             >
               <IconArrowRight />
             </Button>
-            <Button px="xs" disabled={prevParticipantNameAndIndex[0] === participantId} onClick={() => navigate(`./../${encryptIndex(0)}?participantId=${prevParticipantNameAndIndex[0]}`)}>
+            <Button px="xs" disabled={prevParticipantNameAndIndex[0] === participantId} onClick={() => navigate(`./../${encryptIndex(funcIndex ? 0 : prevParticipantNameAndIndex[1])}?participantId=${prevParticipantNameAndIndex[0]}`)}>
               <IconArrowLeft />
               <IconUser />
             </Button>
-            <Button px="xs" disabled={nextParticipantNameAndIndex[0] === participantId} onClick={() => navigate(`./../${encryptIndex(0)}?participantId=${nextParticipantNameAndIndex[0]}`)}>
+            <Button px="xs" disabled={nextParticipantNameAndIndex[0] === participantId} onClick={() => navigate(`./../${encryptIndex(funcIndex ? 0 : nextParticipantNameAndIndex[1])}?participantId=${nextParticipantNameAndIndex[0]}`)}>
               <IconUser />
               <IconArrowRight />
             </Button>
