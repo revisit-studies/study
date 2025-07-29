@@ -78,7 +78,17 @@ libraries.forEach((library) => {
   const exampleAssetsPath = path.join(__dirname, 'public', `library-${library}`, 'assets');
   if (fs.existsSync(exampleAssetsPath)) {
     const exampleDocsPath = path.join(exampleAssetsPath, `${library}.md`);
-    fs.writeFileSync(exampleDocsPath, exampleMd);
+    
+    let finalMd = exampleMd;
+    if (fs.existsSync(exampleDocsPath)) {
+      const existingContent = fs.readFileSync(exampleDocsPath, 'utf8');
+      const customContentMatch = existingContent.match(/## Description\n\n([\s\S]*?)(?=\n## |$)/);
+      if (customContentMatch) {
+        finalMd +=  '\n\n## Description\n\n' + customContentMatch[1];
+      }
+    }
+    
+    fs.writeFileSync(exampleDocsPath, finalMd);
     // eslint-disable-next-line no-console
     console.log(`Documentation saved to ${exampleDocsPath}`);
   }
