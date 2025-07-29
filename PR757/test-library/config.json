@@ -22,8 +22,7 @@
   },
   "importedLibraries": [
     "test",
-    "mini-vlat",
-    "sam"
+    "mini-vlat"
   ],
   "components": {
     "my-test": {
@@ -54,7 +53,6 @@
   "sequence": {
     "order": "fixed",
     "components": [
-      "$sam.se.3-dimensions",
       "$test.sequences.small",
       "$test.se.long",
       "$test.components.test-md",
