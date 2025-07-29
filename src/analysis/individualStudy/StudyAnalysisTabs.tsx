@@ -147,10 +147,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               <Tabs.Panel style={{ height: 'calc(100% - 37px' }} value="table" pt="xs">
                 {studyConfig && <TableView width={width} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, studyId)} />}
               </Tabs.Panel>
-              <Tabs.Panel style={{ height: 'calc(100% - var(--tabs-radius))' }} value="stats" pt="xs">
+              <Tabs.Panel value="stats" pt="xs">
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
               </Tabs.Panel>
-              <Tabs.Panel style={{ flexGrow: 1 }} value="manage" pt="xs">
+              <Tabs.Panel value="manage" pt="xs">
                 {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={() => execute(studyConfig, storageEngine, studyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
               </Tabs.Panel>
             </Tabs>
