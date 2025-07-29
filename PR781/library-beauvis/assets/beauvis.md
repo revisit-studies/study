@@ -26,3 +26,5 @@ Link: [https://www.aviz.fr/Research/BeauVis-Scale](https://www.aviz.fr/Research/
 ## Available Sequences
 
 None
+
+
