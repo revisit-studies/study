@@ -12,7 +12,7 @@ import { useAsync } from '../../store/hooks/useAsync';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StorageEngine } from '../../storage/engines/types';
 import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
-import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { encryptIndex, decryptIndex } from '../../utils/encryptDecryptIndex';
 import {
   useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../../store/store';
@@ -82,17 +82,33 @@ export function AnalysisFooter() {
               }}
               data={allParticipants || []}
             />
-            <Button onClick={() => navigate(`../${funcIndex ? '..' : ''}${encryptIndex(+currentStep - 1)}?participantId=${participantId}`, { relative: 'path' })}>
+            <Button onClick={() => {
+              const newFuncIndex = funcIndex ? decryptIndex(funcIndex) - 1 : -1;
+              if (newFuncIndex >= 0) {
+                navigate(`../${encryptIndex(+currentStep)}/${encryptIndex(newFuncIndex)}?participantId=${participantId}`, { relative: 'path' });
+              } else {
+                navigate(`../${encryptIndex(+currentStep - 1)}?participantId=${participantId}`, { relative: 'path' });
+              }
+            }}
+            >
               <IconArrowLeft />
             </Button>
-            <Button onClick={() => navigate(`../${funcIndex ? '..' : ''}${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' })}>
+            <Button onClick={() => {
+              if (funcIndex) {
+                const newFuncIndex = decryptIndex(funcIndex) + 1;
+                navigate(`../${encryptIndex(+currentStep)}/${encryptIndex(newFuncIndex)}?participantId=${participantId}`, { relative: 'path' });
+              } else {
+                navigate(`../${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' });
+              }
+            }}
+            >
               <IconArrowRight />
             </Button>
-            <Button px="xs" disabled={prevParticipantNameAndIndex[0] === participantId} onClick={() => navigate(`./../${funcIndex ? '..' : ''}${encryptIndex(prevParticipantNameAndIndex[1])}?participantId=${prevParticipantNameAndIndex[0]}`)}>
+            <Button px="xs" disabled={prevParticipantNameAndIndex[0] === participantId} onClick={() => navigate(`./../${encryptIndex(0)}?participantId=${prevParticipantNameAndIndex[0]}`)}>
               <IconArrowLeft />
               <IconUser />
             </Button>
-            <Button px="xs" disabled={nextParticipantNameAndIndex[0] === participantId} onClick={() => navigate(`./../${funcIndex ? '..' : ''}${encryptIndex(nextParticipantNameAndIndex[1])}?participantId=${nextParticipantNameAndIndex[0]}`)}>
+            <Button px="xs" disabled={nextParticipantNameAndIndex[0] === participantId} onClick={() => navigate(`./../${encryptIndex(0)}?participantId=${nextParticipantNameAndIndex[0]}`)}>
               <IconUser />
               <IconArrowRight />
             </Button>
