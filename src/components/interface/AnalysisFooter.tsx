@@ -62,19 +62,8 @@ export function AnalysisFooter() {
 
   const flatSequence = useMemo(() => getSequenceFlatMap(studyConfig.sequence), [studyConfig.sequence]);
 
-  const isStart = useMemo(() => {
-    if (funcIndex) {
-      return decryptIndex(funcIndex) === 0 && +currentStep === 0;
-    }
-    return +currentStep === 0;
-  }, [funcIndex, currentStep]);
-
-  const isEnd = useMemo(() => {
-    if (funcIndex) {
-      return false;
-    }
-    return +currentStep >= flatSequence.length - 1;
-  }, [funcIndex, currentStep, flatSequence.length]);
+  const isStart = useMemo(() => currentStep === 0, [currentStep]);
+  const isEnd = useMemo(() => currentStep === flatSequence.length, [currentStep, flatSequence.length]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
