@@ -42,6 +42,7 @@ export function AnalysisFooter() {
   const storeDispatch = useStoreDispatch();
 
   const analysisIsPlaying = useStoreSelector((state) => state.analysisIsPlaying);
+  const answers = useStoreSelector((state) => state.answers);
 
   const { storageEngine } = useStorageEngine();
 
@@ -110,7 +111,13 @@ export function AnalysisFooter() {
               disabled={isEnd}
               onClick={() => {
                 if (funcIndex) {
-                  navigate(`../${encryptIndex(decryptIndex(funcIndex) + 1)}?participantId=${participantId}`, { relative: 'path' });
+                  const currentComponentId = flatSequence[currentStep as number];
+                  const dynamicBlockAnswers = Object.keys(answers).filter((key) => key.startsWith(`${currentComponentId}_${currentStep}_`));
+                  if (decryptIndex(funcIndex) > dynamicBlockAnswers.length) {
+                    navigate(`../../${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' });
+                  } else {
+                    navigate(`../${encryptIndex(decryptIndex(funcIndex) + 1)}?participantId=${participantId}`, { relative: 'path' });
+                  }
                 } else {
                   navigate(`../${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' });
                 }
