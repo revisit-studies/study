@@ -3,6 +3,7 @@
   "configsList": [
     "tutorial",
     "demo-html",
+    "demo-html-video",
     "demo-html-input",
     "demo-survey",
     "demo-training",
@@ -54,6 +55,9 @@
     },
     "demo-html": {
       "path": "demo-html/config.json"
+    },
+    "demo-html-video": {
+      "path": "demo-html-video/config.json"
     },
     "demo-html-input": {
       "path": "demo-html-input/config.json"

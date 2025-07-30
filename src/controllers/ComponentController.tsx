@@ -41,8 +41,10 @@ export function ComponentController() {
 
   const answers = useStoreSelector((store) => store.answers);
   const audioStream = useRef<MediaRecorder | null>(null);
+  const screenRecordingStream = useRef<MediaRecorder | null>(null);
+
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
-  const { setIsRecording } = useStoreActions();
+  const { setIsRecording, setIsScreenRecording } = useStoreActions();
   const analysisProvState = useStoreSelector((state) => state.analysisProvState.stimulus);
 
   const isAnalysis = useIsAnalysis();
@@ -98,6 +100,42 @@ export function ComponentController() {
         audioStream.current = recorder;
         audioStream.current.start();
         storeDispatch(setIsRecording(true));
+        setPrevTrialName(`${currentComponent}_${currentStep}`);
+      });
+    }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentComponent, currentStep]);
+
+  useEffect(() => {
+    if (!studyConfig || !studyConfig.uiConfig.recordScreen || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+      return;
+    }
+
+    if (screenRecordingStream.current && prevTrialName) {
+      storageEngine.saveScreenRecording(screenRecordingStream.current, prevTrialName);
+    }
+
+    if (screenRecordingStream.current) {
+      screenRecordingStream.current.stream.getTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
+      screenRecordingStream.current.stream.getVideoTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
+      screenRecordingStream.current.stop();
+      screenRecordingStream.current = null;
+    }
+
+    if ((stepConfig && stepConfig.recordScreen !== undefined && !stepConfig.recordScreen) || currentComponent === 'end') {
+      setPrevTrialName(null);
+      storeDispatch(setIsRecording(false));
+    } else {
+      navigator.mediaDevices.getDisplayMedia({
+        video: {
+          displaySurface: 'browser',
+        },
+      }).then((s) => {
+        const recorder = new MediaRecorder(s);
+        screenRecordingStream.current = recorder;
+        screenRecordingStream.current.start();
+        storeDispatch(setIsScreenRecording(true));
         setPrevTrialName(`${currentComponent}_${currentStep}`);
       });
     }

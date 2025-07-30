@@ -161,6 +161,7 @@ export interface StoreState {
   studyId: string;
   participantId: string;
   isRecording: boolean;
+  isScreenRecording: boolean;
   answers: ParticipantData['answers'];
   sequence: Sequence;
   config: StudyConfig;

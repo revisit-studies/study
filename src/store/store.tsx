@@ -103,6 +103,7 @@ export async function studyStoreCreator(
   const initialState: StoreState = {
     studyId,
     isRecording: false,
+    isScreenRecording: false,
     answers: Object.keys(answers).length > 0 ? answers : emptyAnswers,
     sequence,
     config,
@@ -137,6 +138,9 @@ export async function studyStoreCreator(
       },
       setIsRecording(state, { payload }: PayloadAction<boolean>) {
         state.isRecording = payload;
+      },
+      setIsScreenRecording(state, { payload }: PayloadAction<boolean>) {
+        state.isScreenRecording = payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       pushToFuncSequence(state, { payload }: PayloadAction<{ component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined }>) {

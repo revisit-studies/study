@@ -729,6 +729,30 @@ export abstract class StorageEngine {
     // Don't clean up the listener. The stream will be destroyed.
   }
 
+  // Saves the video stream to the storage engine. This method is used to save the screen recorded video data from a MediaRecorder stream.
+  async saveScreenRecording(
+    videoStream: MediaRecorder,
+    taskName: string,
+  ) {
+    let debounceTimeout: NodeJS.Timeout | null = null;
+
+    const listener = async (data: BlobEvent) => {
+      if (debounceTimeout) {
+        return;
+      }
+
+      debounceTimeout = setTimeout(async () => {
+        await this._pushToStorage(`screenRecording/${this.currentParticipantId}`, taskName, data.data);
+        await this._cacheStorageObject(`screenRecording/${this.currentParticipantId}`, taskName);
+      }, 500);
+    };
+
+    videoStream.addEventListener('dataavailable', listener);
+    videoStream.requestData();
+
+    // Don't clean up the listener. The stream will be destroyed.
+  }
+
   // Gets the sequence array from the storage engine.
   async getSequenceArray() {
     await this.verifyStudyDatabase();
