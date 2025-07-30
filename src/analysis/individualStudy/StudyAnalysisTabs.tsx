@@ -149,7 +149,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
               </Tabs.List>
-              <Tabs.Panel value="summary" pt="xs">
+              <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
                 {studyConfig && <SummaryView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ height: `calc(100% - ${TABLE_HEADER_HEIGHT}px)` }} value="table" pt="xs">
