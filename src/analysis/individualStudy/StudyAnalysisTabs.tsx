@@ -14,6 +14,7 @@ import { useResizeObserver } from '@mantine/hooks';
 import { AppHeader } from '../interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
+import { SummaryView } from './summary/SummaryView';
 import { TableView } from './table/TableView';
 import { StatsView } from './stats/StatsView';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -23,7 +24,6 @@ import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
-import { SummaryView } from './summary/SummaryView';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 
