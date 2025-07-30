@@ -65,6 +65,12 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
   const table = useMantineReactTable({
     columns,
     data: tableData,
+    mantinePaperProps: {
+      style: { overflow: 'hidden' },
+    },
+    mantineTableContainerProps: {
+      style: { overflow: 'hidden' },
+    },
   });
 
   if (visibleParticipants.length === 0 || tableData.length === 0) {

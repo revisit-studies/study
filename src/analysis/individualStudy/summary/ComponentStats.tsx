@@ -71,6 +71,12 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
       placeholder: 'Search components...',
       leftSection: <IconSearch size={16} />,
     },
+    mantinePaperProps: {
+      style: { overflow: 'hidden' },
+    },
+    mantineTableContainerProps: {
+      style: { overflow: 'hidden' },
+    },
   });
 
   if (visibleParticipants.length === 0 || tableData.length === 0) {
