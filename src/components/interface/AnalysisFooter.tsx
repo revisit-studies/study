@@ -113,7 +113,7 @@ export function AnalysisFooter() {
                 if (funcIndex) {
                   const currentComponentId = flatSequence[currentStep as number];
                   const dynamicBlockAnswers = Object.keys(answers).filter((key) => key.startsWith(`${currentComponentId}_${currentStep}_`));
-                  if (decryptIndex(funcIndex) > dynamicBlockAnswers.length) {
+                  if (decryptIndex(funcIndex) >= dynamicBlockAnswers.length) {
                     navigate(`../../${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' });
                   } else {
                     navigate(`../${encryptIndex(decryptIndex(funcIndex) + 1)}?participantId=${participantId}`, { relative: 'path' });
