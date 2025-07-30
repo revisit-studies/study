@@ -10,18 +10,11 @@
       "nextButtonText": "Continue",
       "response": [
         {
-          "id": "audioResponse",
-          "type": "radio",
+          "id": "audioTest",
+          "type": "reactive",
           "required": true,
-          "hidden": true,
-          "location": "sidebar",
-          "prompt": "Found Audio",
-          "options": [
-            {
-              "label": "Yes",
-              "value": "Yes"
-            }
-          ]
+          "prompt": "",
+          "hidden": true
         }
       ]
     }
