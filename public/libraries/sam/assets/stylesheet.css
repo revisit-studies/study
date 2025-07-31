@@ -1,4 +1,9 @@
 .radioButtons {
     width: 100%;
-    margin: 0 60px;
+    margin: 0 75px;
+}
+
+/* Hide number labels from users while keeping them available for analysis */
+.radioButtons p {
+    display: none;
 }
