@@ -13,10 +13,10 @@
           "prompt": "",
           "required": true,
           "location": "belowStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "",
-          "leftLabel": ""
+          "type": "radio",
+          "horizontal": true,
+          "options": [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+          "stylesheetPath": "libraries/sam/assets/stylesheet.css"
         }
       ]
     },
@@ -29,10 +29,10 @@
           "prompt": "",
           "required": true,
           "location": "belowStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "",
-          "leftLabel": ""
+          "type": "radio",
+          "horizontal": true,
+          "options": [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+          "stylesheetPath": "libraries/sam/assets/stylesheet.css"
         }
       ]
     },
@@ -45,10 +45,10 @@
           "prompt": "",
           "required": true,
           "location": "belowStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "",
-          "leftLabel": ""
+          "type": "radio",
+          "horizontal": true,
+          "options": [" ", " ", " ", " ", " ", " ", " ", " ", " "],
+          "stylesheetPath": "libraries/sam/assets/stylesheet.css"
         }  
       ]
     }
