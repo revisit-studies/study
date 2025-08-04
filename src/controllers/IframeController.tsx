@@ -9,6 +9,10 @@ import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 
 const PREFIX = '@REVISIT_COMMS';
 
+const defaultStyle = {
+  border: 0,
+};
+
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const {
     setReactiveAnswers, updateResponseBlockValidation,
@@ -106,7 +110,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   return (
     <iframe
       ref={ref}
-      style={iframeStyle}
+      style={{ ...defaultStyle, ...iframeStyle }}
       src={
         currentConfig.path.startsWith('http')
           ? currentConfig.path
