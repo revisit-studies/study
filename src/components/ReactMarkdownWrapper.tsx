@@ -23,7 +23,7 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
     ol({ node, type, ...props }) { return <List type="ordered" withPadding {...props} pb={8} />; },
   };
 
-  const asteriskIcon = ('<span style="color: #fa5252; margin-left: 4px">*</span>');
+  const asteriskIcon = ('<span class="required" style="color: #fa5252; margin-left: 4px">*</span>');
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
