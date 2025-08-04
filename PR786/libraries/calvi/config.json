@@ -10,9 +10,6 @@
       "path": "libraries/calvi/assets/questions/normal/N1.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -53,9 +50,6 @@
       "path": "libraries/calvi/assets/questions/normal/N2.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -96,9 +90,6 @@
       "path": "libraries/calvi/assets/questions/normal/N3.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -140,9 +131,6 @@
       "path": "libraries/calvi/assets/questions/normal/N4.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -183,9 +171,6 @@
       "path": "libraries/calvi/assets/questions/normal/N5.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -226,9 +211,6 @@
       "path": "libraries/calvi/assets/questions/normal/N6.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -269,9 +251,6 @@
       "path": "libraries/calvi/assets/questions/normal/N7.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -308,9 +287,6 @@
       "path": "libraries/calvi/assets/questions/normal/N8.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -347,9 +323,6 @@
       "path": "libraries/calvi/assets/questions/normal/N9.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -390,9 +363,6 @@
       "path": "libraries/calvi/assets/questions/normal/N10.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -429,9 +399,6 @@
       "path": "libraries/calvi/assets/questions/normal/N11.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -472,9 +439,6 @@
       "path": "libraries/calvi/assets/questions/normal/N12.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -515,9 +479,6 @@
       "path": "libraries/calvi/assets/questions/normal/N13.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -558,9 +519,6 @@
       "path": "libraries/calvi/assets/questions/normal/N14.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -587,9 +545,6 @@
       "path": "libraries/calvi/assets/questions/normal/N15.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -625,9 +580,6 @@
       "path": "libraries/calvi/assets/questions/trick/T1.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -664,9 +616,6 @@
       "path": "libraries/calvi/assets/questions/trick/T2.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -703,9 +652,6 @@
       "path": "libraries/calvi/assets/questions/trick/T3.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -746,9 +692,6 @@
       "path": "libraries/calvi/assets/questions/trick/T4.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -789,9 +732,6 @@
       "path": "libraries/calvi/assets/questions/trick/T5.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -832,9 +772,6 @@
       "path": "libraries/calvi/assets/questions/trick/T6.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -875,9 +812,6 @@
       "path": "libraries/calvi/assets/questions/trick/T8.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -918,9 +852,6 @@
       "path": "libraries/calvi/assets/questions/trick/T9.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -961,9 +892,6 @@
       "path": "libraries/calvi/assets/questions/trick/T10.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1000,9 +928,6 @@
       "path": "libraries/calvi/assets/questions/trick/T11.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1039,9 +964,6 @@
       "path": "libraries/calvi/assets/questions/trick/T12.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1078,9 +1000,6 @@
       "path": "libraries/calvi/assets/questions/trick/T13.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1117,9 +1036,6 @@
       "path": "libraries/calvi/assets/questions/trick/T14.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1160,9 +1076,6 @@
       "path": "libraries/calvi/assets/questions/trick/T15.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1199,9 +1112,6 @@
       "path": "libraries/calvi/assets/questions/trick/T16.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1238,9 +1148,6 @@
       "path": "libraries/calvi/assets/questions/trick/T17.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1281,9 +1188,6 @@
       "path": "libraries/calvi/assets/questions/trick/T18.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1324,9 +1228,6 @@
       "path": "libraries/calvi/assets/questions/trick/T19.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1367,9 +1268,6 @@
       "path": "libraries/calvi/assets/questions/trick/T20.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1411,9 +1309,6 @@
       "path": "libraries/calvi/assets/questions/trick/T21.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q21",
@@ -1454,9 +1349,6 @@
       "path": "libraries/calvi/assets/questions/trick/T22.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q22",
@@ -1493,9 +1385,6 @@
       "path": "libraries/calvi/assets/questions/trick/T23.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q23",
@@ -1532,9 +1421,6 @@
       "path": "libraries/calvi/assets/questions/trick/T25.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1575,9 +1461,6 @@
       "path": "libraries/calvi/assets/questions/trick/T26.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1618,9 +1501,6 @@
       "path": "libraries/calvi/assets/questions/trick/T27.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1657,9 +1537,6 @@
       "path": "libraries/calvi/assets/questions/trick/T28.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1696,9 +1573,6 @@
       "path": "libraries/calvi/assets/questions/trick/T29.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1735,9 +1609,6 @@
       "path": "libraries/calvi/assets/questions/trick/T30.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1774,9 +1645,6 @@
       "path": "libraries/calvi/assets/questions/trick/T34.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1806,9 +1674,6 @@
       "path": "libraries/calvi/assets/questions/trick/T35.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1841,9 +1706,6 @@
       "path": "libraries/calvi/assets/questions/trick/T36.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1869,9 +1731,6 @@
       "path": "libraries/calvi/assets/questions/trick/T37.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1904,9 +1763,6 @@
       "path": "libraries/calvi/assets/questions/trick/T38.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1932,9 +1788,6 @@
       "path": "libraries/calvi/assets/questions/trick/T39.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1960,9 +1813,6 @@
       "path": "libraries/calvi/assets/questions/trick/T40.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -1988,9 +1838,6 @@
       "path": "libraries/calvi/assets/questions/trick/T42.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -2017,9 +1864,6 @@
       "path": "libraries/calvi/assets/questions/trick/T43.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -2046,9 +1890,6 @@
       "path": "libraries/calvi/assets/questions/trick/T44.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -2075,9 +1916,6 @@
       "path": "libraries/calvi/assets/questions/trick/T45.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -2110,9 +1948,6 @@
       "path": "libraries/calvi/assets/questions/trick/T46.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -2138,9 +1973,6 @@
       "path": "libraries/calvi/assets/questions/trick/T47.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -2166,9 +1998,6 @@
       "path": "libraries/calvi/assets/questions/trick/T48.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -2201,9 +2030,6 @@
       "path": "libraries/calvi/assets/questions/trick/T49.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -2227,9 +2053,6 @@
       "path": "libraries/calvi/assets/questions/trick/T50.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",
@@ -2253,9 +2076,6 @@
       "path": "libraries/calvi/assets/questions/trick/T52.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
-      "style": {
-        "height": "80%"
-      },
       "response": [
         {
           "id": "q1",

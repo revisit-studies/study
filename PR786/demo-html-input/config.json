@@ -35,7 +35,8 @@
         }
       ],
       "path": "demo-html-input/assets/bar-chart-interaction.html",
-      "instructionLocation": "aboveStimulus"
+      "instructionLocation": "aboveStimulus",
+      "stylesheetPath": "demo-html-input/assets/barChart.css"
     }
   },
   "components": {
