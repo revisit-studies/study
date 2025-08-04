@@ -4,10 +4,14 @@
   gap: 20px;
   margin-bottom: 20px;
 }
+
 #layout-title {
   grid-row: 1;
   grid-column: span 6;
   text-align: center;
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
 
 #layout-title p {
