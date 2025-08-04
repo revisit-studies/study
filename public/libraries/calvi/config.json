@@ -7,12 +7,11 @@
     "N1": {
       "description": "Audio test",
       "type": "image",
-
       "path": "libraries/calvi/assets/questions/normal/N1.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -55,7 +54,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -98,7 +97,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -142,7 +141,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -185,7 +184,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -228,7 +227,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -271,7 +270,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -310,7 +309,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -349,7 +348,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -392,7 +391,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -431,7 +430,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -474,7 +473,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -517,7 +516,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -560,7 +559,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -589,7 +588,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -627,7 +626,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -666,7 +665,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -705,7 +704,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -748,7 +747,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -791,7 +790,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -834,7 +833,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -877,7 +876,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -920,7 +919,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -963,7 +962,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1002,7 +1001,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1041,7 +1040,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1080,7 +1079,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1119,7 +1118,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1162,7 +1161,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1201,7 +1200,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1240,7 +1239,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1283,7 +1282,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1326,7 +1325,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1369,7 +1368,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1413,7 +1412,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1456,7 +1455,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1495,7 +1494,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1534,7 +1533,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1577,7 +1576,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1620,7 +1619,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1659,7 +1658,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1698,7 +1697,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1737,7 +1736,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1776,7 +1775,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1808,7 +1807,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1843,7 +1842,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1871,7 +1870,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1906,7 +1905,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1934,7 +1933,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1962,7 +1961,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -1990,7 +1989,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -2019,7 +2018,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -2048,7 +2047,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -2077,7 +2076,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -2112,7 +2111,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -2140,7 +2139,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -2168,7 +2167,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -2203,7 +2202,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -2229,7 +2228,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
@@ -2255,7 +2254,7 @@
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
-        "maxHeight": "80%"
+        "height": "80%"
       },
       "response": [
         {
