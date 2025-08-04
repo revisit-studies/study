@@ -54,7 +54,7 @@ export function ButtonsInput({
         error={error}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
-        <Flex justify="space-between" align="center" gap="xl" mt="xs">
+        <Flex justify="space-between" align="center" gap="xl" mt="xs" style={{ overflow: 'hidden' }}>
           {orderedOptions.map((radio, idx) => (
             <Radio.Card
               key={`radio-${idx}`}
