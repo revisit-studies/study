@@ -9,7 +9,7 @@ export function OverviewStats({
   mismatchDetails,
 }: {
   overviewData: OverviewData | null;
-  mismatchDetails: {
+  mismatchDetails?: {
     completed: { current: number; calculated: number };
     inProgress: { current: number; calculated: number };
     rejected: { current: number; calculated: number };

@@ -86,7 +86,7 @@ export function SummaryView({ visibleParticipants, studyConfig }: StudyStatsProp
 
   return (
     <Stack gap="md">
-      <OverviewStats overviewData={overviewData} />
+      <OverviewStats overviewData={overviewData} mismatchDetails={null} />
       {studyConfig && (
         <Group align="flex-start" gap="md" grow>
           <ComponentStats visibleParticipants={visibleParticipants} />
