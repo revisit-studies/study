@@ -1,5 +1,5 @@
 import {
-  useCallback, useEffect, useMemo, useRef, useState,
+  useCallback, useEffect, useMemo, useRef,
 } from 'react';
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
@@ -16,8 +16,6 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
-  const [height, setHeight] = useState(800);
-  const iframeStyle = useMemo(() => ({ height: `${height}px`, width: '100%' }), [height]);
 
   const ref = useRef<HTMLIFrameElement>(null);
 
@@ -67,12 +65,6 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             }
             break;
           case `${PREFIX}/READY`:
-            if (ref.current) {
-              const iFrame = document.getElementById(data.iframeId) as HTMLIFrameElement;
-              if (iFrame && iFrame.contentWindow) {
-                ref.current.style.height = `${iFrame.contentWindow.document.body.scrollHeight.toString()}px`;
-              }
-            }
             break;
           case `${PREFIX}/ANSWERS`:
             storeDispatch(setReactiveAnswers(data.message));
@@ -106,13 +98,12 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   return (
     <iframe
       ref={ref}
-      style={iframeStyle}
+      style={{ width: '100%', flexGrow: 1 }}
       src={
         currentConfig.path.startsWith('http')
           ? currentConfig.path
           : `${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`
       }
-      onLoad={() => setHeight((ref.current?.contentWindow?.document.body.scrollHeight || 750) + 20)}
     />
   );
 }
