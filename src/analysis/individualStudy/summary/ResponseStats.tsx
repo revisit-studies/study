@@ -11,6 +11,11 @@ import 'mantine-react-table/styles.css';
 import { calculateResponseStats, getResponseOptions } from './utils';
 import { ResponseData } from './types';
 
+const extractNumericValue = (value: string, unit: string): number => {
+  if (value === 'N/A') return -1;
+  return parseFloat(value.replace(unit, '')) || 0;
+};
+
 export function ResponseStats({ visibleParticipants, studyConfig }: { visibleParticipants: ParticipantData[]; studyConfig: StudyConfig }) {
   const tableData: ResponseData[] = useMemo(() => {
     const stats = calculateResponseStats(visibleParticipants);
@@ -59,12 +64,20 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
     {
       accessorKey: 'correctness',
       header: 'Correctness',
+      sortingFn: (rowA, rowB) => {
+        const a = extractNumericValue(rowA.original.correctness, '%');
+        const b = extractNumericValue(rowB.original.correctness, '%');
+        return a - b;
+      },
     },
   ], []);
 
   const table = useMantineReactTable({
     columns,
     data: tableData,
+    initialState: {
+      sorting: [{ id: 'component', desc: false }],
+    },
     mantinePaperProps: {
       style: { overflow: 'hidden' },
     },

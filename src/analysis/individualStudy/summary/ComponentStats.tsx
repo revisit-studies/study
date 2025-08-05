@@ -17,6 +17,11 @@ interface TableRow {
   correctness: string;
 }
 
+const extractNumericValue = (value: string, unit: string): number => {
+  if (value === 'N/A') return -1;
+  return parseFloat(value.replace(unit, '')) || 0;
+};
+
 export function ComponentStats({ visibleParticipants }: { visibleParticipants: ParticipantData[] }) {
   const tableData: TableRow[] = useMemo(() => {
     const stats = calculateComponentStats(visibleParticipants);
@@ -43,14 +48,29 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
       {
         accessorKey: 'avgTime',
         header: 'Avg Time',
+        sortingFn: (rowA, rowB) => {
+          const a = extractNumericValue(rowA.original.avgTime, 's');
+          const b = extractNumericValue(rowB.original.avgTime, 's');
+          return a - b;
+        },
       },
       {
         accessorKey: 'avgCleanTime',
         header: 'Avg Clean Time',
+        sortingFn: (rowA, rowB) => {
+          const a = extractNumericValue(rowA.original.avgCleanTime, 's');
+          const b = extractNumericValue(rowB.original.avgCleanTime, 's');
+          return a - b;
+        },
       },
       {
         accessorKey: 'correctness',
         header: 'Correctness',
+        sortingFn: (rowA, rowB) => {
+          const a = extractNumericValue(rowA.original.correctness, '%');
+          const b = extractNumericValue(rowB.original.correctness, '%');
+          return a - b;
+        },
       },
     ],
     [],
