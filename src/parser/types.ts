@@ -69,6 +69,8 @@ export type Styles = {
   /** Sizing */
   height?: string;
   width?: string;
+  maxHeight?: string;
+  maxWidth?: string;
 
   /** Positioning */
   position?: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';

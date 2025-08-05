@@ -2616,6 +2616,12 @@
           "description": "Spacing",
           "type": "string"
         },
+        "maxHeight": {
+          "type": "string"
+        },
+        "maxWidth": {
+          "type": "string"
+        },
         "padding": {
           "type": "string"
         },
