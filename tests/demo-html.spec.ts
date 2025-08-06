@@ -37,6 +37,7 @@ test('html demo works as intended with previous button', async ({ page }) => {
 
   // Go to previous page
   await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
 
   // Check answer is correctly saved
   await expect(input).toBeVisible();
@@ -52,6 +53,7 @@ test('html demo works as intended with previous button', async ({ page }) => {
 
   // Go to previous page
   await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
 
   // Check answer is correctly saved
   await expect(input).toBeVisible();
@@ -60,6 +62,7 @@ test('html demo works as intended with previous button', async ({ page }) => {
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(iframeContent).toBeVisible();
 
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the end of study text renders
