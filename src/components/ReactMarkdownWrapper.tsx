@@ -2,9 +2,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import ReactMarkdown, { Components } from 'react-markdown';
 import {
-  Image, Text, Title, Anchor, List,
+  Image, Text, Title, Anchor, List, Table,
 } from '@mantine/core';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 
 export function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
   const components: Partial<Components> = {
@@ -21,13 +22,19 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
     a({ node, ...props }) { return <Anchor {...props} ref={undefined} />; },
     ul({ node, ...props }) { return <List withPadding {...props} pb={8} />; },
     ol({ node, type, ...props }) { return <List type="ordered" withPadding {...props} pb={8} />; },
+    table({ node, ...props }) { return <Table {...props} mb={12} borderColor="grey" />; },
+    thead({ node, ...props }) { return <Table.Thead {...props} />; },
+    tbody({ node, ...props }) { return <Table.Tbody {...props} />; },
+    tr({ node, ...props }) { return <Table.Tr {...props} />; },
+    th({ node, ...props }) { return <Table.Th {...props} />; },
+    td({ node, ...props }) { return <Table.Td {...props} />; },
   };
 
   const asteriskIcon = ('<span style="color: #fa5252; margin-left: 4px">*</span>');
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <ReactMarkdown components={components} rehypePlugins={[rehypeRaw] as any}>
+    <ReactMarkdown components={components} rehypePlugins={[rehypeRaw] as any} remarkPlugins={[remarkGfm]}>
       {text + (required ? `${asteriskIcon}` : '')}
     </ReactMarkdown>
   );
