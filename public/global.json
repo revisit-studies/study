@@ -29,6 +29,7 @@
     "library-previs",
     "library-sus",
     "library-vlat",
+    "library-adaptive-vlat",
     "test-audio",
     "test-library",
     "test-likert-matrix",
@@ -136,6 +137,10 @@
     },
     "library-vlat": {
       "path": "library-vlat/config.json",
+      "test": true
+    },
+    "library-adaptive-vlat": {
+      "path": "library-adaptive-vlat/config.json",
       "test": true
     },
     "test-likert-matrix": {
