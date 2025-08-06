@@ -165,7 +165,7 @@ export function MatrixInput({
   const _m = orderedQuestions.length;
   return (
     <>
-      <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />
+      {prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
       <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
       <Box
         style={{

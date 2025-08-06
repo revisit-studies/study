@@ -30,7 +30,7 @@ export function NumericInput({
     <NumberInput
       disabled={disabled}
       placeholder={placeholder}
-      label={<InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
       description={secondaryText}
       radius="md"
       size="md"

@@ -30,7 +30,7 @@ export function DropdownInput({
   return (
     <Select
       disabled={disabled}
-      label={<InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
       description={secondaryText}
       placeholder={placeholder}
       data={optionsAsStringOptions}
