@@ -5,7 +5,7 @@ body {
 .image {
   height: 200px;
   overflow-y: hidden;
-  width: 70% !important;
+  width: 50% !important;
   object-fit: cover;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -28,7 +28,7 @@ body {
   padding: 20px;
   border: 2px solid #e3e8ed;
   border-radius: 12px;
-  width: 70%;
+  width: 50%;
   box-sizing: border-box;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
