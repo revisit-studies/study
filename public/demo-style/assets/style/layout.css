@@ -23,21 +23,18 @@
   grid-row: 1;
   /* Span across all 6 columns */
   grid-column: span 6;
-  text-align: center;
   border: none;
   box-shadow: none;
   padding: 0;
+  /* Centers the title content */
+  display: flex;
+  justify-content: center;
 }
 
 /* Makes the title text large and bold */
 #layout-title p {
   font-size: 24px;
   font-weight: bold;
-}
-
-/* Centers the title content */
-#layout-title .mantine-Flex-root {
-  justify-content: center;
 }
 
 /* Positions the color response in the first 2 columns of row 2 */
