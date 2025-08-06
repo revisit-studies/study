@@ -29,7 +29,7 @@
   },
   "sequences": {
     "adaptive-vlat": {
-      "id": "adaptive-vlat",
+      "id": "dynamicBlock",
       "order": "dynamic",
       "functionPath": "libraries/adaptive-vlat/assets/Dynamic.tsx"
     }
