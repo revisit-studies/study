@@ -199,7 +199,17 @@ export function ComponentController() {
         config={currentConfig}
         location="aboveStimulus"
       />
-      <Box id={currentComponent} className={currentConfig.type} style={{ width: '100%', ...currentConfig.style }}>
+      <Box
+        id={currentComponent}
+        className={currentConfig.type}
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexGrow: currentConfig.type === 'website' ? 1 : undefined,
+          flexDirection: 'column',
+          ...currentConfig.style,
+        }}
+      >
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
           {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
           {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}

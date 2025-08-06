@@ -141,7 +141,7 @@ export function StepRenderer() {
         <ResolutionWarning />
         <HelpModal />
         <AlertModal />
-        <AppShell.Main className="main">
+        <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }}>
           {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
             <Button
               variant="transparent"
