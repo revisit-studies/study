@@ -62,7 +62,7 @@
       "my-test2",
       "$test.components.test-inherited",
       "mini-vlat-treemap-modified",
-      "$adaptive-vlat.se.adaptive"
+      "$adaptive-vlat.se.adaptive-vlat"
     ]
   }
 }
