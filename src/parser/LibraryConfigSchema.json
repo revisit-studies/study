@@ -2585,6 +2585,12 @@
         "maxWidth": {
           "type": "string"
         },
+        "minHeight": {
+          "type": "string"
+        },
+        "minWidth": {
+          "type": "string"
+        },
         "padding": {
           "type": "string"
         },

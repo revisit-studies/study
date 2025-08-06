@@ -69,6 +69,8 @@ export type Styles = {
   /** Sizing */
   height?: string;
   width?: string;
+  minHeight?: string;
+  minWidth?: string;
   maxHeight?: string;
   maxWidth?: string;
 
