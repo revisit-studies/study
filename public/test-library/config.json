@@ -49,9 +49,6 @@
     "mini-vlat-treemap-modified": {
       "baseComponent": "$mini-vlat.co.treemap",
       "instruction": "new instruction."
-    },
-    "vlat-trial": {
-      "baseComponent": "$adaptive-vlat.co.VlatTrial"
     }
   },
   "sequence": {

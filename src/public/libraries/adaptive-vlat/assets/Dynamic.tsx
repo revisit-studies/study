@@ -30,7 +30,7 @@ export default function Dynamic({ answers }: JumpFunctionParameters<never>): Jum
   // console.log(correctOption)
 
   return {
-    component: 'vlat-trial',
+    component: '$adaptive-vlat.components.VlatTrial',
     parameters: {
       activeQuestionIdx: nxtidx,
       qidx: qid.length,
