@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Adaptive VLAT (Visualization Literacy Assessment Test)",
+    "title": "A-VLAT: Adaptive Visualization Literacy Assessment Test)",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
