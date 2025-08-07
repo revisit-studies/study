@@ -41,7 +41,7 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
   return text.length > 0 && (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <ReactMarkdown components={components} rehypePlugins={[rehypeRaw] as any} remarkPlugins={[remarkGfm]}>
-      {text + (required ? `${asteriskIcon}` : '')}
+      {modifiedText}
     </ReactMarkdown>
   );
 }
