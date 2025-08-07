@@ -344,7 +344,9 @@ export interface LongTextResponse extends BaseResponse {
   "type": "likert",
   "leftLabel": "Not Enjoyable",
   "rightLabel": "Very Enjoyable",
-  "numItems": 5
+  "numItems": 5,
+  "start": 1,
+  "spacing": 1
 }
 ```
  */
