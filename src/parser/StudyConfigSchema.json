@@ -2369,6 +2369,10 @@
           "description": "Whether the slider should snap between values. Defaults to false. Slider snapping disables the label above the handle.",
           "type": "boolean"
         },
+        "spacing": {
+          "description": "The spacing between the ticks. If not provided, the spacing is calculated as the range of the slider divided by power of 10.",
+          "type": "number"
+        },
         "startingValue": {
           "description": "The starting value of the slider. Defaults to the minimum value.",
           "type": "number"
