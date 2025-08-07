@@ -69,6 +69,10 @@ export type Styles = {
   /** Sizing */
   height?: string;
   width?: string;
+  minHeight?: string;
+  minWidth?: string;
+  maxHeight?: string;
+  maxWidth?: string;
 
   /** Positioning */
   position?: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
@@ -344,7 +348,9 @@ export interface LongTextResponse extends BaseResponse {
   "type": "likert",
   "leftLabel": "Not Enjoyable",
   "rightLabel": "Very Enjoyable",
-  "numItems": 5
+  "numItems": 5,
+  "start": 1,
+  "spacing": 1
 }
 ```
  */
@@ -352,6 +358,10 @@ export interface LikertResponse extends BaseResponse {
   type: 'likert';
   /** The number of options to render. */
   numItems: number;
+  /** The starting value of the likert scale. Defaults to 1. */
+  start?: number;
+  /** The spacing between the options. Defaults to 1. */
+  spacing?: number;
   /** The left label of the likert scale. E.g Strongly Disagree */
   leftLabel?: string;
   /** The right label of the likert scale. E.g Strongly Agree */
@@ -1557,6 +1567,12 @@ export interface LibraryConfig {
   $schema: string;
   /** A description of the library. */
   description: string;
+  /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
+  components: Record<string, IndividualComponent | InheritedComponent>
+  /** The order of the components in the study. This might include some randomness. */
+  sequences: Record<string, StudyConfig['sequence']>;
+  /** Additional description of the library. It accepts markdown formatting. */
+  additionalDescription?: string;
   /** The reference to the paper where the content of the library is based on. */
   reference?: string;
   /** The DOI of the paper where the content of the library is based on. */
@@ -1565,10 +1581,6 @@ export interface LibraryConfig {
   externalLink?: string;
   /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
   baseComponents?: BaseComponents;
-  /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
-  components: Record<string, IndividualComponent | InheritedComponent>
-  /** The order of the components in the study. This might include some randomness. */
-  sequences: Record<string, StudyConfig['sequence']>;
 }
 
 /**

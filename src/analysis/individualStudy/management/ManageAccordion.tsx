@@ -1,8 +1,9 @@
 import { Accordion, Container, Title } from '@mantine/core';
 import { DataManagementAccordionItem } from './DataManagementAccordionItem';
 import { RevisitModesAccordionItem } from './RevisitModesAccordionItem';
+import { ParticipantData } from '../../../storage/types';
 
-export function ManageAccordion({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
+export function ManageAccordion({ studyId, refresh }: { studyId: string, refresh: () => Promise<Record<number, ParticipantData>> }) {
   return (
     <Container>
       <Accordion

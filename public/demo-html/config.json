@@ -21,7 +21,9 @@
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "withSidebar": true,
-    "windowEventDebounceTime": 200
+    "windowEventDebounceTime": 200,
+    "minHeightSize": 800,
+    "minWidthSize": 400
   },
   "components": {
     "introduction": {
