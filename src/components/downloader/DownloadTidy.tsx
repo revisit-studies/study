@@ -43,6 +43,16 @@ export const OPTIONAL_COMMON_PROPS = [
   'cleanedDuration',
   'meta',
   'configHash',
+  'focusEvents',
+  'inputEvents',
+  'keydownEvents',
+  'keyupEvents',
+  'mousemoveEvents',
+  'mousedownEvents',
+  'mouseupEvents',
+  'resizeEvents',
+  'scrollEvents',
+  'visibilityEvents',
 ] as const;
 
 export const REQUIRED_PROPS = [
@@ -162,7 +172,36 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         if (properties.includes('meta')) {
           tidyRow.meta = JSON.stringify(completeComponent.meta, null, 2);
         }
-
+        if (properties.includes('focusEvents')) {
+          tidyRow.focusEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'focus').length;
+        }
+        if (properties.includes('inputEvents')) {
+          tidyRow.inputEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'input').length;
+        }
+        if (properties.includes('keydownEvents')) {
+          tidyRow.keydownEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'keydown').length;
+        }
+        if (properties.includes('keyupEvents')) {
+          tidyRow.keyupEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'keyup').length;
+        }
+        if (properties.includes('mousemoveEvents')) {
+          tidyRow.mousemoveEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'mousemove').length;
+        }
+        if (properties.includes('mousedownEvents')) {
+          tidyRow.mousedownEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'mousedown').length;
+        }
+        if (properties.includes('mouseupEvents')) {
+          tidyRow.mouseupEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'mouseup').length;
+        }
+        if (properties.includes('resizeEvents')) {
+          tidyRow.resizeEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'resize').length;
+        }
+        if (properties.includes('scrollEvents')) {
+          tidyRow.scrollEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'scroll').length;
+        }
+        if (properties.includes('visibilityEvents')) {
+          tidyRow.visibilityEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'visibility').length;
+        }
         return tidyRow;
       }).flat();
 
