@@ -224,7 +224,7 @@ export interface NumberOption {
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
  */
 export interface StringOption {
-  /** The label displayed to participants. */
+  /** The label displayed to participants. Markdown is supported. */
   label: string;
   /** The value stored in the participant's data. */
   value: string;
