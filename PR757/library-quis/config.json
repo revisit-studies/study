@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "QUIS:Questionnaire for User Interface Satisfaction",
+    "title": "QUIS: Questionnaire for User Interface Satisfaction",
     "version": "1.0.0",
     "authors": [
       "The reVISit Team"
