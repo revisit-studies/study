@@ -38,12 +38,7 @@ export function SliderInput({
   const hasLabels = options.some((opt) => opt.label !== '');
   const errorMessage = generateErrorMessage(response, answer);
 
-  // For smeq style (vertical slider)
-  const [val, setVal] = useState((answer as { value?: number }).value ?? (min + max) / 2);
-  const normalizedValue = (val - min) / (max - min);
-  const [hovered, setHovered] = useState(false);
-
-  // Numeric label for smeq style
+  // Numeric label
   const labelValues = useMemo(() => {
     // Calculate spacing - power of 10 if not specified, otherwise use spacing
     const calculatedSpacing = spacing ?? 10 ** Math.floor(Math.log10((max - min) / 10));
@@ -51,6 +46,11 @@ export function SliderInput({
     const count = Math.floor((max - start) / calculatedSpacing) + 1;
     return Array.from({ length: count }, (_, i) => start + i * calculatedSpacing);
   }, [min, max, spacing]);
+
+  // For smeq style (vertical slider)
+  const [val, setVal] = useState((answer as { value?: number }).value ?? (min + max) / 2);
+  const normalizedValue = (val - min) / (max - min);
+  const [hovered, setHovered] = useState(false);
 
   const { ref } = useMove(({ y }) => {
     // Convert y position to slider value
@@ -233,7 +233,7 @@ export function SliderInput({
       ) : (
         <Slider
           disabled={disabled}
-          marks={options as SliderProps['marks']}
+          marks={[...labelValues.map((value) => ({ value })), ...options] as SliderProps['marks']}
           min={min}
           max={max}
           step={step ?? (snap ? 0.001 : (max - min) / 100)}
