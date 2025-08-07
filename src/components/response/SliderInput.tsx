@@ -31,6 +31,7 @@ export function SliderInput({
     withBar,
     tlxStyle,
     smeqStyle,
+    spacing,
   } = response;
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
@@ -42,12 +43,14 @@ export function SliderInput({
   const normalizedValue = (val - min) / (max - min);
   const [hovered, setHovered] = useState(false);
 
-  // Numeric labels of multiples of 10 for smeq style
+  // Numeric label for smeq style
   const labelValues = useMemo(() => {
-    const start = Math.ceil(min / 10) * 10;
-    const count = Math.floor((max - start) / 10) + 1;
-    return Array.from({ length: count }, (_, i) => start + i * 10);
-  }, [min, max]);
+    // Calculate spacing - power of 10 if not specified, otherwise use spacing
+    const calculatedSpacing = spacing ?? 10 ** Math.floor(Math.log10((max - min) / 10));
+    const start = Math.ceil(min / calculatedSpacing) * calculatedSpacing;
+    const count = Math.floor((max - start) / calculatedSpacing) + 1;
+    return Array.from({ length: count }, (_, i) => start + i * calculatedSpacing);
+  }, [min, max, spacing]);
 
   const { ref } = useMove(({ y }) => {
     // Convert y position to slider value
@@ -77,7 +80,7 @@ export function SliderInput({
       {smeqStyle ? (
         <Box style={{ overflow: 'hidden' }}>
           <Flex direction="row" align="flex-start" gap="sm" m="md" justify="center" wrap="nowrap">
-            {/* Numeric labels (multiples of 10 within min-max range) ex: 0, 10, 20, 30, ... */}
+            {/* Label */}
             <Box style={{
               height: 450, position: 'relative', minWidth: 30, textAlign: 'right', flexShrink: 0,
             }}
@@ -126,7 +129,26 @@ export function SliderInput({
                 }}
               />
 
-              {/* Marks */}
+              {/* Mark - numeric label */}
+              {labelValues.map((value) => {
+                const markPosition = ((value - min) / (max - min)) * 100;
+                return (
+                  <Box
+                    key={value}
+                    style={{
+                      position: 'absolute',
+                      bottom: `${markPosition}%`,
+                      left: 2,
+                      width: 20,
+                      height: 1,
+                      backgroundColor: 'var(--mantine-color-gray-7)',
+                      transform: 'translateY(50%)',
+                    }}
+                  />
+                );
+              })}
+
+              {/* Mark - value */}
               {options.map((option) => {
                 const markPosition = ((option.value - min) / (max - min)) * 100;
                 return (
@@ -178,7 +200,7 @@ export function SliderInput({
               </Box>
             </Box>
 
-            {/* Mark labels */}
+            {/* Mark label */}
             <Box
               style={{
                 height: 450,
