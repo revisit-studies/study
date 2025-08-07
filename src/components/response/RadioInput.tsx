@@ -60,64 +60,62 @@ export function RadioInput({
     >
       <Group gap="lg" align="flex-end" mt={horizontal ? 0 : 'sm'}>
         {leftLabel ? <Text>{leftLabel}</Text> : null}
-        <div className="radioButtons">
-          <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between' }}>
-            {orderedOptions.map((radio) => (
-              <div
-                key={`${radio.value}-${response.id}`}
-                style={{
-                  display: 'flex',
-                  flexDirection: horizontal ? 'column' : 'row',
-                  gap: horizontal ? 'unset' : rem(12),
-                  flex: stretch ? 1 : 'unset',
-                  alignItems: 'center',
+        <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
+          {orderedOptions.map((radio) => (
+            <div
+              key={`${radio.value}-${response.id}`}
+              style={{
+                display: 'flex',
+                flexDirection: horizontal ? 'column' : 'row',
+                gap: horizontal ? 'unset' : rem(12),
+                flex: stretch ? 1 : 'unset',
+                alignItems: 'center',
+              }}
+            >
+              {horizontal && <Text size="sm">{radio.label}</Text>}
+              <Radio
+                disabled={disabled}
+                value={radio.value}
+                label={radio.label}
+                styles={{
+                  label: { display: !horizontal ? 'initial' : 'none' },
                 }}
-              >
-                {horizontal && <Text size="sm">{radio.label}</Text>}
-                <Radio
-                  disabled={disabled}
-                  value={radio.value}
-                  label={radio.label}
-                  styles={{
-                    label: { display: !horizontal ? 'initial' : 'none' },
-                  }}
-                  onChange={() => setOtherSelected(false)}
-                  classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
-                />
-              </div>
-            ))}
-            {withOther && (
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: horizontal ? 'column' : 'row',
-                  gap: horizontal ? 'unset' : rem(12),
-                  flex: stretch ? 1 : 'unset',
-                  alignItems: 'center',
-                }}
-              >
-                {horizontal && <Text size="sm">Other</Text>}
-                <Radio
-                  disabled={disabled}
-                  value="other"
-                  checked={otherSelected}
-                  onClick={(event) => setOtherSelected(event.currentTarget.checked)}
-                  label={!horizontal && (
-                    <Input
-                      mt={-8}
-                      placeholder="Other"
-                      disabled={!otherSelected}
-                      {...otherValue}
-                      classNames={{ input: inputClasses.fixDisabled }}
-                    />
-                  )}
-                  mt={0}
-                  classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
-                />
-              </div>
-            )}
-          </HorizontalHandler>
-        </div>
+                onChange={() => setOtherSelected(false)}
+                classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
+              />
+            </div>
+          ))}
+          {withOther && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: horizontal ? 'column' : 'row',
+              gap: horizontal ? 'unset' : rem(12),
+              flex: stretch ? 1 : 'unset',
+              alignItems: 'center',
+            }}
+          >
+            {horizontal && <Text size="sm">Other</Text>}
+            <Radio
+              disabled={disabled}
+              value="other"
+              checked={otherSelected}
+              onClick={(event) => setOtherSelected(event.currentTarget.checked)}
+              label={!horizontal && (
+              <Input
+                mt={-8}
+                placeholder="Other"
+                disabled={!otherSelected}
+                {...otherValue}
+                classNames={{ input: inputClasses.fixDisabled }}
+              />
+              )}
+              mt={0}
+              classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
+            />
+          </div>
+          )}
+        </HorizontalHandler>
         <Text>{rightLabel}</Text>
       </Group>
       {horizontal && withOther && (
