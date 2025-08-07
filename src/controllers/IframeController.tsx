@@ -98,7 +98,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   return (
     <iframe
       ref={ref}
-      style={{ width: '100%', flexGrow: 1 }}
+      style={{ width: '100%', flexGrow: 1, border: 0 }}
       src={
         currentConfig.path.startsWith('http')
           ? currentConfig.path
