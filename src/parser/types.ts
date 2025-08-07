@@ -352,6 +352,10 @@ export interface LikertResponse extends BaseResponse {
   type: 'likert';
   /** The number of options to render. */
   numItems: number;
+  /** The starting value of the likert scale. Defaults to 1. */
+  start?: number;
+  /** The spacing between the options. Defaults to 1. */
+  spacing?: number;
   /** The left label of the likert scale. E.g Strongly Disagree */
   leftLabel?: string;
   /** The right label of the likert scale. E.g Strongly Agree */

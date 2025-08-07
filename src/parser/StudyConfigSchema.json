@@ -1191,6 +1191,14 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "spacing": {
+          "description": "The spacing between the options. Defaults to 1.",
+          "type": "number"
+        },
+        "start": {
+          "description": "The starting value of the likert scale. Defaults to 1.",
+          "type": "number"
+        },
         "style": {
           "$ref": "#/definitions/Styles",
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
