@@ -6,12 +6,10 @@ import {
 } from '@mantine/core';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+import { PREFIX } from '../utils/Prefix';
 
 export function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
   const components: Partial<Components> = {
-    img({
-      node, width, height, ...props
-    }) { return <Image {...props} h={height} w={width} ref={undefined} />; },
     p({ node, ...props }) { return <Text {...props} pb={8} fw="inherit" ref={undefined} />; },
     h1({ node, ...props }) { return <Title {...props} order={1} pb={12} />; },
     h2({ node, ...props }) { return <Title {...props} order={2} pb={12} />; },
@@ -28,6 +26,7 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
     tr({ node, ...props }) { return <Table.Tr {...props} />; },
     th({ node, ...props }) { return <Table.Th {...props} />; },
     td({ node, ...props }) { return <Table.Td {...props} />; },
+    img({ node, src, ...props }) { return <Image {...props} src={src?.startsWith('http') ? src : `${PREFIX}${src}`} />; },
   };
 
   const splitText = text.trim().split(' ');
