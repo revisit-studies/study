@@ -39,7 +39,6 @@
     "@visdesignlab/upset2-react": "^1.0.0-rc6",
     "ajv": "^8.17.1",
     "arquero": "^5.4.0",
-    "clsx": "^2.1.1",
     "crypto-js": "^4.2.0",
     "d3": "^7.9.0",
     "dayjs": "^1.11.13",
