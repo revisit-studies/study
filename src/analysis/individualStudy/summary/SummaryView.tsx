@@ -12,12 +12,10 @@ import {
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { OverviewData, ResponseData } from './types';
 
-interface StudyStatsProps {
+export function SummaryView({ visibleParticipants, studyConfig }: {
   visibleParticipants: ParticipantData[];
   studyConfig?: StudyConfig;
-}
-
-export function SummaryView({ visibleParticipants, studyConfig }: StudyStatsProps) {
+}) {
   const overviewData: OverviewData | null = useMemo(() => {
     if (visibleParticipants.length === 0) return null;
 
