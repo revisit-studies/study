@@ -40,7 +40,7 @@ export type SequenceAssignment = {
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
 
-export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | 'overviewData' | string;
+export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
   T extends 'sequenceArray'
     ? Sequence[]
@@ -48,8 +48,6 @@ export type StorageObject<T extends StorageObjectType> =
     ? ParticipantData
     : T extends 'config'
     ? StudyConfig
-    : T extends 'overviewData'
-    ? OverviewData
     : Blob; // Fallback for any random string
 
 export interface CloudStorageEngineError {
@@ -603,18 +601,23 @@ export abstract class StorageEngine {
   }
 
   async getOverviewData(): Promise<OverviewData | null> {
-    const overviewData = await this._getFromStorage(
-      `overviewData/${this.studyId}`,
-      'overviewData',
-    );
-    return overviewData;
+    try {
+      const overviewData = await this._getFromStorage(
+        `overviewData/${this.studyId}`,
+        'overviewData' as StorageObjectType,
+      );
+      return overviewData as unknown as OverviewData;
+    } catch {
+      console.warn('No overview data found');
+      return null;
+    }
   }
 
   async saveOverviewData(overviewData: OverviewData): Promise<void> {
     await this._pushToStorage(
       `overviewData/${this.studyId}`,
-      'overviewData',
-      overviewData,
+      'overviewData' as StorageObjectType,
+      overviewData as unknown as StorageObject<'overviewData'>,
     );
   }
 
