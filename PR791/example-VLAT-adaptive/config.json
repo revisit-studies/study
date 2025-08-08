@@ -20,7 +20,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": false,
+    "withSidebar": false,
     "studyEndMsg": "Thank you for completing the study. You may close this window",
     "urlParticipantIdParam": "PROLIFIC_ID"
   },
