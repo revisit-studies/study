@@ -11,6 +11,7 @@
       "style": {
         "width": "800px"
       },
+      "responseOrder": "random",
       "response": [
         {
           "id": "obvious",
@@ -47,6 +48,7 @@
     "Layout": {
       "type": "image",
       "path": "libraries/previs/assets/vis-example.png",
+      "responseOrder": "random",
       "style": {
         "width": "800px"
       },
@@ -86,6 +88,7 @@
     "ReadingData": {
       "type": "image",
       "path": "libraries/previs/assets/vis-example.png",
+      "responseOrder": "random",
       "style": {
         "width": "800px"
       },
@@ -125,6 +128,7 @@
     "ReadingFeatures": {
       "type": "image",
       "path": "libraries/previs/assets/vis-example.png",
+      "responseOrder": "random",
       "style": {
         "width": "800px"
       },
