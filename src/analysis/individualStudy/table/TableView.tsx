@@ -29,6 +29,7 @@ import { checkAnswerCorrect } from '../../../store/hooks/useNextStep';
 import { humanReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
+import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 
 function formatDate(date: Date): string | JSX.Element {
   if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
@@ -76,6 +77,13 @@ export function TableView({
     setChecked({});
     await refresh();
   }, [checked, refresh, rejectParticipant, rejectParticipantsMessage]);
+
+  const selectedData = useMemo(
+    () => Object.keys(checked).filter((v) => checked[v])
+      .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
+      .filter((p) => p !== undefined) as ParticipantData[],
+    [checked, visibleParticipants],
+  );
 
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => [
     {
@@ -210,6 +218,10 @@ export function TableView({
               {Object.keys(checked).length}
               )
             </Button>
+            <DownloadButtons
+              visibleParticipants={selectedData}
+              studyId={studyId || ''}
+            />
           </Group>
         </Flex>
         <Modal
