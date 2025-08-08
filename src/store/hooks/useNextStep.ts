@@ -42,6 +42,11 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
   return foundConfigComponentConfig.correctAnswer.every((correctAnswerEntry) => answers[correctAnswerEntry.id] === correctAnswerEntry.answer);
 }
 
+export function checkAnswerCorrect(answer: Record<string, string | number | boolean | string[]>, correctAnswer: Answer[]) {
+  // Check that the response is matches the correct answer
+  return correctAnswer.every((correctAnswerEntry) => answer[correctAnswerEntry.id] === correctAnswerEntry.answer);
+}
+
 export function useNextStep() {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();

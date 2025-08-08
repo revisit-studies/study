@@ -18,7 +18,8 @@
     "contactEmail": "",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
-    "sidebar": true
+    "withSidebar": true,
+    "stylesheetPath": "library-calvi/assets/image.css"
   },
   "importedLibraries": [
     "calvi"

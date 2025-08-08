@@ -60,6 +60,64 @@ export interface StudyMetadata {
 }
 
 /**
+ * @ignore
+ */
+export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
+export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
+
+export type Styles = {
+  /** Sizing */
+  height?: string;
+  width?: string;
+  minHeight?: string;
+  minWidth?: string;
+  maxHeight?: string;
+  maxWidth?: string;
+
+  /** Positioning */
+  position?: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
+  top?: string;
+  bottom?: string;
+  left?: string;
+  right?: string;
+
+  /** Spacing */
+  margin?: string;
+  padding?: string;
+
+  /** Border */
+  border?: string;
+  borderRadius?: string;
+
+  /** Background */
+  background?: string;
+  backgroundColor?: string;
+  backgroundImage?: string;
+  backgroundPosition?: string;
+  backgroundSize?: string;
+
+  /** Filter */
+  filter?: string;
+
+  /** Typography */
+  color?: string;
+  font?: string;
+  fontFamily?: string;
+  fontSize?: string;
+  fontStyle?: 'normal' | 'italic' | 'oblique';
+  fontWeight?: string | number;
+  textAlign?: 'start' | 'center' | 'end' | 'justify' | 'left' | 'right' | 'match-parent';
+  textDecoration?: 'none' | 'underline' | 'overline' | 'line-through' | 'underline-overline';
+  textTransform?: 'capitalize' | 'lowercase' | 'none' | 'uppercase';
+  letterSpacing?: string;
+  wordSpacing?: string;
+  lineHeight?: string | number;
+
+  /** Transform */
+  transform?: string;
+};
+
+/**
  * The UIConfig is used to configure the UI of the app.
  * This includes the logo, contact email, and whether to show a progress bar.
  * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration (note, there are optional fields that are not shown here):
@@ -72,7 +130,7 @@ uiConfig:{
   "autoDownloadStudy": true
   "autoDownloadTime": 5000,
   "studyEndMsg": "Thank you for completing this study. You're the best!",
-  "sidebar": true,
+  "withSidebar": true,
   "windowEventDebounceTime": 500,
   "urlParticipantIdParam": "PROLIFIC_ID",
   "numSequences": 500
@@ -81,52 +139,73 @@ uiConfig:{
 In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)
  */
 export interface UIConfig {
+  // Required fields
+  /** The path to the logo image. This is displayed on the landing page and the header. */
+  logoPath: string;
+  /** The email address that used during the study if a participant clicks contact. */
+  contactEmail: string;
+  /** Controls whether the progress bar is rendered in the study. */
+  withProgressBar: boolean;
+  /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. */
+  withSidebar: boolean;
+
+  // Optional fields
+  /** The width of the left sidebar. Defaults to 300. */
+  sidebarWidth?: number;
   /** Controls whether the title should be hidden in the study. */
   showTitle?: boolean;
   /** Controls whether the title bar should be hidden in the study. */
   showTitleBar?: boolean;
-  /** The email address that used during the study if a participant clicks contact. */
-  contactEmail: string;
+  /** The location of the instructions. */
+  instructionLocation?: ConfigResponseBlockLocation;
   /** The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. */
   helpTextPath?: string;
-  /** The path to the logo image. This is displayed on the landing page and the header. */
-  logoPath: string;
-  /** Controls whether the progress bar is rendered in the study. */
-  withProgressBar: boolean;
+  /** Whether enter key should move to the next question. Defaults to false. */
+  nextOnEnter?: boolean;
+  /** The text to display on the next button. */
+  nextButtonText?: string;
+  /** The location of the next button. */
+  nextButtonLocation?: ConfigResponseBlockLocation;
+  /** The time in milliseconds to wait before the next button is enabled. */
+  nextButtonEnableTime?: number;
+  /** The time in milliseconds to wait before the next button is disabled. */
+  nextButtonDisableTime?: number;
+  /** The text that is displayed on the previous button. */
+  previousButtonText?: string;
+  /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
+  timeoutReject?: boolean;
+  /** Controls whether the component should provide feedback to the participant, such as in a training trial. Defaults to false. */
+  provideFeedback?: boolean;
+  /** The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.  */
+  trainingAttempts?: number;
+  /** Controls whether the component should allow failed training. Defaults to true. */
+  allowFailedTraining?: boolean;
+  /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false. */
+  recordAudio?: boolean;
+  /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. */
+  enumerateQuestions?: boolean;
+  /** Whether to show the response dividers. Defaults to false. */
+  responseDividers?: boolean;
+  /** Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second  */
+  windowEventDebounceTime?: number;
+  /** The message to display when the study ends. */
+  studyEndMsg?: string;
   /** Controls whether the study data is automatically downloaded at the end of the study. */
   autoDownloadStudy?: boolean;
   /** The time in milliseconds to wait before automatically downloading the study data. */
   autoDownloadTime?: number;
-  /** The message to display when the study ends. Supports templating with the participant ID. e.g. "Thank you for completing the study. You may click this link and return to Prolific: [Go to Prolific](https://app.prolific.com/submissions/complete?cc=StudyID&PROLIFIC_ID={PROLIFIC_ID}))" */
-  studyEndMsg?: string;
-  /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.  */
-  recordStudyAudio?: boolean;
-  /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. */
-  sidebar: boolean;
-  /** The width of the left sidebar. Defaults to 300. */
-  sidebarWidth?: number;
-  /** Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second  */
-  windowEventDebounceTime?: number;
+  /** The number of sequences to generate for the study. This is used to generate the random sequences for the study. Defaults to 1000. */
+  numSequences?: number;
   /** If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers. */
   urlParticipantIdParam?: string;
-  /**
-   * The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.
-   */
-  numSequences?: number;
-  /**
-   * Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.
-   */
-  enumerateQuestions?: boolean;
-  /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
-  timeoutReject?: boolean;
   /** The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId' */
   participantNameField?: string;
-  /** Whether enter key should move to the next question. Defaults to false. */
-  nextOnEnter?: boolean;
   /** The minimum screen width size for the study */
   minWidthSize?: number;
   /** The minimum screen height size for the study */
   minHeightSize?: number;
+  /** The path to the external stylesheet file. */
+  stylesheetPath?: string;
 }
 
 /**
@@ -145,17 +224,11 @@ export interface NumberOption {
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
  */
 export interface StringOption {
-  /** The label displayed to participants. */
+  /** The label displayed to participants. Markdown is supported. */
   label: string;
   /** The value stored in the participant's data. */
   value: string;
 }
-
-/**
- * @ignore
- */
-export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
-export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
 
 /**
  * The BaseResponse interface is used to define the required fields for all responses.
@@ -181,10 +254,14 @@ export interface BaseResponse {
   paramCapture?: string;
   /** Controls whether the response is hidden. */
   hidden?: boolean;
-  /** Renders the response with a trailing divider. */
+  /** Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig. */
   withDivider?: boolean;
   /** Renders the response with an option for "I don't know". This counts as a completed answer for the validation. */
   withDontKnow?: boolean;
+  /** The path to the external stylesheet file. */
+  stylesheetPath?: string;
+  /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
+  style?: Styles;
 }
 
 /**
@@ -271,7 +348,9 @@ export interface LongTextResponse extends BaseResponse {
   "type": "likert",
   "leftLabel": "Not Enjoyable",
   "rightLabel": "Very Enjoyable",
-  "numItems": 5
+  "numItems": 5,
+  "start": 1,
+  "spacing": 1
 }
 ```
  */
@@ -279,6 +358,10 @@ export interface LikertResponse extends BaseResponse {
   type: 'likert';
   /** The number of options to render. */
   numItems: number;
+  /** The starting value of the likert scale. Defaults to 1. */
+  start?: number;
+  /** The spacing between the options. Defaults to 1. */
+  spacing?: number;
   /** The left label of the likert scale. E.g Strongly Disagree */
   leftLabel?: string;
   /** The right label of the likert scale. E.g Strongly Agree */
@@ -406,10 +489,14 @@ export interface SliderResponse extends BaseResponse {
   snap?: boolean;
   /** The step value of the slider. If not provided (and snap not enabled), the step value is calculated as the range of the slider divided by 100. */
   step?: number;
+  /** The spacing between the ticks. If not provided, the spacing is calculated as the range of the slider divided by power of 10. */
+  spacing?: number;
   /** Whether to render the slider with a bar to the left. Defaults to true. */
   withBar?: boolean;
   /** Whether to render the slider with a NASA-tlx style. Defaults to false. */
   tlxStyle?: boolean;
+  /** Whether to render the slider with a SMEQ style. Defaults to false. */
+  smeqStyle?: boolean;
 }
 
 /**
@@ -608,42 +695,62 @@ export interface BaseIndividualComponent {
   response: Response[];
 
   // Optional fields
-  /** The text that is displayed on the next button. */
-  nextButtonText?: string;
-  /** The location of the next button. */
-  nextButtonLocation?: ConfigResponseBlockLocation;
-  /** Whether to show the previous button. */
-  previousButton?: boolean;
-  /** The text that is displayed on the previous button. */
-  previousButtonText?:string;
-  /** The location of the instructions. */
-  instructionLocation?: ConfigResponseBlockLocation;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
   correctAnswer?: Answer[];
-  /** Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false. */
-  provideFeedback?: boolean;
-  /** The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.  */
-  trainingAttempts?: number;
-  /** Controls whether the component should allow failed training. If not provided, the default is true. */
-  allowFailedTraining?: boolean;
   /** The meta data for the component. This is used to identify and provide additional information for the component in the admin panel. */
   meta?: Record<string, unknown>;
   /** The description of the component. This is used to identify and provide additional information for the component in the admin panel. */
   description?: string;
+  /** Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig. */
+  withProgressBar?: boolean;
+  /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig. */
+  withSidebar?: boolean;
+  /** The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig. */
+  sidebarWidth?: number;
+  /** Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig. */
+  showTitle?: boolean;
+  /** Controls whether the title bar should be hidden in the study. If present, will override the title bar setting in the uiConfig. */
+  showTitleBar?: boolean;
   /** The instruction of the component. This is used to identify and provide additional information for the component in the admin panel. */
   instruction?: string;
-  /** Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.  */
-  recordAudio?: boolean;
-  /** A timeout (in ms) after which the next button will be disabled. */
-  nextButtonDisableTime?: number;
-  /** A timer (in ms) after which the next button will be enabled. */
+  /** The location of the instructions. If present, will override the instruction location setting in the uiConfig. */
+  instructionLocation?: ConfigResponseBlockLocation;
+  /** The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig. */
+  helpTextPath?: string;
+  /** Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig. */
+  nextOnEnter?: boolean;
+  /** The text to display on the next button. If present, will override the next button text setting in the uiConfig. */
+  nextButtonText?: string;
+  /** The location of the next button. If present, will override the  next button location setting in the uiConfig. */
+  nextButtonLocation?: ConfigResponseBlockLocation;
+  /** The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig. */
   nextButtonEnableTime?: number;
-  /** Whether to show the response dividers. Defaults to false. */
+  /** The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig. */
+  nextButtonDisableTime?: number;
+  /** Whether to show the previous button. If present, will override the previous button setting in the uiConfig. */
+  previousButton?: boolean;
+  /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
+  previousButtonText?:string;
+  /** Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig. */
+  provideFeedback?: boolean;
+  /** The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig. */
+  trainingAttempts?: number;
+  /** Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig. */
+  allowFailedTraining?: boolean;
+  /** Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig. */
+  recordAudio?: boolean;
+  /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig. */
+  enumerateQuestions?: boolean;
+  /** Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig. */
   responseDividers?: boolean;
-  /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */
-  helpTextPathOverride?: string;
+  /** Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig. */
+  windowEventDebounceTime?: number;
   /** The order of the responses. Defaults to 'fixed'. */
   responseOrder?: 'fixed' | 'random';
+  /** The path to the external stylesheet file. */
+  stylesheetPath?: string;
+  /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
+  style?: Styles;
 }
 
 /**
@@ -732,8 +839,6 @@ export interface ImageComponent extends BaseIndividualComponent {
   type: 'image';
   /** The path to the image. This could be a relative path from the public folder or a url to an external image. */
   path: string;
-  /** The style of the image. This is an object with css properties as keys and css values as values. */
-  style?: Record<string, string>;
 }
 
 /**
@@ -1462,6 +1567,12 @@ export interface LibraryConfig {
   $schema: string;
   /** A description of the library. */
   description: string;
+  /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
+  components: Record<string, IndividualComponent | InheritedComponent>
+  /** The order of the components in the study. This might include some randomness. */
+  sequences: Record<string, StudyConfig['sequence']>;
+  /** Additional description of the library. It accepts markdown formatting. */
+  additionalDescription?: string;
   /** The reference to the paper where the content of the library is based on. */
   reference?: string;
   /** The DOI of the paper where the content of the library is based on. */
@@ -1470,10 +1581,6 @@ export interface LibraryConfig {
   externalLink?: string;
   /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
   baseComponents?: BaseComponents;
-  /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
-  components: Record<string, IndividualComponent | InheritedComponent>
-  /** The order of the components in the study. This might include some randomness. */
-  sequences: Record<string, StudyConfig['sequence']>;
 }
 
 /**

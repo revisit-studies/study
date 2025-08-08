@@ -10,15 +10,7 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
   const answerKey = `dynamicBlock_1_VlatTrial_${parameters.qidx}`;
   const userAnswer = answers[answerKey]?.answer?.[taskid];
   const [currentanswer, setCurrentAnswer] = useState<string>(userAnswer ? userAnswer as string : '');
-  const activeQuestion = VLATQuestions.filter((q) => q.originID === parameters.activeQuestionIdx)[0];
-  
-  // Safety check - if no question found, return loading or error
-  if (!activeQuestion) {
-    return <Box>Loading question...</Box>;
-  }
   const [answerChecked, setAnswerChecked] = useState(false);
-  const images = import.meta.glob('./vlatImg/*.png', { eager: true });
-  const imgMap: Record<string, string> = {};
 
   useEffect(() => {
     const hasIncrrectAnswer = Object.keys(answers[answerKey]?.incorrectAnswers || {}).length > 0;
@@ -33,7 +25,16 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
         score: parameters.score,
       },
     });
-  }, [currentanswer]);
+  }, [currentanswer, parameters.score, setAnswer]);
+
+  const activeQuestion = VLATQuestions.filter((q) => q.originID === parameters.activeQuestionIdx)[0];
+  const images = import.meta.glob('./vlatImg/*.png', { eager: true });
+  const imgMap: Record<string, string> = {};
+
+  // Safety check - if no question found, return loading or error
+  if (!activeQuestion) {
+    return <Box>Loading question...</Box>;
+  }
 
   for (const path in images) {
     if (path) {
@@ -42,11 +43,6 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
       imgMap[fileName] = mod.default;
     }
   }
-  
-  // Debug logging
-  console.log('Image map keys:', Object.keys(imgMap));
-  console.log('Active question img:', activeQuestion.img);
-  console.log('Available image:', imgMap[activeQuestion.img]);
 
   return (
     <Box>
@@ -71,7 +67,7 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
               {
                     activeQuestion.options.map((op:string, idx:number) => (
                       <Radio
-                        disabled={userAnswer !== undefined && userAnswer !== '' || answerChecked}
+                        disabled={(userAnswer !== undefined && userAnswer !== '') || answerChecked}
                         value={`${String.fromCharCode(65 + idx)}`}
                         label={`${String.fromCharCode(65 + idx)}. ${op}`}
                         key={`op${idx}`}

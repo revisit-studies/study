@@ -12,11 +12,13 @@ import { useAsync } from '../../store/hooks/useAsync';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StorageEngine } from '../../storage/engines/types';
 import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
-import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { encryptIndex, decryptIndex } from '../../utils/encryptDecryptIndex';
 import {
   useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../../store/store';
 import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -34,11 +36,13 @@ export function AnalysisFooter() {
   const currentStep = useCurrentStep();
   const { funcIndex } = useParams();
   const navigate = useNavigate();
+  const studyConfig = useStudyConfig();
 
   const { setAnalysisIsPlaying } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 
   const analysisIsPlaying = useStoreSelector((state) => state.analysisIsPlaying);
+  const answers = useStoreSelector((state) => state.answers);
 
   const { storageEngine } = useStorageEngine();
 
@@ -56,6 +60,11 @@ export function AnalysisFooter() {
   }, [allParticipants, currentComponent, currentStep, participantId]);
 
   const [timeString, setTimeString] = useState<string>('');
+
+  const flatSequence = useMemo(() => getSequenceFlatMap(studyConfig.sequence), [studyConfig.sequence]);
+
+  const isStart = useMemo(() => currentStep === 0, [currentStep]);
+  const isEnd = useMemo(() => currentStep === flatSequence.length, [currentStep, flatSequence.length]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
@@ -82,17 +91,45 @@ export function AnalysisFooter() {
               }}
               data={allParticipants || []}
             />
-            <Button onClick={() => navigate(`../${funcIndex ? '..' : ''}${encryptIndex(+currentStep - 1)}?participantId=${participantId}`, { relative: 'path' })}>
+            <Button
+              disabled={isStart}
+              onClick={() => {
+                if (funcIndex) {
+                  if (decryptIndex(funcIndex) > 0) {
+                    navigate(`../${encryptIndex(decryptIndex(funcIndex) - 1)}?participantId=${participantId}`, { relative: 'path' });
+                  } else {
+                    navigate(`../../${encryptIndex(+currentStep - 1)}?participantId=${participantId}`, { relative: 'path' });
+                  }
+                } else {
+                  navigate(`../${encryptIndex(+currentStep - 1)}?participantId=${participantId}`, { relative: 'path' });
+                }
+              }}
+            >
               <IconArrowLeft />
             </Button>
-            <Button onClick={() => navigate(`../${funcIndex ? '..' : ''}${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' })}>
+            <Button
+              disabled={isEnd}
+              onClick={() => {
+                if (funcIndex) {
+                  const currentComponentId = flatSequence[currentStep as number];
+                  const dynamicBlockAnswers = Object.keys(answers).filter((key) => key.startsWith(`${currentComponentId}_${currentStep}_`));
+                  if (decryptIndex(funcIndex) >= dynamicBlockAnswers.length) {
+                    navigate(`../../${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' });
+                  } else {
+                    navigate(`../${encryptIndex(decryptIndex(funcIndex) + 1)}?participantId=${participantId}`, { relative: 'path' });
+                  }
+                } else {
+                  navigate(`../${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' });
+                }
+              }}
+            >
               <IconArrowRight />
             </Button>
-            <Button px="xs" disabled={prevParticipantNameAndIndex[0] === participantId} onClick={() => navigate(`./../${funcIndex ? '..' : ''}${encryptIndex(prevParticipantNameAndIndex[1])}?participantId=${prevParticipantNameAndIndex[0]}`)}>
+            <Button px="xs" disabled={prevParticipantNameAndIndex[0] === participantId} onClick={() => navigate(`./../${encryptIndex(funcIndex ? 0 : prevParticipantNameAndIndex[1])}?participantId=${prevParticipantNameAndIndex[0]}`)}>
               <IconArrowLeft />
               <IconUser />
             </Button>
-            <Button px="xs" disabled={nextParticipantNameAndIndex[0] === participantId} onClick={() => navigate(`./../${funcIndex ? '..' : ''}${encryptIndex(nextParticipantNameAndIndex[1])}?participantId=${nextParticipantNameAndIndex[0]}`)}>
+            <Button px="xs" disabled={nextParticipantNameAndIndex[0] === participantId} onClick={() => navigate(`./../${encryptIndex(funcIndex ? 0 : nextParticipantNameAndIndex[1])}?participantId=${nextParticipantNameAndIndex[0]}`)}>
               <IconUser />
               <IconArrowRight />
             </Button>

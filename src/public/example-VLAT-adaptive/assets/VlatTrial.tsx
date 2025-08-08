@@ -17,7 +17,7 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
   useEffect(() => {
     const hasIncrrectAnswer = Object.keys(answers[`dynamicBlock_1_VlatTrial_${parameters.qidx}`].incorrectAnswers).length > 0;
     setAnswerChecked(hasIncrrectAnswer);
-  }, [answers]);
+  }, [answers, parameters.qidx]);
 
   useEffect(() => {
     setAnswer({
@@ -27,7 +27,7 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
         score: parameters.score,
       },
     });
-  }, [currentanswer]);
+  }, [currentanswer, parameters.score, setAnswer]);
 
   for (const path in images) {
     if (path) {

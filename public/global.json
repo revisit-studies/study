@@ -1,12 +1,7 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/GlobalConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/GlobalConfigSchema.json",
   "configsList": [
     "tutorial",
-    "example-brush-interactions",
-    "example-cleveland",
-    "example-mvnv",
-    "example-VLAT-full-randomized",
-    "example-VLAT-mini-randomized",
     "demo-html",
     "demo-html-input",
     "demo-survey",
@@ -19,7 +14,16 @@
     "demo-video-slider",
     "demo-video",
     "demo-dynamic",
+    "demo-style",
+    "demo-yaml",
+    "example-brush-interactions",
+    "example-cleveland",
+    "example-mvnv",
+    "example-VLAT-adaptive",
+    "example-VLAT-full-randomized",
+    "example-VLAT-mini-randomized",
     "library-beauvis",
+    "library-berlin-num",
     "library-calvi",
     "library-color-blindness",
     "library-demographics",
@@ -27,6 +31,9 @@
     "library-mini-vlat",
     "library-nasa-tlx",
     "library-previs",
+    "library-quis",
+    "library-sam",
+    "library-smeq",
     "library-sus",
     "library-vlat",
     "library-adaptive-vlat",
@@ -36,21 +43,11 @@
     "test-parser-errors",
     "test-randomization",
     "test-skip-logic",
-    "test-step-logic",
-    "example-VLAT-adaptive"
+    "test-step-logic"
   ],
   "configs": {
     "tutorial": {
       "path": "tutorial/config.json"
-    },
-    "example-brush-interactions": {
-      "path": "example-brush-interactions/config.json"
-    },
-    "example-cleveland": {
-      "path": "example-cleveland/config.json"
-    },
-    "example-mvnv": {
-      "path": "example-mvnv/config.json"
     },
     "demo-video-slider": {
       "path": "demo-video-slider/config.json"
@@ -76,12 +73,6 @@
     "demo-dynamic": {
       "path": "demo-dynamic/config.json"
     },
-    "example-VLAT-full-randomized": {
-      "path": "example-VLAT-full-randomized/config.json"
-    },
-    "example-VLAT-mini-randomized": {
-      "path": "example-VLAT-mini-randomized/config.json"
-    },
     "demo-html-trrack": {
       "path": "demo-html-trrack/config.json"
     },
@@ -91,16 +82,40 @@
     "demo-image": {
       "path": "demo-image/config.json"
     },
-    "test-audio": {
-      "path": "test-audio/config.json",
-      "test": true
+    "demo-style": {
+      "path": "demo-style/config.json"
     },
-    "test-library": {
-      "path": "test-library/config.json",
+    "demo-vega": {
+      "path": "demo-vega/config.json"
+    },
+    "demo-yaml": {
+      "path": "demo-yaml/config.yaml"
+    },
+    "example-brush-interactions": {
+      "path": "example-brush-interactions/config.json"
+    },
+    "example-cleveland": {
+      "path": "example-cleveland/config.json"
+    },
+    "example-mvnv": {
+      "path": "example-mvnv/config.json"
+    },
+    "example-VLAT-full-randomized": {
+      "path": "example-VLAT-full-randomized/config.json"
+    },
+    "example-VLAT-mini-randomized": {
+      "path": "example-VLAT-mini-randomized/config.json"
+    },
+    "library-adaptive-vlat": {
+      "path": "library-adaptive-vlat/config.json",
       "test": true
     },
     "library-beauvis": {
       "path": "library-beauvis/config.json",
+      "test": true
+    },
+    "library-berlin-num": {
+      "path": "library-berlin-num/config.json",
       "test": true
     },
     "library-calvi": {
@@ -131,6 +146,18 @@
       "path": "library-previs/config.json",
       "test": true
     },
+    "library-quis": {
+      "path": "library-quis/config.json",
+      "test": true
+    },
+    "library-sam": {
+      "path": "library-sam/config.json",
+      "test": true
+    },
+    "library-smeq": {
+      "path": "library-smeq/config.json",
+      "test": true
+    },
     "library-sus": {
       "path": "library-sus/config.json",
       "test": true
@@ -139,8 +166,12 @@
       "path": "library-vlat/config.json",
       "test": true
     },
-    "library-adaptive-vlat": {
-      "path": "library-adaptive-vlat/config.json",
+    "test-audio": {
+      "path": "test-audio/config.json",
+      "test": true
+    },
+    "test-library": {
+      "path": "test-library/config.json",
       "test": true
     },
     "test-likert-matrix": {
@@ -149,9 +180,6 @@
     "test-parser-errors": {
       "path": "test-parser-errors/config.json",
       "test": true
-    },
-    "demo-vega": {
-      "path": "demo-vega/config.json"
     },
     "test-randomization": {
       "path": "test-randomization/config.json",

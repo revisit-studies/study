@@ -1,5 +1,5 @@
 import {
-  Alert, Anchor, Button,
+  Alert, Anchor, Box, Button,
 } from '@mantine/core';
 
 import React, {
@@ -111,18 +111,20 @@ export function ResponseBlock({
 
   const matrixAnswers = useStoreSelector((state) => state.matrixAnswers);
 
-  const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
-  const allowFailedTraining = configInUse?.allowFailedTraining === undefined ? true : configInUse.allowFailedTraining;
+  const studyConfig = useStudyConfig();
+
+  const provideFeedback = useMemo(() => configInUse?.provideFeedback ?? studyConfig.uiConfig.provideFeedback, [configInUse, studyConfig]);
+  const hasCorrectAnswerFeedback = provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
+  const allowFailedTraining = useMemo(() => configInUse?.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [configInUse, studyConfig]);
   const [attemptsUsed, setAttemptsUsed] = useState(0);
-  const trainingAttempts = configInUse?.trainingAttempts || 2;
+  const trainingAttempts = useMemo(() => configInUse?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [configInUse, studyConfig]);
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
-  const studyConfig = useStudyConfig();
+  const showBtnsInLocation = useMemo(() => location === (configInUse?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [configInUse, studyConfig, location]);
   const identifier = useCurrentIdentifier();
 
-  const showBtnsInLocation = location === (configInUse?.nextButtonLocation || 'belowStimulus');
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
     if (reactiveAnswers && ReactiveResponse) {
@@ -189,7 +191,7 @@ export function ResponseBlock({
     setAttemptsUsed(newAttemptsUsed);
 
     const correctAnswers = Object.fromEntries(responsesWithDefaults.map((response) => {
-      const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+      const configCorrectAnswer = configInUse?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
       const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id];
 
       return [response.id, Array.isArray(suppliedAnswer)
@@ -234,7 +236,7 @@ export function ResponseBlock({
             message = `Please try again. You have ${trainingAttempts - newAttemptsUsed} attempts left.`;
           }
           if (response.type === 'checkbox') {
-            const correct = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+            const correct = configInUse?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
 
             const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id] as string[];
             const matches = findMatchingStrings(suppliedAnswer, correct);
@@ -259,8 +261,10 @@ export function ResponseBlock({
     }
   }, [attemptsUsed, responsesWithDefaults, configInUse, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, navigate, identifier, storeDispatch, answerValidator, alertConfig, saveIncorrectAnswer]);
 
+  const nextOnEnter = configInUse?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
+
   useEffect(() => {
-    if (studyConfig.uiConfig.nextOnEnter) {
+    if (nextOnEnter) {
       const handleKeyDown = (event: KeyboardEvent) => {
         if (event.key === 'Enter') {
           checkAnswerProvideFeedback();
@@ -272,78 +276,83 @@ export function ResponseBlock({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-    return () => { };
-  }, [checkAnswerProvideFeedback, studyConfig]);
+    return () => {};
+  }, [checkAnswerProvideFeedback, nextOnEnter]);
+
+  const nextButtonText = useMemo(() => configInUse?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [configInUse, studyConfig]);
 
   let index = 0;
   return (
-    <div style={style}>
-      {responsesWithDefaults.map((response) => {
-        const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+    <>
+      <Box className={`responseBlock responseBlock-${location}`} style={style}>
+        {responsesWithDefaults.map((response) => {
+          const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
 
-        // Increment index for each response, unless it is a textOnly response
-        if (response.type !== 'textOnly') {
-          index += 1;
-        } else if (response.restartEnumeration) {
-          index = 0;
-        }
+          // Increment index for each response, unless it is a textOnly response
+          if (response.type !== 'textOnly') {
+            index += 1;
+          } else if (response.restartEnumeration) {
+            index = 0;
+          }
 
-        return (
-          <React.Fragment key={`${response.id}-${currentStep}`}>
-            {response.hidden ? (
-              ''
-            ) : (
-              <>
-                <ResponseSwitcher
-                  storedAnswer={storedAnswer}
-                  form={{
-                    ...answerValidator.getInputProps(response.id, {
-                      type: response.type === 'checkbox' ? 'checkbox' : 'input',
-                    }),
-                  }}
-                  dontKnowCheckbox={{
-                    ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
-                  }}
-                  otherInput={{
-                    ...answerValidator.getInputProps(`${response.id}-other`),
-                  }}
-                  response={response}
-                  index={index}
-                  configInUse={configInUse}
-                  disabled={disabledAttempts}
-                />
-                {alertConfig[response.id]?.visible && (
-                  <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
-                    {alertConfig[response.id].message}
-                    {alertConfig[response.id].message.includes('Please try again') && (
-                      <>
-                        <br />
-                        <br />
-                        If you&apos;re unsure
-                        {' '}
-                        <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier })); }}>review the help text.</Anchor>
-                        {' '}
-                      </>
-                    )}
-                    <br />
-                    <br />
-                    {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && configCorrectAnswer && ` The correct answer was: ${configCorrectAnswer}.`}
-                  </Alert>
-                )}
-              </>
-            )}
-          </React.Fragment>
-        );
-      })}
+          return (
+            <React.Fragment key={`${response.id}-${currentStep}`}>
+              {response.hidden ? (
+                ''
+              ) : (
+                <>
+                  <ResponseSwitcher
+                    storedAnswer={storedAnswer}
+                    form={{
+                      ...answerValidator.getInputProps(response.id, {
+                        type: response.type === 'checkbox' ? 'checkbox' : 'input',
+                      }),
+                    }}
+                    dontKnowCheckbox={{
+                      ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
+                    }}
+                    otherInput={{
+                      ...answerValidator.getInputProps(`${response.id}-other`),
+                    }}
+                    response={response}
+                    index={index}
+                    configInUse={configInUse}
+                    disabled={disabledAttempts}
+                  />
+                  {alertConfig[response.id]?.visible && (
+                    <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
+                      {alertConfig[response.id].message}
+                      {alertConfig[response.id].message.includes('Please try again') && (
+                        <>
+                          <br />
+                          <br />
+                          If you&apos;re unsure
+                          {' '}
+                          <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier })); }}>review the help text.</Anchor>
+                          {' '}
+                        </>
+                      )}
+                      <br />
+                      <br />
+                      {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && configCorrectAnswer && ` The correct answer was: ${configCorrectAnswer}.`}
+                    </Alert>
+                  )}
+                </>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </Box>
 
       {showBtnsInLocation && (
       <NextButton
         disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
-        label={configInUse.nextButtonText || 'Next'}
+        label={nextButtonText}
         configInUse={configInUse}
         location={location}
         checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
           <Button
+            disabled={hasCorrectAnswer || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
             onClick={() => checkAnswerProvideFeedback()}
             px={location === 'sidebar' ? 8 : undefined}
           >
@@ -352,6 +361,6 @@ export function ResponseBlock({
         ) : null}
       />
       )}
-    </div>
+    </>
   );
 }
