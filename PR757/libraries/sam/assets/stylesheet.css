@@ -1,9 +1,8 @@
-.radioButtons {
-    width: 100%;
-    margin: 0 75px;
+.response {
+    display: flex;
+    justify-content: space-between;
 }
 
-/* Hide number labels from users while keeping them available for analysis */
-.radioButtons p {
-    display: none;
+.response img {
+    max-width: 110px;
 }
