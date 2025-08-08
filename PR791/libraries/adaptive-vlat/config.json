@@ -31,7 +31,7 @@
     "adaptive-vlat": {
       "id": "dynamicBlock",
       "order": "dynamic",
-      "functionPath": "libraries/adaptive-vlat/assets/Dynamic.tsx"
+      "functionPath": "libraries/adaptive-vlat/assets/dynamic.tsx"
     }
   }
 }

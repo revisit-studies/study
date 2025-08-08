@@ -24,33 +24,12 @@
     "studyEndMsg": "Thank you for completing the study. You may close this window",
     "urlParticipantIdParam": "PROLIFIC_ID"
   },
+  "importedLibraries": ["adaptive-vlat"],
   "components": {
     "introduction": {
       "type": "markdown",
       "path": "example-VLAT-adaptive/assets/introduction.md",
       "response": []
-    },
-    "VlatTrial": {
-      "type": "react-component",
-      "path": "example-VLAT-adaptive/assets/VlatTrial.tsx",
-      "response": [
-        {
-          "id": "vlatResp",
-          "prompt": "Your selection is:  ",
-          "location": "belowStimulus",
-          "type": "reactive",
-          "hidden": false
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "vlatResp",
-          "answer": "A"
-        }
-      ],
-      "provideFeedback": true,
-      "allowFailedTraining": true,
-      "trainingAttempts": 1
     },
     "feedback": {
       "type": "react-component",
@@ -65,11 +44,7 @@
     "order": "fixed",
     "components": [
       "introduction",
-      {
-        "id": "dynamicBlock",
-        "order": "dynamic",
-        "functionPath": "example-VLAT-adaptive/assets/Dynamic.tsx"
-      },
+      "$adaptive-vlat.se.adaptive-vlat",
       "feedback"
     ]
   }
