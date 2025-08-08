@@ -86,19 +86,12 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
     },
   });
 
-  if (visibleParticipants.length === 0 || tableData.length === 0) {
-    return (
-      <Paper shadow="sm" p="md" withBorder>
-        <Title order={4} mb="md">Response Statistics</Title>
-        <Text ta="center" mb="md">No data available</Text>
-      </Paper>
-    );
-  }
-
   return (
     <Paper shadow="sm" p="md" withBorder>
       <Title order={4} mb="md">Response Statistics</Title>
-      <MantineReactTable table={table} />
+      {(visibleParticipants.length === 0 || tableData.length === 0)
+        ? <Text ta="center" mb="md">No data available</Text>
+        : <MantineReactTable table={table} />}
     </Paper>
   );
 }
