@@ -3,7 +3,7 @@ import { JumpFunctionParameters, JumpFunctionReturnVal } from '../../../../store
 import { getVLATnextqid } from './utils';
 import { VLATQuestions } from './vlatQ';
 
-export default function Dynamic({ answers }: JumpFunctionParameters<never>): JumpFunctionReturnVal {
+export default function dynamic({ answers }: JumpFunctionParameters<never>): JumpFunctionReturnVal {
   const taskid = 'vlatResp';
 
   const topAnswer = Object.entries(answers)
