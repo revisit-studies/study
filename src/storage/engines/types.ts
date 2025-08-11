@@ -7,7 +7,6 @@ import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
 import { RevisitNotification } from '../../utils/notifications';
-import { OverviewData } from '../../analysis/individualStudy/summary/types';
 
 export interface StoredUser {
   email: string,
@@ -598,27 +597,6 @@ export abstract class StorageEngine {
       minTime,
       maxTime,
     };
-  }
-
-  async getOverviewData(): Promise<OverviewData | null> {
-    try {
-      const overviewData = await this._getFromStorage(
-        `overviewData/${this.studyId}`,
-        'overviewData' as StorageObjectType,
-      );
-      return overviewData as unknown as OverviewData;
-    } catch {
-      console.warn('No overview data found');
-      return null;
-    }
-  }
-
-  async saveOverviewData(overviewData: OverviewData): Promise<void> {
-    await this._pushToStorage(
-      `overviewData/${this.studyId}`,
-      'overviewData' as StorageObjectType,
-      overviewData as unknown as StorageObject<'overviewData'>,
-    );
   }
 
   // The actual logic to save the answers to storage, called by the throttled saveAnswers method
