@@ -14,7 +14,7 @@ import { OverviewData, ResponseData } from './types';
 
 export function SummaryView({ visibleParticipants, studyConfig }: {
   visibleParticipants: ParticipantData[];
-  studyConfig?: StudyConfig;
+  studyConfig: StudyConfig;
 }) {
   const overviewData: OverviewData | null = useMemo(() => {
     if (visibleParticipants.length === 0) return null;
@@ -76,12 +76,11 @@ export function SummaryView({ visibleParticipants, studyConfig }: {
   return (
     <Stack gap="md">
       <OverviewStats overviewData={overviewData} mismatchDetails={null} />
-      {studyConfig && (
-        <Group align="flex-start" gap="md" grow>
-          <ComponentStats visibleParticipants={visibleParticipants} />
-          <ResponseStats visibleParticipants={visibleParticipants} studyConfig={studyConfig} />
-        </Group>
-      )}
+
+      <Group align="flex-start" gap="md" grow>
+        <ComponentStats visibleParticipants={visibleParticipants} />
+        <ResponseStats visibleParticipants={visibleParticipants} studyConfig={studyConfig} />
+      </Group>
     </Stack>
   );
 }
