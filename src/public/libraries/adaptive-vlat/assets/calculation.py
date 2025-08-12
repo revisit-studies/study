@@ -1,4 +1,5 @@
-# This file is used to calculate the next item to be displayed in the adaptive Vlat test
+# This file shows how you can use the dynamic adaptive vlat in python
+
 from collections import OrderedDict
 import pandas as pd
 import numpy as np

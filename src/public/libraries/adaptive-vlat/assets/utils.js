@@ -107,7 +107,5 @@ export function getVLATnextqid(qid, correct) {
   }
 
   const [itemId, score] = adaptiveVLATAlt(responseHistoryDict);
-  // console.log(itemId);
-  // console.log(score);
   return [itemId, score];
 }
