@@ -13,17 +13,12 @@ export default function Feedback({ answers }: StimulusParams<any>) {
   const topAnswer = Object.entries(answers)
     .filter(([key, _]) => key.startsWith('dynamicBlock'))
     .filter(([_, value]) => value.endTime > -1);
-  // const [opened, { open, close }] = useDisclosure(false);
+
   const [currentCheck, setCurrentCheck] = useState<number>(0);
 
   const score = +topAnswer[topAnswer.length - 1][1].answer.score;
   let correctNum = 0;
-  // const correctRecord = topAnswer.map((item) => {
-  //   const ans = item[1].answer[taskid];
-  //   const correctAns = item[1].correctAnswer[0].answer;
-  //   if (ans === correctAns) correctNum += 1;
-  //   return ans === correctAns;
-  // });
+
   const openTrialCheck = (idx: number) => {
     setCurrentCheck(idx);
   };
@@ -41,8 +36,6 @@ export default function Feedback({ answers }: StimulusParams<any>) {
       correct,
     };
   });
-
-  // console.log(topAnswer, 'topAnswer');
 
   return (
     <Grid maw={1800}>

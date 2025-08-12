@@ -1,7 +1,7 @@
 import {
   Grid, Radio, Image, Box, Stack, Title, Center,
 } from '@mantine/core';
-import { VLATQuestions } from './vlatQ';
+import { VLATQuestions } from '../../libraries/adaptive-vlat/assets/vlatQ';
 
 interface FeedbackTrialProps {
   activeQuestionIdx: number;
@@ -14,7 +14,7 @@ export default function FeedbackTrial({
   correctAnswer,
 }: FeedbackTrialProps) {
   const activeQuestion = VLATQuestions.filter((q) => q.originID === activeQuestionIdx)[0];
-  const images = import.meta.glob('../assets/vlatImg/*.png', { eager: true });
+  const images = import.meta.glob('../../../public/libraries/adaptive-vlat/assets/vlatImg/*.png', { eager: true });
   const imgMap: Record<string, string> = {};
 
   for (const path in images) {
