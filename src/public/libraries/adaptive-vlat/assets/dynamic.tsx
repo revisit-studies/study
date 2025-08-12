@@ -1,5 +1,5 @@
 import { JumpFunctionParameters, JumpFunctionReturnVal } from '../../../../store/types';
-// @ts-expect-error
+// @ts-ignore
 import { getVLATnextqid } from './utils';
 import { VLATQuestions } from './vlatQ';
 
