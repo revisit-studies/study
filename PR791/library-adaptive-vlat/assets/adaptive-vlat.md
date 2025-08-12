@@ -1,6 +1,8 @@
 
 # adaptive-vlat
 
+
+
 This is an example study of the library `adaptive-vlat`.
 
 A-VLAT is a short, adaptive visualization literacy test, which are built upon the existing static assessments VLAT. 
@@ -24,3 +26,5 @@ DOI: [10.1109/TVCG.2023.3327165](https://dx.doi.org/10.1109/TVCG.2023.3327165)
 ## Available Sequences
 
 - adaptive-vlat
+
+
