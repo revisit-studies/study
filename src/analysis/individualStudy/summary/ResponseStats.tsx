@@ -5,9 +5,8 @@ import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from 'man
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
-import 'mantine-react-table/styles.css';
 import { calculateResponseStats, getResponseOptions } from './utils';
-import { ResponseData } from './types';
+import { ResponseData } from '../../types';
 
 const extractNumericValue = (value: string, unit: string): number => {
   if (value === 'N/A') return -1;

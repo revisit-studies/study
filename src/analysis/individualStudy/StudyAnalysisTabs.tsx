@@ -24,6 +24,7 @@ import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
+import 'mantine-react-table/styles.css';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 

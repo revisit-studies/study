@@ -1,6 +1,6 @@
 import { ParticipantData } from '../../../storage/types';
 import { getCleanedDuration } from '../../../utils/getCleanedDuration';
-import { ParticipantCounts } from './types';
+import { ParticipantCounts } from '../../types';
 import { Response } from '../../../parser/types';
 import { StorageEngine } from '../../../storage/engines/types';
 

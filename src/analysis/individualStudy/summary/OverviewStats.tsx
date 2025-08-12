@@ -2,7 +2,7 @@ import {
   Flex, Paper, Text, Title, Tooltip,
 } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
-import { OverviewData } from './types';
+import { OverviewData } from '../../types';
 
 export function OverviewStats({
   overviewData,

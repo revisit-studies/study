@@ -6,7 +6,6 @@ import { IconSearch } from '@tabler/icons-react';
 // eslint-disable-next-line camelcase
 import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from 'mantine-react-table';
 import { ParticipantData } from '../../../storage/types';
-import 'mantine-react-table/styles.css';
 import { calculateComponentStats } from './utils';
 
 interface TableRow {

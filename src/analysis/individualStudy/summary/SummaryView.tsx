@@ -10,7 +10,7 @@ import {
   calculateResponseStats, getResponseOptions,
 } from './utils';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
-import { OverviewData, ResponseData } from './types';
+import { OverviewData, ResponseData } from '../../types';
 
 export function SummaryView({ visibleParticipants, studyConfig }: {
   visibleParticipants: ParticipantData[];
