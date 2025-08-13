@@ -1,4 +1,4 @@
-# This file shows how you can use the dynamic adaptive vlat in python
+# This file contains the original python logic used to calculate the adaptive VLAT. Please see dynamic.tsx for the javascript implementation used by reVISit
 
 from collections import OrderedDict
 import pandas as pd
