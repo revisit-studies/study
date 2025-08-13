@@ -7,7 +7,7 @@ This is an example study of the library `adaptive-vlat`.
 
 A-VLAT is a short, adaptive visualization literacy test, which are built upon the existing static assessments VLAT. 
 
- This library contains a sequence of the full A-VLAT questionnaire. 
+This library contains a sequence of the full A-VLAT questionnaire. 
 
 The component `VlatTrial` in this library is part of the sequence and should not be used alone.
 
