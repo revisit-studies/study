@@ -21,7 +21,8 @@
     "withSidebar": true
   },
   "importedLibraries": [
-    "test"
+    "test",
+    "mini-vlat"
   ],
   "components": {
     "my-test": {
