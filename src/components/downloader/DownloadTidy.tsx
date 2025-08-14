@@ -8,6 +8,7 @@ import {
   LoadingOverlay,
   Modal,
   Space,
+  Switch,
   Table,
   Text,
 } from '@mantine/core';
@@ -257,6 +258,7 @@ export function DownloadTidy({
     'duration',
     'cleanedDuration',
   ]);
+  const [isComponentView, setIsComponentView] = useState(true);
 
   const storageEngine = useStorageEngine();
   const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine.storageEngine, studyId]);
@@ -306,6 +308,15 @@ export function DownloadTidy({
       centered
       withCloseButton={false}
     >
+      <Flex justify="flex-end">
+        <Switch
+          checked={isComponentView}
+          onChange={(event) => setIsComponentView(event.currentTarget.checked)}
+          label={isComponentView ? 'Component View' : 'Response View'}
+          size="sm"
+        />
+      </Flex>
+
       <Box>
         <Text size="sm" fw={500} mb="xs">
           <Flex align="center" gap="xs">
