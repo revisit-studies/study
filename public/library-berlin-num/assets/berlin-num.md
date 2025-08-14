@@ -13,7 +13,7 @@ Cokely ET, Galesic M, Schulz E, Ghazal S, Garcia-Retamero R. Measuring Risk Lite
 
 DOI: [10.1017/S1930297500001819](https://dx.doi.org/10.1017/S1930297500001819)
 
-
+Link: [http://www.riskliteracy.org/](http://www.riskliteracy.org/)
 
 ## Available Components
 
