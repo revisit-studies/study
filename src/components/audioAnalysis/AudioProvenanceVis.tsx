@@ -111,7 +111,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   // Make sure we always pause analysis when we change participants or tasks
   useEffect(() => {
     storeDispatch(setAnalysisIsPlaying(false));
-  }, [participantId, currentComponent, currentStep, storeDispatch, setAnalysisIsPlaying, identifier, replayTimestamp]);
+  }, [participantId, currentComponent, currentStep, storeDispatch, setAnalysisIsPlaying, identifier]);
   // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
   useEffect(() => {
     if (identifier && answers[identifier]?.provenanceGraph) {
