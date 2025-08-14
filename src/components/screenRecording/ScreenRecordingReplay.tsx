@@ -6,6 +6,7 @@ import {
 import { useSearchParams } from 'react-router';
 import {
   ActionIcon, Box, Flex, LoadingOverlay,
+  Tooltip,
 } from '@mantine/core';
 import {
   IconArrowsMaximize, IconPlayerPauseFilled, IconPlayerPlayFilled,
@@ -40,8 +41,11 @@ export function ScreenRecordingReplay() {
   const [videoStartTime, setVideoStartTime] = useState(0);
   const [videoEndTime, setVideoEndTime] = useState(0);
 
+  const [hoveredTime, setHoveredTime] = useState(0);
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
+  const timelineHoverRef = useRef<HTMLDivElement | null>(null);
   const timelineWrapperRef = useRef<HTMLDivElement | null>(null);
 
   const [duration, setDuration] = useState<number>(0);
@@ -210,6 +214,21 @@ export function ScreenRecordingReplay() {
     }
   }, [videoStartTime, videoEndTime]);
 
+  const handleTimelineMouseMove = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    if (videoRef.current) {
+      const parentBounding = timelineWrapperRef.current?.getBoundingClientRect();
+      const percentage = (e.clientX - (parentBounding?.left || 0)) / (parentBounding?.width || 1);
+
+      // get time from percentage
+      const currentTime = (videoStartTime + percentage * (videoEndTime - videoStartTime)) / 1000;
+      const targetTime = (currentTime * 1000 - videoStartTime);
+
+      setHoveredTime(targetTime);
+
+      timelineHoverRef.current!.style.width = `${percentage * 100}%`;
+    }
+  }, [videoStartTime, videoEndTime]);
+
   return (
     <Box pos="relative" ref={fullScreenRef} bg="white" px={fullscreen ? 'lg' : 0}>
       <Box pos="relative">
@@ -231,9 +250,12 @@ export function ScreenRecordingReplay() {
         </video>
         <LoadingOverlay visible={!isReady} zIndex={1000} overlayProps={{ blur: 5, bg: 'rgba(255, 255, 255, .98)' }} />
       </Box>
-      <Flex ref={timelineWrapperRef} className={classes.timeline} onMouseUp={handleTimelineMouseUp}>
+      <Flex ref={timelineWrapperRef} className={classes.timeline} onMouseUp={handleTimelineMouseUp} onMouseMove={handleTimelineMouseMove}>
         <div className={classes.timelineBar}>
           <div ref={timelineRef} className={classes.timelineInner} />
+          <Tooltip label={humanReadableDuration(hoveredTime)} position="top-end" w={80} offset={{ mainAxis: 15, crossAxis: 40 }} ta="center" withArrow arrowOffset={37} arrowSize={6}>
+            <div ref={timelineHoverRef} className={classes.timelineInnerHover} />
+          </Tooltip>
         </div>
       </Flex>
 
