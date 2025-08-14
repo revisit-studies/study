@@ -448,10 +448,11 @@ export abstract class StorageEngine {
 
   // Gets all participant IDs for the given studyId
   async getAllParticipantIds(studyId?: string) {
-    if (!this.studyId) {
+    const studyIdToUse = this.studyId || studyId;
+    if (studyIdToUse === undefined) {
       throw new Error('Study ID is not set');
     }
-    const sequenceAssignments = await this._getAllSequenceAssignments(studyId || this.studyId);
+    const sequenceAssignments = await this._getAllSequenceAssignments(studyIdToUse);
     return sequenceAssignments.map((assignment) => assignment.participantId);
   }
 
@@ -559,8 +560,6 @@ export abstract class StorageEngine {
 
   // Gets all participant IDs for the current studyId or a provided studyId.
   async getAllParticipantsData(studyId: string) {
-    await this.verifyStudyDatabase();
-
     const participantIds = await this.getAllParticipantIds(studyId);
     const participantsData: ParticipantData[] = [];
 

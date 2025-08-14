@@ -1,15 +1,15 @@
 import {
-  Box, Flex, Radio, Text, Checkbox,
+  Box, Radio, Text, Checkbox,
 } from '@mantine/core';
 import {
   ChangeEvent, useMemo,
 } from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
 import checkboxClasses from './css/Checkbox.module.css';
 import radioClasses from './css/Radio.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
+import { InputLabel } from './InputLabel';
 
 function CheckboxComponent({
   _choices,
@@ -165,12 +165,7 @@ export function MatrixInput({
   const _m = orderedQuestions.length;
   return (
     <>
-      <Flex direction="row" wrap="nowrap" gap={4}>
-        {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
-        <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
-          <ReactMarkdownWrapper text={prompt} required={required} />
-        </Box>
-      </Flex>
+      {prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
       <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
       <Box
         style={{

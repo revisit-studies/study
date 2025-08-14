@@ -1191,6 +1191,14 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "spacing": {
+          "description": "The spacing between the options. Defaults to 1.",
+          "type": "number"
+        },
+        "start": {
+          "description": "The starting value of the likert scale. Defaults to 1.",
+          "type": "number"
+        },
         "style": {
           "$ref": "#/definitions/Styles",
           "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
@@ -2361,9 +2369,17 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "smeqStyle": {
+          "description": "Whether to render the slider with a SMEQ style. Defaults to false.",
+          "type": "boolean"
+        },
         "snap": {
           "description": "Whether the slider should snap between values. Defaults to false. Slider snapping disables the label above the handle.",
           "type": "boolean"
+        },
+        "spacing": {
+          "description": "The spacing between the ticks. If not provided, the spacing is calculated as the range of the slider divided by power of 10.",
+          "type": "number"
         },
         "startingValue": {
           "description": "The starting value of the slider. Defaults to the minimum value.",
@@ -2614,6 +2630,18 @@
         },
         "margin": {
           "description": "Spacing",
+          "type": "string"
+        },
+        "maxHeight": {
+          "type": "string"
+        },
+        "maxWidth": {
+          "type": "string"
+        },
+        "minHeight": {
+          "type": "string"
+        },
+        "minWidth": {
           "type": "string"
         },
         "padding": {

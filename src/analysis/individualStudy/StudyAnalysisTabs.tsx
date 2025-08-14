@@ -5,23 +5,26 @@ import { useNavigate, useParams } from 'react-router';
 import {
   IconChartDonut2, IconTable, IconSettings,
   IconInfoCircle,
+  IconChartPie,
 } from '@tabler/icons-react';
-import React, {
+import {
   useEffect, useMemo, useState,
 } from 'react';
 import { useResizeObserver } from '@mantine/hooks';
 import { AppHeader } from '../interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
+import { SummaryView } from './summary/SummaryView';
 import { TableView } from './table/TableView';
+import { StatsView } from './stats/StatsView';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { ManageAccordion } from './management/ManageAccordion';
 import { useAuth } from '../../store/hooks/useAuth';
-import { StatsView } from './stats/StatsView';
 import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
+import 'mantine-react-table/styles.css';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 
@@ -142,10 +145,14 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)}
             >
               <Tabs.List>
+                <Tabs.Tab value="summary" leftSection={<IconChartPie size={16} />}>Study Summary</Tabs.Tab>
                 <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Participant View</Tabs.Tab>
                 <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
               </Tabs.List>
+              <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
+                {studyConfig && <SummaryView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
+              </Tabs.Panel>
               <Tabs.Panel style={{ height: `calc(100% - ${TABLE_HEADER_HEIGHT}px)` }} value="table" pt="xs">
                 {studyConfig && <TableView width={width} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, studyId)} />}
               </Tabs.Panel>

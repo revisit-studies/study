@@ -352,6 +352,7 @@ export function ResponseBlock({
         location={location}
         checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
           <Button
+            disabled={hasCorrectAnswer || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
             onClick={() => checkAnswerProvideFeedback()}
             px={location === 'sidebar' ? 8 : undefined}
           >

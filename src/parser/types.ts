@@ -69,6 +69,10 @@ export type Styles = {
   /** Sizing */
   height?: string;
   width?: string;
+  minHeight?: string;
+  minWidth?: string;
+  maxHeight?: string;
+  maxWidth?: string;
 
   /** Positioning */
   position?: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
@@ -220,7 +224,7 @@ export interface NumberOption {
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
  */
 export interface StringOption {
-  /** The label displayed to participants. */
+  /** The label displayed to participants. Markdown is supported. */
   label: string;
   /** The value stored in the participant's data. */
   value: string;
@@ -344,7 +348,9 @@ export interface LongTextResponse extends BaseResponse {
   "type": "likert",
   "leftLabel": "Not Enjoyable",
   "rightLabel": "Very Enjoyable",
-  "numItems": 5
+  "numItems": 5,
+  "start": 1,
+  "spacing": 1
 }
 ```
  */
@@ -352,6 +358,10 @@ export interface LikertResponse extends BaseResponse {
   type: 'likert';
   /** The number of options to render. */
   numItems: number;
+  /** The starting value of the likert scale. Defaults to 1. */
+  start?: number;
+  /** The spacing between the options. Defaults to 1. */
+  spacing?: number;
   /** The left label of the likert scale. E.g Strongly Disagree */
   leftLabel?: string;
   /** The right label of the likert scale. E.g Strongly Agree */
@@ -479,10 +489,14 @@ export interface SliderResponse extends BaseResponse {
   snap?: boolean;
   /** The step value of the slider. If not provided (and snap not enabled), the step value is calculated as the range of the slider divided by 100. */
   step?: number;
+  /** The spacing between the ticks. If not provided, the spacing is calculated as the range of the slider divided by power of 10. */
+  spacing?: number;
   /** Whether to render the slider with a bar to the left. Defaults to true. */
   withBar?: boolean;
   /** Whether to render the slider with a NASA-tlx style. Defaults to false. */
   tlxStyle?: boolean;
+  /** Whether to render the slider with a SMEQ style. Defaults to false. */
+  smeqStyle?: boolean;
 }
 
 /**
