@@ -706,6 +706,18 @@ export abstract class StorageEngine {
     return allAudioList;
   }
 
+  // Gets the audio download URL
+  async getAudioUrl(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getAudioUrl(task, participantId);
+    if (!url) {
+      return null;
+    }
+    return url;
+  }
+
   // Saves the audio stream to the storage engine. This method is used to save the audio data from a MediaRecorder stream.
   async saveAudio(
     audioStream: MediaRecorder,

@@ -1,17 +1,16 @@
 import {
-  ActionIcon,
-  AppShell, Box, Button, Center, Group, Select, Text,
+  ActionIcon, AppShell, Box, Button, Center, Group, Select, Text, Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
-  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser,
+  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser, IconDownload,
 } from '@tabler/icons-react';
 import { useAsync } from '../../store/hooks/useAsync';
 
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StorageEngine } from '../../storage/engines/types';
-import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
+import { useCurrentComponent, useCurrentStep, useCurrentIdentifier } from '../../routes/utils';
 import { encryptIndex, decryptIndex } from '../../utils/encryptDecryptIndex';
 import {
   useStoreActions, useStoreDispatch, useStoreSelector,
@@ -65,6 +64,39 @@ export function AnalysisFooter() {
 
   const isStart = useMemo(() => currentStep === 0, [currentStep]);
   const isEnd = useMemo(() => currentStep === flatSequence.length, [currentStep, flatSequence.length]);
+  const identifier = useCurrentIdentifier();
+  const [hasAudio, setHasAudio] = useState(false);
+
+  useEffect(() => {
+    if (!storageEngine || !participantId || !identifier) {
+      setHasAudio(false);
+      return;
+    }
+
+    storageEngine.getAudioUrl(identifier, participantId)
+      .then((audioUrl) => setHasAudio(!!audioUrl))
+      .catch(() => setHasAudio(false));
+  }, [storageEngine, participantId, identifier]);
+
+  const handleDownloadAudio = async () => {
+    if (!storageEngine || !participantId || !identifier) {
+      return;
+    }
+
+    const audioUrl = await storageEngine.getAudioUrl(identifier, participantId);
+
+    if (audioUrl) {
+      const blob = await (await fetch(audioUrl)).blob();
+      const url = URL.createObjectURL(blob);
+
+      Object.assign(document.createElement('a'), {
+        href: url,
+        download: `${participantId}_${identifier}_audio.webm`,
+      }).click();
+
+      URL.revokeObjectURL(url);
+    }
+  };
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
@@ -79,7 +111,13 @@ export function AnalysisFooter() {
             <ActionIcon variant="filled" size={30} onClick={() => storeDispatch(setAnalysisIsPlaying(!analysisIsPlaying))}>
               {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
             </ActionIcon>
-
+            {hasAudio && (
+              <Tooltip label="Download audio">
+                <ActionIcon variant="filled" size={30} onClick={handleDownloadAudio}>
+                  <IconDownload />
+                </ActionIcon>
+              </Tooltip>
+            )}
             <Text mx="0">
               Participant:
             </Text>
