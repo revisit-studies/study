@@ -2,7 +2,7 @@
 import {
   Box, Center, Group, Loader, Stack,
 } from '@mantine/core';
-import { useSearchParams } from 'react-router';
+import { useSearchParams, useNavigate } from 'react-router';
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
@@ -204,6 +204,18 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
       setTotalAudioLength(length > -1 ? length / 1000 : 0);
     }
   }, [analysisHasAudio, answers, identifier]);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (totalAudioLength > 0 && replayTimestamp) {
+      const maxTime = totalAudioLength * 1000;
+
+      if (replayTimestamp > maxTime) {
+        navigate(`?participantId=${participantId}&t=${maxTime}`);
+      }
+    }
+  }, [totalAudioLength, replayTimestamp, participantId, navigate]);
 
   const isAnalysis = useIsAnalysis();
   const wavesurfer = useRef<WaveSurferType | null>(null);
