@@ -31,6 +31,25 @@ const margin = {
 export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: string) => void }) {
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
+  const timestamp = useMemo(() => searchParams.get('t') || undefined, [searchParams]);
+
+  const replayTimestamp = useMemo(() => {
+    if (!timestamp) {
+      return undefined;
+    }
+
+    // If the timestamp is already in milliseconds, return it
+    if (!Number.isNaN(Number(timestamp))) {
+      return parseInt(timestamp, 10);
+    }
+
+    const hours = parseInt(timestamp.match(/(\d+)h/)?.[1] || '0', 10);
+    const minutes = parseInt(timestamp.match(/(\d+)m/)?.[1] || '0', 10);
+    const seconds = parseInt(timestamp.match(/(\d+)s/)?.[1] || '0', 10);
+
+    const milliseconds = (hours * 3600 + minutes * 60 + seconds) * 1000;
+    return milliseconds;
+  }, [timestamp]);
 
   const { storageEngine } = useStorageEngine();
 
@@ -92,8 +111,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   // Make sure we always pause analysis when we change participants or tasks
   useEffect(() => {
     storeDispatch(setAnalysisIsPlaying(false));
-  }, [participantId, currentComponent, currentStep, storeDispatch, setAnalysisIsPlaying]);
-
+  }, [participantId, currentComponent, currentStep, storeDispatch, setAnalysisIsPlaying, identifier, replayTimestamp]);
   // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
   useEffect(() => {
     if (identifier && answers[identifier]?.provenanceGraph) {
@@ -164,6 +182,12 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   }, [_setCurrentNode, currentNode, participantId, playTime, identifier, answers]);
 
   const startTime = useMemo(() => answers[identifier]?.startTime || 0, [answers, identifier]);
+
+  useEffect(() => {
+    if (startTime) {
+      setPlayTime(startTime + (replayTimestamp || 0));
+    }
+  }, [startTime, replayTimestamp]);
 
   useEffect(() => {
     if (totalAudioLength === 0) {
@@ -291,7 +315,18 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
               height={25}
             />
           ) : null}
-        {xScale ? <Timer duration={totalAudioLength * 1000} height={(analysisHasAudio ? 50 : 0) + 25} isPlaying={analysisIsPlaying} startTime={startTime} width={width} xScale={xScale} updateTimer={_setPlayTime} /> : null}
+        {xScale ? (
+          <Timer
+            duration={totalAudioLength * 1000}
+            height={(analysisHasAudio ? 50 : 0) + 25}
+            isPlaying={analysisIsPlaying}
+            startTime={startTime}
+            width={width}
+            xScale={xScale}
+            updateTimer={_setPlayTime}
+            initialTime={replayTimestamp ? startTime + replayTimestamp : undefined}
+          />
+        ) : null}
       </Stack>
     </Group>
   );

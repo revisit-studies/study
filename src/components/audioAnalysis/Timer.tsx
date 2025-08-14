@@ -5,18 +5,20 @@ import {
 import { useEvent } from '../../store/hooks/useEvent';
 
 export function Timer({
-  width, height, updateTimer, duration, isPlaying, xScale, startTime,
-}: { width: number, height: number, updateTimer: (time: number, percent: number | undefined) => void, duration: number, isPlaying: boolean, xScale: d3.ScaleLinear<number, number>, startTime: number }) {
+  width, height, updateTimer, duration, isPlaying, xScale, startTime, initialTime,
+}: { width: number, height: number, updateTimer: (time: number, percent: number | undefined) => void, duration: number, isPlaying: boolean, xScale: d3.ScaleLinear<number, number>, startTime: number, initialTime?: number }) {
   const timer = useRef<number>(0);
   const startDate = useRef<number>(Date.now());
   const [forceRerenderInt, setForceRerenderInt] = useState<number>(0);
 
   useEffect(() => {
     if (startTime) {
-      timer.current = 0;
-      updateTimer(startTime, 0);
+      // Initial time is the time the user wants to start at, if it's not provided, we start at the beginning
+      const time = initialTime !== undefined ? initialTime : startTime;
+      timer.current = time - startTime;
+      updateTimer(time, (time - startTime) / duration);
     }
-  }, [startTime, updateTimer]);
+  }, [startTime, updateTimer, initialTime, duration]);
 
   const incrementTimer = useEvent(() => {
     if (timer.current >= duration) {
