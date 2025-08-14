@@ -7,7 +7,6 @@ import {
   Group,
   LoadingOverlay,
   Modal,
-  MultiSelect,
   Space,
   Table,
   Text,
@@ -35,13 +34,13 @@ export const OPTIONAL_COMMON_PROPS = [
   'responsePrompt',
   'answer',
   'correctAnswer',
-  'responseMin',
-  'responseMax',
-  'startTime',
-  'endTime',
+
   'duration',
   'cleanedDuration',
-  'meta',
+  'startTime',
+  'endTime',
+  'responseMin',
+  'responseMax',
   'configHash',
   'focusEvents',
   'inputEvents',
@@ -151,12 +150,7 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
           const correctAnswer = answerCorrectAnswer || configCorrectAnswer;
           tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
         }
-        if (properties.includes('responseMin')) {
-          tidyRow.responseMin = response?.type === 'numerical' ? response.min : undefined;
-        }
-        if (properties.includes('responseMax')) {
-          tidyRow.responseMax = response?.type === 'numerical' ? response.max : undefined;
-        }
+
         if (properties.includes('startTime')) {
           tidyRow.startTime = new Date(trialAnswer.startTime).toISOString();
         }
@@ -169,8 +163,11 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         if (properties.includes('cleanedDuration')) {
           tidyRow.cleanedDuration = cleanedDuration;
         }
-        if (properties.includes('meta')) {
-          tidyRow.meta = JSON.stringify(completeComponent.meta, null, 2);
+        if (properties.includes('responseMin')) {
+          tidyRow.responseMin = response?.type === 'numerical' ? response.min : undefined;
+        }
+        if (properties.includes('responseMax')) {
+          tidyRow.responseMax = response?.type === 'numerical' ? response.max : undefined;
         }
         if (properties.includes('focusEvents')) {
           tidyRow.focusEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'focus').length;
@@ -247,7 +244,19 @@ export function DownloadTidy({
   data: ParticipantData[];
   studyId: string;
 }) {
-  const [selectedProperties, setSelectedProperties] = useState<Array<OptionalProperty>>([...OPTIONAL_COMMON_PROPS].filter((prop) => prop !== 'meta'));
+  const [selectedProperties, setSelectedProperties] = useState<Array<OptionalProperty>>([
+    'status',
+    'rejectReason',
+    'description',
+    'rejectTime',
+    'percentComplete',
+    'instruction',
+    'responsePrompt',
+    'answer',
+    'correctAnswer',
+    'duration',
+    'cleanedDuration',
+  ]);
 
   const storageEngine = useStorageEngine();
   const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine.storageEngine, studyId]);
@@ -297,16 +306,44 @@ export function DownloadTidy({
       centered
       withCloseButton={false}
     >
-      <MultiSelect
-        searchable
-        nothingFoundMessage="Property not found"
-        data={[...OPTIONAL_COMMON_PROPS]}
-        value={selectedProperties}
-        onChange={(values: string[]) => setSelectedProperties(values as OptionalProperty[])}
-        label="Included optional columns:"
-        leftSection={<IconLayoutColumns />}
-        variant="filled"
-      />
+      <Box>
+        <Text size="sm" fw={500} mb="xs">
+          <Flex align="center" gap="xs">
+            <IconLayoutColumns size={16} />
+            Optional columns:
+          </Flex>
+        </Text>
+        <Flex wrap="wrap" gap="4px">
+          {OPTIONAL_COMMON_PROPS.map((prop) => {
+            const isSelected = selectedProperties.includes(prop);
+            return (
+              <Button
+                key={prop}
+                variant={isSelected ? 'light' : 'white'}
+                color={isSelected ? 'blue' : 'gray'}
+                size="xs"
+                onClick={() => {
+                  if (isSelected) {
+                    setSelectedProperties(selectedProperties.filter((p) => p !== prop));
+                  } else {
+                    setSelectedProperties([...selectedProperties, prop]);
+                  }
+                }}
+                styles={{
+                  root: {
+                    fontSize: '14px',
+                    height: 'auto',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                  },
+                }}
+              >
+                {prop}
+              </Button>
+            );
+          })}
+        </Flex>
+      </Box>
 
       <Space h="md" />
 
