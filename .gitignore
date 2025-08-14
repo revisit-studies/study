@@ -37,3 +37,7 @@ supabase/volumes/*
 !supabase/volumes/db/
 supabase/volumes/db/data
 !supabase/volumes/api/
+# Continue MCP Server
+.continue/
+.continue/mcpServers/
+.continue/mcpServers/*
