@@ -11,6 +11,7 @@ import {
   Switch,
   Table,
   Text,
+  Tooltip,
 } from '@mantine/core';
 import {
   IconBrandPython, IconLayoutColumns, IconTableExport, IconX,
@@ -327,7 +328,21 @@ export function DownloadTidy({
         <Flex wrap="wrap" gap="4px">
           {OPTIONAL_COMMON_PROPS.map((prop) => {
             const isSelected = selectedProperties.includes(prop);
-            return (
+
+            const eventTooltips: Record<string, string> = {
+              focusEvents: 'Tab focus events',
+              inputEvents: 'Form input events',
+              keydownEvents: 'Key press events',
+              keyupEvents: 'Key release events',
+              mousemoveEvents: 'Mouse movement tracking',
+              mousedownEvents: 'Mouse button press events',
+              mouseupEvents: 'Mouse button release events',
+              resizeEvents: 'Window resize events',
+              scrollEvents: 'Page scroll events',
+              visibilityEvents: 'Page visibility changes',
+            };
+
+            const button = (
               <Button
                 key={prop}
                 variant={isSelected ? 'light' : 'white'}
@@ -352,6 +367,16 @@ export function DownloadTidy({
                 {prop}
               </Button>
             );
+
+            if (eventTooltips[prop]) {
+              return (
+                <Tooltip key={prop} label={eventTooltips[prop]}>
+                  {button}
+                </Tooltip>
+              );
+            }
+
+            return button;
           })}
         </Flex>
       </Box>
