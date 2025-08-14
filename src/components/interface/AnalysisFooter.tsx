@@ -43,6 +43,7 @@ export function AnalysisFooter() {
 
   const analysisIsPlaying = useStoreSelector((state) => state.analysisIsPlaying);
   const answers = useStoreSelector((state) => state.answers);
+  const analysisHasScreenRecording = useStoreSelector((state) => state.analysisHasScreenRecording);
 
   const { storageEngine } = useStorageEngine();
 
@@ -70,15 +71,18 @@ export function AnalysisFooter() {
     <AppShell.Footer zIndex={101} withBorder={false}>
       <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px' }}>
 
-        <AudioProvenanceVis setTimeString={setTimeString} />
+        {!analysisHasScreenRecording && <AudioProvenanceVis setTimeString={setTimeString} />}
         <Center>
           <Group gap="xs" style={{ height: '50px' }}>
             <Text size="sm" ff="monospace">
               {timeString}
             </Text>
+
+            {!analysisHasScreenRecording && (
             <ActionIcon variant="filled" size={30} onClick={() => storeDispatch(setAnalysisIsPlaying(!analysisIsPlaying))}>
               {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
             </ActionIcon>
+            )}
 
             <Text mx="0">
               Participant:
