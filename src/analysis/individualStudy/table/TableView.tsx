@@ -77,12 +77,13 @@ export function TableView({
     await refresh();
   }, [checked, refresh, rejectParticipant, rejectParticipantsMessage]);
 
-  const selectedData = useMemo(
-    () => Object.keys(checked).filter((v) => checked[v])
+  const selectedData = useMemo(() => {
+    const selected = Object.keys(checked).filter((v) => checked[v])
       .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
-      .filter((p) => p !== undefined) as ParticipantData[],
-    [checked, visibleParticipants],
-  );
+      .filter((p) => p !== undefined) as ParticipantData[];
+
+    return selected.length > 0 ? selected : visibleParticipants;
+  }, [checked, visibleParticipants]);
 
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => [
     {
