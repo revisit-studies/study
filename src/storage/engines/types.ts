@@ -173,6 +173,9 @@ export abstract class StorageEngine {
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
 
+  // Gets the screen recording URL for the given task and participantId. This method is used to fetch the screen recording video file from the storage engine.
+  protected abstract _getScreenRecordingUrl(task: string, participantId?: string): Promise<string | null>;
+
   // Resets the entire study database for testing purposes. This is used to reset the study database to a clean state for testing.
   protected abstract _testingReset(studyId: string): Promise<void>;
 
@@ -729,6 +732,33 @@ export abstract class StorageEngine {
     // Don't clean up the listener. The stream will be destroyed.
   }
 
+  // Gets the screen recording for a specific task and participantId.
+  async getScreenRecording(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getScreenRecordingUrl(task, participantId);
+    if (!url) {
+      return null;
+    }
+
+    const allScreenRecordingList = new Promise<string>((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.responseType = 'blob';
+      xhr.onload = () => {
+        const blob = xhr.response;
+
+        const _url = URL.createObjectURL(blob);
+
+        resolve(_url);
+      };
+      xhr.open('GET', url);
+      xhr.send();
+    });
+
+    return allScreenRecordingList;
+  }
+
   // Saves the video stream to the storage engine. This method is used to save the screen recorded video data from a MediaRecorder stream.
   async saveScreenRecording(
     videoStream: MediaRecorder,
@@ -749,8 +779,6 @@ export abstract class StorageEngine {
 
     videoStream.addEventListener('dataavailable', listener);
     videoStream.requestData();
-
-    // Don't clean up the listener. The stream will be destroyed.
   }
 
   // Gets the sequence array from the storage engine.

@@ -122,6 +122,7 @@ export async function studyStoreCreator(
     },
     analysisIsPlaying: false,
     analysisHasAudio: false,
+    analysisHasScreenRecording: false,
     analysisHasProvenance: false,
     modes,
     matrixAnswers: {},
@@ -214,6 +215,9 @@ export async function studyStoreCreator(
       },
       setAnalysisHasAudio(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasAudio = payload;
+      },
+      setAnalysisHasScreenRecording(state, { payload }: PayloadAction<boolean>) {
+        state.analysisHasScreenRecording = payload;
       },
       setAnalysisHasProvenance(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasProvenance = payload;

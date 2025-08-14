@@ -28,6 +28,7 @@ import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { VideoController } from './VideoController';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
+import { ScreenRecordingReplay } from '../components/screenRecording/ScreenRecordingReplay';
 
 // current active stimuli presented to the user
 export function ComponentController() {
@@ -41,10 +42,9 @@ export function ComponentController() {
 
   const answers = useStoreSelector((store) => store.answers);
   const audioStream = useRef<MediaRecorder | null>(null);
-  const screenRecordingStream = useRef<MediaRecorder | null>(null);
 
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
-  const { setIsRecording, setIsScreenRecording } = useStoreActions();
+  const { setIsRecording } = useStoreActions();
   const analysisProvState = useStoreSelector((state) => state.analysisProvState.stimulus);
 
   const isAnalysis = useIsAnalysis();
@@ -100,42 +100,6 @@ export function ComponentController() {
         audioStream.current = recorder;
         audioStream.current.start();
         storeDispatch(setIsRecording(true));
-        setPrevTrialName(`${currentComponent}_${currentStep}`);
-      });
-    }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, currentStep]);
-
-  useEffect(() => {
-    if (!studyConfig || !studyConfig.uiConfig.recordScreen || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
-      return;
-    }
-
-    if (screenRecordingStream.current && prevTrialName) {
-      storageEngine.saveScreenRecording(screenRecordingStream.current, prevTrialName);
-    }
-
-    if (screenRecordingStream.current) {
-      screenRecordingStream.current.stream.getTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
-      screenRecordingStream.current.stream.getVideoTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
-      screenRecordingStream.current.stop();
-      screenRecordingStream.current = null;
-    }
-
-    if ((stepConfig && stepConfig.recordScreen !== undefined && !stepConfig.recordScreen) || currentComponent === 'end') {
-      setPrevTrialName(null);
-      storeDispatch(setIsRecording(false));
-    } else {
-      navigator.mediaDevices.getDisplayMedia({
-        video: {
-          displaySurface: 'browser',
-        },
-      }).then((s) => {
-        const recorder = new MediaRecorder(s);
-        screenRecordingStream.current = recorder;
-        screenRecordingStream.current.start();
-        storeDispatch(setIsScreenRecording(true));
         setPrevTrialName(`${currentComponent}_${currentStep}`);
       });
     }
@@ -249,12 +213,16 @@ export function ComponentController() {
         }}
       >
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
-          {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
-          {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-          {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-          {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-          {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
-          {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
+          {studyConfig.uiConfig.recordScreen && isAnalysis ? <ScreenRecordingReplay /> : (
+            <>
+              {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
+              {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
+              {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
+              {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
+              {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
+              {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
+            </>
+          )}
         </Suspense>
       </Box>
 

@@ -174,6 +174,7 @@ export interface StoreState {
   analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };
   analysisIsPlaying: boolean;
   analysisHasAudio: boolean;
+  analysisHasScreenRecording: boolean;
   analysisHasProvenance: boolean;
   modes: Record<REVISIT_MODE, boolean>;
   matrixAnswers: Record<string, Record<string, string>>;

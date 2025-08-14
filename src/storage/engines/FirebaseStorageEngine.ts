@@ -347,6 +347,21 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
+  protected async _getScreenRecordingUrl(
+    task: string,
+    participantId: string,
+  ): Promise<string | null> {
+    const storage = getStorage();
+    const screenRecordingRef = ref(storage, `${this.collectionPrefix}${this.studyId}/screenRecording/${participantId}_${task}`);
+
+    try {
+      return await getDownloadURL(screenRecordingRef);
+    } catch {
+      console.warn(`Screen recording for task ${task} and participant ${participantId} not found.`);
+      return null;
+    }
+  }
+
   protected async _testingReset() {
     throw new Error('Testing reset not implemented for FirebaseStorageEngine');
   }

@@ -197,6 +197,18 @@ export class LocalStorageEngine extends StorageEngine {
     return URL.createObjectURL(audioBlob);
   }
 
+  protected async _getScreenRecordingUrl(task: string, participantId?: string) {
+    await this.verifyStudyDatabase();
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+    const screenRecordingBlob = await this._getFromStorage(`screenRecording/${participantId || this.currentParticipantId}`, task);
+    if (!screenRecordingBlob) {
+      throw new Error(`ScreenRecording for task ${task} and participant ${participantId || this.currentParticipantId} not found`);
+    }
+    return URL.createObjectURL(screenRecordingBlob);
+  }
+
   protected async _testingReset(studyId: string) {
     if (!studyId) {
       throw new Error('Study ID is required for reset');

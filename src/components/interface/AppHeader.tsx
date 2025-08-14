@@ -35,7 +35,7 @@ import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
-export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
+export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled, screenWithAudioRecording }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean, screenWithAudioRecording: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
 
   const answers = useStoreSelector((state) => state.answers);
@@ -117,7 +117,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
 
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
-            {isRecording ? (
+            {isRecording || screenWithAudioRecording ? (
               <Group ml="xl" gap={20} wrap="nowrap">
                 <Text color="red">Recording audio</Text>
                 <RecordingAudioWaveform />

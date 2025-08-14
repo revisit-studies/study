@@ -1,0 +1,32 @@
+.timeline {
+  align-items: center;
+  border: none;
+  margin-bottom: 1rem;
+  height: 20px;
+}
+
+.timelineBar {
+  background: #ccc;
+  height: 4px;
+  flex: 1;
+}
+
+.timelineInner {
+  background: rgb(0, 0, 0);
+  width: 0%;
+  height: 100%;
+  position: relative;
+  transition: width 300ms linear;
+
+  &:after {
+    display: block;
+    content: '';
+    position: absolute;
+    right: 0;
+    height: 20px;
+    width: 4px;
+    top: 50%;
+    transform: translate(50%, -50%);
+    background: #000;
+  }
+}

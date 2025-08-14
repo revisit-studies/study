@@ -3,16 +3,10 @@
   "studyMetadata": {
     "title": "HTML as a Stimulus with Screen Recording",
     "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
+    "authors": ["The reVISit Team"],
     "date": "2023-04-14",
     "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
-    "organizations": [
-      "University of Utah",
-      "WPI",
-      "University of Toronto"
-    ]
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
@@ -22,13 +16,16 @@
     "autoDownloadStudy": false,
     "withSidebar": true,
     "windowEventDebounceTime": 200,
+    "recordAudio": true,
     "recordScreen": true
   },
   "components": {
     "introduction": {
       "type": "markdown",
       "path": "demo-html-video/assets/introduction.md",
-      "response": []
+      "response": [],
+      "recordAudio": false,
+      "recordScreen": false
     },
     "barChart": {
       "type": "website",
@@ -49,21 +46,21 @@
           "min": 0,
           "max": 7
         }
-      ]
+      ],
+      "recordAudio": false,
+      "recordScreen": false
     },
     "external_website": {
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
-      "previousButton": true
+      "previousButton": true,
+      "recordAudio": false,
+      "recordScreen": false
     }
   },
   "sequence": {
     "order": "fixed",
-    "components": [
-      "introduction",
-      "barChart",
-      "external_website"
-    ]
+    "components": ["introduction", "external_website", "barChart"]
   }
 }
