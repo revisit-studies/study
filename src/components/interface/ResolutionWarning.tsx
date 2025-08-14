@@ -67,13 +67,13 @@ export function ResolutionWarning() {
 
       if (needsResize) {
         setShowWarning(true);
-        // Start countdown if one isn't already running
-        if (countdownIntervalRef.current === null) {
-          startCountdown();
-        }
+        startCountdown();
       } else {
         setShowWarning(false);
-        startCountdown();
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
+        }
       }
     };
 

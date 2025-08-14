@@ -22,7 +22,6 @@ import {
 } from '../../../parser/types';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { useAuth } from '../../../store/hooks/useAuth';
-import 'mantine-react-table/styles.css';
 import { participantName } from '../../../utils/participantName';
 import { AllTasksTimeline } from '../replay/AllTasksTimeline';
 import { checkAnswerCorrect } from '../../../store/hooks/useNextStep';
