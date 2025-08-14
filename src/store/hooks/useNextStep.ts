@@ -90,13 +90,13 @@ export function useNextStep() {
     }
     // Get answer from across the 3 response blocks and the provenance graph
     const trialValidationCopy = structuredClone(trialValidation[identifier]);
-    const answer = Object.values(trialValidationCopy).reduce((acc, curr) => {
+    const answer = trialValidationCopy ? Object.values(trialValidationCopy).reduce((acc, curr) => {
       if (Object.hasOwn(curr, 'values')) {
         return { ...acc, ...(curr as ValidationStatus).values };
       }
       return acc;
-    }, {}) as StoredAnswer['answer'];
-    const { provenanceGraph } = trialValidationCopy;
+    }, {}) as StoredAnswer['answer'] : {};
+    const { provenanceGraph } = trialValidationCopy || {};
     const endTime = Date.now();
 
     const { componentName } = storedAnswer;
