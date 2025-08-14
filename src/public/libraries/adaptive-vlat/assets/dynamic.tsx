@@ -1,5 +1,4 @@
 import { JumpFunctionParameters, JumpFunctionReturnVal } from '../../../../store/types';
-// @ts-ignore
 import { getVLATnextqid } from './utils';
 import { VLATQuestions } from './vlatQ';
 
@@ -8,13 +7,13 @@ export default function dynamic({ answers, currentStep, currentBlock }: JumpFunc
 
   const topAnswer = Object.entries(answers).filter(([key, value]) => key.startsWith(`${currentBlock}_${currentStep}`) && value.endTime > -1);
 
-  const qid : number[] = [];
+  const qid : string[] = [];
   const correct : number[] = [];
 
   topAnswer.forEach((item) => {
     const qidx = item[1].parameters.activeQuestionIdx;
     const cor = item[1].answer[taskid] === item[1].correctAnswer[0].answer;
-    qid.push(+qidx);
+    qid.push(qidx);
     correct.push(cor ? 1 : 0);
   });
   const [nxtidx, score] = getVLATnextqid(qid, correct);
