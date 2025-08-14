@@ -3,12 +3,10 @@ import { JumpFunctionParameters, JumpFunctionReturnVal } from '../../../../store
 import { getVLATnextqid } from './utils';
 import { VLATQuestions } from './vlatQ';
 
-export default function dynamic({ answers }: JumpFunctionParameters<never>): JumpFunctionReturnVal {
+export default function dynamic({ answers, currentStep, currentBlock }: JumpFunctionParameters<never>): JumpFunctionReturnVal {
   const taskid = 'vlatResp';
 
-  const topAnswer = Object.entries(answers)
-    .filter(([key, _]) => key.startsWith('dynamicBlock'))
-    .filter(([_, value]) => value.endTime > -1);
+  const topAnswer = Object.entries(answers).filter(([key, value]) => key.startsWith(`${currentBlock}_${currentStep}`) && value.endTime > -1);
 
   const qid : number[] = [];
   const correct : number[] = [];
