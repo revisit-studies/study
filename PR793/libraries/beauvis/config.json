@@ -18,6 +18,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "matrix-radio",
+          "questionOrder":"random",
           "answerOptions": [
             "Strongly disagree",
             "Disagree",
@@ -50,6 +51,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "matrix-radio",
+          "questionOrder":"random",
           "answerOptions": [
             "Strongly disagree",
             "Disagree",
@@ -81,6 +83,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "matrix-radio",
+          "questionOrder":"random",
           "answerOptions": [
             "Strongly disagree",
             "Disagree",
