@@ -20,6 +20,7 @@
     "example-brush-interactions",
     "example-cleveland",
     "example-mvnv",
+    "example-VLAT-adaptive",
     "example-VLAT-full-randomized",
     "example-VLAT-mini-randomized",
     "library-beauvis",
@@ -36,6 +37,7 @@
     "library-smeq",
     "library-sus",
     "library-vlat",
+    "library-adaptive-vlat",
     "test-audio",
     "test-library",
     "test-likert-matrix",
@@ -107,6 +109,10 @@
     },
     "example-VLAT-mini-randomized": {
       "path": "example-VLAT-mini-randomized/config.json"
+    },
+    "library-adaptive-vlat": {
+      "path": "library-adaptive-vlat/config.json",
+      "test": true
     },
     "library-beauvis": {
       "path": "library-beauvis/config.json",
@@ -189,6 +195,10 @@
     },
     "test-step-logic": {
       "path": "test-step-logic/config.json",
+      "test": true
+    },
+    "example-VLAT-adaptive": {
+      "path": "example-VLAT-adaptive/config.json",
       "test": true
     }
   }
