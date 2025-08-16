@@ -177,7 +177,7 @@ export function StepRenderer() {
         <AppNavBar />
         <AppAside />
         {showTitleBar && (
-          <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} screenWithAudioRecording={screenWithAudioRecording} />
+          <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} screenRecording={screenRecording} screenWithAudioRecording={screenWithAudioRecording} />
         )}
         <ResolutionWarning />
         <HelpModal />
