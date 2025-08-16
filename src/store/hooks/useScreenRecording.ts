@@ -9,7 +9,7 @@ import { useStudyConfig } from './useStudyConfig';
 export function useScreenRecording() {
   const studyConfig = useStudyConfig();
 
-  const { recordScreen, recordAudio } = studyConfig.uiConfig;
+  const { recordScreen, recordScreenFPS, recordAudio } = studyConfig.uiConfig;
 
   const recordVideoRef = useRef<HTMLVideoElement>(null);
   const [screenRecordingError, setRecordingError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function useScreenRecording() {
 
       try {
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: { displaySurface: 'browser' },
+          video: { displaySurface: 'browser', ...(recordScreenFPS ? { frameRate: { ideal: recordScreenFPS } } : {}) },
           audio: false,
         });
 
@@ -65,7 +65,7 @@ export function useScreenRecording() {
     if (recordScreen) {
       captureFn();
     }
-  }, [pageTitle, recordAudio, recordScreen]);
+  }, [pageTitle, recordAudio, recordScreen, recordScreenFPS]);
 
   const stopScreenCapture = useCallback(() => {
     const stream = recordVideoRef.current?.srcObject as MediaStream;

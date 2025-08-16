@@ -17,15 +17,15 @@
     "withSidebar": true,
     "windowEventDebounceTime": 200,
     "recordAudio": true,
-    "recordScreen": true
+    "recordScreen": true,
+    "recordScreenFPS": 30
   },
   "components": {
     "introduction": {
       "type": "markdown",
       "path": "demo-html-video/assets/introduction.md",
       "response": [],
-      "recordAudio": false,
-      "recordScreen": false
+      "recordAudio": false
     },
     "barChart": {
       "type": "website",
@@ -47,16 +47,14 @@
           "max": 7
         }
       ],
-      "recordAudio": false,
-      "recordScreen": false
+      "recordAudio": false
     },
     "external_website": {
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
       "previousButton": true,
-      "recordAudio": false,
-      "recordScreen": false
+      "recordAudio": false
     }
   },
   "sequence": {

@@ -156,10 +156,6 @@
             "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
             "type": "boolean"
           },
-          "recordScreen": {
-            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig.",
-            "type": "boolean"
-          },
           "response": {
             "description": "The responses to the component",
             "items": {
@@ -757,10 +753,6 @@
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
-        "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig.",
-          "type": "boolean"
-        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -1056,10 +1048,6 @@
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
-        "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig.",
-          "type": "boolean"
-        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -1154,7 +1142,7 @@
     },
     "LikertResponse": {
       "additionalProperties": false,
-      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"numItems\": 5 } ```",
+      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"numItems\": 5, \"start\": 1, \"spacing\": 1 } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -1389,10 +1377,6 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -1750,10 +1734,6 @@
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
-        "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig.",
-          "type": "boolean"
-        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -2037,10 +2017,6 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -2455,7 +2431,7 @@
       "description": "The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
       "properties": {
         "label": {
-          "description": "The label displayed to participants.",
+          "description": "The label displayed to participants. Markdown is supported.",
           "type": "string"
         },
         "value": {
@@ -2885,6 +2861,10 @@
           "description": "Whether or not we want to utilize screen recording feature. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
           "type": "boolean"
         },
+        "recordScreenFPS": {
+          "description": "Desired fps for recording screen. If possible, this value will be used, but if it's not possible, the user agent will use the closest possible match.",
+          "type": "number"
+        },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
@@ -3030,10 +3010,6 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -3185,10 +3161,6 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
@@ -3346,10 +3318,6 @@
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
-        "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig.",
-          "type": "boolean"
-        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -3504,10 +3472,6 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
-          "type": "boolean"
-        },
-        "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig.",
           "type": "boolean"
         },
         "response": {
