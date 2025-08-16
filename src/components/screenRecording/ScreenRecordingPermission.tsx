@@ -1,4 +1,4 @@
-import { Button } from '@mantine/core';
+import { Box, Button, Title } from '@mantine/core';
 import { RefObject } from 'react';
 
 function ScreenRecordingPermission({
@@ -19,12 +19,12 @@ function ScreenRecordingPermission({
   error: string | null,
 }) {
   return (
-    <div style={{ padding: '2rem' }}>
-      <h2>
+    <Box p="md">
+      <Title order={1} size="h2">
         Screen
         {recordAudio && ' and Audio '}
         Recording Permission
-      </h2>
+      </Title>
 
       <p>
         This study requires recording of your screen
@@ -57,7 +57,7 @@ function ScreenRecordingPermission({
       <div>
         <Button onClick={onConfirm} disabled={!recording}>Proceed to Study</Button>
       </div>
-    </div>
+    </Box>
   );
 }
 
