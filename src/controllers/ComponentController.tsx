@@ -192,6 +192,8 @@ export function ComponentController() {
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 
+  if (studyConfig.uiConfig.recordScreen && isAnalysis) return <ScreenRecordingReplay />;
+
   return (
     <>
       {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
@@ -213,16 +215,14 @@ export function ComponentController() {
         }}
       >
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
-          {studyConfig.uiConfig.recordScreen && isAnalysis ? <ScreenRecordingReplay /> : (
-            <>
-              {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
-              {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-              {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-              {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-              {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
-              {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
-            </>
-          )}
+          <>
+            {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
+            {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
+            {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
+            {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
+            {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
+            {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
+          </>
         </Suspense>
       </Box>
 

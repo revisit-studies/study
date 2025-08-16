@@ -17,6 +17,7 @@ import {
   useFlatSequence,
   useStoreActions,
   useStoreDispatch,
+  useStoreSelector,
 } from '../../store/store';
 import { useCurrentIdentifier } from '../../routes/utils';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
@@ -37,6 +38,9 @@ export function ScreenRecordingReplay() {
   const stopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
+
+  const analysisIsPlaying = useStoreSelector((state) => state.analysisIsPlaying);
+  const provenanceJumpTime = useStoreSelector((state) => state.provenanceJumpTime);
 
   const [videoStartTime, setVideoStartTime] = useState(0);
   const [videoEndTime, setVideoEndTime] = useState(0);
@@ -63,6 +67,17 @@ export function ScreenRecordingReplay() {
   const identifier = useCurrentIdentifier();
 
   const flatSequence = useFlatSequence();
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = (videoStartTime + provenanceJumpTime) / 1000;
+      if (analysisIsPlaying) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [analysisIsPlaying, provenanceJumpTime, videoStartTime]);
 
   // get start time end time and stimulus duration
   useEffect(() => {

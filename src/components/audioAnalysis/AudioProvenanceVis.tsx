@@ -57,7 +57,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
 
   const {
-    saveAnalysisState, setAnalysisHasAudio, setAnalysisIsPlaying,
+    saveAnalysisState, setAnalysisHasAudio, setAnalysisIsPlaying, setProvenanceJumpTime,
   } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 
@@ -82,6 +82,8 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   const answers = useStoreSelector((state) => state.answers);
 
   const [playTime, setPlayTime] = useState<number>(0);
+
+  const currentTimeRef = useRef<number>(0); // time in seconds
 
   const waveSurferDiv = useRef(null);
 
@@ -186,6 +188,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   useEffect(() => {
     if (startTime) {
       setPlayTime(startTime + (replayTimestamp || 0));
+      currentTimeRef.current = replayTimestamp || 0;
     }
   }, [startTime, replayTimestamp]);
 
@@ -252,6 +255,9 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   const _setPlayTime = useThrottledCallback((n: number, percent: number | undefined) => {
     // if were past the end, pause the timer
     const audioEndTime = totalAudioLength * 1000 + startTime;
+
+    currentTimeRef.current = n - startTime;
+
     if (n > audioEndTime) {
       storeDispatch(setAnalysisIsPlaying(false));
       setPlayTime(n);
@@ -277,6 +283,14 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
       }
     }
   }, [wavesurfer, analysisIsPlaying, totalAudioLength, startTime, setPlayTime]);
+
+  useEffect(() => {
+    storeDispatch(setProvenanceJumpTime(currentTimeRef.current));
+  }, [analysisIsPlaying, setProvenanceJumpTime, storeDispatch]);
+
+  const handleClickUpdateTimer = useCallback(() => {
+    storeDispatch(setProvenanceJumpTime(currentTimeRef.current));
+  }, [setProvenanceJumpTime, storeDispatch]);
 
   const xScale = useMemo(() => {
     if (!answers[identifier]?.startTime || !answers[identifier]?.endTime) {
@@ -337,6 +351,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
             xScale={xScale}
             updateTimer={_setPlayTime}
             initialTime={replayTimestamp ? startTime + replayTimestamp : undefined}
+            onClickUpdateTimer={handleClickUpdateTimer}
           />
         ) : null}
       </Stack>

@@ -124,6 +124,7 @@ export async function studyStoreCreator(
     analysisHasAudio: false,
     analysisHasScreenRecording: false,
     analysisHasProvenance: false,
+    provenanceJumpTime: 0,
     modes,
     matrixAnswers: {},
     participantId,
@@ -221,6 +222,9 @@ export async function studyStoreCreator(
       },
       setAnalysisHasProvenance(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasProvenance = payload;
+      },
+      setProvenanceJumpTime(state, { payload }: PayloadAction<number>) {
+        state.provenanceJumpTime = payload;
       },
       setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string } | null>) => {
         if (action.payload) {

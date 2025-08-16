@@ -175,6 +175,7 @@ export interface StoreState {
   analysisIsPlaying: boolean;
   analysisHasAudio: boolean;
   analysisHasScreenRecording: boolean;
+  provenanceJumpTime: number;
   analysisHasProvenance: boolean;
   modes: Record<REVISIT_MODE, boolean>;
   matrixAnswers: Record<string, Record<string, string>>;
