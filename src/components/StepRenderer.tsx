@@ -44,6 +44,8 @@ export function StepRenderer() {
     recordVideoRef, recordScreen, recordAudio, screenRecording, screenWithAudioRecording, screenRecordingConfirmed, screenRecordingError, startScreenCapture, stopScreenCapture, confirmScreenRecording, screenRecordingStream,
   } = useScreenRecording();
 
+  const analysisHasScreenRecording = useStoreSelector((state) => state.analysisHasScreenRecording);
+
   useEffect(() => {
     if (screenRecording) {
       if (currentComponent === 'end') {
@@ -152,7 +154,7 @@ export function StepRenderer() {
   const { studyNavigatorEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
   // No default value for withSidebar since it's a required field in uiConfig
-  const sidebarOpen = useMemo(() => componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar, [componentConfig, studyConfig]);
+  const sidebarOpen = useMemo(() => (analysisHasScreenRecording ? false : (componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar)), [componentConfig, studyConfig, analysisHasScreenRecording]);
   const sidebarWidth = useMemo(() => componentConfig?.sidebarWidth ?? studyConfig.uiConfig.sidebarWidth ?? 300, [componentConfig, studyConfig]);
   const showTitleBar = useMemo(() => componentConfig.showTitleBar ?? studyConfig.uiConfig.showTitleBar ?? true, [componentConfig, studyConfig]);
 
@@ -206,10 +208,7 @@ export function StepRenderer() {
           ) : <Outlet />}
         </AppShell.Main>
         {isAnalysis && (
-          <>
-            {/* <ScreenRecordingReplay /> */}
-            <AnalysisFooter />
-          </>
+          <AnalysisFooter />
         )}
       </AppShell>
     </WindowEventsContext.Provider>
