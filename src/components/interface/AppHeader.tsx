@@ -119,17 +119,22 @@ export function AppHeader({
 
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
-            {screenRecording ? (
-              <Group ml="xl" gap={20} wrap="nowrap">
-                <Text c="red">Recording screen</Text>
-              </Group>
-            ) : null}
-            {isRecording || screenWithAudioRecording ? (
-              <Group ml="xl" gap={20} wrap="nowrap">
-                <Text color="red">Recording audio</Text>
-                <RecordingAudioWaveform />
-              </Group>
-            ) : null}
+            {(isRecording || screenWithAudioRecording || screenRecording) && (() => {
+              const recordingAudio = isRecording || screenWithAudioRecording;
+              const recordingScreen = screenRecording;
+
+              return (
+                <Group ml="xl" gap={20} wrap="nowrap">
+                  <Text c="red">
+                    Recording
+                    {recordingScreen && ' screen'}
+                    {recordingScreen && recordingAudio && ' and'}
+                    {recordingAudio && ' audio'}
+                  </Text>
+                  {recordingAudio && <RecordingAudioWaveform />}
+                </Group>
+              );
+            })()}
             {!dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button

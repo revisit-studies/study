@@ -22,7 +22,8 @@ function ScreenRecordingPermission({
     <Box p="md">
       <Title order={1} size="h2">
         Screen
-        {recordAudio && ' and Audio '}
+        {recordAudio && ' and Audio'}
+        {' '}
         Recording Permission
       </Title>
 
