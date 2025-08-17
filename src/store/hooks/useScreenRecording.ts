@@ -22,6 +22,16 @@ export function useScreenRecording() {
 
   const [pageTitle] = useState(document.title);
 
+  const stopScreenCapture = useCallback(() => {
+    const stream = recordVideoRef.current?.srcObject as MediaStream;
+    stream?.getTracks().forEach((track) => track.stop());
+    if (recordVideoRef.current) {
+      recordVideoRef.current.srcObject = null;
+    }
+    setScreenRecording(false);
+    setScreenWithAudioRecording(false);
+  }, []);
+
   const startScreenCapture = useCallback(() => {
     const captureFn = async () => {
       document.title = `RECORD THIS TAB: ${pageTitle}`;
@@ -47,6 +57,12 @@ export function useScreenRecording() {
           recordVideoRef.current.play();
         }
 
+        combinedStream.getTracks().forEach((track) => {
+          track.addEventListener('ended', () => {
+            stopScreenCapture();
+          });
+        });
+
         const mediaRecorder = new MediaRecorder(combinedStream);
         screenRecordingStream.current = mediaRecorder;
 
@@ -65,17 +81,7 @@ export function useScreenRecording() {
     if (recordScreen) {
       captureFn();
     }
-  }, [pageTitle, recordAudio, recordScreen, recordScreenFPS]);
-
-  const stopScreenCapture = useCallback(() => {
-    const stream = recordVideoRef.current?.srcObject as MediaStream;
-    stream?.getTracks().forEach((track) => track.stop());
-    if (recordVideoRef.current) {
-      recordVideoRef.current.srcObject = null;
-    }
-    setScreenRecording(false);
-    setScreenWithAudioRecording(false);
-  }, []);
+  }, [pageTitle, recordAudio, recordScreen, recordScreenFPS, stopScreenCapture]);
 
   const confirmScreenRecording = useCallback(() => {
     if (screenRecording) {
