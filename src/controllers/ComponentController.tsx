@@ -192,7 +192,7 @@ export function ComponentController() {
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 
-  if (studyConfig.uiConfig.recordScreen && isAnalysis) return <ScreenRecordingReplay />;
+  if (studyConfig.uiConfig.recordScreen && isAnalysis) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
 
   return (
     <>
