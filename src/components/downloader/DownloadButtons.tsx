@@ -1,7 +1,7 @@
 import {
   Button, Group, Tooltip,
 } from '@mantine/core';
-import { IconDatabaseExport, IconTableExport } from '@tabler/icons-react';
+import { IconDatabaseExport, IconFileExport, IconTableExport } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { DownloadTidy, download } from './DownloadTidy';
@@ -55,6 +55,17 @@ export function DownloadButtons({
             px={4}
           >
             <IconTableExport />
+          </Button>
+        </Tooltip>
+        <Tooltip label={`${tooltipText} audio`}>
+          <Button
+            variant="light"
+            disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
+            // TODO: Implement audio download
+            onClick={handleOpenTidy}
+            px={4}
+          >
+            <IconFileExport />
           </Button>
         </Tooltip>
       </Group>
