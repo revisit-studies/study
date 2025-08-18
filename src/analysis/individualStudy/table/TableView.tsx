@@ -6,9 +6,7 @@ import {
   RingProgress,
   Stack,
 } from '@mantine/core';
-import React, {
-  useCallback, useMemo, useState,
-} from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import {
   MantineReactTable, MRT_Cell as MrtCell, MRT_ColumnDef as MrtColumnDef, MRT_RowSelectionState as MrtRowSelectionState, useMantineReactTable,

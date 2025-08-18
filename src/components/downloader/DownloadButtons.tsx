@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { DownloadTidy, download } from './DownloadTidy';
 import { ParticipantData } from '../../storage/types';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 
 type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData[]>);
 
@@ -14,6 +15,7 @@ export function DownloadButtons({
 }: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null }) {
   const [openDownload, { open, close }] = useDisclosure(false);
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
+  const { storageEngine } = useStorageEngine();
 
   const fetchParticipants = async () => {
     const currParticipants = typeof visibleParticipants === 'function' ? await visibleParticipants() : visibleParticipants;
@@ -30,6 +32,30 @@ export function DownloadButtons({
     const currParticipants = await fetchParticipants();
     setParticipants(currParticipants);
     open();
+  };
+
+  const handleDownloadAudio = async () => {
+    const currParticipants = await fetchParticipants();
+    if (!storageEngine) return;
+
+    const namePrefix = fileName || studyId;
+    await Promise.all(currParticipants.map(async (participant) => {
+      const entries = Object.values(participant.answers)
+        .filter((ans) => ans.endTime > 0)
+        .sort((a, b) => a.startTime - b.startTime);
+      await Promise.all(entries.map(async (ans) => {
+        const identifier = `${ans.componentName}_${ans.trialOrder}`;
+        const audioUrl = await storageEngine.getAudioUrl(identifier, participant.participantId);
+        if (!audioUrl) return;
+        const blob = await (await fetch(audioUrl)).blob();
+        const url = URL.createObjectURL(blob);
+        Object.assign(document.createElement('a'), {
+          href: url,
+          download: `${namePrefix}_${participant.participantId}_${identifier}.webm`,
+        }).click();
+        URL.revokeObjectURL(url);
+      }));
+    }));
   };
 
   const tooltipText = typeof visibleParticipants !== 'function' ? `Download ${visibleParticipants.length} participants` : 'Download participants data';
@@ -61,8 +87,7 @@ export function DownloadButtons({
           <Button
             variant="light"
             disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
-            // TODO: Implement audio download
-            onClick={handleOpenTidy}
+            onClick={handleDownloadAudio}
             px={4}
           >
             <IconFileExport />
