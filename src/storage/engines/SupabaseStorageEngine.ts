@@ -359,6 +359,19 @@ export class SupabaseStorageEngine extends StorageEngine {
     return audio ? URL.createObjectURL(audio) : null;
   }
 
+  protected async _getTranscriptUrl(task: string, participantId?: string) {
+    await this.verifyStudyDatabase();
+    // If participantId is not provided, use the current participant id
+    const id = participantId || this.currentParticipantId;
+    if (!id) {
+      throw new Error('Participant not initialized');
+    }
+
+    // Get the transcript from the storage
+    const transcript = await this._getFromStorage(`/audio/${id}`, `${task}.wav_transcription.txt`);
+    return transcript ? URL.createObjectURL(transcript) : null;
+  }
+
   protected async _testingReset(studyId: string) {
     // Delete all rows with studyId matching the studyId
     const { error } = await this.supabase
