@@ -97,6 +97,9 @@ export abstract class StorageEngine {
 
   protected participantData: ParticipantData | undefined;
 
+  // Ids of assets (eg. audio/screen recording) being uploaded. Set to true when uploading, false when done.
+  protected uploadingAssetIds: {[key:string]: boolean} = {};
+
   constructor(engine: typeof this.engine, testing: boolean) {
     this.engine = engine;
     this.testing = testing;
@@ -650,6 +653,12 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
+    // Check for remaining assets uploads
+    const hasUploadsRemaining = Object.keys(this.uploadingAssetIds).some((uploadId) => this.uploadingAssetIds[uploadId]);
+    if (hasUploadsRemaining) {
+      return false;
+    }
+
     if (participantData.completed) {
       return true;
     }
@@ -715,6 +724,8 @@ export abstract class StorageEngine {
   ) {
     let debounceTimeout: NodeJS.Timeout | null = null;
 
+    this.uploadingAssetIds[`audio/${taskName}`] = true;
+
     const listener = async (data: BlobEvent) => {
       if (debounceTimeout) {
         return;
@@ -723,6 +734,8 @@ export abstract class StorageEngine {
       debounceTimeout = setTimeout(async () => {
         await this._pushToStorage(`audio/${this.currentParticipantId}`, taskName, data.data);
         await this._cacheStorageObject(`audio/${this.currentParticipantId}`, taskName);
+
+        this.uploadingAssetIds[`audio/${taskName}`] = false;
       }, 500);
     };
 
@@ -766,6 +779,8 @@ export abstract class StorageEngine {
   ) {
     let debounceTimeout: NodeJS.Timeout | null = null;
 
+    this.uploadingAssetIds[`screenRecording/${taskName}`] = true;
+
     const listener = async (data: BlobEvent) => {
       if (debounceTimeout) {
         return;
@@ -774,6 +789,8 @@ export abstract class StorageEngine {
       debounceTimeout = setTimeout(async () => {
         await this._pushToStorage(`screenRecording/${this.currentParticipantId}`, taskName, data.data);
         await this._cacheStorageObject(`screenRecording/${this.currentParticipantId}`, taskName);
+
+        this.uploadingAssetIds[`screenRecording/${taskName}`] = false;
       }, 500);
     };
 
