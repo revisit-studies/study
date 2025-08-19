@@ -58,8 +58,16 @@ export function DownloadButtons({
             const audioFileName = `${namePrefix}_${participant.participantId}_${identifier}.webm`;
             zip.file(audioFileName, blob);
           }
+
+          const transcriptUrl = await storageEngine.getTranscriptUrl(identifier, participant.participantId);
+          if (transcriptUrl) {
+            const transcriptResponse = await fetch(transcriptUrl);
+            const transcriptBlob = await transcriptResponse.blob();
+            const transcriptFileName = `${namePrefix}_${participant.participantId}_${identifier}_transcription.txt`;
+            zip.file(transcriptFileName, transcriptBlob);
+          }
         } catch (error) {
-          console.warn(`Failed to fetch audio for ${identifier}:`, error);
+          console.warn(`Failed to fetch files for ${identifier}:`, error);
         }
       });
     });
@@ -70,7 +78,7 @@ export function DownloadButtons({
     const url = URL.createObjectURL(zipBlob);
     Object.assign(document.createElement('a'), {
       href: url,
-      download: `${namePrefix}_audio.zip`,
+      download: `${namePrefix}_audio_transcript.zip`,
     }).click();
     URL.revokeObjectURL(url);
   };
@@ -100,7 +108,7 @@ export function DownloadButtons({
             <IconTableExport />
           </Button>
         </Tooltip>
-        <Tooltip label={`${tooltipText} audio files as ZIP`}>
+        <Tooltip label={`${tooltipText} audio & transcripts as ZIP`}>
           <Button
             variant="light"
             disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}

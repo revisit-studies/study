@@ -96,6 +96,20 @@ export function AnalysisFooter() {
 
       URL.revokeObjectURL(url);
     }
+
+    const transcriptUrl = await storageEngine.getTranscriptUrl(identifier, participantId);
+
+    if (transcriptUrl) {
+      const transcriptBlob = await (await fetch(transcriptUrl)).blob();
+      const transcriptBlobUrl = URL.createObjectURL(transcriptBlob);
+
+      Object.assign(document.createElement('a'), {
+        href: transcriptBlobUrl,
+        download: `${participantId}_${identifier}_transcription.txt`,
+      }).click();
+
+      URL.revokeObjectURL(transcriptBlobUrl);
+    }
   };
 
   return (
