@@ -11,7 +11,7 @@ type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData
 
 export function DownloadButtons({
   visibleParticipants, studyId, gap, fileName,
-}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string }) {
+}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null }) {
   const [openDownload, { open, close }] = useDisclosure(false);
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
 
@@ -32,10 +32,12 @@ export function DownloadButtons({
     open();
   };
 
+  const tooltipText = typeof visibleParticipants !== 'function' ? `Download ${visibleParticipants.length} participants` : 'Download participants data';
+
   return (
     <>
       <Group style={{ gap }}>
-        <Tooltip label="Download all participants data as JSON">
+        <Tooltip label={`${tooltipText} as JSON`}>
           <Button
             variant="light"
             disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
@@ -45,7 +47,7 @@ export function DownloadButtons({
             <IconDatabaseExport />
           </Button>
         </Tooltip>
-        <Tooltip label="Download all participants data as a tidy CSV">
+        <Tooltip label={`${tooltipText} as tidy CSV`}>
           <Button
             variant="light"
             disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}

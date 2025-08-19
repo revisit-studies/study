@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
         "title": "Test LIKERT",
         "version": "pilot",
@@ -19,7 +19,7 @@
         "logoPath": "revisitAssets/revisitLogoSquare.svg",
         "withProgressBar": true,
         "autoDownloadStudy": false,
-        "sidebar": true,
+        "withSidebar": true,
         "urlParticipantIdParam": "PROLIFIC_PID",
         "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [yourProlificLink](yourProlificLink)"
     },

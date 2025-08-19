@@ -51,7 +51,7 @@ export function ResolutionWarning() {
               if (storageEngine && !isRejected) {
                 setIsRejected(true);
                 setIsTimedOut(true);
-                storageEngine.rejectCurrentParticipant(studyId, 'Screen resolution too small')
+                storageEngine.rejectCurrentParticipant('Screen resolution too small')
                   .catch(() => {
                     console.error('Failed to reject participant who failed training');
                   });
@@ -67,13 +67,13 @@ export function ResolutionWarning() {
 
       if (needsResize) {
         setShowWarning(true);
-        // Start countdown if one isn't already running
-        if (countdownIntervalRef.current === null) {
-          startCountdown();
-        }
+        startCountdown();
       } else {
         setShowWarning(false);
-        startCountdown();
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
+        }
       }
     };
 

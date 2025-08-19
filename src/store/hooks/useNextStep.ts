@@ -42,6 +42,11 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
   return foundConfigComponentConfig.correctAnswer.every((correctAnswerEntry) => answers[correctAnswerEntry.id] === correctAnswerEntry.answer);
 }
 
+export function checkAnswerCorrect(answer: Record<string, string | number | boolean | string[]>, correctAnswer: Answer[]) {
+  // Check that the response is matches the correct answer
+  return correctAnswer.every((correctAnswerEntry) => answer[correctAnswerEntry.id] === correctAnswerEntry.answer);
+}
+
 export function useNextStep() {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();
@@ -85,13 +90,13 @@ export function useNextStep() {
     }
     // Get answer from across the 3 response blocks and the provenance graph
     const trialValidationCopy = structuredClone(trialValidation[identifier]);
-    const answer = Object.values(trialValidationCopy).reduce((acc, curr) => {
+    const answer = trialValidationCopy ? Object.values(trialValidationCopy).reduce((acc, curr) => {
       if (Object.hasOwn(curr, 'values')) {
         return { ...acc, ...(curr as ValidationStatus).values };
       }
       return acc;
-    }, {}) as StoredAnswer['answer'];
-    const { provenanceGraph } = trialValidationCopy;
+    }, {}) as StoredAnswer['answer'] : {};
+    const { provenanceGraph } = trialValidationCopy || {};
     const endTime = Date.now();
 
     const { componentName } = storedAnswer;

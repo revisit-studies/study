@@ -1,424 +1,162 @@
 import localforage from 'localforage';
-import { v4 as uuidv4 } from 'uuid';
-import { REVISIT_MODE, StorageEngine, UserWrapped } from './StorageEngine';
-import { ParticipantData } from '../types';
-import { ParticipantMetadata, Sequence } from '../../store/types';
-import { hash } from './utils';
-import { StudyConfig } from '../../parser/types';
+import {
+  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType,
+} from './types';
 
 export class LocalStorageEngine extends StorageEngine {
-  private studyDatabase: LocalForage | undefined = undefined;
+  private studyDatabase = localforage.createInstance({
+    name: 'revisit',
+  });
 
-  private studyId: string | undefined = undefined;
+  constructor(testing: boolean = false) {
+    super('localStorage', testing);
+  }
 
-  constructor() {
-    super('localStorage');
+  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
+    const storageKey = `${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`;
+    const storedObject = await this.studyDatabase.getItem<StorageObject<T>>(storageKey);
+    return storedObject;
+  }
+
+  protected async _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>) {
+    await this.verifyStudyDatabase();
+    const storageKey = `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`;
+    await this.studyDatabase.setItem(storageKey, objectToUpload);
+  }
+
+  protected async _deleteFromStorage<T extends StorageObjectType>(prefix: string, type: T) {
+    await this.verifyStudyDatabase();
+    const storageKey = `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`;
+    await this.studyDatabase.removeItem(storageKey);
+  }
+
+  protected async _cacheStorageObject() {
+    // Caching is not applicable in a local storage environment
+  }
+
+  protected async _verifyStudyDatabase() {
+    if (!this.studyDatabase || !this.studyId) {
+      throw new Error('Study database not initialized');
+    }
+  }
+
+  protected async _getCurrentConfigHash() {
+    await this.verifyStudyDatabase();
+    const key = `${this.collectionPrefix}${this.studyId}/configHash`;
+    return await this.studyDatabase.getItem<string>(key) || null;
+  }
+
+  protected async _setCurrentConfigHash(configHash: string) {
+    await this.verifyStudyDatabase();
+    const key = `${this.collectionPrefix}${this.studyId}/configHash`;
+    await this.studyDatabase.setItem(key, configHash);
+  }
+
+  protected async _getAllSequenceAssignments(studyId: string) {
+    const sequenceAssignmentPath = `${this.collectionPrefix}${studyId}/sequenceAssignment`;
+    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath);
+    if (!sequenceAssignments) {
+      return [];
+    }
+    return Object.values(sequenceAssignments).sort((a, b) => a.timestamp - b.timestamp);
+  }
+
+  protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
+    await this.verifyStudyDatabase();
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+    sequenceAssignments[participantId] = sequenceAssignment;
+    await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+  }
+
+  protected async _completeCurrentParticipantRealtime() {
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+
+    if (sequenceAssignments[this.currentParticipantId]) {
+      sequenceAssignments[this.currentParticipantId] = {
+        ...sequenceAssignments[this.currentParticipantId],
+        completed: new Date().getTime(),
+      };
+    } else {
+      throw new Error('Participant sequence assignment not found');
+    }
+    await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+  }
+
+  protected async _rejectParticipantRealtime(participantId: string) {
+    await this.verifyStudyDatabase();
+    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+
+    const participantSequenceAssignment = sequenceAssignments[participantId];
+
+    // If this was a claimed sequence assignment, we need to mark it as available again
+    // Find the sequence assignment that was claimed
+    const claimedAssignmentData = Object.values(sequenceAssignments).find((assignment) => assignment.claimed && assignment.timestamp === participantSequenceAssignment.timestamp);
+    if (participantSequenceAssignment && claimedAssignmentData) {
+      // Mark the claimed assignment as available again
+      claimedAssignmentData.claimed = false;
+      claimedAssignmentData.rejected = true; // Mark it as rejected
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+
+      // Delete the participant's sequence assignment
+      // delete sequenceAssignments[participantId];
+      sequenceAssignments[participantId] = {
+        ...participantSequenceAssignment,
+        timestamp: new Date().getTime(),
+        rejected: true,
+      };
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+      return;
+    }
+
+    // Handle the original participant's sequence assignment
+    if (participantSequenceAssignment) {
+      participantSequenceAssignment.rejected = true;
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+    }
+  }
+
+  protected async _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
+    await this.verifyStudyDatabase();
+    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+    if (sequenceAssignments[participantId]) {
+      sequenceAssignments[participantId] = {
+        ...sequenceAssignment,
+        claimed: true,
+      };
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+    } else {
+      throw new Error(`Sequence assignment for participant ${participantId} not found`);
+    }
+  }
+
+  async initializeStudyDb(studyId: string) {
+    // Create or retrieve database for study
+    this.studyId = studyId;
   }
 
   async connect() {
     this.connected = true;
   }
 
-  async initializeStudyDb(studyId: string, config: StudyConfig) {
-    // Create or retrieve database for study
-    this.studyId = studyId;
-    this.studyDatabase = await localforage.createInstance({
-      name: studyId,
-    });
-    const currentConfigHash = await this.getCurrentConfigHash();
-    const participantConfigHash = await hash(JSON.stringify(config));
-
-    // Clear sequence array and current participant data if the config has changed
-    if (currentConfigHash && currentConfigHash !== participantConfigHash) {
-      await this.studyDatabase.removeItem('sequenceArray');
-      await this.clearCurrentParticipantId();
-    }
-
-    this.studyDatabase.setItem('currentConfigHash', participantConfigHash);
-
-    // Add the config to the database
-    const allConfigs = await this.studyDatabase.getItem('configs') as object;
-    await this.studyDatabase.setItem('configs', {
-      ...allConfigs,
-      [participantConfigHash]: config,
-    });
-  }
-
-  async getAllParticipantNames() {
-    const allPartsData = await this.getAllParticipantsData();
-
-    return allPartsData.map((part) => part.participantId);
-  }
-
-  getAudio(taskList: string, participantId?: string | undefined) {
-    console.warn('not yet implemented', participantId);
-    return Promise.resolve(undefined);
-  }
-
-  async saveAudio(audioStream: MediaRecorder): Promise<void> {
-    console.warn('not yet implemented', audioStream);
-    return Promise.resolve();
-  }
-
-  async initializeParticipantSession(studyId: string, searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    // Ensure participantId
-    await this.getCurrentParticipantId(urlParticipantId);
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
-
-    // Check if the participant has already been initialized
-    const participant: ParticipantData | null = await this.studyDatabase.getItem(this.currentParticipantId);
-    if (participant) {
-      // Participant already initialized
-      return participant;
-    }
-
-    // Get modes
-    const modes = await this.getModes(studyId);
-
-    // Initialize participant
-    const participantConfigHash = await hash(JSON.stringify(config));
-    const { currentRow, creationIndex } = await this.getSequence();
-    const participantData: ParticipantData = {
-      participantId: this.currentParticipantId,
-      participantConfigHash,
-      sequence: currentRow,
-      participantIndex: creationIndex,
-      answers: {},
-      searchParams,
-      metadata,
-      completed: false,
-      rejected: false,
-      participantTags: [],
-    };
-
-    if (modes.dataCollectionEnabled) {
-      await this.studyDatabase?.setItem(this.currentParticipantId, participantData);
-    }
-
-    return participantData;
-  }
-
-  async getCurrentConfigHash() {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    return await this.studyDatabase.getItem('currentConfigHash') as string;
-  }
-
-  async getAllConfigsFromHash(hashes: string[], studyId: string): Promise<Record<string, StudyConfig>> {
-    const currStudyDatabase = localforage.createInstance({
-      name: studyId,
-    });
-
-    const allConfigs: Record<string, StudyConfig> = await currStudyDatabase.getItem('configs') || {};
-
-    return allConfigs;
-  }
-
-  async getCurrentParticipantId(urlParticipantId?: string) {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    // Check the database for a participantId
-    const currentParticipantId = await this.studyDatabase.getItem('currentParticipant');
-
-    // Prioritize urlParticipantId, then currentParticipantId, then generate a new participantId
-    if (urlParticipantId) {
-      this.currentParticipantId = urlParticipantId;
-      await this.studyDatabase.setItem('currentParticipant', urlParticipantId);
-      return urlParticipantId;
-    } if (currentParticipantId) {
-      this.currentParticipantId = currentParticipantId as string;
-      return currentParticipantId as string;
-    }
-    const newParticipantId = uuidv4();
-    await this.studyDatabase.setItem('currentParticipant', newParticipantId);
-    this.currentParticipantId = newParticipantId;
-    return newParticipantId;
-  }
-
-  async clearCurrentParticipantId() {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    await this.studyDatabase.removeItem('currentParticipant');
-  }
-
-  async saveAnswers(answers: ParticipantData['answers']) {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
-
-    // Get participant data
-    const participant: ParticipantData | null = await this.studyDatabase.getItem(this.currentParticipantId);
-    if (!participant) {
-      throw new Error('Participant not initialized');
-    }
-
-    // Save answer
-    participant.answers = answers;
-    await this.studyDatabase.setItem(this.currentParticipantId, participant);
-  }
-
-  async setSequenceArray(sequenceArray: Sequence[]) {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    this.studyDatabase.setItem('sequenceArray', sequenceArray);
-  }
-
-  async getSequence() {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    // Get the latin square
-    const sequenceArray: Sequence[] | null = await this.studyDatabase.getItem('sequenceArray');
-    if (!sequenceArray) {
-      throw new Error('Latin square not initialized');
-    }
-
-    // Get modes
-    if (!this.studyId) {
-      throw new Error('Study ID not initialized');
-    }
-    const modes = await this.getModes(this.studyId);
-
-    // Get the current row or random if data collection is disabled
-    const currentRow = modes.dataCollectionEnabled
-      ? sequenceArray.pop()
-      : sequenceArray[Math.floor(Math.random() * sequenceArray.length - 1)];
-    if (!currentRow) {
-      throw new Error('Latin square is empty');
-    }
-
-    // Update the latin square
-    if (modes.dataCollectionEnabled) {
-      await this.studyDatabase.setItem('sequenceArray', sequenceArray);
-    }
-
-    return { currentRow, creationIndex: 1000 - sequenceArray.length };
-  }
-
-  async getSequenceArray() {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    return await this.studyDatabase.getItem('sequenceArray') as Sequence[] | null;
-  }
-
-  async getAllParticipantsData() {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    const returnArray: ParticipantData[] = [];
-
-    await this.studyDatabase.iterate((value, key) => {
-      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash' && key !== 'modes') {
-        returnArray.push(value as ParticipantData);
-      }
-    });
-
-    return returnArray;
-  }
-
-  async getAllParticipantsDataByStudy(studyId: string) {
-    const currStudyDatabase = localforage.createInstance({
-      name: studyId,
-    });
-
-    const returnArray: ParticipantData[] = [];
-
-    await currStudyDatabase.iterate((value, key) => {
-      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash' && key !== 'modes') {
-        returnArray.push(value as ParticipantData);
-      }
-    });
-
-    return returnArray;
-  }
-
-  async getParticipantData(participantIdInput?: string) {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    const participantId = participantIdInput || await this.studyDatabase.getItem('currentParticipant') as string | null;
-    if (!participantId) {
-      return null;
-    }
-
-    return await this.studyDatabase.getItem(participantId) as ParticipantData | null;
-  }
-
-  async getParticipantTags(): Promise<string[]> {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    const participantData = await this.getParticipantData();
-    if (!participantData) {
-      throw new Error('Participant not initialized');
-    }
-
-    return participantData.participantTags;
-  }
-
-  async addParticipantTags(tags: string[]): Promise<void> {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    const participantData = await this.getParticipantData();
-    if (!participantData) {
-      throw new Error('Participant not initialized');
-    }
-
-    participantData.participantTags = [...new Set([...participantData.participantTags, ...tags])];
-    await this.studyDatabase.setItem(this.currentParticipantId as string, participantData);
-  }
-
-  async removeParticipantTags(tags: string[]): Promise<void> {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    const participantData = await this.getParticipantData();
-    if (!participantData) {
-      throw new Error('Participant not initialized');
-    }
-
-    participantData.participantTags = participantData.participantTags.filter((tag) => !tags.includes(tag));
-    await this.studyDatabase.setItem(this.currentParticipantId as string, participantData);
-  }
-
-  async nextParticipant() {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    // Generate a new participant id
-    const newParticipantId = uuidv4();
-
-    // Set current participant id
-    await this.studyDatabase.setItem('currentParticipant', newParticipantId);
-  }
-
-  async verifyCompletion() {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    // Get the participantData
-    const participantData = await this.getParticipantData();
-    if (!participantData) {
-      throw new Error('Participant not initialized');
-    }
-
-    if (participantData.completed) {
-      return true;
-    }
-
-    // Set the participant as completed
-    participantData.completed = true;
-
-    // Save the participantData
-    await this.studyDatabase.setItem(this.currentParticipantId as string, participantData);
-
-    return true;
-  }
-
-  async validateUser(_: UserWrapped | null) {
-    return true;
-  }
-
-  async rejectParticipant(studyId: string, participantId: string, reason: string) {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    // Get the user from storage
-    const participant = await this.studyDatabase.getItem(participantId) as ParticipantData | null;
-
-    if (!participant) {
-      throw new Error('Participant not found');
-    }
-
-    // If the user is already rejected, return
-    if (participant.rejected) {
-      return;
-    }
-
-    // Set the user as rejected
-    participant.rejected = {
-      reason,
-      timestamp: new Date().getTime(),
-    };
-
-    // Return the user's sequence to the pool
-    const sequenceArray = await this.studyDatabase.getItem('sequenceArray') as Sequence[] | null;
-    if (sequenceArray) {
-      sequenceArray.unshift(participant.sequence);
-      this.setSequenceArray(sequenceArray);
-    }
-
-    // Save the user
-    await this.studyDatabase.setItem(participantId, participant);
-  }
-
-  async rejectCurrentParticipant(studyId: string, reason: string) {
-    if (!this._verifyStudyDatabase(this.studyDatabase)) {
-      throw new Error('Study database not initialized');
-    }
-
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
-
-    await this.rejectParticipant(studyId, this.currentParticipantId, reason);
-  }
-
-  async setMode(studyId: string, key: REVISIT_MODE, value: boolean) {
-    // Create or retrieve database for study
-    this.studyDatabase = await localforage.createInstance({
-      name: studyId,
-    });
-
-    // Get the modes
-    const modes = await this.studyDatabase.getItem('modes') as Record<REVISIT_MODE, boolean> | null;
-    if (!modes) {
-      throw new Error('Modes not initialized');
-    }
-
-    // Set the mode
-    modes[key] = value;
-    this.studyDatabase.setItem('modes', modes);
-  }
-
   async getModes(studyId: string) {
-    // Create or retrieve database for study
-    this.studyDatabase = await localforage.createInstance({
-      name: studyId,
-    });
+    const key = `${this.collectionPrefix}${studyId}/modes`;
 
     // Get the modes
-    const modes = await this.studyDatabase.getItem('modes') as Record<REVISIT_MODE, boolean> | null;
+    const modes = await this.studyDatabase.getItem(key) as Record<REVISIT_MODE, boolean> | null;
     if (modes) {
       return modes;
     }
@@ -429,30 +167,120 @@ export class LocalStorageEngine extends StorageEngine {
       studyNavigatorEnabled: true,
       analyticsInterfacePubliclyAccessible: true,
     };
-    this.studyDatabase.setItem('modes', defaults);
+    this.studyDatabase.setItem(key, defaults);
     return defaults;
   }
 
-  async getParticipantsStatusCounts(studyId: string) {
-    const participants = await this.getAllParticipantsDataByStudy(studyId);
+  async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
+    const key = `${this.collectionPrefix}${studyId}/modes`;
 
-    const completed = participants.filter((p) => p.completed && !p.rejected).length;
-    const rejected = participants.filter((p) => p.rejected).length;
-    const inProgress = participants.filter((p) => !p.completed && !p.rejected).length;
+    // Get the modes
+    const modes = await this.studyDatabase.getItem(key) as Record<REVISIT_MODE, boolean> | null;
+    if (!modes) {
+      throw new Error('Modes not initialized');
+    }
 
-    const minTime = Math.min(...participants.map((p) => Math.min(...Object.values(p.answers).map((s) => s.startTime))));
-    const maxTime = Math.max(...participants.map((p) => Math.max(...Object.values(p.answers).map((s) => s.endTime))));
-
-    return {
-      completed,
-      rejected,
-      inProgress,
-      minTime: minTime === Infinity ? null : minTime,
-      maxTime: maxTime === -Infinity ? null : maxTime,
-    };
+    // Set the mode
+    modes[mode] = value;
+    this.studyDatabase.setItem(key, modes);
   }
 
-  private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage {
-    return db !== undefined;
+  protected async _getAudioUrl(task: string, participantId?: string) {
+    await this.verifyStudyDatabase();
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+    const audioBlob = await this._getFromStorage(`audio/${participantId || this.currentParticipantId}`, task);
+    if (!audioBlob) {
+      throw new Error(`Audio for task ${task} and participant ${participantId || this.currentParticipantId} not found`);
+    }
+    return URL.createObjectURL(audioBlob);
+  }
+
+  protected async _testingReset(studyId: string) {
+    if (!studyId) {
+      throw new Error('Study ID is required for reset');
+    }
+    // Clear the entire study database
+    const keys = await this.studyDatabase.keys();
+    const studyKeys = keys.filter((key) => key.startsWith(`${this.collectionPrefix}${studyId}/`));
+    await Promise.all(studyKeys.map((key) => this.studyDatabase.removeItem(key)));
+
+    await super.__testingReset();
+  }
+
+  async getSnapshots(studyId: string) {
+    const snapshotsKey = `${this.collectionPrefix}${studyId}/snapshots`;
+    const snapshotsData = await this.studyDatabase.getItem<SnapshotDocContent>(snapshotsKey);
+    return snapshotsData || {};
+  }
+
+  protected async _directoryExists(path: string) {
+    const keys = await this.studyDatabase.keys();
+    return keys.some((key) => key.startsWith(path));
+  }
+
+  protected async _copyDirectory(source: string, target: string) {
+    const keys = await this.studyDatabase.keys();
+    const sourceKeys = keys.filter((key) => key.startsWith(source));
+    const copyPromises = sourceKeys.map(async (key) => {
+      if (key.endsWith('/snapshots') || key.endsWith('modes') || key.endsWith('configHash') || key.endsWith('currentParticipantId')) {
+        // Skip copying the snapshots file
+        return;
+      }
+      const value = await this.studyDatabase.getItem(key);
+      const newKey = key.replace(source, target);
+      await this.studyDatabase.setItem(newKey, value);
+    });
+    await Promise.all(copyPromises);
+  }
+
+  protected async _deleteDirectory(path: string) {
+    const keys = await this.studyDatabase.keys();
+    const targetKeys = keys.filter((key) => key.startsWith(path) && !key.includes('snapshots'));
+    const deletePromises = targetKeys.map((key) => this.studyDatabase.removeItem(key));
+    await Promise.all(deletePromises);
+  }
+
+  protected async _copyRealtimeData(source: string, target: string) {
+    // Since the logic is the same, we'll use the same method as copying a directory
+    await this._copyDirectory(source, target);
+  }
+
+  protected async _deleteRealtimeData(path: string) {
+    // Since the logic is the same, we'll use the same method as deleting a directory
+    await this._deleteDirectory(path);
+  }
+
+  protected async _addDirectoryNameToSnapshots(directoryName: string, studyId: string) {
+    await this.verifyStudyDatabase();
+    const metadataKey = `${this.collectionPrefix}${studyId}/snapshots`;
+    const metadata = await this.studyDatabase.getItem<SnapshotDocContent>(metadataKey) || {};
+    if (!metadata[directoryName]) {
+      metadata[directoryName] = { name: directoryName };
+      await this.studyDatabase.setItem(metadataKey, metadata);
+    }
+  }
+
+  protected async _removeDirectoryNameFromSnapshots(directoryName: string, studyId: string) {
+    await this.verifyStudyDatabase();
+    const snapshotsKey = `${this.collectionPrefix}${studyId}/snapshots`;
+    const snapshots = await this.studyDatabase.getItem<SnapshotDocContent>(snapshotsKey) || {};
+    if (snapshots[directoryName]) {
+      delete snapshots[directoryName];
+      await this.studyDatabase.setItem(snapshotsKey, snapshots);
+    }
+  }
+
+  protected async _changeDirectoryNameInSnapshots(key: string, newName: string, studyId: string) {
+    await this.verifyStudyDatabase();
+    const snapshotsKey = `${this.collectionPrefix}${studyId}/snapshots`;
+    const snapshots = await this.studyDatabase.getItem<SnapshotDocContent>(snapshotsKey) || {};
+    if (snapshots[key]) {
+      snapshots[key] = { name: newName };
+      await this.studyDatabase.setItem(snapshotsKey, snapshots);
+    } else {
+      throw new Error(`Snapshot with name ${key} does not exist`);
+    }
   }
 }

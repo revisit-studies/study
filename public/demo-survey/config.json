@@ -20,7 +20,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true,
+    "withSidebar": true,
     "enumerateQuestions": true
   },
   "components": {
@@ -193,6 +193,7 @@
           "location": "aboveStimulus",
           "type": "slider",
           "startingValue": 50,
+          "spacing": 50,
           "options": [
             {
               "label": "Bad",

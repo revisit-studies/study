@@ -2,7 +2,7 @@ import {
   Suspense, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { useSearchParams } from 'react-router';
-import { Center, Loader } from '@mantine/core';
+import { Box, Center, Loader } from '@mantine/core';
 import { ResponseBlock } from '../components/response/ResponseBlock';
 import { IframeController } from './IframeController';
 import { ImageController } from './ImageController';
@@ -27,6 +27,7 @@ import { VegaController, VegaProvState } from './VegaController';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { VideoController } from './VideoController';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import { useFetchStylesheet } from '../utils/fetchStylesheet';
 
 // current active stimuli presented to the user
 export function ComponentController() {
@@ -71,7 +72,7 @@ export function ComponentController() {
   }, [setAlertModal, storageEngine, storeDispatch]);
 
   useEffect(() => {
-    if (!studyConfig || !studyConfig.uiConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || (status && status.endTime > 0) || isAnalysis) {
+    if (!studyConfig || !studyConfig.uiConfig.recordAudio || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -152,6 +153,8 @@ export function ComponentController() {
     return toReturn as unknown as IndividualComponent;
   }, [answers, currentComponent, currentIdentifier, stepConfig, studyConfig]);
 
+  useFetchStylesheet(currentConfig?.stylesheetPath);
+
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
   if (currentComponent === 'end') {
@@ -183,10 +186,9 @@ export function ComponentController() {
       </Center>
     );
   }
-
-  const instruction = (currentConfig.instruction || '');
-  const { instructionLocation } = currentConfig;
-  const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
+  const instruction = currentConfig?.instruction || '';
+  const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
+  const instructionInSideBar = instructionLocation === 'sidebar';
 
   return (
     <>
@@ -197,16 +199,26 @@ export function ComponentController() {
         config={currentConfig}
         location="aboveStimulus"
       />
-
-      <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
-        {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
-        {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-        {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-        {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
-        {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
-
-      </Suspense>
+      <Box
+        id={currentComponent}
+        className={currentConfig.type}
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexGrow: currentConfig.type === 'website' ? 1 : undefined,
+          flexDirection: 'column',
+          ...currentConfig.style,
+        }}
+      >
+        <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
+          {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
+          {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
+          {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
+          {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
+          {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
+          {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
+        </Suspense>
+      </Box>
 
       {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
       <ResponseBlock

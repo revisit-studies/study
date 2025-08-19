@@ -3,7 +3,7 @@ import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import type {
   Answer, ConfigResponseBlockLocation, ParticipantData, ResponseBlockLocation, SkipConditions, StringOption, StudyConfig, ValueOf,
 } from '../parser/types';
-import { type REVISIT_MODE } from '../storage/engines/StorageEngine';
+import { type REVISIT_MODE } from '../storage/engines/types';
 
 /**
  * The ParticipantMetadata object contains metadata about the participant. This includes the user agent, resolution, language, and IP address. This object is used to store information about the participant that is not directly related to the study itself.

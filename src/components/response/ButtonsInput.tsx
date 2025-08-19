@@ -1,12 +1,12 @@
 import {
-  Box, Flex, FocusTrap, Radio, Text,
+  Flex, FocusTrap, Radio, Text,
 } from '@mantine/core';
 import { useMemo } from 'react';
 import { ButtonsResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import classes from './css/ButtonsInput.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
+import { InputLabel } from './InputLabel';
 
 export function ButtonsInput({
   response,
@@ -39,14 +39,7 @@ export function ButtonsInput({
     <FocusTrap>
       <Radio.Group
         name={`radioInput${response.id}`}
-        label={(
-          <Flex direction="row" wrap="nowrap" gap={4}>
-            {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
-            <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
-              <ReactMarkdownWrapper text={prompt} required={required} />
-            </Box>
-          </Flex>
-      )}
+        label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
         description={secondaryText}
         key={response.id}
         {...answer}
