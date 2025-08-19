@@ -4,6 +4,7 @@ import {
 import { IconDatabaseExport, IconFileExport, IconTableExport } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
+import JSZip from 'jszip';
 import { DownloadTidy, download } from './DownloadTidy';
 import { ParticipantData } from '../../storage/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -39,23 +40,39 @@ export function DownloadButtons({
     if (!storageEngine) return;
 
     const namePrefix = fileName || studyId;
-    await Promise.all(currParticipants.map(async (participant) => {
+    const zip = new JSZip();
+
+    const audioPromises = currParticipants.flatMap((participant) => {
       const entries = Object.values(participant.answers)
         .filter((ans) => ans.endTime > 0)
         .sort((a, b) => a.startTime - b.startTime);
-      await Promise.all(entries.map(async (ans) => {
+
+      return entries.map(async (ans) => {
         const identifier = `${ans.componentName}_${ans.trialOrder}`;
-        const audioUrl = await storageEngine.getAudioUrl(identifier, participant.participantId);
-        if (!audioUrl) return;
-        const blob = await (await fetch(audioUrl)).blob();
-        const url = URL.createObjectURL(blob);
-        Object.assign(document.createElement('a'), {
-          href: url,
-          download: `${namePrefix}_${participant.participantId}_${identifier}.webm`,
-        }).click();
-        URL.revokeObjectURL(url);
-      }));
-    }));
+
+        try {
+          const audioUrl = await storageEngine.getAudioUrl(identifier, participant.participantId);
+          if (audioUrl) {
+            const response = await fetch(audioUrl);
+            const blob = await response.blob();
+            const audioFileName = `${namePrefix}_${participant.participantId}_${identifier}.webm`;
+            zip.file(audioFileName, blob);
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch audio for ${identifier}:`, error);
+        }
+      });
+    });
+
+    await Promise.all(audioPromises);
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(zipBlob);
+    Object.assign(document.createElement('a'), {
+      href: url,
+      download: `${namePrefix}_audio.zip`,
+    }).click();
+    URL.revokeObjectURL(url);
   };
 
   const tooltipText = typeof visibleParticipants !== 'function' ? `Download ${visibleParticipants.length} participants` : 'Download participants data';
@@ -83,7 +100,7 @@ export function DownloadButtons({
             <IconTableExport />
           </Button>
         </Tooltip>
-        <Tooltip label={`${tooltipText} audio`}>
+        <Tooltip label={`${tooltipText} audio files as ZIP`}>
           <Button
             variant="light"
             disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}

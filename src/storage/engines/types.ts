@@ -173,6 +173,9 @@ export abstract class StorageEngine {
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
 
+  // Gets the transcript URL for the given task and participantId. This method is used to fetch the transcript file from the storage engine.
+  protected abstract _getTranscriptUrl(task: string, participantId?: string): Promise<string | null>;
+
   // Resets the entire study database for testing purposes. This is used to reset the study database to a clean state for testing.
   protected abstract _testingReset(studyId: string): Promise<void>;
 
@@ -711,6 +714,18 @@ export abstract class StorageEngine {
     participantId: string,
   ) {
     const url = await this._getAudioUrl(task, participantId);
+    if (!url) {
+      return null;
+    }
+    return url;
+  }
+
+  // Gets the transcript download URL
+  async getTranscriptUrl(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getTranscriptUrl(task, participantId);
     if (!url) {
       return null;
     }
