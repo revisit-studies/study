@@ -56,7 +56,7 @@ export function AnalysisFooter() {
   const { user } = useAuth();
 
   const { value: allParticipants } = useAsync(getAllParticipantsNames, [storageEngine]);
-  const { value: currentParticipantData } = useAsync(getCurrentParticipantData, [storageEngine, participantId, studyId]);
+  const { value: currentParticipantData, execute: refreshCurrentParticipantData } = useAsync(getCurrentParticipantData, [storageEngine, participantId, studyId]);
 
   const rejectParticipant = useCallback(async (rejectParticipantId: string, reason: string) => {
     if (storageEngine && studyId) {
@@ -76,7 +76,8 @@ export function AnalysisFooter() {
     setModalRejectParticipantsOpened(false);
     await rejectParticipant(participantId || '', rejectParticipantsMessage);
     setRejectParticipantsMessage('');
-  }, [rejectParticipant, rejectParticipantsMessage, participantId]);
+    refreshCurrentParticipantData(storageEngine, participantId, studyId);
+  }, [rejectParticipant, rejectParticipantsMessage, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
 
   const [nextParticipantNameAndIndex, prevParticipantNameAndIndex]: [[string, number], [string, number]] = useMemo(() => {
     if (allParticipants && participantId && currentComponent) {
