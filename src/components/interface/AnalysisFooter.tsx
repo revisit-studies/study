@@ -5,7 +5,7 @@ import {
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMemo, useState, useCallback } from 'react';
 import {
-  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser, IconX,
+  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser,
 } from '@tabler/icons-react';
 import { useAsync } from '../../store/hooks/useAsync';
 
@@ -164,7 +164,7 @@ export function AnalysisFooter() {
               <IconUser />
               <IconArrowRight />
             </Button>
-            <Button color="red" disabled={!user.isAdmin || !participantId || !!currentParticipantData?.rejected} onClick={() => setModalRejectParticipantsOpened(true)} leftSection={!currentParticipantData?.rejected ? <IconX size={16} /> : undefined}>
+            <Button color="red" disabled={!user.isAdmin || !participantId || !!currentParticipantData?.rejected} onClick={() => setModalRejectParticipantsOpened(true)}>
               {currentParticipantData?.rejected ? 'Rejected Participant' : 'Reject Participant'}
             </Button>
           </Group>
