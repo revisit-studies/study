@@ -1,11 +1,11 @@
 import {
   ActionIcon,
-  AppShell, Box, Button, Center, Group, Select, Text,
+  AppShell, Box, Button, Center, Group, Select, Text, Modal, TextInput, Flex,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import {
-  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser,
+  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser, IconX,
 } from '@tabler/icons-react';
 import { useAsync } from '../../store/hooks/useAsync';
 
@@ -19,6 +19,7 @@ import {
 import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { useAuth } from '../../store/hooks/useAuth';
 
 function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -34,7 +35,7 @@ export function AnalysisFooter() {
 
   const currentComponent = useCurrentComponent();
   const currentStep = useCurrentStep();
-  const { funcIndex } = useParams();
+  const { funcIndex, studyId } = useParams();
   const navigate = useNavigate();
   const studyConfig = useStudyConfig();
 
@@ -45,8 +46,29 @@ export function AnalysisFooter() {
   const answers = useStoreSelector((state) => state.answers);
 
   const { storageEngine } = useStorageEngine();
+  const { user } = useAuth();
 
   const { value: allParticipants } = useAsync(getAllParticipantsNames, [storageEngine]);
+
+  const rejectParticipant = useCallback(async (rejectParticipantId: string, reason: string) => {
+    if (storageEngine && studyId) {
+      if (user.isAdmin) {
+        const finalReason = reason === '' ? 'Rejected by admin' : reason;
+        await storageEngine.rejectParticipant(rejectParticipantId, finalReason, studyId);
+      } else {
+        console.warn('You are not authorized to perform this action.');
+      }
+    }
+  }, [storageEngine, studyId, user.isAdmin]);
+
+  const [modalRejectParticipantsOpened, setModalRejectParticipantsOpened] = useState<boolean>(false);
+  const [rejectParticipantsMessage, setRejectParticipantsMessage] = useState<string>('');
+
+  const handleRejectParticipant = useCallback(async () => {
+    setModalRejectParticipantsOpened(false);
+    await rejectParticipant(participantId || '', rejectParticipantsMessage);
+    setRejectParticipantsMessage('');
+  }, [rejectParticipant, rejectParticipantsMessage, participantId]);
 
   const [nextParticipantNameAndIndex, prevParticipantNameAndIndex]: [[string, number], [string, number]] = useMemo(() => {
     if (allParticipants && participantId && currentComponent) {
@@ -133,9 +155,41 @@ export function AnalysisFooter() {
               <IconUser />
               <IconArrowRight />
             </Button>
+            <Button
+              color="red"
+              disabled={!user.isAdmin || !participantId}
+              onClick={() => setModalRejectParticipantsOpened(true)}
+              leftSection={<IconX size={16} />}
+            >
+              Reject Participant
+            </Button>
           </Group>
         </Center>
+
       </Box>
+
+      <Modal
+        opened={modalRejectParticipantsOpened}
+        onClose={() => setModalRejectParticipantsOpened(false)}
+        title={(
+          <Text>
+            Reject Participant
+          </Text>
+        )}
+      >
+        <TextInput
+          label="Please enter the reason for rejection."
+          onChange={(event) => setRejectParticipantsMessage(event.target.value)}
+        />
+        <Flex mt="sm" justify="right">
+          <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalRejectParticipantsOpened(false); setRejectParticipantsMessage(''); }}>
+            Cancel
+          </Button>
+          <Button color="red" onClick={() => handleRejectParticipant()}>
+            Reject Participants
+          </Button>
+        </Flex>
+      </Modal>
     </AppShell.Footer>
   );
 }
