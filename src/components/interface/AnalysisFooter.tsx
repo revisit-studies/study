@@ -28,6 +28,13 @@ function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   return null;
 }
 
+function getCurrentParticipantData(storageEngine: StorageEngine | undefined, participantId: string | undefined, studyId: string | undefined) {
+  if (storageEngine && participantId && studyId) {
+    return storageEngine.getAllParticipantsData(studyId).then((participants) => participants.find((p) => p.participantId === participantId));
+  }
+  return null;
+}
+
 export function AnalysisFooter() {
   const [searchParams] = useSearchParams();
 
@@ -49,6 +56,7 @@ export function AnalysisFooter() {
   const { user } = useAuth();
 
   const { value: allParticipants } = useAsync(getAllParticipantsNames, [storageEngine]);
+  const { value: currentParticipantData } = useAsync(getCurrentParticipantData, [storageEngine, participantId, studyId]);
 
   const rejectParticipant = useCallback(async (rejectParticipantId: string, reason: string) => {
     if (storageEngine && studyId) {
@@ -59,7 +67,7 @@ export function AnalysisFooter() {
         console.warn('You are not authorized to perform this action.');
       }
     }
-  }, [storageEngine, studyId, user.isAdmin]);
+  }, [storageEngine, studyId, user.isAdmin, participantId]);
 
   const [modalRejectParticipantsOpened, setModalRejectParticipantsOpened] = useState<boolean>(false);
   const [rejectParticipantsMessage, setRejectParticipantsMessage] = useState<string>('');
@@ -155,13 +163,8 @@ export function AnalysisFooter() {
               <IconUser />
               <IconArrowRight />
             </Button>
-            <Button
-              color="red"
-              disabled={!user.isAdmin || !participantId}
-              onClick={() => setModalRejectParticipantsOpened(true)}
-              leftSection={<IconX size={16} />}
-            >
-              Reject Participant
+            <Button color="red" disabled={!user.isAdmin || !participantId || !!currentParticipantData?.rejected} onClick={() => setModalRejectParticipantsOpened(true)} leftSection={!currentParticipantData?.rejected ? <IconX size={16} /> : undefined}>
+              {currentParticipantData?.rejected ? 'Rejected Participant' : 'Reject Participant'}
             </Button>
           </Group>
         </Center>
