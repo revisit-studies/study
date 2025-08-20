@@ -77,7 +77,8 @@
     },
     "tutorial": {
       "type": "markdown",
-      "path": "example-brush-interactions/assets/tutorial.md"
+      "path": "example-brush-interactions/assets/tutorial.md",
+      "response": []
     },
     "rectangleBrush_q1": {
       "baseComponent": "scatterPlot",
