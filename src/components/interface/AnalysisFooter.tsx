@@ -190,7 +190,7 @@ export function AnalysisFooter() {
             Cancel
           </Button>
           <Button color="red" onClick={() => handleRejectParticipant()}>
-            Reject Participants
+            Reject Participant
           </Button>
         </Flex>
       </Modal>
