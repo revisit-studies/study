@@ -97,12 +97,16 @@ export function TableView({
       Cell: ({ cell }: { cell: MrtCell<ParticipantData, {percent: number, completed: boolean, rejected: ParticipantData['rejected']}> }) => {
         const cellValue = cell.getValue();
         return (
-          cellValue.completed ? <Group align="center" justify="center" w="100%"><Tooltip label="Completed"><IconCheck size={30} color="teal" style={{ marginBottom: -3 }} /></Tooltip></Group>
-            : cellValue.rejected ? (
-              <Stack align="center" justify="center" gap={4} w="100%">
-                <Tooltip label="Rejected"><IconX size={30} color="red" style={{ marginBottom: -3 }} /></Tooltip>
-                <Text size="xs" c="dimmed" ta="center">{cellValue.rejected.reason}</Text>
-              </Stack>
+          cellValue.rejected ? (
+            <Stack align="center" justify="center" gap={4} w="100%">
+              <Tooltip label="Rejected"><IconX size={30} color="red" style={{ marginBottom: -3 }} /></Tooltip>
+              <Text size="xs" c="dimmed" ta="center">{cellValue.rejected.reason}</Text>
+            </Stack>
+          )
+            : cellValue.completed ? (
+              <Group align="center" justify="center" w="100%">
+                <Tooltip label="Completed"><IconCheck size={30} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
+              </Group>
             )
               : (
                 <Group align="center" justify="center" w="100%">
