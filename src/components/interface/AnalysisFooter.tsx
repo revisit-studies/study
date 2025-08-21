@@ -1,6 +1,6 @@
 import {
   ActionIcon,
-  AppShell, Box, Button, Center, Group, Select, Text, Modal, TextInput, Flex,
+  AppShell, Box, Button, Center, Group, Select, Text, Modal, TextInput, Flex, Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMemo, useState, useCallback } from 'react';
@@ -181,19 +181,37 @@ export function AnalysisFooter() {
               <IconUser />
               <IconArrowRight />
             </Button>
-            <Button
-              color={currentParticipantData?.rejected ? 'blue' : 'red'}
-              disabled={!user.isAdmin || !participantId}
-              onClick={() => {
-                if (currentParticipantData?.rejected) {
-                  setModalUndoRejectParticipantsOpened(true);
-                } else {
-                  setModalRejectParticipantsOpened(true);
-                }
-              }}
-            >
-              {currentParticipantData?.rejected ? 'Rejected Participant' : 'Reject Participant'}
-            </Button>
+            {!user.isAdmin ? (
+              <Tooltip label={currentParticipantData?.rejected ? 'Admin can undo rejection' : 'Admin can reject participants'}>
+                <Button
+                  color={currentParticipantData?.rejected ? 'blue' : 'red'}
+                  disabled={!user.isAdmin || !participantId}
+                  onClick={() => {
+                    if (currentParticipantData?.rejected) {
+                      setModalUndoRejectParticipantsOpened(true);
+                    } else {
+                      setModalRejectParticipantsOpened(true);
+                    }
+                  }}
+                >
+                  {currentParticipantData?.rejected ? 'Rejected Participant' : 'Reject Participant'}
+                </Button>
+              </Tooltip>
+            ) : (
+              <Button
+                color={currentParticipantData?.rejected ? 'blue' : 'red'}
+                disabled={!user.isAdmin || !participantId}
+                onClick={() => {
+                  if (currentParticipantData?.rejected) {
+                    setModalUndoRejectParticipantsOpened(true);
+                  } else {
+                    setModalRejectParticipantsOpened(true);
+                  }
+                }}
+              >
+                {currentParticipantData?.rejected ? 'Rejected Participant' : 'Reject Participant'}
+              </Button>
+            )}
           </Group>
         </Center>
 
