@@ -29,6 +29,7 @@
     "library-color-blindness",
     "library-demographics",
     "library-mic-check",
+    "library-screen-recording",
     "library-mini-vlat",
     "library-nasa-tlx",
     "library-previs",
@@ -136,6 +137,10 @@
     },
     "library-mic-check": {
       "path": "library-mic-check/config.json",
+      "test": true
+    },
+    "library-screen-recording": {
+      "path": "library-screen-recording/config.json",
       "test": true
     },
     "library-mini-vlat": {
