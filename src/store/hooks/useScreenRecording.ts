@@ -40,6 +40,10 @@ export function useScreenRecording() {
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: { displaySurface: 'browser', ...(recordScreenFPS ? { frameRate: { ideal: recordScreenFPS } } : {}) },
           audio: false,
+          // @ts-expect-error: experimental (selfBrowserSurface and preferCurrentTab are not yet standardized)
+          // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia#selfbrowsersurface
+          selfBrowserSurface: 'include',
+          preferCurrentTab: true,
         });
 
         const micStream = recordAudio ? await navigator.mediaDevices.getUserMedia({
