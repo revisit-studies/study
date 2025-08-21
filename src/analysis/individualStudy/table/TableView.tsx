@@ -246,18 +246,38 @@ export function TableView({
         <Flex justify="space-between" mb={8} p={8}>
           <Group>
             {areSelectedParticipantsRejected && (
-              <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalUndoRejectParticipantsOpened(true)} color="green">
-                Undo Reject Participants (
-                {Object.keys(checked).length}
-                )
-              </Button>
+              !user.isAdmin ? (
+                <Tooltip label="Only admins can undo rejection">
+                  <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalUndoRejectParticipantsOpened(true)} color="green">
+                    Undo Reject Participants (
+                    {Object.keys(checked).length}
+                    )
+                  </Button>
+                </Tooltip>
+              ) : (
+                <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalUndoRejectParticipantsOpened(true)} color="green">
+                  Undo Reject Participants (
+                  {Object.keys(checked).length}
+                  )
+                </Button>
+              )
             )}
             {areSelectedParticipantsNotRejected && (
-              <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
-                Reject Participants (
-                {Object.keys(checked).length}
-                )
-              </Button>
+              !user.isAdmin ? (
+                <Tooltip label="Only admins can reject participants">
+                  <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
+                    Reject Participants (
+                    {Object.keys(checked).length}
+                    )
+                  </Button>
+                </Tooltip>
+              ) : (
+                <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
+                  Reject Participants (
+                  {Object.keys(checked).length}
+                  )
+                </Button>
+              )
             )}
             <DownloadButtons
               visibleParticipants={selectedData}
