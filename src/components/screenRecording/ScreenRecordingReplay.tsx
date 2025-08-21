@@ -38,7 +38,7 @@ export function ScreenRecordingReplay() {
 
   const { storageEngine } = useStorageEngine();
 
-  const { setAnalysisHasScreenRecording } = useStoreActions();
+  const { setAnalysisHasScreenRecording, setAnalysisCanPlayScreenRecording } = useStoreActions();
 
   const storeDispatch = useStoreDispatch();
 
@@ -95,6 +95,9 @@ export function ScreenRecordingReplay() {
   // Add events for the video so that it plays between the stimulus start time and end time.
   useEffect(() => {
     const video = videoRef.current;
+    if (videoStartTime < 0) {
+      storeDispatch(setAnalysisCanPlayScreenRecording(false));
+    }
     if (video && videoStartTime > 0 && videoEndTime > 0) {
       video.currentTime = videoStartTime / 1000;
       video.onpause = () => {
@@ -120,7 +123,7 @@ export function ScreenRecordingReplay() {
         setIsReady(true);
       }, 300);
     }
-  }, [videoStartTime, videoEndTime]);
+  }, [videoStartTime, videoEndTime, setAnalysisCanPlayScreenRecording, storeDispatch]);
 
   // Load and show the video
   useEffect(

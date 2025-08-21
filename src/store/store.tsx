@@ -123,6 +123,7 @@ export async function studyStoreCreator(
     analysisIsPlaying: false,
     analysisHasAudio: false,
     analysisHasScreenRecording: false,
+    analysisCanPlayScreenRecording: true,
     analysisHasProvenance: false,
     provenanceJumpTime: 0,
     modes,
@@ -219,6 +220,9 @@ export async function studyStoreCreator(
       },
       setAnalysisHasScreenRecording(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasScreenRecording = payload;
+      },
+      setAnalysisCanPlayScreenRecording(state, { payload }: PayloadAction<boolean>) {
+        state.analysisCanPlayScreenRecording = payload;
       },
       setAnalysisHasProvenance(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasProvenance = payload;

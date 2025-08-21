@@ -20,6 +20,9 @@
     "recordScreen": true,
     "recordScreenFPS": 30
   },
+  "importedLibraries": [
+    "screen-recording"
+  ],
   "components": {
     "introduction": {
       "type": "markdown",
@@ -59,6 +62,6 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": ["introduction", "external_website", "barChart"]
+    "components": ["introduction", "$screen-recording.co.screenRecordingPermission", "external_website", "barChart"]
   }
 }

@@ -1,4 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
+import {
+  createContext, useCallback, useContext, useRef, useState,
+} from 'react';
 import { useStudyConfig } from './useStudyConfig';
 
 /**
@@ -13,10 +15,8 @@ export function useScreenRecording() {
 
   const recordVideoRef = useRef<HTMLVideoElement>(null);
   const [screenRecordingError, setRecordingError] = useState<string | null>(null);
-  const [screenRecording, setScreenRecording] = useState(false);
+  const [isScreenRecording, setIsScreenRecording] = useState(false);
   const [screenWithAudioRecording, setScreenWithAudioRecording] = useState(false);
-
-  const [screenRecordingConfirmed, setScreenRecordingConfirmed] = useState(false);
 
   const screenRecordingStream = useRef<MediaRecorder | null>(null); // combined stream
 
@@ -28,7 +28,7 @@ export function useScreenRecording() {
     if (recordVideoRef.current) {
       recordVideoRef.current.srcObject = null;
     }
-    setScreenRecording(false);
+    setIsScreenRecording(false);
     setScreenWithAudioRecording(false);
   }, []);
 
@@ -68,7 +68,7 @@ export function useScreenRecording() {
 
         mediaRecorder.start();
 
-        setScreenRecording(true);
+        setIsScreenRecording(true);
         setScreenWithAudioRecording(!!recordAudio);
         setRecordingError(null);
       } catch (err) {
@@ -83,12 +83,6 @@ export function useScreenRecording() {
     }
   }, [pageTitle, recordAudio, recordScreen, recordScreenFPS, stopScreenCapture]);
 
-  const confirmScreenRecording = useCallback(() => {
-    if (screenRecording) {
-      setScreenRecordingConfirmed(true);
-    }
-  }, [screenRecording]);
-
   return {
     recordVideoRef,
     recordScreen,
@@ -96,10 +90,20 @@ export function useScreenRecording() {
     startScreenCapture,
     stopScreenCapture,
     screenRecordingError,
-    screenRecording,
-    screenRecordingConfirmed,
-    confirmScreenRecording,
+    isScreenRecording,
     screenRecordingStream,
     screenWithAudioRecording,
   };
+}
+
+type ScreenRecordingContextType = ReturnType<typeof useScreenRecording>;
+
+export const ScreenRecordingContext = createContext<ScreenRecordingContextType | undefined>(undefined);
+
+export function useScreenRecordingContext() {
+  const context = useContext(ScreenRecordingContext);
+  if (!context) {
+    throw new Error('useScreenRecordingContext must be used within a ScreenRecordingProvider');
+  }
+  return context;
 }

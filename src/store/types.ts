@@ -175,6 +175,7 @@ export interface StoreState {
   analysisIsPlaying: boolean;
   analysisHasAudio: boolean;
   analysisHasScreenRecording: boolean;
+  analysisCanPlayScreenRecording: boolean;
   provenanceJumpTime: number;
   analysisHasProvenance: boolean;
   modes: Record<REVISIT_MODE, boolean>;

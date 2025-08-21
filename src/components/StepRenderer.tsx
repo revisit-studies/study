@@ -18,8 +18,7 @@ import { studyComponentToIndividualComponent } from '../utils/handleComponentInh
 import { useCurrentComponent } from '../routes/utils';
 import { ResolutionWarning } from './interface/ResolutionWarning';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
-import ScreenRecordingPermission from './screenRecording/ScreenRecordingPermission';
-import { useScreenRecording } from '../store/hooks/useScreenRecording';
+import { ScreenRecordingContext, useScreenRecording } from '../store/hooks/useScreenRecording';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 
 export function StepRenderer() {
@@ -30,6 +29,7 @@ export function StepRenderer() {
   const isAnalysis = useIsAnalysis();
   const studyConfig = useStudyConfig();
   const currentComponent = useCurrentComponent();
+
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
 
   const windowEventDebounceTime = useMemo(() => componentConfig.windowEventDebounceTime ?? studyConfig.uiConfig.windowEventDebounceTime ?? 100, [componentConfig, studyConfig]);
@@ -40,19 +40,21 @@ export function StepRenderer() {
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
   const modes = useStoreSelector((state) => state.modes);
 
+  const screenRecording = useScreenRecording();
+
   const {
-    recordVideoRef, recordScreen, recordAudio, screenRecording, screenWithAudioRecording, screenRecordingConfirmed, screenRecordingError, startScreenCapture, stopScreenCapture, confirmScreenRecording, screenRecordingStream,
-  } = useScreenRecording();
+    isScreenRecording, screenWithAudioRecording, stopScreenCapture, screenRecordingStream,
+  } = screenRecording;
 
   const analysisHasScreenRecording = useStoreSelector((state) => state.analysisHasScreenRecording);
 
   useEffect(() => {
-    if (screenRecording) {
+    if (isScreenRecording) {
       if (currentComponent === 'end') {
         stopScreenCapture();
       }
     }
-  }, [screenRecording, currentComponent, stopScreenCapture]);
+  }, [isScreenRecording, currentComponent, stopScreenCapture]);
 
   const { storageEngine } = useStorageEngine();
 
@@ -163,27 +165,26 @@ export function StepRenderer() {
     return studyNavigatorEnabled && showStudyBrowser;
   }, [studyNavigatorEnabled, showStudyBrowser, isAnalysis]);
 
-  const showScreenRecordingPermission = !isAnalysis && recordScreen && !screenRecordingConfirmed && currentComponent !== 'end';
-
   return (
     <WindowEventsContext.Provider value={windowEvents}>
-      <AppShell
-        padding="md"
-        header={{ height: showTitleBar ? 70 : 0 }}
-        navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !sidebarOpen, mobile: !sidebarOpen } }}
-        aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
-        footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
-      >
-        <AppNavBar />
-        <AppAside />
-        {showTitleBar && (
-          <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} screenRecording={screenRecording} screenWithAudioRecording={screenWithAudioRecording} />
-        )}
-        <ResolutionWarning />
-        <HelpModal />
-        <AlertModal />
-        <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }}>
-          {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
+      <ScreenRecordingContext.Provider value={screenRecording}>
+        <AppShell
+          padding="md"
+          header={{ height: showTitleBar ? 70 : 0 }}
+          navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !sidebarOpen, mobile: !sidebarOpen } }}
+          aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
+          footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
+        >
+          <AppNavBar />
+          <AppAside />
+          {showTitleBar && (
+          <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} screenRecording={isScreenRecording} screenWithAudioRecording={screenWithAudioRecording} />
+          )}
+          <ResolutionWarning />
+          <HelpModal />
+          <AlertModal />
+          <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }}>
+            {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
             <Button
               variant="transparent"
               leftSection={<IconArrowLeft size={14} />}
@@ -193,24 +194,14 @@ export function StepRenderer() {
             >
               Study Browser
             </Button>
-          )}
-
-          {showScreenRecordingPermission ? (
-            <ScreenRecordingPermission
-              recordAudio={recordAudio || false}
-              recordVideoRef={recordVideoRef}
-              onConfirm={confirmScreenRecording}
-              error={screenRecordingError}
-              recording={screenRecording}
-              startCapture={startScreenCapture}
-              stopCapture={stopScreenCapture}
-            />
-          ) : <Outlet />}
-        </AppShell.Main>
-        {isAnalysis && (
+            )}
+            <Outlet />
+          </AppShell.Main>
+          {isAnalysis && (
           <AnalysisFooter />
-        )}
-      </AppShell>
+          )}
+        </AppShell>
+      </ScreenRecordingContext.Provider>
     </WindowEventsContext.Provider>
   );
 }
