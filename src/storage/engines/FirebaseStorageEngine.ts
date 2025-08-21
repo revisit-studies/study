@@ -249,6 +249,33 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await updateDoc(participantSequenceAssignmentDoc, { rejected: true });
   }
 
+  protected async _undoRejectParticipantRealtime(participantId: string) {
+    await this.verifyStudyDatabase();
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${this.studyId}`,
+    );
+
+    // set sequence assignment to empty string, keep the timestamp
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      participantId,
+    );
+    await updateDoc(participantSequenceAssignmentDoc, { rejected: false });
+  }
+
   protected async _claimSequenceAssignment(participantId: string) {
     await this.verifyStudyDatabase();
     if (!this.currentParticipantId) {

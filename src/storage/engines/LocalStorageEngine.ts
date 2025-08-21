@@ -128,6 +128,40 @@ export class LocalStorageEngine extends StorageEngine {
     }
   }
 
+  protected async _undoRejectParticipantRealtime(participantId: string) {
+    await this.verifyStudyDatabase();
+    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+
+    const participantSequenceAssignment = sequenceAssignments[participantId];
+
+    // If this was a claimed sequence assignment, we need to mark it as available again
+    // Find the sequence assignment that was claimed
+    const claimedAssignmentData = Object.values(sequenceAssignments).find((assignment) => assignment.claimed && assignment.timestamp === participantSequenceAssignment.timestamp);
+    if (participantSequenceAssignment && claimedAssignmentData) {
+      // Mark the claimed assignment as available again
+      claimedAssignmentData.claimed = false;
+      claimedAssignmentData.rejected = false; // Undo the rejection
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+
+      // Delete the participant's sequence assignment
+      // delete sequenceAssignments[participantId];
+      sequenceAssignments[participantId] = {
+        ...participantSequenceAssignment,
+        timestamp: new Date().getTime(),
+        rejected: false,
+      };
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+      return;
+    }
+
+    // Handle the original participant's sequence assignment
+    if (participantSequenceAssignment) {
+      participantSequenceAssignment.rejected = false;
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+    }
+  }
+
   protected async _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
     await this.verifyStudyDatabase();
     const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
