@@ -78,7 +78,6 @@
     "tutorial": {
       "type": "markdown",
       "path": "example-brush-interactions/assets/tutorial.md",
-      "nextButtonText": "",
       "response": []
     },
     "rectangleBrush_q1": {
