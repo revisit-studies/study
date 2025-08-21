@@ -41,3 +41,6 @@ supabase/volumes/db/data
 .continue/
 .continue/mcpServers/
 .continue/mcpServers/*
+
+# Cursor IDE
+.cursor/

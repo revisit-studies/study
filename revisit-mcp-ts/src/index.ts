@@ -1,7 +1,7 @@
-import { McpServer, ResourceTemplate  } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {StdioServerTransport} from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import path from 'path';
+import * as path from 'path';
 
 
 
@@ -110,36 +110,35 @@ const server = new McpServer({
   version: "1.0.0",
 });
 
-server.registerResource(
-  "version",
-  "revisit://version",
+server.registerTool("getversion",
   {
-    title: "Revisit Version",
-    description: "The version of revisit",
-    mimeType: "text/plain"
+    title: "Get Revisit Version",
+    description: "Get the version of revisit",
+    inputSchema: {}
   },
-  async (uri) => ({
-    contents: [{
-      uri: uri.href,
-      text: "2.0.0"
-    }]
-  })
+  async () => {
+    return {
+      content: [{ 
+        type: "text", 
+        text: "2.0.0"
+      }]
+    };
+  }
 );
 
 
 
-server.registerResource(
-  "citation",
-  "revisit://citation",
+server.registerTool("getcitation",
   {
-    title: "Revisit Citation",
-    description: "The BibTeX citation for Revisit",
-    mimeType: "text/plain"
+    title: "Get Revisit Citation",
+    description: "Get the BibTeX citation for Revisit",
+    inputSchema: {}
   },
-  async (uri) => ({
-    contents: [{
-      uri: uri.href,
-      text: `@INPROCEEDINGS{revisit,
+  async () => {
+    return {
+      content: [{ 
+        type: "text", 
+        text: `@INPROCEEDINGS{revisit,
   author={Ding, Yiren and Wilburn, Jack and Shrestha, Hilson and Ndlovu, Akim and Gadhave, Kiran and Nobre, Carolina and Lex, Alexander and Harrison, Lane},
   booktitle={2023 IEEE Visualization and Visual Analytics (VIS)},
   title={reVISit: Supporting Scalable Evaluation of Interactive Visualizations},
@@ -149,57 +148,57 @@ server.registerResource(
   pages={31-35},
   keywords={Training;Costs;Visual analytics;Data visualization;Data collection;Market research;Task analysis;Human-centered computing;Software prototype;Visualization systems and tools;Empirical Study},
   doi={10.1109/VIS54172.2023.00015}}`
-    }]
-  })
+      }]
+    };
+  }
 );
 
-server.registerResource(
-  "Config Schema",
-  "revisit://configschema",
+server.registerTool("getconfigschema",
   {
-    title: "Revisit Config File Schema",
-    description: "The Schema Definition of Revisit Config File",
-    mimeType: "text/plain"
+    title: "Get Config File Schema",
+    description: "Get the Schema Definition of Revisit Config File",
+    inputSchema: {}
   },
-  async (uri) => ({
-    contents: [{
-      uri: uri.href,
-      text: "src/parser/StudyConfigSchema.json"
-    }]
-  })
+  async () => {
+    return {
+      content: [{ 
+        type: "text", 
+        text: "src/parser/StudyConfigSchema.json"
+      }]
+    };
+  }
 );
 
-server.registerResource(
-  "Types",
-  "revisit://types",
+server.registerTool("gettypes",
   {
-    title: "Revisit Types defition",
-    description: "The Types Definition of Revisit Config File",
-    mimeType: "text/plain"
+    title: "Get Revisit Types Definition",
+    description: "Get the Types Definition of Revisit Config File",
+    inputSchema: {}
   },
-  async (uri) => ({
-    contents: [{
-      uri: uri.href,
-      text: "src/parser/types.ts"
-    }]
-  })
+  async () => {
+    return {
+      content: [{ 
+        type: "text", 
+        text: "src/parser/types.ts"
+      }]
+    };
+  }
 );
 
 
 
 
-server.registerResource(
-  "Template Study Metadata",
-  "revisit://studytemplatemeta",
+server.registerTool("getstudytemplatemetadata",
   {
-    title: "Revisit Study Templates Metadata",
-    description: "Get template study meta data.",
-    mimeType: "application/json"
+    title: "Get Study Templates Metadata",
+    description: "Get template study meta data with paths and tags",
+    inputSchema: {}
   },
-  async (uri) => ({
-    contents: [{
-      uri: uri.href,
-      text: JSON.stringify([
+  async () => {
+    return {
+      content: [{ 
+        type: "text", 
+        text: JSON.stringify([
             {"path": "public/demo-click-accuracy-test", "tags": ["stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: reactive"]},
             {"path": "public/demo-dynamic", "tags": ["stimuli: react-component", "sequence: dynamic", "basecomponent: false", "response: buttons"]},
             {"path": "public/demo-html", "tags": ["stimuli: website", "sequence: fixed", "basecomponent: false", "response: numerical"]},
@@ -241,24 +240,26 @@ server.registerResource(
             {"path": "public/test-step-logic", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
             {"path": "public/test-uncert", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
             {"path": "public/tutorial", "tags": ["stimuli: markdown", "sequence: fixed", "basecomponent: false", "response: none"]}
-        ])
+        ], null, 2)
       }]
-  })
+    };
+  }
 );
 
 
-server.registerResource(
-  "prompt enhancer",
-  new ResourceTemplate("revisit://promptenhancer/{name}", { list: undefined }),
-  { 
-    title: "Prompt Enhancer",      // Display name for UI
-    description: "Enahnce the study description"
+server.registerTool("generatestudyprompt",
+  {
+    title: "Generate Study Prompt",
+    description: "Generate an enhanced prompt for creating empirical studies using the Revisit Framework",
+    inputSchema: {
+      description: z.string().describe("The user's study description to enhance")
+    }
   },
-  async (uri, { description }) => ({
-    contents: [{
-      uri: uri.href,
-                text: `
-# 🎯 Task: Generate an Empirical Study using the Revisit Framework
+  async ({ description }) => {
+    return {
+      content: [{ 
+        type: "text", 
+        text: `# 🎯 Task: Generate an Empirical Study using the Revisit Framework
 
 You are tasked with generating a study configuration using the **Revisit Framework**. This involves creating a folder structure, DSL config file, and assets based on the user's description.
 Check the study config schema first, then check a few template studies similar to the user's description based on their tags before starting to build the study.
@@ -271,8 +272,8 @@ ${description}
 ---
 
 ## 🧩 Before creating the study:
-- Call "revisit://studyschema" to get the schema file location.
-- Call "revisit://studytemplate" to retrieve existing study template metadata.
+- Call "getconfigschema" to get the schema file location.
+- Call "getstudytemplatemetadata" to retrieve existing study template metadata.
 - Read a few templates that match the user's requirement as references.
 
 ---
@@ -302,12 +303,13 @@ ${description}
 ---
 
 ## 🧠 Final Integration:
-- Use 'validateStudyConfig' tool to validate study config you generated.
-- Don’t forget to add the generated study to the **global config file** so it becomes accessible.
+- Use 'validatestudyconfig' tool to validate study config you generated.
+- Don't forget to add the generated study to the **global config file** so it becomes accessible.
 - Use 'validateglobalconfig' tool to validate global config.
 `
-    }]
-  })
+      }]
+    };
+  }
 );
 
 
@@ -386,8 +388,8 @@ server.registerTool("validatestudyconfig",
   {
     title: "Study Config Validator",
     description: "Validate study config files",
-    inputSchema: { 
-      filePath: z.string()
+    inputSchema: {
+      filePath: z.string().describe("Path to the study config file to validate")
     }
   },
   async ({ filePath }) => {
