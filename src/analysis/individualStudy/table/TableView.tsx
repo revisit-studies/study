@@ -66,7 +66,19 @@ export function TableView({
     }
   }, [refresh, storageEngine, studyId, user.isAdmin]);
 
+  const undoRejectParticipant = useCallback(async (participantId: string) => {
+    if (storageEngine && studyId) {
+      if (user.isAdmin) {
+        await storageEngine.undoRejectParticipant(participantId, studyId);
+        await refresh();
+      } else {
+        console.warn('You are not authorized to perform this action.');
+      }
+    }
+  }, [refresh, storageEngine, studyId, user.isAdmin]);
+
   const [modalRejectParticipantsOpened, setModalRejectParticipantsOpened] = useState<boolean>(false);
+  const [modalUndoRejectParticipantsOpened, setModalUndoRejectParticipantsOpened] = useState<boolean>(false);
   const [rejectParticipantsMessage, setRejectParticipantsMessage] = useState<string>('');
 
   const handleRejectParticipants = useCallback(async () => {
@@ -77,6 +89,14 @@ export function TableView({
     await refresh();
   }, [checked, refresh, rejectParticipant, rejectParticipantsMessage]);
 
+  const handleUndoRejectParticipants = useCallback(async () => {
+    setModalUndoRejectParticipantsOpened(false);
+    const promises = Object.keys(checked).filter((v) => checked[v]).map(async (participantId) => await undoRejectParticipant(participantId));
+    await Promise.all(promises);
+    setChecked({});
+    await refresh();
+  }, [checked, refresh, undoRejectParticipant]);
+
   const selectedData = useMemo(() => {
     const selected = Object.keys(checked).filter((v) => checked[v])
       .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
@@ -84,6 +104,14 @@ export function TableView({
 
     return selected.length > 0 ? selected : visibleParticipants;
   }, [checked, visibleParticipants]);
+
+  const selectedParticipants = useMemo(() => Object.keys(checked).filter((v) => checked[v])
+    .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
+    .filter((p) => p !== undefined) as ParticipantData[], [checked, visibleParticipants]);
+
+  const areSelectedParticipantsRejected = useMemo(() => selectedParticipants.length > 0 && selectedParticipants.every((p) => p.rejected), [selectedParticipants]);
+
+  const areSelectedParticipantsNotRejected = useMemo(() => selectedParticipants.length > 0 && selectedParticipants.every((p) => !p.rejected), [selectedParticipants]);
 
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => [
     {
@@ -217,11 +245,20 @@ export function TableView({
       <>
         <Flex justify="space-between" mb={8} p={8}>
           <Group>
-            <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
-              Reject Participants (
-              {Object.keys(checked).length}
-              )
-            </Button>
+            {areSelectedParticipantsRejected && (
+              <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalUndoRejectParticipantsOpened(true)} color="green">
+                Undo Reject Participants (
+                {Object.keys(checked).length}
+                )
+              </Button>
+            )}
+            {areSelectedParticipantsNotRejected && (
+              <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
+                Reject Participants (
+                {Object.keys(checked).length}
+                )
+              </Button>
+            )}
             <DownloadButtons
               visibleParticipants={selectedData}
               studyId={studyId || ''}
@@ -249,6 +286,27 @@ export function TableView({
             </Button>
             <Button color="red" onClick={() => handleRejectParticipants()}>
               Reject Participants
+            </Button>
+          </Flex>
+        </Modal>
+        <Modal
+          opened={modalUndoRejectParticipantsOpened}
+          onClose={() => setModalUndoRejectParticipantsOpened(false)}
+          title={(
+            <Text>
+              Undo Reject Participants (
+              {Object.keys(checked).length}
+              )
+            </Text>
+        )}
+        >
+          <Text>Are you sure you want to undo the rejection of these participants?</Text>
+          <Flex mt="sm" justify="right">
+            <Button mr={5} variant="subtle" color="dark" onClick={() => setModalUndoRejectParticipantsOpened(false)}>
+              Cancel
+            </Button>
+            <Button color="green" onClick={() => handleUndoRejectParticipants()}>
+              Undo Reject Participants
             </Button>
           </Flex>
         </Modal>
