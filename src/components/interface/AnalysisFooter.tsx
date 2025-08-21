@@ -1,6 +1,6 @@
 import {
   ActionIcon,
-  AppShell, Box, Button, Center, Group, Select, Text, Modal, TextInput, Flex, Tooltip,
+  AppShell, Box, Button, Group, Select, Text, Modal, TextInput, Flex, Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMemo, useState, useCallback } from 'react';
@@ -116,10 +116,12 @@ export function AnalysisFooter() {
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
-      <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px' }}>
+      <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px', position: 'relative' }}>
 
         <AudioProvenanceVis setTimeString={setTimeString} />
-        <Center>
+        <Flex justify="space-between" align="center" px="md">
+          {/* Placeholder box for Show Legend button */}
+          <Box />
           <Group gap="xs" style={{ height: '50px' }}>
             <Text size="sm" ff="monospace">
               {timeString}
@@ -181,6 +183,8 @@ export function AnalysisFooter() {
               <IconUser />
               <IconArrowRight />
             </Button>
+          </Group>
+          <Group>
             {!user.isAdmin ? (
               <Tooltip label={currentParticipantData?.rejected ? 'Admin can undo rejection' : 'Admin can reject participants'}>
                 <Button
@@ -200,7 +204,7 @@ export function AnalysisFooter() {
             ) : (
               <Button
                 color={currentParticipantData?.rejected ? 'blue' : 'red'}
-                disabled={!user.isAdmin || !participantId}
+                disabled={!participantId}
                 onClick={() => {
                   if (currentParticipantData?.rejected) {
                     setModalUndoRejectParticipantsOpened(true);
@@ -213,7 +217,7 @@ export function AnalysisFooter() {
               </Button>
             )}
           </Group>
-        </Center>
+        </Flex>
 
       </Box>
 
