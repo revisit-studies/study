@@ -70,6 +70,7 @@ export function AnalysisFooter() {
   }, [storageEngine, studyId, user.isAdmin, participantId]);
 
   const [modalRejectParticipantsOpened, setModalRejectParticipantsOpened] = useState<boolean>(false);
+  const [modalRejectedParticipantsOpened, setModalRejectedParticipantsOpened] = useState<boolean>(false);
   const [rejectParticipantsMessage, setRejectParticipantsMessage] = useState<string>('');
 
   const handleRejectParticipant = useCallback(async () => {
@@ -164,7 +165,17 @@ export function AnalysisFooter() {
               <IconUser />
               <IconArrowRight />
             </Button>
-            <Button color="red" disabled={!user.isAdmin || !participantId || !!currentParticipantData?.rejected} onClick={() => setModalRejectParticipantsOpened(true)}>
+            <Button
+              color="red"
+              disabled={!user.isAdmin || !participantId}
+              onClick={() => {
+                if (currentParticipantData?.rejected) {
+                  setModalRejectedParticipantsOpened(true);
+                } else {
+                  setModalRejectParticipantsOpened(true);
+                }
+              }}
+            >
               {currentParticipantData?.rejected ? 'Rejected Participant' : 'Reject Participant'}
             </Button>
           </Group>
@@ -189,8 +200,31 @@ export function AnalysisFooter() {
           <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalRejectParticipantsOpened(false); setRejectParticipantsMessage(''); }}>
             Cancel
           </Button>
-          <Button color="red" onClick={() => handleRejectParticipant()}>
+          <Button color="red" onClick={() => { setModalRejectParticipantsOpened(false); handleRejectParticipant(); }}>
             Reject Participant
+          </Button>
+        </Flex>
+      </Modal>
+
+      <Modal
+        opened={modalRejectedParticipantsOpened}
+        onClose={() => setModalRejectedParticipantsOpened(false)}
+        title={(
+          <Text>
+            Participant Rejected
+          </Text>
+        )}
+      >
+        <TextInput
+          label={`The participant has been rejected. (Reason: ${currentParticipantData?.rejected ? currentParticipantData.rejected.reason : 'No reason provided'})`}
+          onChange={(event) => setRejectParticipantsMessage(event.target.value)}
+        />
+        <Flex mt="sm" justify="right">
+          <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalRejectedParticipantsOpened(false); setRejectParticipantsMessage(''); }}>
+            Cancel
+          </Button>
+          <Button color="red" onClick={() => { setModalRejectedParticipantsOpened(false); handleRejectParticipant(); }}>
+            Unreject Participant
           </Button>
         </Flex>
       </Modal>
