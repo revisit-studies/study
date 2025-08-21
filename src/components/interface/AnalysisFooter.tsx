@@ -105,7 +105,7 @@ export function AnalysisFooter() {
 
       Object.assign(document.createElement('a'), {
         href: transcriptBlobUrl,
-        download: `${participantId}_${identifier}_transcription.txt`,
+        download: `${participantId}_${identifier}_transcript.txt`,
       }).click();
 
       URL.revokeObjectURL(transcriptBlobUrl);

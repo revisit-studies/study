@@ -53,17 +53,17 @@ export function DownloadButtons({
         try {
           const audioUrl = await storageEngine.getAudioUrl(identifier, participant.participantId);
           if (audioUrl) {
-            const response = await fetch(audioUrl);
-            const blob = await response.blob();
+            const audioResponse = await fetch(audioUrl);
+            const audioBlob = await audioResponse.blob();
             const audioFileName = `${namePrefix}_${participant.participantId}_${identifier}.webm`;
-            zip.file(audioFileName, blob);
+            zip.file(audioFileName, audioBlob);
           }
 
           const transcriptUrl = await storageEngine.getTranscriptUrl(identifier, participant.participantId);
           if (transcriptUrl) {
             const transcriptResponse = await fetch(transcriptUrl);
             const transcriptBlob = await transcriptResponse.blob();
-            const transcriptFileName = `${namePrefix}_${participant.participantId}_${identifier}_transcription.txt`;
+            const transcriptFileName = `${namePrefix}_${participant.participantId}_${identifier}_transcript.txt`;
             zip.file(transcriptFileName, transcriptBlob);
           }
         } catch (error) {
