@@ -67,10 +67,20 @@ export function AnalysisFooter() {
         console.warn('You are not authorized to perform this action.');
       }
     }
-  }, [storageEngine, studyId, user.isAdmin, participantId]);
+  }, [storageEngine, studyId, user.isAdmin]);
+
+  const undoRejectParticipant = useCallback(async (rejectParticipantId: string) => {
+    if (storageEngine && studyId) {
+      if (user.isAdmin) {
+        await storageEngine.undoRejectParticipant(rejectParticipantId, studyId);
+      } else {
+        console.warn('You are not authorized to perform this action.');
+      }
+    }
+  }, [storageEngine, studyId, user.isAdmin]);
 
   const [modalRejectParticipantsOpened, setModalRejectParticipantsOpened] = useState<boolean>(false);
-  const [modalRejectedParticipantsOpened, setModalRejectedParticipantsOpened] = useState<boolean>(false);
+  const [modalUndoRejectParticipantsOpened, setModalUndoRejectParticipantsOpened] = useState<boolean>(false);
   const [rejectParticipantsMessage, setRejectParticipantsMessage] = useState<string>('');
 
   const handleRejectParticipant = useCallback(async () => {
@@ -79,6 +89,12 @@ export function AnalysisFooter() {
     setRejectParticipantsMessage('');
     refreshCurrentParticipantData(storageEngine, participantId, studyId);
   }, [rejectParticipant, rejectParticipantsMessage, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
+
+  const handleUndoRejectParticipant = useCallback(async () => {
+    setModalUndoRejectParticipantsOpened(false);
+    await undoRejectParticipant(participantId || '');
+    refreshCurrentParticipantData(storageEngine, participantId, studyId);
+  }, [undoRejectParticipant, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
 
   const [nextParticipantNameAndIndex, prevParticipantNameAndIndex]: [[string, number], [string, number]] = useMemo(() => {
     if (allParticipants && participantId && currentComponent) {
@@ -166,11 +182,11 @@ export function AnalysisFooter() {
               <IconArrowRight />
             </Button>
             <Button
-              color="red"
+              color={currentParticipantData?.rejected ? 'blue' : 'red'}
               disabled={!user.isAdmin || !participantId}
               onClick={() => {
                 if (currentParticipantData?.rejected) {
-                  setModalRejectedParticipantsOpened(true);
+                  setModalUndoRejectParticipantsOpened(true);
                 } else {
                   setModalRejectParticipantsOpened(true);
                 }
@@ -207,24 +223,28 @@ export function AnalysisFooter() {
       </Modal>
 
       <Modal
-        opened={modalRejectedParticipantsOpened}
-        onClose={() => setModalRejectedParticipantsOpened(false)}
+        opened={modalUndoRejectParticipantsOpened}
+        onClose={() => setModalUndoRejectParticipantsOpened(false)}
         title={(
           <Text>
             Participant Rejected
           </Text>
         )}
       >
-        <TextInput
-          label={`The participant has been rejected. (Reason: ${currentParticipantData?.rejected ? currentParticipantData.rejected.reason : 'No reason provided'})`}
-          onChange={(event) => setRejectParticipantsMessage(event.target.value)}
-        />
+        <Text>
+          The participant has been rejected.
+        </Text>
+        <Text>
+          Reason:
+          {' '}
+          {currentParticipantData?.rejected ? currentParticipantData.rejected.reason : 'No reason provided'}
+        </Text>
         <Flex mt="sm" justify="right">
-          <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalRejectedParticipantsOpened(false); setRejectParticipantsMessage(''); }}>
+          <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalUndoRejectParticipantsOpened(false); setRejectParticipantsMessage(''); }}>
             Cancel
           </Button>
-          <Button color="red" onClick={() => { setModalRejectedParticipantsOpened(false); handleRejectParticipant(); }}>
-            Unreject Participant
+          <Button color="blue" onClick={() => { setModalUndoRejectParticipantsOpened(false); handleUndoRejectParticipant(); }}>
+            Undo Reject Participant
           </Button>
         </Flex>
       </Modal>
