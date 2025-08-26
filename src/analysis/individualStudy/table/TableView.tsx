@@ -5,6 +5,7 @@ import {
   Badge,
   RingProgress,
   Stack,
+  Alert,
 } from '@mantine/core';
 import React, {
   useCallback, useMemo, useState,
@@ -14,7 +15,7 @@ import {
   MantineReactTable, MRT_Cell as MrtCell, MRT_ColumnDef as MrtColumnDef, MRT_RowSelectionState as MrtRowSelectionState, useMantineReactTable,
 } from 'mantine-react-table';
 import {
-  IconCheck, IconHourglassEmpty, IconX,
+  IconCheck, IconHourglassEmpty, IconX, IconAlertTriangle,
 } from '@tabler/icons-react';
 
 import {
@@ -83,11 +84,18 @@ export function TableView({
 
   const handleRejectParticipants = useCallback(async () => {
     setModalRejectParticipantsOpened(false);
-    const promises = Object.keys(checked).filter((v) => checked[v]).map(async (participantId) => await rejectParticipant(participantId, rejectParticipantsMessage));
+    const participantsToReject = Object.keys(checked)
+      .filter((v) => checked[v])
+      .filter((participantId) => {
+        const participant = visibleParticipants.find((p) => p.participantId === participantId);
+        return participant && !participant.rejected;
+      });
+
+    const promises = participantsToReject.map(async (participantId) => await rejectParticipant(participantId, rejectParticipantsMessage));
     await Promise.all(promises);
     setChecked({});
     await refresh();
-  }, [checked, refresh, rejectParticipant, rejectParticipantsMessage]);
+  }, [checked, refresh, rejectParticipant, rejectParticipantsMessage, visibleParticipants]);
 
   const handleUndoRejectParticipants = useCallback(async () => {
     setModalUndoRejectParticipantsOpened(false);
@@ -111,7 +119,9 @@ export function TableView({
 
   const areSelectedParticipantsRejected = useMemo(() => selectedParticipants.length > 0 && selectedParticipants.every((p) => p.rejected), [selectedParticipants]);
 
-  const areSelectedParticipantsNotRejected = useMemo(() => selectedParticipants.length > 0 && selectedParticipants.every((p) => !p.rejected), [selectedParticipants]);
+  const rejectedParticipantsCount = useMemo(() => selectedParticipants.filter((p) => p.rejected).length, [selectedParticipants]);
+  const nonRejectedParticipantsCount = useMemo(() => selectedParticipants.filter((p) => !p.rejected).length, [selectedParticipants]);
+  const hasNonRejectedSelected = useMemo(() => selectedParticipants.some((p) => !p.rejected), [selectedParticipants]);
 
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => [
     {
@@ -262,19 +272,19 @@ export function TableView({
                 </Button>
               )
             )}
-            {areSelectedParticipantsNotRejected && (
+            {hasNonRejectedSelected && (
               !user.isAdmin ? (
                 <Tooltip label="Only admins can reject participants">
-                  <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
+                  <Button disabled={nonRejectedParticipantsCount === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
                     Reject Participants (
-                    {Object.keys(checked).length}
+                    {nonRejectedParticipantsCount}
                     )
                   </Button>
                 </Tooltip>
               ) : (
-                <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
+                <Button disabled={nonRejectedParticipantsCount === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
                   Reject Participants (
-                  {Object.keys(checked).length}
+                  {nonRejectedParticipantsCount}
                   )
                 </Button>
               )
@@ -291,11 +301,28 @@ export function TableView({
           title={(
             <Text>
               Reject Participants (
-              {Object.keys(checked).length}
+              {nonRejectedParticipantsCount}
               )
             </Text>
         )}
         >
+          {rejectedParticipantsCount > 0 && (
+            <Alert
+              icon={<IconAlertTriangle size={16} />}
+              title="Warning"
+              color="orange"
+              mb="md"
+            >
+              {rejectedParticipantsCount}
+              {' '}
+              participant
+              {rejectedParticipantsCount === 1 ? '' : 's'}
+              {' '}
+              {rejectedParticipantsCount === 1 ? 'has' : 'have'}
+              {' '}
+              already been rejected.
+            </Alert>
+          )}
           <TextInput
             label="Please enter the reason for rejection."
             onChange={(event) => setRejectParticipantsMessage(event.target.value)}
