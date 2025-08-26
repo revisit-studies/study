@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import ReactMarkdown, { Components } from 'react-markdown';
 import {
-  Image, Text, Title, Anchor, List, Table,
+  Text, Title, Anchor, List, Table, Image,
 } from '@mantine/core';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
@@ -26,7 +26,9 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
     tr({ node, ...props }) { return <Table.Tr {...props} />; },
     th({ node, ...props }) { return <Table.Th {...props} />; },
     td({ node, ...props }) { return <Table.Td {...props} />; },
-    img({ node, src, ...props }) { return <Image {...props} src={src?.startsWith('http') ? src : `${PREFIX}${src}`} />; },
+    img({
+      node, width, height, src, ...props
+    }) { return <Image {...props} h={height} w={width} src={src?.startsWith('http') ? src : `${PREFIX}${src}`} />; },
   };
 
   const splitText = text.trim().split(' ');
