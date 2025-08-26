@@ -1,15 +1,6 @@
 import { Flex } from '@mantine/core';
 import { useRef, useEffect, useState } from 'react';
 
-interface AudioVisualizerProps {
-  width?: number;
-  height?: number;
-  fps?: number;
-  fftSize?: 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 8192 | 16384;
-  barColor?: string;
-  barWidth?: number;
-}
-
 export function RecordingAudioWaveform({
   width = 60,
   height = 36,
@@ -17,7 +8,14 @@ export function RecordingAudioWaveform({
   fftSize = 256,
   barColor = '#FA5252',
   barWidth = 2,
-}: AudioVisualizerProps) {
+}: {
+  width?: number;
+  height?: number;
+  fps?: number;
+  fftSize?: 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 8192 | 16384;
+  barColor?: string;
+  barWidth?: number;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
