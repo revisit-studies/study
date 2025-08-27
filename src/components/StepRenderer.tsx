@@ -20,6 +20,7 @@ import { ResolutionWarning } from './interface/ResolutionWarning';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { ScreenRecordingContext, useScreenRecording } from '../store/hooks/useScreenRecording';
 import { useStorageEngine } from '../storage/storageEngineHooks';
+import { ScreenRecordingRejection } from './interface/ScreenRecordingRejection';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -43,7 +44,7 @@ export function StepRenderer() {
   const screenRecording = useScreenRecording();
 
   const {
-    isScreenRecording, screenWithAudioRecording, stopScreenCapture, screenRecordingStream,
+    isScreenRecording, screenWithAudioRecording, stopScreenCapture, screenRecordingStream, isRejected: isScreenRecordingUserRejected,
   } = screenRecording;
 
   const analysisHasScreenRecording = useStoreSelector((state) => state.analysisHasScreenRecording);
@@ -182,6 +183,7 @@ export function StepRenderer() {
           <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} screenRecording={isScreenRecording} screenWithAudioRecording={screenWithAudioRecording} />
           )}
           <ResolutionWarning />
+          {isScreenRecordingUserRejected && <ScreenRecordingRejection />}
           <HelpModal />
           <AlertModal />
           <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }}>

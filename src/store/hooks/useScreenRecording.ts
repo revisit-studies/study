@@ -1,7 +1,8 @@
 import {
-  createContext, useCallback, useContext, useRef, useState,
+  createContext, useCallback, useContext, useEffect, useRef, useState,
 } from 'react';
 import { useStudyConfig } from './useStudyConfig';
+import { useCurrentComponent } from '../../routes/utils';
 
 /**
  * Capture screen and audio
@@ -17,8 +18,12 @@ export function useScreenRecording() {
   const [screenRecordingError, setRecordingError] = useState<string | null>(null);
   const [isScreenRecording, setIsScreenRecording] = useState(false);
   const [screenWithAudioRecording, setScreenWithAudioRecording] = useState(false);
+  const [captureStarted, setCaptureStarted] = useState(false);
+  const [isRejected, setIsRejected] = useState(false);
 
   const screenRecordingStream = useRef<MediaRecorder | null>(null); // combined stream
+
+  const currentComponent = useCurrentComponent();
 
   const [pageTitle] = useState(document.title);
 
@@ -31,6 +36,12 @@ export function useScreenRecording() {
     setIsScreenRecording(false);
     setScreenWithAudioRecording(false);
   }, []);
+
+  useEffect(() => {
+    if (currentComponent !== '$screen-recording.co.screenRecordingPermission' && currentComponent !== 'end' && captureStarted && !isScreenRecording) {
+      setIsRejected(true);
+    }
+  }, [currentComponent, captureStarted, isScreenRecording]);
 
   const startScreenCapture = useCallback(() => {
     const captureFn = async () => {
@@ -71,7 +82,7 @@ export function useScreenRecording() {
         screenRecordingStream.current = mediaRecorder;
 
         mediaRecorder.start();
-
+        setCaptureStarted(true);
         setIsScreenRecording(true);
         setScreenWithAudioRecording(!!recordAudio);
         setRecordingError(null);
@@ -97,6 +108,7 @@ export function useScreenRecording() {
     isScreenRecording,
     screenRecordingStream,
     screenWithAudioRecording,
+    isRejected,
   };
 }
 
