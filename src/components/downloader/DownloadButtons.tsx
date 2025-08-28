@@ -17,6 +17,7 @@ export function DownloadButtons({
 }: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null }) {
   const [openDownload, { open, close }] = useDisclosure(false);
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
+  const [loadingAudio, setLoadingAudio] = useState(false);
   const { storageEngine } = useStorageEngine();
 
   const fetchParticipants = async () => {
@@ -37,39 +38,44 @@ export function DownloadButtons({
   };
 
   const handleDownloadAudio = async () => {
-    const currParticipants = await fetchParticipants();
-    if (!storageEngine) return;
+    setLoadingAudio(true);
+    try {
+      const currParticipants = await fetchParticipants();
+      if (!storageEngine) return;
 
-    const namePrefix = fileName || studyId;
-    const zip = new JSZip();
+      const namePrefix = fileName || studyId;
+      const zip = new JSZip();
 
-    const audioPromises = currParticipants.flatMap((participant) => {
-      const entries = Object.values(participant.answers)
-        .filter((ans) => ans.endTime > 0)
-        .sort((a, b) => a.startTime - b.startTime);
+      const audioPromises = currParticipants.flatMap((participant) => {
+        const entries = Object.values(participant.answers)
+          .filter((ans) => ans.endTime > 0)
+          .sort((a, b) => a.startTime - b.startTime);
 
-      return entries.map(async (ans) => {
-        const identifier = `${ans.componentName}_${ans.trialOrder}`;
+        return entries.map(async (ans) => {
+          const identifier = `${ans.componentName}_${ans.trialOrder}`;
 
-        await downloadParticipantsAudio({
-          storageEngine,
-          participantId: participant.participantId,
-          identifier,
-          zip,
-          namePrefix,
+          await downloadParticipantsAudio({
+            storageEngine,
+            participantId: participant.participantId,
+            identifier,
+            zip,
+            namePrefix,
+          });
         });
       });
-    });
 
-    await Promise.all(audioPromises);
+      await Promise.all(audioPromises);
 
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(zipBlob);
-    Object.assign(document.createElement('a'), {
-      href: url,
-      download: `${namePrefix}_audio_transcript.zip`,
-    }).click();
-    URL.revokeObjectURL(url);
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      Object.assign(document.createElement('a'), {
+        href: url,
+        download: `${namePrefix}_audio_transcript.zip`,
+      }).click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setLoadingAudio(false);
+    }
   };
 
   const tooltipText = typeof visibleParticipants !== 'function' ? `Download ${visibleParticipants.length} participants` : 'Download participants data';
@@ -103,6 +109,7 @@ export function DownloadButtons({
             disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
             onClick={handleDownloadAudio}
             px={4}
+            loading={loadingAudio}
           >
             <IconFileExport />
           </Button>
