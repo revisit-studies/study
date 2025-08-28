@@ -219,6 +219,7 @@ export function TableView({
             <DownloadButtons
               visibleParticipants={selectedData}
               studyId={studyId || ''}
+              hasAudio={studyConfig?.uiConfig?.recordAudio}
             />
           </Group>
         </Flex>

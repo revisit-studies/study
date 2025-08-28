@@ -13,8 +13,8 @@ import { downloadParticipantsAudio } from '../../utils/handleDownloadAudio';
 type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData[]>);
 
 export function DownloadButtons({
-  visibleParticipants, studyId, gap, fileName,
-}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null }) {
+  visibleParticipants, studyId, gap, fileName, hasAudio,
+}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null; hasAudio?: boolean }) {
   const [openDownload, { open, close }] = useDisclosure(false);
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
   const [loadingAudio, setLoadingAudio] = useState(false);
@@ -70,7 +70,7 @@ export function DownloadButtons({
       const url = URL.createObjectURL(zipBlob);
       Object.assign(document.createElement('a'), {
         href: url,
-        download: `${namePrefix}_audio_transcript.zip`,
+        download: `${namePrefix}_audio.zip`,
       }).click();
       URL.revokeObjectURL(url);
     } finally {
@@ -103,17 +103,19 @@ export function DownloadButtons({
             <IconTableExport />
           </Button>
         </Tooltip>
-        <Tooltip label={`${tooltipText} audio & transcripts as ZIP`}>
-          <Button
-            variant="light"
-            disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
-            onClick={handleDownloadAudio}
-            px={4}
-            loading={loadingAudio}
-          >
-            <IconFileExport />
-          </Button>
-        </Tooltip>
+        {hasAudio && (
+          <Tooltip label={`${tooltipText} audio & transcripts as ZIP`}>
+            <Button
+              variant="light"
+              disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
+              onClick={handleDownloadAudio}
+              px={4}
+              loading={loadingAudio}
+            >
+              <IconFileExport />
+            </Button>
+          </Tooltip>
+        )}
       </Group>
 
       {openDownload && participants.length > 0 && (
