@@ -1,108 +1,107 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {StdioServerTransport} from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import * as path from 'path';
+import path from 'path';
+import Ajv from 'ajv';
 
 
 
-// Validation schemas for config files
-const GlobalConfigSchema = {
-  type: "object",
-  required: ["configsList", "configs"],
-  properties: {
-    configsList: {
-      type: "array",
-      items: { type: "string" }
-    },
-    configs: {
-      type: "object",
-      additionalProperties: {
-        type: "object",
-        required: ["path"],
-        properties: {
-          path: { type: "string" },
-          name: { type: "string" },
-          description: { type: "string" },
-          tags: {
-            type: "array",
-            items: { type: "string" }
-          }
-        }
-      }
-    }
+// Load the actual JSON schemas from the Revisit project
+let globalConfigSchema: any = null;
+let studyConfigSchema: any = null;
+let globalValidate: any = null;
+let studyValidate: any = null;
+
+async function loadSchemas() {
+  try {
+    const fs = await import('fs/promises');
+    
+    // Load global config schema
+    const globalSchemaPath = path.join(__dirname, '..', '..', 'src', 'parser', 'GlobalConfigSchema.json');
+    const globalSchemaContent = await fs.readFile(globalSchemaPath, 'utf-8');
+    globalConfigSchema = JSON.parse(globalSchemaContent);
+    
+    // Load study config schema
+    const studySchemaPath = path.join(__dirname, '..', '..', 'src', 'parser', 'StudyConfigSchema.json');
+    const studySchemaContent = await fs.readFile(studySchemaPath, 'utf-8');
+    studyConfigSchema = JSON.parse(studySchemaContent);
+    
+    // Initialize AJV validators
+    const ajv1 = new Ajv();
+    ajv1.addSchema(globalConfigSchema);
+    globalValidate = ajv1.getSchema('#/definitions/GlobalConfig');
+    
+    const ajv2 = new Ajv();
+    ajv2.addSchema(studyConfigSchema);
+    studyValidate = ajv2.getSchema('#/definitions/StudyConfig');
+    
+  } catch (error) {
+    console.error('Failed to load schemas:', error);
   }
-};
+}
 
-const StudyConfigSchema = {
-  type: "object",
-  required: ["$schema", "uiConfig", "studyMetadata", "components", "sequence"],
-  properties: {
-    $schema: { type: "string" },
-    uiConfig: { type: "object" },
-    studyMetadata: { type: "object" },
-    components: { type: "object" },
-    sequence: { type: "object" },
-    baseComponents: { type: "object" },
-    importedLibraries: {
-      type: "array",
-      items: { type: "string" }
-    }
-  }
-};
-
-// Validation function for global config
-function validateGlobalConfig(data: any): { isValid: boolean; errors: string[] } {
-  const errors: string[] = [];
-  
-  // Check required fields
-  if (!data.configsList || !Array.isArray(data.configsList)) {
-    errors.push("configsList must be an array");
+// Validation function for global config (following Revisit's approach)
+function validateGlobalConfig(data: any): { isValid: boolean; errors: any[] } {
+  if (!globalValidate) {
+    return { isValid: false, errors: [{ message: 'Schema not loaded' }] };
   }
   
-  if (!data.configs || typeof data.configs !== 'object') {
-    errors.push("configs must be an object");
-  }
+  const schemaValid = globalValidate(data) as boolean;
+  const schemaErrors = globalValidate.errors || [];
   
-  // Verify all configsList items exist in configs
+  // Additional custom validation (like Revisit's verifyGlobalConfig)
+  const customErrors: any[] = [];
   if (data.configsList && data.configs) {
     data.configsList.forEach((configName: string) => {
       if (!data.configs[configName]) {
-        errors.push(`Config '${configName}' is not defined in configs object, but is present in configsList`);
+        customErrors.push({ 
+          message: `Config ${configName} is not defined in configs object, but is present in configsList`,
+          instancePath: '/configsList',
+          params: { action: 'add the config to the configs object or remove it from configsList' }
+        });
       }
     });
   }
   
   return {
-    isValid: errors.length === 0,
-    errors
+    isValid: schemaValid && customErrors.length === 0,
+    errors: [...schemaErrors, ...customErrors]
   };
 }
 
-// Validation function for study config
-function validateStudyConfig(data: any): { isValid: boolean; errors: string[] } {
-  const errors: string[] = [];
+// Validation function for study config (following Revisit's approach)
+function validateStudyConfig(data: any): { isValid: boolean; errors: any[] } {
+  if (!studyValidate) {
+    return { isValid: false, errors: [{ message: 'Schema not loaded' }] };
+  }
   
-  // Check required fields
-  if (!data.$schema) errors.push("$schema is required");
-  if (!data.uiConfig) errors.push("uiConfig is required");
-  if (!data.studyMetadata) errors.push("studyMetadata is required");
-  if (!data.components) errors.push("components is required");
-  if (!data.sequence) errors.push("sequence is required");
+  const schemaValid = studyValidate(data) as boolean;
+  const schemaErrors = studyValidate.errors || [];
   
-  // Check components structure
+  // Additional custom validation (like Revisit's verifyStudyConfig)
+  const customErrors: any[] = [];
+  
   if (data.components && typeof data.components === 'object') {
-    Object.entries(data.components).forEach(([name, component]: [string, any]) => {
+    Object.entries(data.components).forEach(([componentName, component]: [string, any]) => {
+      // Verify baseComponent is defined in baseComponents object
       if (component.baseComponent && !data.baseComponents?.[component.baseComponent]) {
-        errors.push(`Base component '${component.baseComponent}' is not defined in baseComponents object`);
+        customErrors.push({
+          message: `Base component \`${component.baseComponent}\` is not defined in baseComponents object`,
+          instancePath: `/components/${componentName}`,
+          params: { action: 'add the base component to the baseComponents object' },
+        });
       }
     });
   }
   
   return {
-    isValid: errors.length === 0,
-    errors
+    isValid: schemaValid && customErrors.length === 0,
+    errors: [...schemaErrors, ...customErrors]
   };
 }
+
+// Load schemas on startup
+loadSchemas();
 
 const server = new McpServer({
   name: "RevisitMCP",
@@ -113,14 +112,14 @@ const server = new McpServer({
 server.registerTool("getversion",
   {
     title: "Get Revisit Version",
-    description: "Get the version of revisit",
+    description: "Get the version of Revisit framework",
     inputSchema: {}
   },
   async () => {
     return {
       content: [{ 
         type: "text", 
-        text: "2.0.0"
+        text: "Revisit Framework Version: 2.0.0"
       }]
     };
   }
@@ -131,7 +130,7 @@ server.registerTool("getversion",
 server.registerTool("getcitation",
   {
     title: "Get Revisit Citation",
-    description: "Get the BibTeX citation for Revisit",
+    description: "Get the BibTeX citation for Revisit framework",
     inputSchema: {}
   },
   async () => {
@@ -155,8 +154,8 @@ server.registerTool("getcitation",
 
 server.registerTool("getconfigschema",
   {
-    title: "Get Config File Schema",
-    description: "Get the Schema Definition of Revisit Config File",
+    title: "Get Config Schema",
+    description: "Get the path to Revisit config file schema",
     inputSchema: {}
   },
   async () => {
@@ -171,8 +170,8 @@ server.registerTool("getconfigschema",
 
 server.registerTool("gettypes",
   {
-    title: "Get Revisit Types Definition",
-    description: "Get the Types Definition of Revisit Config File",
+    title: "Get Types Definition",
+    description: "Get the path to Revisit types definition file",
     inputSchema: {}
   },
   async () => {
@@ -190,57 +189,59 @@ server.registerTool("gettypes",
 
 server.registerTool("getstudytemplatemetadata",
   {
-    title: "Get Study Templates Metadata",
-    description: "Get template study meta data with paths and tags",
+    title: "Get Study Template Metadata",
+    description: "Get metadata for all available study templates",
     inputSchema: {}
   },
   async () => {
+    const templateData = [
+      {"path": "public/demo-click-accuracy-test", "tags": ["stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: reactive"]},
+      {"path": "public/demo-dynamic", "tags": ["stimuli: react-component", "sequence: dynamic", "basecomponent: false", "response: buttons"]},
+      {"path": "public/demo-html", "tags": ["stimuli: website", "sequence: fixed", "basecomponent: false", "response: numerical"]},
+      {"path": "public/demo-html-input", "tags": ["stimuli: website", "sequence: fixed", "basecomponent: true", "response: reactive"]},
+      {"path": "public/demo-html-trrack", "tags": ["stimuli: website", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/demo-image", "tags": ["stimuli: image", "sequence: fixed", "basecomponent: false", "response: radio, shortText"]},
+      {"path": "public/demo-reaction-speed", "tags": ["stimuli: react-component", "sequence: fixed", "basecomponent: false", "response: reactive"]},
+      {"path": "public/demo-survey", "tags": ["stimuli: markdown", "sequence: fixed", "basecomponent: false", "response: text, radio, checkbox"]},
+      {"path": "public/demo-temperature-study", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/demo-training", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/demo-upset", "tags": ["stimuli: vega", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/demo-vega", "tags": ["stimuli: vega", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/demo-video", "tags": ["stimuli: video", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/demo-video-slider", "tags": ["stimuli: video", "sequence: fixed", "basecomponent: false", "response: slider"]},
+      {"path": "public/demo-yaml", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/example-brush-interactions", "tags": ["stimuli: vega", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/example-cleveland", "tags": ["stimuli: vega", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/example-mvnv", "tags": ["stimuli: html", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/example-VLAT-full_fixed", "tags": ["stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: reactive"]},
+      {"path": "public/example-VLAT-full-randomized", "tags": ["stimuli: react-component", "sequence: randomized", "basecomponent: true", "response: reactive"]},
+      {"path": "public/example-VLAT-mini-randomized", "tags": ["stimuli: react-component", "sequence: randomized", "basecomponent: true", "response: reactive"]},
+      {"path": "public/html-stimuli/mvnv-study", "tags": ["stimuli: html", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/library-beauvis", "tags": ["library: beauvis", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: none"]},
+      {"path": "public/library-calvi", "tags": ["library: calvi", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: none"]},
+      {"path": "public/library-color-blindness", "tags": ["library: color-blindness", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: none"]},
+      {"path": "public/library-demographics", "tags": ["library: demographics", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: text, radio, checkbox"]},
+      {"path": "public/library-mic-check", "tags": ["library: mic-check", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: audio"]},
+      {"path": "public/library-mini-vlat", "tags": ["library: mini-vlat", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: reactive"]},
+      {"path": "public/library-nasa-tlx", "tags": ["library: nasa-tlx", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: slider"]},
+      {"path": "public/library-previs", "tags": ["library: previs", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: none"]},
+      {"path": "public/library-sus", "tags": ["library: sus", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: radio"]},
+      {"path": "public/library-vlat", "tags": ["library: vlat", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: reactive"]},
+      {"path": "public/test-audio", "tags": ["stimuli: audio", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/test-library", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/test-likert-matrix", "tags": ["stimuli: react-component", "sequence: fixed", "basecomponent: false", "response: likert"]},
+      {"path": "public/test-parser-errors", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/test-randomization", "tags": ["stimuli: generic-web-component", "sequence: randomized", "basecomponent: false", "response: none"]},
+      {"path": "public/test-skip-logic", "tags": ["stimuli: markdown", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/test-step-logic", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/test-uncert", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/tutorial", "tags": ["stimuli: markdown", "sequence: fixed", "basecomponent: false", "response: none"]}
+    ];
+    
     return {
       content: [{ 
         type: "text", 
-        text: JSON.stringify([
-            {"path": "public/demo-click-accuracy-test", "tags": ["stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: reactive"]},
-            {"path": "public/demo-dynamic", "tags": ["stimuli: react-component", "sequence: dynamic", "basecomponent: false", "response: buttons"]},
-            {"path": "public/demo-html", "tags": ["stimuli: website", "sequence: fixed", "basecomponent: false", "response: numerical"]},
-            {"path": "public/demo-html-input", "tags": ["stimuli: website", "sequence: fixed", "basecomponent: true", "response: reactive"]},
-            {"path": "public/demo-html-trrack", "tags": ["stimuli: website", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/demo-image", "tags": ["stimuli: image", "sequence: fixed", "basecomponent: false", "response: radio, shortText"]},
-            {"path": "public/demo-reaction-speed", "tags": ["stimuli: react-component", "sequence: fixed", "basecomponent: false", "response: reactive"]},
-            {"path": "public/demo-survey", "tags": ["stimuli: markdown", "sequence: fixed", "basecomponent: false", "response: text, radio, checkbox"]},
-            {"path": "public/demo-temperature-study", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/demo-training", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/demo-upset", "tags": ["stimuli: vega", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/demo-vega", "tags": ["stimuli: vega", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/demo-video", "tags": ["stimuli: video", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/demo-video-slider", "tags": ["stimuli: video", "sequence: fixed", "basecomponent: false", "response: slider"]},
-            {"path": "public/demo-yaml", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/example-brush-interactions", "tags": ["stimuli: vega", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/example-cleveland", "tags": ["stimuli: vega", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/example-mvnv", "tags": ["stimuli: html", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/example-VLAT-full_fixed", "tags": ["stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: reactive"]},
-            {"path": "public/example-VLAT-full-randomized", "tags": ["stimuli: react-component", "sequence: randomized", "basecomponent: true", "response: reactive"]},
-            {"path": "public/example-VLAT-mini-randomized", "tags": ["stimuli: react-component", "sequence: randomized", "basecomponent: true", "response: reactive"]},
-            {"path": "public/html-stimuli/mvnv-study", "tags": ["stimuli: html", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/library-beauvis", "tags": ["library: beauvis", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: none"]},
-            {"path": "public/library-calvi", "tags": ["library: calvi", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: none"]},
-            {"path": "public/library-color-blindness", "tags": ["library: color-blindness", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: none"]},
-            {"path": "public/library-demographics", "tags": ["library: demographics", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: text, radio, checkbox"]},
-            {"path": "public/library-mic-check", "tags": ["library: mic-check", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: audio"]},
-            {"path": "public/library-mini-vlat", "tags": ["library: mini-vlat", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: reactive"]},
-            {"path": "public/library-nasa-tlx", "tags": ["library: nasa-tlx", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: slider"]},
-            {"path": "public/library-previs", "tags": ["library: previs", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: none"]},
-            {"path": "public/library-sus", "tags": ["library: sus", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: radio"]},
-            {"path": "public/library-vlat", "tags": ["library: vlat", "stimuli: react-component", "sequence: fixed", "basecomponent: true", "response: reactive"]},
-            {"path": "public/test-audio", "tags": ["stimuli: audio", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/test-library", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/test-likert-matrix", "tags": ["stimuli: react-component", "sequence: fixed", "basecomponent: false", "response: likert"]},
-            {"path": "public/test-parser-errors", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/test-randomization", "tags": ["stimuli: generic-web-component", "sequence: randomized", "basecomponent: false", "response: none"]},
-            {"path": "public/test-skip-logic", "tags": ["stimuli: markdown", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/test-step-logic", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/test-uncert", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
-            {"path": "public/tutorial", "tags": ["stimuli: markdown", "sequence: fixed", "basecomponent: false", "response: none"]}
-        ], null, 2)
+        text: JSON.stringify(templateData, null, 2)
       }]
     };
   }
@@ -250,16 +251,13 @@ server.registerTool("getstudytemplatemetadata",
 server.registerTool("generatestudyprompt",
   {
     title: "Generate Study Prompt",
-    description: "Generate an enhanced prompt for creating empirical studies using the Revisit Framework",
+    description: "Generate an enhanced prompt for creating a Revisit study based on user description",
     inputSchema: {
-      description: z.string().describe("The user's study description to enhance")
+      description: z.string().describe("The user's study description")
     }
   },
   async ({ description }) => {
-    return {
-      content: [{ 
-        type: "text", 
-        text: `# 🎯 Task: Generate an Empirical Study using the Revisit Framework
+    const enhancedPrompt = `# 🎯 Task: Generate an Empirical Study using the Revisit Framework
 
 You are tasked with generating a study configuration using the **Revisit Framework**. This involves creating a folder structure, DSL config file, and assets based on the user's description.
 Check the study config schema first, then check a few template studies similar to the user's description based on their tags before starting to build the study.
@@ -305,8 +303,12 @@ ${description}
 ## 🧠 Final Integration:
 - Use 'validatestudyconfig' tool to validate study config you generated.
 - Don't forget to add the generated study to the **global config file** so it becomes accessible.
-- Use 'validateglobalconfig' tool to validate global config.
-`
+- Use 'validateglobalconfig' tool to validate global config.`;
+
+    return {
+      content: [{ 
+        type: "text", 
+        text: enhancedPrompt
       }]
     };
   }
@@ -365,10 +367,17 @@ server.registerTool("validateglobalconfig",
           }]
         };
       } else {
+        const errorMessages = validationResult.errors.map(error => {
+          if (error.instancePath && error.message) {
+            return `You have an error at ${error.instancePath}: ${error.message}${error.params?.action ? ` - ${JSON.stringify(error.params)}` : ''}`;
+          }
+          return `• ${error.message || error}`;
+        });
+        
         return {
           content: [{ 
             type: "text", 
-            text: `❌ Global config file '${filePath}' validation failed:\n\n${validationResult.errors.map(error => `• ${error}`).join('\n')}`
+            text: `❌ Global config file '${filePath}' validation failed:\n\n${errorMessages.join('\n')}`
           }]
         };
       }
@@ -439,10 +448,17 @@ server.registerTool("validatestudyconfig",
           }]
         };
       } else {
+        const errorMessages = validationResult.errors.map(error => {
+          if (error.instancePath && error.message) {
+            return `You have an error at ${error.instancePath}: ${error.message}${error.params?.action ? ` - ${JSON.stringify(error.params)}` : ''}`;
+          }
+          return `• ${error.message || error}`;
+        });
+        
         return {
           content: [{ 
             type: "text", 
-            text: `❌ Study config file '${resolvedPath}' validation failed:\n\n${validationResult.errors.map(error => `• ${error}`).join('\n')}`
+            text: `❌ Study config file '${resolvedPath}' validation failed:\n\nThere was an issue loading the study config. Please check the following issues:\n\n${errorMessages.join('\n')}`
           }]
         };
       }
