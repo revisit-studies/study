@@ -156,7 +156,18 @@ function StepItem({
   const taskAnswer: StoredAnswer | null = matchingAnswer ? matchingAnswer[1] : null;
 
   const correctAnswer = taskAnswer && taskAnswer.correctAnswer.length > 0 && Object.keys(taskAnswer.answer).length > 0 && taskAnswer.correctAnswer;
-  const correct = correctAnswer && taskAnswer && Object.values(correctAnswer).every((value) => taskAnswer.answer[value.id] === value.answer);
+  const correct = correctAnswer && taskAnswer && Object.values(correctAnswer).every((value) => {
+    const participantAnswer = taskAnswer.answer[value.id];
+    const expectedAnswer = value.answer;
+
+    // Handle multi-select responses
+    if (Array.isArray(expectedAnswer)) {
+      return Array.isArray(participantAnswer) && participantAnswer.length === expectedAnswer.length
+              && participantAnswer.every((answer) => expectedAnswer.includes(answer));
+    }
+
+    return participantAnswer === expectedAnswer;
+  });
 
   const correctIncorrectIcon = taskAnswer && correctAnswer ? (
     correct
