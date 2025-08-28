@@ -161,9 +161,8 @@ function StepItem({
     const expectedAnswer = value.answer;
 
     // Handle multi-select responses
-    if (Array.isArray(expectedAnswer)) {
-      return Array.isArray(participantAnswer) && participantAnswer.length === expectedAnswer.length
-              && participantAnswer.every((answer) => expectedAnswer.includes(answer));
+    if (Array.isArray(expectedAnswer) && Array.isArray(participantAnswer)) {
+      return participantAnswer.length === expectedAnswer.length && participantAnswer.every((answer) => expectedAnswer.includes(answer));
     }
 
     return participantAnswer === expectedAnswer;
