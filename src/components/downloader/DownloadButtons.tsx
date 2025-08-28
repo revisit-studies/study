@@ -4,11 +4,10 @@ import {
 import { IconDatabaseExport, IconFileExport, IconTableExport } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
-import JSZip from 'jszip';
 import { DownloadTidy, download } from './DownloadTidy';
 import { ParticipantData } from '../../storage/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { downloadParticipantsAudio } from '../../utils/handleDownloadAudio';
+import { downloadParticipantsAudioZip } from '../../utils/handleDownloadAudio';
 
 type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData[]>);
 
@@ -39,40 +38,16 @@ export function DownloadButtons({
 
   const handleDownloadAudio = async () => {
     setLoadingAudio(true);
+
     try {
       const currParticipants = await fetchParticipants();
       if (!storageEngine) return;
-
-      const namePrefix = fileName || studyId;
-      const zip = new JSZip();
-
-      const audioPromises = currParticipants.flatMap((participant) => {
-        const entries = Object.values(participant.answers)
-          .filter((ans) => ans.endTime > 0)
-          .sort((a, b) => a.startTime - b.startTime);
-
-        return entries.map(async (ans) => {
-          const identifier = `${ans.componentName}_${ans.trialOrder}`;
-
-          await downloadParticipantsAudio({
-            storageEngine,
-            participantId: participant.participantId,
-            identifier,
-            zip,
-            namePrefix,
-          });
-        });
+      await downloadParticipantsAudioZip({
+        storageEngine,
+        participants: currParticipants,
+        studyId,
+        fileName,
       });
-
-      await Promise.all(audioPromises);
-
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(zipBlob);
-      Object.assign(document.createElement('a'), {
-        href: url,
-        download: `${namePrefix}_audio.zip`,
-      }).click();
-      URL.revokeObjectURL(url);
     } finally {
       setLoadingAudio(false);
     }
