@@ -8,6 +8,7 @@ import JSZip from 'jszip';
 import { DownloadTidy, download } from './DownloadTidy';
 import { ParticipantData } from '../../storage/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { downloadParticipantsAudio } from '../../utils/handleDownloadAudio';
 
 type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData[]>);
 
@@ -50,25 +51,13 @@ export function DownloadButtons({
       return entries.map(async (ans) => {
         const identifier = `${ans.componentName}_${ans.trialOrder}`;
 
-        try {
-          const audioUrl = await storageEngine.getAudioUrl(identifier, participant.participantId);
-          if (audioUrl) {
-            const audioResponse = await fetch(audioUrl);
-            const audioBlob = await audioResponse.blob();
-            const audioFileName = `${namePrefix}_${participant.participantId}_${identifier}.webm`;
-            zip.file(audioFileName, audioBlob);
-          }
-
-          const transcriptUrl = await storageEngine.getTranscriptUrl(identifier, participant.participantId);
-          if (transcriptUrl) {
-            const transcriptResponse = await fetch(transcriptUrl);
-            const transcriptBlob = await transcriptResponse.blob();
-            const transcriptFileName = `${namePrefix}_${participant.participantId}_${identifier}_transcript.txt`;
-            zip.file(transcriptFileName, transcriptBlob);
-          }
-        } catch (error) {
-          console.warn(`Failed to fetch files for ${identifier}:`, error);
-        }
+        await downloadParticipantsAudio({
+          storageEngine,
+          participantId: participant.participantId,
+          identifier,
+          zip,
+          namePrefix,
+        });
       });
     });
 

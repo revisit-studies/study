@@ -18,6 +18,7 @@ import {
 import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { handleTaskAudio } from '../../utils/handleDownloadAudio';
 
 function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -65,17 +66,17 @@ export function AnalysisFooter() {
   const isStart = useMemo(() => currentStep === 0, [currentStep]);
   const isEnd = useMemo(() => currentStep === flatSequence.length, [currentStep, flatSequence.length]);
   const identifier = useCurrentIdentifier();
-  const [hasAudio, setHasAudio] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!storageEngine || !participantId || !identifier) {
-      setHasAudio(false);
+      setAudioUrl(null);
       return;
     }
 
     storageEngine.getAudioUrl(identifier, participantId)
-      .then((audioUrl) => setHasAudio(!!audioUrl))
-      .catch(() => setHasAudio(false));
+      .then((url) => setAudioUrl(url))
+      .catch(() => setAudioUrl(null));
   }, [storageEngine, participantId, identifier]);
 
   const handleDownloadAudio = async () => {
@@ -83,33 +84,12 @@ export function AnalysisFooter() {
       return;
     }
 
-    const audioUrl = await storageEngine.getAudioUrl(identifier, participantId);
-
-    if (audioUrl) {
-      const blob = await (await fetch(audioUrl)).blob();
-      const url = URL.createObjectURL(blob);
-
-      Object.assign(document.createElement('a'), {
-        href: url,
-        download: `${participantId}_${identifier}_audio.webm`,
-      }).click();
-
-      URL.revokeObjectURL(url);
-    }
-
-    const transcriptUrl = await storageEngine.getTranscriptUrl(identifier, participantId);
-
-    if (transcriptUrl) {
-      const transcriptBlob = await (await fetch(transcriptUrl)).blob();
-      const transcriptBlobUrl = URL.createObjectURL(transcriptBlob);
-
-      Object.assign(document.createElement('a'), {
-        href: transcriptBlobUrl,
-        download: `${participantId}_${identifier}_transcript.txt`,
-      }).click();
-
-      URL.revokeObjectURL(transcriptBlobUrl);
-    }
+    await handleTaskAudio({
+      storageEngine,
+      participantId,
+      identifier,
+      audioUrl,
+    });
   };
 
   return (
@@ -125,7 +105,7 @@ export function AnalysisFooter() {
             <ActionIcon variant="filled" size={30} onClick={() => storeDispatch(setAnalysisIsPlaying(!analysisIsPlaying))}>
               {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
             </ActionIcon>
-            {hasAudio && (
+            {audioUrl && (
               <Tooltip label="Download audio">
                 <ActionIcon variant="filled" size={30} onClick={handleDownloadAudio}>
                   <IconDownload />
