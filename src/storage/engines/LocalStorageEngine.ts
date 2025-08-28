@@ -197,18 +197,6 @@ export class LocalStorageEngine extends StorageEngine {
     return URL.createObjectURL(audioBlob);
   }
 
-  protected async _getTranscriptUrl(task: string, participantId?: string) {
-    await this.verifyStudyDatabase();
-    if (this.studyId === undefined) {
-      throw new Error('Study ID is not set');
-    }
-    const transcriptBlob = await this._getFromStorage(`audio/${participantId || this.currentParticipantId}`, `${task}.wav_transcription.txt`);
-    if (!transcriptBlob) {
-      throw new Error(`Transcript for task ${task} and participant ${participantId || this.currentParticipantId} not found`);
-    }
-    return URL.createObjectURL(transcriptBlob);
-  }
-
   protected async _testingReset(studyId: string) {
     if (!studyId) {
       throw new Error('Study ID is required for reset');
