@@ -133,7 +133,7 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
           tidyRow.responsePrompt = response?.prompt;
         }
         if (properties.includes('answer')) {
-          tidyRow.answer = value;
+          tidyRow.answer = typeof value === 'object' ? JSON.stringify(value) : value;
         }
         if (properties.includes('correctAnswer')) {
           const configCorrectAnswer = completeComponent.correctAnswer?.find((ans) => ans.id === key)?.answer;
