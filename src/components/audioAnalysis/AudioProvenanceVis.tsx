@@ -231,7 +231,9 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
           if (!participantId) {
             throw new Error('Participant ID is required to load audio');
           }
-          const url = await storageEngine.getAudio(identifier, participantId);
+
+          const url = await Promise.any([storageEngine.getAudio(identifier, participantId), storageEngine.getScreenRecording(identifier, participantId)]);
+
           await waveSurfer.load(url!);
           setWaveSurferLoading(false);
           storeDispatch(setAnalysisHasAudio(true));

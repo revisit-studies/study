@@ -27,14 +27,35 @@ export function useScreenRecording() {
 
   const [pageTitle] = useState(document.title);
 
+  // Screen capture starts once and stops at the end of the study.
+  // At the beginning of each stimulus, recording starts by calling `startScreenRecording`.
+  // At the end of each stimulus, recording stops by calling `stopScreenRecording`.
+
+  // Stop the screen capture.
   const stopScreenCapture = useCallback(() => {
-    const stream = recordVideoRef.current?.srcObject as MediaStream;
-    stream?.getTracks().forEach((track) => track.stop());
     if (recordVideoRef.current) {
       recordVideoRef.current.srcObject = null;
     }
     setIsScreenRecording(false);
     setScreenWithAudioRecording(false);
+
+    if (screenRecordingStream.current) {
+      screenRecordingStream.current.stream.getTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
+      screenRecordingStream.current.stream.getVideoTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
+      screenRecordingStream.current.stream.getAudioTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
+      screenRecordingStream.current.stop();
+      screenRecordingStream.current = null;
+    }
+  }, []);
+
+  // Start screen recording
+  const startScreenRecording = useCallback(() => {
+    screenRecordingStream.current?.start();
+  }, []);
+
+  // Start screen recording. This does not stop screen capture.
+  const stopScreenRecording = useCallback(() => {
+    screenRecordingStream.current?.stop();
   }, []);
 
   useEffect(() => {
@@ -43,6 +64,7 @@ export function useScreenRecording() {
     }
   }, [currentComponent, captureStarted, isScreenRecording]);
 
+  // Start screen capture. This does not begin recording.
   const startScreenCapture = useCallback(() => {
     const captureFn = async () => {
       document.title = `RECORD THIS TAB: ${pageTitle}`;
@@ -81,7 +103,6 @@ export function useScreenRecording() {
         const mediaRecorder = new MediaRecorder(combinedStream);
         screenRecordingStream.current = mediaRecorder;
 
-        mediaRecorder.start();
         setCaptureStarted(true);
         setIsScreenRecording(true);
         setScreenWithAudioRecording(!!recordAudio);
@@ -104,6 +125,8 @@ export function useScreenRecording() {
     recordAudio,
     startScreenCapture,
     stopScreenCapture,
+    startScreenRecording,
+    stopScreenRecording,
     screenRecordingError,
     isScreenRecording,
     screenRecordingStream,
