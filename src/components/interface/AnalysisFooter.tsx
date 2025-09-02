@@ -1,5 +1,5 @@
 import {
-  ActionIcon, AppShell, Box, Button, Center, Group, Select, Text, Tooltip,
+  ActionIcon, AppShell, Box, Button, Flex, Group, Select, Text, Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMemo, useState, useEffect } from 'react';
@@ -94,10 +94,12 @@ export function AnalysisFooter() {
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
-      <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px' }}>
+      <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px', position: 'relative' }}>
 
         <AudioProvenanceVis setTimeString={setTimeString} />
-        <Center>
+        <Flex justify="space-between" align="center" px="md">
+          {/* Placeholder box for Show Legend button */}
+          <Box />
           <Group gap="xs" style={{ height: '50px' }}>
             <Text size="sm" ff="monospace">
               {timeString}
@@ -105,13 +107,6 @@ export function AnalysisFooter() {
             <ActionIcon variant="filled" size={30} onClick={() => storeDispatch(setAnalysisIsPlaying(!analysisIsPlaying))}>
               {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
             </ActionIcon>
-            {audioUrl && (
-              <Tooltip label="Download audio">
-                <ActionIcon variant="filled" size={30} onClick={handleDownloadAudio}>
-                  <IconDownload />
-                </ActionIcon>
-              </Tooltip>
-            )}
             <Text mx="0">
               Participant:
             </Text>
@@ -166,7 +161,16 @@ export function AnalysisFooter() {
               <IconArrowRight />
             </Button>
           </Group>
-        </Center>
+          <Group>
+            {audioUrl && (
+            <Tooltip label="Download audio">
+              <ActionIcon variant="filled" size={30} onClick={handleDownloadAudio}>
+                <IconDownload />
+              </ActionIcon>
+            </Tooltip>
+            )}
+          </Group>
+        </Flex>
       </Box>
     </AppShell.Footer>
   );
