@@ -94,7 +94,7 @@ export async function downloadParticipantsAudioZip({
   fileName,
 }: {
   storageEngine: StorageEngine;
-  participants: Array<{ participantId: string; answers: Record<string, { endTime: number; startTime: number; componentName: string; trialOrder: number }> }>;
+  participants: Array<{ participantId: string; answers: Record<string, { endTime: number; startTime: number; componentName: string; trialOrder: string }> }>;
   studyId: string;
   fileName?: string | null;
 }) {
