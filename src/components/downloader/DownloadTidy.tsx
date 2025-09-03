@@ -53,6 +53,7 @@ export const OPTIONAL_COMMON_PROPS = [
   'resizeEvents',
   'scrollEvents',
   'visibilityEvents',
+  'windowEvents',
 ] as const;
 
 export const REQUIRED_PROPS = [
@@ -199,6 +200,9 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         }
         if (properties.includes('visibilityEvents')) {
           tidyRow.visibilityEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'visibility').length;
+        }
+        if (properties.includes('windowEvents')) {
+          tidyRow.windowEvents = JSON.stringify(trialAnswer.windowEvents);
         }
         return tidyRow;
       }).flat();
