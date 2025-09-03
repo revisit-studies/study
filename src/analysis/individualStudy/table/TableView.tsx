@@ -249,7 +249,7 @@ export function TableView({
           <Group>
             {areSelectedParticipantsRejected && (
               <Tooltip label="Only admins can undo rejection" disabled={user.isAdmin}>
-                <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalUndoRejectParticipantsOpened(true)} color="green">
+                <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalUndoRejectParticipantsOpened(true)} color="blue">
                   Undo Reject Participants (
                   {Object.keys(checked).length}
                   )
@@ -341,7 +341,7 @@ export function TableView({
             <Button mr={5} variant="subtle" color="dark" onClick={() => setModalUndoRejectParticipantsOpened(false)}>
               Cancel
             </Button>
-            <Button color="green" onClick={() => handleUndoRejectParticipants()}>
+            <Button color="blue" onClick={() => handleUndoRejectParticipants()}>
               Undo Reject Participants
             </Button>
           </Flex>
