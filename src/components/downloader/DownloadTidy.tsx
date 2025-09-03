@@ -10,7 +10,6 @@ import {
   Space,
   Table,
   Text,
-  Tooltip,
 } from '@mantine/core';
 import {
   IconBrandPython, IconLayoutColumns, IconTableExport, IconX,
@@ -43,16 +42,6 @@ export const OPTIONAL_COMMON_PROPS = [
   'responseMin',
   'responseMax',
   'configHash',
-  'focusEvents',
-  'inputEvents',
-  'keydownEvents',
-  'keyupEvents',
-  'mousemoveEvents',
-  'mousedownEvents',
-  'mouseupEvents',
-  'resizeEvents',
-  'scrollEvents',
-  'visibilityEvents',
   'windowEvents',
 ] as const;
 
@@ -171,38 +160,22 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         if (properties.includes('responseMax')) {
           tidyRow.responseMax = response?.type === 'numerical' ? response.max : undefined;
         }
-        if (properties.includes('focusEvents')) {
-          tidyRow.focusEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'focus').length;
-        }
-        if (properties.includes('inputEvents')) {
-          tidyRow.inputEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'input').length;
-        }
-        if (properties.includes('keydownEvents')) {
-          tidyRow.keydownEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'keydown').length;
-        }
-        if (properties.includes('keyupEvents')) {
-          tidyRow.keyupEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'keyup').length;
-        }
-        if (properties.includes('mousemoveEvents')) {
-          tidyRow.mousemoveEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'mousemove').length;
-        }
-        if (properties.includes('mousedownEvents')) {
-          tidyRow.mousedownEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'mousedown').length;
-        }
-        if (properties.includes('mouseupEvents')) {
-          tidyRow.mouseupEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'mouseup').length;
-        }
-        if (properties.includes('resizeEvents')) {
-          tidyRow.resizeEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'resize').length;
-        }
-        if (properties.includes('scrollEvents')) {
-          tidyRow.scrollEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'scroll').length;
-        }
-        if (properties.includes('visibilityEvents')) {
-          tidyRow.visibilityEvents = trialAnswer.windowEvents.filter((event) => event[1] === 'visibility').length;
-        }
+
         if (properties.includes('windowEvents')) {
-          tidyRow.windowEvents = JSON.stringify(trialAnswer.windowEvents);
+          const windowEventsCount = {
+            focus: trialAnswer.windowEvents.filter((event) => event[1] === 'focus').length,
+            input: trialAnswer.windowEvents.filter((event) => event[1] === 'input').length,
+            keydown: trialAnswer.windowEvents.filter((event) => event[1] === 'keydown').length,
+            keyup: trialAnswer.windowEvents.filter((event) => event[1] === 'keyup').length,
+            mousemove: trialAnswer.windowEvents.filter((event) => event[1] === 'mousemove').length,
+            mousedown: trialAnswer.windowEvents.filter((event) => event[1] === 'mousedown').length,
+            mouseup: trialAnswer.windowEvents.filter((event) => event[1] === 'mouseup').length,
+            resize: trialAnswer.windowEvents.filter((event) => event[1] === 'resize').length,
+            scroll: trialAnswer.windowEvents.filter((event) => event[1] === 'scroll').length,
+            visibility: trialAnswer.windowEvents.filter((event) => event[1] === 'visibility').length,
+          };
+
+          tidyRow.windowEvents = JSON.stringify(windowEventsCount);
         }
         return tidyRow;
       }).flat();
@@ -322,19 +295,6 @@ export function DownloadTidy({
           {OPTIONAL_COMMON_PROPS.map((prop) => {
             const isSelected = selectedProperties.includes(prop);
 
-            const eventTooltips: Record<string, string> = {
-              focusEvents: 'Tab focus events',
-              inputEvents: 'Form input events',
-              keydownEvents: 'Key press events',
-              keyupEvents: 'Key release events',
-              mousemoveEvents: 'Mouse movement tracking',
-              mousedownEvents: 'Mouse button press events',
-              mouseupEvents: 'Mouse button release events',
-              resizeEvents: 'Window resize events',
-              scrollEvents: 'Page scroll events',
-              visibilityEvents: 'Page visibility changes',
-            };
-
             const button = (
               <Button
                 key={prop}
@@ -360,14 +320,6 @@ export function DownloadTidy({
                 {prop}
               </Button>
             );
-
-            if (eventTooltips[prop]) {
-              return (
-                <Tooltip key={prop} label={eventTooltips[prop]}>
-                  {button}
-                </Tooltip>
-              );
-            }
 
             return button;
           })}
