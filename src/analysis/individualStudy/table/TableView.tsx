@@ -57,26 +57,18 @@ export function TableView({
 
   const rejectParticipant = useCallback(async (participantId: string, reason: string) => {
     if (storageEngine && studyId) {
-      if (user.isAdmin) {
-        const finalReason = reason === '' ? 'Rejected by admin' : reason;
-        await storageEngine.rejectParticipant(participantId, finalReason, studyId);
-        await refresh();
-      } else {
-        console.warn('You are not authorized to perform this action.');
-      }
+      const finalReason = reason === '' ? 'Rejected by admin' : reason;
+      await storageEngine.rejectParticipant(participantId, finalReason, studyId);
+      await refresh();
     }
-  }, [refresh, storageEngine, studyId, user.isAdmin]);
+  }, [refresh, storageEngine, studyId]);
 
   const undoRejectParticipant = useCallback(async (participantId: string) => {
     if (storageEngine && studyId) {
-      if (user.isAdmin) {
-        await storageEngine.undoRejectParticipant(participantId, studyId);
-        await refresh();
-      } else {
-        console.warn('You are not authorized to perform this action.');
-      }
+      await storageEngine.undoRejectParticipant(participantId, studyId);
+      await refresh();
     }
-  }, [refresh, storageEngine, studyId, user.isAdmin]);
+  }, [refresh, storageEngine, studyId]);
 
   const [modalRejectParticipantsOpened, setModalRejectParticipantsOpened] = useState<boolean>(false);
   const [modalUndoRejectParticipantsOpened, setModalUndoRejectParticipantsOpened] = useState<boolean>(false);

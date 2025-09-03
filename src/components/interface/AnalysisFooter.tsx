@@ -60,24 +60,16 @@ export function AnalysisFooter() {
 
   const rejectParticipant = useCallback(async (rejectParticipantId: string, reason: string) => {
     if (storageEngine && studyId) {
-      if (user.isAdmin) {
-        const finalReason = reason === '' ? 'Rejected by admin' : reason;
-        await storageEngine.rejectParticipant(rejectParticipantId, finalReason, studyId);
-      } else {
-        console.warn('You are not authorized to perform this action.');
-      }
+      const finalReason = reason === '' ? 'Rejected by admin' : reason;
+      await storageEngine.rejectParticipant(rejectParticipantId, finalReason, studyId);
     }
-  }, [storageEngine, studyId, user.isAdmin]);
+  }, [storageEngine, studyId]);
 
   const undoRejectParticipant = useCallback(async (rejectParticipantId: string) => {
     if (storageEngine && studyId) {
-      if (user.isAdmin) {
-        await storageEngine.undoRejectParticipant(rejectParticipantId, studyId);
-      } else {
-        console.warn('You are not authorized to perform this action.');
-      }
+      await storageEngine.undoRejectParticipant(rejectParticipantId, studyId);
     }
-  }, [storageEngine, studyId, user.isAdmin]);
+  }, [storageEngine, studyId]);
 
   const [modalRejectParticipantsOpened, setModalRejectParticipantsOpened] = useState<boolean>(false);
   const [modalUndoRejectParticipantsOpened, setModalUndoRejectParticipantsOpened] = useState<boolean>(false);
