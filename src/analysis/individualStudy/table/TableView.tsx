@@ -248,38 +248,22 @@ export function TableView({
         <Flex justify="space-between" mb={8} p={8}>
           <Group>
             {areSelectedParticipantsRejected && (
-              !user.isAdmin ? (
-                <Tooltip label="Only admins can undo rejection">
-                  <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalUndoRejectParticipantsOpened(true)} color="green">
-                    Undo Reject Participants (
-                    {Object.keys(checked).length}
-                    )
-                  </Button>
-                </Tooltip>
-              ) : (
+              <Tooltip label="Only admins can undo rejection" disabled={user.isAdmin}>
                 <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalUndoRejectParticipantsOpened(true)} color="green">
                   Undo Reject Participants (
                   {Object.keys(checked).length}
                   )
                 </Button>
-              )
+              </Tooltip>
             )}
             {hasNonRejectedSelected && (
-              !user.isAdmin ? (
-                <Tooltip label="Only admins can reject participants">
-                  <Button disabled={nonRejectedParticipantsCount === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
-                    Reject Participants (
-                    {nonRejectedParticipantsCount}
-                    )
-                  </Button>
-                </Tooltip>
-              ) : (
+              <Tooltip label="Only admins can reject participants" disabled={user.isAdmin}>
                 <Button disabled={nonRejectedParticipantsCount === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
                   Reject Participants (
                   {nonRejectedParticipantsCount}
                   )
                 </Button>
-              )
+              </Tooltip>
             )}
             <DownloadButtons
               visibleParticipants={selectedData}

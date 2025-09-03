@@ -177,26 +177,10 @@ export function AnalysisFooter() {
             </Button>
           </Group>
           <Group>
-            {!user.isAdmin ? (
-              <Tooltip label={currentParticipantData?.rejected ? 'Admin can undo rejection' : 'Admin can reject participants'}>
-                <Button
-                  color={currentParticipantData?.rejected ? 'blue' : 'red'}
-                  disabled={!user.isAdmin || !participantId}
-                  onClick={() => {
-                    if (currentParticipantData?.rejected) {
-                      setModalUndoRejectParticipantsOpened(true);
-                    } else {
-                      setModalRejectParticipantsOpened(true);
-                    }
-                  }}
-                >
-                  {currentParticipantData?.rejected ? 'Rejected Participant' : 'Reject Participant'}
-                </Button>
-              </Tooltip>
-            ) : (
+            <Tooltip label={currentParticipantData?.rejected ? 'Admin can undo rejection' : 'Admin can reject participants'} disabled={user.isAdmin}>
               <Button
                 color={currentParticipantData?.rejected ? 'blue' : 'red'}
-                disabled={!participantId}
+                disabled={!user.isAdmin || !participantId}
                 onClick={() => {
                   if (currentParticipantData?.rejected) {
                     setModalUndoRejectParticipantsOpened(true);
@@ -207,7 +191,7 @@ export function AnalysisFooter() {
               >
                 {currentParticipantData?.rejected ? 'Rejected Participant' : 'Reject Participant'}
               </Button>
-            )}
+            </Tooltip>
           </Group>
         </Flex>
 
