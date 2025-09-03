@@ -327,7 +327,7 @@ export function DownloadTidy({
 
       <Space h="md" />
 
-      <Box mih={300} style={{ width: '100%', overflow: 'scroll' }}>
+      <Box h={400} style={{ width: '100%', overflow: 'scroll' }}>
         {tableDataStatus === 'success' && tableData
           ? (
             <Table striped captionSide="bottom" withTableBorder>
