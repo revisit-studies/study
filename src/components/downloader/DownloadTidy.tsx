@@ -34,7 +34,6 @@ export const OPTIONAL_COMMON_PROPS = [
   'responsePrompt',
   'answer',
   'correctAnswer',
-
   'duration',
   'cleanedDuration',
   'startTime',
