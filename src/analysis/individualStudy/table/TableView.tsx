@@ -306,23 +306,28 @@ export function TableView({
             </Text>
         )}
         >
-          {rejectedParticipantsCount > 0 && (
-            <Alert
-              icon={<IconAlertTriangle size={16} />}
-              title="Warning"
-              color="orange"
-              mb="md"
-            >
-              {rejectedParticipantsCount}
-              {' '}
-              participant
-              {rejectedParticipantsCount === 1 ? '' : 's'}
-              {' '}
-              {rejectedParticipantsCount === 1 ? 'has' : 'have'}
-              {' '}
-              already been rejected.
-            </Alert>
-          )}
+          <Alert
+            icon={<IconAlertTriangle size={16} />}
+            title="Warning"
+            color="orange"
+            mb="md"
+          >
+            {rejectedParticipantsCount > 0 && (
+              <>
+                {rejectedParticipantsCount}
+                {' '}
+                participant
+                {rejectedParticipantsCount === 1 ? '' : 's'}
+                {' '}
+                {rejectedParticipantsCount === 1 ? 'has' : 'have'}
+                {' '}
+                already been rejected.
+                <br />
+                <br />
+              </>
+            )}
+            When participants are rejected, their sequences will be reassigned to other participants.
+          </Alert>
           <TextInput
             label="Please enter the reason for rejection."
             onChange={(event) => setRejectParticipantsMessage(event.target.value)}
@@ -347,6 +352,14 @@ export function TableView({
             </Text>
         )}
         >
+          <Alert
+            icon={<IconAlertTriangle size={16} />}
+            title="Warning"
+            color="orange"
+            mb="md"
+          >
+            When you undo participant rejections, their sequence assignments will be marked as available again.
+          </Alert>
           <Text>Are you sure you want to undo the rejection of these participants?</Text>
           <Flex mt="sm" justify="right">
             <Button mr={5} variant="subtle" color="dark" onClick={() => setModalUndoRejectParticipantsOpened(false)}>

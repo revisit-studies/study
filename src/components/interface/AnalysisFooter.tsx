@@ -1,11 +1,11 @@
 import {
   ActionIcon,
-  AppShell, Box, Button, Group, Select, Text, Modal, TextInput, Flex, Tooltip,
+  AppShell, Box, Button, Group, Select, Text, Modal, TextInput, Flex, Tooltip, Alert,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMemo, useState, useCallback } from 'react';
 import {
-  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser,
+  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser, IconAlertTriangle,
 } from '@tabler/icons-react';
 import { useAsync } from '../../store/hooks/useAsync';
 
@@ -230,6 +230,14 @@ export function AnalysisFooter() {
           </Text>
         )}
       >
+        <Alert
+          icon={<IconAlertTriangle size={16} />}
+          title="Warning"
+          color="orange"
+          mb="md"
+        >
+          When participants are rejected, their sequences will be reassigned to other participants.
+        </Alert>
         <TextInput
           label="Please enter the reason for rejection."
           onChange={(event) => setRejectParticipantsMessage(event.target.value)}
@@ -253,6 +261,14 @@ export function AnalysisFooter() {
           </Text>
         )}
       >
+        <Alert
+          icon={<IconAlertTriangle size={16} />}
+          title="Warning"
+          color="orange"
+          mb="md"
+        >
+          When you undo participant rejections, their sequence assignments will be marked as available again.
+        </Alert>
         <Text>
           The participant has been rejected.
         </Text>
