@@ -82,6 +82,7 @@ export function ScreenRecordingReplay() {
             const url = await storageEngine.getScreenRecording(identifier, participantId);
             if (!url) {
               storeDispatch(setAnalysisHasScreenRecording(false));
+              storeDispatch(setAnalysisCanPlayScreenRecording(false));
               return;
             }
             storeDispatch(setAnalysisHasScreenRecording(true));
@@ -124,7 +125,7 @@ export function ScreenRecordingReplay() {
         style={{
           background: 'black',
           maxWidth: '100%',
-          maxHeight: 'calc(100vh - 220px)',
+          maxHeight: 'calc(100vh - 270px)',
           display: 'block',
           margin: '20px auto',
           height: isReady ? 'auto' : 200,

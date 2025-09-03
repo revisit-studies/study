@@ -52,6 +52,8 @@ export function ComponentController() {
   // const [screenCaptureTrialName, setScreenCaptureTrialName] = useState<string | null>(null);
   const screenCaptureTrialName = useRef<string | null>(null);
 
+  const identifier = useCurrentIdentifier();
+
   const screenRecording = useScreenRecordingContext();
 
   const {
@@ -111,12 +113,12 @@ export function ComponentController() {
         audioStream.current = recorder;
         audioStream.current.start();
         storeDispatch(setIsRecording(true));
-        setPrevTrialName(`${currentComponent}_${currentStep}`);
+        setPrevTrialName(identifier);
       });
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, currentStep]);
+  }, [currentComponent, identifier]);
 
   useEffect(() => {
     if (!studyConfig || !studyConfig.uiConfig.recordScreen || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
@@ -128,8 +130,8 @@ export function ComponentController() {
       stopScreenRecording();
     }
 
-    if (currentComponent !== 'end' && isScreenRecording && screenCaptureTrialName.current !== `${currentComponent}_${currentStep}`) {
-      screenCaptureTrialName.current = `${currentComponent}_${currentStep}`;
+    if (currentComponent !== 'end' && isScreenRecording && screenCaptureTrialName.current !== identifier) {
+      screenCaptureTrialName.current = identifier;
       startScreenRecording();
     }
 
@@ -138,7 +140,7 @@ export function ComponentController() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, currentStep]);
+  }, [currentComponent, identifier]);
 
   // Find current block, if it has an ID, add it as a participant tag
   const [blockForStep, setBlockForStep] = useState<string[]>([]);

@@ -28,6 +28,10 @@ const margin = {
   left: 0, top: 0, right: 0, bottom: 0,
 };
 
+function safe<T>(p: Promise<T>): Promise<T | null> {
+  return p.catch(() => null);
+}
+
 export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: string) => void }) {
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
@@ -226,14 +230,26 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   const handleWSMount = useCallback(
     async (waveSurfer: WaveSurferType | null) => {
       wavesurfer.current = waveSurfer;
+      if (identifier.includes('__dynamicLoading')) {
+        return;
+      }
       if (waveSurfer && isAnalysis && identifier && storageEngine) {
         try {
           if (!participantId) {
             throw new Error('Participant ID is required to load audio');
           }
 
-          const url = await Promise.any([storageEngine.getAudio(identifier, participantId), storageEngine.getScreenRecording(identifier, participantId)]);
+          const [audioUrl, screenUrl] = await Promise.all([
+            safe(storageEngine.getAudio(identifier, participantId)),
+            safe(storageEngine.getScreenRecording(identifier, participantId)),
+          ]);
 
+          if (screenUrl) {
+            // Audio is played from the screen recording video.
+            wavesurfer.current?.setMuted(true);
+          }
+
+          const url = audioUrl ?? screenUrl ?? null;
           await waveSurfer.load(url!);
           setWaveSurferLoading(false);
           storeDispatch(setAnalysisHasAudio(true));
