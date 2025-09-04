@@ -334,7 +334,7 @@ export function TableView({
             color="orange"
             mb="md"
           >
-            When you undo participant rejections, their sequence assignments will be marked as available again.
+            When you undo participant rejections, you may end up with unbalanced latin squares. This is because the rejected sequence may have been reassigned.
           </Alert>
           <Text>Are you sure you want to undo the rejection of these participants?</Text>
           <Flex mt="sm" justify="right">
