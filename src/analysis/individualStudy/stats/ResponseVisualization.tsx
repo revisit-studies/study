@@ -175,7 +175,7 @@ export function ResponseVisualization({
         data: { values: questionData },
         mark: 'bar',
         params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
-        transform: correctAnswer !== undefined ? correctAnswerSpec.transform : undefined,
+        transform: Array.isArray(correctAnswer?.answer) ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
         encoding: {
           x: { field: response.id, type: 'ordinal', title: 'Answer' },
           y: { aggregate: 'count', type: 'quantitative', title: 'Count' },
