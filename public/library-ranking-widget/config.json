@@ -34,7 +34,7 @@
       "order": "fixed",
       "components": [
         "introduction",
-        "$ranking-widget.se.3-dimensions"
+        "$ranking-widget.se.full"
       ]
     }
   }

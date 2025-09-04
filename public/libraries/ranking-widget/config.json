@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/LibraryConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/jk/rankingWidget/src/parser/LibraryConfigSchema.json",
     "description": "Rankings distill a large number of factors into simple comparative models to facilitate complex decision making. Yet key questions remain in the design of mixed-initiative systems for ranking, in particular how best to collect users' preferences to produce high-quality rankings that users trust and employ in the real world. To address this challenge we evaluate the relative merits of three preference collection methods for ranking in a crowdsourced study. We find that with a categorical binning technique, users interact with a large amount of data quickly, organizing information using broad strokes. Alternative interaction modes using pairwise comparisons or sub-lists result in smaller, targeted input from users. We consider how well each interaction mode addresses design goals for interactive ranking systems. Our study indicates that the categorical approach provides the best value-added benefit to users, requiring minimal effort to create sufficient training data for the underlying ranking algorithm.",
     "reference": "Caitlin Kuhlman, Diana Doherty, Malika Nurbekova, Goutham Deva, Zarni Phyo, Paul-Henry Schoenhagen, MaryAnn VanValkenburg, Elke Rundensteiner, and Lane Harrison. 2019. Evaluating Preference Collection Methods for Interactive Ranking Analytics. In Proceedings of the 2019 CHI Conference on Human Factors in Computing Systems (CHI '19). Association for Computing Machinery, New York, NY, USA, Paper 512, 1–11.",
     "doi": "10.1145/3290605.3300742",
@@ -8,24 +8,18 @@
         "type": "questionnaire",
         "response": [
           {
-            "id": "pleasure",
+            "id": "university-preference-sublist",
             "prompt": "",
             "required": true,
             "location": "belowStimulus",
-            "type": "radio",
-            "horizontal": true,
+            "type": "ranking-sublist",
             "options": [
-              {"label": "![pleasure1](libraries/sam/assets/pleasure/pleasure1.png)", "value": "1"},
-              {"label": "![pleasure2](libraries/sam/assets/pleasure/pleasure2.png)", "value": "2"},
-              {"label": "![pleasure3](libraries/sam/assets/pleasure/pleasure3.png)", "value": "3"},
-              {"label": "![pleasure4](libraries/sam/assets/pleasure/pleasure4.png)", "value": "4"},
-              {"label": "![pleasure5](libraries/sam/assets/pleasure/pleasure5.png)", "value": "5"},
-              {"label": "![pleasure6](libraries/sam/assets/pleasure/pleasure6.png)", "value": "6"},
-              {"label": "![pleasure7](libraries/sam/assets/pleasure/pleasure7.png)", "value": "7"},
-              {"label": "![pleasure8](libraries/sam/assets/pleasure/pleasure8.png)", "value": "8"},
-              {"label": "![pleasure9](libraries/sam/assets/pleasure/pleasure9.png)", "value": "9"}
-            ],
-            "stylesheetPath": "libraries/sam/assets/stylesheet.css"
+              "Ball State University",
+              "University of Rochester",
+              "George Mason University",
+              "University of California - Berkeley",
+              "Washington State University"
+            ]
           }
         ]
       },
@@ -33,24 +27,18 @@
         "type": "questionnaire",
         "response": [
           {
-            "id": "arousal",
+            "id": "university-preference-categorical",
             "prompt": "",
             "required": true,
             "location": "belowStimulus",
-            "type": "radio",
-            "horizontal": true,
+            "type": "ranking-categorical",
             "options": [
-              {"label": "![arousal1](libraries/sam/assets/arousal/arousal1.png)", "value": "1"},
-              {"label": "![arousal2](libraries/sam/assets/arousal/arousal2.png)", "value": "2"},
-              {"label": "![arousal3](libraries/sam/assets/arousal/arousal3.png)", "value": "3"},
-              {"label": "![arousal4](libraries/sam/assets/arousal/arousal4.png)", "value": "4"},
-              {"label": "![arousal5](libraries/sam/assets/arousal/arousal5.png)", "value": "5"},
-              {"label": "![arousal6](libraries/sam/assets/arousal/arousal6.png)", "value": "6"},
-              {"label": "![arousal7](libraries/sam/assets/arousal/arousal7.png)", "value": "7"},
-              {"label": "![arousal8](libraries/sam/assets/arousal/arousal8.png)", "value": "8"},
-              {"label": "![arousal9](libraries/sam/assets/arousal/arousal9.png)", "value": "9"}
-            ],
-            "stylesheetPath": "libraries/sam/assets/stylesheet.css"
+              "Ball State University",
+              "University of Rochester",
+              "George Mason University",
+              "University of California - Berkeley",
+              "Washington State University"
+            ]
           }
         ]
       },
@@ -58,31 +46,25 @@
         "type": "questionnaire",
         "response": [
           {
-            "id": "dominance",
+            "id": "university-preference-pairwise",
             "prompt": "",
             "required": true,
             "location": "belowStimulus",
-            "type": "radio",
-            "horizontal": true,
+            "type": "ranking-pairwise",
             "options": [
-              {"label": "![dominance1](libraries/sam/assets/dominance/dominance1.png)", "value": "1"},
-              {"label": "![dominance2](libraries/sam/assets/dominance/dominance2.png)", "value": "2"},
-              {"label": "![dominance3](libraries/sam/assets/dominance/dominance3.png)", "value": "3"},
-              {"label": "![dominance4](libraries/sam/assets/dominance/dominance4.png)", "value": "4"},
-              {"label": "![dominance5](libraries/sam/assets/dominance/dominance5.png)", "value": "5"},
-              {"label": "![dominance6](libraries/sam/assets/dominance/dominance6.png)", "value": "6"},
-              {"label": "![dominance7](libraries/sam/assets/dominance/dominance7.png)", "value": "7"},
-              {"label": "![dominance8](libraries/sam/assets/dominance/dominance8.png)", "value": "8"},
-              {"label": "![dominance9](libraries/sam/assets/dominance/dominance9.png)", "value": "9"}
-            ],
-            "stylesheetPath": "libraries/sam/assets/stylesheet.css"
-          }  
+              "Ball State University",
+              "University of Rochester",
+              "George Mason University",
+              "University of California - Berkeley",
+              "Washington State University"
+            ]
+          }
         ]
       }
     },
     "sequences": {
-      "3-dimensions": {
-        "id": "ranking-widget-3-dimensions",
+      "full": {
+        "id": "ranking-widget-full",
         "order": "fixed",
         "components": [
           "sublist-ranking",

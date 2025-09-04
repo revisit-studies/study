@@ -11,6 +11,7 @@ import { Reactive } from './ReactiveInput';
 import { LikertInput } from './LikertInput';
 import { NumericInput } from './NumericInput';
 import { RadioInput } from './RadioInput';
+import { RankingInput } from './RankingInput';
 import { SliderInput } from './SliderInput';
 import { StringInput } from './StringInput';
 import { TextAreaInput } from './TextAreaInput';
@@ -195,6 +196,14 @@ export function ResponseSwitcher({
         index={index}
         enumerateQuestions={enumerateQuestions}
         otherValue={otherValue}
+      />
+      )}
+      {(response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') && (
+      <RankingInput
+        response={response}
+        disabled={isDisabled || dontKnowCheckbox?.checked}
+        index={index}
+        enumerateQuestions={enumerateQuestions}
       />
       )}
       {response.type === 'reactive' && (

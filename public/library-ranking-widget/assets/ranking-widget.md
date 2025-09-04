@@ -23,6 +23,6 @@ DOI: [10.1145/3290605.3300742](https://dx.doi.org/10.1145/3290605.3300742)
 
 ## Available Sequences
 
-- 3-dimensions
+- full
 
 
