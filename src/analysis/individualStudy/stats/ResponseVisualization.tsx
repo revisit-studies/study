@@ -174,19 +174,14 @@ export function ResponseVisualization({
         ...baseSpec,
         data: { values: questionData },
         mark: 'bar',
-        params: response.type === 'checkbox' ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.params : undefined),
-        transform: response.type === 'checkbox' ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
+        params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
+        transform: correctAnswer !== undefined ? correctAnswerSpec.transform : undefined,
         encoding: {
           x: { field: response.id, type: 'ordinal', title: 'Answer' },
           y: { aggregate: 'count', type: 'quantitative', title: 'Count' },
-          color: correctAnswer !== undefined ? (response.type === 'checkbox' ? {
-            field: 'result',
-            type: 'nominal',
-            scale: { domain: ['correct', 'incorrect'], range: ['#69DB7C', '#ADB5BD'] },
-          } : correctAnswerSpec.color) : undefined,
+          color: correctAnswer !== undefined ? correctAnswerSpec.color : undefined,
         },
       };
-
       return spec;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any
