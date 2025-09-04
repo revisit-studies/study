@@ -189,7 +189,7 @@ export function AnalysisFooter() {
                   }
                 }}
               >
-                {currentParticipantData?.rejected ? 'Rejected Participant' : 'Reject Participant'}
+                {currentParticipantData?.rejected ? 'Un-reject Participant' : 'Reject Participant'}
               </Button>
             </Tooltip>
           </Group>
