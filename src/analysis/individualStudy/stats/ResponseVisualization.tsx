@@ -22,15 +22,6 @@ export function ResponseVisualization({
   const [opened, { toggle }] = useDisclosure(true);
   const [ref, dms] = useResizeObserver();
 
-  const questionData = useMemo(() => {
-    if (response.type === 'metadata') {
-      return [];
-    }
-
-    const data = participantData.map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)).map((p) => p.map(([, value]) => value.answer)).flat();
-    return data;
-  }, [participantData, response.type, trialId]);
-
   const correctAnswer = useMemo(() => {
     if (response.type === 'metadata') {
       return undefined;
@@ -39,6 +30,32 @@ export function ResponseVisualization({
     const found = trialConfig.correctAnswer?.find((a) => a.id === response.id);
     return found;
   }, [response.id, response.type, trialConfig.correctAnswer]);
+
+  const questionData = useMemo(() => {
+    if (response.type === 'metadata') {
+      return [];
+    }
+
+    const data = participantData.map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)).map((p) => p.map(([, value]) => {
+      const answerData = { ...value.answer };
+
+      if (correctAnswer) {
+        const participantAnswer = value.answer[response.id];
+        const expectedAnswer = correctAnswer.answer;
+
+        // Handle multi-select responses
+        if (Array.isArray(expectedAnswer) && Array.isArray(participantAnswer)) {
+          const isCorrect = participantAnswer.length === expectedAnswer.length && participantAnswer.every((answer) => expectedAnswer.includes(answer));
+          answerData.result = isCorrect ? 'correct' : 'incorrect';
+        } else {
+          answerData.result = expectedAnswer === participantAnswer ? 'correct' : 'incorrect';
+        }
+      }
+
+      return answerData;
+    })).flat();
+    return data;
+  }, [participantData, response.type, trialId, correctAnswer, response.id]);
 
   // eslint-disable-next-line consistent-return
   const vegaLiteSpec = useMemo(() => {
@@ -157,12 +174,16 @@ export function ResponseVisualization({
         ...baseSpec,
         data: { values: questionData },
         mark: 'bar',
-        params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
-        transform: correctAnswer !== undefined ? correctAnswerSpec.transform : undefined,
+        params: response.type === 'checkbox' ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.params : undefined),
+        transform: response.type === 'checkbox' ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
         encoding: {
           x: { field: response.id, type: 'ordinal', title: 'Answer' },
           y: { aggregate: 'count', type: 'quantitative', title: 'Count' },
-          color: correctAnswer !== undefined ? correctAnswerSpec.color : undefined,
+          color: correctAnswer !== undefined ? (response.type === 'checkbox' ? {
+            field: 'result',
+            type: 'nominal',
+            scale: { domain: ['correct', 'incorrect'], range: ['#69DB7C', '#ADB5BD'] },
+          } : correctAnswerSpec.color) : undefined,
         },
       };
 
