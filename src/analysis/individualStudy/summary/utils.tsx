@@ -131,7 +131,14 @@ export function calculateComponentStats(visibleParticipants: ParticipantData[]) 
       if (answer.correctAnswer && answer.correctAnswer.length > 0) {
         const isCorrect = answer.correctAnswer.every((correctAnswer) => {
           const participantAnswer = answer.answer[correctAnswer.id];
-          return correctAnswer.answer === participantAnswer;
+          const expectedAnswer = correctAnswer.answer;
+
+          // Handle multi-select responses
+          if (Array.isArray(expectedAnswer) && Array.isArray(participantAnswer)) {
+            return participantAnswer.length === expectedAnswer.length && participantAnswer.every((ans) => expectedAnswer.includes(ans));
+          }
+
+          return participantAnswer === expectedAnswer;
         });
         stat.correctness += isCorrect ? 1 : 0;
       }
@@ -179,7 +186,14 @@ export function calculateResponseStats(visibleParticipants: ParticipantData[]) {
       if (answer.correctAnswer && answer.correctAnswer.length > 0) {
         const isCorrect = answer.correctAnswer.every((correctAnswer) => {
           const participantAnswer = answer.answer[correctAnswer.id];
-          return correctAnswer.answer === participantAnswer;
+          const expectedAnswer = correctAnswer.answer;
+
+          // Handle multi-select responses
+          if (Array.isArray(expectedAnswer) && Array.isArray(participantAnswer)) {
+            return participantAnswer.length === expectedAnswer.length && participantAnswer.every((ans) => expectedAnswer.includes(ans));
+          }
+
+          return participantAnswer === expectedAnswer;
         });
         stat.correctness += isCorrect ? 1 : 0;
       }
