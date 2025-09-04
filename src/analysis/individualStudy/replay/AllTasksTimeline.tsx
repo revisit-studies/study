@@ -109,12 +109,20 @@ export function AllTasksTimeline({
       let hasCorrect = false;
 
       if (component && component.correctAnswer) {
-        component.correctAnswer.forEach((a) => {
+        isCorrect = component.correctAnswer.every((a) => {
           const { id, answer: componentCorrectAnswer } = a;
 
           if (!component || !component.correctAnswer || answer.answer[id] !== componentCorrectAnswer) {
             isCorrect = false;
           }
+          const participantAnswer = answer.answer[id];
+
+          // Handle multi-select responses
+          if (Array.isArray(componentCorrectAnswer) && Array.isArray(participantAnswer)) {
+            return participantAnswer.length === componentCorrectAnswer.length && participantAnswer.every((ans) => componentCorrectAnswer.includes(ans));
+          }
+
+          return participantAnswer === componentCorrectAnswer;
         });
 
         hasCorrect = true;
