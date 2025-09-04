@@ -263,7 +263,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       `${this.collectionPrefix}${this.studyId}`,
     );
 
-    // set sequence assignment to empty string, keep the timestamp
     const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
     const sequenceAssignmentCollection = collection(
       sequenceAssignmentDoc,
