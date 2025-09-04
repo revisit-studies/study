@@ -22,6 +22,7 @@
     "example-VLAT-adaptive",
     "example-VLAT-full-randomized",
     "example-VLAT-mini-randomized",
+    "library-adaptive-vlat",
     "library-beauvis",
     "library-berlin-num",
     "library-calvi",
@@ -32,11 +33,11 @@
     "library-nasa-tlx",
     "library-previs",
     "library-quis",
+    "library-ranking-widget",
     "library-sam",
     "library-smeq",
     "library-sus",
     "library-vlat",
-    "library-adaptive-vlat",
     "test-audio",
     "test-library",
     "test-likert-matrix",
@@ -148,6 +149,10 @@
     },
     "library-quis": {
       "path": "library-quis/config.json",
+      "test": true
+    },
+    "library-ranking-widget": {
+      "path": "library-ranking-widget/config.json",
       "test": true
     },
     "library-sam": {
