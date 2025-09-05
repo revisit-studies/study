@@ -18,7 +18,8 @@ export function useScreenRecording() {
   const [screenRecordingError, setRecordingError] = useState<string | null>(null);
   const [isScreenRecording, setIsScreenRecording] = useState(false);
   const [screenWithAudioRecording, setScreenWithAudioRecording] = useState(false);
-  const [captureStarted, setCaptureStarted] = useState(false);
+  const [screenCaptureStarted, setScreenCaptureStarted] = useState(false);
+  const [isScreenCapturing, setIsScreenCapturing] = useState(false);
   const [isRejected, setIsRejected] = useState(false);
 
   const screenRecordingStream = useRef<MediaRecorder | null>(null); // combined stream
@@ -36,6 +37,7 @@ export function useScreenRecording() {
     if (recordVideoRef.current) {
       recordVideoRef.current.srcObject = null;
     }
+    setIsScreenCapturing(false);
     setIsScreenRecording(false);
     setScreenWithAudioRecording(false);
 
@@ -50,19 +52,23 @@ export function useScreenRecording() {
 
   // Start screen recording
   const startScreenRecording = useCallback(() => {
+    setIsScreenRecording(true);
+    setScreenWithAudioRecording(!!recordAudio);
     screenRecordingStream.current?.start();
-  }, []);
+  }, [recordAudio]);
 
   // Start screen recording. This does not stop screen capture.
   const stopScreenRecording = useCallback(() => {
+    setIsScreenRecording(false);
+    setScreenWithAudioRecording(false);
     screenRecordingStream.current?.stop();
   }, []);
 
   useEffect(() => {
-    if (currentComponent !== '$screen-recording.co.screenRecordingPermission' && currentComponent !== 'end' && captureStarted && !isScreenRecording) {
+    if (currentComponent !== '$screen-recording.co.screenRecordingPermission' && currentComponent !== 'end' && screenCaptureStarted && !isScreenCapturing) {
       setIsRejected(true);
     }
-  }, [currentComponent, captureStarted, isScreenRecording]);
+  }, [currentComponent, isScreenCapturing, screenCaptureStarted]);
 
   // Start screen capture. This does not begin recording.
   const startScreenCapture = useCallback(() => {
@@ -103,8 +109,8 @@ export function useScreenRecording() {
         const mediaRecorder = new MediaRecorder(combinedStream);
         screenRecordingStream.current = mediaRecorder;
 
-        setCaptureStarted(true);
-        setIsScreenRecording(true);
+        setIsScreenCapturing(true);
+        setScreenCaptureStarted(true);
         setScreenWithAudioRecording(!!recordAudio);
         setRecordingError(null);
       } catch (err) {
@@ -129,6 +135,7 @@ export function useScreenRecording() {
     stopScreenRecording,
     screenRecordingError,
     isScreenRecording,
+    isScreenCapturing,
     screenRecordingStream,
     screenWithAudioRecording,
     isRejected,

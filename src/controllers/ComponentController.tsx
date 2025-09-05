@@ -49,7 +49,6 @@ export function ComponentController() {
   const { setIsRecording, setAnalysisCanPlayScreenRecording } = useStoreActions();
   const analysisProvState = useStoreSelector((state) => state.analysisProvState.stimulus);
 
-  // const [screenCaptureTrialName, setScreenCaptureTrialName] = useState<string | null>(null);
   const screenCaptureTrialName = useRef<string | null>(null);
 
   const identifier = useCurrentIdentifier();
@@ -57,7 +56,7 @@ export function ComponentController() {
   const screenRecording = useScreenRecordingContext();
 
   const {
-    isScreenRecording, stopScreenCapture, startScreenRecording, stopScreenRecording, screenRecordingStream,
+    isScreenCapturing, stopScreenCapture, startScreenRecording, stopScreenRecording, screenRecordingStream,
   } = screenRecording;
 
   const isAnalysis = useIsAnalysis();
@@ -127,10 +126,11 @@ export function ComponentController() {
 
     if (screenRecordingStream.current && screenCaptureTrialName.current) {
       storageEngine.saveScreenRecording(screenRecordingStream.current, screenCaptureTrialName.current);
+      screenCaptureTrialName.current = null;
       stopScreenRecording();
     }
 
-    if (currentComponent !== 'end' && isScreenRecording && screenCaptureTrialName.current !== identifier) {
+    if (currentComponent !== 'end' && isScreenCapturing && screenCaptureTrialName.current !== identifier && stepConfig.recordScreen) {
       screenCaptureTrialName.current = identifier;
       startScreenRecording();
     }

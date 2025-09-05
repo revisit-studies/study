@@ -9,19 +9,19 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
     recordVideoRef,
     startScreenCapture: startCapture,
     stopScreenCapture: stopCapture,
-    isScreenRecording: recording,
+    isScreenCapturing: screenCapturing,
     screenRecordingError: error,
   } = useScreenRecordingContext();
 
   useEffect(() => {
     setAnswer({
-      status: recording,
+      status: screenCapturing,
       provenanceGraph: undefined,
       answers: {
-        screenRecordingPermission: recording,
+        screenRecordingPermission: screenCapturing,
       },
     });
-  }, [recording, setAnswer]);
+  }, [screenCapturing, setAnswer]);
 
   return (
     <Box p="md">
@@ -41,8 +41,8 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
       <p>
         Click the button below to grant permission. If you&apos;re not comfortable, you may exit and return the study.
       </p>
-      <Button type="button" onClick={recording ? stopCapture : startCapture}>
-        {recording ? 'Stop Recording' : 'Start Recording'}
+      <Button type="button" onClick={screenCapturing ? stopCapture : startCapture}>
+        {screenCapturing ? 'Stop Recording' : 'Start Recording'}
       </Button>
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
