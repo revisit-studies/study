@@ -19,7 +19,6 @@ import { useCurrentComponent } from '../routes/utils';
 import { ResolutionWarning } from './interface/ResolutionWarning';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { ScreenRecordingContext, useScreenRecording } from '../store/hooks/useScreenRecording';
-import { useStorageEngine } from '../storage/storageEngineHooks';
 import { ScreenRecordingRejection } from './interface/ScreenRecordingRejection';
 
 export function StepRenderer() {
@@ -44,41 +43,11 @@ export function StepRenderer() {
   const screenRecording = useScreenRecording();
 
   const {
-    isScreenRecording, screenWithAudioRecording, stopScreenCapture, screenRecordingStream, isRejected: isScreenRecordingUserRejected,
+    isScreenRecording, screenWithAudioRecording, isRejected: isScreenRecordingUserRejected,
   } = screenRecording;
 
   const analysisHasScreenRecording = useStoreSelector((state) => state.analysisHasScreenRecording);
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
-
-  useEffect(() => {
-    if (isScreenRecording) {
-      if (currentComponent === 'end') {
-        stopScreenCapture();
-      }
-    }
-  }, [isScreenRecording, currentComponent, stopScreenCapture]);
-
-  const { storageEngine } = useStorageEngine();
-
-  useEffect(() => {
-    // store the screen capture stream
-    if (!studyConfig || !studyConfig.uiConfig.recordScreen || !storageEngine || isAnalysis || currentComponent !== 'end' || !screenRecordingStream) {
-      return;
-    }
-
-    if (screenRecordingStream.current) {
-      // screenRecordingStream.current.stop();
-      storageEngine.saveScreenRecording(screenRecordingStream.current, '__global');
-    }
-
-    if (screenRecordingStream.current) {
-      screenRecordingStream.current.stream.getTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
-      screenRecordingStream.current.stream.getVideoTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
-      screenRecordingStream.current.stream.getAudioTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
-      screenRecordingStream.current.stop();
-      screenRecordingStream.current = null;
-    }
-  }, [currentComponent, isAnalysis, screenRecordingStream, storageEngine, studyConfig]);
 
   // Attach event listeners
   useEffect(() => {

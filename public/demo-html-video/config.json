@@ -27,8 +27,7 @@
     "introduction": {
       "type": "markdown",
       "path": "demo-html-video/assets/introduction.md",
-      "response": [],
-      "recordAudio": false
+      "response": []
     },
     "barChart": {
       "type": "website",
@@ -49,15 +48,13 @@
           "min": 0,
           "max": 7
         }
-      ],
-      "recordAudio": false
+      ]
     },
     "external_website": {
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
-      "previousButton": true,
-      "recordAudio": false
+      "previousButton": true
     }
   },
   "sequence": {
