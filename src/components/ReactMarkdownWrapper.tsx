@@ -31,18 +31,22 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
     }) { return <Image {...props} h={height} w={width} src={src?.startsWith('http') ? src : `${PREFIX}${src}`} />; },
   };
 
-  const splitText = text.trim().split(' ');
-  const lastWord = splitText.at(-1);
+  let textToParse = text.trim();
 
-  const asteriskIcon = ('<span style="color: #fa5252; margin-left: 4px">*</span>');
-  const spannedLastWord = lastWord ? `<span style="white-space: nowrap;">${lastWord + (required ? `${asteriskIcon}` : '')}</span>` : '';
+  if (required) {
+    const splitText = textToParse.split(' ');
+    const lastWord = splitText.at(-1);
 
-  const modifiedText = `${splitText.slice(0, -1).join(' ')} ${spannedLastWord}`;
+    const asteriskIcon = ('<span style="color: #fa5252; margin-left: 4px">*</span>');
+    const spannedLastWord = `<span style="white-space: nowrap;">${lastWord + (required ? `${asteriskIcon}` : '')}</span>`;
+
+    textToParse = `${splitText.slice(0, -1).join(' ')} ${spannedLastWord}`;
+  }
 
   return text.length > 0 && (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <ReactMarkdown components={components} rehypePlugins={[rehypeRaw] as any} remarkPlugins={[remarkGfm]}>
-      {modifiedText}
+      {textToParse}
     </ReactMarkdown>
   );
 }
