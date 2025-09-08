@@ -30,7 +30,7 @@ function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
 
 function getCurrentParticipantData(storageEngine: StorageEngine | undefined, participantId: string | undefined, studyId: string | undefined) {
   if (storageEngine && participantId && studyId) {
-    return storageEngine.getAllParticipantsData(studyId).then((participants) => participants.find((p) => p.participantId === participantId));
+    return storageEngine.getParticipantData(participantId);
   }
   return null;
 }
