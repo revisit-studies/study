@@ -292,12 +292,19 @@ export function TableView({
               <>
                 {rejectedParticipantsCount}
                 {' '}
-                participant
-                {rejectedParticipantsCount === 1 ? '' : 's'}
+                of your
+                {' '}
+                {selectedParticipants.length}
+                {' '}
+                selected participant
+                {selectedParticipants.length === 1 ? '' : 's'}
                 {' '}
                 {rejectedParticipantsCount === 1 ? 'has' : 'have'}
                 {' '}
-                already been rejected.
+                already been rejected. Clicking reject participants will now reject the other
+                {' '}
+                {nonRejectedParticipantsCount}
+                .
                 <br />
                 <br />
               </>
