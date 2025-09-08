@@ -119,8 +119,8 @@ export function AppHeader({
 
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
-            {(isRecording || screenWithAudioRecording || screenRecording) && (() => {
-              const recordingAudio = isRecording || screenWithAudioRecording;
+            {(isRecording || screenRecording) && (() => {
+              const recordingAudio = isRecording || (screenWithAudioRecording && screenRecording);
               const recordingScreen = screenRecording;
 
               return (

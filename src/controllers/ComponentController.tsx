@@ -130,7 +130,7 @@ export function ComponentController() {
       stopScreenRecording();
     }
 
-    if (currentComponent !== 'end' && isScreenCapturing && screenCaptureTrialName.current !== identifier && stepConfig.recordScreen) {
+    if (currentComponent !== 'end' && isScreenCapturing && screenCaptureTrialName.current !== identifier && (stepConfig.recordScreen === undefined || stepConfig.recordScreen === true)) {
       screenCaptureTrialName.current = identifier;
       startScreenRecording();
     }
