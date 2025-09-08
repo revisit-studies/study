@@ -78,7 +78,7 @@ export function AnalysisFooter() {
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
-      <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px', position: 'relative' }}>
+      <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px' }}>
 
         <AudioProvenanceVis setTimeString={setTimeString} />
         <Flex justify="space-between" align="center" px="md">
