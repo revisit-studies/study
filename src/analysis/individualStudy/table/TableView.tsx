@@ -1,11 +1,10 @@
 /* eslint-disable react/no-unstable-nested-components */
 import {
-  Text, Flex, Button, Group, Space, Modal, TextInput,
+  Text, Flex, Button, Group, Space,
   Tooltip,
   Badge,
   RingProgress,
   Stack,
-  Alert,
 } from '@mantine/core';
 import React, {
   useCallback, useMemo, useState,
@@ -15,14 +14,14 @@ import {
   MantineReactTable, MRT_Cell as MrtCell, MRT_ColumnDef as MrtColumnDef, MRT_RowSelectionState as MrtRowSelectionState, useMantineReactTable,
 } from 'mantine-react-table';
 import {
-  IconCheck, IconHourglassEmpty, IconX, IconAlertTriangle,
+  IconCheck, IconHourglassEmpty, IconX,
 } from '@tabler/icons-react';
 
 import {
   ParticipantData, StoredAnswer, StudyConfig,
 } from '../../../parser/types';
-import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { useAuth } from '../../../store/hooks/useAuth';
+import { useParticipantRejectModal } from '../ParticipantRejectModal';
 import { participantName } from '../../../utils/participantName';
 import { AllTasksTimeline } from '../replay/AllTasksTimeline';
 import { checkAnswerCorrect } from '../../../store/hooks/useNextStep';
@@ -50,68 +49,32 @@ export function TableView({
   refresh: () => Promise<Record<number, ParticipantData>>;
   width: number;
 }) {
-  const { storageEngine } = useStorageEngine();
   const { studyId } = useParams();
   const { user } = useAuth();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
-
-  const rejectParticipant = useCallback(async (participantId: string, reason: string) => {
-    if (storageEngine && studyId) {
-      const finalReason = reason === '' ? 'Rejected by admin' : reason;
-      await storageEngine.rejectParticipant(participantId, finalReason, studyId);
-      await refresh();
-    }
-  }, [refresh, storageEngine, studyId]);
-
-  const undoRejectParticipant = useCallback(async (participantId: string) => {
-    if (storageEngine && studyId) {
-      await storageEngine.undoRejectParticipant(participantId, studyId);
-      await refresh();
-    }
-  }, [refresh, storageEngine, studyId]);
-
-  const [modalRejectParticipantsOpened, setModalRejectParticipantsOpened] = useState<boolean>(false);
-  const [modalUndoRejectParticipantsOpened, setModalUndoRejectParticipantsOpened] = useState<boolean>(false);
-  const [rejectParticipantsMessage, setRejectParticipantsMessage] = useState<string>('');
-
-  const handleRejectParticipants = useCallback(async () => {
-    setModalRejectParticipantsOpened(false);
-    const participantsToReject = Object.keys(checked)
-      .filter((v) => checked[v])
-      .filter((participantId) => {
-        const participant = visibleParticipants.find((p) => p.participantId === participantId);
-        return participant && !participant.rejected;
-      });
-
-    const promises = participantsToReject.map(async (participantId) => await rejectParticipant(participantId, rejectParticipantsMessage));
-    await Promise.all(promises);
-    setChecked({});
-    await refresh();
-  }, [checked, refresh, rejectParticipant, rejectParticipantsMessage, visibleParticipants]);
-
-  const handleUndoRejectParticipants = useCallback(async () => {
-    setModalUndoRejectParticipantsOpened(false);
-    const promises = Object.keys(checked).filter((v) => checked[v]).map(async (participantId) => await undoRejectParticipant(participantId));
-    await Promise.all(promises);
-    setChecked({});
-    await refresh();
-  }, [checked, refresh, undoRejectParticipant]);
-
-  const selectedData = useMemo(() => {
-    const selected = Object.keys(checked).filter((v) => checked[v])
-      .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
-      .filter((p) => p !== undefined) as ParticipantData[];
-
-    return selected.length > 0 ? selected : visibleParticipants;
-  }, [checked, visibleParticipants]);
 
   const selectedParticipants = useMemo(() => Object.keys(checked).filter((v) => checked[v])
     .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
     .filter((p) => p !== undefined) as ParticipantData[], [checked, visibleParticipants]);
 
+  const handleRefresh = useCallback(async () => {
+    await refresh();
+  }, [refresh]);
+
+  const {
+    setModalRejectOpened,
+    setModalUndoRejectOpened,
+    modals,
+  } = useParticipantRejectModal({
+    selectedParticipants,
+    onRefresh: handleRefresh,
+    onSelectionChange: setChecked,
+  });
+
+  const selectedData = useMemo(() => (selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants), [selectedParticipants, visibleParticipants]);
+
   const areSelectedParticipantsRejected = useMemo(() => selectedParticipants.length > 0 && selectedParticipants.every((p) => p.rejected), [selectedParticipants]);
 
-  const rejectedParticipantsCount = useMemo(() => selectedParticipants.filter((p) => p.rejected).length, [selectedParticipants]);
   const nonRejectedParticipantsCount = useMemo(() => selectedParticipants.filter((p) => !p.rejected).length, [selectedParticipants]);
   const hasNonRejectedSelected = useMemo(() => selectedParticipants.some((p) => !p.rejected), [selectedParticipants]);
 
@@ -249,7 +212,7 @@ export function TableView({
           <Group>
             {areSelectedParticipantsRejected && (
               <Tooltip label="Only admins can undo rejection" disabled={user.isAdmin}>
-                <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalUndoRejectParticipantsOpened(true)} color="blue">
+                <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalUndoRejectOpened(true)} color="blue">
                   Undo Reject Participants (
                   {Object.keys(checked).length}
                   )
@@ -258,7 +221,7 @@ export function TableView({
             )}
             {hasNonRejectedSelected && (
               <Tooltip label="Only admins can reject participants" disabled={user.isAdmin}>
-                <Button disabled={nonRejectedParticipantsCount === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
+                <Button disabled={nonRejectedParticipantsCount === 0 || !user.isAdmin} onClick={() => setModalRejectOpened(true)} color="red">
                   Reject Participants (
                   {nonRejectedParticipantsCount}
                   )
@@ -271,88 +234,7 @@ export function TableView({
             />
           </Group>
         </Flex>
-        <Modal
-          opened={modalRejectParticipantsOpened}
-          onClose={() => setModalRejectParticipantsOpened(false)}
-          title={(
-            <Text>
-              Reject Participants (
-              {nonRejectedParticipantsCount}
-              )
-            </Text>
-        )}
-        >
-          <Alert
-            icon={<IconAlertTriangle size={16} />}
-            title="Warning"
-            color="orange"
-            mb="md"
-          >
-            {rejectedParticipantsCount > 0 && (
-              <>
-                {rejectedParticipantsCount}
-                {' '}
-                of your
-                {' '}
-                {selectedParticipants.length}
-                {' '}
-                selected participant
-                {selectedParticipants.length === 1 ? '' : 's'}
-                {' '}
-                {rejectedParticipantsCount === 1 ? 'has' : 'have'}
-                {' '}
-                already been rejected. Clicking reject participants will now reject the other
-                {' '}
-                {nonRejectedParticipantsCount}
-                .
-                <br />
-                <br />
-              </>
-            )}
-            When participants are rejected, their sequences will be reassigned to other participants.
-          </Alert>
-          <TextInput
-            label="Please enter the reason for rejection."
-            onChange={(event) => setRejectParticipantsMessage(event.target.value)}
-          />
-          <Flex mt="sm" justify="right">
-            <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalRejectParticipantsOpened(false); setRejectParticipantsMessage(''); }}>
-              Cancel
-            </Button>
-            <Button color="red" onClick={() => handleRejectParticipants()}>
-              Reject Participants
-            </Button>
-          </Flex>
-        </Modal>
-        <Modal
-          opened={modalUndoRejectParticipantsOpened}
-          onClose={() => setModalUndoRejectParticipantsOpened(false)}
-          title={(
-            <Text>
-              Undo Reject Participants (
-              {Object.keys(checked).length}
-              )
-            </Text>
-        )}
-        >
-          <Alert
-            icon={<IconAlertTriangle size={16} />}
-            title="Warning"
-            color="orange"
-            mb="md"
-          >
-            When you undo participant rejections, you may end up with unbalanced latin squares. This is because the rejected sequence may have been reassigned.
-          </Alert>
-          <Text>Are you sure you want to undo the rejection of these participants?</Text>
-          <Flex mt="sm" justify="right">
-            <Button mr={5} variant="subtle" color="dark" onClick={() => setModalUndoRejectParticipantsOpened(false)}>
-              Cancel
-            </Button>
-            <Button color="blue" onClick={() => handleUndoRejectParticipants()}>
-              Undo Reject Participants
-            </Button>
-          </Flex>
-        </Modal>
+        {modals}
       </>
     ),
   });

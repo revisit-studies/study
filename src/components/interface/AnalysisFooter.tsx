@@ -1,11 +1,11 @@
 import {
   ActionIcon,
-  AppShell, Box, Button, Group, Select, Text, Modal, TextInput, Flex, Tooltip, Alert,
+  AppShell, Box, Button, Group, Select, Text, Flex, Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser, IconAlertTriangle,
+  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser,
 } from '@tabler/icons-react';
 import { useAsync } from '../../store/hooks/useAsync';
 
@@ -20,17 +20,11 @@ import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useAuth } from '../../store/hooks/useAuth';
+import { useParticipantRejectModal } from '../../analysis/individualStudy/ParticipantRejectModal';
 
 function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
     return storageEngine.getAllParticipantIds();
-  }
-  return null;
-}
-
-function getCurrentParticipantData(storageEngine: StorageEngine | undefined, participantId: string | undefined, studyId: string | undefined) {
-  if (storageEngine && participantId && studyId) {
-    return storageEngine.getParticipantData(participantId);
   }
   return null;
 }
@@ -42,7 +36,7 @@ export function AnalysisFooter() {
 
   const currentComponent = useCurrentComponent();
   const currentStep = useCurrentStep();
-  const { funcIndex, studyId } = useParams();
+  const { funcIndex } = useParams();
   const navigate = useNavigate();
   const studyConfig = useStudyConfig();
 
@@ -56,37 +50,13 @@ export function AnalysisFooter() {
   const { user } = useAuth();
 
   const { value: allParticipants } = useAsync(getAllParticipantsNames, [storageEngine]);
-  const { value: currentParticipantData, execute: refreshCurrentParticipantData } = useAsync(getCurrentParticipantData, [storageEngine, participantId, studyId]);
 
-  const rejectParticipant = useCallback(async (rejectParticipantId: string, reason: string) => {
-    if (storageEngine && studyId) {
-      const finalReason = reason === '' ? 'Rejected by admin' : reason;
-      await storageEngine.rejectParticipant(rejectParticipantId, finalReason, studyId);
-    }
-  }, [storageEngine, studyId]);
-
-  const undoRejectParticipant = useCallback(async (rejectParticipantId: string) => {
-    if (storageEngine && studyId) {
-      await storageEngine.undoRejectParticipant(rejectParticipantId, studyId);
-    }
-  }, [storageEngine, studyId]);
-
-  const [modalRejectParticipantsOpened, setModalRejectParticipantsOpened] = useState<boolean>(false);
-  const [modalUndoRejectParticipantsOpened, setModalUndoRejectParticipantsOpened] = useState<boolean>(false);
-  const [rejectParticipantsMessage, setRejectParticipantsMessage] = useState<string>('');
-
-  const handleRejectParticipant = useCallback(async () => {
-    setModalRejectParticipantsOpened(false);
-    await rejectParticipant(participantId || '', rejectParticipantsMessage);
-    setRejectParticipantsMessage('');
-    refreshCurrentParticipantData(storageEngine, participantId, studyId);
-  }, [rejectParticipant, rejectParticipantsMessage, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
-
-  const handleUndoRejectParticipant = useCallback(async () => {
-    setModalUndoRejectParticipantsOpened(false);
-    await undoRejectParticipant(participantId || '');
-    refreshCurrentParticipantData(storageEngine, participantId, studyId);
-  }, [undoRejectParticipant, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
+  const {
+    setModalRejectOpened,
+    setModalUndoRejectOpened,
+    currentParticipantData,
+    modals,
+  } = useParticipantRejectModal();
 
   const [nextParticipantNameAndIndex, prevParticipantNameAndIndex]: [[string, number], [string, number]] = useMemo(() => {
     if (allParticipants && participantId && currentComponent) {
@@ -183,9 +153,9 @@ export function AnalysisFooter() {
                 disabled={!user.isAdmin || !participantId}
                 onClick={() => {
                   if (currentParticipantData?.rejected) {
-                    setModalUndoRejectParticipantsOpened(true);
+                    setModalUndoRejectOpened(true);
                   } else {
-                    setModalRejectParticipantsOpened(true);
+                    setModalRejectOpened(true);
                   }
                 }}
               >
@@ -197,71 +167,7 @@ export function AnalysisFooter() {
 
       </Box>
 
-      <Modal
-        opened={modalRejectParticipantsOpened}
-        onClose={() => setModalRejectParticipantsOpened(false)}
-        title={(
-          <Text>
-            Reject Participant
-          </Text>
-        )}
-      >
-        <Alert
-          icon={<IconAlertTriangle size={16} />}
-          title="Warning"
-          color="orange"
-          mb="md"
-        >
-          When participants are rejected, their sequences will be reassigned to other participants.
-        </Alert>
-        <TextInput
-          label="Please enter the reason for rejection."
-          onChange={(event) => setRejectParticipantsMessage(event.target.value)}
-        />
-        <Flex mt="sm" justify="right">
-          <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalRejectParticipantsOpened(false); setRejectParticipantsMessage(''); }}>
-            Cancel
-          </Button>
-          <Button color="red" onClick={() => { setModalRejectParticipantsOpened(false); handleRejectParticipant(); }}>
-            Reject Participant
-          </Button>
-        </Flex>
-      </Modal>
-
-      <Modal
-        opened={modalUndoRejectParticipantsOpened}
-        onClose={() => setModalUndoRejectParticipantsOpened(false)}
-        title={(
-          <Text>
-            Participant Rejected
-          </Text>
-        )}
-      >
-        <Alert
-          icon={<IconAlertTriangle size={16} />}
-          title="Warning"
-          color="orange"
-          mb="md"
-        >
-          When you undo participant rejections, their sequence assignments will be marked as available again.
-        </Alert>
-        <Text>
-          The participant has been rejected.
-        </Text>
-        <Text>
-          Reason:
-          {' '}
-          {currentParticipantData?.rejected ? currentParticipantData.rejected.reason : 'No reason provided'}
-        </Text>
-        <Flex mt="sm" justify="right">
-          <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalUndoRejectParticipantsOpened(false); setRejectParticipantsMessage(''); }}>
-            Cancel
-          </Button>
-          <Button color="blue" onClick={() => { setModalUndoRejectParticipantsOpened(false); handleUndoRejectParticipant(); }}>
-            Undo Reject Participant
-          </Button>
-        </Flex>
-      </Modal>
+      {modals}
     </AppShell.Footer>
   );
 }
