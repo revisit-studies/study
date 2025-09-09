@@ -31,8 +31,6 @@ import {
 } from 'react';
 import { RankingResponse, StringOption } from '../../parser/types';
 
-type PairwiseItem = { id: string; label: string; originalIndex: number };
-
 interface ItemProps {
   item: {
     id: string;
@@ -65,37 +63,6 @@ function SortableItem({ item }: ItemProps) {
       {...listeners}
     >
       <Text>{item.label}</Text>
-    </Paper>
-  );
-}
-
-// can we remove this..
-function DroppableZone({
-  id,
-  children,
-  title,
-}: {
-  id: string;
-  children: React.ReactNode;
-  title: string;
-}) {
-  const { setNodeRef, isOver } = useDroppable({
-    id,
-  });
-
-  return (
-    <Paper
-      withBorder
-      p="md"
-      m="md"
-      ref={setNodeRef}
-      style={{
-        backgroundColor: isOver ? '#f0f8ff' : undefined,
-        borderColor: isOver ? '#4dabf7' : undefined,
-      }}
-    >
-      <Text size="md" fw={500} ta="center" mb="md">{title}</Text>
-      {children}
     </Paper>
   );
 }
@@ -218,6 +185,36 @@ function RankingSublistComponent({
         </Text>
       </Paper>
     </Box>
+  );
+}
+
+function DroppableZone({
+  id,
+  children,
+  title,
+}: {
+  id: string;
+  children: React.ReactNode;
+  title: string;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id,
+  });
+
+  return (
+    <Paper
+      withBorder
+      p="md"
+      m="md"
+      ref={setNodeRef}
+      style={{
+        backgroundColor: isOver ? '#f0f8ff' : undefined,
+        borderColor: isOver ? '#4dabf7' : undefined,
+      }}
+    >
+      <Text size="md" fw={500} ta="center" mb="md">{title}</Text>
+      {children}
+    </Paper>
   );
 }
 
@@ -480,6 +477,8 @@ function RankingCategoricalComponent({
     </Box>
   );
 }
+
+type PairwiseItem = { id: string; label: string; originalIndex: number };
 
 function RankingPairwiseComponent({
   options,
