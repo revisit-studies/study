@@ -202,6 +202,7 @@ export function ResponseSwitcher({
       <RankingInput
         response={response}
         disabled={isDisabled || dontKnowCheckbox?.checked}
+        answer={ans as { value: Record<string, string> }}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
