@@ -189,6 +189,7 @@ export function TableView({
           <DownloadButtons
             visibleParticipants={selectedData}
             studyId={studyId || ''}
+            hasAudio={studyConfig?.uiConfig?.recordAudio}
           />
           <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
         </Group>
