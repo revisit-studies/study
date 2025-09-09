@@ -26,8 +26,12 @@ import {
   Text,
 } from '@mantine/core';
 import { useListState } from '@mantine/hooks';
-import { useMemo, useState, useEffect } from 'react';
+import {
+  useMemo, useState, useEffect, useRef,
+} from 'react';
 import { RankingResponse, StringOption } from '../../parser/types';
+
+type PairwiseItem = { id: string; label: string; originalIndex: number };
 
 function SortableItem({ item, disabled }: {
   item: {
@@ -477,7 +481,7 @@ function RankingCategoricalComponent({
 
 function RankingPairwiseComponent({
   options,
-  disabled,
+  disabled = false,
   index,
   enumerateQuestions,
   prompt,
@@ -486,7 +490,7 @@ function RankingPairwiseComponent({
   answer,
 }: {
   options: (StringOption | string)[];
-  disabled: boolean;
+  disabled?: boolean;
   index: number;
   enumerateQuestions: boolean;
   prompt?: string;
@@ -546,11 +550,17 @@ function RankingPairwiseComponent({
   }, [itemList, answer]);
 
   const [state, setState] = useState(initialState);
-  const [pairCount, setPairCount] = useState(initialPairCount);
+  const [_pairCount, setPairCount] = useState(initialPairCount);
+  const [isAddingPair, setIsAddingPair] = useState(false);
+  const addingPairRef = useRef(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    setState(initialState);
-    setPairCount(initialPairCount);
+    if (!initializedRef.current) {
+      setState(initialState);
+      setPairCount(initialPairCount);
+      initializedRef.current = true;
+    }
   }, [initialState, initialPairCount]);
 
   const sensors = useSensors(
@@ -595,17 +605,17 @@ function RankingPairwiseComponent({
             }
           }
 
-          const answerValue: Record<string, string> = {};
-          Object.entries(newState).forEach(([category, categoryItems]) => {
-            if (category !== 'unassigned') {
-              categoryItems.forEach((item) => {
-                answerValue[item.id] = category;
-              });
-            }
-          });
-
           if (answer.onChange) {
-            answer.onChange(answerValue);
+            const answerValue: Record<string, string> = {};
+            const entries = Object.entries(newState) as Array<[string, PairwiseItem[]]>;
+            entries.forEach(([category, categoryItems]) => {
+              if (category !== 'unassigned') {
+                categoryItems.forEach((item) => {
+                  answerValue[item.id] = category;
+                });
+              }
+            });
+            setTimeout(() => answer.onChange!(answerValue), 0);
           }
 
           return newState;
@@ -615,16 +625,32 @@ function RankingPairwiseComponent({
   };
 
   const addNewPair = () => {
-    const newPairIndex = pairCount;
-    setState((prev) => {
-      const newState = {
-        ...prev,
-        [`pair-${newPairIndex}-high`]: [],
-        [`pair-${newPairIndex}-low`]: [],
-      };
+    if (isAddingPair || disabled || addingPairRef.current) return;
+    addingPairRef.current = true;
+    setIsAddingPair(true);
 
+    setState((prev) => {
+      const nextIndex = Object.keys(prev).reduce((max, key) => {
+        const m = key.match(/^pair-(\d+)-(high|low)$/);
+        if (m) {
+          const idx = parseInt(m[1], 10);
+          return Math.max(max, idx + 1);
+        }
+        return max;
+      }, 0);
+
+      return {
+        ...prev,
+        [`pair-${nextIndex}-high`]: [],
+        [`pair-${nextIndex}-low`]: [],
+      };
+    });
+  };
+
+  useEffect(() => {
+    if (isAddingPair) {
       const answerValue: Record<string, string> = {};
-      Object.entries(newState).forEach(([category, categoryItems]) => {
+      Object.entries(state).forEach(([category, categoryItems]) => {
         if (category !== 'unassigned') {
           categoryItems.forEach((item) => {
             answerValue[item.id] = category;
@@ -636,14 +662,17 @@ function RankingPairwiseComponent({
         answer.onChange(answerValue);
       }
 
-      return newState;
-    });
-    setPairCount((prev) => prev + 1);
-  };
+      setIsAddingPair(false);
+      addingPairRef.current = false;
+    }
+  }, [state, isAddingPair, answer]);
 
   const getPairs = () => {
     const pairs = [];
-    for (let i = 0; i < pairCount; i += 1) {
+    const pairKeys = Object.keys(state).filter((key) => key.startsWith('pair-') && key.endsWith('-high'));
+    const actualPairCount = pairKeys.length;
+
+    for (let i = 0; i < actualPairCount; i += 1) {
       pairs.push({
         index: i,
         high: state[`pair-${i}-high` as keyof typeof state] || [],
@@ -678,7 +707,7 @@ function RankingPairwiseComponent({
           <SortableContext items={state.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             <Flex gap="xs" wrap="wrap" justify="center">
               {state.unassigned.map((item) => (
-                <SortableItem key={item.id} item={item} />
+                <SortableItem key={item.id} item={item} disabled={disabled} />
               ))}
             </Flex>
           </SortableContext>
@@ -692,7 +721,7 @@ function RankingPairwiseComponent({
                   <SortableContext items={pair.high.map((i) => i.id)} strategy={verticalListSortingStrategy}>
                     <Stack gap="xs" w="50%" mx="auto" miw={150} mih={80} justify="center">
                       {pair.high.map((item) => (
-                        <SortableItem key={item.id} item={item} />
+                        <SortableItem key={item.id} item={item} disabled={disabled} />
                       ))}
                     </Stack>
                   </SortableContext>
@@ -702,7 +731,7 @@ function RankingPairwiseComponent({
                   <SortableContext items={pair.low.map((i) => i.id)} strategy={verticalListSortingStrategy}>
                     <Stack gap="xs" w="50%" mx="auto" miw={150} mih={80} justify="center">
                       {pair.low.map((item) => (
-                        <SortableItem key={item.id} item={item} />
+                        <SortableItem key={item.id} item={item} disabled={disabled} />
                       ))}
                     </Stack>
                   </SortableContext>
@@ -715,11 +744,11 @@ function RankingPairwiseComponent({
             variant="filled"
             color="orange"
             onClick={addNewPair}
-            disabled={disabled}
+            disabled={disabled || isAddingPair}
             mx="auto"
             w="fit-content"
           >
-            Add New Pair
+            {isAddingPair ? 'Adding...' : 'Add New Pair'}
           </Button>
 
         </Stack>
