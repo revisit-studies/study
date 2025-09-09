@@ -33,19 +33,19 @@ import { RankingResponse, StringOption } from '../../parser/types';
 
 type PairwiseItem = { id: string; label: string; originalIndex: number };
 
-function SortableItem({ item, disabled }: {
+interface ItemProps {
   item: {
     id: string;
     label: string;
     originalIndex: number;
   };
-  disabled?: boolean;
-}) {
+}
+
+function SortableItem({ item }: ItemProps) {
   const {
     attributes, listeners, setNodeRef, transform, transition,
   } = useSortable({
     id: item.id,
-    disabled,
   });
 
   const style: React.CSSProperties = {
@@ -58,19 +58,18 @@ function SortableItem({ item, disabled }: {
       ref={setNodeRef}
       style={{
         ...style,
-        cursor: disabled ? 'default' : 'grab',
       }}
-      p="sm"
       withBorder
-      shadow="sm"
+      p="sm"
       {...attributes}
-      {...(disabled ? {} : listeners)}
+      {...listeners}
     >
       <Text>{item.label}</Text>
     </Paper>
   );
 }
 
+// can we remove this..
 function DroppableZone({
   id,
   children,
@@ -130,6 +129,7 @@ function RankingSublistComponent({
     originalIndex: idx,
   })), [options]);
 
+  // initialize state based on answer value
   const initialState = useMemo(() => {
     if (answer?.value && Object.keys(answer.value).length > 0) {
       const orderedItems = [];
@@ -152,6 +152,7 @@ function RankingSublistComponent({
     handlers.setState(initialState);
   }, [initialState, handlers]);
 
+  // Sensors are used to detect drag and drop events
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor),
@@ -169,11 +170,11 @@ function RankingSublistComponent({
     const newState = arrayMove(state, oldIndex, newIndex);
     handlers.setState(newState);
 
+    // update answer value
     const answerValue: Record<string, string> = {};
     newState.forEach((item, idx) => {
       answerValue[item.id] = idx.toString();
     });
-
     if (answer.onChange) {
       answer.onChange(answerValue);
     }
@@ -193,6 +194,7 @@ function RankingSublistComponent({
       )}
 
       <Paper withBorder ta="center" p="md">
+        {/* TODO: make this a label in types? */}
         <Text size="md" fw={500} m="md">
           HIGH
         </Text>
@@ -387,7 +389,7 @@ function RankingCategoricalComponent({
                 }}
               >
                 {state.HIGH.map((item) => (
-                  <SortableItem key={item.id} item={item} disabled={disabled} />
+                  <SortableItem key={item.id} item={item} />
                 ))}
               </Stack>
             </SortableContext>
@@ -408,7 +410,7 @@ function RankingCategoricalComponent({
                 }}
               >
                 {state.MEDIUM.map((item) => (
-                  <SortableItem key={item.id} item={item} disabled={disabled} />
+                  <SortableItem key={item.id} item={item} />
                 ))}
               </Stack>
             </SortableContext>
@@ -429,7 +431,7 @@ function RankingCategoricalComponent({
                 }}
               >
                 {state.LOW.map((item) => (
-                  <SortableItem key={item.id} item={item} disabled={disabled} />
+                  <SortableItem key={item.id} item={item} />
                 ))}
               </Stack>
             </SortableContext>
@@ -450,7 +452,7 @@ function RankingCategoricalComponent({
                 }}
               >
                 {state.unassigned.map((item) => (
-                  <SortableItem key={item.id} item={item} disabled={disabled} />
+                  <SortableItem key={item.id} item={item} />
                 ))}
               </Stack>
             </SortableContext>
@@ -707,7 +709,7 @@ function RankingPairwiseComponent({
           <SortableContext items={state.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             <Flex gap="xs" wrap="wrap" justify="center">
               {state.unassigned.map((item) => (
-                <SortableItem key={item.id} item={item} disabled={disabled} />
+                <SortableItem key={item.id} item={item} />
               ))}
             </Flex>
           </SortableContext>
@@ -721,7 +723,7 @@ function RankingPairwiseComponent({
                   <SortableContext items={pair.high.map((i) => i.id)} strategy={verticalListSortingStrategy}>
                     <Stack gap="xs" w="50%" mx="auto" miw={150} mih={80} justify="center">
                       {pair.high.map((item) => (
-                        <SortableItem key={item.id} item={item} disabled={disabled} />
+                        <SortableItem key={item.id} item={item} />
                       ))}
                     </Stack>
                   </SortableContext>
@@ -731,7 +733,7 @@ function RankingPairwiseComponent({
                   <SortableContext items={pair.low.map((i) => i.id)} strategy={verticalListSortingStrategy}>
                     <Stack gap="xs" w="50%" mx="auto" miw={150} mih={80} justify="center">
                       {pair.low.map((item) => (
-                        <SortableItem key={item.id} item={item} disabled={disabled} />
+                        <SortableItem key={item.id} item={item} />
                       ))}
                     </Stack>
                   </SortableContext>
