@@ -176,6 +176,9 @@ export abstract class StorageEngine {
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
 
+  // Gets the transcript URL for the given task and participantId. (Optional - not all storage engines need to implement this, only if they generate transcripts).
+  protected _getTranscriptUrl?(task: string, participantId?: string): Promise<string | null>;
+
   // Resets the entire study database for testing purposes. This is used to reset the study database to a clean state for testing.
   protected abstract _testingReset(studyId: string): Promise<void>;
 
@@ -743,6 +746,34 @@ export abstract class StorageEngine {
     });
 
     return allAudioList;
+  }
+
+  // Gets the audio download URL
+  async getAudioUrl(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getAudioUrl(task, participantId);
+    if (!url) {
+      return null;
+    }
+    return url;
+  }
+
+  // Gets the transcript download URL (currently only supported by Firebase)
+  async getTranscriptUrl(
+    task: string,
+    participantId: string,
+  ) {
+    if (!this._getTranscriptUrl) {
+      return null;
+    }
+
+    const url = await this._getTranscriptUrl(task, participantId);
+    if (!url) {
+      return null;
+    }
+    return url;
   }
 
   // Saves the audio stream to the storage engine. This method is used to save the audio data from a MediaRecorder stream.

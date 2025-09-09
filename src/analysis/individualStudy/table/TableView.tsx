@@ -2,9 +2,7 @@
 import {
   Text, Flex, Group, Space, Tooltip, Badge, RingProgress, Stack,
 } from '@mantine/core';
-import {
-  useCallback, useMemo, useState,
-} from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import {
   MantineReactTable, MRT_Cell as MrtCell, MRT_ColumnDef as MrtColumnDef, MRT_RowSelectionState as MrtRowSelectionState, useMantineReactTable,
@@ -191,6 +189,7 @@ export function TableView({
           <DownloadButtons
             visibleParticipants={selectedData}
             studyId={studyId || ''}
+            hasAudio={studyConfig?.uiConfig?.recordAudio}
           />
           <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
         </Group>
