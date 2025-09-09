@@ -1,6 +1,5 @@
 import {
-  ActionIcon,
-  AppShell, Box, Button, Center, Group, Select, Text,
+  ActionIcon, AppShell, Box, Button, Group, Select, Text, Flex,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMemo, useState } from 'react';
@@ -19,6 +18,7 @@ import {
 import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { ParticipantRejectModal } from '../../analysis/individualStudy/ParticipantRejectModal';
 
 function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -71,7 +71,9 @@ export function AnalysisFooter() {
       <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px' }}>
 
         <AudioProvenanceVis setTimeString={setTimeString} />
-        <Center>
+        <Flex justify="space-between" align="center" px="md">
+          {/* Placeholder box for Show Legend button */}
+          <Box />
           <Group gap="xs" style={{ height: '50px' }}>
             <Text size="sm" ff="monospace">
               {timeString}
@@ -134,7 +136,25 @@ export function AnalysisFooter() {
               <IconArrowRight />
             </Button>
           </Group>
-        </Center>
+          <Group>
+            {/* <Tooltip label={currentParticipantData?.rejected ? 'Admin can undo rejection' : 'Admin can reject participants'} disabled={user.isAdmin}>
+              <Button
+                color={currentParticipantData?.rejected ? 'blue' : 'red'}
+                disabled={!user.isAdmin || !participantId}
+                onClick={() => {
+                  if (currentParticipantData?.rejected) {
+                    setModalUndoRejectOpened(true);
+                  } else {
+                    setModalRejectOpened(true);
+                  }
+                }}
+              >
+                {currentParticipantData?.rejected ? 'Undo Reject Participant' : 'Reject Participant'}
+              </Button>
+            </Tooltip> */}
+            <ParticipantRejectModal selectedParticipants={[]} />
+          </Group>
+        </Flex>
       </Box>
     </AppShell.Footer>
   );
