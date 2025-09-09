@@ -25,7 +25,7 @@ import {
   Text,
 } from '@mantine/core';
 import { useListState } from '@mantine/hooks';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { RankingResponse, StringOption } from '../../parser/types';
 
 function SortableItem({ item }: {
@@ -102,6 +102,7 @@ function RankingSublistComponent({
   prompt,
   required: _required,
   secondaryText,
+  answer,
 }: {
   options: (StringOption | string)[];
   disabled: boolean;
@@ -110,6 +111,7 @@ function RankingSublistComponent({
   prompt?: string;
   required?: boolean;
   secondaryText?: string;
+  answer: { value: Record<string, string>; onChange?: (value: Record<string, string>) => void };
 }) {
   const items: {
     id: string;
@@ -121,7 +123,27 @@ function RankingSublistComponent({
     originalIndex: idx,
   })), [options]);
 
-  const [state, handlers] = useListState(items);
+  const initialState = useMemo(() => {
+    if (answer?.value && Object.keys(answer.value).length > 0) {
+      const orderedItems = [];
+      const answerEntries = Object.entries(answer.value).sort((a, b) => parseInt(a[1], 10) - parseInt(b[1], 10));
+      for (const [itemId] of answerEntries) {
+        const item = items.find((i) => i.id === itemId);
+        if (item) {
+          orderedItems.push(item);
+        }
+      }
+      const remainingItems = items.filter((item) => !Object.keys(answer.value).includes(item.id));
+      return [...orderedItems, ...remainingItems];
+    }
+    return items;
+  }, [items, answer]);
+
+  const [state, handlers] = useListState(initialState);
+
+  useEffect(() => {
+    handlers.setState(initialState);
+  }, [initialState, handlers]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -139,6 +161,15 @@ function RankingSublistComponent({
 
     const newState = arrayMove(state, oldIndex, newIndex);
     handlers.setState(newState);
+
+    const answerValue: Record<string, string> = {};
+    newState.forEach((item, idx) => {
+      answerValue[item.id] = idx.toString();
+    });
+
+    if (answer.onChange) {
+      answer.onChange(answerValue);
+    }
   };
 
   return (
@@ -189,6 +220,7 @@ function RankingCategoricalComponent({
   prompt,
   required: _required,
   secondaryText,
+  answer,
 }: {
   options: (StringOption | string)[];
   disabled: boolean;
@@ -197,6 +229,7 @@ function RankingCategoricalComponent({
   prompt?: string;
   required?: boolean;
   secondaryText?: string;
+  answer: { value: Record<string, string>; onChange?: (value: Record<string, string>) => void };
 }) {
   const items: {
     id: string;
@@ -208,24 +241,44 @@ function RankingCategoricalComponent({
     originalIndex: idx,
   })), [options]);
 
-  const [state, setState] = useState({
-    unassigned: items,
-    HIGH: [] as {
-      id: string;
-      label: string;
-      originalIndex: number;
-    }[],
-    MEDIUM: [] as {
-      id: string;
-      label: string;
-      originalIndex: number;
-    }[],
-    LOW: [] as {
-      id: string;
-      label: string;
-      originalIndex: number;
-    }[],
-  });
+  const initialState = useMemo(() => {
+    const state = {
+      unassigned: [...items],
+      HIGH: [] as {
+        id: string;
+        label: string;
+        originalIndex: number;
+      }[],
+      MEDIUM: [] as {
+        id: string;
+        label: string;
+        originalIndex: number;
+      }[],
+      LOW: [] as {
+        id: string;
+        label: string;
+        originalIndex: number;
+      }[],
+    };
+
+    if (answer?.value && Object.keys(answer.value).length > 0) {
+      Object.entries(answer.value).forEach(([itemId, category]) => {
+        const item = items.find((i) => i.id === itemId);
+        if (item && (category === 'HIGH' || category === 'MEDIUM' || category === 'LOW')) {
+          state[category].push(item);
+          state.unassigned = state.unassigned.filter((i) => i.id !== itemId);
+        }
+      });
+    }
+
+    return state;
+  }, [items, answer]);
+
+  const [state, setState] = useState(initialState);
+
+  useEffect(() => {
+    setState(initialState);
+  }, [initialState]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -256,6 +309,17 @@ function RankingCategoricalComponent({
           if (activeItem) {
             newState[sourceCategory as keyof typeof newState] = newState[sourceCategory as keyof typeof newState].filter((item) => item.id !== activeId);
             newState[targetCategory as keyof typeof newState] = [...newState[targetCategory as keyof typeof newState], activeItem];
+          }
+
+          const answerValue: Record<string, string> = {};
+          ['HIGH', 'MEDIUM', 'LOW'].forEach((category) => {
+            newState[category as keyof typeof newState].forEach((item) => {
+              answerValue[item.id] = category;
+            });
+          });
+
+          if (answer.onChange) {
+            answer.onChange(answerValue);
           }
 
           return newState;
@@ -338,6 +402,7 @@ function RankingPairwiseComponent({
   prompt,
   required: _required,
   secondaryText,
+  answer,
 }: {
   options: (StringOption | string)[];
   disabled: boolean;
@@ -346,6 +411,7 @@ function RankingPairwiseComponent({
   prompt?: string;
   required?: boolean;
   secondaryText?: string;
+  answer: { value: Record<string, string>; onChange?: (value: Record<string, string>) => void };
 }) {
   const itemList: {
     id: string;
@@ -357,21 +423,54 @@ function RankingPairwiseComponent({
     originalIndex: idx,
   })), [options]);
 
-  const [state, setState] = useState({
-    unassigned: itemList,
-    'pair-0-high': [] as {
+  const { initialState, initialPairCount } = useMemo(() => {
+    const state: Record<string, {
       id: string;
       label: string;
       originalIndex: number;
-    }[],
-    'pair-0-low': [] as {
-      id: string;
-      label: string;
-      originalIndex: number;
-    }[],
-  });
+    }[]> = {
+      unassigned: [...itemList],
+      'pair-0-high': [],
+      'pair-0-low': [],
+    };
 
-  const [pairCount, setPairCount] = useState(1);
+    let pairCount = 1;
+
+    if (answer?.value && Object.keys(answer.value).length > 0) {
+      const pairKeys = new Set<string>();
+      Object.values(answer.value).forEach((pairLocation) => {
+        const match = pairLocation.match(/^pair-(\d+)-(high|low)$/);
+        if (match) {
+          pairKeys.add(match[1]);
+        }
+      });
+
+      pairCount = Math.max(1, pairKeys.size);
+
+      for (let i = 0; i < pairCount; i += 1) {
+        state[`pair-${i}-high`] = [];
+        state[`pair-${i}-low`] = [];
+      }
+
+      Object.entries(answer.value).forEach(([itemId, pairLocation]) => {
+        const item = itemList.find((i) => i.id === itemId);
+        if (item && state[pairLocation]) {
+          state[pairLocation].push(item);
+          state.unassigned = state.unassigned.filter((i) => i.id !== itemId);
+        }
+      });
+    }
+
+    return { initialState: state, initialPairCount: pairCount };
+  }, [itemList, answer]);
+
+  const [state, setState] = useState(initialState);
+  const [pairCount, setPairCount] = useState(initialPairCount);
+
+  useEffect(() => {
+    setState(initialState);
+    setPairCount(initialPairCount);
+  }, [initialState, initialPairCount]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -415,6 +514,19 @@ function RankingPairwiseComponent({
             }
           }
 
+          const answerValue: Record<string, string> = {};
+          Object.entries(newState).forEach(([category, categoryItems]) => {
+            if (category !== 'unassigned') {
+              categoryItems.forEach((item) => {
+                answerValue[item.id] = category;
+              });
+            }
+          });
+
+          if (answer.onChange) {
+            answer.onChange(answerValue);
+          }
+
           return newState;
         });
       }
@@ -423,11 +535,28 @@ function RankingPairwiseComponent({
 
   const addNewPair = () => {
     const newPairIndex = pairCount;
-    setState((prev) => ({
-      ...prev,
-      [`pair-${newPairIndex}-high`]: [],
-      [`pair-${newPairIndex}-low`]: [],
-    }));
+    setState((prev) => {
+      const newState = {
+        ...prev,
+        [`pair-${newPairIndex}-high`]: [],
+        [`pair-${newPairIndex}-low`]: [],
+      };
+
+      const answerValue: Record<string, string> = {};
+      Object.entries(newState).forEach(([category, categoryItems]) => {
+        if (category !== 'unassigned') {
+          categoryItems.forEach((item) => {
+            answerValue[item.id] = category;
+          });
+        }
+      });
+
+      if (answer.onChange) {
+        answer.onChange(answerValue);
+      }
+
+      return newState;
+    });
     setPairCount((prev) => prev + 1);
   };
 
@@ -521,13 +650,13 @@ function RankingPairwiseComponent({
 export function RankingInput({
   response,
   disabled,
-  // answer,
+  answer,
   index,
   enumerateQuestions,
 }: {
   response: RankingResponse;
   disabled: boolean;
-  // answer: { value: string[] };
+  answer: { value: Record<string, string>; onChange?: (value: Record<string, string>) => void };
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -544,6 +673,7 @@ export function RankingInput({
         options={options}
         disabled={disabled}
         index={index}
+        answer={answer}
         enumerateQuestions={enumerateQuestions}
         prompt={prompt}
         required={required}
@@ -558,6 +688,7 @@ export function RankingInput({
         options={options}
         disabled={disabled}
         index={index}
+        answer={answer}
         enumerateQuestions={enumerateQuestions}
         prompt={prompt}
         required={required}
@@ -572,6 +703,7 @@ export function RankingInput({
         options={options}
         disabled={disabled}
         index={index}
+        answer={answer}
         enumerateQuestions={enumerateQuestions}
         prompt={prompt}
         required={required}
