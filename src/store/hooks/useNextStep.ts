@@ -42,21 +42,6 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
   return foundConfigComponentConfig.correctAnswer.every((correctAnswerEntry) => answers[correctAnswerEntry.id] === correctAnswerEntry.answer);
 }
 
-export function checkAnswerCorrect(answer: Record<string, string | number | boolean | string[]>, correctAnswer: Answer[]) {
-  // Check that the response matches the correct answer
-  return correctAnswer.every((correctAnswerEntry) => {
-    const suppliedAnswer = answer[correctAnswerEntry.id];
-    const expectedAnswer = correctAnswerEntry.answer;
-
-    // Handle multi-select responses
-    if (Array.isArray(expectedAnswer) && Array.isArray(suppliedAnswer)) {
-      return suppliedAnswer.length === expectedAnswer.length && suppliedAnswer.every((userAnswer) => expectedAnswer.includes(userAnswer));
-    }
-
-    return expectedAnswer === suppliedAnswer;
-  });
-}
-
 export function useNextStep() {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();

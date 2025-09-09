@@ -3,6 +3,7 @@ import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 import { ParticipantCounts } from '../../types';
 import { Response } from '../../../parser/types';
 import { StorageEngine } from '../../../storage/engines/types';
+import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 
 export function calculateParticipantCounts(visibleParticipants: ParticipantData[]): ParticipantCounts {
   return {
@@ -129,17 +130,7 @@ export function calculateComponentStats(visibleParticipants: ParticipantData[]) 
       }
 
       if (answer.correctAnswer && answer.correctAnswer.length > 0) {
-        const isCorrect = answer.correctAnswer.every((correctAnswer) => {
-          const participantAnswer = answer.answer[correctAnswer.id];
-          const expectedAnswer = correctAnswer.answer;
-
-          // Handle multi-select responses
-          if (Array.isArray(expectedAnswer) && Array.isArray(participantAnswer)) {
-            return participantAnswer.length === expectedAnswer.length && participantAnswer.every((ans) => expectedAnswer.includes(ans));
-          }
-
-          return participantAnswer === expectedAnswer;
-        });
+        const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
         stat.correctness += isCorrect ? 1 : 0;
       }
     });
@@ -184,17 +175,7 @@ export function calculateResponseStats(visibleParticipants: ParticipantData[]) {
       stat.participantCount += 1;
 
       if (answer.correctAnswer && answer.correctAnswer.length > 0) {
-        const isCorrect = answer.correctAnswer.every((correctAnswer) => {
-          const participantAnswer = answer.answer[correctAnswer.id];
-          const expectedAnswer = correctAnswer.answer;
-
-          // Handle multi-select responses
-          if (Array.isArray(expectedAnswer) && Array.isArray(participantAnswer)) {
-            return participantAnswer.length === expectedAnswer.length && participantAnswer.every((ans) => expectedAnswer.includes(ans));
-          }
-
-          return participantAnswer === expectedAnswer;
-        });
+        const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
         stat.correctness += isCorrect ? 1 : 0;
       }
     });

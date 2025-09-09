@@ -10,6 +10,7 @@ import {
 import { useMemo } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
 import { IndividualComponent, ParticipantData, Response } from '../../../parser/types';
+import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 
 export function ResponseVisualization({
   response, participantData, trialId, trialConfig,
@@ -43,13 +44,7 @@ export function ResponseVisualization({
         const participantAnswer = value.answer[response.id];
         const expectedAnswer = correctAnswer.answer;
 
-        // Handle multi-select responses
-        if (Array.isArray(expectedAnswer) && Array.isArray(participantAnswer)) {
-          const isCorrect = participantAnswer.length === expectedAnswer.length && participantAnswer.every((answer) => expectedAnswer.includes(answer));
-          answerData.result = isCorrect ? 'correct' : 'incorrect';
-        } else {
-          answerData.result = expectedAnswer === participantAnswer ? 'correct' : 'incorrect';
-        }
+        answerData.result = responseAnswerIsCorrect(participantAnswer, expectedAnswer) ? 'correct' : 'incorrect';
       }
 
       return answerData;

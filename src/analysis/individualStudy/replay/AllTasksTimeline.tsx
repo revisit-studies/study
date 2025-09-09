@@ -8,6 +8,7 @@ import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
 import { StoredAnswer, StudyConfig } from '../../../parser/types';
+import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
@@ -105,30 +106,8 @@ export function AllTasksTimeline({
 
       const component = studyConfig?.components[joinExceptLast];
 
-      let isCorrect = true;
-      let hasCorrect = false;
-
-      if (component && component.correctAnswer) {
-        isCorrect = component.correctAnswer.every((a) => {
-          const { id, answer: componentCorrectAnswer } = a;
-
-          if (!component || !component.correctAnswer || answer.answer[id] !== componentCorrectAnswer) {
-            isCorrect = false;
-          }
-          const participantAnswer = answer.answer[id];
-
-          // Handle multi-select responses
-          if (Array.isArray(componentCorrectAnswer) && Array.isArray(participantAnswer)) {
-            return participantAnswer.length === componentCorrectAnswer.length && participantAnswer.every((ans) => componentCorrectAnswer.includes(ans));
-          }
-
-          return participantAnswer === componentCorrectAnswer;
-        });
-
-        hasCorrect = true;
-      } else {
-        hasCorrect = false;
-      }
+      const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
+      const hasCorrect = !!((component && component.correctAnswer) || answer.correctAnswer.length > 0);
 
       return {
         line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} xScale={scale} scaleStart={scaleStart} />,
