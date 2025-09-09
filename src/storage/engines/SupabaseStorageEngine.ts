@@ -266,7 +266,7 @@ export class SupabaseStorageEngine extends StorageEngine {
       throw new Error('Failed to retrieve sequence assignment for current participant');
     }
 
-    // Update the sequence assignment for the participant to mark it as rejected
+    // Update the sequence assignment for the participant to mark it as un-rejected
     await this.supabase
       .from('revisit')
       .update({ data: { ...data.data, rejected: false } })

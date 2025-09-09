@@ -55,7 +55,7 @@ export function AnalysisFooter() {
     setModalRejectOpened,
     setModalUndoRejectOpened,
     currentParticipantData,
-    participantRejectModals,
+    ParticipantRejectModal,
   } = useParticipantRejectModal({ selectedParticipants: [] });
 
   const [nextParticipantNameAndIndex, prevParticipantNameAndIndex]: [[string, number], [string, number]] = useMemo(() => {
@@ -165,7 +165,7 @@ export function AnalysisFooter() {
           </Group>
         </Flex>
       </Box>
-      {participantRejectModals}
+      {ParticipantRejectModal}
     </AppShell.Footer>
   );
 }

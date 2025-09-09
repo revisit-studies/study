@@ -561,7 +561,7 @@ export abstract class StorageEngine {
     return await this.rejectParticipant(this.currentParticipantId, reason);
   }
 
-  // Rejects a participant with the given participantId and reason.
+  // Un-rejects a participant with the given participantId.
   async undoRejectParticipant(participantId: string, studyId?: string) {
     const participant = await this._getFromStorage(
       `participants/${participantId}`,
@@ -589,7 +589,7 @@ export abstract class StorageEngine {
     }
   }
 
-  // Rejects the current participant with the given reason.
+  // Un-rejects the current participant.
   async undoRejectCurrentParticipant() {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');

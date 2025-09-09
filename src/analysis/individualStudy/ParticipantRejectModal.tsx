@@ -68,7 +68,7 @@ export function useParticipantRejectModal({
     }
 
     setRejectMessage('');
-  }, [selectedParticipants, rejectParticipant, rejectMessage, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
+  }, [selectedParticipants, rejectParticipant, rejectMessage, participantId, refreshCurrentParticipantData]);
 
   const handleUndoRejectParticipant = useCallback(async () => {
     setModalUndoRejectOpened(false);
@@ -80,7 +80,7 @@ export function useParticipantRejectModal({
       await undoRejectParticipant(participantId || '');
       await refreshCurrentParticipantData();
     }
-  }, [selectedParticipants, undoRejectParticipant, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
+  }, [selectedParticipants, undoRejectParticipant, participantId, refreshCurrentParticipantData]);
 
   return {
     modalRejectOpened,
@@ -88,7 +88,7 @@ export function useParticipantRejectModal({
     setModalRejectOpened,
     setModalUndoRejectOpened,
     currentParticipantData,
-    participantRejectModals: (
+    ParticipantRejectModal: (
       <>
         <Modal
           opened={modalRejectOpened}
@@ -147,7 +147,7 @@ export function useParticipantRejectModal({
           onClose={() => setModalUndoRejectOpened(false)}
           title={(
             <Text>
-              {selectedParticipants.length > 0 ? `Undo Reject Participants (${selectedParticipants.length})` : 'Participant Rejected'}
+              {`Undo Reject Participants (${selectedParticipants.length})`}
             </Text>
           )}
         >
@@ -157,9 +157,7 @@ export function useParticipantRejectModal({
             color="orange"
             mb="md"
           >
-            {selectedParticipants.length > 0
-              ? 'When you undo participant rejections, you may end up with unbalanced latin squares. This is because the rejected sequence may have been reassigned.'
-              : 'When you undo participant rejections, their sequence assignments will be marked as available again.'}
+            When you undo participant rejections, you may end up with unbalanced latin squares. This is because the rejected sequence may have been reassigned.
           </Alert>
           {selectedParticipants.length > 0 ? (
             <Text>Are you sure you want to undo the rejection of these participants?</Text>

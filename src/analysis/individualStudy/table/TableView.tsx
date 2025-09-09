@@ -67,7 +67,7 @@ export function TableView({
     setModalUndoRejectOpened,
     modalRejectOpened,
     modalUndoRejectOpened,
-    participantRejectModals,
+    ParticipantRejectModal,
   } = useParticipantRejectModal({
     selectedParticipants,
   });
@@ -249,7 +249,7 @@ export function TableView({
             />
           </Group>
         </Flex>
-        {participantRejectModals}
+        {ParticipantRejectModal}
       </>
     ),
   });
