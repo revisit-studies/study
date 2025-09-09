@@ -2,9 +2,11 @@ import {
   ActionIcon, AppShell, Box, Button, Flex, Group, Select, Text, Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { useMemo, useState, useEffect } from 'react';
 import {
-  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser, IconDownload,
+  useMemo, useState, useEffect, useCallback,
+} from 'react';
+import {
+  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser, IconMusicDown,
 } from '@tabler/icons-react';
 import { useAsync } from '../../store/hooks/useAsync';
 
@@ -70,17 +72,24 @@ export function AnalysisFooter() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!storageEngine || !participantId || !identifier) {
-      setAudioUrl(null);
-      return;
+    async function fetchAudioUrl() {
+      if (!storageEngine || !participantId || !identifier) {
+        setAudioUrl(null);
+        return;
+      }
+
+      try {
+        const url = await storageEngine.getAudioUrl(identifier, participantId);
+        setAudioUrl(url);
+      } catch {
+        setAudioUrl(null);
+      }
     }
 
-    storageEngine.getAudioUrl(identifier, participantId)
-      .then((url) => setAudioUrl(url))
-      .catch(() => setAudioUrl(null));
+    fetchAudioUrl();
   }, [storageEngine, participantId, identifier]);
 
-  const handleDownloadAudio = async () => {
+  const handleDownloadAudio = useCallback(async () => {
     if (!storageEngine || !participantId || !identifier) {
       return;
     }
@@ -91,11 +100,11 @@ export function AnalysisFooter() {
       identifier,
       audioUrl,
     });
-  };
+  }, [storageEngine, participantId, identifier, audioUrl]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
-      <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px', position: 'relative' }}>
+      <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px' }}>
 
         <AudioProvenanceVis setTimeString={setTimeString} />
         <Flex justify="space-between" align="center" px="md">
@@ -166,7 +175,7 @@ export function AnalysisFooter() {
             {audioUrl && (
             <Tooltip label="Download audio">
               <ActionIcon variant="filled" size={30} onClick={handleDownloadAudio}>
-                <IconDownload />
+                <IconMusicDown />
               </ActionIcon>
             </Tooltip>
             )}

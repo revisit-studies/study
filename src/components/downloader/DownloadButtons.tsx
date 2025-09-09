@@ -1,7 +1,7 @@
 import {
   Button, Group, Tooltip,
 } from '@mantine/core';
-import { IconDatabaseExport, IconFileExport, IconTableExport } from '@tabler/icons-react';
+import { IconDatabaseExport, IconMusicDown, IconTableExport } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { DownloadTidy, download } from './DownloadTidy';
@@ -87,7 +87,7 @@ export function DownloadButtons({
               px={4}
               loading={loadingAudio}
             >
-              <IconFileExport />
+              <IconMusicDown />
             </Button>
           </Tooltip>
         )}
