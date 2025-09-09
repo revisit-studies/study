@@ -39,13 +39,8 @@ export function useParticipantRejectModal({
   const [modalUndoRejectOpened, setModalUndoRejectOpened] = useState(false);
   const [rejectMessage, setRejectMessage] = useState<string>('');
 
-  const multipleParticipantsSelected = selectedParticipants && selectedParticipants.length > 0;
-  const participantsToUse = useMemo(
-    () => selectedParticipants || (currentParticipantData ? [currentParticipantData] : []),
-    [selectedParticipants, currentParticipantData],
-  );
-  const rejectedParticipantsCount = useMemo(() => participantsToUse.filter((p) => p.rejected).length, [participantsToUse]);
-  const nonRejectedParticipantsCount = useMemo(() => participantsToUse.filter((p) => !p.rejected).length, [participantsToUse]);
+  const rejectedParticipantsCount = useMemo(() => selectedParticipants.filter((p) => p.rejected).length, [selectedParticipants]);
+  const nonRejectedParticipantsCount = useMemo(() => selectedParticipants.filter((p) => !p.rejected).length, [selectedParticipants]);
 
   const rejectParticipant = useCallback(async (rejectParticipantId: string, reason: string) => {
     if (storageEngine && studyId) {
@@ -63,8 +58,8 @@ export function useParticipantRejectModal({
   const handleRejectParticipant = useCallback(async () => {
     setModalRejectOpened(false);
 
-    if (multipleParticipantsSelected) {
-      const participantsToReject = participantsToUse.filter((p) => !p.rejected);
+    if (selectedParticipants.length > 0) {
+      const participantsToReject = selectedParticipants.filter((p) => !p.rejected);
       const promises = participantsToReject.map(async (p) => await rejectParticipant(p.participantId, rejectMessage));
       await Promise.all(promises);
     } else {
@@ -73,19 +68,19 @@ export function useParticipantRejectModal({
     }
 
     setRejectMessage('');
-  }, [multipleParticipantsSelected, participantsToUse, selectedParticipants, rejectParticipant, rejectMessage, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
+  }, [selectedParticipants, rejectParticipant, rejectMessage, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
 
   const handleUndoRejectParticipant = useCallback(async () => {
     setModalUndoRejectOpened(false);
 
-    if (multipleParticipantsSelected) {
-      const promises = participantsToUse.map(async (p) => await undoRejectParticipant(p.participantId));
+    if (selectedParticipants.length > 0) {
+      const promises = selectedParticipants.map(async (p) => await undoRejectParticipant(p.participantId));
       await Promise.all(promises);
     } else {
       await undoRejectParticipant(participantId || '');
       await refreshCurrentParticipantData();
     }
-  }, [multipleParticipantsSelected, participantsToUse, selectedParticipants, undoRejectParticipant, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
+  }, [selectedParticipants, undoRejectParticipant, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
 
   return {
     modalRejectOpened,
@@ -100,7 +95,7 @@ export function useParticipantRejectModal({
           onClose={() => setModalRejectOpened(false)}
           title={(
             <Text>
-              {multipleParticipantsSelected ? `Reject Participants (${nonRejectedParticipantsCount})` : 'Reject Participant'}
+              {selectedParticipants.length > 0 ? `Reject Participants (${nonRejectedParticipantsCount})` : 'Reject Participant'}
             </Text>
           )}
         >
@@ -110,7 +105,7 @@ export function useParticipantRejectModal({
             color="orange"
             mb="md"
           >
-            {multipleParticipantsSelected && rejectedParticipantsCount > 0 && (
+            {selectedParticipants.length > 0 && rejectedParticipantsCount > 0 && (
               <>
                 {rejectedParticipantsCount}
                 {' '}
@@ -142,7 +137,7 @@ export function useParticipantRejectModal({
               Cancel
             </Button>
             <Button color="red" onClick={handleRejectParticipant}>
-              {multipleParticipantsSelected ? 'Reject Participants' : 'Reject Participant'}
+              {selectedParticipants.length > 0 ? 'Reject Participants' : 'Reject Participant'}
             </Button>
           </Flex>
         </Modal>
@@ -152,7 +147,7 @@ export function useParticipantRejectModal({
           onClose={() => setModalUndoRejectOpened(false)}
           title={(
             <Text>
-              {multipleParticipantsSelected ? `Undo Reject Participants (${selectedParticipants.length})` : 'Participant Rejected'}
+              {selectedParticipants.length > 0 ? `Undo Reject Participants (${selectedParticipants.length})` : 'Participant Rejected'}
             </Text>
           )}
         >
@@ -162,11 +157,11 @@ export function useParticipantRejectModal({
             color="orange"
             mb="md"
           >
-            {multipleParticipantsSelected
+            {selectedParticipants.length > 0
               ? 'When you undo participant rejections, you may end up with unbalanced latin squares. This is because the rejected sequence may have been reassigned.'
               : 'When you undo participant rejections, their sequence assignments will be marked as available again.'}
           </Alert>
-          {multipleParticipantsSelected ? (
+          {selectedParticipants.length > 0 ? (
             <Text>Are you sure you want to undo the rejection of these participants?</Text>
           ) : (
             <>
@@ -185,7 +180,7 @@ export function useParticipantRejectModal({
               Cancel
             </Button>
             <Button color="blue" onClick={handleUndoRejectParticipant}>
-              {multipleParticipantsSelected ? 'Undo Reject Participants' : 'Undo Reject Participant'}
+              {selectedParticipants.length > 0 ? 'Undo Reject Participants' : 'Undo Reject Participant'}
             </Button>
           </Flex>
         </Modal>
