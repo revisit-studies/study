@@ -17,11 +17,11 @@ import {
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { participantName } from '../../../utils/participantName';
 import { AllTasksTimeline } from '../replay/AllTasksTimeline';
-import { checkAnswerCorrect } from '../../../store/hooks/useNextStep';
 import { humanReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
+import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 
 function formatDate(date: Date): string | JSX.Element {
   if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
@@ -121,7 +121,7 @@ export function TableView({
       header: 'Start Time',
     },
     {
-      accessorFn: (row: ParticipantData) => Object.values(row.answers).filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0).map((answer) => checkAnswerCorrect(answer.answer, answer.correctAnswer)),
+      accessorFn: (row: ParticipantData) => Object.values(row.answers).filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0).map((answer) => componentAnswersAreCorrect(answer.answer, answer.correctAnswer)),
       header: 'Correct Answers',
       Cell: ({ cell }: {cell: MrtCell<ParticipantData, boolean[]>}) => (
         <>
