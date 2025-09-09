@@ -2,45 +2,50 @@ import {
   Modal, Text, TextInput, Flex, Button, Alert,
 } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
-import { useState, useCallback, useMemo } from 'react';
+import {
+  useState, useCallback, useMemo, useEffect,
+} from 'react';
 import { useSearchParams, useParams } from 'react-router';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { useAsync } from '../../store/hooks/useAsync';
-import { StorageEngine } from '../../storage/engines/types';
 import { ParticipantData } from '../../storage/types';
 
-function getCurrentParticipantData(storageEngine: StorageEngine | undefined, participantId: string | undefined, studyId: string | undefined): Promise<ParticipantData | null> | null {
-  if (storageEngine && participantId && studyId) {
-    return storageEngine.getParticipantData(participantId);
-  }
-  return null;
-}
-
-interface UseParticipantRejectModalOptions {
-  selectedParticipants?: ParticipantData[];
-  onRefresh?: () => Promise<void>;
-  onSelectionChange?: (selection: Record<string, boolean>) => void;
-}
-
-export function useParticipantRejectModal(options: UseParticipantRejectModalOptions = {}) {
-  const [searchParams] = useSearchParams();
-  const { studyId } = useParams();
+export function useParticipantRejectModal({
+  selectedParticipants = [],
+}: {
+  selectedParticipants: ParticipantData[];
+}) {
   const { storageEngine } = useStorageEngine();
-
+  const { studyId } = useParams();
+  const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
-  const { value: currentParticipantData, execute: refreshCurrentParticipantData } = useAsync(getCurrentParticipantData, [storageEngine, participantId, studyId]);
+  const [currentParticipantData, setCurrentParticipantData] = useState<ParticipantData | null>(null);
 
-  const [modalRejectOpened, setModalRejectOpened] = useState<boolean>(false);
-  const [modalUndoRejectOpened, setModalUndoRejectOpened] = useState<boolean>(false);
+  useEffect(() => {
+    if (storageEngine && participantId && studyId) {
+      storageEngine.getParticipantData(participantId).then(setCurrentParticipantData);
+    } else {
+      setCurrentParticipantData(null);
+    }
+  }, [storageEngine, participantId, studyId]);
+
+  const refreshCurrentParticipantData = useCallback(async () => {
+    if (storageEngine && participantId && studyId) {
+      const data = await storageEngine.getParticipantData(participantId);
+      setCurrentParticipantData(data);
+    }
+  }, [storageEngine, participantId, studyId]);
+
+  const [modalRejectOpened, setModalRejectOpened] = useState(false);
+  const [modalUndoRejectOpened, setModalUndoRejectOpened] = useState(false);
   const [rejectMessage, setRejectMessage] = useState<string>('');
 
-  const isBulkMode = Boolean(options.selectedParticipants && options.selectedParticipants.length > 0);
-  const selectedParticipants = useMemo(
-    () => options.selectedParticipants || (currentParticipantData ? [currentParticipantData] : []),
-    [options.selectedParticipants, currentParticipantData],
+  const multipleParticipantsSelected = selectedParticipants && selectedParticipants.length > 0;
+  const participantsToUse = useMemo(
+    () => selectedParticipants || (currentParticipantData ? [currentParticipantData] : []),
+    [selectedParticipants, currentParticipantData],
   );
-  const rejectedParticipantsCount = useMemo(() => selectedParticipants.filter((p) => p.rejected).length, [selectedParticipants]);
-  const nonRejectedParticipantsCount = useMemo(() => selectedParticipants.filter((p) => !p.rejected).length, [selectedParticipants]);
+  const rejectedParticipantsCount = useMemo(() => participantsToUse.filter((p) => p.rejected).length, [participantsToUse]);
+  const nonRejectedParticipantsCount = useMemo(() => participantsToUse.filter((p) => !p.rejected).length, [participantsToUse]);
 
   const rejectParticipant = useCallback(async (rejectParticipantId: string, reason: string) => {
     if (storageEngine && studyId) {
@@ -58,33 +63,29 @@ export function useParticipantRejectModal(options: UseParticipantRejectModalOpti
   const handleRejectParticipant = useCallback(async () => {
     setModalRejectOpened(false);
 
-    if (isBulkMode) {
-      const participantsToReject = selectedParticipants.filter((p) => !p.rejected);
+    if (multipleParticipantsSelected) {
+      const participantsToReject = participantsToUse.filter((p) => !p.rejected);
       const promises = participantsToReject.map(async (p) => await rejectParticipant(p.participantId, rejectMessage));
       await Promise.all(promises);
-      if (options.onSelectionChange) options.onSelectionChange({});
-      if (options.onRefresh) await options.onRefresh();
     } else {
       await rejectParticipant(participantId || '', rejectMessage);
-      refreshCurrentParticipantData(storageEngine, participantId, studyId);
+      await refreshCurrentParticipantData();
     }
 
     setRejectMessage('');
-  }, [isBulkMode, selectedParticipants, rejectParticipant, rejectMessage, options, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
+  }, [multipleParticipantsSelected, participantsToUse, selectedParticipants, rejectParticipant, rejectMessage, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
 
   const handleUndoRejectParticipant = useCallback(async () => {
     setModalUndoRejectOpened(false);
 
-    if (isBulkMode) {
-      const promises = selectedParticipants.map(async (p) => await undoRejectParticipant(p.participantId));
+    if (multipleParticipantsSelected) {
+      const promises = participantsToUse.map(async (p) => await undoRejectParticipant(p.participantId));
       await Promise.all(promises);
-      if (options.onSelectionChange) options.onSelectionChange({});
-      if (options.onRefresh) await options.onRefresh();
     } else {
       await undoRejectParticipant(participantId || '');
-      refreshCurrentParticipantData(storageEngine, participantId, studyId);
+      await refreshCurrentParticipantData();
     }
-  }, [isBulkMode, selectedParticipants, undoRejectParticipant, options, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
+  }, [multipleParticipantsSelected, participantsToUse, selectedParticipants, undoRejectParticipant, participantId, refreshCurrentParticipantData, storageEngine, studyId]);
 
   return {
     modalRejectOpened,
@@ -92,14 +93,14 @@ export function useParticipantRejectModal(options: UseParticipantRejectModalOpti
     setModalRejectOpened,
     setModalUndoRejectOpened,
     currentParticipantData,
-    modals: (
+    participantRejectModals: (
       <>
         <Modal
           opened={modalRejectOpened}
           onClose={() => setModalRejectOpened(false)}
           title={(
             <Text>
-              {isBulkMode ? `Reject Participants (${nonRejectedParticipantsCount})` : 'Reject Participant'}
+              {multipleParticipantsSelected ? `Reject Participants (${nonRejectedParticipantsCount})` : 'Reject Participant'}
             </Text>
           )}
         >
@@ -109,7 +110,7 @@ export function useParticipantRejectModal(options: UseParticipantRejectModalOpti
             color="orange"
             mb="md"
           >
-            {isBulkMode && rejectedParticipantsCount > 0 && (
+            {multipleParticipantsSelected && rejectedParticipantsCount > 0 && (
               <>
                 {rejectedParticipantsCount}
                 {' '}
@@ -141,7 +142,7 @@ export function useParticipantRejectModal(options: UseParticipantRejectModalOpti
               Cancel
             </Button>
             <Button color="red" onClick={handleRejectParticipant}>
-              {isBulkMode ? 'Reject Participants' : 'Reject Participant'}
+              {multipleParticipantsSelected ? 'Reject Participants' : 'Reject Participant'}
             </Button>
           </Flex>
         </Modal>
@@ -151,7 +152,7 @@ export function useParticipantRejectModal(options: UseParticipantRejectModalOpti
           onClose={() => setModalUndoRejectOpened(false)}
           title={(
             <Text>
-              {isBulkMode ? `Undo Reject Participants (${selectedParticipants.length})` : 'Participant Rejected'}
+              {multipleParticipantsSelected ? `Undo Reject Participants (${selectedParticipants.length})` : 'Participant Rejected'}
             </Text>
           )}
         >
@@ -161,11 +162,11 @@ export function useParticipantRejectModal(options: UseParticipantRejectModalOpti
             color="orange"
             mb="md"
           >
-            {isBulkMode
+            {multipleParticipantsSelected
               ? 'When you undo participant rejections, you may end up with unbalanced latin squares. This is because the rejected sequence may have been reassigned.'
               : 'When you undo participant rejections, their sequence assignments will be marked as available again.'}
           </Alert>
-          {isBulkMode ? (
+          {multipleParticipantsSelected ? (
             <Text>Are you sure you want to undo the rejection of these participants?</Text>
           ) : (
             <>
@@ -184,7 +185,7 @@ export function useParticipantRejectModal(options: UseParticipantRejectModalOpti
               Cancel
             </Button>
             <Button color="blue" onClick={handleUndoRejectParticipant}>
-              {isBulkMode ? 'Undo Reject Participants' : 'Undo Reject Participant'}
+              {multipleParticipantsSelected ? 'Undo Reject Participants' : 'Undo Reject Participant'}
             </Button>
           </Flex>
         </Modal>

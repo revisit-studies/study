@@ -6,8 +6,8 @@ import {
   RingProgress,
   Stack,
 } from '@mantine/core';
-import React, {
-  useCallback, useMemo, useState,
+import {
+  useCallback, useMemo, useState, useEffect,
 } from 'react';
 import { useParams } from 'react-router';
 import {
@@ -52,6 +52,7 @@ export function TableView({
   const { studyId } = useParams();
   const { user } = useAuth();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
+  const [refreshed, setRefreshed] = useState(false);
 
   const selectedParticipants = useMemo(() => Object.keys(checked).filter((v) => checked[v])
     .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
@@ -64,19 +65,33 @@ export function TableView({
   const {
     setModalRejectOpened,
     setModalUndoRejectOpened,
-    modals,
+    modalRejectOpened,
+    modalUndoRejectOpened,
+    participantRejectModals,
   } = useParticipantRejectModal({
     selectedParticipants,
-    onRefresh: handleRefresh,
-    onSelectionChange: setChecked,
   });
+
+  useEffect(() => {
+    if (modalRejectOpened || modalUndoRejectOpened) {
+      setRefreshed(true);
+    }
+  }, [modalRejectOpened, modalUndoRejectOpened]);
+
+  useEffect(() => {
+    if (refreshed && !modalRejectOpened && !modalUndoRejectOpened) {
+      setChecked({});
+      handleRefresh();
+      setRefreshed(false);
+    }
+  }, [modalRejectOpened, modalUndoRejectOpened, refreshed, handleRefresh]);
 
   const selectedData = useMemo(() => (selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants), [selectedParticipants, visibleParticipants]);
 
-  const areSelectedParticipantsRejected = useMemo(() => selectedParticipants.length > 0 && selectedParticipants.every((p) => p.rejected), [selectedParticipants]);
+  const checkRejectedParticipants = useMemo(() => selectedParticipants.length > 0 && selectedParticipants.every((p) => p.rejected), [selectedParticipants]);
 
-  const nonRejectedParticipantsCount = useMemo(() => selectedParticipants.filter((p) => !p.rejected).length, [selectedParticipants]);
-  const hasNonRejectedSelected = useMemo(() => selectedParticipants.some((p) => !p.rejected), [selectedParticipants]);
+  const checkNotRejectedParticipantsCount = useMemo(() => selectedParticipants.filter((p) => !p.rejected).length, [selectedParticipants]);
+  const checkNotRejectedParticipants = useMemo(() => selectedParticipants.some((p) => !p.rejected), [selectedParticipants]);
 
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => [
     {
@@ -210,7 +225,7 @@ export function TableView({
       <>
         <Flex justify="space-between" mb={8} p={8}>
           <Group>
-            {areSelectedParticipantsRejected && (
+            {checkRejectedParticipants && (
               <Tooltip label="Only admins can undo rejection" disabled={user.isAdmin}>
                 <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalUndoRejectOpened(true)} color="blue">
                   Undo Reject Participants (
@@ -219,11 +234,11 @@ export function TableView({
                 </Button>
               </Tooltip>
             )}
-            {hasNonRejectedSelected && (
+            {checkNotRejectedParticipants && (
               <Tooltip label="Only admins can reject participants" disabled={user.isAdmin}>
-                <Button disabled={nonRejectedParticipantsCount === 0 || !user.isAdmin} onClick={() => setModalRejectOpened(true)} color="red">
+                <Button disabled={checkNotRejectedParticipantsCount === 0 || !user.isAdmin} onClick={() => setModalRejectOpened(true)} color="red">
                   Reject Participants (
-                  {nonRejectedParticipantsCount}
+                  {checkNotRejectedParticipantsCount}
                   )
                 </Button>
               </Tooltip>
@@ -234,7 +249,7 @@ export function TableView({
             />
           </Group>
         </Flex>
-        {modals}
+        {participantRejectModals}
       </>
     ),
   });
