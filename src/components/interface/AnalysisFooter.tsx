@@ -1,6 +1,5 @@
 import {
-  ActionIcon,
-  AppShell, Box, Button, Group, Select, Text, Flex, Tooltip,
+  ActionIcon, AppShell, Box, Button, Group, Select, Text, Flex,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMemo, useState } from 'react';
@@ -19,8 +18,7 @@ import {
 import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { useAuth } from '../../store/hooks/useAuth';
-import { useParticipantRejectModal } from '../../analysis/individualStudy/ParticipantRejectModal';
+import { ParticipantRejectModal } from '../../analysis/individualStudy/ParticipantRejectModal';
 
 function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -47,16 +45,8 @@ export function AnalysisFooter() {
   const answers = useStoreSelector((state) => state.answers);
 
   const { storageEngine } = useStorageEngine();
-  const { user } = useAuth();
 
   const { value: allParticipants } = useAsync(getAllParticipantsNames, [storageEngine]);
-
-  const {
-    setModalRejectOpened,
-    setModalUndoRejectOpened,
-    currentParticipantData,
-    ParticipantRejectModal,
-  } = useParticipantRejectModal({ selectedParticipants: [] });
 
   const [nextParticipantNameAndIndex, prevParticipantNameAndIndex]: [[string, number], [string, number]] = useMemo(() => {
     if (allParticipants && participantId && currentComponent) {
@@ -147,7 +137,7 @@ export function AnalysisFooter() {
             </Button>
           </Group>
           <Group>
-            <Tooltip label={currentParticipantData?.rejected ? 'Admin can undo rejection' : 'Admin can reject participants'} disabled={user.isAdmin}>
+            {/* <Tooltip label={currentParticipantData?.rejected ? 'Admin can undo rejection' : 'Admin can reject participants'} disabled={user.isAdmin}>
               <Button
                 color={currentParticipantData?.rejected ? 'blue' : 'red'}
                 disabled={!user.isAdmin || !participantId}
@@ -161,11 +151,11 @@ export function AnalysisFooter() {
               >
                 {currentParticipantData?.rejected ? 'Undo Reject Participant' : 'Reject Participant'}
               </Button>
-            </Tooltip>
+            </Tooltip> */}
+            <ParticipantRejectModal selectedParticipants={[]} />
           </Group>
         </Flex>
       </Box>
-      {ParticipantRejectModal}
     </AppShell.Footer>
   );
 }

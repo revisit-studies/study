@@ -1,13 +1,9 @@
 /* eslint-disable react/no-unstable-nested-components */
 import {
-  Text, Flex, Button, Group, Space,
-  Tooltip,
-  Badge,
-  RingProgress,
-  Stack,
+  Text, Flex, Group, Space, Tooltip, Badge, RingProgress, Stack,
 } from '@mantine/core';
 import {
-  useCallback, useMemo, useState, useEffect,
+  useCallback, useMemo, useState,
 } from 'react';
 import { useParams } from 'react-router';
 import {
@@ -20,8 +16,7 @@ import {
 import {
   ParticipantData, StoredAnswer, StudyConfig,
 } from '../../../parser/types';
-import { useAuth } from '../../../store/hooks/useAuth';
-import { useParticipantRejectModal } from '../ParticipantRejectModal';
+import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { participantName } from '../../../utils/participantName';
 import { AllTasksTimeline } from '../replay/AllTasksTimeline';
 import { checkAnswerCorrect } from '../../../store/hooks/useNextStep';
@@ -50,9 +45,7 @@ export function TableView({
   width: number;
 }) {
   const { studyId } = useParams();
-  const { user } = useAuth();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
-  const [refreshed, setRefreshed] = useState(false);
 
   const selectedParticipants = useMemo(() => Object.keys(checked).filter((v) => checked[v])
     .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
@@ -62,36 +55,7 @@ export function TableView({
     await refresh();
   }, [refresh]);
 
-  const {
-    setModalRejectOpened,
-    setModalUndoRejectOpened,
-    modalRejectOpened,
-    modalUndoRejectOpened,
-    ParticipantRejectModal,
-  } = useParticipantRejectModal({
-    selectedParticipants,
-  });
-
-  useEffect(() => {
-    if (modalRejectOpened || modalUndoRejectOpened) {
-      setRefreshed(true);
-    }
-  }, [modalRejectOpened, modalUndoRejectOpened]);
-
-  useEffect(() => {
-    if (refreshed && !modalRejectOpened && !modalUndoRejectOpened) {
-      setChecked({});
-      handleRefresh();
-      setRefreshed(false);
-    }
-  }, [modalRejectOpened, modalUndoRejectOpened, refreshed, handleRefresh]);
-
   const selectedData = useMemo(() => (selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants), [selectedParticipants, visibleParticipants]);
-
-  const checkRejectedParticipants = useMemo(() => selectedParticipants.length > 0 && selectedParticipants.every((p) => p.rejected), [selectedParticipants]);
-
-  const checkNotRejectedParticipantsCount = useMemo(() => selectedParticipants.filter((p) => !p.rejected).length, [selectedParticipants]);
-  const checkNotRejectedParticipants = useMemo(() => selectedParticipants.some((p) => !p.rejected), [selectedParticipants]);
 
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => [
     {
@@ -222,35 +186,15 @@ export function TableView({
     enableDensityToggle: false,
     positionToolbarAlertBanner: 'none',
     renderTopToolbarCustomActions: () => (
-      <>
-        <Flex justify="space-between" mb={8} p={8}>
-          <Group>
-            {checkRejectedParticipants && (
-              <Tooltip label="Only admins can undo rejection" disabled={user.isAdmin}>
-                <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalUndoRejectOpened(true)} color="blue">
-                  Undo Reject Participants (
-                  {Object.keys(checked).length}
-                  )
-                </Button>
-              </Tooltip>
-            )}
-            {checkNotRejectedParticipants && (
-              <Tooltip label="Only admins can reject participants" disabled={user.isAdmin}>
-                <Button disabled={checkNotRejectedParticipantsCount === 0 || !user.isAdmin} onClick={() => setModalRejectOpened(true)} color="red">
-                  Reject Participants (
-                  {checkNotRejectedParticipantsCount}
-                  )
-                </Button>
-              </Tooltip>
-            )}
-            <DownloadButtons
-              visibleParticipants={selectedData}
-              studyId={studyId || ''}
-            />
-          </Group>
-        </Flex>
-        {ParticipantRejectModal}
-      </>
+      <Flex justify="space-between" mb={8} p={8}>
+        <Group>
+          <DownloadButtons
+            visibleParticipants={selectedData}
+            studyId={studyId || ''}
+          />
+          <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
+        </Group>
+      </Flex>
     ),
   });
 
