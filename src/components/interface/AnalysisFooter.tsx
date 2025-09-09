@@ -19,6 +19,7 @@ import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { handleTaskAudio } from '../../utils/handleDownloadAudio';
+import { ParticipantRejectModal } from '../../analysis/individualStudy/ParticipantRejectModal';
 
 function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -169,6 +170,7 @@ export function AnalysisFooter() {
               </ActionIcon>
             </Tooltip>
             )}
+            <ParticipantRejectModal selectedParticipants={[]} />
           </Group>
         </Flex>
       </Box>

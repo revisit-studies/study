@@ -154,6 +154,9 @@ export abstract class StorageEngine {
   // Rejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments.
   protected abstract _rejectParticipantRealtime(participantId: string): Promise<void>;
 
+  // Unrejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments.
+  protected abstract _undoRejectParticipantRealtime(participantId: string): Promise<void>;
+
   // Helper function to claim a sequence assignment of the given participant in the realtime database.
   protected abstract _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment): Promise<void>;
 
@@ -559,6 +562,43 @@ export abstract class StorageEngine {
     }
 
     return await this.rejectParticipant(this.currentParticipantId, reason);
+  }
+
+  // Un-rejects a participant with the given participantId.
+  async undoRejectParticipant(participantId: string, studyId?: string) {
+    const participant = await this._getFromStorage(
+      `participants/${participantId}`,
+      'participantData',
+      studyId,
+    );
+
+    try {
+      // If the user doesn't exist, return
+      if (!participant || !isParticipantData(participant)) {
+        return;
+      }
+
+      // set reject flag to false
+      participant.rejected = false;
+
+      await this._pushToStorage(
+        `participants/${participantId}`,
+        'participantData',
+        participant,
+      );
+      await this._undoRejectParticipantRealtime(participantId);
+    } catch (error) {
+      console.warn('Error undoing participant rejection:', error);
+    }
+  }
+
+  // Un-rejects the current participant.
+  async undoRejectCurrentParticipant() {
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
+    return await this.undoRejectParticipant(this.currentParticipantId);
   }
 
   // Gets all participant IDs for the current studyId or a provided studyId.
