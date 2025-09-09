@@ -7,6 +7,7 @@ import {
   useSensor,
   useSensors,
   useDroppable,
+  DragOverlay,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -28,17 +29,19 @@ import { useListState } from '@mantine/hooks';
 import { useMemo, useState, useEffect } from 'react';
 import { RankingResponse, StringOption } from '../../parser/types';
 
-function SortableItem({ item }: {
+function SortableItem({ item, disabled }: {
   item: {
     id: string;
     label: string;
     originalIndex: number;
   };
+  disabled?: boolean;
 }) {
   const {
     attributes, listeners, setNodeRef, transform, transition,
   } = useSortable({
     id: item.id,
+    disabled,
   });
 
   const style: React.CSSProperties = {
@@ -51,13 +54,13 @@ function SortableItem({ item }: {
       ref={setNodeRef}
       style={{
         ...style,
-        cursor: 'grab',
+        cursor: disabled ? 'default' : 'grab',
       }}
       p="sm"
       withBorder
       shadow="sm"
       {...attributes}
-      {...listeners}
+      {...(disabled ? {} : listeners)}
     >
       <Text>{item.label}</Text>
     </Paper>
@@ -275,39 +278,50 @@ function RankingCategoricalComponent({
   }, [items, answer]);
 
   const [state, setState] = useState(initialState);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   useEffect(() => {
     setState(initialState);
   }, [initialState]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
     useSensor(KeyboardSensor),
   );
 
+  const handleDragStart = (event: DragEndEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+
     if (disabled) return;
 
     const { active, over } = event;
     if (!over) return;
 
-    const activeId = active.id as string;
+    const draggedItemId = active.id as string;
     const targetCategory = over.id as string;
 
     let sourceCategory = '';
-    if (state.unassigned.find((item) => item.id === activeId)) sourceCategory = 'unassigned';
-    if (state.HIGH.find((item) => item.id === activeId)) sourceCategory = 'HIGH';
-    if (state.MEDIUM.find((item) => item.id === activeId)) sourceCategory = 'MEDIUM';
-    if (state.LOW.find((item) => item.id === activeId)) sourceCategory = 'LOW';
+    if (state.unassigned.find((item) => item.id === draggedItemId)) sourceCategory = 'unassigned';
+    if (state.HIGH.find((item) => item.id === draggedItemId)) sourceCategory = 'HIGH';
+    if (state.MEDIUM.find((item) => item.id === draggedItemId)) sourceCategory = 'MEDIUM';
+    if (state.LOW.find((item) => item.id === draggedItemId)) sourceCategory = 'LOW';
 
     if (sourceCategory && targetCategory && sourceCategory !== targetCategory) {
       if (['unassigned', 'HIGH', 'MEDIUM', 'LOW'].includes(targetCategory)) {
         setState((prev) => {
           const newState = { ...prev };
-          const activeItem = newState[sourceCategory as keyof typeof newState].find((item) => item.id === activeId);
+          const activeItem = newState[sourceCategory as keyof typeof newState].find((item) => item.id === draggedItemId);
 
           if (activeItem) {
-            newState[sourceCategory as keyof typeof newState] = newState[sourceCategory as keyof typeof newState].filter((item) => item.id !== activeId);
+            newState[sourceCategory as keyof typeof newState] = newState[sourceCategory as keyof typeof newState].filter((item) => item.id !== draggedItemId);
             newState[targetCategory as keyof typeof newState] = [...newState[targetCategory as keyof typeof newState], activeItem];
           }
 
@@ -347,13 +361,29 @@ function RankingCategoricalComponent({
           {secondaryText}
         </Text>
       )}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
         <Stack gap="sm" w="60%" mx="auto">
           <DroppableZone id="HIGH" title="HIGH">
             <SortableContext items={state.HIGH.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-              <Stack gap="xs" w="50%" mx="auto">
+              <Stack
+                gap="xs"
+                w="50%"
+                mx="auto"
+                miw={200}
+                mih={80}
+                justify="flex-start"
+                style={{
+                  transition: 'all 200ms ease',
+                  minHeight: '80px',
+                }}
+              >
                 {state.HIGH.map((item) => (
-                  <SortableItem key={item.id} item={item} />
+                  <SortableItem key={item.id} item={item} disabled={disabled} />
                 ))}
               </Stack>
             </SortableContext>
@@ -361,9 +391,20 @@ function RankingCategoricalComponent({
 
           <DroppableZone id="MEDIUM" title="MEDIUM">
             <SortableContext items={state.MEDIUM.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-              <Stack gap="xs" w="50%" mx="auto">
+              <Stack
+                gap="xs"
+                w="50%"
+                mx="auto"
+                miw={200}
+                mih={80}
+                justify="flex-start"
+                style={{
+                  transition: 'all 200ms ease',
+                  minHeight: '80px',
+                }}
+              >
                 {state.MEDIUM.map((item) => (
-                  <SortableItem key={item.id} item={item} />
+                  <SortableItem key={item.id} item={item} disabled={disabled} />
                 ))}
               </Stack>
             </SortableContext>
@@ -371,9 +412,20 @@ function RankingCategoricalComponent({
 
           <DroppableZone id="LOW" title="LOW">
             <SortableContext items={state.LOW.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-              <Stack gap="xs" w="50%" mx="auto">
+              <Stack
+                gap="xs"
+                w="50%"
+                mx="auto"
+                miw={200}
+                mih={80}
+                justify="flex-start"
+                style={{
+                  transition: 'all 200ms ease',
+                  minHeight: '80px',
+                }}
+              >
                 {state.LOW.map((item) => (
-                  <SortableItem key={item.id} item={item} />
+                  <SortableItem key={item.id} item={item} disabled={disabled} />
                 ))}
               </Stack>
             </SortableContext>
@@ -381,14 +433,43 @@ function RankingCategoricalComponent({
 
           <DroppableZone id="unassigned" title="Unassigned Items">
             <SortableContext items={state.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-              <Stack gap="xs" w="50%" mx="auto">
+              <Stack
+                gap="xs"
+                w="50%"
+                mx="auto"
+                miw={200}
+                mih={80}
+                justify="flex-start"
+                style={{
+                  transition: 'all 200ms ease',
+                  minHeight: '80px',
+                }}
+              >
                 {state.unassigned.map((item) => (
-                  <SortableItem key={item.id} item={item} />
+                  <SortableItem key={item.id} item={item} disabled={disabled} />
                 ))}
               </Stack>
             </SortableContext>
           </DroppableZone>
         </Stack>
+
+        <DragOverlay>
+          {activeId ? (
+            <Paper
+              p="sm"
+              withBorder
+              shadow="lg"
+              style={{
+                cursor: 'grabbing',
+                opacity: 0.9,
+              }}
+            >
+              <Text>
+                {items.find((item) => item.id === activeId)?.label}
+              </Text>
+            </Paper>
+          ) : null}
+        </DragOverlay>
       </DndContext>
     </Box>
   );
