@@ -157,6 +157,9 @@ export abstract class StorageEngine {
   // Rejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments.
   protected abstract _rejectParticipantRealtime(participantId: string): Promise<void>;
 
+  // Unrejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments.
+  protected abstract _undoRejectParticipantRealtime(participantId: string): Promise<void>;
+
   // Helper function to claim a sequence assignment of the given participant in the realtime database.
   protected abstract _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment): Promise<void>;
 
@@ -178,6 +181,9 @@ export abstract class StorageEngine {
 
   // Gets the screen recording URL for the given task and participantId. This method is used to fetch the screen recording video file from the storage engine.
   protected abstract _getScreenRecordingUrl(task: string, participantId?: string): Promise<string | null>;
+
+  // Gets the transcript URL for the given task and participantId. (Optional - not all storage engines need to implement this, only if they generate transcripts).
+  protected _getTranscriptUrl?(task: string, participantId?: string): Promise<string | null>;
 
   // Resets the entire study database for testing purposes. This is used to reset the study database to a clean state for testing.
   protected abstract _testingReset(studyId: string): Promise<void>;
@@ -564,6 +570,43 @@ export abstract class StorageEngine {
     return await this.rejectParticipant(this.currentParticipantId, reason);
   }
 
+  // Un-rejects a participant with the given participantId.
+  async undoRejectParticipant(participantId: string, studyId?: string) {
+    const participant = await this._getFromStorage(
+      `participants/${participantId}`,
+      'participantData',
+      studyId,
+    );
+
+    try {
+      // If the user doesn't exist, return
+      if (!participant || !isParticipantData(participant)) {
+        return;
+      }
+
+      // set reject flag to false
+      participant.rejected = false;
+
+      await this._pushToStorage(
+        `participants/${participantId}`,
+        'participantData',
+        participant,
+      );
+      await this._undoRejectParticipantRealtime(participantId);
+    } catch (error) {
+      console.warn('Error undoing participant rejection:', error);
+    }
+  }
+
+  // Un-rejects the current participant.
+  async undoRejectCurrentParticipant() {
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
+    return await this.undoRejectParticipant(this.currentParticipantId);
+  }
+
   // Gets all participant IDs for the current studyId or a provided studyId.
   async getAllParticipantsData(studyId: string) {
     const participantIds = await this.getAllParticipantIds(studyId);
@@ -715,6 +758,34 @@ export abstract class StorageEngine {
     });
 
     return allAudioList;
+  }
+
+  // Gets the audio download URL
+  async getAudioUrl(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getAudioUrl(task, participantId);
+    if (!url) {
+      return null;
+    }
+    return url;
+  }
+
+  // Gets the transcript download URL (currently only supported by Firebase)
+  async getTranscriptUrl(
+    task: string,
+    participantId: string,
+  ) {
+    if (!this._getTranscriptUrl) {
+      return null;
+    }
+
+    const url = await this._getTranscriptUrl(task, participantId);
+    if (!url) {
+      return null;
+    }
+    return url;
   }
 
   // Saves the audio stream to the storage engine. This method is used to save the audio data from a MediaRecorder stream.

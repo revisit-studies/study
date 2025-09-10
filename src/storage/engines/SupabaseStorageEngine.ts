@@ -244,6 +244,36 @@ export class SupabaseStorageEngine extends StorageEngine {
       .eq('docId', `sequenceAssignment_${claimedData.data.participantId}`);
   }
 
+  protected async _undoRejectParticipantRealtime(participantId: string) {
+    await this.verifyStudyDatabase();
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentPath = `sequenceAssignment_${participantId}`;
+    // Get the sequence assignment for the participant
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', sequenceAssignmentPath)
+      .single();
+
+    if (error || !data) {
+      throw new Error('Failed to retrieve sequence assignment for current participant');
+    }
+
+    // Update the sequence assignment for the participant to mark it as un-rejected
+    await this.supabase
+      .from('revisit')
+      .update({ data: { ...data.data, rejected: false } })
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', sequenceAssignmentPath);
+  }
+
   protected async _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
     await this.verifyStudyDatabase();
     if (!this.currentParticipantId) {

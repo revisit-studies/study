@@ -128,6 +128,18 @@ export class LocalStorageEngine extends StorageEngine {
     }
   }
 
+  protected async _undoRejectParticipantRealtime(participantId: string) {
+    await this.verifyStudyDatabase();
+    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+
+    const participantSequenceAssignment = sequenceAssignments[participantId];
+    if (participantSequenceAssignment) {
+      participantSequenceAssignment.rejected = false;
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+    }
+  }
+
   protected async _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
     await this.verifyStudyDatabase();
     const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;

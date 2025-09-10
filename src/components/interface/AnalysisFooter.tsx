@@ -1,17 +1,18 @@
 import {
-  ActionIcon,
-  AppShell, Box, Button, Center, Group, Select, Text,
+  ActionIcon, AppShell, Box, Button, Flex, Group, Select, Text, Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { useMemo, useState } from 'react';
 import {
-  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser,
+  useMemo, useState, useEffect, useCallback,
+} from 'react';
+import {
+  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser, IconMusicDown,
 } from '@tabler/icons-react';
 import { useAsync } from '../../store/hooks/useAsync';
 
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StorageEngine } from '../../storage/engines/types';
-import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
+import { useCurrentComponent, useCurrentStep, useCurrentIdentifier } from '../../routes/utils';
 import { encryptIndex, decryptIndex } from '../../utils/encryptDecryptIndex';
 import {
   useStoreActions, useStoreDispatch, useStoreSelector,
@@ -19,6 +20,8 @@ import {
 import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { handleTaskAudio } from '../../utils/handleDownloadAudio';
+import { ParticipantRejectModal } from '../../analysis/individualStudy/ParticipantRejectModal';
 
 function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -65,13 +68,48 @@ export function AnalysisFooter() {
 
   const isStart = useMemo(() => currentStep === 0, [currentStep]);
   const isEnd = useMemo(() => currentStep === flatSequence.length, [currentStep, flatSequence.length]);
+  const identifier = useCurrentIdentifier();
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchAudioUrl() {
+      if (!storageEngine || !participantId || !identifier) {
+        setAudioUrl(null);
+        return;
+      }
+
+      try {
+        const url = await storageEngine.getAudioUrl(identifier, participantId);
+        setAudioUrl(url);
+      } catch {
+        setAudioUrl(null);
+      }
+    }
+
+    fetchAudioUrl();
+  }, [storageEngine, participantId, identifier]);
+
+  const handleDownloadAudio = useCallback(async () => {
+    if (!storageEngine || !participantId || !identifier) {
+      return;
+    }
+
+    await handleTaskAudio({
+      storageEngine,
+      participantId,
+      identifier,
+      audioUrl,
+    });
+  }, [storageEngine, participantId, identifier, audioUrl]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
       <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px' }}>
 
         <AudioProvenanceVis setTimeString={setTimeString} />
-        <Center>
+        <Flex justify="space-between" align="center" px="md">
+          {/* Placeholder box for Show Legend button */}
+          <Box />
           <Group gap="xs" style={{ height: '50px' }}>
             <Text size="sm" ff="monospace">
               {timeString}
@@ -80,7 +118,6 @@ export function AnalysisFooter() {
             <ActionIcon variant="filled" size={30} onClick={() => storeDispatch(setAnalysisIsPlaying(!analysisIsPlaying))}>
               {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
             </ActionIcon>
-
             <Text mx="0">
               Participant:
             </Text>
@@ -135,7 +172,17 @@ export function AnalysisFooter() {
               <IconArrowRight />
             </Button>
           </Group>
-        </Center>
+          <Group>
+            {audioUrl && (
+            <Tooltip label="Download audio">
+              <ActionIcon variant="filled" size={30} onClick={handleDownloadAudio}>
+                <IconMusicDown />
+              </ActionIcon>
+            </Tooltip>
+            )}
+            <ParticipantRejectModal selectedParticipants={[]} />
+          </Group>
+        </Flex>
       </Box>
     </AppShell.Footer>
   );

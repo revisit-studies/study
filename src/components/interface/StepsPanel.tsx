@@ -15,6 +15,7 @@ import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useFlatSequence, useStoreSelector } from '../../store/store';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
 
 export type ComponentBlockWithOrderPath =
   Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] }
@@ -152,11 +153,11 @@ function StepItem({
     : (step.includes('.components.') ? '.components.' : false);
   const cleanedStep = step.includes('$') && coOrComponents && step.includes(coOrComponents) ? step.split(coOrComponents).at(-1) : step;
 
-  const matchingAnswer = parentBlock.order === 'dynamic' ? Object.entries(answers).find(([key, _]) => key === `${parentBlock.id}_${flatSequence.indexOf(parentBlock.id!)}_${cleanedStep}_${startIndex}`) : Object.entries(answers).find(([key, _]) => key === `${cleanedStep}_${startIndex}` || key === `${step}_${startIndex}`);
+  const matchingAnswer = parentBlock.order === 'dynamic' ? Object.entries(answers).find(([key, _]) => key === `${parentBlock.id}_${flatSequence.indexOf(parentBlock.id!)}_${cleanedStep}_${startIndex}`) : Object.entries(answers).find(([key, _]) => key === `${cleanedStep}_${stepIndex}` || key === `${step}_${stepIndex}`);
   const taskAnswer: StoredAnswer | null = matchingAnswer ? matchingAnswer[1] : null;
 
   const correctAnswer = taskAnswer && taskAnswer.correctAnswer.length > 0 && Object.keys(taskAnswer.answer).length > 0 && taskAnswer.correctAnswer;
-  const correct = correctAnswer && taskAnswer && Object.values(correctAnswer).every((value) => taskAnswer.answer[value.id] === value.answer);
+  const correct = correctAnswer && taskAnswer && componentAnswersAreCorrect(taskAnswer.answer, correctAnswer);
 
   const correctIncorrectIcon = taskAnswer && correctAnswer ? (
     correct

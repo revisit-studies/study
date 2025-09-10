@@ -45,6 +45,7 @@
     "eslint-config-airbnb": "^19.0.4",
     "firebase": "^11.2.0",
     "hjson": "^3.2.2",
+    "jszip": "^3.10.1",
     "localforage": "^1.10.0",
     "lodash.debounce": "^4.0.8",
     "lodash.merge": "^4.6.2",
