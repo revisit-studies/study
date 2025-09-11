@@ -578,6 +578,8 @@ export interface CheckboxResponse extends BaseResponse {
 export interface RankingResponse extends BaseResponse {
   type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise';
   options: (StringOption | string)[];
+  /** The number of options to render. Applies only to sublist and categorical ranking widgets. */
+  numItems?: number;
 }
 
 /**
