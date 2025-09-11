@@ -37,9 +37,10 @@ interface ItemProps {
     label: string;
     originalIndex: number;
   };
+  indexLabel?: number;
 }
 
-function SortableItem({ item }: ItemProps) {
+function SortableItem({ item, indexLabel }: ItemProps) {
   const {
     attributes, listeners, setNodeRef, transform, transition,
   } = useSortable({
@@ -62,7 +63,14 @@ function SortableItem({ item }: ItemProps) {
       {...attributes}
       {...listeners}
     >
-      <Text>{item.label}</Text>
+      <Flex align="center" gap="sm">
+        {typeof indexLabel === 'number' && (
+          <Box w={28} ta="center">
+            <Text size="sm" c="dimmed">{indexLabel}</Text>
+          </Box>
+        )}
+        <Text>{item.label}</Text>
+      </Flex>
     </Paper>
   );
 }
@@ -169,10 +177,10 @@ function RankingSublistComponent({
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={state.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             <Stack gap="xs" w="40%" mx="auto">
-              {state.map((item) => (
+              {state.map((item, idx) => (
                 <Flex key={item.id} align="center" gap="sm">
                   <Box style={{ flexGrow: 1 }}>
-                    <SortableItem item={item} />
+                    <SortableItem item={item} indexLabel={idx + 1} />
                   </Box>
                 </Flex>
               ))}
@@ -385,8 +393,8 @@ function RankingCategoricalComponent({
                   minHeight: '80px',
                 }}
               >
-                {state.HIGH.map((item) => (
-                  <SortableItem key={item.id} item={item} />
+                {state.HIGH.map((item, idx) => (
+                  <SortableItem key={item.id} item={item} indexLabel={idx + 1} />
                 ))}
               </Stack>
             </SortableContext>
@@ -406,8 +414,8 @@ function RankingCategoricalComponent({
                   minHeight: '80px',
                 }}
               >
-                {state.MEDIUM.map((item) => (
-                  <SortableItem key={item.id} item={item} />
+                {state.MEDIUM.map((item, idx) => (
+                  <SortableItem key={item.id} item={item} indexLabel={idx + 1} />
                 ))}
               </Stack>
             </SortableContext>
@@ -427,8 +435,8 @@ function RankingCategoricalComponent({
                   minHeight: '80px',
                 }}
               >
-                {state.LOW.map((item) => (
-                  <SortableItem key={item.id} item={item} />
+                {state.LOW.map((item, idx) => (
+                  <SortableItem key={item.id} item={item} indexLabel={idx + 1} />
                 ))}
               </Stack>
             </SortableContext>
