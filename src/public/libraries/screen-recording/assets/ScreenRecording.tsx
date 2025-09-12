@@ -121,7 +121,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
               <strong>Speak</strong>
               {' '}
               into your microphone to check if audio is working.
-              {recordAudio && screenCapturing && <RecordingAudioWaveform height={200} width={400} />}
+              {(recordAudio && screenCapturing) ? <Box h={200} w={400} bd="1px solid #ccc"><RecordingAudioWaveform height={200} width={400} /></Box> : <Box h={200} w={400} bd="1px solid #ccc" />}
             </li>
           </ol>
           <p>
