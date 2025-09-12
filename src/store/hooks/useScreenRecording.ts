@@ -23,6 +23,7 @@ export function useScreenRecording() {
   const [isRejected, setIsRejected] = useState(false);
 
   const screenRecordingStream = useRef<MediaRecorder | null>(null); // combined stream
+  const audioRecordingStream = useRef<MediaStream | null>(null); // audio stream
 
   const currentComponent = useCurrentComponent();
 
@@ -47,6 +48,7 @@ export function useScreenRecording() {
       screenRecordingStream.current.stream.getAudioTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
       screenRecordingStream.current.stop();
       screenRecordingStream.current = null;
+      audioRecordingStream.current = null;
     }
   }, []);
 
@@ -89,6 +91,8 @@ export function useScreenRecording() {
           audio: recordAudio,
           video: false,
         }) : null;
+
+        audioRecordingStream.current = micStream;
 
         const combinedStream = new MediaStream([
           ...screenStream.getVideoTracks(),
@@ -137,6 +141,7 @@ export function useScreenRecording() {
     isScreenRecording,
     isScreenCapturing,
     screenRecordingStream,
+    audioRecordingStream,
     screenWithAudioRecording,
     isRejected,
   };
