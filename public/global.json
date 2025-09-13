@@ -32,7 +32,8 @@
     "test-parser-errors",
     "test-randomization",
     "test-skip-logic",
-    "test-step-logic"
+    "test-step-logic",
+    "new-demo-study"
 
   ],
   "configs": {
@@ -144,6 +145,10 @@
     },
     "test-step-logic": {
       "path": "test-step-logic/config.json",
+      "test": true
+    },
+    "new-demo-study": {
+      "path": "new-demo-study/config.json",
       "test": true
     }
   }
