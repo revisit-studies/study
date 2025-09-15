@@ -9,7 +9,7 @@
         "response": [
           {
             "id": "university-preference-sublist",
-            "prompt": "",
+            "prompt": "Rank the following options.",
             "required": true,
             "location": "belowStimulus",
             "type": "ranking-sublist",
@@ -23,12 +23,32 @@
           }
         ]
       },
+      "sublist-ranking-top-3": {
+        "type": "questionnaire",
+        "response": [
+          {
+            "id": "university-preference-sublist",
+            "prompt": "Rank the following options, selecting the top 3 options.",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "ranking-sublist",
+            "options": [
+              "Ball State University",
+              "University of Rochester",
+              "George Mason University",
+              "University of California - Berkeley",
+              "Washington State University"
+            ],
+            "numItems": 3
+          }
+        ]
+      },
       "categorical-binning": {
         "type": "questionnaire",
         "response": [
           {
             "id": "university-preference-categorical",
-            "prompt": "",
+            "prompt": "Rank the following options.",
             "required": true,
             "location": "belowStimulus",
             "type": "ranking-categorical",
@@ -42,12 +62,32 @@
           }
         ]
       },
+      "categorical-binning-top-2": {
+        "type": "questionnaire",
+        "response": [
+          {
+            "id": "university-preference-categorical",
+            "prompt": "Rank the following options. Select the top 2 options.",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "ranking-categorical",
+            "options": [
+              "Ball State University",
+              "University of Rochester",
+              "George Mason University",
+              "University of California - Berkeley",
+              "Washington State University"
+            ],
+            "numItems": 2
+          }
+        ]
+      },
       "pairwise-comparison": {
         "type": "questionnaire",
         "response": [
           {
             "id": "university-preference-pairwise",
-            "prompt": "",
+            "prompt": "Rank the following options by pairing them up.",
             "required": true,
             "location": "belowStimulus",
             "type": "ranking-pairwise",
@@ -68,7 +108,9 @@
         "order": "fixed",
         "components": [
           "sublist-ranking",
+          "sublist-ranking-top-3",
           "categorical-binning",
+          "categorical-binning-top-2",
           "pairwise-comparison"
         ]
       }
