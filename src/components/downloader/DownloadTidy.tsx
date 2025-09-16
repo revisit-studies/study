@@ -179,6 +179,7 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         visibility: trialAnswer.windowEvents.filter((event) => event[1] === 'visibility').length,
       };
 
+      // Add a window events count row for each component
       rows.push({
         participantId: participant.participantId,
         trialId,
