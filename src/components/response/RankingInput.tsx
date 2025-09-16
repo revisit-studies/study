@@ -78,6 +78,7 @@ function RankingSublistComponent({
   secondaryText,
   answer,
   responseId,
+  numItems,
 }: {
   options: (StringOption | string)[];
   disabled: boolean;
@@ -88,16 +89,21 @@ function RankingSublistComponent({
   secondaryText?: string;
   answer: { value: Record<string, string> };
   responseId: string;
+  numItems?: number;
 }) {
   const { onChange } = (answer as { onChange?: (value: Record<string, string>) => void });
   const { setRankingAnswers } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const _choices: { id: string; label: string }[] = useMemo(
-    () => options.map((option) => ({
-      id: typeof option === 'string' ? option : option.value,
-      label: typeof option === 'string' ? option : option.label,
-    })),
-    [options],
+    () => {
+      const mapped = options.map((option) => ({
+        id: typeof option === 'string' ? option : option.value,
+        label: typeof option === 'string' ? option : option.label,
+      }));
+      if (numItems && numItems > 0) return mapped.slice(0, numItems);
+      return mapped;
+    },
+    [options, numItems],
   );
 
   const initialState = useMemo(() => {
@@ -556,25 +562,36 @@ function RankingPairwiseComponent({
 
           if (activeItem) {
             if (sourceCategory === 'unassigned' && targetCategory !== 'unassigned') {
+              newState.unassigned = newState.unassigned.filter((i) => i.id !== activeItem.id);
               if (targetArr.length > 0) {
-                newState.unassigned = [...newState.unassigned, ...targetArr];
+                const itemsToReturn = targetArr.filter((i) => !newState.unassigned.find((u) => u.id === i.id));
+                newState.unassigned = [...newState.unassigned, ...itemsToReturn];
               }
-              if (!targetArr.find((i) => i.id === activeItem.id)) {
-                newState[targetCategory as keyof typeof newState] = [activeItem];
-              }
+              newState[targetCategory as keyof typeof newState] = [activeItem];
             } else {
               newState[sourceCategory as keyof typeof newState] = sourceArr.filter((item) => item.id !== activeId);
 
               if (targetCategory !== 'unassigned') {
-                const existingItems = targetArr;
-                if (existingItems.length > 0) {
-                  newState.unassigned = [...newState.unassigned, ...existingItems];
+                const itemsToReturn = targetArr.filter((i) => !newState.unassigned.find((u) => u.id === i.id));
+                if (itemsToReturn.length > 0) {
+                  newState.unassigned = [...newState.unassigned, ...itemsToReturn];
                 }
                 newState[targetCategory as keyof typeof newState] = [activeItem];
+              } else if (!newState.unassigned.find((u) => u.id === activeItem.id)) {
+                newState.unassigned = [...targetArr, activeItem];
               } else {
-                newState[targetCategory as keyof typeof newState] = [...targetArr, activeItem];
+                newState.unassigned = [...targetArr];
               }
             }
+          }
+
+          if (Array.isArray(newState.unassigned)) {
+            const seen = new Set<string>();
+            newState.unassigned = newState.unassigned.filter((it) => {
+              if (seen.has(it.id)) return false;
+              seen.add(it.id);
+              return true;
+            });
           }
 
           const answerValue: Record<string, string> = {};
@@ -596,26 +613,31 @@ function RankingPairwiseComponent({
   };
 
   const addNewPair = () => {
-    if (isAddingPair || disabled || addingPairRef.current) return;
+    if (disabled || addingPairRef.current) return;
     addingPairRef.current = true;
-    setIsAddingPair(true);
 
     setState((prev) => {
-      const nextIndex = Object.keys(prev).reduce((max, key) => {
-        const m = key.match(/^pair-(\d+)-(high|low)$/);
-        if (m) {
-          const idx = parseInt(m[1], 10);
-          return Math.max(max, idx + 1);
-        }
-        return max;
-      }, 0);
+      const pairIndices = Object.keys(prev)
+        .map((k) => {
+          const m = k.match(/^pair-(\d+)-(high|low)$/);
+          return m ? parseInt(m[1], 10) : null;
+        })
+        .filter((v): v is number => v !== null);
+      const nextIndex = pairIndices.length > 0 ? Math.max(...pairIndices) + 1 : 0;
 
-      return {
+      const nextState = {
         ...prev,
         [`pair-${nextIndex}-high`]: [],
         [`pair-${nextIndex}-low`]: [],
       };
+
+      return nextState;
     });
+
+    setTimeout(() => {
+      addingPairRef.current = false;
+      setIsAddingPair(false);
+    }, 0);
   };
 
   useEffect(() => {
