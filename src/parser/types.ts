@@ -572,11 +572,13 @@ export interface CheckboxResponse extends BaseResponse {
   "prompt": "Rank the following options",
   "location": "belowStimulus",
   "options": ["Option 1", "Option 2", "Option 3"]
+  "numItems": 2
  }
  ```
 */
 export interface RankingResponse extends BaseResponse {
   type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise';
+  /** The options that are displayed as ranking options, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
   /** The number of options to render. Applies only to sublist and categorical ranking widgets. */
   numItems?: number;

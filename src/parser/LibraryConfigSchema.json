@@ -2006,7 +2006,7 @@
     },
     "RankingResponse": {
       "additionalProperties": false,
-      "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options. There are three types of ranking widgets: sublist, categorical, and pairwise.\n\n```js { \"id\": \"ranking-sublist\", \"type\": \"ranking-sublist\", \"prompt\": \"Rank the following options\", \"location\": \"belowStimulus\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] } ```",
+      "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options. There are three types of ranking widgets: sublist, categorical, and pairwise.\n\n```js { \"id\": \"ranking-sublist\", \"type\": \"ranking-sublist\", \"prompt\": \"Rank the following options\", \"location\": \"belowStimulus\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] \"numItems\": 2 } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -2025,6 +2025,7 @@
           "type": "number"
         },
         "options": {
+          "description": "The options that are displayed as ranking options, provided as an array of objects, with label and value fields.",
           "items": {
             "anyOf": [
               {
