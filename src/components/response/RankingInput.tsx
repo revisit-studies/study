@@ -738,13 +738,15 @@ function RankingPairwiseComponent({
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
 
-        <Button
-          variant="filled"
-          color="orange"
-          onClick={addNewPair}
-        >
-          Add New Pair
-        </Button>
+        <Flex justify="flex-end" w="800px" mx="auto" mb="sm">
+          <Button
+            variant="filled"
+            color="orange"
+            onClick={addNewPair}
+          >
+            Add New Pair
+          </Button>
+        </Flex>
 
         <Stack gap="md" w="800px" mx="auto">
           {getPairs().map((pair) => (
