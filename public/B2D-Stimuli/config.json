@@ -20,7 +20,8 @@
         "withProgressBar": true,
         "autoDownloadStudy": false,
         "sidebar": true,
-        "nextOnEnter": true
+        "nextOnEnter": true,
+        "recordStudyAudio": true
     },
     "components": {
         "B2D-stimuli": {

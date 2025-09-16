@@ -12,6 +12,7 @@
             "WPI"
         ]
   },
+    
     "uiConfig": {
         "contactEmail": "contact@revisit.dev",
         "helpTextPath": "demo-image/assets/help.md",
@@ -19,7 +20,8 @@
         "withProgressBar": true,
         "autoDownloadStudy": false,
         "sidebar": true,
-        "nextOnEnter": true
+        "nextOnEnter": true,
+        "recordStudyAudio": true
     },
     "components": {
         "B1D-stimuli": {
