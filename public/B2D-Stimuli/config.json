@@ -23,7 +23,7 @@
         "nextOnEnter": true
     },
     "components": {
-        "B1D-stimuli": {
+        "B2D-stimuli": {
             "type": "image",
             "description": "test",
             "path": "B2D-Stimuli/assets/b2d.png",
