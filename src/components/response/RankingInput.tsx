@@ -25,7 +25,6 @@ import {
   Stack,
   Text,
 } from '@mantine/core';
-import { useListState } from '@mantine/hooks';
 import {
   useMemo, useState, useEffect, useRef,
 } from 'react';
@@ -68,126 +67,6 @@ function SortableItem({ item, index }: ItemProps) {
   );
 }
 
-function RankingSublistComponent({
-  options,
-  disabled,
-  index: _index,
-  enumerateQuestions,
-  prompt,
-  required: _required,
-  secondaryText,
-  answer,
-  responseId,
-  numItems,
-}: {
-  options: (StringOption | string)[];
-  disabled: boolean;
-  index: number;
-  enumerateQuestions: boolean;
-  prompt?: string;
-  required?: boolean;
-  secondaryText?: string;
-  answer: { value: Record<string, string> };
-  responseId: string;
-  numItems?: number;
-}) {
-  const { onChange } = (answer as { onChange?: (value: Record<string, string>) => void });
-  const { setRankingAnswers } = useStoreActions();
-  const storeDispatch = useStoreDispatch();
-  const _choices: { id: string; label: string }[] = useMemo(
-    () => {
-      const mapped = options.map((option) => ({
-        id: typeof option === 'string' ? option : option.value,
-        label: typeof option === 'string' ? option : option.label,
-      }));
-      if (numItems && numItems > 0) return mapped.slice(0, numItems);
-      return mapped;
-    },
-    [options, numItems],
-  );
-
-  const initialState = useMemo(() => {
-    if (answer?.value && Object.keys(answer.value).length > 0) {
-      const ordered: { id: string; label: string }[] = [];
-      const answerEntries = (Object.entries(answer.value) as [string, string][])
-        .sort((a, b) => parseInt(a[1], 10) - parseInt(b[1], 10));
-      for (const [itemId] of answerEntries) {
-        const found = _choices.find((i) => i.id === itemId);
-        if (found) ordered.push(found);
-      }
-      const remaining = _choices.filter((i) => !Object.keys(answer.value).includes(i.id));
-      return [...ordered, ...remaining];
-    }
-    return _choices;
-  }, [_choices, answer]);
-
-  const [state, handlers] = useListState(initialState);
-
-  useEffect(() => {
-    handlers.setState(initialState);
-  }, [initialState, handlers]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor),
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    if (disabled) return;
-
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = state.findIndex((i) => i.id === active.id);
-    const newIndex = state.findIndex((i) => i.id === over.id);
-
-    const newState = arrayMove(state, oldIndex, newIndex);
-    handlers.setState(newState);
-
-    const answerValue: Record<string, string> = {};
-    newState.forEach((item, idx) => {
-      answerValue[item.id] = idx.toString();
-    });
-    onChange?.(answerValue);
-    storeDispatch(setRankingAnswers({ responseId, values: answerValue }));
-  };
-
-  return (
-    <Box mb="lg" w="60%" mx="auto">
-      {!enumerateQuestions && prompt && (
-        <Text fw={500} mb="sm">
-          {prompt}
-        </Text>
-      )}
-      {secondaryText && (
-        <Text size="sm" c="dimmed" mb="md">
-          {secondaryText}
-        </Text>
-      )}
-
-      <Box ta="center">
-        <Text size="md" fw={500} m="md">
-          HIGH
-        </Text>
-
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={state.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-            <Stack w="400px" mx="auto">
-              {state.map((item, index) => (
-                <SortableItem key={item.id} item={item} index={index + 1} />
-              ))}
-            </Stack>
-          </SortableContext>
-        </DndContext>
-
-        <Text size="md" fw={500} m="md">
-          LOW
-        </Text>
-      </Box>
-    </Box>
-  );
-}
-
 function DroppableZone({
   id,
   children,
@@ -221,16 +100,17 @@ function DroppableZone({
   );
 }
 
-function RankingCategoricalComponent({
+function RankingSublistComponent({
   options,
   disabled,
-  index,
+  index: _index,
   enumerateQuestions,
   prompt,
   required: _required,
   secondaryText,
   answer,
   responseId,
+  numItems,
 }: {
   options: (StringOption | string)[];
   disabled: boolean;
@@ -241,6 +121,165 @@ function RankingCategoricalComponent({
   secondaryText?: string;
   answer: { value: Record<string, string> };
   responseId: string;
+  numItems?: number;
+}) {
+  const { onChange } = (answer as { onChange?: (value: Record<string, string>) => void });
+  const { setRankingAnswers } = useStoreActions();
+  const storeDispatch = useStoreDispatch();
+  const _choices: { id: string; label: string }[] = useMemo(
+    () => options.map((option) => ({
+      id: typeof option === 'string' ? option : option.value,
+      label: typeof option === 'string' ? option : option.label,
+    })),
+    [options],
+  );
+
+  const initialState = useMemo(() => {
+    let selected: { id: string; label: string }[] = [];
+    if (answer?.value && Object.keys(answer.value).length > 0) {
+      const answerEntries = (Object.entries(answer.value) as [string, string][])
+        .sort((a, b) => parseInt(a[1], 10) - parseInt(b[1], 10));
+      for (const [itemId] of answerEntries) {
+        const found = _choices.find((i) => i.id === itemId);
+        if (found) selected.push(found);
+      }
+    }
+    if (typeof numItems === 'number' && numItems > 0 && selected.length > numItems) {
+      selected = selected.slice(0, numItems);
+    }
+    const unassigned = _choices.filter((i) => !selected.find((s) => s.id === i.id));
+    return { selected, unassigned };
+  }, [_choices, answer, numItems]);
+
+  const [state, setState] = useState(initialState);
+
+  useEffect(() => {
+    setState(initialState);
+  }, [initialState]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    if (disabled) return;
+
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const inSelected = state.selected.findIndex((i) => i.id === active.id) !== -1;
+    const inUnassigned = state.unassigned.findIndex((i) => i.id === active.id) !== -1;
+    const overId = over.id as string;
+    const overInSelected = overId === 'sublist-selected' || state.selected.findIndex((i) => i.id === overId) !== -1;
+    const overInUnassigned = overId === 'sublist-unassigned' || state.unassigned.findIndex((i) => i.id === overId) !== -1;
+
+    if (inSelected && overInSelected) {
+      const oldIndex = state.selected.findIndex((i) => i.id === active.id);
+      const newIndex = state.selected.findIndex((i) => i.id === (over.id as string));
+      const newSelected = arrayMove(state.selected, oldIndex, newIndex);
+      setState({ ...state, selected: newSelected });
+      const answerValue: Record<string, string> = {};
+      newSelected.forEach((item, idx) => { answerValue[item.id] = idx.toString(); });
+      onChange?.(answerValue);
+      storeDispatch(setRankingAnswers({ responseId, values: answerValue }));
+      return;
+    }
+
+    if (inUnassigned && (overInSelected || !overInUnassigned)) {
+      if (typeof numItems === 'number' && numItems > 0 && state.selected.length >= numItems) {
+        return;
+      }
+      const moved = state.unassigned.find((i) => i.id === active.id)!;
+      const newUnassigned = state.unassigned.filter((i) => i.id !== active.id);
+      const newSelected = [...state.selected, moved];
+      setState({ selected: newSelected, unassigned: newUnassigned });
+      const answerValue: Record<string, string> = {};
+      newSelected.forEach((item, idx) => { answerValue[item.id] = idx.toString(); });
+      onChange?.(answerValue);
+      storeDispatch(setRankingAnswers({ responseId, values: answerValue }));
+      return;
+    }
+
+    if (inSelected && (overInUnassigned || !overInSelected)) {
+      const moved = state.selected.find((i) => i.id === active.id)!;
+      const newSelected = state.selected.filter((i) => i.id !== active.id);
+      const exists = state.unassigned.find((i) => i.id === moved.id);
+      const newUnassigned = exists ? state.unassigned : [...state.unassigned, moved];
+      setState({ selected: newSelected, unassigned: newUnassigned });
+      const answerValue: Record<string, string> = {};
+      newSelected.forEach((item, idx) => { answerValue[item.id] = idx.toString(); });
+      onChange?.(answerValue);
+      storeDispatch(setRankingAnswers({ responseId, values: answerValue }));
+    }
+  };
+
+  return (
+    <Box mb="lg" w="60%" mx="auto">
+      {!enumerateQuestions && prompt && (
+        <Text fw={500} mb="sm">
+          {prompt}
+        </Text>
+      )}
+      {secondaryText && (
+        <Text size="sm" c="dimmed" mb="md">
+          {secondaryText}
+        </Text>
+      )}
+
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <Box ta="center" mb="md">
+
+          <DroppableZone id="sublist-selected" title="">
+            <Text size="md" fw={500} m="md">HIGH</Text>
+            <SortableContext items={state.selected.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+              <Stack w="400px" mx="auto">
+                {state.selected.map((item, index) => (
+                  <SortableItem key={item.id} item={item} index={index + 1} />
+                ))}
+              </Stack>
+            </SortableContext>
+            <Text size="md" fw={500} m="md">LOW</Text>
+          </DroppableZone>
+
+        </Box>
+
+        <DroppableZone id="sublist-unassigned" title="Available Items">
+          <SortableContext items={state.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+            <Flex gap="xs" wrap="wrap" justify="center" w="400px" mx="auto">
+              {state.unassigned.map((item) => (
+                <SortableItem key={item.id} item={item} />
+              ))}
+            </Flex>
+          </SortableContext>
+        </DroppableZone>
+      </DndContext>
+    </Box>
+  );
+}
+
+function RankingCategoricalComponent({
+  options,
+  disabled,
+  index,
+  enumerateQuestions,
+  prompt,
+  required: _required,
+  secondaryText,
+  answer,
+  responseId,
+  numItems,
+}: {
+  options: (StringOption | string)[];
+  disabled: boolean;
+  index: number;
+  enumerateQuestions: boolean;
+  prompt?: string;
+  required?: boolean;
+  secondaryText?: string;
+  answer: { value: Record<string, string> };
+  responseId: string;
+  numItems?: number;
 }) {
   const { onChange } = (answer as { onChange?: (value: Record<string, string>) => void });
   const { setRankingAnswers } = useStoreActions();
@@ -323,13 +362,16 @@ function RankingCategoricalComponent({
           const activeItem = newState[sourceCategory as keyof typeof newState].find((item) => item.id === draggedItemId);
 
           if (activeItem) {
+            if (targetCategory !== 'unassigned' && typeof numItems === 'number' && numItems > 0 && (newState[targetCategory as keyof typeof newState] as typeof newState.HIGH).length >= numItems) {
+              return prev;
+            }
             newState[sourceCategory as keyof typeof newState] = newState[sourceCategory as keyof typeof newState].filter((item) => item.id !== draggedItemId);
-            newState[targetCategory as keyof typeof newState] = [...newState[targetCategory as keyof typeof newState], activeItem];
+            newState[targetCategory as keyof typeof newState] = [...(newState[targetCategory as keyof typeof newState] as typeof newState.HIGH), activeItem];
           }
 
           const answerValue: Record<string, string> = {};
           ['HIGH', 'MEDIUM', 'LOW'].forEach((category) => {
-            newState[category as keyof typeof newState].forEach((item) => {
+            (newState[category as keyof typeof newState] as typeof newState.HIGH).forEach((item) => {
               answerValue[item.id] = category;
             });
           });
@@ -411,7 +453,7 @@ function RankingCategoricalComponent({
             </SortableContext>
           </DroppableZone>
 
-          <DroppableZone id="unassigned" title="Unassigned Items">
+          <DroppableZone id="unassigned" title="Available Items">
             <SortableContext items={state.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
               <Stack
                 gap="xs"
@@ -765,6 +807,7 @@ export function RankingInput({
     required,
     options,
     secondaryText,
+    numItems,
   } = response;
 
   if (response.type === 'ranking-sublist') {
@@ -779,6 +822,7 @@ export function RankingInput({
         required={required}
         secondaryText={secondaryText}
         responseId={response.id}
+        numItems={numItems}
       />
     );
   }
@@ -795,6 +839,7 @@ export function RankingInput({
         prompt={prompt}
         secondaryText={secondaryText}
         responseId={response.id}
+        numItems={numItems}
       />
     );
   }
