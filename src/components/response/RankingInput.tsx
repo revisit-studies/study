@@ -30,6 +30,7 @@ import {
   useMemo, useState, useEffect, useRef,
 } from 'react';
 import { RankingResponse, StringOption } from '../../parser/types';
+import { useStoreActions, useStoreDispatch } from '../../store/store';
 
 interface ItemProps {
   item: {
@@ -38,7 +39,6 @@ interface ItemProps {
   };
   index: number;
 }
-
 function SortableItem({ item, index }: ItemProps) {
   const {
     attributes, listeners, setNodeRef, transform, transition,
@@ -77,6 +77,7 @@ function RankingSublistComponent({
   required: _required,
   secondaryText,
   answer,
+  responseId,
 }: {
   options: (StringOption | string)[];
   disabled: boolean;
@@ -85,32 +86,34 @@ function RankingSublistComponent({
   prompt?: string;
   required?: boolean;
   secondaryText?: string;
-  answer: { value: Record<string, string>; onChange?: (value: Record<string, string>) => void };
+  answer: { value: Record<string, string> };
+  responseId: string;
 }) {
-  const items: {
-    id: string;
-    label: string;
-  }[] = useMemo(() => options.map((option) => ({
-    id: typeof option === 'string' ? option : option.value,
-    label: typeof option === 'string' ? option : option.label,
-  })), [options]);
+  const { onChange } = (answer as { onChange?: (value: Record<string, string>) => void });
+  const { setRankingAnswers } = useStoreActions();
+  const storeDispatch = useStoreDispatch();
+  const _choices: { id: string; label: string }[] = useMemo(
+    () => options.map((option) => ({
+      id: typeof option === 'string' ? option : option.value,
+      label: typeof option === 'string' ? option : option.label,
+    })),
+    [options],
+  );
 
-  // initialize state based on answer value
   const initialState = useMemo(() => {
     if (answer?.value && Object.keys(answer.value).length > 0) {
-      const orderedItems = [];
-      const answerEntries = Object.entries(answer.value).sort((a, b) => parseInt(a[1], 10) - parseInt(b[1], 10));
+      const ordered: { id: string; label: string }[] = [];
+      const answerEntries = (Object.entries(answer.value) as [string, string][])
+        .sort((a, b) => parseInt(a[1], 10) - parseInt(b[1], 10));
       for (const [itemId] of answerEntries) {
-        const item = items.find((i) => i.id === itemId);
-        if (item) {
-          orderedItems.push(item);
-        }
+        const found = _choices.find((i) => i.id === itemId);
+        if (found) ordered.push(found);
       }
-      const remainingItems = items.filter((item) => !Object.keys(answer.value).includes(item.id));
-      return [...orderedItems, ...remainingItems];
+      const remaining = _choices.filter((i) => !Object.keys(answer.value).includes(i.id));
+      return [...ordered, ...remaining];
     }
-    return items;
-  }, [items, answer]);
+    return _choices;
+  }, [_choices, answer]);
 
   const [state, handlers] = useListState(initialState);
 
@@ -118,7 +121,6 @@ function RankingSublistComponent({
     handlers.setState(initialState);
   }, [initialState, handlers]);
 
-  // Sensors are used to detect drag and drop events
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor),
@@ -136,14 +138,12 @@ function RankingSublistComponent({
     const newState = arrayMove(state, oldIndex, newIndex);
     handlers.setState(newState);
 
-    // update answer value
     const answerValue: Record<string, string> = {};
     newState.forEach((item, idx) => {
       answerValue[item.id] = idx.toString();
     });
-    if (answer.onChange) {
-      answer.onChange(answerValue);
-    }
+    onChange?.(answerValue);
+    storeDispatch(setRankingAnswers({ responseId, values: answerValue }));
   };
 
   return (
@@ -226,6 +226,7 @@ function RankingCategoricalComponent({
   required: _required,
   secondaryText,
   answer,
+  responseId,
 }: {
   options: (StringOption | string)[];
   disabled: boolean;
@@ -234,8 +235,12 @@ function RankingCategoricalComponent({
   prompt?: string;
   required?: boolean;
   secondaryText?: string;
-  answer: { value: Record<string, string>; onChange?: (value: Record<string, string>) => void };
+  answer: { value: Record<string, string> };
+  responseId: string;
 }) {
+  const { onChange } = (answer as { onChange?: (value: Record<string, string>) => void });
+  const { setRankingAnswers } = useStoreActions();
+  const storeDispatch = useStoreDispatch();
   const items: {
     id: string;
     label: string;
@@ -262,7 +267,7 @@ function RankingCategoricalComponent({
     };
 
     if (answer?.value && Object.keys(answer.value).length > 0) {
-      Object.entries(answer.value).forEach(([itemId, category]) => {
+      (Object.entries(answer.value) as [string, string][]).forEach(([itemId, category]) => {
         const item = items.find((i) => i.id === itemId);
         if (item && (category === 'HIGH' || category === 'MEDIUM' || category === 'LOW')) {
           state[category].push(item);
@@ -329,9 +334,8 @@ function RankingCategoricalComponent({
             });
           });
 
-          if (answer.onChange) {
-            answer.onChange(answerValue);
-          }
+          onChange?.(answerValue);
+          storeDispatch(setRankingAnswers({ responseId, values: answerValue }));
 
           return newState;
         });
@@ -483,6 +487,7 @@ function RankingPairwiseComponent({
   required: _required,
   secondaryText,
   answer,
+  responseId,
 }: {
   options: (StringOption | string)[];
   disabled?: boolean;
@@ -491,8 +496,12 @@ function RankingPairwiseComponent({
   prompt?: string;
   required?: boolean;
   secondaryText?: string;
-  answer: { value: Record<string, string>; onChange?: (value: Record<string, string>) => void };
+  answer: { value: Record<string, string> };
+  responseId: string;
 }) {
+  const { onChange } = (answer as { onChange?: (value: Record<string, string>) => void });
+  const { setRankingAnswers } = useStoreActions();
+  const storeDispatch = useStoreDispatch();
   const itemList: {
     id: string;
     label: string;
@@ -515,7 +524,7 @@ function RankingPairwiseComponent({
 
     if (answer?.value && Object.keys(answer.value).length > 0) {
       const pairKeys = new Set<string>();
-      Object.values(answer.value).forEach((pairLocation) => {
+      (Object.values(answer.value) as string[]).forEach((pairLocation) => {
         const match = pairLocation.match(/^pair-(\d+)-(high|low)$/);
         if (match) {
           pairKeys.add(match[1]);
@@ -529,10 +538,11 @@ function RankingPairwiseComponent({
         state[`pair-${i}-low`] = [];
       }
 
-      Object.entries(answer.value).forEach(([itemId, pairLocation]) => {
+      (Object.entries(answer.value) as [string, string][]).forEach(([itemId, pairLocation]) => {
         const item = itemList.find((i) => i.id === itemId);
-        if (item && state[pairLocation]) {
-          state[pairLocation].push(item);
+        const key = pairLocation as keyof typeof state;
+        if (item && state[key]) {
+          state[key].push(item);
           state.unassigned = state.unassigned.filter((i) => i.id !== itemId);
         }
       });
@@ -597,18 +607,17 @@ function RankingPairwiseComponent({
             }
           }
 
-          if (answer.onChange) {
-            const answerValue: Record<string, string> = {};
-            const entries = Object.entries(newState) as Array<[string, PairwiseItem[]]>;
-            entries.forEach(([category, categoryItems]) => {
-              if (category !== 'unassigned') {
-                categoryItems.forEach((item) => {
-                  answerValue[item.id] = category;
-                });
-              }
-            });
-            setTimeout(() => answer.onChange!(answerValue), 0);
-          }
+          const answerValue: Record<string, string> = {};
+          const entries = Object.entries(newState) as Array<[string, PairwiseItem[]]>;
+          entries.forEach(([category, categoryItems]) => {
+            if (category !== 'unassigned') {
+              categoryItems.forEach((item) => {
+                answerValue[item.id] = category;
+              });
+            }
+          });
+          onChange?.(answerValue);
+          storeDispatch(setRankingAnswers({ responseId, values: answerValue }));
 
           return newState;
         });
@@ -650,14 +659,13 @@ function RankingPairwiseComponent({
         }
       });
 
-      if (answer.onChange) {
-        answer.onChange(answerValue);
-      }
+      onChange?.(answerValue);
+      storeDispatch(setRankingAnswers({ responseId, values: answerValue }));
 
       setIsAddingPair(false);
       addingPairRef.current = false;
     }
-  }, [state, isAddingPair, answer]);
+  }, [state, isAddingPair, answer, responseId, onChange, storeDispatch, setRankingAnswers]);
 
   const getPairs = () => {
     const pairs = [];
@@ -758,7 +766,7 @@ export function RankingInput({
 }: {
   response: RankingResponse;
   disabled: boolean;
-  answer: { value: Record<string, string>; onChange?: (value: Record<string, string>) => void };
+  answer: { value: Record<string, string> };
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -780,6 +788,7 @@ export function RankingInput({
         prompt={prompt}
         required={required}
         secondaryText={secondaryText}
+        responseId={response.id}
       />
     );
   }
@@ -795,6 +804,7 @@ export function RankingInput({
         prompt={prompt}
         required={required}
         secondaryText={secondaryText}
+        responseId={response.id}
       />
     );
   }
@@ -810,6 +820,7 @@ export function RankingInput({
         prompt={prompt}
         required={required}
         secondaryText={secondaryText}
+        responseId={response.id}
       />
     );
   }

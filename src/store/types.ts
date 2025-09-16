@@ -176,5 +176,6 @@ export interface StoreState {
   analysisHasProvenance: boolean;
   modes: Record<REVISIT_MODE, boolean>;
   matrixAnswers: Record<string, Record<string, string>>;
+  rankingAnswers: Record<string, Record<string, string>>;
   funcSequence: Record<string, string[]>;
 }
