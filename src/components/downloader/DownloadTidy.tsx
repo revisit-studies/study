@@ -36,6 +36,7 @@ export const OPTIONAL_COMMON_PROPS = [
   'correctAnswer',
   'duration',
   'cleanedDuration',
+  'meta',
   'startTime',
   'endTime',
   'responseMin',
@@ -151,6 +152,9 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         }
         if (properties.includes('cleanedDuration')) {
           tidyRow.cleanedDuration = cleanedDuration;
+        }
+        if (properties.includes('meta')) {
+          tidyRow.meta = JSON.stringify(completeComponent.meta, null, 2);
         }
         if (properties.includes('responseMin')) {
           tidyRow.responseMin = response?.type === 'numerical' ? response.min : undefined;
