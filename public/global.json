@@ -33,7 +33,8 @@
     "test-randomization",
     "test-skip-logic",
     "test-step-logic",
-    "B1D-Stimuli"
+    "B1D-Stimuli",
+    "B2D-Stimuli"
 
   ],
   "configs": {
@@ -149,6 +150,10 @@
     },
     "B1D-Stimuli":{
       "path": "B1D-Stimuli/config.json",
+      "test": true
+    },
+    "B2D-Stimuli":{
+      "path": "B2D-Stimuli/config.json",
       "test": true
     }
   }
