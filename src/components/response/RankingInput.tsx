@@ -37,7 +37,7 @@ interface ItemProps {
     id: string;
     label: string;
   };
-  index: number;
+  index?: number;
 }
 function SortableItem({ item, index }: ItemProps) {
   const {
@@ -61,7 +61,7 @@ function SortableItem({ item, index }: ItemProps) {
       p="sm"
     >
       <Flex align="center" gap="sm">
-        <Text c="dimmed">{index}</Text>
+        {index !== undefined && <Text c="dimmed">{index}</Text>}
         <Text>{item.label}</Text>
       </Flex>
     </Paper>
@@ -166,7 +166,7 @@ function RankingSublistComponent({
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={state.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-            <Stack w="50%" mx="auto">
+            <Stack w="400px" mx="auto">
               {state.map((item, index) => (
                 <SortableItem key={item.id} item={item} index={index + 1} />
               ))}
@@ -198,15 +198,18 @@ function DroppableZone({
   return (
     <Paper
       withBorder
-      p="md"
-      m="md"
+      p="sm"
       ref={setNodeRef}
       style={{
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+        minWidth: 0,
         backgroundColor: isOver ? '#f0f8ff' : undefined,
         borderColor: isOver ? '#4dabf7' : undefined,
       }}
     >
-      <Text size="md" fw={500} ta="center" mb="md">{title}</Text>
+      <Text size="md" fw={500} ta="center" mb="xs">{title}</Text>
       {children}
     </Paper>
   );
@@ -282,11 +285,7 @@ function RankingCategoricalComponent({
   }, [initialState]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor),
   );
 
@@ -363,20 +362,13 @@ function RankingCategoricalComponent({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <Stack gap="sm" w="60%" mx="auto">
+        <Stack gap="sm" w="600px" mx="auto">
           <DroppableZone id="HIGH" title="HIGH">
             <SortableContext items={state.HIGH.map((i) => i.id)} strategy={verticalListSortingStrategy}>
               <Stack
                 gap="xs"
-                w="50%"
+                w="400px"
                 mx="auto"
-                miw={200}
-                mih={80}
-                justify="flex-start"
-                style={{
-                  transition: 'all 200ms ease',
-                  minHeight: '80px',
-                }}
               >
                 {state.HIGH.map((item, idx) => (
                   <SortableItem key={item.id} item={item} index={idx + 1} />
@@ -389,15 +381,8 @@ function RankingCategoricalComponent({
             <SortableContext items={state.MEDIUM.map((i) => i.id)} strategy={verticalListSortingStrategy}>
               <Stack
                 gap="xs"
-                w="50%"
+                w="400px"
                 mx="auto"
-                miw={200}
-                mih={80}
-                justify="flex-start"
-                style={{
-                  transition: 'all 200ms ease',
-                  minHeight: '80px',
-                }}
               >
                 {state.MEDIUM.map((item, idx) => (
                   <SortableItem key={item.id} item={item} index={idx + 1} />
@@ -410,15 +395,8 @@ function RankingCategoricalComponent({
             <SortableContext items={state.LOW.map((i) => i.id)} strategy={verticalListSortingStrategy}>
               <Stack
                 gap="xs"
-                w="50%"
+                w="400px"
                 mx="auto"
-                miw={200}
-                mih={80}
-                justify="flex-start"
-                style={{
-                  transition: 'all 200ms ease',
-                  minHeight: '80px',
-                }}
               >
                 {state.LOW.map((item, idx) => (
                   <SortableItem key={item.id} item={item} index={idx + 1} />
@@ -431,15 +409,8 @@ function RankingCategoricalComponent({
             <SortableContext items={state.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
               <Stack
                 gap="xs"
-                w="50%"
+                w="400px"
                 mx="auto"
-                miw={200}
-                mih={80}
-                justify="flex-start"
-                style={{
-                  transition: 'all 200ms ease',
-                  minHeight: '80px',
-                }}
               >
                 {state.unassigned.map((item, idx) => (
                   <SortableItem key={item.id} item={item} index={idx + 1} />
@@ -454,11 +425,6 @@ function RankingCategoricalComponent({
             <Paper
               p="sm"
               withBorder
-              shadow="lg"
-              style={{
-                cursor: 'grabbing',
-                opacity: 0.9,
-              }}
             >
               <Text>
                 {items.find((item) => item.id === activeId)?.label}
@@ -471,11 +437,9 @@ function RankingCategoricalComponent({
   );
 }
 
-type PairwiseItem = { id: string; label: string };
-
 function RankingPairwiseComponent({
   options,
-  disabled = false,
+  disabled,
   index,
   enumerateQuestions,
   prompt,
@@ -586,24 +550,35 @@ function RankingPairwiseComponent({
       if (Object.keys(state).includes(targetCategory)) {
         setState((prev) => {
           const newState = { ...prev };
-          const activeItem = newState[sourceCategory as keyof typeof newState].find((item) => item.id === activeId);
+          const sourceArr = newState[sourceCategory as keyof typeof newState] as { id: string; label: string }[];
+          const targetArr = newState[targetCategory as keyof typeof newState] as { id: string; label: string }[];
+          const activeItem = sourceArr.find((item) => item.id === activeId);
 
           if (activeItem) {
-            newState[sourceCategory as keyof typeof newState] = newState[sourceCategory as keyof typeof newState].filter((item) => item.id !== activeId);
-
-            if (targetCategory !== 'unassigned') {
-              const existingItems = newState[targetCategory as keyof typeof newState];
-              if (existingItems.length > 0) {
-                newState.unassigned = [...newState.unassigned, ...existingItems];
+            if (sourceCategory === 'unassigned' && targetCategory !== 'unassigned') {
+              if (targetArr.length > 0) {
+                newState.unassigned = [...newState.unassigned, ...targetArr];
               }
-              newState[targetCategory as keyof typeof newState] = [activeItem];
+              if (!targetArr.find((i) => i.id === activeItem.id)) {
+                newState[targetCategory as keyof typeof newState] = [activeItem];
+              }
             } else {
-              newState[targetCategory as keyof typeof newState] = [...newState[targetCategory as keyof typeof newState], activeItem];
+              newState[sourceCategory as keyof typeof newState] = sourceArr.filter((item) => item.id !== activeId);
+
+              if (targetCategory !== 'unassigned') {
+                const existingItems = targetArr;
+                if (existingItems.length > 0) {
+                  newState.unassigned = [...newState.unassigned, ...existingItems];
+                }
+                newState[targetCategory as keyof typeof newState] = [activeItem];
+              } else {
+                newState[targetCategory as keyof typeof newState] = [...targetArr, activeItem];
+              }
             }
           }
 
           const answerValue: Record<string, string> = {};
-          const entries = Object.entries(newState) as Array<[string, PairwiseItem[]]>;
+          const entries = Object.entries(newState) as Array<[string, { id: string; label: string }[]]>;
           entries.forEach(([category, categoryItems]) => {
             if (category !== 'unassigned') {
               categoryItems.forEach((item) => {
@@ -698,25 +673,24 @@ function RankingPairwiseComponent({
       )}
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <DroppableZone id="unassigned" title="Available Items">
-          <SortableContext items={state.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-            <Flex gap="xs" wrap="wrap" justify="center">
-              {state.unassigned.map((item, idx) => (
-                <SortableItem key={item.id} item={item} index={idx + 1} />
-              ))}
-            </Flex>
-          </SortableContext>
-        </DroppableZone>
 
-        <Stack gap="md" w="80%" mx="auto">
+        <Button
+          variant="filled"
+          color="orange"
+          onClick={addNewPair}
+        >
+          Add New Pair
+        </Button>
+
+        <Stack gap="md" w="800px" mx="auto">
           {getPairs().map((pair) => (
-            <Stack key={`pair-${pair.index}`} gap="sm">
-              <Group justify="center" gap="md">
+            <Stack key={`pair-${pair.index}`} gap="sm" w="100%">
+              <Group justify="center" gap="md" wrap="nowrap" w="100%">
                 <DroppableZone id={`pair-${pair.index}-high`} title="HIGH">
                   <SortableContext items={pair.high.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-                    <Stack gap="xs" w="50%" mx="auto" miw={150} mih={80} justify="center">
-                      {pair.high.map((item, idx) => (
-                        <SortableItem key={item.id} item={item} index={idx + 1} />
+                    <Stack gap="xs" w="300px" mx="auto">
+                      {pair.high.map((item) => (
+                        <SortableItem key={item.id} item={item} />
                       ))}
                     </Stack>
                   </SortableContext>
@@ -724,9 +698,9 @@ function RankingPairwiseComponent({
 
                 <DroppableZone id={`pair-${pair.index}-low`} title="LOW">
                   <SortableContext items={pair.low.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-                    <Stack gap="xs" w="50%" mx="auto" miw={150} mih={80} justify="center">
-                      {pair.low.map((item, idx) => (
-                        <SortableItem key={item.id} item={item} index={idx + 1} />
+                    <Stack gap="xs" w="300px" mx="auto">
+                      {pair.low.map((item) => (
+                        <SortableItem key={item.id} item={item} />
                       ))}
                     </Stack>
                   </SortableContext>
@@ -735,16 +709,15 @@ function RankingPairwiseComponent({
             </Stack>
           ))}
 
-          <Button
-            variant="filled"
-            color="orange"
-            onClick={addNewPair}
-            disabled={disabled || isAddingPair}
-            mx="auto"
-            w="fit-content"
-          >
-            {isAddingPair ? 'Adding...' : 'Add New Pair'}
-          </Button>
+          <DroppableZone id="unassigned" title="Available Items">
+            <SortableContext items={state.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+              <Flex gap="xs" wrap="wrap" justify="center" w="300px" mx="auto">
+                {state.unassigned.map((item) => (
+                  <SortableItem key={item.id} item={item} />
+                ))}
+              </Flex>
+            </SortableContext>
+          </DroppableZone>
 
         </Stack>
       </DndContext>
@@ -795,9 +768,9 @@ export function RankingInput({
         disabled={disabled}
         index={index}
         answer={answer}
+        required={required}
         enumerateQuestions={enumerateQuestions}
         prompt={prompt}
-        required={required}
         secondaryText={secondaryText}
         responseId={response.id}
       />
