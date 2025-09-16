@@ -32,7 +32,8 @@
     "test-parser-errors",
     "test-randomization",
     "test-skip-logic",
-    "test-step-logic"
+    "test-step-logic",
+    "B1D-Stimuli"
 
   ],
   "configs": {
@@ -144,6 +145,10 @@
     },
     "test-step-logic": {
       "path": "test-step-logic/config.json",
+      "test": true
+    },
+    "B1D-Stimuli":{
+      "path": "B1D-Stimuli/config.json",
       "test": true
     }
   }
