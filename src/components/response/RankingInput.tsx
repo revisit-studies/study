@@ -35,12 +35,11 @@ interface ItemProps {
   item: {
     id: string;
     label: string;
-    originalIndex: number;
   };
-  indexLabel?: number;
+  index: number;
 }
 
-function SortableItem({ item, indexLabel }: ItemProps) {
+function SortableItem({ item, index }: ItemProps) {
   const {
     attributes, listeners, setNodeRef, transform, transition,
   } = useSortable({
@@ -55,20 +54,14 @@ function SortableItem({ item, indexLabel }: ItemProps) {
   return (
     <Paper
       ref={setNodeRef}
-      style={{
-        ...style,
-      }}
-      withBorder
-      p="sm"
+      style={style}
       {...attributes}
       {...listeners}
+      withBorder
+      p="sm"
     >
       <Flex align="center" gap="sm">
-        {typeof indexLabel === 'number' && (
-          <Box w={28} ta="center">
-            <Text size="sm" c="dimmed">{indexLabel}</Text>
-          </Box>
-        )}
+        <Text c="dimmed">{index}</Text>
         <Text>{item.label}</Text>
       </Flex>
     </Paper>
@@ -97,11 +90,9 @@ function RankingSublistComponent({
   const items: {
     id: string;
     label: string;
-    originalIndex: number;
-  }[] = useMemo(() => options.map((option, idx) => ({
+  }[] = useMemo(() => options.map((option) => ({
     id: typeof option === 'string' ? option : option.value,
     label: typeof option === 'string' ? option : option.label,
-    originalIndex: idx,
   })), [options]);
 
   // initialize state based on answer value
@@ -180,7 +171,7 @@ function RankingSublistComponent({
               {state.map((item, idx) => (
                 <Flex key={item.id} align="center" gap="sm">
                   <Box style={{ flexGrow: 1 }}>
-                    <SortableItem item={item} indexLabel={idx + 1} />
+                    <SortableItem item={item} index={idx + 1} />
                   </Box>
                 </Flex>
               ))}
@@ -248,11 +239,9 @@ function RankingCategoricalComponent({
   const items: {
     id: string;
     label: string;
-    originalIndex: number;
-  }[] = useMemo(() => options.map((option, idx) => ({
+  }[] = useMemo(() => options.map((option) => ({
     id: typeof option === 'string' ? option : option.value,
     label: typeof option === 'string' ? option : option.label,
-    originalIndex: idx,
   })), [options]);
 
   const initialState = useMemo(() => {
@@ -261,17 +250,14 @@ function RankingCategoricalComponent({
       HIGH: [] as {
         id: string;
         label: string;
-        originalIndex: number;
       }[],
       MEDIUM: [] as {
         id: string;
         label: string;
-        originalIndex: number;
       }[],
       LOW: [] as {
         id: string;
         label: string;
-        originalIndex: number;
       }[],
     };
 
@@ -394,7 +380,7 @@ function RankingCategoricalComponent({
                 }}
               >
                 {state.HIGH.map((item, idx) => (
-                  <SortableItem key={item.id} item={item} indexLabel={idx + 1} />
+                  <SortableItem key={item.id} item={item} index={idx + 1} />
                 ))}
               </Stack>
             </SortableContext>
@@ -415,7 +401,7 @@ function RankingCategoricalComponent({
                 }}
               >
                 {state.MEDIUM.map((item, idx) => (
-                  <SortableItem key={item.id} item={item} indexLabel={idx + 1} />
+                  <SortableItem key={item.id} item={item} index={idx + 1} />
                 ))}
               </Stack>
             </SortableContext>
@@ -436,7 +422,7 @@ function RankingCategoricalComponent({
                 }}
               >
                 {state.LOW.map((item, idx) => (
-                  <SortableItem key={item.id} item={item} indexLabel={idx + 1} />
+                  <SortableItem key={item.id} item={item} index={idx + 1} />
                 ))}
               </Stack>
             </SortableContext>
@@ -456,8 +442,8 @@ function RankingCategoricalComponent({
                   minHeight: '80px',
                 }}
               >
-                {state.unassigned.map((item) => (
-                  <SortableItem key={item.id} item={item} />
+                {state.unassigned.map((item, idx) => (
+                  <SortableItem key={item.id} item={item} index={idx + 1} />
                 ))}
               </Stack>
             </SortableContext>
@@ -486,7 +472,7 @@ function RankingCategoricalComponent({
   );
 }
 
-type PairwiseItem = { id: string; label: string; originalIndex: number };
+type PairwiseItem = { id: string; label: string };
 
 function RankingPairwiseComponent({
   options,
@@ -510,18 +496,15 @@ function RankingPairwiseComponent({
   const itemList: {
     id: string;
     label: string;
-    originalIndex: number;
-  }[] = useMemo(() => options.map((option, idx) => ({
+  }[] = useMemo(() => options.map((option) => ({
     id: typeof option === 'string' ? option : option.value,
     label: typeof option === 'string' ? option : option.label,
-    originalIndex: idx,
   })), [options]);
 
   const { initialState, initialPairCount } = useMemo(() => {
     const state: Record<string, {
       id: string;
       label: string;
-      originalIndex: number;
     }[]> = {
       unassigned: [...itemList],
       'pair-0-high': [],
@@ -715,8 +698,8 @@ function RankingPairwiseComponent({
         <DroppableZone id="unassigned" title="Available Items">
           <SortableContext items={state.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             <Flex gap="xs" wrap="wrap" justify="center">
-              {state.unassigned.map((item) => (
-                <SortableItem key={item.id} item={item} />
+              {state.unassigned.map((item, idx) => (
+                <SortableItem key={item.id} item={item} index={idx + 1} />
               ))}
             </Flex>
           </SortableContext>
@@ -729,8 +712,8 @@ function RankingPairwiseComponent({
                 <DroppableZone id={`pair-${pair.index}-high`} title="HIGH">
                   <SortableContext items={pair.high.map((i) => i.id)} strategy={verticalListSortingStrategy}>
                     <Stack gap="xs" w="50%" mx="auto" miw={150} mih={80} justify="center">
-                      {pair.high.map((item) => (
-                        <SortableItem key={item.id} item={item} />
+                      {pair.high.map((item, idx) => (
+                        <SortableItem key={item.id} item={item} index={idx + 1} />
                       ))}
                     </Stack>
                   </SortableContext>
@@ -739,8 +722,8 @@ function RankingPairwiseComponent({
                 <DroppableZone id={`pair-${pair.index}-low`} title="LOW">
                   <SortableContext items={pair.low.map((i) => i.id)} strategy={verticalListSortingStrategy}>
                     <Stack gap="xs" w="50%" mx="auto" miw={150} mih={80} justify="center">
-                      {pair.low.map((item) => (
-                        <SortableItem key={item.id} item={item} />
+                      {pair.low.map((item, idx) => (
+                        <SortableItem key={item.id} item={item} index={idx + 1} />
                       ))}
                     </Stack>
                   </SortableContext>
