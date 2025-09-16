@@ -159,21 +159,16 @@ function RankingSublistComponent({
         </Text>
       )}
 
-      <Paper withBorder ta="center" p="md">
-        {/* TODO: make this a label in types? */}
+      <Box ta="center">
         <Text size="md" fw={500} m="md">
           HIGH
         </Text>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={state.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-            <Stack gap="xs" w="40%" mx="auto">
-              {state.map((item, idx) => (
-                <Flex key={item.id} align="center" gap="sm">
-                  <Box style={{ flexGrow: 1 }}>
-                    <SortableItem item={item} index={idx + 1} />
-                  </Box>
-                </Flex>
+            <Stack w="50%" mx="auto">
+              {state.map((item, index) => (
+                <SortableItem key={item.id} item={item} index={index + 1} />
               ))}
             </Stack>
           </SortableContext>
@@ -182,7 +177,7 @@ function RankingSublistComponent({
         <Text size="md" fw={500} m="md">
           LOW
         </Text>
-      </Paper>
+      </Box>
     </Box>
   );
 }
