@@ -26,7 +26,7 @@
         "B2D-stimuli": {
             "type": "image",
             "description": "test",
-            "path": "B2D-Stimuli/assets/b2d.png",
+            "path": "B2D-Stimuli/assets/B2DStim.png",
             "instruction": "What can you conclude from this image?",
             "style": {
                 "width": "800px"
