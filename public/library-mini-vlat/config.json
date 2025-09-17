@@ -21,10 +21,61 @@
     "withSidebar": true
   },
   "importedLibraries": [
-    "mini-vlat"
+    "mini-vlat",
+    "mic-check"
   ],
   "components": {
     "introduction": {
+      "type": "markdown",
+      "path": "library-mini-vlat/assets/mini-vlat.md",
+      "response": []
+    },
+    "critiqueCalvi1": {
+      "type": "markdown",
+      "path": "library-mini-vlat/assets/mini-vlat.md",
+      "response": []
+    },
+    "critiqueCalvi2": {
+      "type": "markdown",
+      "path": "library-mini-vlat/assets/mini-vlat.md",
+      "response": []
+    },
+    "critiqueUntimelyDeath": {
+      "type": "markdown",
+      "path": "library-mini-vlat/assets/mini-vlat.md",
+      "response": []
+    },
+    "critiqueWealth": {
+      "type": "markdown",
+      "path": "library-mini-vlat/assets/mini-vlat.md",
+      "response": []
+    },
+    "drawingTraining": {
+      "type": "markdown",
+      "path": "library-mini-vlat/assets/mini-vlat.md",
+      "response": []
+    },
+    "drawingTree": {
+      "type": "markdown",
+      "path": "library-mini-vlat/assets/mini-vlat.md",
+      "response": []
+    },
+    "drawingNetwork": {
+      "type": "markdown",
+      "path": "library-mini-vlat/assets/mini-vlat.md",
+      "response": []
+    },
+    "drawingBpm": {
+      "type": "markdown",
+      "path": "library-mini-vlat/assets/mini-vlat.md",
+      "response": []
+    },
+    "drawingRanking": {
+      "type": "markdown",
+      "path": "library-mini-vlat/assets/mini-vlat.md",
+      "response": []
+    },
+    "drawing100m": {
       "type": "markdown",
       "path": "library-mini-vlat/assets/mini-vlat.md",
       "response": []
@@ -34,6 +85,29 @@
     "order": "fixed",
     "components": [
       "introduction",
+      "$mic-check.co.audioTest",
+      {
+        "id": "critiquePart",
+        "components": [
+          "critiqueCalvi1",
+          "critiqueCalvi2",
+          "critiqueUntimelyDeath",
+          "critiqueWealth"
+        ],
+        "order": "random"
+      },
+      "drawingTraining",
+      {
+        "id": "drawingPart",
+        "components": [
+          "drawingTree",
+          "drawingNetwork",
+          "drawingBpm",
+          "drawingRanking",
+          "drawing100m"
+        ],
+        "order": "random"
+      },
       "$mini-vlat.se.full"
     ]
   }
