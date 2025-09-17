@@ -33,6 +33,7 @@
     "test-randomization",
     "test-skip-logic",
     "test-step-logic",
+    "new-demo-study"
     "B1D-Stimuli",
     "B2D-Stimuli"
 
@@ -146,6 +147,10 @@
     },
     "test-step-logic": {
       "path": "test-step-logic/config.json",
+      "test": true
+    },
+    "new-demo-study": {
+      "path": "new-demo-study/config.json",
       "test": true
     },
     "B1D-Stimuli":{

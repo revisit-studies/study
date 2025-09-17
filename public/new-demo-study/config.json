@@ -1,0 +1,29 @@
+{
+  "components": {
+    "image-stimulus-1": {
+      "type": "image",
+      "path": "new-demo-study/assets/image.png",
+      "instruction": "What do you see in this image?",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "image-response",
+          "prompt": "Your answer:",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ]
+        }
+      ]
+    }
+  },
+  "sequence": [
+    "image-stimulus-1"
+  ],
+  "randomization": {}
+}
