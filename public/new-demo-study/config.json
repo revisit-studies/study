@@ -1,4 +1,27 @@
 {
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "B3DStimuli",
+        "version": "pilot",
+        "authors": [
+            "The MQP Team"
+        ],
+        "date": "2025-09-17",
+        "description": "",
+        "organizations": [
+            "WPI"
+        ]
+  },
+    "uiConfig": {
+        "contactEmail": "contact@revisit.dev",
+        "helpTextPath": "demo-image/assets/help.md",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true,
+        "nextOnEnter": true,
+        "recordStudyAudio": true
+    },
   "components": {
     "image-stimulus-1": {
       "type": "image",
@@ -22,8 +45,8 @@
       ]
     }
   },
-  "sequence": [
-    "image-stimulus-1"
-  ],
-  "randomization": {}
+  "sequence": {
+    "order": "fixed",
+    "components": ["image-stimulus-1"]
+  }
 }
