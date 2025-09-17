@@ -1,0 +1,53 @@
+{  
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "B1DStimuli",
+        "version": "pilot",
+        "authors": [
+            "The MQP Team"
+        ],
+        "date": "2025-09-14",
+        "description": "",
+        "organizations": [
+            "WPI"
+        ]
+  },
+    
+    "uiConfig": {
+        "contactEmail": "contact@revisit.dev",
+        "helpTextPath": "demo-image/assets/help.md",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true,
+        "nextOnEnter": true,
+        "recordStudyAudio": true
+    },
+    "components": {
+        "B1D-stimuli": {
+            "type": "image",
+            "description": "test",
+            "path": "B1D-Stimuli/assets/BD1Stim.png",
+            "instruction": "What can you conclude from this image?",
+            "style": {
+                "width": "800px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+            {
+                "id": "B1D-Response",
+                "prompt": "Answer:",
+                "location": "sidebar",
+                "type": "shortText",
+                "required": true
+            }
+            ]
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "B1D-stimuli"
+        ]
+    }
+}

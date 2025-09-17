@@ -34,6 +34,8 @@
     "test-skip-logic",
     "test-step-logic",
     "new-demo-study"
+    "B1D-Stimuli",
+    "B2D-Stimuli"
 
   ],
   "configs": {
@@ -149,6 +151,14 @@
     },
     "new-demo-study": {
       "path": "new-demo-study/config.json",
+      "test": true
+    },
+    "B1D-Stimuli":{
+      "path": "B1D-Stimuli/config.json",
+      "test": true
+    },
+    "B2D-Stimuli":{
+      "path": "B2D-Stimuli/config.json",
       "test": true
     }
   }
