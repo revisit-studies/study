@@ -6,7 +6,7 @@
   "baseComponents": {
     "bar-cancer-recovery": {
       "type": "image",
-      "path": "libraries/graph-literacys-scale/assets/bar-cancer-recovery.png",
+      "path": "libraries/graph-literacy-scale/assets/bar-cancer-recovery.png",
       "instruction": "Here is some information about cancer therapies.",
       "instructionLocation": "aboveStimulus",
       "style": {
@@ -16,7 +16,7 @@
     },
     "pie-cancer": {
       "type": "image",
-      "path": "libraries/graph-literacys-scale/assets/pie-cancer.png",
+      "path": "libraries/graph-literacy-scale/assets/pie-cancer.png",
       "instruction": "Here is some information about different forms of cancer.",
       "instructionLocation": "aboveStimulus",
       "style": {
@@ -26,7 +26,7 @@
     },
     "line-Adeolitis": {
       "type": "image",
-      "path": "libraries/graph-literacys-scale/assets/line-Adeolitis.png",
+      "path": "libraries/graph-literacy-scale/assets/line-Adeolitis.png",
       "instruction": "Here is some information about an imaginary disease called Adeolitis.",
       "instructionLocation": "aboveStimulus",
       "style": {
@@ -36,7 +36,7 @@
     },
     "icon-diseaseX": {
       "type": "image",
-      "path": "libraries/graph-literacys-scale/assets/icon-diseaseX.png",
+      "path": "libraries/graph-literacy-scale/assets/icon-diseaseX.png",
       "instruction": "The following figure shows the number of men and women among patients with disease X. The total number of circles is 100.",
       "instructionLocation": "aboveStimulus",
       "style": {
@@ -46,7 +46,7 @@
     },
     "bar-treat-heart-disease": {
       "type": "image",
-      "path": "libraries/graph-literacys-scale/assets/bar-treat-heart-disease.png",
+      "path": "libraries/graph-literacy-scale/assets/bar-treat-heart-disease.png",
       "instruction": "In a magazine you see two advertisements, one on page 5 and another on page 12. Each is for a different drug for treating heart disease, and each includes a graph showing the effectiveness of the drug compared to a placebo (sugar pill).",
       "instructionLocation": "aboveStimulus",
       "style": {
@@ -56,7 +56,7 @@
     },
     "line-treat-psoriasis": {
       "type": "image",
-      "path": "libraries/graph-literacys-scale/assets/line-treat-psoriasis.png",
+      "path": "libraries/graph-literacy-scale/assets/line-treat-psoriasis.png",
       "instruction": "In the newspaper you see two advertisements, one on page 15 and another on page 17. Each is for a different treatment of psoriasis, and each includes a graph showing the effectiveness of the treatment over time.",
       "instructionLocation": "aboveStimulus",
       "style": {
@@ -66,7 +66,7 @@
     },
     "line-Coliosis-Tiosis": {
       "type": "image",
-      "path": "libraries/graph-literacys-scale/assets/line-Coliosis-Tiosis.png",
+      "path": "libraries/graph-literacy-scale/assets/line-Coliosis-Tiosis.png",
       "instruction": "Here is some information about the imaginary diseases Coliosis and Tiosis.",
       "instructionLocation": "aboveStimulus",
       "style": {
@@ -76,7 +76,7 @@
     },
     "bar-cancer-die": {
       "type": "image",
-      "path": "libraries/graph-literacys-scale/assets/bar-cancer-die.png",
+      "path": "libraries/graph-literacy-scale/assets/bar-cancer-die.png",
       "instruction": "Here is some information about cancer therapies.",
       "instructionLocation": "aboveStimulus",
       "style": {
@@ -321,7 +321,7 @@
   },
   "sequences": {
     "full": {
-      "id": "graph-literacys-scale",
+      "id": "graph-literacy-scale",
       "order": "fixed",
       "components": [
         "Q1",
