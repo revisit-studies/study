@@ -97,8 +97,8 @@ export abstract class StorageEngine {
 
   protected participantData: ParticipantData | undefined;
 
-  // Ids of assets (eg. audio/screen recording) being uploaded. Set to true when uploading, false when done.
-  protected uploadingAssetIds: {[key:string]: boolean} = {};
+  // Ids of assets (eg. audio/screen recording) being uploaded.
+  protected uploadingAssetIds: string[] = [];
 
   constructor(engine: typeof this.engine, testing: boolean) {
     this.engine = engine;
@@ -697,7 +697,7 @@ export abstract class StorageEngine {
     }
 
     // Check for remaining assets uploads
-    const hasUploadsRemaining = Object.keys(this.uploadingAssetIds).some((uploadId) => this.uploadingAssetIds[uploadId]);
+    const hasUploadsRemaining = this.uploadingAssetIds.length > 0;
     if (hasUploadsRemaining) {
       return false;
     }
@@ -733,17 +733,12 @@ export abstract class StorageEngine {
     return false;
   }
 
-  // Gets the audio for a specific task and participantId.
-  async getAudio(
-    task: string,
-    participantId: string,
-  ) {
-    const url = await this._getAudioUrl(task, participantId);
+  async getAsset(url:string | null) {
     if (!url) {
       return null;
     }
 
-    const allAudioList = new Promise<string>((resolve) => {
+    const asset = new Promise<string>((resolve) => {
       const xhr = new XMLHttpRequest();
       xhr.responseType = 'blob';
       xhr.onload = () => {
@@ -757,7 +752,16 @@ export abstract class StorageEngine {
       xhr.send();
     });
 
-    return allAudioList;
+    return asset;
+  }
+
+  // Gets the audio for a specific task and participantId.
+  async getAudio(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getAudioUrl(task, participantId);
+    return await this.getAsset(url);
   }
 
   // Gets the audio download URL
@@ -788,14 +792,17 @@ export abstract class StorageEngine {
     return url;
   }
 
-  // Saves the audio stream to the storage engine. This method is used to save the audio data from a MediaRecorder stream.
-  async saveAudio(
-    audioStream: MediaRecorder,
+  async saveAsset(
+    prefix: string,
+    recorder: MediaRecorder,
     taskName: string,
   ) {
     let debounceTimeout: NodeJS.Timeout | null = null;
 
-    this.uploadingAssetIds[`audio/${taskName}`] = true;
+    const assetKey = `${prefix}/${taskName}`;
+    const participantKey = `${prefix}/${this.currentParticipantId}`;
+
+    this.uploadingAssetIds.push(assetKey);
 
     const listener = async (data: BlobEvent) => {
       if (debounceTimeout) {
@@ -803,17 +810,25 @@ export abstract class StorageEngine {
       }
 
       debounceTimeout = setTimeout(async () => {
-        await this._pushToStorage(`audio/${this.currentParticipantId}`, taskName, data.data);
-        await this._cacheStorageObject(`audio/${this.currentParticipantId}`, taskName);
+        await this._pushToStorage(participantKey, taskName, data.data);
+        await this._cacheStorageObject(participantKey, taskName);
 
-        this.uploadingAssetIds[`audio/${taskName}`] = false;
+        this.uploadingAssetIds = this.uploadingAssetIds.filter((id) => id !== assetKey);
       }, 500);
     };
 
-    audioStream.addEventListener('dataavailable', listener);
-    audioStream.requestData();
+    recorder.addEventListener('dataavailable', listener);
+    recorder.requestData();
 
     // Don't clean up the listener. The stream will be destroyed.
+  }
+
+  // Saves the audio stream to the storage engine. This method is used to save the audio data from a MediaRecorder stream.
+  async saveAudio(
+    audioStream: MediaRecorder,
+    taskName: string,
+  ) {
+    return this.saveAsset('audio', audioStream, taskName);
   }
 
   // Gets the screen recording for a specific task and participantId.
@@ -822,25 +837,7 @@ export abstract class StorageEngine {
     participantId: string,
   ) {
     const url = await this._getScreenRecordingUrl(task, participantId);
-    if (!url) {
-      return null;
-    }
-
-    const allScreenRecordingList = new Promise<string>((resolve) => {
-      const xhr = new XMLHttpRequest();
-      xhr.responseType = 'blob';
-      xhr.onload = () => {
-        const blob = xhr.response;
-
-        const _url = URL.createObjectURL(blob);
-
-        resolve(_url);
-      };
-      xhr.open('GET', url);
-      xhr.send();
-    });
-
-    return allScreenRecordingList;
+    return this.getAsset(url);
   }
 
   // Saves the video stream to the storage engine. This method is used to save the screen recorded video data from a MediaRecorder stream.
@@ -848,25 +845,7 @@ export abstract class StorageEngine {
     videoStream: MediaRecorder,
     taskName: string,
   ) {
-    let debounceTimeout: NodeJS.Timeout | null = null;
-
-    this.uploadingAssetIds[`screenRecording/${taskName}`] = true;
-
-    const listener = async (data: BlobEvent) => {
-      if (debounceTimeout) {
-        return;
-      }
-
-      debounceTimeout = setTimeout(async () => {
-        await this._pushToStorage(`screenRecording/${this.currentParticipantId}`, taskName, data.data);
-        await this._cacheStorageObject(`screenRecording/${this.currentParticipantId}`, taskName);
-
-        this.uploadingAssetIds[`screenRecording/${taskName}`] = false;
-      }, 500);
-    };
-
-    videoStream.addEventListener('dataavailable', listener);
-    videoStream.requestData();
+    return this.saveAsset('screenRecording', videoStream, taskName);
   }
 
   // Gets the sequence array from the storage engine.
@@ -936,6 +915,7 @@ export abstract class StorageEngine {
       await this._copyDirectory(`${sourceName}/configs`, `${targetName}/configs`);
       await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
       await this._copyDirectory(`${sourceName}/audio`, `${targetName}/audio`);
+      await this._copyDirectory(`${sourceName}/screenRecording`, `${targetName}/screenRecording`);
       await this._copyDirectory(sourceName, targetName);
       await this._copyRealtimeData(sourceName, targetName);
     }
@@ -982,6 +962,7 @@ export abstract class StorageEngine {
         await this._deleteDirectory(`${deletionTarget}/configs`);
         await this._deleteDirectory(`${deletionTarget}/participants`);
         await this._deleteDirectory(`${deletionTarget}/audio`);
+        await this._deleteDirectory(`${deletionTarget}/screenRecording`);
         await this._deleteDirectory(deletionTarget);
         await this._deleteRealtimeData(deletionTarget);
       }
@@ -1046,6 +1027,10 @@ export abstract class StorageEngine {
       await this._copyDirectory(
         `${snapshotName}/audio`,
         `${originalName}/audio`,
+      );
+      await this._copyDirectory(
+        `${snapshotName}/screenRecording`,
+        `${originalName}/screenRecording`,
       );
       await this._copyDirectory(snapshotName, originalName);
       await this._copyRealtimeData(snapshotName, originalName);

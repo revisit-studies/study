@@ -119,6 +119,7 @@ export function ScreenRecordingReplay() {
 
   return (
     <Box pos="relative">
+      <LoadingOverlay visible={!isReady} zIndex={1000} overlayProps={{ blur: 5, bg: 'rgba(255, 255, 255, .98)' }} />
       <video
         ref={videoRef}
         width="100%"
@@ -135,7 +136,6 @@ export function ScreenRecordingReplay() {
         <source type="video/mp4" />
         Your browser does not support the video tag.
       </video>
-      <LoadingOverlay visible={!isReady} zIndex={1000} overlayProps={{ blur: 5, bg: 'rgba(255, 255, 255, .98)' }} />
     </Box>
   );
 }
