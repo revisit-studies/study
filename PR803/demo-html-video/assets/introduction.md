@@ -1,3 +1,3 @@
 # Introduction
 
-Welcome to our study. This is an example study to show how to embed html elements into the study page. In this simple example, there is no communication from the stimulus to revisit, and all answers and provenance data is solely recorded by the revisit app.
+Welcome to our study. This example demonstrates how to capture screen recordings for components where provenance tracking is difficult to implement. In this case, we illustrate the process using a simple website component that is recorded directly from the screen.
