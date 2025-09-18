@@ -35,6 +35,7 @@ interface ItemProps {
   item: {
     id: string;
     label: string;
+    symbol: string;
   };
   index?: number;
 }
@@ -42,7 +43,7 @@ function SortableItem({ item, index }: ItemProps) {
   const {
     attributes, listeners, setNodeRef, transform, transition,
   } = useSortable({
-    id: item.id,
+    id: item.symbol,
   });
 
   const style: React.CSSProperties = {
@@ -69,12 +70,12 @@ function SortableItem({ item, index }: ItemProps) {
 
 function DroppableZone({
   id,
-  children,
   title,
+  children,
 }: {
   id: string;
-  children: React.ReactNode;
   title: string;
+  children: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -86,10 +87,7 @@ function DroppableZone({
       p="sm"
       ref={setNodeRef}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        minWidth: 0,
+        // If item is over the droppable zone, change the background and border color to blue
         backgroundColor: isOver ? '#f0f8ff' : undefined,
         borderColor: isOver ? '#4dabf7' : undefined,
       }}
@@ -126,16 +124,17 @@ function RankingSublistComponent({
   const { onChange } = (answer as { onChange?: (value: Record<string, string>) => void });
   const { setRankingAnswers } = useStoreActions();
   const storeDispatch = useStoreDispatch();
-  const _choices: { id: string; label: string }[] = useMemo(
+  const _choices: { id: string; label: string; symbol: string }[] = useMemo(
     () => options.map((option) => ({
       id: typeof option === 'string' ? option : option.value,
       label: typeof option === 'string' ? option : option.label,
+      symbol: typeof option === 'string' ? option : option.value,
     })),
     [options],
   );
 
   const initialState = useMemo(() => {
-    let selected: { id: string; label: string }[] = [];
+    let selected: { id: string; label: string; symbol: string }[] = [];
     if (answer?.value && Object.keys(answer.value).length > 0) {
       const answerEntries = (Object.entries(answer.value) as [string, string][])
         .sort((a, b) => parseInt(a[1], 10) - parseInt(b[1], 10));
@@ -168,15 +167,15 @@ function RankingSublistComponent({
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const inSelected = state.selected.findIndex((i) => i.id === active.id) !== -1;
-    const inUnassigned = state.unassigned.findIndex((i) => i.id === active.id) !== -1;
+    const inSelected = state.selected.findIndex((i) => i.symbol === active.id) !== -1;
+    const inUnassigned = state.unassigned.findIndex((i) => i.symbol === active.id) !== -1;
     const overId = over.id as string;
-    const overInSelected = overId === 'sublist-selected' || state.selected.findIndex((i) => i.id === overId) !== -1;
-    const overInUnassigned = overId === 'sublist-unassigned' || state.unassigned.findIndex((i) => i.id === overId) !== -1;
+    const overInSelected = overId === 'sublist-selected' || state.selected.findIndex((i) => i.symbol === overId) !== -1;
+    const overInUnassigned = overId === 'sublist-unassigned' || state.unassigned.findIndex((i) => i.symbol === overId) !== -1;
 
     if (inSelected && overInSelected) {
-      const oldIndex = state.selected.findIndex((i) => i.id === active.id);
-      const newIndex = state.selected.findIndex((i) => i.id === (over.id as string));
+      const oldIndex = state.selected.findIndex((i) => i.symbol === active.id);
+      const newIndex = state.selected.findIndex((i) => i.symbol === (over.id as string));
       const newSelected = arrayMove(state.selected, oldIndex, newIndex);
       setState({ ...state, selected: newSelected });
       const answerValue: Record<string, string> = {};
@@ -190,8 +189,8 @@ function RankingSublistComponent({
       if (typeof numItems === 'number' && numItems > 0 && state.selected.length >= numItems) {
         return;
       }
-      const moved = state.unassigned.find((i) => i.id === active.id)!;
-      const newUnassigned = state.unassigned.filter((i) => i.id !== active.id);
+      const moved = state.unassigned.find((i) => i.symbol === active.id)!;
+      const newUnassigned = state.unassigned.filter((i) => i.symbol !== active.id);
       const newSelected = [...state.selected, moved];
       setState({ selected: newSelected, unassigned: newUnassigned });
       const answerValue: Record<string, string> = {};
@@ -202,9 +201,9 @@ function RankingSublistComponent({
     }
 
     if (inSelected && (overInUnassigned || !overInSelected)) {
-      const moved = state.selected.find((i) => i.id === active.id)!;
-      const newSelected = state.selected.filter((i) => i.id !== active.id);
-      const exists = state.unassigned.find((i) => i.id === moved.id);
+      const moved = state.selected.find((i) => i.symbol === active.id)!;
+      const newSelected = state.selected.filter((i) => i.symbol !== active.id);
+      const exists = state.unassigned.find((i) => i.symbol === moved.symbol);
       const newUnassigned = exists ? state.unassigned : [...state.unassigned, moved];
       setState({ selected: newSelected, unassigned: newUnassigned });
       const answerValue: Record<string, string> = {};
@@ -215,45 +214,47 @@ function RankingSublistComponent({
   };
 
   return (
-    <Box mb="lg" w="60%" mx="auto">
+    <Box>
       {!enumerateQuestions && prompt && (
         <Text fw={500} mb="sm">
           {prompt}
         </Text>
       )}
-      {secondaryText && (
+      <Paper p="sm" w="60%" mx="auto">
+        {secondaryText && (
         <Text size="sm" c="dimmed" mb="md">
           {secondaryText}
         </Text>
-      )}
+        )}
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <Box ta="center" mb="md">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <Box ta="center" mb="md">
 
-          <DroppableZone id="sublist-selected" title="">
-            <Text size="md" fw={500} m="md">HIGH</Text>
-            <SortableContext items={state.selected.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-              <Stack w="400px" mx="auto">
-                {state.selected.map((item, index) => (
-                  <SortableItem key={item.id} item={item} index={index + 1} />
+            <DroppableZone id="sublist-selected" title="">
+              <Text size="md" fw={500} m="md">HIGH</Text>
+              <SortableContext items={state.selected.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
+                <Stack w="400px" mx="auto">
+                  {state.selected.map((item, index) => (
+                    <SortableItem key={item.symbol} item={item} index={index + 1} />
+                  ))}
+                </Stack>
+              </SortableContext>
+              <Text size="md" fw={500} m="md">LOW</Text>
+            </DroppableZone>
+
+          </Box>
+
+          <DroppableZone id="sublist-unassigned" title="Available Items">
+            <SortableContext items={state.unassigned.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
+              <Flex gap="xs" wrap="wrap" justify="center" w="400px" mx="auto">
+                {state.unassigned.map((item) => (
+                  <SortableItem key={item.symbol} item={item} />
                 ))}
-              </Stack>
+              </Flex>
             </SortableContext>
-            <Text size="md" fw={500} m="md">LOW</Text>
           </DroppableZone>
-
-        </Box>
-
-        <DroppableZone id="sublist-unassigned" title="Available Items">
-          <SortableContext items={state.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-            <Flex gap="xs" wrap="wrap" justify="center" w="400px" mx="auto">
-              {state.unassigned.map((item) => (
-                <SortableItem key={item.id} item={item} />
-              ))}
-            </Flex>
-          </SortableContext>
-        </DroppableZone>
-      </DndContext>
+        </DndContext>
+      </Paper>
     </Box>
   );
 }
@@ -287,9 +288,11 @@ function RankingCategoricalComponent({
   const items: {
     id: string;
     label: string;
+    symbol: string;
   }[] = useMemo(() => options.map((option) => ({
     id: typeof option === 'string' ? option : option.value,
     label: typeof option === 'string' ? option : option.label,
+    symbol: typeof option === 'string' ? option : option.value,
   })), [options]);
 
   const initialState = useMemo(() => {
@@ -298,14 +301,17 @@ function RankingCategoricalComponent({
       HIGH: [] as {
         id: string;
         label: string;
+        symbol: string;
       }[],
       MEDIUM: [] as {
         id: string;
         label: string;
+        symbol: string;
       }[],
       LOW: [] as {
         id: string;
         label: string;
+        symbol: string;
       }[],
     };
 
@@ -412,56 +418,56 @@ function RankingCategoricalComponent({
       >
         <Stack gap="sm" w="600px" mx="auto">
           <DroppableZone id="HIGH" title="HIGH">
-            <SortableContext items={state.HIGH.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={state.HIGH.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
               <Stack
                 gap="xs"
                 w="400px"
                 mx="auto"
               >
-                {state.HIGH.map((item, idx) => (
-                  <SortableItem key={item.id} item={item} index={idx + 1} />
+                {state.HIGH.map((item) => (
+                  <SortableItem key={item.symbol} item={item} />
                 ))}
               </Stack>
             </SortableContext>
           </DroppableZone>
 
           <DroppableZone id="MEDIUM" title="MEDIUM">
-            <SortableContext items={state.MEDIUM.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={state.MEDIUM.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
               <Stack
                 gap="xs"
                 w="400px"
                 mx="auto"
               >
-                {state.MEDIUM.map((item, idx) => (
-                  <SortableItem key={item.id} item={item} index={idx + 1} />
+                {state.MEDIUM.map((item) => (
+                  <SortableItem key={item.symbol} item={item} />
                 ))}
               </Stack>
             </SortableContext>
           </DroppableZone>
 
           <DroppableZone id="LOW" title="LOW">
-            <SortableContext items={state.LOW.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={state.LOW.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
               <Stack
                 gap="xs"
                 w="400px"
                 mx="auto"
               >
-                {state.LOW.map((item, idx) => (
-                  <SortableItem key={item.id} item={item} index={idx + 1} />
+                {state.LOW.map((item) => (
+                  <SortableItem key={item.symbol} item={item} />
                 ))}
               </Stack>
             </SortableContext>
           </DroppableZone>
 
           <DroppableZone id="unassigned" title="Available Items">
-            <SortableContext items={state.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={state.unassigned.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
               <Stack
                 gap="xs"
                 w="400px"
                 mx="auto"
               >
-                {state.unassigned.map((item, idx) => (
-                  <SortableItem key={item.id} item={item} index={idx + 1} />
+                {state.unassigned.map((item) => (
+                  <SortableItem key={item.symbol} item={item} />
                 ))}
               </Stack>
             </SortableContext>
@@ -512,15 +518,18 @@ function RankingPairwiseComponent({
   const itemList: {
     id: string;
     label: string;
+    symbol: string;
   }[] = useMemo(() => options.map((option) => ({
     id: typeof option === 'string' ? option : option.value,
     label: typeof option === 'string' ? option : option.label,
+    symbol: typeof option === 'string' ? option : option.value,
   })), [options]);
 
   const { initialState, initialPairCount } = useMemo(() => {
     const state: Record<string, {
       id: string;
       label: string;
+      symbol: string;
     }[]> = {
       unassigned: [...itemList],
       'pair-0-high': [],
@@ -598,8 +607,8 @@ function RankingPairwiseComponent({
       if (Object.keys(state).includes(targetCategory)) {
         setState((prev) => {
           const newState = { ...prev };
-          const sourceArr = newState[sourceCategory as keyof typeof newState] as { id: string; label: string }[];
-          const targetArr = newState[targetCategory as keyof typeof newState] as { id: string; label: string }[];
+          const sourceArr = newState[sourceCategory as keyof typeof newState] as { id: string; label: string; symbol: string }[];
+          const targetArr = newState[targetCategory as keyof typeof newState] as { id: string; label: string; symbol: string }[];
           const activeItem = sourceArr.find((item) => item.id === activeId);
 
           if (activeItem) {
@@ -637,7 +646,7 @@ function RankingPairwiseComponent({
           }
 
           const answerValue: Record<string, string> = {};
-          const entries = Object.entries(newState) as Array<[string, { id: string; label: string }[]]>;
+          const entries = Object.entries(newState) as Array<[string, { id: string; label: string; symbol: string }[]]>;
           entries.forEach(([category, categoryItems]) => {
             if (category !== 'unassigned') {
               categoryItems.forEach((item) => {
@@ -753,20 +762,20 @@ function RankingPairwiseComponent({
             <Stack key={`pair-${pair.index}`} gap="sm" w="100%">
               <Group justify="center" gap="md" wrap="nowrap" w="100%">
                 <DroppableZone id={`pair-${pair.index}-high`} title="HIGH">
-                  <SortableContext items={pair.high.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-                    <Stack gap="xs" w="300px" mx="auto">
+                  <SortableContext items={pair.high.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
+                    <Stack gap="xs" w="365px" mx="auto">
                       {pair.high.map((item) => (
-                        <SortableItem key={item.id} item={item} />
+                        <SortableItem key={item.symbol} item={item} />
                       ))}
                     </Stack>
                   </SortableContext>
                 </DroppableZone>
 
                 <DroppableZone id={`pair-${pair.index}-low`} title="LOW">
-                  <SortableContext items={pair.low.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-                    <Stack gap="xs" w="300px" mx="auto">
+                  <SortableContext items={pair.low.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
+                    <Stack gap="xs" w="365px" mx="auto">
                       {pair.low.map((item) => (
-                        <SortableItem key={item.id} item={item} />
+                        <SortableItem key={item.symbol} item={item} />
                       ))}
                     </Stack>
                   </SortableContext>
@@ -776,10 +785,10 @@ function RankingPairwiseComponent({
           ))}
 
           <DroppableZone id="unassigned" title="Available Items">
-            <SortableContext items={state.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-              <Flex gap="xs" wrap="wrap" justify="center" w="300px" mx="auto">
+            <SortableContext items={state.unassigned.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
+              <Flex gap="xs" wrap="wrap" justify="center" w="800px" mx="auto">
                 {state.unassigned.map((item) => (
-                  <SortableItem key={item.id} item={item} />
+                  <SortableItem key={item.symbol} item={item} />
                 ))}
               </Flex>
             </SortableContext>
