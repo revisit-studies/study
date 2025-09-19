@@ -9,11 +9,11 @@ import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap
 import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
 import { isDynamicBlock, isInheritedComponent } from './utils';
 
-const ajv1 = new Ajv();
+const ajv1 = new Ajv({ allowUnionTypes: true });
 ajv1.addSchema(globalSchema);
 const globalValidate = ajv1.getSchema<GlobalConfig>('#/definitions/GlobalConfig')!;
 
-const ajv2 = new Ajv();
+const ajv2 = new Ajv({ allowUnionTypes: true });
 ajv2.addSchema(configSchema);
 const studyValidate = ajv2.getSchema<StudyConfig>('#/definitions/StudyConfig')!;
 

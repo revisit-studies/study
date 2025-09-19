@@ -7,7 +7,7 @@ import {
 import { isDynamicBlock, isInheritedComponent } from './utils';
 import { PREFIX } from '../utils/Prefix';
 
-const ajv = new Ajv();
+const ajv = new Ajv({ allowUnionTypes: true });
 ajv.addSchema(librarySchema);
 const libraryValidate = ajv.getSchema<LibraryConfig>('#/definitions/LibraryConfig')!;
 
