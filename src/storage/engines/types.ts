@@ -842,10 +842,19 @@ export abstract class StorageEngine {
 
   // Saves the video stream to the storage engine. This method is used to save the screen recorded video data from a MediaRecorder stream.
   async saveScreenRecording(
-    videoStream: MediaRecorder,
+    blob: Blob,
     taskName: string,
   ) {
-    return this.saveAsset('screenRecording', videoStream, taskName);
+    const prefix = 'screenRecording';
+    const assetKey = `${prefix}/${taskName}`;
+    const participantKey = `${prefix}/${this.currentParticipantId}`;
+
+    this.uploadingAssetIds.push(assetKey);
+
+    await this._pushToStorage(participantKey, taskName, blob);
+    await this._cacheStorageObject(participantKey, taskName);
+
+    this.uploadingAssetIds = this.uploadingAssetIds.filter((id) => id !== assetKey);
   }
 
   // Gets the sequence array from the storage engine.

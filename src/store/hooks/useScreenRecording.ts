@@ -25,6 +25,8 @@ export function useScreenRecording() {
   const screenRecordingStream = useRef<MediaRecorder | null>(null); // combined stream
   const audioRecordingStream = useRef<MediaStream | null>(null); // audio stream
 
+  const chunks = useRef<Blob[]>([]);
+
   const currentComponent = useCurrentComponent();
 
   const [pageTitle] = useState(document.title);
@@ -56,7 +58,9 @@ export function useScreenRecording() {
   const startScreenRecording = useCallback(() => {
     setIsScreenRecording(true);
     setScreenWithAudioRecording(!!recordAudio);
-    screenRecordingStream.current?.start();
+
+    chunks.current = [];
+    screenRecordingStream.current?.start(1000); // 1s chunks
   }, [recordAudio]);
 
   // Start screen recording. This does not stop screen capture.
@@ -113,6 +117,12 @@ export function useScreenRecording() {
         const mediaRecorder = new MediaRecorder(combinedStream);
         screenRecordingStream.current = mediaRecorder;
 
+        screenRecordingStream.current.addEventListener('dataavailable', (event: BlobEvent) => {
+          if (event.data && event.data.size > 0) {
+            chunks.current.push(event.data);
+          }
+        });
+
         setIsScreenCapturing(true);
         setScreenCaptureStarted(true);
         setScreenWithAudioRecording(!!recordAudio);
@@ -137,6 +147,7 @@ export function useScreenRecording() {
     stopScreenCapture,
     startScreenRecording,
     stopScreenRecording,
+    chunks,
     screenRecordingError,
     isScreenRecording,
     isScreenCapturing,

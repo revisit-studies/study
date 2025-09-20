@@ -56,7 +56,7 @@ export function ComponentController() {
   const screenRecording = useScreenRecordingContext();
 
   const {
-    isScreenCapturing, stopScreenCapture, startScreenRecording, stopScreenRecording, screenRecordingStream,
+    isScreenCapturing, stopScreenCapture, startScreenRecording, stopScreenRecording, screenRecordingStream, chunks: screenRecordingChunks,
   } = screenRecording;
 
   const isAnalysis = useIsAnalysis();
@@ -116,7 +116,7 @@ export function ComponentController() {
       });
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentComponent, identifier]);
 
   useEffect(() => {
@@ -125,9 +125,15 @@ export function ComponentController() {
     }
 
     if (screenRecordingStream.current && screenCaptureTrialName.current) {
-      storageEngine.saveScreenRecording(screenRecordingStream.current, screenCaptureTrialName.current);
-      screenCaptureTrialName.current = null;
       stopScreenRecording();
+      const trialName = screenCaptureTrialName.current;
+      const { mimeType } = screenRecordingStream.current;
+      screenCaptureTrialName.current = null;
+
+      setTimeout(() => {
+        const blob = new Blob(screenRecordingChunks.current, { type: mimeType });
+        storageEngine.saveScreenRecording(blob, trialName);
+      }, 500);
     }
 
     if (currentComponent !== 'end' && isScreenCapturing && screenCaptureTrialName.current !== identifier && (stepConfig.recordScreen === undefined || stepConfig.recordScreen === true)) {
@@ -169,7 +175,7 @@ export function ComponentController() {
     }
 
     updateBlockForStep().then(addParticipantTag);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, storageEngine, sequence]);
 
   const currentIdentifier = useCurrentIdentifier();
