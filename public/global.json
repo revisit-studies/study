@@ -39,6 +39,7 @@
     "library-sus",
     "library-vlat",
     "library-adaptive-vlat",
+    "library-graph-literacy-scale",
     "test-audio",
     "test-library",
     "test-likert-matrix",
@@ -173,6 +174,10 @@
     },
     "library-vlat": {
       "path": "library-vlat/config.json",
+      "test": true
+    },
+    "library-graph-literacy-scale": {
+      "path": "library-graph-literacy-scale/config.json",
       "test": true
     },
     "test-audio": {

@@ -3,7 +3,6 @@ import * as d3 from 'd3';
 import {
   Center, Stack, Tooltip, Text,
 } from '@mantine/core';
-import { _ } from 'ajv';
 import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
