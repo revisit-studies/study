@@ -818,7 +818,16 @@ export abstract class StorageEngine {
     };
 
     recorder.addEventListener('dataavailable', listener);
-    recorder.requestData();
+
+    // Detect Safari
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    // When stopping recording:
+    if (isSafari) {
+      recorder.stop(); // This will trigger ondataavailable with the full recording
+    } else {
+      // For Chrome/Firefox, you can use requestData or chunked data
+      recorder.requestData();
+    }
 
     // Don't clean up the listener. The stream will be destroyed.
   }
