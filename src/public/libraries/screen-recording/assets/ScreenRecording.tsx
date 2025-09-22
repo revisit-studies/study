@@ -124,19 +124,17 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
               {(recordAudio && screenCapturing) ? <Box h={200} w={400} bd="1px solid #ccc"><RecordingAudioWaveform height={200} width={400} /></Box> : <Box h={200} w={400} bd="1px solid #ccc" />}
             </li>
           </ol>
-          <p>
-            <strong>Note:</strong>
-            <ul>
-              <li>
-                After we hear you say something, the
-                {' '}
-                <b>Continue</b>
-                {' '}
-                button will be enabled.
-              </li>
-              <li>Please do not close the window or screen recording until the entire study is completed.</li>
-            </ul>
-          </p>
+          <strong>Note:</strong>
+          <ul>
+            <li>
+              After we hear you say something, the
+              {' '}
+              <b>Continue</b>
+              {' '}
+              button will be enabled.
+            </li>
+            <li>Please do not close the window or screen recording until the entire study is completed.</li>
+          </ul>
         </>
       ) : (
         <>
