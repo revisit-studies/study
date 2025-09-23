@@ -15,6 +15,7 @@ const { exec } = require('child_process');
 const librariesPath = path.join(__dirname, './public/libraries');
 const publicPath = path.join(__dirname, './public');
 
+
 // Create example study config template
 const createExampleConfig = (libraryName) => ({
   $schema: 'https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json',
@@ -30,7 +31,7 @@ const createExampleConfig = (libraryName) => ({
     contactEmail: '',
     logoPath: 'revisitAssets/revisitLogoSquare.svg',
     withProgressBar: true,
-    sidebar: true,
+    withSidebar: true,
   },
   importedLibraries: [libraryName],
   components: {
@@ -49,10 +50,16 @@ const createExampleConfig = (libraryName) => ({
 });
 
 // Process each library
-const libraries = fs.readdirSync(librariesPath);
+const libraries = fs.readdirSync(librariesPath)
+  .filter(library => !library.startsWith('.') && !library.endsWith('.DS_Store'));
+
 libraries.forEach((library) => {
   // Skip hidden folders and files, and libraries in skip list
-  if (library.startsWith('.')) return;
+  if (library.startsWith('.')) {
+    // eslint-disable-next-line no-console
+    console.log(`Skipping ${library} library`);
+    return;
+  }
 
   const exampleFolderName = `library-${library}`;
   const examplePath = path.join(publicPath, exampleFolderName);
@@ -69,14 +76,15 @@ libraries.forEach((library) => {
     fs.mkdirSync(assetsPath);
     // eslint-disable-next-line no-console
     console.log(`Created ${exampleFolderName}/assets directory`);
+
+    // Create config.json
+    const configPath = path.join(examplePath, 'config.json');
+    const configContent = createExampleConfig(library);
+    fs.writeFileSync(configPath, JSON.stringify(configContent, null, 2));
+    // eslint-disable-next-line no-console
+    console.log(`Created/Updated ${exampleFolderName}/config.json`);
   }
 
-  // Create config.json
-  const configPath = path.join(examplePath, 'config.json');
-  const configContent = createExampleConfig(library);
-  fs.writeFileSync(configPath, JSON.stringify(configContent, null, 2));
-  // eslint-disable-next-line no-console
-  console.log(`Created/Updated ${exampleFolderName}/config.json`);
 });
 
 // eslint-disable-next-line no-console

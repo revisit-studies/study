@@ -7,11 +7,17 @@ import { openConfirmModal } from '@mantine/modals';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { showNotification, RevisitNotification } from '../../../utils/notifications';
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
-import {
-  FirebaseStorageEngine, FirebaseActionResponse, SnapshotNameItem,
-} from '../../../storage/engines/FirebaseStorageEngine';
+import { ActionResponse, SnapshotDocContent } from '../../../storage/engines/types';
+import { ParticipantData } from '../../../storage/types';
 
-export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
+type SnapshotAction =
+  | { type: 'create', archive: boolean }
+  | { type: 'rename', snapshot: string, newName: string }
+  | { type: 'restore', snapshot: string }
+  | { type: 'deleteSnapshot', snapshot: string }
+  | { type: 'deleteLive' };
+
+export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<Record<number, ParticipantData>> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
   const [modalDeleteSnapshotOpened, setModalDeleteSnapshotOpened] = useState<boolean>(false);
   const [modalRenameSnapshotOpened, setModalRenameSnapshotOpened] = useState<boolean>(false);
@@ -19,7 +25,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
 
   const [currentSnapshot, setCurrentSnapshot] = useState<string>('');
 
-  const [snapshots, setSnapshots] = useState<SnapshotNameItem[]>([]);
+  const [snapshots, setSnapshots] = useState<SnapshotDocContent>({});
 
   const [deleteValue, setDeleteValue] = useState<string>('');
   const [renameValue, setRenameValue] = useState<string>('');
@@ -27,11 +33,13 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
   const [loading, setLoading] = useState<boolean>(false);
   const [snapshotListLoading, setSnapshotListLoading] = useState<boolean>(false);
 
-  const { storageEngine: storageEngineBadType } = useStorageEngine();
-  const storageEngine = storageEngineBadType as FirebaseStorageEngine; // We're guaranteed to have a FirebaseStorageEngine here
+  const { storageEngine } = useStorageEngine();
 
   // Used to fetch archived datasets
   const refreshSnapshots = useCallback(async () => {
+    if (!storageEngine) {
+      return;
+    }
     setSnapshotListLoading(true);
     const currSnapshots = await storageEngine.getSnapshots(studyId);
     setSnapshots(currSnapshots);
@@ -42,61 +50,54 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
     refreshSnapshots();
   }, [refreshSnapshots]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  type FirebaseAction = (...args: any[]) => Promise<FirebaseActionResponse>;
+  if (!storageEngine) {
+    return null;
+  }
 
-  // Generalized snapshot action handler
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const snapshotAction = async (action: FirebaseAction, ...args: any[]) => {
+  // Strongly-typed action dispatcher
+  const snapshotAction = async (action: SnapshotAction) => {
     setLoading(true);
-    const response: FirebaseActionResponse = await action(...args);
+    let response: ActionResponse;
+
+    switch (action.type) {
+      case 'create':
+        response = await storageEngine.createSnapshot(studyId, action.archive);
+        break;
+      case 'rename':
+        response = await storageEngine.renameSnapshot(action.snapshot, action.newName, studyId);
+        break;
+      case 'restore':
+        response = await storageEngine.restoreSnapshot(studyId, action.snapshot);
+        break;
+      case 'deleteSnapshot':
+        response = await storageEngine.removeSnapshotOrLive(action.snapshot, studyId);
+        break;
+      case 'deleteLive':
+        response = await storageEngine.removeSnapshotOrLive(studyId, studyId);
+        break;
+      default:
+        setLoading(false);
+        throw new Error('Unknown action');
+    }
+
     if (response.status === 'SUCCESS') {
-      refreshSnapshots();
+      await refreshSnapshots();
       setLoading(false);
       await refresh();
-      // Show all notifications from success.
-      if (response.notifications) {
-        response.notifications.forEach((notification: RevisitNotification) => {
-          showNotification(notification);
-        });
-      }
+      response.notifications?.forEach((notification: RevisitNotification) => showNotification(notification));
     } else {
-      // Show returned error as a notification in red.
       setLoading(false);
       showNotification({ title: response.error.title, message: response.error.message, color: 'red' });
     }
   };
 
-  const handleCreateSnapshot = async () => {
-    await snapshotAction(storageEngine.createSnapshot.bind(storageEngine), studyId, false);
-  };
-
-  const handleArchiveData = async () => {
-    setDeleteValue('');
-    setModalArchiveOpened(false);
-    await snapshotAction(storageEngine.createSnapshot.bind(storageEngine), studyId, true);
-  };
-
-  const handleRenameSnapshot = async () => {
-    setModalRenameSnapshotOpened(false);
-    await snapshotAction(storageEngine.renameSnapshot.bind(storageEngine), currentSnapshot, renameValue);
-  };
-
-  const handleRestoreSnapshot = async (snapshot: string) => {
-    await snapshotAction(storageEngine.restoreSnapshot.bind(storageEngine), studyId, snapshot);
-  };
-
-  const handleDeleteSnapshot = async () => {
-    setDeleteValue('');
-    setModalDeleteSnapshotOpened(false);
-    await snapshotAction(storageEngine.removeSnapshotOrLive.bind(storageEngine), currentSnapshot, true);
-  };
-
-  const handleDeleteLive = async () => {
-    setDeleteValue('');
-    setModalDeleteLiveOpened(false);
-    await snapshotAction(storageEngine.removeSnapshotOrLive.bind(storageEngine), studyId, true);
-  };
+  // Handlers
+  const handleCreateSnapshot = () => snapshotAction({ type: 'create', archive: false });
+  const handleArchiveData = () => { setDeleteValue(''); setModalArchiveOpened(false); snapshotAction({ type: 'create', archive: true }); };
+  const handleRenameSnapshot = () => { setModalRenameSnapshotOpened(false); snapshotAction({ type: 'rename', snapshot: currentSnapshot, newName: renameValue }); };
+  const handleRestoreSnapshot = (snapshot: string) => snapshotAction({ type: 'restore', snapshot });
+  const handleDeleteSnapshot = () => { setDeleteValue(''); setModalDeleteSnapshotOpened(false); snapshotAction({ type: 'deleteSnapshot', snapshot: currentSnapshot }); };
+  const handleDeleteLive = () => { setDeleteValue(''); setModalDeleteLiveOpened(false); snapshotAction({ type: 'deleteLive' }); };
 
   const openCreateSnapshotModal = () => openConfirmModal({
     title: 'Create a Snapshot',
@@ -135,8 +136,9 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
 
   const fetchParticipants = async (snapshotName: string) => {
     const strippedFilename = snapshotName.slice(snapshotName.indexOf('-') + 1);
-    return await storageEngine.getAllParticipantsDataByStudy(strippedFilename);
+    return await storageEngine.getAllParticipantsData(strippedFilename);
   };
+
   return (
     <>
       <LoadingOverlay visible={loading} />
@@ -215,7 +217,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
         {/* Position relative keeps the loading overlay only on the list */}
         <Box style={{ position: 'relative' }}>
           <LoadingOverlay visible={snapshotListLoading} />
-          {snapshots.length > 0
+          {Object.keys(snapshots).length > 0
             ? (
               <Table>
                 <Table.Thead>
@@ -226,11 +228,11 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {snapshots.map(
-                    (snapshotItem: SnapshotNameItem) => (
-                      <Table.Tr key={snapshotItem.originalName}>
-                        <Table.Td>{snapshotItem.alternateName}</Table.Td>
-                        <Table.Td>{getDateFromSnapshotName(snapshotItem.originalName)}</Table.Td>
+                  {Object.entries(snapshots).map(
+                    ([key, snapshotItem]) => (
+                      <Table.Tr key={key}>
+                        <Table.Td>{snapshotItem.name}</Table.Td>
+                        <Table.Td>{getDateFromSnapshotName(key)}</Table.Td>
                         <Table.Td>
                           <Flex>
                             <Tooltip label="Rename">
@@ -239,7 +241,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
                                 variant="light"
                                 px={4}
                                 style={{ margin: '0px 5px' }}
-                                onClick={() => { setModalRenameSnapshotOpened(true); setCurrentSnapshot(snapshotItem.originalName); }}
+                                onClick={() => { setModalRenameSnapshotOpened(true); setCurrentSnapshot(key); }}
                               >
                                 <IconPencil />
                               </Button>
@@ -250,7 +252,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
                                 variant="light"
                                 px={4}
                                 style={{ margin: '0px 5px' }}
-                                onClick={() => { openRestoreSnapshotModal(snapshotItem.originalName); }}
+                                onClick={() => { openRestoreSnapshotModal(key); }}
                               >
                                 <IconRefresh />
                               </Button>
@@ -262,12 +264,12 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
                                 px={4}
                                 variant="light"
                                 style={{ margin: '0px 10px 0px 5px' }}
-                                onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(snapshotItem.originalName); }}
+                                onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(key); }}
                               >
                                 <IconTrashX />
                               </Button>
                             </Tooltip>
-                            <DownloadButtons visibleParticipants={() => fetchParticipants(snapshotItem.originalName)} studyId={studyId} gap="10px" fileName={snapshotItem.alternateName} />
+                            <DownloadButtons visibleParticipants={() => fetchParticipants(key)} studyId={studyId} gap="10px" fileName={snapshotItem.name} />
                           </Flex>
                         </Table.Td>
                       </Table.Tr>

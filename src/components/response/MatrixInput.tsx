@@ -1,12 +1,15 @@
 import {
-  Box, Flex, Radio, Text, Checkbox,
+  Box, Radio, Text, Checkbox,
 } from '@mantine/core';
-import { ChangeEvent } from 'react';
+import {
+  ChangeEvent, useMemo,
+} from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
 import checkboxClasses from './css/Checkbox.module.css';
 import radioClasses from './css/Radio.module.css';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
+import { InputLabel } from './InputLabel';
 
 function CheckboxComponent({
   _choices,
@@ -20,7 +23,7 @@ function CheckboxComponent({
   _choices: StringOption[],
   _n: number,
   idx: number,
-  question: StringOption,
+  question: string,
   answer: { value: Record<string, string> },
   onChange: (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: StringOption) => void
   disabled: boolean
@@ -38,8 +41,8 @@ function CheckboxComponent({
         <Checkbox
           disabled={disabled}
           key={`${checkbox.label}-${idx}`}
-          checked={answer.value[question.label].split('|').includes(checkbox.value)}
-          onChange={(event) => onChange(event, question.label, checkbox)}
+          checked={answer.value[question].split('|').includes(checkbox.value)}
+          onChange={(event) => onChange(event, question, checkbox)}
           value={checkbox.value}
           classNames={{ input: checkboxClasses.fixDisabled, icon: checkboxClasses.fixDisabledIcon }}
         />
@@ -60,7 +63,7 @@ function RadioGroupComponent({
   _choices: StringOption[],
   _n: number,
   idx: number,
-  question: StringOption,
+  question: string,
   response: MatrixResponse,
   answer: { value: Record<string, string> },
   onChange: (val: string, questionKey: string) => void,
@@ -75,8 +78,8 @@ function RadioGroupComponent({
         '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))',
         flex: 1,
       }}
-      onChange={(val) => onChange(val, question.label)}
-      value={answer.value[question.label]}
+      onChange={(val) => onChange(val, question)}
+      value={answer.value[question]}
     >
       <div
         style={{
@@ -117,7 +120,6 @@ export function MatrixInput({
 
   const {
     answerOptions,
-    questionOptions,
     prompt,
     secondaryText,
     required,
@@ -131,7 +133,9 @@ export function MatrixInput({
   };
 
   const _choices = typeof answerOptions === 'string' ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry })) : answerOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
-  const _questions = questionOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+
+  const { questionOrders } = useStoredAnswer();
+  const orderedQuestions = useMemo(() => questionOrders[response.id], [questionOrders, response.id]);
 
   // Re-define on change functions. Dispatch answers to store.
   const onChangeRadio = (val: string, questionKey: string) => {
@@ -158,15 +162,10 @@ export function MatrixInput({
   };
 
   const _n = _choices.length;
-  const _m = _questions.length;
+  const _m = orderedQuestions.length;
   return (
     <>
-      <Flex direction="row" wrap="nowrap" gap={4}>
-        {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
-        <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
-          <ReactMarkdownWrapper text={prompt} required={required} />
-        </Box>
-      </Flex>
+      {prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
       <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
       <Box
         style={{
@@ -220,7 +219,7 @@ export function MatrixInput({
             gridTemplateRows: `repeat(${_m}, 1fr)`,
           }}
         >
-          {_questions.map((entry, idx) => (
+          {orderedQuestions.map((entry, idx) => (
             <Text
               key={`question-${idx}-label`}
               style={{
@@ -238,7 +237,7 @@ export function MatrixInput({
               miw={140}
               maw={400}
             >
-              {entry.label}
+              {entry}
             </Text>
           ))}
         </div>
@@ -250,7 +249,7 @@ export function MatrixInput({
             gridTemplateRows: `repeat(${_m},1fr)`,
           }}
         >
-          {_questions.map((question, idx) => (
+          {orderedQuestions.map((question, idx) => (
             <div
               key={`question-${idx}`}
               style={{

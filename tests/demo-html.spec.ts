@@ -1,10 +1,17 @@
 import { expect, test } from '@playwright/test';
 
-test('html demo works as intended', async ({ page }) => {
+test('html demo works as intended with previous button', async ({ browser }) => {
+  const page = await browser.newPage();
+  await page.setViewportSize({
+    width: 1200,
+    height: 800,
+  });
+
   await page.goto('/');
 
   // Click on html-demo
   await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'HTML as a Stimulus' })
+    .nth(0)
     .getByText('Go to Study')
     .click();
 
@@ -24,14 +31,40 @@ test('html demo works as intended', async ({ page }) => {
   await expect(vis).toBeVisible();
 
   // Fill the response
-  const input = await page.getByPlaceholder('0-7');
+  const input = await page.locator('input[data-path="html-response"]');
   await expect(input).toBeVisible();
   await input.fill('2');
+  await expect(input).toHaveValue('2');
 
   // Click on the next button
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   const iframeContent = await page.frameLocator('iframe').getByRole('link', { name: 'Try The Demo' });
+  await expect(iframeContent).toBeVisible();
+
+  // Go to previous page
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
+
+  // Check answer is correctly saved
+  await expect(input).toBeVisible();
+  await expect(input).toHaveValue('2');
+
+  // Update answer to 4
+  await input.fill('4');
+  await expect(input).toHaveValue('4');
+
+  // Click on the next button
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(iframeContent).toBeVisible();
+
+  // Go to previous page
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
+
+  // Check answer is correctly saved
+  await expect(input).toBeVisible();
+  await expect(input).toHaveValue('4');
+
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(iframeContent).toBeVisible();
 
   await page.getByRole('button', { name: 'Next', exact: true }).click();

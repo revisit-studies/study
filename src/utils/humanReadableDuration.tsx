@@ -1,4 +1,11 @@
-export function humanReadableDuration(msDuration: number): string {
+export function humanReadableDuration(msDuration: number) {
+  if (Number.isNaN(msDuration as number)) {
+    return undefined;
+  }
+  if (msDuration <= 0) {
+    return '0s';
+  }
+
   const h = Math.floor(msDuration / 1000 / 60 / 60);
   const m = Math.floor((msDuration / 1000 / 60 / 60 - h) * 60);
   const s = Math.floor(((msDuration / 1000 / 60 / 60 - h) * 60 - m) * 60);

@@ -14,12 +14,15 @@ export function LikertInput({
   index: number;
   enumerateQuestions: boolean;
 }) {
-  const { numItems } = response;
+  const { numItems, start, spacing } = response;
 
   const options = [];
+  const startValue = start ?? 1;
+  const spacingValue = spacing ?? 1;
 
-  for (let i = 1; i <= +numItems; i += 1) {
-    options.push({ label: `${i}`, value: `${i}` });
+  for (let i = 0; i < +numItems; i += 1) {
+    const value = startValue + (i * spacingValue);
+    options.push({ label: `${value}`, value: `${value}` });
   }
 
   const radioResponse: RadioResponse = {

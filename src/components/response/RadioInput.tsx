@@ -1,13 +1,15 @@
 import {
-  Box, Flex, Group, Input, Radio, rem, Text,
+  Group, Input, Radio, rem, Text,
 } from '@mantine/core';
-import { useState } from 'react';
-import { RadioResponse } from '../../parser/types';
+import { useState, useMemo } from 'react';
+import { RadioResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Radio.module.css';
 import inputClasses from './css/Input.module.css';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
+import { InputLabel } from './InputLabel';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
 export function RadioInput({
   response,
@@ -29,40 +31,38 @@ export function RadioInput({
   const {
     prompt,
     required,
-    options,
     leftLabel,
     rightLabel,
     secondaryText,
     horizontal,
     withOther,
+    options,
   } = response;
 
-  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const storedAnswer = useStoredAnswer();
+  const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
+
+  const orderedOptions = useMemo(() => optionOrders[response.id] || options.map((option) => (typeof (option) === 'string' ? { label: option, value: option } : option)), [optionOrders, options, response.id]);
 
   const [otherSelected, setOtherSelected] = useState(false);
+
+  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 
   return (
     <Radio.Group
       name={`radioInput${response.id}`}
-      label={(
-        <Flex direction="row" wrap="nowrap" gap={4}>
-          {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
-          <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
-            <ReactMarkdownWrapper text={prompt} required={required} />
-          </Box>
-        </Flex>
-      )}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
       description={secondaryText}
       key={response.id}
       {...answer}
       // This overrides the answers error. Which..is bad?
-      error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+      error={error}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Group gap="lg" align="flex-end" mt={horizontal ? 0 : 'sm'}>
         {leftLabel ? <Text>{leftLabel}</Text> : null}
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
-          {optionsAsStringOptions.map((radio) => (
+          {orderedOptions.map((radio) => (
             <div
               key={`${radio.value}-${response.id}`}
               style={{
@@ -73,7 +73,7 @@ export function RadioInput({
                 alignItems: 'center',
               }}
             >
-              {horizontal && <Text size="sm">{radio.label}</Text>}
+              {horizontal && <ReactMarkdownWrapper text={radio.label} />}
               <Radio
                 disabled={disabled}
                 value={radio.value}
@@ -87,34 +87,34 @@ export function RadioInput({
             </div>
           ))}
           {withOther && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: horizontal ? 'column' : 'row',
-                gap: horizontal ? 'unset' : rem(12),
-                flex: stretch ? 1 : 'unset',
-                alignItems: 'center',
-              }}
-            >
-              {horizontal && <Text size="sm">Other</Text>}
-              <Radio
-                disabled={disabled}
-                value="other"
-                checked={otherSelected}
-                onClick={(event) => setOtherSelected(event.currentTarget.checked)}
-                label={!horizontal && (
-                <Input
-                  mt={-8}
-                  placeholder="Other"
-                  disabled={!otherSelected}
-                  {...otherValue}
-                  classNames={{ input: inputClasses.fixDisabled }}
-                />
-                )}
-                mt={0}
-                classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: horizontal ? 'column' : 'row',
+              gap: horizontal ? 'unset' : rem(12),
+              flex: stretch ? 1 : 'unset',
+              alignItems: 'center',
+            }}
+          >
+            {horizontal && <Text size="sm">Other</Text>}
+            <Radio
+              disabled={disabled}
+              value="other"
+              checked={otherSelected}
+              onClick={(event) => setOtherSelected(event.currentTarget.checked)}
+              label={!horizontal && (
+              <Input
+                mt={-8}
+                placeholder="Other"
+                disabled={!otherSelected}
+                {...otherValue}
+                classNames={{ input: inputClasses.fixDisabled }}
               />
-            </div>
+              )}
+              mt={0}
+              classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
+            />
+          </div>
           )}
         </HorizontalHandler>
         <Text>{rightLabel}</Text>

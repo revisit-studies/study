@@ -2,11 +2,11 @@
 import {
   Box, Center, Group, Loader, Stack,
 } from '@mantine/core';
-import { useSearchParams } from 'react-router';
+import { useSearchParams, useNavigate } from 'react-router';
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
-import { useResizeObserver, useThrottledState } from '@mantine/hooks';
+import { useResizeObserver, useThrottledCallback } from '@mantine/hooks';
 import { WaveForm, WaveSurfer } from 'wavesurfer-react';
 import * as d3 from 'd3';
 import {
@@ -28,9 +28,32 @@ const margin = {
   left: 0, top: 0, right: 0, bottom: 0,
 };
 
+function safe<T>(p: Promise<T>): Promise<T | null> {
+  return p.catch(() => null);
+}
+
 export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: string) => void }) {
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
+  const timestamp = useMemo(() => searchParams.get('t') || undefined, [searchParams]);
+
+  const replayTimestamp = useMemo(() => {
+    if (!timestamp) {
+      return undefined;
+    }
+
+    // If the timestamp is already in milliseconds, return it
+    if (!Number.isNaN(Number(timestamp))) {
+      return parseInt(timestamp, 10);
+    }
+
+    const hours = parseInt(timestamp.match(/(\d+)h/)?.[1] || '0', 10);
+    const minutes = parseInt(timestamp.match(/(\d+)m/)?.[1] || '0', 10);
+    const seconds = parseInt(timestamp.match(/(\d+)s/)?.[1] || '0', 10);
+
+    const milliseconds = (hours * 3600 + minutes * 60 + seconds) * 1000;
+    return milliseconds;
+  }, [timestamp]);
 
   const { storageEngine } = useStorageEngine();
 
@@ -38,7 +61,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
 
   const {
-    saveAnalysisState, setAnalysisHasAudio, setAnalysisIsPlaying,
+    saveAnalysisState, setAnalysisHasAudio, setAnalysisIsPlaying, setProvenanceJumpTime,
   } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 
@@ -62,7 +85,9 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
 
   const answers = useStoreSelector((state) => state.answers);
 
-  const [playTime, setPlayTime] = useThrottledState<number>(0, 100); // 100ms throttle to prevent re-rendering the AnalysisPopout too often
+  const [playTime, setPlayTime] = useState<number>(0);
+
+  const currentTimeRef = useRef<number>(0); // time in seconds
 
   const waveSurferDiv = useRef(null);
 
@@ -92,8 +117,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   // Make sure we always pause analysis when we change participants or tasks
   useEffect(() => {
     storeDispatch(setAnalysisIsPlaying(false));
-  }, [participantId, currentComponent, currentStep, storeDispatch, setAnalysisIsPlaying]);
-
+  }, [participantId, currentComponent, currentStep, storeDispatch, setAnalysisIsPlaying, identifier]);
   // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
   useEffect(() => {
     if (identifier && answers[identifier]?.provenanceGraph) {
@@ -166,6 +190,13 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   const startTime = useMemo(() => answers[identifier]?.startTime || 0, [answers, identifier]);
 
   useEffect(() => {
+    if (startTime) {
+      setPlayTime(startTime + (replayTimestamp || 0));
+      currentTimeRef.current = replayTimestamp || 0;
+    }
+  }, [startTime, replayTimestamp]);
+
+  useEffect(() => {
     if (totalAudioLength === 0) {
       setTimeString('');
     } else if (playTime !== 0) {
@@ -181,15 +212,44 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
     }
   }, [analysisHasAudio, answers, identifier]);
 
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (totalAudioLength > 0 && replayTimestamp) {
+      const maxTime = totalAudioLength * 1000;
+
+      if (replayTimestamp > maxTime) {
+        navigate(`?participantId=${participantId}&t=${maxTime}`);
+      }
+    }
+  }, [totalAudioLength, replayTimestamp, participantId, navigate]);
+
   const isAnalysis = useIsAnalysis();
   const wavesurfer = useRef<WaveSurferType | null>(null);
 
   const handleWSMount = useCallback(
     async (waveSurfer: WaveSurferType | null) => {
       wavesurfer.current = waveSurfer;
+      if (identifier.includes('__dynamicLoading')) {
+        return;
+      }
       if (waveSurfer && isAnalysis && identifier && storageEngine) {
         try {
-          const url = await storageEngine.getAudio(identifier, participantId);
+          if (!participantId) {
+            throw new Error('Participant ID is required to load audio');
+          }
+
+          const [audioUrl, screenUrl] = await Promise.all([
+            safe(storageEngine.getAudio(identifier, participantId)),
+            safe(storageEngine.getScreenRecording(identifier, participantId)),
+          ]);
+
+          if (screenUrl) {
+            // Audio is played from the screen recording video.
+            wavesurfer.current?.setMuted(true);
+          }
+
+          const url = audioUrl ?? screenUrl ?? null;
           await waveSurfer.load(url!);
           setWaveSurferLoading(false);
           storeDispatch(setAnalysisHasAudio(true));
@@ -207,12 +267,16 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
         setTotalAudioLength(0);
       }
     },
-    [isAnalysis, identifier, storageEngine, participantId, storeDispatch, setAnalysisHasAudio],
+    [identifier, isAnalysis, storageEngine, participantId, storeDispatch, setAnalysisHasAudio],
   );
 
-  const _setPlayTime = useCallback((n: number, percent: number | undefined) => {
+  const _setPlayTime = useThrottledCallback((n: number, percent: number | undefined) => {
     // if were past the end, pause the timer
-    if (n > totalAudioLength * 1000 + startTime) {
+    const audioEndTime = totalAudioLength * 1000 + startTime;
+
+    currentTimeRef.current = n - startTime;
+
+    if (n > audioEndTime) {
       storeDispatch(setAnalysisIsPlaying(false));
       setPlayTime(n);
 
@@ -221,12 +285,12 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
 
     setPlayTime(n);
 
-    if (wavesurfer.current && percent !== undefined) {
+    if (wavesurfer.current && percent !== undefined && !Number.isNaN(percent)) {
       setTimeout(() => {
         wavesurfer.current?.seekTo(percent);
       });
     }
-  }, [setAnalysisIsPlaying, setPlayTime, startTime, storeDispatch, totalAudioLength]);
+  }, 100); // 100ms throttle
 
   useEffect(() => {
     if (wavesurfer.current) {
@@ -237,6 +301,14 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
       }
     }
   }, [wavesurfer, analysisIsPlaying, totalAudioLength, startTime, setPlayTime]);
+
+  useEffect(() => {
+    storeDispatch(setProvenanceJumpTime(currentTimeRef.current));
+  }, [analysisIsPlaying, setProvenanceJumpTime, storeDispatch]);
+
+  const handleClickUpdateTimer = useCallback(() => {
+    storeDispatch(setProvenanceJumpTime(currentTimeRef.current));
+  }, [setProvenanceJumpTime, storeDispatch]);
 
   const xScale = useMemo(() => {
     if (!answers[identifier]?.startTime || !answers[identifier]?.endTime) {
@@ -287,7 +359,19 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
               height={25}
             />
           ) : null}
-        {xScale ? <Timer duration={totalAudioLength * 1000} height={(analysisHasAudio ? 50 : 0) + 25} isPlaying={analysisIsPlaying} startTime={startTime} width={width} xScale={xScale} updateTimer={_setPlayTime} /> : null}
+        {xScale ? (
+          <Timer
+            duration={totalAudioLength * 1000}
+            height={(analysisHasAudio ? 50 : 0) + 25}
+            isPlaying={analysisIsPlaying}
+            startTime={startTime}
+            width={width}
+            xScale={xScale}
+            updateTimer={_setPlayTime}
+            initialTime={replayTimestamp ? startTime + replayTimestamp : undefined}
+            onClickUpdateTimer={handleClickUpdateTimer}
+          />
+        ) : null}
       </Stack>
     </Group>
   );

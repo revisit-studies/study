@@ -1,19 +1,23 @@
 import {
   Button, Group, Tooltip,
 } from '@mantine/core';
-import { IconDatabaseExport, IconTableExport } from '@tabler/icons-react';
+import { IconDatabaseExport, IconMusicDown, IconTableExport } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { DownloadTidy, download } from './DownloadTidy';
 import { ParticipantData } from '../../storage/types';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { downloadParticipantsAudioZip } from '../../utils/handleDownloadAudio';
 
 type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData[]>);
 
 export function DownloadButtons({
-  visibleParticipants, studyId, gap, fileName,
-}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string }) {
+  visibleParticipants, studyId, gap, fileName, hasAudio,
+}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null; hasAudio?: boolean }) {
   const [openDownload, { open, close }] = useDisclosure(false);
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
+  const [loadingAudio, setLoadingAudio] = useState(false);
+  const { storageEngine } = useStorageEngine();
 
   const fetchParticipants = async () => {
     const currParticipants = typeof visibleParticipants === 'function' ? await visibleParticipants() : visibleParticipants;
@@ -32,10 +36,29 @@ export function DownloadButtons({
     open();
   };
 
+  const handleDownloadAudio = async () => {
+    setLoadingAudio(true);
+
+    try {
+      const currParticipants = await fetchParticipants();
+      if (!storageEngine) return;
+      await downloadParticipantsAudioZip({
+        storageEngine,
+        participants: currParticipants,
+        studyId,
+        fileName,
+      });
+    } finally {
+      setLoadingAudio(false);
+    }
+  };
+
+  const tooltipText = typeof visibleParticipants !== 'function' ? `Download ${visibleParticipants.length} participants` : 'Download participants data';
+
   return (
     <>
       <Group style={{ gap }}>
-        <Tooltip label="Download all participants data as JSON">
+        <Tooltip label={`${tooltipText} as JSON`}>
           <Button
             variant="light"
             disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
@@ -45,7 +68,7 @@ export function DownloadButtons({
             <IconDatabaseExport />
           </Button>
         </Tooltip>
-        <Tooltip label="Download all participants data as a tidy CSV">
+        <Tooltip label={`${tooltipText} as tidy CSV`}>
           <Button
             variant="light"
             disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
@@ -55,6 +78,19 @@ export function DownloadButtons({
             <IconTableExport />
           </Button>
         </Tooltip>
+        {hasAudio && (
+          <Tooltip label={`${tooltipText} audio & transcripts as ZIP`}>
+            <Button
+              variant="light"
+              disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
+              onClick={handleDownloadAudio}
+              px={4}
+              loading={loadingAudio}
+            >
+              <IconMusicDown />
+            </Button>
+          </Tooltip>
+        )}
       </Group>
 
       {openDownload && participants.length > 0 && (

@@ -1,62 +1,100 @@
-import { JSX, useCallback, useMemo } from 'react';
+import { JSX, useMemo } from 'react';
 import * as d3 from 'd3';
 import {
-  Center, Group, Stack, Tooltip, Text, Divider, Button, Badge,
+  Center, Stack, Tooltip, Text,
 } from '@mantine/core';
-import {
-  IconCheck, IconExternalLink, IconHourglassEmpty, IconX,
-} from '@tabler/icons-react';
 import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
-import { encryptIndex } from '../../../utils/encryptDecryptIndex';
-import { humanReadableDuration } from '../../../utils/humanReadableDuration';
-import { StudyConfig } from '../../../parser/types';
-import { PREFIX } from '../../../utils/Prefix';
-import { participantName } from '../../../utils/participantName';
+import { StoredAnswer, StudyConfig } from '../../../parser/types';
+import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
 
 const margin = {
-  left: 20, top: 0, right: 20, bottom: 0,
+  left: 20, top: 20, right: 20, bottom: 20,
+};
+
+const sortedTaskNames = (a: [string, StoredAnswer], b: [string, StoredAnswer]) => {
+  const splitA = a[1].trialOrder.split('_');
+  const splitB = b[1].trialOrder.split('_');
+  return splitA[0] === splitB[0] ? +splitA[1] - +splitB[1] : +splitA[0] - +splitB[0];
 };
 
 export function AllTasksTimeline({
-  participantData, width, height, selectedTask, studyId, studyConfig, maxLength,
-} : {participantData: ParticipantData, width: number, studyId: string, height: number, selectedTask?: string | null, studyConfig: StudyConfig | undefined, maxLength: number | undefined}) {
-  const clickTask = useCallback((task: string) => {
-    const split = task.split('_');
-    const index = +split[split.length - 1];
+  participantData, width, studyId, studyConfig, maxLength,
+} : {participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined}) {
+  const percentComplete = useMemo(() => {
+    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0);
 
-    window.open(`${PREFIX}${studyId}/${encryptIndex(index)}?participantId=${participantData.participantId}`, '_blank');
-  }, [participantData.participantId, studyId]);
+    return (Object.entries(participantData.answers).length - incompleteEntries.length) / (Object.entries(participantData.answers).length);
+  }, [participantData.answers]);
 
   const xScale = useMemo(() => {
     const allStartTimes = Object.values(participantData.answers || {}).filter((answer) => answer.startTime).map((answer) => [answer.startTime, answer.endTime]).flat();
 
     const extent = d3.extent(allStartTimes) as [number, number];
 
-    const scale = d3.scaleLinear([margin.left, width - margin.left - margin.right]).domain([extent[0], maxLength ? extent[0] + maxLength : extent[1]]).clamp(true);
+    const scale = d3.scaleLinear([margin.left, (width * percentComplete - (percentComplete !== 1 ? 0 : margin.right))]).domain([extent[0], maxLength ? extent[0] + maxLength : extent[1]]).clamp(true);
 
     return scale;
-  }, [maxLength, participantData.answers, width]);
+  }, [maxLength, participantData.answers, percentComplete, width]);
 
-  // Creating labels for the tasks
-  const [numComponentsAnsweredCorrectly, numComponentsWithCorrectAnswer, tasks] : [number, number, {line: JSX.Element, label: JSX.Element}[]] = useMemo(() => {
-    let currentHeight = 0;
+  const incompleteXScale = useMemo(() => {
+    const scale = d3.scaleLinear([width * percentComplete, width - margin.right]).domain([0, Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).length]).clamp(true);
 
+    return scale;
+  }, [participantData.answers, percentComplete, width]);
+
+  const maxHeight = useMemo(() => {
     const sortedEntries = Object.entries(participantData.answers || {}).filter((answer) => !!(answer[1].startTime)).sort((a, b) => a[1].startTime - b[1].startTime);
 
-    let _numComponentsAnsweredCorrectly = 0;
-    let _numComponentsWithCorrectAnswer = 0;
+    let currentHeight = 0;
+    let _maxHeight = 0;
 
-    const allElements = sortedEntries.map((entry, i) => {
-      const [name, answer] = entry;
+    sortedEntries.forEach((entry, i) => {
+      const [_name, answer] = entry;
 
       const prev = i > 0 ? sortedEntries[i - currentHeight - 1] : null;
 
       if (prev && prev[0].length * (CHARACTER_SIZE + 1) + xScale(prev[1].startTime) > xScale(answer.startTime)) {
+        currentHeight += 1;
+      } else {
+        currentHeight = 0;
+      }
+
+      if (currentHeight > _maxHeight) {
+        _maxHeight = currentHeight;
+      }
+    });
+
+    return (_maxHeight + 1) * LABEL_GAP + margin.top + margin.bottom;
+  }, [participantData.answers, xScale]);
+
+  // Creating labels for the tasks
+  const tasks: {line: JSX.Element, label: JSX.Element}[] = useMemo(() => {
+    let currentHeight = 0;
+
+    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(sortedTaskNames);
+
+    const sortedEntries = Object.entries(participantData.answers || {}).filter((answer) => !!(answer[1].startTime)).sort((a, b) => a[1].startTime - b[1].startTime);
+
+    const combined = [...sortedEntries, ...incompleteEntries];
+
+    const allElements = combined.map((entry, i) => {
+      const scale = entry[1].startTime === 0 ? incompleteXScale : xScale;
+
+      const [name, answer] = entry;
+
+      const prev = i > 0 ? combined[i - currentHeight - 1] : null;
+
+      const prevScale = prev && prev[1].startTime ? xScale : incompleteXScale;
+      const prevStart = prev ? prev[1].startTime ? prev[1].startTime : incompleteEntries.indexOf(prev) : 0;
+      const scaleStart = answer.startTime ? answer.startTime : incompleteEntries.indexOf(entry);
+      const scaleEnd = answer.endTime > 0 ? answer.endTime : incompleteEntries.indexOf(entry) + 1;
+
+      if (prev && prev[0].length * (CHARACTER_SIZE + 1) + prevScale(prevStart) > scale(scaleStart)) {
         currentHeight += 1;
       } else {
         currentHeight = 0;
@@ -67,33 +105,11 @@ export function AllTasksTimeline({
 
       const component = studyConfig?.components[joinExceptLast];
 
-      let isCorrect = true;
-      let hasCorrect = false;
-
-      if (component && component.correctAnswer) {
-        component.correctAnswer.forEach((a) => {
-          const { id, answer: componentCorrectAnswer } = a;
-
-          if (!component || !component.correctAnswer || answer.answer[id] !== componentCorrectAnswer) {
-            isCorrect = false;
-          }
-        });
-
-        hasCorrect = true;
-      } else {
-        hasCorrect = false;
-      }
-
-      if (hasCorrect) {
-        _numComponentsWithCorrectAnswer += 1;
-
-        if (isCorrect) {
-          _numComponentsAnsweredCorrectly += 1;
-        }
-      }
+      const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
+      const hasCorrect = !!((component && component.correctAnswer) || answer.correctAnswer.length > 0);
 
       return {
-        line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} answer={answer} height={height} xScale={xScale} />,
+        line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} xScale={scale} scaleStart={scaleStart} />,
         label: (
           <Tooltip
             key={`${name}-tooltip`}
@@ -114,24 +130,14 @@ export function AllTasksTimeline({
             )}
           >
             <g>
-              <SingleTask isCorrect={isCorrect} hasCorrect={hasCorrect} key={name} labelHeight={currentHeight * LABEL_GAP} isSelected={selectedTask === name} setSelectedTask={clickTask} answer={answer} height={height} name={name} xScale={xScale} />
+              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} />
             </g>
           </Tooltip>),
       };
     });
 
-    return [_numComponentsAnsweredCorrectly, _numComponentsWithCorrectAnswer, allElements];
-  }, [participantData.answers, xScale, studyConfig?.components, height, selectedTask, clickTask]);
-
-  const duration = useMemo(() => {
-    if (!participantData.answers || Object.entries(participantData.answers).length === 0) {
-      return 0;
-    }
-
-    const answersSorted = Object.values(participantData.answers).filter((data) => data.startTime).sort((a, b) => a.startTime - b.startTime);
-
-    return new Date(answersSorted[answersSorted.length - 1].endTime - (answersSorted[0] ? answersSorted[0].startTime : 0)).getTime();
-  }, [participantData]);
+    return allElements;
+  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig?.components, maxHeight, studyId]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {
@@ -161,96 +167,19 @@ export function AllTasksTimeline({
       }
 
       return (
-        browsedAwayList.map((browse, i) => <Tooltip withinPortal key={i} label="Browsed away"><rect x={xScale(browse[0])} width={xScale(browse[1]) - xScale(browse[0])} y={height - 5} height={10} /></Tooltip>)
+        browsedAwayList.map((browse, i) => <Tooltip withinPortal key={i} label="Browsed away"><rect x={xScale(browse[0])} width={xScale(browse[1]) - xScale(browse[0])} y={maxHeight - 5} height={10} /></Tooltip>)
       );
     });
-  }, [xScale, height, participantData.answers]);
-
-  const partName = useMemo(() => participantName(participantData, studyConfig), [participantData, studyConfig]);
-
-  const completionTime = useMemo(() => {
-    if (!participantData.answers || Object.entries(participantData.answers).length === 0) {
-      return '';
-    }
-
-    const answersSorted = Object.values(participantData.answers).filter((data) => data.startTime).sort((a, b) => a.startTime - b.startTime);
-
-    const date = new Date(answersSorted[answersSorted.length - 1].endTime);
-
-    return participantData.completed ? `${date.toLocaleDateString()} ${date.toLocaleTimeString()}` : '';
-  }, [participantData]);
+  }, [xScale, maxHeight, participantData.answers]);
 
   return (
     <Center>
       <Stack gap={15} style={{ width: '100%' }}>
-        <Divider size="md" />
-        <Group justify="space-between">
-          <Group justify="center">
-            {participantData.participantIndex
-              ? (
-                <Text>
-                  {`P-${participantData.participantIndex.toString().padStart(3, '0')}`}
-                </Text>
-              ) : null }
-
-            <Text size="md" fw={700}>
-              {partName || participantData.participantId}
-            </Text>
-
-            <Text size="md">
-              {completionTime}
-            </Text>
-
-            {participantData.completed ? null : <Text size="xl" c="red">Not completed</Text>}
-
-            <Group gap={10}>
-              <Badge
-                variant="light"
-                size="lg"
-                color="green"
-                leftSection={<IconCheck width={18} height={18} style={{ paddingTop: 1 }} />}
-                pb={1}
-              >
-                {numComponentsAnsweredCorrectly}
-              </Badge>
-              <Badge
-                variant="light"
-                size="lg"
-                color="red"
-                leftSection={<IconX width={18} height={18} style={{ paddingTop: 1 }} />}
-                pb={1}
-              >
-                {numComponentsWithCorrectAnswer - numComponentsAnsweredCorrectly}
-              </Badge>
-              <Badge
-                variant="light"
-                size="lg"
-                color="gray"
-                leftSection={<IconHourglassEmpty width={18} height={18} style={{ paddingTop: 1 }} />}
-                pb={1}
-              >
-                {humanReadableDuration(duration)}
-              </Badge>
-            </Group>
-
-          </Group>
-          <Button
-            rightSection={<IconExternalLink size={14} />}
-            component="a"
-            href={`${PREFIX}${studyId}/${encryptIndex(0)}?participantId=${participantData.participantId}`}
-            target="_blank"
-          >
-            Go to replay
-          </Button>
-        </Group>
-
-        { participantData.completed ? (
-          <svg style={{ width, height, overflow: 'visible' }}>
-            {tasks.map((t) => t.line)}
-            {tasks.map((t) => t.label)}
-            {browsedAway}
-          </svg>
-        ) : null}
+        <svg style={{ width, height: maxHeight, overflow: 'visible' }}>
+          {tasks.map((t) => t.line)}
+          {tasks.map((t) => t.label)}
+          {browsedAway}
+        </svg>
       </Stack>
     </Center>
 

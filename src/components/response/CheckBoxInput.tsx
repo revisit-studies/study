@@ -1,13 +1,14 @@
 import {
-  Box, Checkbox, Flex, Input,
+  Box, Checkbox, Input,
 } from '@mantine/core';
 import { useMemo, useState } from 'react';
-import { CheckboxResponse } from '../../parser/types';
+import { CheckboxResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Checkbox.module.css';
 import inputClasses from './css/Input.module.css';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
+import { InputLabel } from './InputLabel';
 
 export function CheckBoxInput({
   response,
@@ -27,28 +28,24 @@ export function CheckBoxInput({
   const {
     prompt,
     required,
-    options,
     secondaryText,
     horizontal,
     withOther,
+    options,
   } = response;
 
-  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const storedAnswer = useStoredAnswer();
+  const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
+
+  const orderedOptions = useMemo(() => optionOrders[response.id] || options.map((option) => (typeof (option) === 'string' ? { label: option, value: option } : option)), [optionOrders, options, response.id]);
 
   const [otherSelected, setOtherSelected] = useState(false);
 
-  const error = useMemo(() => generateErrorMessage(response, answer, optionsAsStringOptions), [response, answer, optionsAsStringOptions]);
+  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 
   return (
     <Checkbox.Group
-      label={(
-        <Flex direction="row" wrap="nowrap" gap={4}>
-          {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
-          <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
-            <ReactMarkdownWrapper text={prompt} required={required} />
-          </Box>
-        </Flex>
-      )}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
       description={secondaryText}
       {...answer}
       error={error}
@@ -56,7 +53,7 @@ export function CheckBoxInput({
     >
       <Box mt="xs">
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
-          {optionsAsStringOptions.map((option) => (
+          {orderedOptions.map((option) => (
             <Checkbox
               key={option.value}
               disabled={disabled}
