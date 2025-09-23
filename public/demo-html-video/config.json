@@ -49,7 +49,7 @@
           "max": 7
         }
       ],
-      "recordScreen": false
+      "recordScreen": true
     },
     "external_website": {
       "type": "website",

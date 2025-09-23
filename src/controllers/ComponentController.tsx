@@ -56,7 +56,7 @@ export function ComponentController() {
   const screenRecording = useScreenRecordingContext();
 
   const {
-    isScreenCapturing, stopScreenCapture, startScreenRecording, stopScreenRecording, screenRecordingStream, chunks: screenRecordingChunks,
+    isScreenCapturing, stopScreenCapture, startScreenRecording, stopScreenRecording, combinedMediaRecorder: screenRecordingStream,
   } = screenRecording;
 
   const isAnalysis = useIsAnalysis();
@@ -124,21 +124,14 @@ export function ComponentController() {
       return;
     }
 
-    if (screenRecordingStream.current && screenCaptureTrialName.current) {
+    if (screenRecordingStream.current) {
       stopScreenRecording();
-      const trialName = screenCaptureTrialName.current;
-      const { mimeType } = screenRecordingStream.current;
       screenCaptureTrialName.current = null;
-
-      setTimeout(() => {
-        const blob = new Blob(screenRecordingChunks.current, { type: mimeType });
-        storageEngine.saveScreenRecording(blob, trialName);
-      }, 500);
     }
 
     if (currentComponent !== 'end' && isScreenCapturing && screenCaptureTrialName.current !== identifier && (stepConfig.recordScreen === undefined || stepConfig.recordScreen === true)) {
       screenCaptureTrialName.current = identifier;
-      startScreenRecording();
+      startScreenRecording(identifier);
     }
 
     if (currentComponent === 'end') {

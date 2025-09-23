@@ -3,6 +3,7 @@ import {
 } from 'react';
 import { useStudyConfig } from './useStudyConfig';
 import { useCurrentComponent } from '../../routes/utils';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 
 /**
  * Capture screen and audio
@@ -22,10 +23,11 @@ export function useScreenRecording() {
   const [isScreenCapturing, setIsScreenCapturing] = useState(false);
   const [isRejected, setIsRejected] = useState(false);
 
-  const screenRecordingStream = useRef<MediaRecorder | null>(null); // combined stream
+  const combinedMediaStream = useRef<MediaStream>(null);
+  const combinedMediaRecorder = useRef<MediaRecorder | null>(null); // combined stream recorder
   const audioRecordingStream = useRef<MediaStream | null>(null); // audio stream
 
-  const chunks = useRef<Blob[]>([]);
+  const { storageEngine } = useStorageEngine();
 
   const currentComponent = useCurrentComponent();
 
@@ -44,30 +46,58 @@ export function useScreenRecording() {
     setIsScreenRecording(false);
     setScreenWithAudioRecording(false);
 
-    if (screenRecordingStream.current) {
-      screenRecordingStream.current.stream.getTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
-      screenRecordingStream.current.stream.getVideoTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
-      screenRecordingStream.current.stream.getAudioTracks().forEach((track) => { track.stop(); screenRecordingStream.current?.stream.removeTrack(track); });
-      screenRecordingStream.current.stop();
-      screenRecordingStream.current = null;
+    if (combinedMediaRecorder.current) {
+      combinedMediaRecorder.current.stream.getTracks().forEach((track) => { track.stop(); combinedMediaRecorder.current?.stream.removeTrack(track); });
+      combinedMediaRecorder.current.stream.getVideoTracks().forEach((track) => { track.stop(); combinedMediaRecorder.current?.stream.removeTrack(track); });
+      combinedMediaRecorder.current.stream.getAudioTracks().forEach((track) => { track.stop(); combinedMediaRecorder.current?.stream.removeTrack(track); });
+      combinedMediaRecorder.current.stop();
+      combinedMediaRecorder.current = null;
       audioRecordingStream.current = null;
     }
   }, []);
 
   // Start screen recording
-  const startScreenRecording = useCallback(() => {
-    setIsScreenRecording(true);
-    setScreenWithAudioRecording(!!recordAudio);
+  const startScreenRecording = useCallback((trialName: string) => {
+    if (!combinedMediaStream.current) {
+      return;
+    }
+    const stream = combinedMediaStream.current;
 
-    chunks.current = [];
-    screenRecordingStream.current?.start(1000); // 1s chunks
-  }, [recordAudio]);
+    const mediaRecorder = new MediaRecorder(stream);
+    combinedMediaRecorder.current = mediaRecorder;
+
+    let chunks : Blob[] = [];
+    mediaRecorder.addEventListener('dataavailable', (event: BlobEvent) => {
+      if (event.data && event.data.size > 0) {
+        chunks.push(event.data);
+      }
+    });
+
+    mediaRecorder.addEventListener('start', () => {
+      chunks = [];
+    });
+
+    mediaRecorder.addEventListener('stop', () => {
+      const { mimeType } = mediaRecorder;
+
+      const blob = new Blob(chunks, { type: mimeType });
+      storageEngine?.saveScreenRecording(blob, trialName);
+    });
+
+    setIsScreenCapturing(true);
+    setScreenCaptureStarted(true);
+    setScreenWithAudioRecording(!!recordAudio);
+    setRecordingError(null);
+
+    setIsScreenRecording(true);
+    mediaRecorder.start(1000); // 1s chunks
+  }, [recordAudio, storageEngine]);
 
   // Start screen recording. This does not stop screen capture.
   const stopScreenRecording = useCallback(() => {
     setIsScreenRecording(false);
     setScreenWithAudioRecording(false);
-    screenRecordingStream.current?.stop();
+    combinedMediaRecorder.current?.stop();
   }, []);
 
   useEffect(() => {
@@ -103,6 +133,8 @@ export function useScreenRecording() {
           ...(micStream?.getAudioTracks() ?? []),
         ]);
 
+        combinedMediaStream.current = combinedStream;
+
         if (recordVideoRef.current) {
           recordVideoRef.current.srcObject = combinedStream;
           recordVideoRef.current.play();
@@ -115,13 +147,7 @@ export function useScreenRecording() {
         });
 
         const mediaRecorder = new MediaRecorder(combinedStream);
-        screenRecordingStream.current = mediaRecorder;
-
-        screenRecordingStream.current.addEventListener('dataavailable', (event: BlobEvent) => {
-          if (event.data && event.data.size > 0) {
-            chunks.current.push(event.data);
-          }
-        });
+        combinedMediaRecorder.current = mediaRecorder;
 
         setIsScreenCapturing(true);
         setScreenCaptureStarted(true);
@@ -147,11 +173,10 @@ export function useScreenRecording() {
     stopScreenCapture,
     startScreenRecording,
     stopScreenRecording,
-    chunks,
     screenRecordingError,
     isScreenRecording,
     isScreenCapturing,
-    screenRecordingStream,
+    combinedMediaRecorder,
     audioRecordingStream,
     screenWithAudioRecording,
     isRejected,
