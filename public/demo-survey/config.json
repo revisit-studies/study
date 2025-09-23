@@ -221,6 +221,45 @@
             "Option 3",
             "Option 4"
           ]
+        },
+        {
+          "id": "q-ranking-sublist",
+          "type": "ranking-sublist",
+          "prompt": "Ranking Sublist example",
+          "secondaryText": "A ranking sublist example",
+          "location": "aboveStimulus",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ]
+        },
+        {
+          "id": "q-ranking-categorical",
+          "type": "ranking-categorical",
+          "prompt": "Ranking Categorical example",
+          "secondaryText": "A ranking categorical example",
+          "location": "aboveStimulus",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ]
+        },
+        {
+          "id": "q-ranking-pairwise",
+          "type": "ranking-pairwise",
+          "prompt": "Ranking Pairwise example",
+          "secondaryText": "A ranking pairwise example",
+          "location": "aboveStimulus",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ]
         }
       ]
     },
