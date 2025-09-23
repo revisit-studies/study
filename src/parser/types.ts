@@ -563,7 +563,7 @@ export interface CheckboxResponse extends BaseResponse {
 
 /**
  * The RankingResponse interface is used to define the properties of a ranking widget response.
- * RankingResponses render as a ranking widget with user specified options. There are three types of ranking widgets: sublist, categorical, and pairwise.
+ * RankingResponses render as a ranking widget with user specified options.
  *
  ```js
  {
@@ -580,7 +580,7 @@ export interface RankingResponse extends BaseResponse {
   type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise';
   /** The options that are displayed as ranking options, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
-  /** The number of options to render. Applies only to sublist and categorical ranking widgets. */
+  /** The number of items to rank. Applies only to sublist and categorical ranking widgets. */
   numItems?: number;
 }
 
