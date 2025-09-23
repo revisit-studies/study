@@ -156,6 +156,10 @@
             "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
             "type": "boolean"
           },
+          "recordScreen": {
+            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig",
+            "type": "boolean"
+          },
           "response": {
             "description": "The responses to the component",
             "items": {
@@ -753,6 +757,10 @@
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -1046,6 +1054,10 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig",
           "type": "boolean"
         },
         "response": {
@@ -1449,6 +1461,10 @@
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -1804,6 +1820,10 @@
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -2087,6 +2107,10 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig",
           "type": "boolean"
         },
         "response": {
@@ -2826,6 +2850,10 @@
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -2975,6 +3003,10 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig",
           "type": "boolean"
         },
         "response": {
@@ -3132,6 +3164,10 @@
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -3286,6 +3322,10 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig",
           "type": "boolean"
         },
         "response": {
