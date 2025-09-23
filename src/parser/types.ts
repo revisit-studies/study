@@ -264,7 +264,7 @@ export interface BaseResponse {
   withDontKnow?: boolean;
   /** The path to the external stylesheet file. */
   stylesheetPath?: string;
-  /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
+  /**  You can set styles here, using React CSSProperties, for example: `{"width": 100}` or `{"width": "50%"}` */
   style?: Styles;
 }
 
@@ -755,7 +755,7 @@ export interface BaseIndividualComponent {
   responseOrder?: 'fixed' | 'random';
   /** The path to the external stylesheet file. */
   stylesheetPath?: string;
-  /**  You can set styles here, using React CSSProperties, for example: {"width": 100} or {"width": "50%"} */
+  /**  You can set styles here, using React CSSProperties, for example: `{"width": 100}` or `{"width": "50%"}` */
   style?: Styles;
 }
 
