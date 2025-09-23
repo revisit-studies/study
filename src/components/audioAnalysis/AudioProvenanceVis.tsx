@@ -254,6 +254,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
           setWaveSurferLoading(false);
           storeDispatch(setAnalysisHasAudio(true));
 
+          setTotalAudioLength(waveSurfer.getDuration());
           setWaveSurferWidth(waveSurfer.getWidth());
           waveSurfer.seekTo(0);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
