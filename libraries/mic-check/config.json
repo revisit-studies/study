@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/LibraryConfigSchema.json",
   "description": "This is a library for testing the microphone. It provides a component that listens to the microphone and only enables the next button when audio is detected.",
   "components": {
     "audioTest": {
@@ -10,18 +10,11 @@
       "nextButtonText": "Continue",
       "response": [
         {
-          "id": "audioResponse",
-          "type": "radio",
+          "id": "audioTest",
+          "type": "reactive",
           "required": true,
-          "hidden": true,
-          "location": "sidebar",
-          "prompt": "Found Audio",
-          "options": [
-            {
-              "label": "Yes",
-              "value": "Yes"
-            }
-          ]
+          "prompt": "",
+          "hidden": true
         }
       ]
     }

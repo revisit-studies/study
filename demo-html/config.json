@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "HTML as a Stimulus",
     "version": "pilot",
@@ -20,8 +20,10 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true,
-    "windowEventDebounceTime": 200
+    "withSidebar": true,
+    "windowEventDebounceTime": 200,
+    "minHeightSize": 800,
+    "minWidthSize": 400
   },
   "components": {
     "introduction": {
@@ -53,7 +55,8 @@
     "external_website": {
       "type": "website",
       "path": "https://www.revisit.dev",
-      "response": []
+      "response": [],
+      "previousButton": true
     }
   },
   "sequence": {
