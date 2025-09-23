@@ -35,7 +35,9 @@ import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
-export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
+export function AppHeader({
+  studyNavigatorEnabled, dataCollectionEnabled, screenRecording, screenWithAudioRecording,
+}: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean, screenRecording: boolean, screenWithAudioRecording: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
 
   const answers = useStoreSelector((state) => state.answers);
@@ -117,12 +119,22 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
 
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
-            {isRecording ? (
-              <Group ml="xl" gap={20} wrap="nowrap">
-                <Text color="red">Recording audio</Text>
-                <RecordingAudioWaveform />
-              </Group>
-            ) : null}
+            {(isRecording || screenRecording) && (() => {
+              const recordingAudio = isRecording || (screenWithAudioRecording && screenRecording);
+              const recordingScreen = screenRecording;
+
+              return (
+                <Group ml="xl" gap={20} wrap="nowrap">
+                  <Text c="red">
+                    Recording
+                    {recordingScreen && ' screen'}
+                    {recordingScreen && recordingAudio && ' and'}
+                    {recordingAudio && ' audio'}
+                  </Text>
+                  {recordingAudio && <RecordingAudioWaveform />}
+                </Group>
+              );
+            })()}
             {!dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button

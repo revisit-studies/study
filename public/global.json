@@ -3,6 +3,7 @@
   "configsList": [
     "tutorial",
     "demo-html",
+    "demo-html-video",
     "demo-html-input",
     "demo-survey",
     "demo-training",
@@ -28,6 +29,7 @@
     "library-color-blindness",
     "library-demographics",
     "library-mic-check",
+    "library-screen-recording",
     "library-mini-vlat",
     "library-nasa-tlx",
     "library-previs",
@@ -55,6 +57,9 @@
     },
     "demo-html": {
       "path": "demo-html/config.json"
+    },
+    "demo-html-video": {
+      "path": "demo-html-video/config.json"
     },
     "demo-html-input": {
       "path": "demo-html-input/config.json"
@@ -133,6 +138,10 @@
     },
     "library-mic-check": {
       "path": "library-mic-check/config.json",
+      "test": true
+    },
+    "library-screen-recording": {
+      "path": "library-screen-recording/config.json",
       "test": true
     },
     "library-mini-vlat": {

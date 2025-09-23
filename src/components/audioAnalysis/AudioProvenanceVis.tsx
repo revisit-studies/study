@@ -28,6 +28,10 @@ const margin = {
   left: 0, top: 0, right: 0, bottom: 0,
 };
 
+function safe<T>(p: Promise<T>): Promise<T | null> {
+  return p.catch(() => null);
+}
+
 export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: string) => void }) {
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
@@ -57,7 +61,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
 
   const {
-    saveAnalysisState, setAnalysisHasAudio, setAnalysisIsPlaying,
+    saveAnalysisState, setAnalysisHasAudio, setAnalysisIsPlaying, setProvenanceJumpTime,
   } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 
@@ -82,6 +86,8 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   const answers = useStoreSelector((state) => state.answers);
 
   const [playTime, setPlayTime] = useState<number>(0);
+
+  const currentTimeRef = useRef<number>(0); // time in seconds
 
   const waveSurferDiv = useRef(null);
 
@@ -186,6 +192,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   useEffect(() => {
     if (startTime) {
       setPlayTime(startTime + (replayTimestamp || 0));
+      currentTimeRef.current = replayTimestamp || 0;
     }
   }, [startTime, replayTimestamp]);
 
@@ -223,12 +230,26 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   const handleWSMount = useCallback(
     async (waveSurfer: WaveSurferType | null) => {
       wavesurfer.current = waveSurfer;
+      if (identifier.includes('__dynamicLoading')) {
+        return;
+      }
       if (waveSurfer && isAnalysis && identifier && storageEngine) {
         try {
           if (!participantId) {
             throw new Error('Participant ID is required to load audio');
           }
-          const url = await storageEngine.getAudio(identifier, participantId);
+
+          const [audioUrl, screenUrl] = await Promise.all([
+            safe(storageEngine.getAudio(identifier, participantId)),
+            safe(storageEngine.getScreenRecording(identifier, participantId)),
+          ]);
+
+          if (screenUrl) {
+            // Audio is played from the screen recording video.
+            wavesurfer.current?.setMuted(true);
+          }
+
+          const url = audioUrl ?? screenUrl ?? null;
           await waveSurfer.load(url!);
           setWaveSurferLoading(false);
           storeDispatch(setAnalysisHasAudio(true));
@@ -246,12 +267,15 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
         setTotalAudioLength(0);
       }
     },
-    [isAnalysis, identifier, storageEngine, participantId, storeDispatch, setAnalysisHasAudio],
+    [identifier, isAnalysis, storageEngine, participantId, storeDispatch, setAnalysisHasAudio],
   );
 
   const _setPlayTime = useThrottledCallback((n: number, percent: number | undefined) => {
     // if were past the end, pause the timer
     const audioEndTime = totalAudioLength * 1000 + startTime;
+
+    currentTimeRef.current = n - startTime;
+
     if (n > audioEndTime) {
       storeDispatch(setAnalysisIsPlaying(false));
       setPlayTime(n);
@@ -261,7 +285,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
 
     setPlayTime(n);
 
-    if (wavesurfer.current && percent !== undefined) {
+    if (wavesurfer.current && percent !== undefined && !Number.isNaN(percent)) {
       setTimeout(() => {
         wavesurfer.current?.seekTo(percent);
       });
@@ -277,6 +301,14 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
       }
     }
   }, [wavesurfer, analysisIsPlaying, totalAudioLength, startTime, setPlayTime]);
+
+  useEffect(() => {
+    storeDispatch(setProvenanceJumpTime(currentTimeRef.current));
+  }, [analysisIsPlaying, setProvenanceJumpTime, storeDispatch]);
+
+  const handleClickUpdateTimer = useCallback(() => {
+    storeDispatch(setProvenanceJumpTime(currentTimeRef.current));
+  }, [setProvenanceJumpTime, storeDispatch]);
 
   const xScale = useMemo(() => {
     if (!answers[identifier]?.startTime || !answers[identifier]?.endTime) {
@@ -337,6 +369,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
             xScale={xScale}
             updateTimer={_setPlayTime}
             initialTime={replayTimestamp ? startTime + replayTimestamp : undefined}
+            onClickUpdateTimer={handleClickUpdateTimer}
           />
         ) : null}
       </Stack>

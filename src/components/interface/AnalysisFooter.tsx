@@ -114,6 +114,7 @@ export function AnalysisFooter() {
             <Text size="sm" ff="monospace">
               {timeString}
             </Text>
+
             <ActionIcon variant="filled" size={30} onClick={() => storeDispatch(setAnalysisIsPlaying(!analysisIsPlaying))}>
               {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
             </ActionIcon>

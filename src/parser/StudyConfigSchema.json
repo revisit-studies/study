@@ -156,6 +156,10 @@
             "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
             "type": "boolean"
           },
+          "recordScreen": {
+            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+            "type": "boolean"
+          },
           "response": {
             "description": "The responses to the component",
             "items": {
@@ -753,6 +757,10 @@
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -1046,6 +1054,10 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1377,6 +1389,10 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1734,6 +1750,10 @@
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -2017,6 +2037,10 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -2857,6 +2881,14 @@
           "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
           "type": "boolean"
         },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If true, will record audio on all components unless deactivated on individual components. This must be set to true if you want to record audio on any component in your study. Defaults to false. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before any component that you want to record the screen on to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordScreenFPS": {
+          "description": "Desired fps for recording screen. If possible, this value will be used, but if it's not possible, the user agent will use the closest possible match.",
+          "type": "number"
+        },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
@@ -3002,6 +3034,10 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3153,6 +3189,10 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3310,6 +3350,10 @@
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
           "type": "boolean"
         },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -3464,6 +3508,10 @@
         },
         "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "recordScreen": {
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {

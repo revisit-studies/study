@@ -35,7 +35,7 @@ export function StudyEnd() {
         setCompleted(true);
         clearInterval(interval);
       }
-    }, 1000);
+    }, 2000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

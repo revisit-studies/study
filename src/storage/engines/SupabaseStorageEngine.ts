@@ -389,6 +389,19 @@ export class SupabaseStorageEngine extends StorageEngine {
     return audio ? URL.createObjectURL(audio) : null;
   }
 
+  protected async _getScreenRecordingUrl(task: string, participantId?: string) {
+    await this.verifyStudyDatabase();
+    // If participantId is not provided, use the current participant id
+    const id = participantId || this.currentParticipantId;
+    if (!id) {
+      throw new Error('Participant not initialized');
+    }
+
+    // Get the screen recording from the storage
+    const screenRecording = await this._getFromStorage(`/screenRecording/${id}`, task);
+    return screenRecording ? URL.createObjectURL(screenRecording) : null;
+  }
+
   protected async _testingReset(studyId: string) {
     // Delete all rows with studyId matching the studyId
     const { error } = await this.supabase
