@@ -2,7 +2,10 @@ import {
   Suspense, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { useSearchParams } from 'react-router';
-import { Box, Center, Loader } from '@mantine/core';
+import {
+  Box, Center, Loader, Text, Title,
+} from '@mantine/core';
+import { IconPlugConnectedX } from '@tabler/icons-react';
 import { ResponseBlock } from '../components/response/ResponseBlock';
 import { IframeController } from './IframeController';
 import { ImageController } from './ImageController';
@@ -219,6 +222,16 @@ export function ComponentController() {
 
   if (currentComponent === 'Notfound') {
     return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
+  }
+
+  if (!storageEngine?.isConnected()) {
+    return (
+      <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
+        <IconPlugConnectedX size={48} stroke={1.5} color="orange" />
+        <Title mt="md" order={4}>Database Disconnected</Title>
+        <Text mt="md">Please check your network connection or disable your adblocker for this site, then refresh the page.</Text>
+      </Center>
+    );
   }
 
   if (participantId && storePartId !== participantId) {
