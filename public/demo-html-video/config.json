@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/545-enable-screen-recording-video-for-stimuli-that-cant-integrate-trrack/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "HTML as a Stimulus with Screen Recording",
     "version": "pilot",
@@ -17,7 +17,7 @@
     "withSidebar": true,
     "windowEventDebounceTime": 200,
     "recordAudio": true,
-    "recordScreen": true,
+    "recordScreen": false,
     "recordScreenFPS": 30
   },
   "importedLibraries": [
@@ -48,10 +48,16 @@
           "min": 0,
           "max": 7
         }
-      ],
-      "recordScreen": true
+      ]
     },
     "external_website": {
+      "type": "website",
+      "path": "https://www.revisit.dev",
+      "response": [],
+      "previousButton": true,
+      "recordScreen": true
+    },
+    "external_website2": {
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
@@ -60,6 +66,6 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": ["introduction", "$screen-recording.co.screenRecordingPermission", "external_website", "barChart"]
+    "components": ["introduction", "$screen-recording.co.screenRecordingPermission", "external_website", "external_website2", "barChart"]
   }
 }
