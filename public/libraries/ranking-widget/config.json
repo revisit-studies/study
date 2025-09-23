@@ -4,6 +4,25 @@
     "reference": "Caitlin Kuhlman, Diana Doherty, Malika Nurbekova, Goutham Deva, Zarni Phyo, Paul-Henry Schoenhagen, MaryAnn VanValkenburg, Elke Rundensteiner, and Lane Harrison. 2019. Evaluating Preference Collection Methods for Interactive Ranking Analytics. In Proceedings of the 2019 CHI Conference on Human Factors in Computing Systems (CHI '19). Association for Computing Machinery, New York, NY, USA, Paper 512, 1–11.",
     "doi": "10.1145/3290605.3300742",
     "components": {
+      "sublist-ranking": {
+        "type": "questionnaire",
+        "response": [
+          {
+            "id": "university-preference-sublist",
+            "prompt": "Rank the following options, selecting the top 3 options.",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "ranking-sublist",
+            "options": [
+              "Ball State University",
+              "University of Rochester",
+              "George Mason University",
+              "University of California - Berkeley",
+              "Washington State University"
+            ]
+          }
+        ]
+      },
       "sublist-ranking-top-3": {
         "type": "questionnaire",
         "response": [
@@ -21,6 +40,25 @@
               "Washington State University"
             ],
             "numItems": 3
+          }
+        ]
+      },
+      "categorical-binning": {
+        "type": "questionnaire",
+        "response": [
+          {
+            "id": "university-preference-categorical",
+            "prompt": "Rank the following options. Select the top 2 options.",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "ranking-categorical",
+            "options": [
+              "Ball State University",
+              "University of Rochester",
+              "George Mason University",
+              "University of California - Berkeley",
+              "Washington State University"
+            ]
           }
         ]
       },
@@ -69,7 +107,9 @@
         "id": "ranking-widget-full",
         "order": "fixed",
         "components": [
+          "sublist-ranking",
           "sublist-ranking-top-3",
+          "categorical-binning",
           "categorical-binning-top-2",
           "pairwise-comparison"
         ]
