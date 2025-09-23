@@ -220,15 +220,20 @@ export abstract class StorageEngine {
   * THROTTLED METHODS
   * These methods are used to throttle the calls to the storage engine's methods that can be called frequently.
   */
-  private __throttleVerifyStudyDatabase = throttle(async () => {
-    try {
-      await this._verifyStudyDatabase();
-    } catch (e) {
-      // If we fail to verify the study database, we are probably offline or the connection is bad. Set connected to false.
-      this.connected = false;
-      console.error('Error verifying study database:', e);
-    }
-  }, 10000);
+  private __throttleVerifyStudyDatabase = throttle(
+    () => new Promise<void>((resolve, reject) => {
+      this._verifyStudyDatabase()
+        .then(() => {
+          resolve();
+        })
+        .catch((e) => {
+          this.connected = false;
+          console.error('Error verifying study database:', e);
+          reject(e);
+        });
+    }),
+    10000,
+  );
 
   private __throttleSaveAnswers = throttle(async () => { await this._saveAnswers(); }, 3000);
 
