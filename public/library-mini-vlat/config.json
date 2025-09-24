@@ -87,28 +87,34 @@
       "introduction",
       "$mic-check.co.audioTest",
       {
-        "id": "critiquePart",
+        "id": "test",
+        "order": "random",
         "components": [
-          "critiqueCalvi1",
-          "critiqueCalvi2",
-          "critiqueUntimelyDeath",
-          "critiqueWealth"
-        ],
-        "order": "random"
-      },
-      "drawingTraining",
-      {
-        "id": "drawingPart",
-        "components": [
-          "drawingTree",
-          "drawingNetwork",
-          "drawingBpm",
-          "drawingRanking",
-          "drawing100m"
-        ],
-        "order": "random"
-      },
-      "$mini-vlat.se.full"
+          {
+            "id": "critiquePart",
+            "components": [
+              "critiqueCalvi1",
+              "critiqueCalvi2",
+              "critiqueUntimelyDeath",
+              "critiqueWealth"
+            ],
+            "order": "random"
+          },
+          "drawingTraining",
+          {
+            "id": "drawingPart",
+            "components": [
+              "drawingTree",
+              "drawingNetwork",
+              "drawingBpm",
+              "drawingRanking",
+              "drawing100m"
+            ],
+            "order": "random"
+          },
+          "$mini-vlat.se.full"
+        ]
+      }
     ]
   }
 }
