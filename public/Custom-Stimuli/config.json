@@ -2,7 +2,7 @@
 {  
     "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
-        "title": "Custom Stimuli",
+        "title": "Study 3 Replication",
         "version": "pilot",
         "authors": [
             "The MQP Team"

@@ -155,19 +155,7 @@
       "path": "new-demo-study/config.json",
       "test": true
     },
-    "B0D-Stimuli":{
-      "path": "B0D-Stimuli/config.json",
-      "test": true
-    },
-    "B1D-Stimuli":{
-      "path": "B1D-Stimuli/config.json",
-      "test": true
-    },
-    "B2D-Stimuli":{
-      "path": "B2D-Stimuli/config.json",
-      "test": true
-    },
-    "Custom-Stimuli":{
+    "Study 3 Repication":{
       "path": "Custom-Stimuli/config.json",
       "test": true
     }
