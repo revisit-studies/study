@@ -1,0 +1,621 @@
+
+{  
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "Custom Stimuli",
+        "version": "pilot",
+        "authors": [
+            "The MQP Team"
+        ],
+        "date": "2025-09-24",
+        "description": "",
+        "organizations": [
+            "WPI"
+        ]
+  },
+    "uiConfig": {
+        "contactEmail": "contact@revisit.dev",
+        "helpTextPath": "demo-image/assets/help.md",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true,
+        "nextOnEnter": true,
+        "recordStudyAudio": true
+    },
+    "components": {
+        "B0-obscured": {
+            "type": "image",
+            "description": "obscured image of b0 stimuli",
+            "path": "Custom-Stimuli/assets/b0-obscured.png",
+            "instruction": "Please answer the following questions about the maker of this chart",
+            "style": {
+                "width": "800px"
+            },
+            "response": [
+                {
+                    "id": "Custom-Stimuli/b0-obscured-encounter",
+                    "prompt": "As you're scrolling through your feed, you see this image. What would you do?",
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        "Scroll",
+                        "Read"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-id",
+                    "prompt": "Who do you think is most likely responsible for having this image created?",
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "options": [
+                        "Individual",
+                        "Organization",
+                        "Education",
+                        "Business",
+                        "News",
+                        "Political"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-id-conf",
+                    "prompt": "How confident are you with your answer for the above question?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Not Confident",
+                            "value": 0
+                        },
+                        {
+                            "label": "Confident",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-age",
+                    "prompt": "What generation are they most likely from?",
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "options": [
+                        "Boomer",
+                        "Gen-X",
+                        "Millenial",
+                        "Gen-Z"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-age-conf",
+                    "prompt": "How confident are you with your answer for the above question?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Not Confident",
+                            "value": 0
+                        },
+                        {
+                            "label": "Confident",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-gender",
+                    "prompt": "What gender do they most likely identify with?",
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        "Male",
+                        "Female",
+                        "Other"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-gender-conf",
+                    "prompt": "How confident are you with your answer for the above question?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Not Confident",
+                            "value": 0
+                        },
+                        {
+                            "label": "Confident",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-design",
+                    "prompt": "Are they likely a layperson or professional in graphic design?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Layperson",
+                            "value": 0
+                        },
+                        {
+                            "label": "Professional",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-data",
+                    "prompt": "Are they likely a layperson or professional in data analysis?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Layperson",
+                            "value": 0
+                        },
+                        {
+                            "label": "Professional",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-politics",
+                    "prompt": "Are their politics more likely left-leaning or right-leaning?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Left-Leaning",
+                            "value": 0
+                        },
+                        {
+                            "label": "Right-Leaning",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-alignment",
+                    "prompt": "Do they likely share your values?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "No",
+                            "value": 0
+                        },
+                        {
+                            "label": "Yes",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-intention",
+                    "prompt": "Is their intent more likely to persuade or inform?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Persuade",
+                            "value": 0
+                        },
+                        {
+                            "label": "Inform",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-trust",
+                    "prompt": "How trustworthy are they?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Untrustworthy",
+                            "value": 0
+                        },
+                        {
+                            "label": "Trustworthy",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-beauty",
+                    "prompt": "How aesthetically pleasing is this image?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 0
+                        },
+                        {
+                            "label": "Very much",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-obscured-explain",
+                    "prompt": "Explain what the maker of this chart is trying to demonstrate:",
+                    "location": "sidebar",
+                    "type": "longText"
+                }
+            ]
+        },
+        "B0-unobscured": {
+            "type": "image",
+            "description": "unobscured image of b0 stimuli",
+            "path": "Custom-Stimuli/assets/b0-unobscured.png",
+            "instruction": "Please answer the following questions about the maker of this chart",
+            "style": {
+                "width": "800px"
+            },
+            "response": [
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-encounter",
+                    "prompt": "As you're scrolling through your feed, you see this image. What would you do?",
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        "Scroll",
+                        "Read"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-id",
+                    "prompt": "Who do you think is most likely responsible for having this image created?",
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "options": [
+                        "Individual",
+                        "Organization",
+                        "Education",
+                        "Business",
+                        "News",
+                        "Political"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-id-conf",
+                    "prompt": "How confident are you with your answer for the above question?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Not Confident",
+                            "value": 0
+                        },
+                        {
+                            "label": "Confident",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-age",
+                    "prompt": "What generation are they most likely from?",
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "options": [
+                        "Boomer",
+                        "Gen-X",
+                        "Millenial",
+                        "Gen-Z"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-age-conf",
+                    "prompt": "How confident are you with your answer for the above question?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Not Confident",
+                            "value": 0
+                        },
+                        {
+                            "label": "Confident",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-gender",
+                    "prompt": "What gender do they most likely identify with?",
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        "Male",
+                        "Female",
+                        "Other"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-gender-conf",
+                    "prompt": "How confident are you with your answer for the above question?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Not Confident",
+                            "value": 0
+                        },
+                        {
+                            "label": "Confident",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-design",
+                    "prompt": "Are they likely a layperson or professional in graphic design?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Layperson",
+                            "value": 0
+                        },
+                        {
+                            "label": "Professional",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-data",
+                    "prompt": "Are they likely a layperson or professional in data analysis?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Layperson",
+                            "value": 0
+                        },
+                        {
+                            "label": "Professional",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-politics",
+                    "prompt": "Are their politics more likely left-leaning or right-leaning?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Left-Leaning",
+                            "value": 0
+                        },
+                        {
+                            "label": "Right-Leaning",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-alignment",
+                    "prompt": "Do they likely share your values?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "No",
+                            "value": 0
+                        },
+                        {
+                            "label": "Yes",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-intention",
+                    "prompt": "Is their intent more likely to persuade or inform?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Persuade",
+                            "value": 0
+                        },
+                        {
+                            "label": "Inform",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-trust",
+                    "prompt": "How trustworthy are they?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Untrustworthy",
+                            "value": 0
+                        },
+                        {
+                            "label": "Trustworthy",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-beauty",
+                    "prompt": "How aesthetically pleasing is this image?",
+                    "location": "sidebar",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 0
+                        },
+                        {
+                            "label": "Very much",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/b0-unobscured-explain",
+                    "prompt": "Explain what the maker of this chart is trying to demonstrate:",
+                    "location": "sidebar",
+                    "type": "longText"
+                }
+            ]
+        },
+        "Demographics": {
+            "type": "questionnaire",
+            "response": [
+                {
+                    "id": "Custom-Stimuli/demographics-gender",
+                    "prompt": "What is your gender?",
+                    "type":"radio",
+                    "options": [
+                        "Male",
+                        "Female",
+                        "Non-binary/third gender"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/demographics-race",
+                    "prompt": "Race:",
+                    "type": "checkbox",
+                    "options": [
+                        "American Indian/Native American or Alaska Native",
+                        "Asian",
+                        "Black or African American",
+                        "White or Caucasian"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/demographics-education",
+                    "prompt": "Highest level of education completed:",
+                    "type": "dropdown",
+                    "options": [
+                        "High School Diploma or GED",
+                        "Some College",
+                        "Associates or Technical Degree",
+                        "Undergraduate Degree",
+                        "Graduate or Professional Degree"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/demographis-employment",
+                    "prompt": "Employment Status:",
+                    "type": "dropdown",
+                    "options": [
+                        "Working Part-Time",
+                        "Working Full-Time",
+                        "Unemployed and looking for work",
+                        "Student",
+                        "Retired",
+                        "A homemaker or stay-at-home parent",
+                        "Other"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/demographics-income",
+                    "prompt": "Income:",
+                    "type": "dropdown",
+                    "options": [
+                        "Less than $25,000",
+                        "$25,000-$49,000",
+                        "$50,000-$74,999",
+                        "$75,000-$99,999",
+                        "$100,000-$149,999",
+                        "$150,000 or more",
+                        "Prefer not to say"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/demographics-work-detail",
+                    "prompt": "Describe your job title or area of work",
+                    "type": "shortText"
+                },
+                {
+                    "id": "Custom-Stimuli/demographics-zipcode",
+                    "prompt": "Zipcode:",
+                    "type": "shortText"
+                },
+                {
+                    "id": "Custom-Stimuli/demographics-age",
+                    "prompt": "Age:",
+                    "type": "dropdown",
+                    "options": [
+                        "18-24",
+                        "25-34",
+                        "35-44",
+                        "45-54",
+                        "55-64",
+                        "65+ years"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/demographics-party",
+                    "prompt": "Political Party:",
+                    "type": "radio",
+                    "options": [
+                        "Democrat",
+                        "Republican",
+                        "Other"
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/demographics-party-other",
+                    "prompt": "If you selected Other for the above question, please answer here",
+                    "type": "shortText"
+                },
+                {
+                    "id": "Custom-Stimuli/demographics-politics-social",
+                    "prompt": "Would you say you are more socially left-leaning or right-leaning?",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Left-Leaning",
+                            "value": 0
+                        },
+                        {
+                            "label": "Right-Leaning",
+                            "value": 100
+                        }
+                    ]
+                },
+                {
+                    "id": "Custom-Stimuli/demographics-politics-fiscal",
+                    "prompt": "Would you say you are more fiscally left-leaning or right-leaning?",
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Left-Leaning",
+                            "value": 0
+                        },
+                        {
+                            "label": "Right-Leaning",
+                            "value": 100
+                        }
+                    ]
+                }
+                
+
+            ]
+
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "B0-obscured",
+            "B0-unobscured",
+            "Demographics"
+        ]
+    }
+}

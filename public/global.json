@@ -36,7 +36,8 @@
     "new-demo-study",
     "B1D-Stimuli",
     "B2D-Stimuli",
-    "B0D-Stimuli"
+    "B0D-Stimuli",
+    "Custom-Stimuli"
 
   ],
   "configs": {
@@ -164,6 +165,10 @@
     },
     "B2D-Stimuli":{
       "path": "B2D-Stimuli/config.json",
+      "test": true
+    },
+    "Custom-Stimuli":{
+      "path": "Custom-Stimuli/config.json",
       "test": true
     }
   }
