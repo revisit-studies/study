@@ -9,7 +9,7 @@
         "response": [
           {
             "id": "university-preference-sublist",
-            "prompt": "Rank the following options, selecting the top 3 options.",
+            "prompt": "Rank the following options.",
             "required": true,
             "location": "belowStimulus",
             "type": "ranking-sublist",
@@ -27,7 +27,7 @@
         "type": "questionnaire",
         "response": [
           {
-            "id": "university-preference-sublist",
+            "id": "university-preference-sublist-top-3",
             "prompt": "Rank the following options, selecting the top 3 options.",
             "required": true,
             "location": "belowStimulus",
@@ -48,7 +48,7 @@
         "response": [
           {
             "id": "university-preference-categorical",
-            "prompt": "Rank the following options. Select the top 2 options.",
+            "prompt": "Rank the following options.",
             "required": true,
             "location": "belowStimulus",
             "type": "ranking-categorical",
@@ -66,7 +66,7 @@
         "type": "questionnaire",
         "response": [
           {
-            "id": "university-preference-categorical",
+            "id": "university-preference-categorical-top-2",
             "prompt": "Rank the following options. Select the top 2 options.",
             "required": true,
             "location": "belowStimulus",

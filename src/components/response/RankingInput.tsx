@@ -1,49 +1,32 @@
 import {
-  closestCenter,
-  DndContext,
-  DragEndEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  useDroppable,
-  DragOverlay,
+  closestCenter, DndContext, DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors, useDroppable,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
+  arrayMove, SortableContext, useSortable, verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import cx from 'clsx';
 import {
-  Box,
-  Button,
-  Flex,
-  Group,
-  Paper,
-  Stack,
-  Text,
+  Box, Button, Flex, Group, Paper, Stack, Text,
 } from '@mantine/core';
 import {
   useMemo, useState, useEffect, useRef,
 } from 'react';
+import { InputLabel } from './InputLabel';
+import classes from './css/RankingDnd.module.css';
 import { RankingResponse, StringOption } from '../../parser/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
 
 interface ItemProps {
-  item: {
-    id: string;
-    label: string;
-    symbol: string;
-  };
+  item: string;
   index?: number;
 }
+
 function SortableItem({ item, index }: ItemProps) {
   const {
-    attributes, listeners, setNodeRef, transform, transition,
+    attributes, listeners, setNodeRef, transform, transition, isDragging,
   } = useSortable({
-    id: item.symbol,
+    id: item,
   });
 
   const style: React.CSSProperties = {
@@ -55,15 +38,16 @@ function SortableItem({ item, index }: ItemProps) {
     <Paper
       ref={setNodeRef}
       style={style}
+      className={cx(classes.item, { [classes.itemDragging]: isDragging })}
       {...attributes}
       {...listeners}
       withBorder
       p="sm"
     >
-      <Flex align="center" gap="sm">
-        {index !== undefined && <Text c="dimmed">{index}</Text>}
-        <Text>{item.label}</Text>
-      </Flex>
+      {index !== undefined && (
+        <Text c="dimmed" mr="sm">{index}</Text>
+      )}
+      <Text>{item}</Text>
     </Paper>
   );
 }
@@ -83,16 +67,16 @@ function DroppableZone({
 
   return (
     <Paper
-      withBorder
-      p="sm"
       ref={setNodeRef}
       style={{
         // If item is over the droppable zone, change the background and border color to blue
         backgroundColor: isOver ? '#f0f8ff' : undefined,
         borderColor: isOver ? '#4dabf7' : undefined,
       }}
+      withBorder
+      p="sm"
     >
-      <Text size="md" fw={500} ta="center" mb="xs">{title}</Text>
+      <Text fw={500} ta="center" mb="sm">{title}</Text>
       {children}
     </Paper>
   );
@@ -100,26 +84,16 @@ function DroppableZone({
 
 function RankingSublistComponent({
   options,
-  disabled,
-  index: _index,
-  enumerateQuestions,
-  prompt,
-  required: _required,
-  secondaryText,
-  answer,
   responseId,
   numItems,
+  answer,
+  disabled,
 }: {
   options: (StringOption | string)[];
-  disabled: boolean;
-  index: number;
-  enumerateQuestions: boolean;
-  prompt?: string;
-  required?: boolean;
-  secondaryText?: string;
-  answer: { value: Record<string, string> };
   responseId: string;
   numItems?: number;
+  answer: { value: Record<string, string> };
+  disabled: boolean;
 }) {
   const { onChange } = (answer as { onChange?: (value: Record<string, string>) => void });
   const { setRankingAnswers } = useStoreActions();
@@ -151,9 +125,13 @@ function RankingSublistComponent({
   }, [_choices, answer, numItems]);
 
   const [state, setState] = useState(initialState);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    setState(initialState);
+    if (!initializedRef.current) {
+      setState(initialState);
+      initializedRef.current = true;
+    }
   }, [initialState]);
 
   const sensors = useSensors(
@@ -175,7 +153,10 @@ function RankingSublistComponent({
 
     if (inSelected && overInSelected) {
       const oldIndex = state.selected.findIndex((i) => i.symbol === active.id);
-      const newIndex = state.selected.findIndex((i) => i.symbol === (over.id as string));
+      let newIndex = state.selected.findIndex((i) => i.symbol === (over.id as string));
+      if (over.id === 'sublist-selected' || newIndex === -1) {
+        newIndex = state.selected.length - 1;
+      }
       const newSelected = arrayMove(state.selected, oldIndex, newIndex);
       setState({ ...state, selected: newSelected });
       const answerValue: Record<string, string> = {};
@@ -214,47 +195,30 @@ function RankingSublistComponent({
   };
 
   return (
-    <Box>
-      {!enumerateQuestions && prompt && (
-        <Text fw={500} mb="sm">
-          {prompt}
-        </Text>
-      )}
-      <Paper p="sm" w="60%" mx="auto">
-        {secondaryText && (
-        <Text size="sm" c="dimmed" mb="md">
-          {secondaryText}
-        </Text>
-        )}
+    <Box p="sm" maw="600px" mx="auto">
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DroppableZone id="sublist" title="">
+          <Text size="md" fw={500} m="md" ta="center">HIGH</Text>
+          <SortableContext items={state.selected.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
+            <Stack w="100%" maw="400px" mx="auto">
+              {state.selected.map((item, index) => (
+                <SortableItem key={item.symbol} item={item.symbol} index={index + 1} />
+              ))}
+            </Stack>
+          </SortableContext>
+          <Text size="md" fw={500} m="md" ta="center">LOW</Text>
+        </DroppableZone>
 
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <Box ta="center" mb="md">
-
-            <DroppableZone id="sublist-selected" title="">
-              <Text size="md" fw={500} m="md">HIGH</Text>
-              <SortableContext items={state.selected.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
-                <Stack w="400px" mx="auto">
-                  {state.selected.map((item, index) => (
-                    <SortableItem key={item.symbol} item={item} index={index + 1} />
-                  ))}
-                </Stack>
-              </SortableContext>
-              <Text size="md" fw={500} m="md">LOW</Text>
-            </DroppableZone>
-
-          </Box>
-
-          <DroppableZone id="sublist-unassigned" title="Available Items">
-            <SortableContext items={state.unassigned.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
-              <Flex gap="xs" wrap="wrap" justify="center" w="400px" mx="auto">
-                {state.unassigned.map((item) => (
-                  <SortableItem key={item.symbol} item={item} />
-                ))}
-              </Flex>
-            </SortableContext>
-          </DroppableZone>
-        </DndContext>
-      </Paper>
+        <DroppableZone id="sublist-unassigned" title="Available Items">
+          <SortableContext items={state.unassigned.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
+            <Flex gap="xs" wrap="wrap" justify="center" w="100%" maw="400px" mx="auto">
+              {state.unassigned.map((item) => (
+                <SortableItem key={item.symbol} item={item.symbol} />
+              ))}
+            </Flex>
+          </SortableContext>
+        </DroppableZone>
+      </DndContext>
     </Box>
   );
 }
@@ -262,22 +226,12 @@ function RankingSublistComponent({
 function RankingCategoricalComponent({
   options,
   disabled,
-  index,
-  enumerateQuestions,
-  prompt,
-  required: _required,
-  secondaryText,
   answer,
   responseId,
   numItems,
 }: {
   options: (StringOption | string)[];
   disabled: boolean;
-  index: number;
-  enumerateQuestions: boolean;
-  prompt?: string;
-  required?: boolean;
-  secondaryText?: string;
   answer: { value: Record<string, string> };
   responseId: string;
   numItems?: number;
@@ -329,7 +283,7 @@ function RankingCategoricalComponent({
   }, [items, answer]);
 
   const [state, setState] = useState(initialState);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [_activeId, setActiveId] = useState<string | null>(null);
 
   useEffect(() => {
     setState(initialState);
@@ -392,40 +346,19 @@ function RankingCategoricalComponent({
   };
 
   return (
-    <Box mb="lg">
-      {enumerateQuestions && prompt && (
-        <Text fw={500} mb="sm">
-          {index + 1}
-          .
-          {prompt}
-        </Text>
-      )}
-      {!enumerateQuestions && prompt && (
-        <Text fw={500} mb="sm">
-          {prompt}
-        </Text>
-      )}
-      {secondaryText && (
-        <Text size="sm" c="dimmed" mb="md">
-          {secondaryText}
-        </Text>
-      )}
+    <Box>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <Stack gap="sm" w="600px" mx="auto">
+        <Stack gap="sm" w="100%" maw="600px" mx="auto">
           <DroppableZone id="HIGH" title="HIGH">
             <SortableContext items={state.HIGH.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
-              <Stack
-                gap="xs"
-                w="400px"
-                mx="auto"
-              >
+              <Stack gap="xs" w="100%" maw="400px" mx="auto">
                 {state.HIGH.map((item) => (
-                  <SortableItem key={item.symbol} item={item} />
+                  <SortableItem key={item.symbol} item={item.symbol} />
                 ))}
               </Stack>
             </SortableContext>
@@ -433,13 +366,9 @@ function RankingCategoricalComponent({
 
           <DroppableZone id="MEDIUM" title="MEDIUM">
             <SortableContext items={state.MEDIUM.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
-              <Stack
-                gap="xs"
-                w="400px"
-                mx="auto"
-              >
+              <Stack gap="xs" w="100%" maw="400px" mx="auto">
                 {state.MEDIUM.map((item) => (
-                  <SortableItem key={item.symbol} item={item} />
+                  <SortableItem key={item.symbol} item={item.symbol} />
                 ))}
               </Stack>
             </SortableContext>
@@ -447,13 +376,9 @@ function RankingCategoricalComponent({
 
           <DroppableZone id="LOW" title="LOW">
             <SortableContext items={state.LOW.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
-              <Stack
-                gap="xs"
-                w="400px"
-                mx="auto"
-              >
+              <Stack gap="xs" w="100%" maw="400px" mx="auto">
                 {state.LOW.map((item) => (
-                  <SortableItem key={item.symbol} item={item} />
+                  <SortableItem key={item.symbol} item={item.symbol} />
                 ))}
               </Stack>
             </SortableContext>
@@ -461,31 +386,14 @@ function RankingCategoricalComponent({
 
           <DroppableZone id="unassigned" title="Available Items">
             <SortableContext items={state.unassigned.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
-              <Stack
-                gap="xs"
-                w="400px"
-                mx="auto"
-              >
+              <Stack gap="xs" w="100%" maw="400px" mx="auto">
                 {state.unassigned.map((item) => (
-                  <SortableItem key={item.symbol} item={item} />
+                  <SortableItem key={item.symbol} item={item.symbol} />
                 ))}
               </Stack>
             </SortableContext>
           </DroppableZone>
         </Stack>
-
-        <DragOverlay>
-          {activeId ? (
-            <Paper
-              p="sm"
-              withBorder
-            >
-              <Text>
-                {items.find((item) => item.id === activeId)?.label}
-              </Text>
-            </Paper>
-          ) : null}
-        </DragOverlay>
       </DndContext>
     </Box>
   );
@@ -494,92 +402,50 @@ function RankingCategoricalComponent({
 function RankingPairwiseComponent({
   options,
   disabled,
-  index,
-  enumerateQuestions,
-  prompt,
-  required: _required,
-  secondaryText,
   answer,
   responseId,
 }: {
   options: (StringOption | string)[];
   disabled?: boolean;
-  index: number;
-  enumerateQuestions: boolean;
-  prompt?: string;
-  required?: boolean;
-  secondaryText?: string;
   answer: { value: Record<string, string> };
   responseId: string;
 }) {
   const { onChange } = (answer as { onChange?: (value: Record<string, string>) => void });
   const { setRankingAnswers } = useStoreActions();
   const storeDispatch = useStoreDispatch();
-  const itemList: {
-    id: string;
-    label: string;
-    symbol: string;
-  }[] = useMemo(() => options.map((option) => ({
+
+  const items = useMemo(() => options.map((option) => ({
     id: typeof option === 'string' ? option : option.value,
     label: typeof option === 'string' ? option : option.label,
-    symbol: typeof option === 'string' ? option : option.value,
   })), [options]);
 
-  const { initialState, initialPairCount } = useMemo(() => {
-    const state: Record<string, {
-      id: string;
-      label: string;
-      symbol: string;
-    }[]> = {
-      unassigned: [...itemList],
-      'pair-0-high': [],
-      'pair-0-low': [],
-    };
+  const [pairCount, setPairCount] = useState(1);
 
-    let pairCount = 1;
+  const pairs = useMemo(() => {
+    const pairMap: Record<string, { high: string[], low: string[] }> = {};
+    const assigned = new Set<string>();
 
-    if (answer?.value && Object.keys(answer.value).length > 0) {
-      const pairKeys = new Set<string>();
-      (Object.values(answer.value) as string[]).forEach((pairLocation) => {
-        const match = pairLocation.match(/^pair-(\d+)-(high|low)$/);
-        if (match) {
-          pairKeys.add(match[1]);
-        }
-      });
-
-      pairCount = Math.max(1, pairKeys.size);
-
-      for (let i = 0; i < pairCount; i += 1) {
-        state[`pair-${i}-high`] = [];
-        state[`pair-${i}-low`] = [];
+    Object.entries(answer?.value || {}).forEach(([itemId, location]) => {
+      const match = location.match(/^pair-(\d+)-(high|low)$/);
+      if (match) {
+        const pairId = match[1];
+        const position = match[2] as 'high' | 'low';
+        if (!pairMap[pairId]) pairMap[pairId] = { high: [], low: [] };
+        pairMap[pairId][position].push(itemId);
+        assigned.add(itemId);
       }
+    });
 
-      (Object.entries(answer.value) as [string, string][]).forEach(([itemId, pairLocation]) => {
-        const item = itemList.find((i) => i.id === itemId);
-        const key = pairLocation as keyof typeof state;
-        if (item && state[key]) {
-          state[key].push(item);
-          state.unassigned = state.unassigned.filter((i) => i.id !== itemId);
-        }
-      });
+    // Ensure we show the number of pairs requested
+    for (let i = 0; i < pairCount; i += 1) {
+      if (!pairMap[i.toString()]) {
+        pairMap[i.toString()] = { high: [], low: [] };
+      }
     }
 
-    return { initialState: state, initialPairCount: pairCount };
-  }, [itemList, answer]);
-
-  const [state, setState] = useState(initialState);
-  const [_pairCount, setPairCount] = useState(initialPairCount);
-  const [isAddingPair, setIsAddingPair] = useState(false);
-  const addingPairRef = useRef(false);
-  const initializedRef = useRef(false);
-
-  useEffect(() => {
-    if (!initializedRef.current) {
-      setState(initialState);
-      setPairCount(initialPairCount);
-      initializedRef.current = true;
-    }
-  }, [initialState, initialPairCount]);
+    const unassigned = items.filter((item) => !assigned.has(item.id));
+    return { pairMap, unassigned };
+  }, [items, answer, pairCount]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -588,195 +454,60 @@ function RankingPairwiseComponent({
 
   const handleDragEnd = (event: DragEndEvent) => {
     if (disabled) return;
-
     const { active, over } = event;
     if (!over) return;
 
-    const activeId = active.id as string;
-    const targetCategory = over.id as string;
+    const itemId = active.id as string;
+    const targetId = over.id as string;
 
-    let sourceCategory = '';
-    for (const [category, categoryItems] of Object.entries(state)) {
-      if (categoryItems.find((item) => item.id === activeId)) {
-        sourceCategory = category;
-        break;
-      }
+    const newAnswer = { ...answer.value };
+
+    if (targetId === 'unassigned') {
+      delete newAnswer[itemId];
+    } else {
+      newAnswer[itemId] = targetId;
     }
 
-    if (sourceCategory && targetCategory && sourceCategory !== targetCategory) {
-      if (Object.keys(state).includes(targetCategory)) {
-        setState((prev) => {
-          const newState = { ...prev };
-          const sourceArr = newState[sourceCategory as keyof typeof newState] as { id: string; label: string; symbol: string }[];
-          const targetArr = newState[targetCategory as keyof typeof newState] as { id: string; label: string; symbol: string }[];
-          const activeItem = sourceArr.find((item) => item.id === activeId);
-
-          if (activeItem) {
-            if (sourceCategory === 'unassigned' && targetCategory !== 'unassigned') {
-              newState.unassigned = newState.unassigned.filter((i) => i.id !== activeItem.id);
-              if (targetArr.length > 0) {
-                const itemsToReturn = targetArr.filter((i) => !newState.unassigned.find((u) => u.id === i.id));
-                newState.unassigned = [...newState.unassigned, ...itemsToReturn];
-              }
-              newState[targetCategory as keyof typeof newState] = [activeItem];
-            } else {
-              newState[sourceCategory as keyof typeof newState] = sourceArr.filter((item) => item.id !== activeId);
-
-              if (targetCategory !== 'unassigned') {
-                const itemsToReturn = targetArr.filter((i) => !newState.unassigned.find((u) => u.id === i.id));
-                if (itemsToReturn.length > 0) {
-                  newState.unassigned = [...newState.unassigned, ...itemsToReturn];
-                }
-                newState[targetCategory as keyof typeof newState] = [activeItem];
-              } else if (!newState.unassigned.find((u) => u.id === activeItem.id)) {
-                newState.unassigned = [...targetArr, activeItem];
-              } else {
-                newState.unassigned = [...targetArr];
-              }
-            }
-          }
-
-          if (Array.isArray(newState.unassigned)) {
-            const seen = new Set<string>();
-            newState.unassigned = newState.unassigned.filter((it) => {
-              if (seen.has(it.id)) return false;
-              seen.add(it.id);
-              return true;
-            });
-          }
-
-          const answerValue: Record<string, string> = {};
-          const entries = Object.entries(newState) as Array<[string, { id: string; label: string; symbol: string }[]]>;
-          entries.forEach(([category, categoryItems]) => {
-            if (category !== 'unassigned') {
-              categoryItems.forEach((item) => {
-                answerValue[item.id] = category;
-              });
-            }
-          });
-          onChange?.(answerValue);
-          storeDispatch(setRankingAnswers({ responseId, values: answerValue }));
-
-          return newState;
-        });
-      }
-    }
+    onChange?.(newAnswer);
+    storeDispatch(setRankingAnswers({ responseId, values: newAnswer }));
   };
 
   const addNewPair = () => {
-    if (disabled || addingPairRef.current) return;
-    addingPairRef.current = true;
-
-    setState((prev) => {
-      const pairIndices = Object.keys(prev)
-        .map((k) => {
-          const m = k.match(/^pair-(\d+)-(high|low)$/);
-          return m ? parseInt(m[1], 10) : null;
-        })
-        .filter((v): v is number => v !== null);
-      const nextIndex = pairIndices.length > 0 ? Math.max(...pairIndices) + 1 : 0;
-
-      const nextState = {
-        ...prev,
-        [`pair-${nextIndex}-high`]: [],
-        [`pair-${nextIndex}-low`]: [],
-      };
-
-      return nextState;
-    });
-
-    setTimeout(() => {
-      addingPairRef.current = false;
-      setIsAddingPair(false);
-    }, 0);
-  };
-
-  useEffect(() => {
-    if (isAddingPair) {
-      const answerValue: Record<string, string> = {};
-      Object.entries(state).forEach(([category, categoryItems]) => {
-        if (category !== 'unassigned') {
-          categoryItems.forEach((item) => {
-            answerValue[item.id] = category;
-          });
-        }
-      });
-
-      onChange?.(answerValue);
-      storeDispatch(setRankingAnswers({ responseId, values: answerValue }));
-
-      setIsAddingPair(false);
-      addingPairRef.current = false;
-    }
-  }, [state, isAddingPair, answer, responseId, onChange, storeDispatch, setRankingAnswers]);
-
-  const getPairs = () => {
-    const pairs = [];
-    const pairKeys = Object.keys(state).filter((key) => key.startsWith('pair-') && key.endsWith('-high'));
-    const actualPairCount = pairKeys.length;
-
-    for (let i = 0; i < actualPairCount; i += 1) {
-      pairs.push({
-        index: i,
-        high: state[`pair-${i}-high` as keyof typeof state] || [],
-        low: state[`pair-${i}-low` as keyof typeof state] || [],
-      });
-    }
-    return pairs;
+    if (disabled) return;
+    setPairCount((prev) => prev + 1);
   };
 
   return (
-    <Box mb="lg">
-      {enumerateQuestions && prompt && (
-        <Text fw={500} mb="sm">
-          {index + 1}
-          .
-          {prompt}
-        </Text>
-      )}
-      {!enumerateQuestions && prompt && (
-        <Text fw={500} mb="sm">
-          {prompt}
-        </Text>
-      )}
-      {secondaryText && (
-        <Text size="sm" c="dimmed" mb="md">
-          {secondaryText}
-        </Text>
-      )}
-
+    <Box>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-
-        <Flex justify="flex-end" w="800px" mx="auto" mb="sm">
-          <Button
-            variant="filled"
-            color="orange"
-            onClick={addNewPair}
-          >
+        <Flex justify="flex-end" m="sm">
+          <Button variant="outline" onClick={addNewPair}>
             Add New Pair
           </Button>
         </Flex>
 
-        <Stack gap="md" w="800px" mx="auto">
-          {getPairs().map((pair) => (
-            <Stack key={`pair-${pair.index}`} gap="sm" w="100%">
-              <Group justify="center" gap="md" wrap="nowrap" w="100%">
-                <DroppableZone id={`pair-${pair.index}-high`} title="HIGH">
-                  <SortableContext items={pair.high.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
-                    <Stack gap="xs" w="365px" mx="auto">
-                      {pair.high.map((item) => (
-                        <SortableItem key={item.symbol} item={item} />
-                      ))}
+        <Stack gap="md" mx="auto">
+          {Object.entries(pairs.pairMap).map(([pairId, pair]) => (
+            <Stack key={`pair-${pairId}`} gap="sm">
+              <Group justify="center" gap="md" wrap="wrap">
+                <DroppableZone id={`pair-${pairId}-high`} title="HIGH">
+                  <SortableContext items={pair.high} strategy={verticalListSortingStrategy}>
+                    <Stack gap="xs" maw="500px" mx="auto">
+                      {pair.high.map((itemId) => {
+                        const item = items.find((i) => i.id === itemId);
+                        return item ? <SortableItem key={itemId} item={item.label} /> : null;
+                      })}
                     </Stack>
                   </SortableContext>
                 </DroppableZone>
 
-                <DroppableZone id={`pair-${pair.index}-low`} title="LOW">
-                  <SortableContext items={pair.low.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
-                    <Stack gap="xs" w="365px" mx="auto">
-                      {pair.low.map((item) => (
-                        <SortableItem key={item.symbol} item={item} />
-                      ))}
+                <DroppableZone id={`pair-${pairId}-low`} title="LOW">
+                  <SortableContext items={pair.low} strategy={verticalListSortingStrategy}>
+                    <Stack gap="xs" mx="auto">
+                      {pair.low.map((itemId) => {
+                        const item = items.find((i) => i.id === itemId);
+                        return item ? <SortableItem key={itemId} item={item.label} /> : null;
+                      })}
                     </Stack>
                   </SortableContext>
                 </DroppableZone>
@@ -785,10 +516,10 @@ function RankingPairwiseComponent({
           ))}
 
           <DroppableZone id="unassigned" title="Available Items">
-            <SortableContext items={state.unassigned.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
-              <Flex gap="xs" wrap="wrap" justify="center" w="800px" mx="auto">
-                {state.unassigned.map((item) => (
-                  <SortableItem key={item.symbol} item={item} />
+            <SortableContext items={pairs.unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+              <Flex gap="xs" wrap="wrap" justify="center" mx="auto">
+                {pairs.unassigned.map((item) => (
+                  <SortableItem key={item.id} item={item.label} />
                 ))}
               </Flex>
             </SortableContext>
@@ -802,15 +533,15 @@ function RankingPairwiseComponent({
 
 export function RankingInput({
   response,
-  disabled,
   answer,
-  index,
+  index: idx,
+  disabled,
   enumerateQuestions,
 }: {
   response: RankingResponse;
-  disabled: boolean;
   answer: { value: Record<string, string> };
   index: number;
+  disabled: boolean;
   enumerateQuestions: boolean;
 }) {
   const {
@@ -823,51 +554,54 @@ export function RankingInput({
 
   if (response.type === 'ranking-sublist') {
     return (
-      <RankingSublistComponent
-        options={options}
-        disabled={disabled}
-        index={index}
-        answer={answer}
-        enumerateQuestions={enumerateQuestions}
-        prompt={prompt}
-        required={required}
-        secondaryText={secondaryText}
-        responseId={response.id}
-        numItems={numItems}
-      />
+      <Box>
+        {prompt.length > 0 && (
+          <InputLabel prompt={prompt} required={required} index={idx} enumerateQuestions={enumerateQuestions} />
+        )}
+        <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
+        <RankingSublistComponent
+          disabled={disabled}
+          options={options}
+          answer={answer}
+          responseId={response.id}
+          numItems={numItems}
+        />
+      </Box>
     );
   }
 
   if (response.type === 'ranking-categorical') {
     return (
-      <RankingCategoricalComponent
-        options={options}
-        disabled={disabled}
-        index={index}
-        answer={answer}
-        required={required}
-        enumerateQuestions={enumerateQuestions}
-        prompt={prompt}
-        secondaryText={secondaryText}
-        responseId={response.id}
-        numItems={numItems}
-      />
+      <Box>
+        {prompt.length > 0 && (
+          <InputLabel prompt={prompt} required={required} index={idx} enumerateQuestions={enumerateQuestions} />
+        )}
+        <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
+        <RankingCategoricalComponent
+          disabled={disabled}
+          options={options}
+          answer={answer}
+          responseId={response.id}
+          numItems={numItems}
+        />
+      </Box>
     );
   }
 
   if (response.type === 'ranking-pairwise') {
     return (
-      <RankingPairwiseComponent
-        options={options}
-        disabled={disabled}
-        index={index}
-        answer={answer}
-        enumerateQuestions={enumerateQuestions}
-        prompt={prompt}
-        required={required}
-        secondaryText={secondaryText}
-        responseId={response.id}
-      />
+      <Box>
+        {prompt.length > 0 && (
+          <InputLabel prompt={prompt} required={required} index={idx} enumerateQuestions={enumerateQuestions} />
+        )}
+        <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
+        <RankingPairwiseComponent
+          disabled={disabled}
+          options={options}
+          answer={answer}
+          responseId={response.id}
+        />
+      </Box>
     );
   }
 
