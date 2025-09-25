@@ -6,7 +6,18 @@ import {
 } from '@mantine/core';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+import { visit } from 'unist-util-visit';
+import type { Root, Element, Text as HastText } from 'hast';
+import { useCallback } from 'react';
 import { PREFIX } from '../utils/Prefix';
+
+// Type guards
+function isHastText(node: unknown): node is HastText {
+  return !!node && typeof node === 'object' && (node as HastText).type === 'text';
+}
+function isElement(node: unknown): node is Element {
+  return !!node && typeof node === 'object' && (node as Element).type === 'element';
+}
 
 export function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
   const components: Partial<Components> = {
@@ -31,22 +42,93 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
     }) { return <Image {...props} h={height} w={width} src={src?.startsWith('http') ? src : `${PREFIX}${src}`} />; },
   };
 
-  let textToParse = text.trim();
+  const rehypeAsterisk = useCallback(() => (tree: Root) => {
+    if (!required) return;
+    if (!tree) return;
 
-  if (required) {
-    const splitText = textToParse.split(' ');
-    const lastWord = splitText.at(-1);
+    let ln: Element | null = null;
+    let lp: Element | Root | null = null;
+    // Recursively find the last node
+    visit(tree, (node, _, parent) => {
+      if (isElement(node)) {
+        ln = node;
+        lp = parent!;
+      }
+    });
 
-    const asteriskIcon = ('<span style="color: #fa5252; margin-left: 4px">*</span>');
-    const spannedLastWord = `<span style="white-space: nowrap;">${lastWord + (required ? `${asteriskIcon}` : '')}</span>`;
-
-    textToParse = `${splitText.slice(0, -1).join(' ')} ${spannedLastWord}`;
-  }
+    const lastNode = ln as Element | null;
+    const lastParent = lp as Element | null;
+    if (lastNode !== null) {
+      // Create a new text node with the asterisk
+      const asteriskNode: Element = {
+        type: 'element',
+        tagName: 'span',
+        properties: { style: 'color: #fa5252; margin-left: 4px' },
+        children: [
+          {
+            type: 'text',
+            value: '*',
+          },
+        ],
+      };
+      // Modify the last child to attach the asterisk to the last word if it's text, or to the node if it's an element
+      if (isHastText(lastNode.children.at(-1))) {
+        // Remake the node into an element with the asterisk attached as a span to the last word
+        const textNode = lastNode.children.at(-1) as HastText;
+        const words = textNode.value.split(' ');
+        const lastWord = words.pop();
+        const newTextValue = words.join(' ');
+        const newTextNode: Element = {
+          type: 'element',
+          tagName: 'span',
+          properties: {},
+          children: [
+            {
+              type: 'text',
+              value: newTextValue ? `${newTextValue} ` : '',
+            },
+            {
+              type: 'element',
+              tagName: 'span',
+              properties: { style: 'white-space: nowrap' },
+              children: [
+                {
+                  type: 'text',
+                  value: `${lastWord}`,
+                },
+              ],
+            },
+            asteriskNode,
+          ],
+        };
+        // Replace the last text node with the new element node
+        lastNode.children.splice(lastNode.children.length - 1, 1, newTextNode);
+      } else {
+        // Modify the whole element to add the asterisk with whitespace nowrap
+        const newLastNode: Element = {
+          type: 'element',
+          tagName: 'span',
+          properties: { style: 'white-space: nowrap; display: inline-flex;' },
+          children: [
+            lastNode,
+            asteriskNode,
+          ],
+        };
+        // This is a bit hacky, but we need to replace the lastNode in its parent's children array
+        if (lastParent) {
+          const index = lastParent.children.indexOf(lastNode);
+          if (index !== -1) {
+            lastParent.children.splice(index, 1, newLastNode);
+          }
+        }
+      }
+    }
+  }, [required]);
 
   return text.length > 0 && (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <ReactMarkdown components={components} rehypePlugins={[rehypeRaw] as any} remarkPlugins={[remarkGfm]}>
-      {textToParse}
+    <ReactMarkdown components={components} rehypePlugins={[rehypeRaw, rehypeAsterisk] as any} remarkPlugins={[remarkGfm]}>
+      {text}
     </ReactMarkdown>
   );
 }
