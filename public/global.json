@@ -16,6 +16,7 @@
     "demo-dynamic",
     "demo-style",
     "demo-yaml",
+    "demo-ranking-widget",
     "example-brush-interactions",
     "example-cleveland",
     "example-mvnv",
@@ -33,7 +34,6 @@
     "library-nasa-tlx",
     "library-previs",
     "library-quis",
-    "library-ranking-widget",
     "library-sam",
     "library-smeq",
     "library-sus",
@@ -92,6 +92,9 @@
     "demo-yaml": {
       "path": "demo-yaml/config.yaml"
     },
+    "demo-ranking-widget": {
+      "path": "demo-ranking-widget/config.json"
+    },
     "example-brush-interactions": {
       "path": "example-brush-interactions/config.json"
     },
@@ -149,10 +152,6 @@
     },
     "library-quis": {
       "path": "library-quis/config.json",
-      "test": true
-    },
-    "library-ranking-widget": {
-      "path": "library-ranking-widget/config.json",
       "test": true
     },
     "library-sam": {
