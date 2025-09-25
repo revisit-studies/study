@@ -5,17 +5,12 @@
   ],
   "plugin": [
     "typedoc-plugin-markdown",
-    "typedoc-plugin-frontmatter"
   ],
   "name": "Modules",
   "githubPages": false,
   "readme": "typedocReadMe.md",
   "entryFileName": "index.md",
   "hideBreadcrumbs": true,
-  "frontmatterGlobals": {
-    "sidebar_position": 1,
-    "displayed_sidebar": "reference"
-  },
   "textContentMappings": {
     "title.memberPage": "{name}"
   },

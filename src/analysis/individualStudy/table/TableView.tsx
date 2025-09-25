@@ -1,13 +1,9 @@
 /* eslint-disable react/no-unstable-nested-components */
 import {
-  Text, Flex, Button, Group, Space, Modal, TextInput,
-  Tooltip,
-  Badge,
-  RingProgress,
-  Stack,
+  Text, Flex, Group, Space, Tooltip, Badge, RingProgress, Stack,
 } from '@mantine/core';
-import React, {
-  useCallback, useMemo, useState,
+import {
+  JSX, useCallback, useMemo, useState,
 } from 'react';
 import { useParams } from 'react-router';
 import {
@@ -20,15 +16,14 @@ import {
 import {
   ParticipantData, StoredAnswer, StudyConfig,
 } from '../../../parser/types';
-import { useStorageEngine } from '../../../storage/storageEngineHooks';
-import { useAuth } from '../../../store/hooks/useAuth';
+import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { participantName } from '../../../utils/participantName';
 import { AllTasksTimeline } from '../replay/AllTasksTimeline';
-import { checkAnswerCorrect } from '../../../store/hooks/useNextStep';
 import { humanReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
+import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 
 function formatDate(date: Date): string | JSX.Element {
   if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
@@ -49,41 +44,18 @@ export function TableView({
   refresh: () => Promise<Record<number, ParticipantData>>;
   width: number;
 }) {
-  const { storageEngine } = useStorageEngine();
   const { studyId } = useParams();
-  const { user } = useAuth();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
 
-  const rejectParticipant = useCallback(async (participantId: string, reason: string) => {
-    if (storageEngine && studyId) {
-      if (user.isAdmin) {
-        const finalReason = reason === '' ? 'Rejected by admin' : reason;
-        await storageEngine.rejectParticipant(participantId, finalReason, studyId);
-        await refresh();
-      } else {
-        console.warn('You are not authorized to perform this action.');
-      }
-    }
-  }, [refresh, storageEngine, studyId, user.isAdmin]);
+  const selectedParticipants = useMemo(() => Object.keys(checked).filter((v) => checked[v])
+    .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
+    .filter((p) => p !== undefined) as ParticipantData[], [checked, visibleParticipants]);
 
-  const [modalRejectParticipantsOpened, setModalRejectParticipantsOpened] = useState<boolean>(false);
-  const [rejectParticipantsMessage, setRejectParticipantsMessage] = useState<string>('');
-
-  const handleRejectParticipants = useCallback(async () => {
-    setModalRejectParticipantsOpened(false);
-    const promises = Object.keys(checked).filter((v) => checked[v]).map(async (participantId) => await rejectParticipant(participantId, rejectParticipantsMessage));
-    await Promise.all(promises);
-    setChecked({});
+  const handleRefresh = useCallback(async () => {
     await refresh();
-  }, [checked, refresh, rejectParticipant, rejectParticipantsMessage]);
+  }, [refresh]);
 
-  const selectedData = useMemo(() => {
-    const selected = Object.keys(checked).filter((v) => checked[v])
-      .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
-      .filter((p) => p !== undefined) as ParticipantData[];
-
-    return selected.length > 0 ? selected : visibleParticipants;
-  }, [checked, visibleParticipants]);
+  const selectedData = useMemo(() => (selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants), [selectedParticipants, visibleParticipants]);
 
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => [
     {
@@ -97,12 +69,16 @@ export function TableView({
       Cell: ({ cell }: { cell: MrtCell<ParticipantData, {percent: number, completed: boolean, rejected: ParticipantData['rejected']}> }) => {
         const cellValue = cell.getValue();
         return (
-          cellValue.completed ? <Group align="center" justify="center" w="100%"><Tooltip label="Completed"><IconCheck size={30} color="teal" style={{ marginBottom: -3 }} /></Tooltip></Group>
-            : cellValue.rejected ? (
-              <Stack align="center" justify="center" gap={4} w="100%">
-                <Tooltip label="Rejected"><IconX size={30} color="red" style={{ marginBottom: -3 }} /></Tooltip>
-                <Text size="xs" c="dimmed" ta="center">{cellValue.rejected.reason}</Text>
-              </Stack>
+          cellValue.rejected ? (
+            <Stack align="center" justify="center" gap={4} w="100%">
+              <Tooltip label="Rejected"><IconX size={30} color="red" style={{ marginBottom: -3 }} /></Tooltip>
+              <Text size="xs" c="dimmed" ta="center">{cellValue.rejected.reason}</Text>
+            </Stack>
+          )
+            : cellValue.completed ? (
+              <Group align="center" justify="center" w="100%">
+                <Tooltip label="Completed"><IconCheck size={30} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
+              </Group>
             )
               : (
                 <Group align="center" justify="center" w="100%">
@@ -147,7 +123,7 @@ export function TableView({
       header: 'Start Time',
     },
     {
-      accessorFn: (row: ParticipantData) => Object.values(row.answers).filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0).map((answer) => checkAnswerCorrect(answer.answer, answer.correctAnswer)),
+      accessorFn: (row: ParticipantData) => Object.values(row.answers).filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0).map((answer) => componentAnswersAreCorrect(answer.answer, answer.correctAnswer)),
       header: 'Correct Answers',
       Cell: ({ cell }: {cell: MrtCell<ParticipantData, boolean[]>}) => (
         <>
@@ -210,45 +186,16 @@ export function TableView({
     enableDensityToggle: false,
     positionToolbarAlertBanner: 'none',
     renderTopToolbarCustomActions: () => (
-      <>
-        <Flex justify="space-between" mb={8} p={8}>
-          <Group>
-            <Button disabled={Object.keys(checked).length === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
-              Reject Participants (
-              {Object.keys(checked).length}
-              )
-            </Button>
-            <DownloadButtons
-              visibleParticipants={selectedData}
-              studyId={studyId || ''}
-            />
-          </Group>
-        </Flex>
-        <Modal
-          opened={modalRejectParticipantsOpened}
-          onClose={() => setModalRejectParticipantsOpened(false)}
-          title={(
-            <Text>
-              Reject Participants (
-              {Object.keys(checked).length}
-              )
-            </Text>
-        )}
-        >
-          <TextInput
-            label="Please enter the reason for rejection."
-            onChange={(event) => setRejectParticipantsMessage(event.target.value)}
+      <Flex justify="space-between" mb={8} p={8}>
+        <Group>
+          <DownloadButtons
+            visibleParticipants={selectedData}
+            studyId={studyId || ''}
+            hasAudio={studyConfig?.uiConfig?.recordAudio}
           />
-          <Flex mt="sm" justify="right">
-            <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalRejectParticipantsOpened(false); setRejectParticipantsMessage(''); }}>
-              Cancel
-            </Button>
-            <Button color="red" onClick={() => handleRejectParticipants()}>
-              Reject Participants
-            </Button>
-          </Flex>
-        </Modal>
-      </>
+          <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
+        </Group>
+      </Flex>
     ),
   });
 

@@ -42,7 +42,7 @@ function sortByStartTime(a: ParticipantData, b: ParticipantData) {
   return bStartTimes[0] - aStartTimes[0];
 }
 
-export function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined) : Promise<Record<number, ParticipantData>> {
+function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined) : Promise<Record<number, ParticipantData>> {
   if (!studyConfig || !storageEngine || !studyId) return Promise.resolve([]);
 
   storageEngine?.initializeStudyDb(studyId);

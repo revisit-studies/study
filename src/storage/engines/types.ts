@@ -97,6 +97,9 @@ export abstract class StorageEngine {
 
   protected participantData: ParticipantData | undefined;
 
+  // Ids of assets (eg. audio/screen recording) being uploaded.
+  protected uploadingAssetIds: string[] = [];
+
   constructor(engine: typeof this.engine, testing: boolean) {
     this.engine = engine;
     this.testing = testing;
@@ -154,6 +157,9 @@ export abstract class StorageEngine {
   // Rejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments.
   protected abstract _rejectParticipantRealtime(participantId: string): Promise<void>;
 
+  // Unrejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments.
+  protected abstract _undoRejectParticipantRealtime(participantId: string): Promise<void>;
+
   // Helper function to claim a sequence assignment of the given participant in the realtime database.
   protected abstract _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment): Promise<void>;
 
@@ -172,6 +178,12 @@ export abstract class StorageEngine {
 
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
+
+  // Gets the screen recording URL for the given task and participantId. This method is used to fetch the screen recording video file from the storage engine.
+  protected abstract _getScreenRecordingUrl(task: string, participantId?: string): Promise<string | null>;
+
+  // Gets the transcript URL for the given task and participantId. (Optional - not all storage engines need to implement this, only if they generate transcripts).
+  protected _getTranscriptUrl?(task: string, participantId?: string): Promise<string | null>;
 
   // Resets the entire study database for testing purposes. This is used to reset the study database to a clean state for testing.
   protected abstract _testingReset(studyId: string): Promise<void>;
@@ -208,7 +220,20 @@ export abstract class StorageEngine {
   * THROTTLED METHODS
   * These methods are used to throttle the calls to the storage engine's methods that can be called frequently.
   */
-  private __throttleVerifyStudyDatabase = throttle(async () => { await this._verifyStudyDatabase(); }, 10000);
+  private __throttleVerifyStudyDatabase = throttle(
+    () => new Promise<void>((resolve, reject) => {
+      this._verifyStudyDatabase()
+        .then(() => {
+          resolve();
+        })
+        .catch((e) => {
+          this.connected = false;
+          console.error('Error verifying study database:', e);
+          reject(e);
+        });
+    }),
+    10000,
+  );
 
   private __throttleSaveAnswers = throttle(async () => { await this._saveAnswers(); }, 3000);
 
@@ -558,6 +583,43 @@ export abstract class StorageEngine {
     return await this.rejectParticipant(this.currentParticipantId, reason);
   }
 
+  // Un-rejects a participant with the given participantId.
+  async undoRejectParticipant(participantId: string, studyId?: string) {
+    const participant = await this._getFromStorage(
+      `participants/${participantId}`,
+      'participantData',
+      studyId,
+    );
+
+    try {
+      // If the user doesn't exist, return
+      if (!participant || !isParticipantData(participant)) {
+        return;
+      }
+
+      // set reject flag to false
+      participant.rejected = false;
+
+      await this._pushToStorage(
+        `participants/${participantId}`,
+        'participantData',
+        participant,
+      );
+      await this._undoRejectParticipantRealtime(participantId);
+    } catch (error) {
+      console.warn('Error undoing participant rejection:', error);
+    }
+  }
+
+  // Un-rejects the current participant.
+  async undoRejectCurrentParticipant() {
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
+    return await this.undoRejectParticipant(this.currentParticipantId);
+  }
+
   // Gets all participant IDs for the current studyId or a provided studyId.
   async getAllParticipantsData(studyId: string) {
     const participantIds = await this.getAllParticipantIds(studyId);
@@ -647,6 +709,12 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
+    // Check for remaining assets uploads
+    const hasUploadsRemaining = this.uploadingAssetIds.length > 0;
+    if (hasUploadsRemaining) {
+      return false;
+    }
+
     if (participantData.completed) {
       return true;
     }
@@ -678,17 +746,12 @@ export abstract class StorageEngine {
     return false;
   }
 
-  // Gets the audio for a specific task and participantId.
-  async getAudio(
-    task: string,
-    participantId: string,
-  ) {
-    const url = await this._getAudioUrl(task, participantId);
+  async getAsset(url:string | null) {
     if (!url) {
       return null;
     }
 
-    const allAudioList = new Promise<string>((resolve) => {
+    const asset = new Promise<string>((resolve) => {
       const xhr = new XMLHttpRequest();
       xhr.responseType = 'blob';
       xhr.onload = () => {
@@ -702,15 +765,57 @@ export abstract class StorageEngine {
       xhr.send();
     });
 
-    return allAudioList;
+    return asset;
   }
 
-  // Saves the audio stream to the storage engine. This method is used to save the audio data from a MediaRecorder stream.
-  async saveAudio(
-    audioStream: MediaRecorder,
+  // Gets the audio for a specific task and participantId.
+  async getAudio(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getAudioUrl(task, participantId);
+    return await this.getAsset(url);
+  }
+
+  // Gets the audio download URL
+  async getAudioUrl(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getAudioUrl(task, participantId);
+    if (!url) {
+      return null;
+    }
+    return url;
+  }
+
+  // Gets the transcript download URL (currently only supported by Firebase)
+  async getTranscriptUrl(
+    task: string,
+    participantId: string,
+  ) {
+    if (!this._getTranscriptUrl) {
+      return null;
+    }
+
+    const url = await this._getTranscriptUrl(task, participantId);
+    if (!url) {
+      return null;
+    }
+    return url;
+  }
+
+  async saveAsset(
+    prefix: string,
+    recorder: MediaRecorder,
     taskName: string,
   ) {
     let debounceTimeout: NodeJS.Timeout | null = null;
+
+    const assetKey = `${prefix}/${taskName}`;
+    const participantKey = `${prefix}/${this.currentParticipantId}`;
+
+    this.uploadingAssetIds.push(assetKey);
 
     const listener = async (data: BlobEvent) => {
       if (debounceTimeout) {
@@ -718,15 +823,60 @@ export abstract class StorageEngine {
       }
 
       debounceTimeout = setTimeout(async () => {
-        await this._pushToStorage(`audio/${this.currentParticipantId}`, taskName, data.data);
-        await this._cacheStorageObject(`audio/${this.currentParticipantId}`, taskName);
+        await this._pushToStorage(participantKey, taskName, data.data);
+        await this._cacheStorageObject(participantKey, taskName);
+
+        this.uploadingAssetIds = this.uploadingAssetIds.filter((id) => id !== assetKey);
       }, 500);
     };
 
-    audioStream.addEventListener('dataavailable', listener);
-    audioStream.requestData();
+    recorder.addEventListener('dataavailable', listener);
+
+    // Detect Safari
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    // When stopping recording:
+    if (isSafari) {
+      recorder.stop(); // This will trigger ondataavailable with the full recording
+    } else {
+      // For Chrome/Firefox, you can use requestData or chunked data
+      recorder.requestData();
+    }
 
     // Don't clean up the listener. The stream will be destroyed.
+  }
+
+  // Saves the audio stream to the storage engine. This method is used to save the audio data from a MediaRecorder stream.
+  async saveAudio(
+    audioStream: MediaRecorder,
+    taskName: string,
+  ) {
+    return this.saveAsset('audio', audioStream, taskName);
+  }
+
+  // Gets the screen recording for a specific task and participantId.
+  async getScreenRecording(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getScreenRecordingUrl(task, participantId);
+    return this.getAsset(url);
+  }
+
+  // Saves the video stream to the storage engine. This method is used to save the screen recorded video data from a MediaRecorder stream.
+  async saveScreenRecording(
+    blob: Blob,
+    taskName: string,
+  ) {
+    const prefix = 'screenRecording';
+    const assetKey = `${prefix}/${taskName}`;
+    const participantKey = `${prefix}/${this.currentParticipantId}`;
+
+    this.uploadingAssetIds.push(assetKey);
+
+    await this._pushToStorage(participantKey, taskName, blob);
+    await this._cacheStorageObject(participantKey, taskName);
+
+    this.uploadingAssetIds = this.uploadingAssetIds.filter((id) => id !== assetKey);
   }
 
   // Gets the sequence array from the storage engine.
@@ -796,6 +946,7 @@ export abstract class StorageEngine {
       await this._copyDirectory(`${sourceName}/configs`, `${targetName}/configs`);
       await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
       await this._copyDirectory(`${sourceName}/audio`, `${targetName}/audio`);
+      await this._copyDirectory(`${sourceName}/screenRecording`, `${targetName}/screenRecording`);
       await this._copyDirectory(sourceName, targetName);
       await this._copyRealtimeData(sourceName, targetName);
     }
@@ -842,6 +993,7 @@ export abstract class StorageEngine {
         await this._deleteDirectory(`${deletionTarget}/configs`);
         await this._deleteDirectory(`${deletionTarget}/participants`);
         await this._deleteDirectory(`${deletionTarget}/audio`);
+        await this._deleteDirectory(`${deletionTarget}/screenRecording`);
         await this._deleteDirectory(deletionTarget);
         await this._deleteRealtimeData(deletionTarget);
       }
@@ -906,6 +1058,10 @@ export abstract class StorageEngine {
       await this._copyDirectory(
         `${snapshotName}/audio`,
         `${originalName}/audio`,
+      );
+      await this._copyDirectory(
+        `${snapshotName}/screenRecording`,
+        `${originalName}/screenRecording`,
       );
       await this._copyDirectory(snapshotName, originalName);
       await this._copyRealtimeData(snapshotName, originalName);

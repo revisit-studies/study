@@ -1,8 +1,9 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/GlobalConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/GlobalConfigSchema.json",
   "configsList": [
     "tutorial",
     "demo-html",
+    "demo-html-video",
     "demo-html-input",
     "demo-survey",
     "demo-training",
@@ -29,12 +30,14 @@
     "library-calvi",
     "library-color-blindness",
     "library-demographics",
+    "library-graph-literacy-scale",
     "library-mic-check",
     "library-mini-vlat",
     "library-nasa-tlx",
     "library-previs",
     "library-quis",
     "library-sam",
+    "library-screen-recording",
     "library-smeq",
     "library-sus",
     "library-vlat",
@@ -55,6 +58,9 @@
     },
     "demo-html": {
       "path": "demo-html/config.json"
+    },
+    "demo-html-video": {
+      "path": "demo-html-video/config.json"
     },
     "demo-html-input": {
       "path": "demo-html-input/config.json"
@@ -134,6 +140,10 @@
       "path": "library-demographics/config.json",
       "test": true
     },
+    "library-graph-literacy-scale": {
+      "path": "library-graph-literacy-scale/config.json",
+      "test": true
+    },
     "library-mic-check": {
       "path": "library-mic-check/config.json",
       "test": true
@@ -156,6 +166,10 @@
     },
     "library-sam": {
       "path": "library-sam/config.json",
+      "test": true
+    },
+    "library-screen-recording": {
+      "path": "library-screen-recording/config.json",
       "test": true
     },
     "library-smeq": {

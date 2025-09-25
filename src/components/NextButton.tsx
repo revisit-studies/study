@@ -1,5 +1,7 @@
 import { Alert, Button, Group } from '@mantine/core';
-import { useEffect, useMemo, useState } from 'react';
+import {
+  JSX, useEffect, useMemo, useState,
+} from 'react';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { useNextStep } from '../store/hooks/useNextStep';

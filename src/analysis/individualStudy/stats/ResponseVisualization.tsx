@@ -10,6 +10,7 @@ import {
 import { useMemo } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
 import { IndividualComponent, ParticipantData, Response } from '../../../parser/types';
+import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 
 export function ResponseVisualization({
   response, participantData, trialId, trialConfig,
@@ -22,15 +23,6 @@ export function ResponseVisualization({
   const [opened, { toggle }] = useDisclosure(true);
   const [ref, dms] = useResizeObserver();
 
-  const questionData = useMemo(() => {
-    if (response.type === 'metadata') {
-      return [];
-    }
-
-    const data = participantData.map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)).map((p) => p.map(([, value]) => value.answer)).flat();
-    return data;
-  }, [participantData, response.type, trialId]);
-
   const correctAnswer = useMemo(() => {
     if (response.type === 'metadata') {
       return undefined;
@@ -39,6 +31,26 @@ export function ResponseVisualization({
     const found = trialConfig.correctAnswer?.find((a) => a.id === response.id);
     return found;
   }, [response.id, response.type, trialConfig.correctAnswer]);
+
+  const questionData = useMemo(() => {
+    if (response.type === 'metadata') {
+      return [];
+    }
+
+    const data = participantData.map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)).map((p) => p.map(([, value]) => {
+      const answerData = { ...value.answer };
+
+      if (correctAnswer) {
+        const participantAnswer = value.answer[response.id];
+        const expectedAnswer = correctAnswer.answer;
+
+        answerData.result = responseAnswerIsCorrect(participantAnswer, expectedAnswer) ? 'correct' : 'incorrect';
+      }
+
+      return answerData;
+    })).flat();
+    return data;
+  }, [participantData, response.type, trialId, correctAnswer, response.id]);
 
   // eslint-disable-next-line consistent-return
   const vegaLiteSpec = useMemo(() => {
@@ -158,14 +170,13 @@ export function ResponseVisualization({
         data: { values: questionData },
         mark: 'bar',
         params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
-        transform: correctAnswer !== undefined ? correctAnswerSpec.transform : undefined,
+        transform: Array.isArray(correctAnswer?.answer) ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
         encoding: {
           x: { field: response.id, type: 'ordinal', title: 'Answer' },
           y: { aggregate: 'count', type: 'quantitative', title: 'Count' },
           color: correctAnswer !== undefined ? correctAnswerSpec.color : undefined,
         },
       };
-
       return spec;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any

@@ -47,7 +47,7 @@ export function ResponseSwitcher({
 }) {
   const isAnalysis = useIsAnalysis();
   // Don't update if we're in analysis mode
-  const ans = (isAnalysis || Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![response.id] } : form) || { value: undefined };
+  const ans = (isAnalysis ? { value: storedAnswer![response.id] } : form) || { value: undefined };
   const dontKnowValue = (Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined };
   const otherValue = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
   const inputDisabled = Object.keys(storedAnswer || {}).length > 0 || disabled;
