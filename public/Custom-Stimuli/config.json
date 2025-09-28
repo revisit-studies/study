@@ -21,7 +21,7 @@
         "autoDownloadStudy": false,
         "sidebar": true,
         "nextOnEnter": true,
-        "recordStudyAudio": false
+        "recordStudyAudio": true
     },
     "components": {
         "B0-obscured": {
