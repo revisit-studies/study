@@ -167,6 +167,10 @@
       "path": "B2D-Stimuli/config.json",
       "test": true
     },
+    "B1C-Stimuli":{
+      "path": "B1C-Stimuli/config.json",
+      "test": true
+    },
     "Custom-Stimuli":{
       "path": "Custom-Stimuli/config.json",
       "test": true
