@@ -148,6 +148,9 @@ export function ComponentController() {
   const [blockForStep, setBlockForStep] = useState<string[]>([]);
   const prevBlockForStepRef = useRef<string[]>([]);
   useEffect(() => {
+    if (isAnalysis) {
+      return;
+    }
     async function updateBlockForStep() {
       // Get all nested block IDs
       const blockIds = findBlockForStep(sequence, currentStep)
