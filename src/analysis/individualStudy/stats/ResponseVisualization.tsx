@@ -232,14 +232,18 @@ export function ResponseVisualization({
                   <Code block>{`${JSON.stringify(trialConfig, null, 2)}`}</Code>
                 )}
                 {response.type !== 'metadata' && (
-                  <>
-                    <Text fw={700}>Response Values: </Text>
-                    {questionData.map((d, idx) => (
+                <>
+                  <Text fw={700}>Response Values: </Text>
+                  {(response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') ? (
+                    <Text>N/A</Text>
+                  ) : (
+                    questionData.map((d, idx) => (
                       <Flex key={idx} align="center" gap="xs">
                         <Text>{d[response.id] as unknown as string}</Text>
                       </Flex>
-                    ))}
-                  </>
+                    ))
+                  )}
+                </>
                 )}
               </Flex>
             )}
