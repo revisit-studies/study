@@ -57,7 +57,6 @@ function SortableItem({ item, index }: { item: Item; index?: number }) {
 
 function DroppableZone({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id });
-
   return (
     <Paper
       ref={setNodeRef}
@@ -397,9 +396,11 @@ export function RankingInput({
         <InputLabel prompt={prompt} required={required} index={idx} enumerateQuestions={enumerateQuestions} />
       )}
       {secondaryText && <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>}
-      {response.type === 'ranking-sublist' && <RankingSublistComponent {...componentProps} />}
-      {response.type === 'ranking-categorical' && <RankingCategoricalComponent {...componentProps} />}
-      {response.type === 'ranking-pairwise' && <RankingPairwiseComponent {...componentProps} />}
+      <Box mt="md">
+        {response.type === 'ranking-sublist' && <RankingSublistComponent {...componentProps} />}
+        {response.type === 'ranking-categorical' && <RankingCategoricalComponent {...componentProps} />}
+        {response.type === 'ranking-pairwise' && <RankingPairwiseComponent {...componentProps} />}
+      </Box>
     </Box>
   );
 }
