@@ -221,6 +221,44 @@
             "Option 3",
             "Option 4"
           ]
+        },
+        {
+          "id": "q-ranking-sublist",
+          "prompt": "Ranking Sublist example",
+          "secondaryText": "Select the top 2 options",
+          "location": "aboveStimulus",
+          "type": "ranking-sublist",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "numItems": 2
+        },
+        {
+          "id": "q-ranking-categorical",
+          "prompt": "Ranking Categorical example",
+          "location": "aboveStimulus",
+          "type": "ranking-categorical",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ]
+        },
+        {
+          "id": "q-ranking-pairwise",
+          "prompt": "Ranking Pairwise example",
+          "location": "aboveStimulus",
+          "type": "ranking-pairwise",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ]
         }
       ]
     },
