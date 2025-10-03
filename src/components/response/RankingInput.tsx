@@ -178,11 +178,11 @@ function RankingSublistComponent({
 
         <DroppableZone id="unassigned" title="Available Items">
           <SortableContext items={state.unassigned.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
-            <Flex gap="xs" wrap="wrap" justify="center">
+            <Stack>
               {state.unassigned.map((item) => (
                 <SortableItem key={item.symbol} item={item} />
               ))}
-            </Flex>
+            </Stack>
           </SortableContext>
         </DroppableZone>
       </Stack>
@@ -261,11 +261,11 @@ function RankingCategoricalComponent({
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <Stack gap="sm" maw="600px" mx="auto">
+      <Stack gap="md" maw="600px" mx="auto">
         {(['HIGH', 'MEDIUM', 'LOW', 'unassigned'] as const).map((category) => (
           <DroppableZone key={category} id={category} title={category === 'unassigned' ? 'Available Items' : category}>
             <SortableContext items={state[category].map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
-              <Stack gap="xs">
+              <Stack>
                 {state[category].map((item) => (
                   <SortableItem key={item.symbol} item={item} />
                 ))}
@@ -338,13 +338,13 @@ function RankingPairwiseComponent({
         </Button>
       </Flex>
 
-      <Stack gap="md">
+      <Stack gap="md" maw="600px" mx="auto">
         {Object.entries(pairs).map(([pairId, pair]) => (
           <Group key={pairId} justify="center" gap="md" wrap="wrap">
             {(['high', 'low'] as const).map((position) => (
               <DroppableZone key={position} id={`pair-${pairId}-${position}`} title={position.toUpperCase()}>
                 <SortableContext items={pair[position]} strategy={verticalListSortingStrategy}>
-                  <Stack gap="xs">
+                  <Stack>
                     {pair[position].map((itemId) => {
                       const item = items.find((i) => i.id === itemId);
                       return item ? <SortableItem key={itemId} item={item} /> : null;
@@ -358,11 +358,11 @@ function RankingPairwiseComponent({
 
         <DroppableZone id="unassigned" title="Available Items">
           <SortableContext items={unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-            <Flex gap="xs" wrap="wrap" justify="center">
+            <Stack>
               {unassigned.map((item) => (
                 <SortableItem key={item.id} item={item} />
               ))}
-            </Flex>
+            </Stack>
           </SortableContext>
         </DroppableZone>
       </Stack>
