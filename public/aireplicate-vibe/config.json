@@ -1,0 +1,834 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "AI Replicate Vibe Study - Message-Obscured Visualizations",
+    "version": "pilot",
+    "authors": [],
+    "date": "2024-12-19",
+    "description": "Study examining how message-obscured visualizations influence perceptions of maker characteristics, politics, and trustworthiness. Participants view stimuli from one of six randomization blocks and complete semantic differential scales and multiple-choice questions.",
+    "organizations": []
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "aireplicate-vibe/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "nextOnEnter": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "aireplicate-vibe/assets/introduction.md",
+      "response": []
+    },
+    "context_instantiation": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "social_media_platform",
+          "prompt": "To ground this experiment in a familiar setting, please choose a social media platform:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Facebook",
+            "Instagram", 
+            "Twitter/X",
+            "TikTok",
+            "LinkedIn",
+            "Other"
+          ]
+        }
+      ]
+    },
+    "trial_common": {
+      "type": "image",
+      "path": "aireplicate-vibe/assets/B0-D.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "maker_design_skill",
+          "prompt": "Are they likely ... in graphic design?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Layperson",
+          "rightLabel": "Professional"
+        },
+        {
+          "id": "data_skill",
+          "prompt": "Are they likely ... in data analysis?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Layperson",
+          "rightLabel": "Professional"
+        },
+        {
+          "id": "politics",
+          "prompt": "Are their politics more likely ... or ...?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Left-leaning",
+          "rightLabel": "Right-leaning"
+        },
+        {
+          "id": "alignment",
+          "prompt": "Do they likely share your values?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Does NOT share",
+          "rightLabel": "DOES share"
+        },
+        {
+          "id": "intention",
+          "prompt": "Is their intent more likely to ... or ...?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "To inform",
+          "rightLabel": "To persuade"
+        },
+        {
+          "id": "trust",
+          "prompt": "How trustworthy are they?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Untrustworthy",
+          "rightLabel": "Trustworthy"
+        },
+        {
+          "id": "beauty",
+          "prompt": "How aesthetically pleasing is the image?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not at all",
+          "rightLabel": "Very pleasing"
+        },
+        {
+          "id": "maker_identity",
+          "prompt": "Who do you think is most likely responsible for having this image created?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ]
+        },
+        {
+          "id": "maker_identity_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "maker_age",
+          "prompt": "What generation are they most likely from?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Boomer",
+            "Millennial",
+            "Gen-Z"
+          ]
+        },
+        {
+          "id": "maker_age_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "maker_gender",
+          "prompt": "What gender do they most likely identify with?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Other",
+            "Female",
+            "Male"
+          ]
+        },
+        {
+          "id": "maker_gender_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "encounter",
+          "prompt": "As you're scrolling through your feed, you see this image. What would you do?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Scroll past",
+          "rightLabel": "Stop and read"
+        }
+      ]
+    },
+    "trial_b1a": {
+      "type": "image",
+      "path": "aireplicate-vibe/assets/B1-A.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "maker_design_skill",
+          "prompt": "Are they likely ... in graphic design?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Layperson",
+          "rightLabel": "Professional"
+        },
+        {
+          "id": "data_skill",
+          "prompt": "Are they likely ... in data analysis?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Layperson",
+          "rightLabel": "Professional"
+        },
+        {
+          "id": "politics",
+          "prompt": "Are their politics more likely ... or ...?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Left-leaning",
+          "rightLabel": "Right-leaning"
+        },
+        {
+          "id": "alignment",
+          "prompt": "Do they likely share your values?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Does NOT share",
+          "rightLabel": "DOES share"
+        },
+        {
+          "id": "intention",
+          "prompt": "Is their intent more likely to ... or ...?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "To inform",
+          "rightLabel": "To persuade"
+        },
+        {
+          "id": "trust",
+          "prompt": "How trustworthy are they?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Untrustworthy",
+          "rightLabel": "Trustworthy"
+        },
+        {
+          "id": "beauty",
+          "prompt": "How aesthetically pleasing is the image?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not at all",
+          "rightLabel": "Very pleasing"
+        },
+        {
+          "id": "maker_identity",
+          "prompt": "Who do you think is most likely responsible for having this image created?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ]
+        },
+        {
+          "id": "maker_identity_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "maker_age",
+          "prompt": "What generation are they most likely from?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Boomer",
+            "Millennial",
+            "Gen-Z"
+          ]
+        },
+        {
+          "id": "maker_age_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "maker_gender",
+          "prompt": "What gender do they most likely identify with?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Other",
+            "Female",
+            "Male"
+          ]
+        },
+        {
+          "id": "maker_gender_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "encounter",
+          "prompt": "As you're scrolling through your feed, you see this image. What would you do?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Scroll past",
+          "rightLabel": "Stop and read"
+        }
+      ]
+    },
+    "trial_b1b": {
+      "type": "image",
+      "path": "aireplicate-vibe/assets/B1-B.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "maker_design_skill",
+          "prompt": "Are they likely ... in graphic design?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Layperson",
+          "rightLabel": "Professional"
+        },
+        {
+          "id": "data_skill",
+          "prompt": "Are they likely ... in data analysis?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Layperson",
+          "rightLabel": "Professional"
+        },
+        {
+          "id": "politics",
+          "prompt": "Are their politics more likely ... or ...?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Left-leaning",
+          "rightLabel": "Right-leaning"
+        },
+        {
+          "id": "alignment",
+          "prompt": "Do they likely share your values?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Does NOT share",
+          "rightLabel": "DOES share"
+        },
+        {
+          "id": "intention",
+          "prompt": "Is their intent more likely to ... or ...?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "To inform",
+          "rightLabel": "To persuade"
+        },
+        {
+          "id": "trust",
+          "prompt": "How trustworthy are they?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Untrustworthy",
+          "rightLabel": "Trustworthy"
+        },
+        {
+          "id": "beauty",
+          "prompt": "How aesthetically pleasing is the image?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not at all",
+          "rightLabel": "Very pleasing"
+        },
+        {
+          "id": "maker_identity",
+          "prompt": "Who do you think is most likely responsible for having this image created?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ]
+        },
+        {
+          "id": "maker_identity_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "maker_age",
+          "prompt": "What generation are they most likely from?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Boomer",
+            "Millennial",
+            "Gen-Z"
+          ]
+        },
+        {
+          "id": "maker_age_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "maker_gender",
+          "prompt": "What gender do they most likely identify with?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Other",
+            "Female",
+            "Male"
+          ]
+        },
+        {
+          "id": "maker_gender_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "encounter",
+          "prompt": "As you're scrolling through your feed, you see this image. What would you do?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Scroll past",
+          "rightLabel": "Stop and read"
+        }
+      ]
+    },
+    "trial_b1c": {
+      "type": "image",
+      "path": "aireplicate-vibe/assets/B1-C.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "maker_design_skill",
+          "prompt": "Are they likely ... in graphic design?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Layperson",
+          "rightLabel": "Professional"
+        },
+        {
+          "id": "data_skill",
+          "prompt": "Are they likely ... in data analysis?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Layperson",
+          "rightLabel": "Professional"
+        },
+        {
+          "id": "politics",
+          "prompt": "Are their politics more likely ... or ...?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Left-leaning",
+          "rightLabel": "Right-leaning"
+        },
+        {
+          "id": "alignment",
+          "prompt": "Do they likely share your values?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Does NOT share",
+          "rightLabel": "DOES share"
+        },
+        {
+          "id": "intention",
+          "prompt": "Is their intent more likely to ... or ...?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "To inform",
+          "rightLabel": "To persuade"
+        },
+        {
+          "id": "trust",
+          "prompt": "How trustworthy are they?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Untrustworthy",
+          "rightLabel": "Trustworthy"
+        },
+        {
+          "id": "beauty",
+          "prompt": "How aesthetically pleasing is the image?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not at all",
+          "rightLabel": "Very pleasing"
+        },
+        {
+          "id": "maker_identity",
+          "prompt": "Who do you think is most likely responsible for having this image created?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ]
+        },
+        {
+          "id": "maker_identity_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "maker_age",
+          "prompt": "What generation are they most likely from?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Boomer",
+            "Millennial",
+            "Gen-Z"
+          ]
+        },
+        {
+          "id": "maker_age_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "maker_gender",
+          "prompt": "What gender do they most likely identify with?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Other",
+            "Female",
+            "Male"
+          ]
+        },
+        {
+          "id": "maker_gender_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "encounter",
+          "prompt": "As you're scrolling through your feed, you see this image. What would you do?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Scroll past",
+          "rightLabel": "Stop and read"
+        }
+      ]
+    },
+    "trial_b1d": {
+      "type": "image",
+      "path": "aireplicate-vibe/assets/B1-D.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "maker_design_skill",
+          "prompt": "Are they likely ... in graphic design?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Layperson",
+          "rightLabel": "Professional"
+        },
+        {
+          "id": "data_skill",
+          "prompt": "Are they likely ... in data analysis?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Layperson",
+          "rightLabel": "Professional"
+        },
+        {
+          "id": "politics",
+          "prompt": "Are their politics more likely ... or ...?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Left-leaning",
+          "rightLabel": "Right-leaning"
+        },
+        {
+          "id": "alignment",
+          "prompt": "Do they likely share your values?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Does NOT share",
+          "rightLabel": "DOES share"
+        },
+        {
+          "id": "intention",
+          "prompt": "Is their intent more likely to ... or ...?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "To inform",
+          "rightLabel": "To persuade"
+        },
+        {
+          "id": "trust",
+          "prompt": "How trustworthy are they?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Untrustworthy",
+          "rightLabel": "Trustworthy"
+        },
+        {
+          "id": "beauty",
+          "prompt": "How aesthetically pleasing is the image?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not at all",
+          "rightLabel": "Very pleasing"
+        },
+        {
+          "id": "maker_identity",
+          "prompt": "Who do you think is most likely responsible for having this image created?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ]
+        },
+        {
+          "id": "maker_identity_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "maker_age",
+          "prompt": "What generation are they most likely from?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Boomer",
+            "Millennial",
+            "Gen-Z"
+          ]
+        },
+        {
+          "id": "maker_age_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "maker_gender",
+          "prompt": "What gender do they most likely identify with?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Other",
+            "Female",
+            "Male"
+          ]
+        },
+        {
+          "id": "maker_gender_confidence",
+          "prompt": "How confident are you in this answer?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not confident",
+          "rightLabel": "Very confident"
+        },
+        {
+          "id": "encounter",
+          "prompt": "As you're scrolling through your feed, you see this image. What would you do?",
+          "location": "sidebar",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Scroll past",
+          "rightLabel": "Stop and read"
+        }
+      ]
+    },
+    "demographics": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "age",
+          "prompt": "What is your age?",
+          "location": "aboveStimulus",
+          "type": "numerical",
+          "min": 18,
+          "max": 100
+        },
+        {
+          "id": "gender",
+          "prompt": "What is your gender?",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Male",
+            "Female",
+            "Non-binary",
+            "Other",
+            "Prefer not to say"
+          ]
+        },
+        {
+          "id": "education",
+          "prompt": "What is your highest level of education?",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "High school or less",
+            "Some college",
+            "Bachelor's degree",
+            "Master's degree",
+            "Doctoral degree",
+            "Other"
+          ]
+        },
+        {
+          "id": "data_visualization_experience",
+          "prompt": "How would you rate your experience with data visualization?",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "No experience",
+          "rightLabel": "Very experienced"
+        }
+      ]
+    },
+    "debrief": {
+      "type": "markdown",
+      "path": "aireplicate-vibe/assets/debrief.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "context_instantiation",
+      "trial_common",
+      "trial_b1a",
+      "trial_b1b", 
+      "trial_b1c",
+      "trial_b1d",
+      "demographics",
+      "debrief"
+    ]
+  }
+}

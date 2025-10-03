@@ -1,0 +1,625 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "An exploration of the salience of images on social media",
+    "version": "pilot",
+    "authors": [],
+    "date": "2024-12-19",
+    "description": "To conceptually replicate a previous interview study by asynchronously eliciting social attributions about data visualizations from Tumblr users using a survey instrument.",
+    "organizations": []
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "aireplicate-vibe2/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "enumerateQuestions": true
+  },
+  "baseComponents": {
+    "trial_template": {
+      "type": "image",
+      "style": {
+        "width": "800px",
+        "maxWidth": "100%"
+      },
+      "response": [
+        {
+          "id": "q1_expertise_design",
+          "prompt": "Are the person(s) most likely responsible for creating this image... or ... in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Layperson",
+          "rightLabel": "Professional",
+          "required": true
+        },
+        {
+          "id": "q2_expertise_analysis",
+          "prompt": "Are they likely... or ... in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Layperson",
+          "rightLabel": "Professional",
+          "required": true
+        },
+        {
+          "id": "q3_politics",
+          "prompt": "Are their politics more likely... or ...?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Left-leaning",
+          "rightLabel": "Right-leaning",
+          "required": true
+        },
+        {
+          "id": "q4_values",
+          "prompt": "Do they likely share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "q5_intent",
+          "prompt": "Is their intent more likely to... or ...?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Inform",
+          "rightLabel": "Persuade",
+          "required": true
+        },
+        {
+          "id": "q6_trustworthiness",
+          "prompt": "How trustworthy are they?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Untrustworthy",
+          "rightLabel": "Trustworthy",
+          "required": true
+        },
+        {
+          "id": "q7_aesthetics",
+          "prompt": "How aesthetically pleasing is the image?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not at all",
+          "rightLabel": "Very much",
+          "required": true
+        },
+        {
+          "id": "q8_responsible_party",
+          "prompt": "Who do you think is most likely responsible for having this image created?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Educational Institution",
+            "Business",
+            "Political Entity"
+          ],
+          "required": true
+        },
+        {
+          "id": "q9_confidence_responsible",
+          "prompt": "How confident are you in your answer above?",
+          "location": "belowStimulus",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "0%",
+              "value": 0
+            },
+            {
+              "label": "50%",
+              "value": 50
+            },
+            {
+              "label": "100%",
+              "value": 100
+            }
+          ],
+          "required": true
+        },
+        {
+          "id": "q10_generation",
+          "prompt": "What generation are they most likely from?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Boomer",
+            "Millennial",
+            "Gen-Z"
+          ],
+          "required": true
+        },
+        {
+          "id": "q11_confidence_generation",
+          "prompt": "How confident are you in your answer above?",
+          "location": "belowStimulus",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "0%",
+              "value": 0
+            },
+            {
+              "label": "50%",
+              "value": 50
+            },
+            {
+              "label": "100%",
+              "value": 100
+            }
+          ],
+          "required": true
+        },
+        {
+          "id": "q12_gender",
+          "prompt": "What gender do they most likely identify with?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Male",
+            "Female",
+            "Other"
+          ],
+          "required": true
+        },
+        {
+          "id": "q13_confidence_gender",
+          "prompt": "How confident are you in your answer above?",
+          "location": "belowStimulus",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "0%",
+              "value": 0
+            },
+            {
+              "label": "50%",
+              "value": 50
+            },
+            {
+              "label": "100%",
+              "value": 100
+            }
+          ],
+          "required": true
+        },
+        {
+          "id": "q14_behavior",
+          "prompt": "As you're scrolling through your feed, you see this image. What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read it",
+            "Scroll past it"
+          ],
+          "required": true
+        },
+        {
+          "id": "q15_reasoning",
+          "prompt": "Please explain your reasoning for the ratings you provided above.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Enter your reasoning here...",
+          "required": true
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "aireplicate-vibe2/assets/introduction.md",
+      "response": []
+    },
+    "platform_selection": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "platform_choice",
+          "prompt": "Please choose one of the following social media platforms:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Tumblr",
+            "Twitter/X",
+            "Instagram",
+            "Facebook",
+            "TikTok"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "context_instruction": {
+      "type": "markdown",
+      "path": "aireplicate-vibe2/assets/context_instruction.md",
+      "response": []
+    },
+    "trial_b1a": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B1-A.png",
+      "meta": {
+        "block": "B1",
+        "stimulus": "A",
+        "type": "heatmap"
+      }
+    },
+    "trial_b1b": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B1-B.png",
+      "meta": {
+        "block": "B1",
+        "stimulus": "B",
+        "type": "line_chart"
+      }
+    },
+    "trial_b1c": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B1-C.png",
+      "meta": {
+        "block": "B1",
+        "stimulus": "C",
+        "type": "area_chart"
+      }
+    },
+    "trial_b1d": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B1-D.png",
+      "meta": {
+        "block": "B1",
+        "stimulus": "D",
+        "type": "bar_chart"
+      }
+    },
+    "trial_b2a": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B2-A.png",
+      "meta": {
+        "block": "B2",
+        "stimulus": "A",
+        "type": "heatmap"
+      }
+    },
+    "trial_b2b": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B2-B.png",
+      "meta": {
+        "block": "B2",
+        "stimulus": "B",
+        "type": "line_chart"
+      }
+    },
+    "trial_b2c": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B2-C.png",
+      "meta": {
+        "block": "B2",
+        "stimulus": "C",
+        "type": "area_chart"
+      }
+    },
+    "trial_b2d": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B2-D.png",
+      "meta": {
+        "block": "B2",
+        "stimulus": "D",
+        "type": "bar_chart"
+      }
+    },
+    "trial_b3a": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B3-A.png",
+      "meta": {
+        "block": "B3",
+        "stimulus": "A",
+        "type": "heatmap"
+      }
+    },
+    "trial_b3b": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B3-B.png",
+      "meta": {
+        "block": "B3",
+        "stimulus": "B",
+        "type": "line_chart"
+      }
+    },
+    "trial_b3c": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B3-C.png",
+      "meta": {
+        "block": "B3",
+        "stimulus": "C",
+        "type": "area_chart"
+      }
+    },
+    "trial_b3d": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B3-D.png",
+      "meta": {
+        "block": "B3",
+        "stimulus": "D",
+        "type": "bar_chart"
+      }
+    },
+    "trial_b4a": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B4-A.png",
+      "meta": {
+        "block": "B4",
+        "stimulus": "A",
+        "type": "heatmap"
+      }
+    },
+    "trial_b4b": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B4-B.png",
+      "meta": {
+        "block": "B4",
+        "stimulus": "B",
+        "type": "line_chart"
+      }
+    },
+    "trial_b4c": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B4-C.png",
+      "meta": {
+        "block": "B4",
+        "stimulus": "C",
+        "type": "area_chart"
+      }
+    },
+    "trial_b4d": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B4-D.png",
+      "meta": {
+        "block": "B4",
+        "stimulus": "D",
+        "type": "bar_chart"
+      }
+    },
+    "trial_b5a": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B5-A.png",
+      "meta": {
+        "block": "B5",
+        "stimulus": "A",
+        "type": "heatmap"
+      }
+    },
+    "trial_b5b": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B5-B.png",
+      "meta": {
+        "block": "B5",
+        "stimulus": "B",
+        "type": "line_chart"
+      }
+    },
+    "trial_b5c": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B5-C.png",
+      "meta": {
+        "block": "B5",
+        "stimulus": "C",
+        "type": "area_chart"
+      }
+    },
+    "trial_b5d": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B5-D.png",
+      "meta": {
+        "block": "B5",
+        "stimulus": "D",
+        "type": "bar_chart"
+      }
+    },
+    "trial_b6a": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B6-A.png",
+      "meta": {
+        "block": "B6",
+        "stimulus": "A",
+        "type": "heatmap"
+      }
+    },
+    "trial_b6b": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B6-B.png",
+      "meta": {
+        "block": "B6",
+        "stimulus": "B",
+        "type": "line_chart"
+      }
+    },
+    "trial_b6c": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B6-C.png",
+      "meta": {
+        "block": "B6",
+        "stimulus": "C",
+        "type": "area_chart"
+      }
+    },
+    "trial_b6d": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B6-D.png",
+      "meta": {
+        "block": "B6",
+        "stimulus": "D",
+        "type": "bar_chart"
+      }
+    },
+    "trial_b0d": {
+      "baseComponent": "trial_template",
+      "path": "aireplicate-vibe2/assets/B0-D.png",
+      "meta": {
+        "block": "B0",
+        "stimulus": "D",
+        "type": "bar_chart_common"
+      }
+    },
+    "demographics": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "age",
+          "prompt": "What is your age?",
+          "location": "aboveStimulus",
+          "type": "numerical",
+          "min": 18,
+          "max": 100,
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "What is your gender?",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Male",
+            "Female",
+            "Non-binary",
+            "Other",
+            "Prefer not to say"
+          ],
+          "required": true
+        },
+        {
+          "id": "education",
+          "prompt": "What is your highest level of education?",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "High school or equivalent",
+            "Some college",
+            "Bachelor's degree",
+            "Master's degree",
+            "Doctoral degree",
+            "Other"
+          ],
+          "required": true
+        },
+        {
+          "id": "social_media_usage",
+          "prompt": "How often do you use social media?",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Multiple times per day",
+            "Once per day",
+            "A few times per week",
+            "Once per week",
+            "Less than once per week",
+            "Never"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "debrief": {
+      "type": "markdown",
+      "path": "aireplicate-vibe2/assets/debrief.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "platform_selection",
+      "context_instruction",
+      {
+        "order": "random",
+        "numSamples": 1,
+        "components": [
+          {
+            "order": "random",
+            "numSamples": 5,
+            "components": [
+              "trial_b1a",
+              "trial_b1b",
+              "trial_b1c",
+              "trial_b1d",
+              "trial_b0d"
+            ]
+          },
+          {
+            "order": "random",
+            "numSamples": 5,
+            "components": [
+              "trial_b2a",
+              "trial_b2b",
+              "trial_b2c",
+              "trial_b2d",
+              "trial_b0d"
+            ]
+          },
+          {
+            "order": "random",
+            "numSamples": 5,
+            "components": [
+              "trial_b3a",
+              "trial_b3b",
+              "trial_b3c",
+              "trial_b3d",
+              "trial_b0d"
+            ]
+          },
+          {
+            "order": "random",
+            "numSamples": 5,
+            "components": [
+              "trial_b4a",
+              "trial_b4b",
+              "trial_b4c",
+              "trial_b4d",
+              "trial_b0d"
+            ]
+          },
+          {
+            "order": "random",
+            "numSamples": 5,
+            "components": [
+              "trial_b5a",
+              "trial_b5b",
+              "trial_b5c",
+              "trial_b5d",
+              "trial_b0d"
+            ]
+          },
+          {
+            "order": "random",
+            "numSamples": 5,
+            "components": [
+              "trial_b6a",
+              "trial_b6b",
+              "trial_b6c",
+              "trial_b6d",
+              "trial_b0d"
+            ]
+          }
+        ]
+      },
+      "demographics",
+      "debrief"
+    ]
+  }
+}
