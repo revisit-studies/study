@@ -221,44 +221,6 @@
             "Option 3",
             "Option 4"
           ]
-        },
-        {
-          "id": "q-ranking-sublist",
-          "prompt": "Ranking Sublist example",
-          "secondaryText": "Select the top 2 options",
-          "location": "aboveStimulus",
-          "type": "ranking-sublist",
-          "options": [
-            "Option 1",
-            "Option 2",
-            "Option 3",
-            "Option 4"
-          ],
-          "numItems": 2
-        },
-        {
-          "id": "q-ranking-categorical",
-          "prompt": "Ranking Categorical example",
-          "location": "aboveStimulus",
-          "type": "ranking-categorical",
-          "options": [
-            "Option 1",
-            "Option 2",
-            "Option 3",
-            "Option 4"
-          ]
-        },
-        {
-          "id": "q-ranking-pairwise",
-          "prompt": "Ranking Pairwise example",
-          "location": "aboveStimulus",
-          "type": "ranking-pairwise",
-          "options": [
-            "Option 1",
-            "Option 2",
-            "Option 3",
-            "Option 4"
-          ]
         }
       ]
     },
@@ -452,6 +414,33 @@
         }
       ],
       "responseOrder": "random"
+    },
+    "survey-ranking-widget": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "ranking-sublist",
+          "type": "ranking-sublist",
+          "prompt": "Rank your top 2 favorite fruits from the list below",
+          "location": "belowStimulus",
+          "options": ["Apple", "Banana", "Orange", "Strawberry", "Grapes"],
+          "numItems": 2
+        },
+        {
+          "id": "ranking-categorical",
+          "type": "ranking-categorical",
+          "prompt": "Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.",
+          "location": "belowStimulus",
+          "options": ["Drawing", "Singing", "Hiking", "Dancing", "Photography"]
+        },
+        {
+          "id": "ranking-pairwise-food",
+          "type": "ranking-pairwise",
+          "prompt": "Which meal would you prefer",
+          "location": "belowStimulus",
+          "options": ["Pizza", "Sushi", "Burger", "Pasta", "Salad", "Tacos"]
+        }
+      ]
     }
   },
   "sequence": {
@@ -460,7 +449,8 @@
       "introduction",
       "survey",
       "survey_randomized_options",
-      "survey_randomized_form"
+      "survey_randomized_form",
+      "survey-ranking-widget"
     ]
   }
 }

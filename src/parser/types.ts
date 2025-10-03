@@ -571,7 +571,7 @@ export interface CheckboxResponse extends BaseResponse {
  *
  * There are three types of ranking widgets:
  * Ranking Sublist: The participant is asked to rank a subset of items from a larger list.
- * Ranking Categorical: The participant is asked to rank items within categories.
+ * Ranking Categorical: The participant is asked to rank items within categories: HIGH, MEDIUM, and LOW.
  * Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.
  *
  ```js
@@ -586,13 +586,12 @@ export interface CheckboxResponse extends BaseResponse {
 {
   "id": "ranking-categorical",
   "type": "ranking-categorical",
-  "prompt": "Sort these activities into categories: Enjoy, Neutral, Dislike",
+  "prompt": "Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.",
   "location": "belowStimulus",
-  "options": ["Reading", "Cooking", "Running", "Gaming", "Traveling"],
-  "numItems": 2
+  "options": ["Drawing", "Singing", "Hiking", "Dancing", "Photography"]
 },
 {
-  "id": "ranking-pairwise-food",
+  "id": "ranking-pairwise",
   "type": "ranking-pairwise",
   "prompt": "Which meal would you prefer",
   "location": "belowStimulus",
