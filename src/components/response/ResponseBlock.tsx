@@ -140,29 +140,27 @@ export function ResponseBlock({
     const matrixResponse = responsesWithDefaults.filter((r) => r.type === 'matrix-radio' || r.type === 'matrix-checkbox');
     // Create blank object with current values
     const rankingResponse = responsesWithDefaults.filter((r) => r.type === 'ranking-sublist' || r.type === 'ranking-categorical' || r.type === 'ranking-pairwise');
-    if ((matrixAnswers && matrixResponse.length > 0) || (rankingAnswers && rankingResponse.length > 0)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const updatedValues: Record<string, any> = { ...answerValidator.values };
-      // Adjust object to have new matrix response values
-      matrixResponse.forEach((r) => {
-        const { id } = r;
-        updatedValues[id] = {
-          ...answerValidator.getInputProps(id).value,
-          ...matrixAnswers[id],
-        };
-      });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updatedValues: Record<string, any> = { ...answerValidator.values };
+    // Adjust object to have new matrix response values
+    matrixResponse.forEach((r) => {
+      const { id } = r;
+      updatedValues[id] = {
+        ...answerValidator.getInputProps(id).value,
+        ...matrixAnswers[id],
+      };
+    });
 
-      rankingResponse.forEach((r) => {
-        const { id } = r;
-        updatedValues[id] = {
-          ...answerValidator.getInputProps(id).value,
-          ...rankingAnswers[id],
-        };
-      });
+    rankingResponse.forEach((r) => {
+      const { id } = r;
+      updatedValues[id] = {
+        ...answerValidator.getInputProps(id).value,
+        ...rankingAnswers[id],
+      };
+    });
 
-      // update answerValidator
-      answerValidator.setValues(updatedValues);
-    }
+    // update answerValidator
+    answerValidator.setValues(updatedValues);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matrixAnswers, rankingAnswers]);
 
