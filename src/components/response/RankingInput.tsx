@@ -344,7 +344,7 @@ function RankingPairwiseComponent({
             {(['high', 'low'] as const).map((position) => (
               <DroppableZone key={position} id={`pair-${pairId}-${position}`} title={position.toUpperCase()}>
                 <SortableContext items={pair[position]} strategy={verticalListSortingStrategy}>
-                  <Stack>
+                  <Stack gap="md">
                     {pair[position].map((itemId) => {
                       const item = items.find((i) => i.id === itemId);
                       return item ? <SortableItem key={itemId} item={item} /> : null;
