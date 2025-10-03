@@ -47,7 +47,8 @@
     "test-randomization",
     "test-skip-logic",
     "test-step-logic",
-    "aireplicate-vibe-exp1"
+    "aireplicate-vibe-exp1",
+    "aireplicate-vibe-exp3"
   ],
   "configs": {
     "tutorial": {
@@ -214,6 +215,9 @@
     },
     "aireplicate-vibe-exp1": {
       "path": "aireplicate-vibe-exp1/config.json"
+    },
+    "aireplicate-vibe-exp3": {
+      "path": "aireplicate-vibe-exp3/config.json"
     }
   }
 }

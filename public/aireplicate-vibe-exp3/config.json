@@ -1,0 +1,4762 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Quantifying Visualization Vibes",
+    "version": "pilot",
+    "authors": [
+      "Research Team"
+    ],
+    "date": "2024",
+    "description": "Study investigating how visualization message availability affects social inferences.",
+    "organizations": [
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@example.com",
+    "helpTextPath": "aireplicate-vibe-exp3/assets/instruction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "nextOnEnter": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "aireplicate-vibe-exp3/assets/introduction.md",
+      "response": []
+    },
+    "instructions": {
+      "type": "markdown",
+      "path": "aireplicate-vibe-exp3/assets/instruction.md",
+      "response": []
+    },
+    "b0d-obscured": {
+      "description": "Common stimulus B0-D obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B0-D-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b0d-unobscured": {
+      "description": "Common stimulus B0-D unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B0-D-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "debrief": {
+      "type": "markdown",
+      "path": "aireplicate-vibe-exp3/assets/debrief.md",
+      "response": []
+    },
+    "b1a-obscured": {
+      "description": "Block 1 stimulus B1-A obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B1-A-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b1a-unobscured": {
+      "description": "Block 1 stimulus B1-A unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B1-A-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b1b-obscured": {
+      "description": "Block 1 stimulus B1-B obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B1-B-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b1b-unobscured": {
+      "description": "Block 1 stimulus B1-B unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B1-B-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b1c-obscured": {
+      "description": "Block 1 stimulus B1-C obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B1-C-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b1c-unobscured": {
+      "description": "Block 1 stimulus B1-C unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B1-C-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b1d-obscured": {
+      "description": "Block 1 stimulus B1-D obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B1-D-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b1d-unobscured": {
+      "description": "Block 1 stimulus B1-D unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B1-D-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b2a-obscured": {
+      "description": "Block 2 stimulus B2-A obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B2-A-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b2a-unobscured": {
+      "description": "Block 2 stimulus B2-A unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B2-A-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b2b-obscured": {
+      "description": "Block 2 stimulus B2-B obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B2-B-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b2b-unobscured": {
+      "description": "Block 2 stimulus B2-B unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B2-B-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b2c-obscured": {
+      "description": "Block 2 stimulus B2-C obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B2-C-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b2c-unobscured": {
+      "description": "Block 2 stimulus B2-C unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B2-C-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b2d-obscured": {
+      "description": "Block 2 stimulus B2-D obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B2-D-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b2d-unobscured": {
+      "description": "Block 2 stimulus B2-D unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B2-D-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b3a-obscured": {
+      "description": "Block 3 stimulus B3-A obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B3-A-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b3a-unobscured": {
+      "description": "Block 3 stimulus B3-A unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B3-A-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b3b-obscured": {
+      "description": "Block 3 stimulus B3-B obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B3-B-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b3b-unobscured": {
+      "description": "Block 3 stimulus B3-B unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B3-B-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b3c-obscured": {
+      "description": "Block 3 stimulus B3-C obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B3-C-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b3c-unobscured": {
+      "description": "Block 3 stimulus B3-C unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B3-C-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b3d-obscured": {
+      "description": "Block 3 stimulus B3-D obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B3-D-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b3d-unobscured": {
+      "description": "Block 3 stimulus B3-D unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B3-D-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b4a-obscured": {
+      "description": "Block 4 stimulus B4-A obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B4-A-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b4a-unobscured": {
+      "description": "Block 4 stimulus B4-A unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B4-A-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b4b-obscured": {
+      "description": "Block 4 stimulus B4-B obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B4-B-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b4b-unobscured": {
+      "description": "Block 4 stimulus B4-B unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B4-B-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b4c-obscured": {
+      "description": "Block 4 stimulus B4-C obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B4-C-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b4c-unobscured": {
+      "description": "Block 4 stimulus B4-C unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B4-C-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    },
+    "b4d-obscured": {
+      "description": "Block 4 stimulus B4-D obscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B4-D-obscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "b4d-unobscured": {
+      "description": "Block 4 stimulus B4-D unobscured",
+      "type": "image",
+      "path": "aireplicate-vibe-exp3/assets/B4-D-unobscured.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "graphic_design_skills",
+          "prompt": "Professional or layperson in graphic design?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "data_analysis_skills",
+          "prompt": "Professional or layperson in data analysis?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "layperson",
+          "rightLabel": "professional",
+          "required": true
+        },
+        {
+          "id": "politics",
+          "prompt": "Political leaning?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "left leaning",
+          "rightLabel": "right leaning",
+          "required": true
+        },
+        {
+          "id": "values_alignment",
+          "prompt": "Do they share your values?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "does NOT share",
+          "rightLabel": "DOES share",
+          "required": true
+        },
+        {
+          "id": "intent",
+          "prompt": "Intent to inform or persuade?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "inform",
+          "rightLabel": "persuade",
+          "required": true
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "untrustworthy",
+          "rightLabel": "trustworthy",
+          "required": true
+        },
+        {
+          "id": "aesthetic_appeal",
+          "prompt": "How aesthetically pleasing?",
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "not at all",
+          "rightLabel": "very much",
+          "required": true
+        },
+        {
+          "id": "responsible_party",
+          "prompt": "Who created this?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "Organization",
+            "Education",
+            "Business",
+            "Political"
+          ],
+          "required": true
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-x",
+            "gen z"
+          ],
+          "required": true
+        },
+        {
+          "id": "gender",
+          "prompt": "Gender?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ],
+          "required": true
+        },
+        {
+          "id": "behavioral_response",
+          "prompt": "What would you do?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Stop and read",
+            "Scroll past"
+          ],
+          "required": true
+        },
+        {
+          "id": "explanation",
+          "prompt": "How did your answers change?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "instructions",
+      "b0d-obscured",
+      "b0d-unobscured",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+          {
+            "order": "fixed",
+            "components": [
+              {
+                "order": "fixed",
+                "components": [
+                  "b1a-obscured",
+                  "b1a-unobscured"
+                ]
+              },
+              {
+                "order": "fixed",
+                "components": [
+                  "b1b-obscured",
+                  "b1b-unobscured"
+                ]
+              },
+              {
+                "order": "fixed",
+                "components": [
+                  "b1c-obscured",
+                  "b1c-unobscured"
+                ]
+              },
+              {
+                "order": "fixed",
+                "components": [
+                  "b1d-obscured",
+                  "b1d-unobscured"
+                ]
+              }
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              {
+                "order": "fixed",
+                "components": [
+                  "b2a-obscured",
+                  "b2a-unobscured"
+                ]
+              },
+              {
+                "order": "fixed",
+                "components": [
+                  "b2b-obscured",
+                  "b2b-unobscured"
+                ]
+              },
+              {
+                "order": "fixed",
+                "components": [
+                  "b2c-obscured",
+                  "b2c-unobscured"
+                ]
+              },
+              {
+                "order": "fixed",
+                "components": [
+                  "b2d-obscured",
+                  "b2d-unobscured"
+                ]
+              }
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              {
+                "order": "fixed",
+                "components": [
+                  "b3a-obscured",
+                  "b3a-unobscured"
+                ]
+              },
+              {
+                "order": "fixed",
+                "components": [
+                  "b3b-obscured",
+                  "b3b-unobscured"
+                ]
+              },
+              {
+                "order": "fixed",
+                "components": [
+                  "b3c-obscured",
+                  "b3c-unobscured"
+                ]
+              },
+              {
+                "order": "fixed",
+                "components": [
+                  "b3d-obscured",
+                  "b3d-unobscured"
+                ]
+              }
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              {
+                "order": "fixed",
+                "components": [
+                  "b4a-obscured",
+                  "b4a-unobscured"
+                ]
+              },
+              {
+                "order": "fixed",
+                "components": [
+                  "b4b-obscured",
+                  "b4b-unobscured"
+                ]
+              },
+              {
+                "order": "fixed",
+                "components": [
+                  "b4c-obscured",
+                  "b4c-unobscured"
+                ]
+              },
+              {
+                "order": "fixed",
+                "components": [
+                  "b4d-obscured",
+                  "b4d-unobscured"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "debrief"
+    ]
+  }
+}
