@@ -5,7 +5,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import {
-  IconAdjustmentsHorizontal, IconBubbleText, IconChevronDown, IconCodePlus, IconDots, IconHtml, IconNumber123, IconRadio, IconSelect, IconSquares,
+  IconAdjustmentsHorizontal, IconBubbleText, IconChevronDown, IconCodePlus, IconCopyCheck, IconDots, IconGridPattern, IconHtml, IconLetterCase, IconMatrix, IconNumber123, IconRadio, IconSelect, IconSquares,
 } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
@@ -220,7 +220,11 @@ export function ResponseVisualization({
           {response.type === 'slider' && <IconAdjustmentsHorizontal size={20} />}
           {response.type === 'radio' && <IconRadio size={20} />}
           {response.type === 'checkbox' && <IconSquares size={20} />}
+          {response.type === 'matrix-radio' && <IconMatrix size={20} />}
+          {response.type === 'matrix-checkbox' && <IconGridPattern size={20} />}
+          {response.type === 'buttons' && <IconCopyCheck size={20} />}
           {response.type === 'reactive' && <IconHtml size={20} />}
+          {response.type === 'textOnly' && <IconLetterCase size={20} />}
           <Title order={5} ml={4}>
             {response.id}
           </Title>
@@ -263,7 +267,7 @@ export function ResponseVisualization({
                   ) : (
                     questionData.map((d, idx) => (
                       <Flex key={idx} align="center" gap="xs">
-                        <Text>d[response.id] as unknown as string</Text>
+                        <Text>{d[response.id] as unknown as string}</Text>
                       </Flex>
                     ))
                   )}
