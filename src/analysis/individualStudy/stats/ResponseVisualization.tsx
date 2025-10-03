@@ -250,7 +250,7 @@ export function ResponseVisualization({
                 spec={vegaLiteSpec as VisualizationSpec}
                 actions={false}
                 height={270}
-                width={(dms.width / 2) - 60 - (correctAnswer === undefined ? 0 : 60)}
+                width={(response.type === 'matrix-checkbox' || response.type === 'matrix-radio' ? 500 : (dms.width / 2) - 60 - (correctAnswer === undefined ? 0 : 60))}
                 padding={0}
                 style={{ justifySelf: 'center' }}
                 renderer="svg"
