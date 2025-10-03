@@ -569,16 +569,36 @@ export interface CheckboxResponse extends BaseResponse {
  * The RankingResponse interface is used to define the properties of a ranking widget response.
  * RankingResponses render as a ranking widget with user specified options.
  *
+ * There are three types of ranking widgets:
+ * Ranking Sublist: The participant is asked to rank a subset of items from a larger list.
+ * Ranking Categorical: The participant is asked to rank items within categories.
+ * Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.
+ *
  ```js
- {
+{
   "id": "ranking-sublist",
   "type": "ranking-sublist",
-  "prompt": "Rank the following options",
+  "prompt": "Rank your top 2 favorite fruits from the list below",
   "location": "belowStimulus",
-  "options": ["Option 1", "Option 2", "Option 3"]
+  "options": ["Apple", "Banana", "Orange", "Strawberry", "Grapes"],
   "numItems": 2
- }
- ```
+},
+{
+  "id": "ranking-categorical",
+  "type": "ranking-categorical",
+  "prompt": "Sort these activities into categories: Enjoy, Neutral, Dislike",
+  "location": "belowStimulus",
+  "options": ["Reading", "Cooking", "Running", "Gaming", "Traveling"],
+  "numItems": 2
+},
+{
+  "id": "ranking-pairwise-food",
+  "type": "ranking-pairwise",
+  "prompt": "Which meal would you prefer",
+  "location": "belowStimulus",
+  "options": ["Pizza", "Sushi", "Burger", "Pasta", "Salad", "Tacos"]
+}
+```
 */
 export interface RankingResponse extends BaseResponse {
   type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise';
