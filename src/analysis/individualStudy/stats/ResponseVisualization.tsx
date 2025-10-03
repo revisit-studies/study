@@ -36,9 +36,6 @@ export function ResponseVisualization({
     if (response.type === 'metadata') {
       return [];
     }
-    if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
-      return participantData.map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)).map((p) => p.filter(([_, value]) => value.endTime !== -1).map(([_, value]) => value.answer[response.id])).flat();
-    }
 
     const data = participantData.map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)).map((p) => p.map(([, value]) => {
       const answerData = { ...value.answer };
@@ -114,19 +111,15 @@ export function ResponseVisualization({
 
     // Matrix visualization
     if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
-      const rawValues = participantData
-        .map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId))
-        .map((p) => p.filter(([_, value]) => value.endTime !== -1).map(([_, value]) => value.answer[response.id]))
-        .flat()
-        .map((row) => Object.entries(row).map(([question, v]) => (response.type === 'matrix-checkbox'
-          ? (typeof v === 'string' ? v.split('|') : []).filter((s) => s.length > 0).map((vv) => ({ question, value: vv }))
-          : [{ question, value: String(v) }])))
-        .flat(2);
+      const data = questionData
+        .map((row) => Object.entries(row[response.id] || {}).map(([question, value]) => (response.type === 'matrix-checkbox'
+          ? (value as string).split('|').map((option) => ({ question, value: option }))
+          : [{ question, value }])).flat()).flat();
 
       // Histogram
       const spec = {
         ...baseSpec,
-        data: { values: rawValues },
+        data: { values: data },
         mark: 'bar',
         params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
         transform: Array.isArray(correctAnswer?.answer) ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
@@ -270,7 +263,7 @@ export function ResponseVisualization({
                   ) : (
                     questionData.map((d, idx) => (
                       <Flex key={idx} align="center" gap="xs">
-                        <Text>{d[response.id as keyof typeof d] as unknown as string}</Text>
+                        <Text>d[response.id] as unknown as string</Text>
                       </Flex>
                     ))
                   )}
