@@ -22,7 +22,7 @@ function _componentBlockToSequence(
   let computedComponents = order.components;
 
   if (order.order === 'random') {
-    const randomArr = order.components.sort(() => 0.5 - Math.random());
+    const randomArr = structuredClone(order.components).sort(() => 0.5 - Math.random());
 
     computedComponents = randomArr;
   } else if (order.order === 'latinSquare' && latinSquareObject) {

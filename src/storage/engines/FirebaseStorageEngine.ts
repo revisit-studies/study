@@ -249,6 +249,32 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await updateDoc(participantSequenceAssignmentDoc, { rejected: true });
   }
 
+  protected async _undoRejectParticipantRealtime(participantId: string) {
+    await this.verifyStudyDatabase();
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${this.studyId}`,
+    );
+
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      participantId,
+    );
+    await updateDoc(participantSequenceAssignmentDoc, { rejected: false });
+  }
+
   protected async _claimSequenceAssignment(participantId: string) {
     await this.verifyStudyDatabase();
     if (!this.currentParticipantId) {
@@ -343,6 +369,36 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       return await getDownloadURL(audioRef);
     } catch {
       console.warn(`Audio for task ${task} and participant ${participantId} not found.`);
+      return null;
+    }
+  }
+
+  protected async _getScreenRecordingUrl(
+    task: string,
+    participantId: string,
+  ): Promise<string | null> {
+    const storage = getStorage();
+    const screenRecordingRef = ref(storage, `${this.collectionPrefix}${this.studyId}/screenRecording/${participantId}_${task}`);
+
+    try {
+      return await getDownloadURL(screenRecordingRef);
+    } catch {
+      console.warn(`Screen recording for task ${task} and participant ${participantId} not found.`);
+      return null;
+    }
+  }
+
+  protected async _getTranscriptUrl(
+    task: string,
+    participantId: string,
+  ): Promise<string | null> {
+    const storage = getStorage();
+    const transcriptRef = ref(storage, `${this.collectionPrefix}${this.studyId}/audio/${participantId}_${task}.wav_transcription.txt`);
+
+    try {
+      return await getDownloadURL(transcriptRef);
+    } catch {
+      console.warn(`Transcript for task ${task} and participant ${participantId} not found.`);
       return null;
     }
   }

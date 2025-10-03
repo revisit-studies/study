@@ -1,13 +1,10 @@
 import { Tooltip, Badge, Flex } from '@mantine/core';
 import { IconCheck, IconProgress, IconX } from '@tabler/icons-react';
+import { ParticipantCounts } from '../types';
 
 const ICON_SIZE = 14;
 
-export function ParticipantStatusBadges({
-  completed, inProgress, rejected,
-}: {
-  completed: number; inProgress: number; rejected: number
-}) {
+export function ParticipantStatusBadges({ completed, inProgress, rejected }: Omit<ParticipantCounts, 'total'>) {
   return (
     <Flex ml={4} gap={4}>
       <Tooltip label="Completed">
