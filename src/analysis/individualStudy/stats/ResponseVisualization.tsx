@@ -36,6 +36,9 @@ export function ResponseVisualization({
     if (response.type === 'metadata') {
       return [];
     }
+    if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
+      return participantData.map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)).map((p) => p.filter(([_, value]) => value.endTime !== -1).map(([_, value]) => value.answer[response.id])).flat();
+    }
 
     const data = participantData.map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)).map((p) => p.map(([, value]) => {
       const answerData = { ...value.answer };
@@ -108,6 +111,36 @@ export function ResponseVisualization({
       },
       order: { field: 'order' },
     };
+
+    // Matrix visualization
+    if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
+      const rawValues = participantData
+        .map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId))
+        .map((p) => p.filter(([_, value]) => value.endTime !== -1).map(([_, value]) => value.answer[response.id]))
+        .flat()
+        .map((row) => Object.entries(row).map(([question, v]) => (response.type === 'matrix-checkbox'
+          ? (typeof v === 'string' ? v.split('|') : []).filter((s) => s.length > 0).map((vv) => ({ question, value: vv }))
+          : [{ question, value: String(v) }])))
+        .flat(2);
+
+      // Histogram
+      const spec = {
+        ...baseSpec,
+        data: { values: rawValues },
+        mark: 'bar',
+        params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
+        transform: Array.isArray(correctAnswer?.answer) ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
+        encoding: {
+          row: { field: 'question', type: 'nominal', header: { title: 'Question' } },
+          x: { field: 'value', type: 'ordinal', title: 'Answer' },
+          y: { aggregate: 'count', type: 'quantitative', title: 'Count' },
+          color: correctAnswer !== undefined ? correctAnswerSpec.color : undefined,
+        },
+        order: correctAnswer !== undefined ? correctAnswerSpec.order : undefined,
+        resolve: { scale: { x: 'independent' } },
+      };
+      return spec;
+    }
 
     // Numerical visualization
     if (response.type === 'numerical' || response.type === 'slider' || response.type === 'likert') {
@@ -215,7 +248,7 @@ export function ResponseVisualization({
 
         <SimpleGrid cols={2} h={360}>
           <ScrollArea mih={200}>
-            {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'reactive') ? (
+            {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'reactive' && response.type !== 'textOnly') ? (
               <VegaLite
                 spec={vegaLiteSpec as VisualizationSpec}
                 actions={false}
@@ -230,16 +263,18 @@ export function ResponseVisualization({
                 {response.type === 'metadata' && (
                   <Code block>{`${JSON.stringify(trialConfig, null, 2)}`}</Code>
                 )}
-                {response.type !== 'metadata' && (
-                  <>
-                    <Text fw={700}>Response Values: </Text>
-                    {questionData.map((d, idx) => (
+                <>
+                  <Text fw={700}>Response Values: </Text>
+                  {(response.type === 'textOnly') ? (
+                    <Text>N/A</Text>
+                  ) : (
+                    questionData.map((d, idx) => (
                       <Flex key={idx} align="center" gap="xs">
-                        <Text>{d[response.id] as unknown as string}</Text>
+                        <Text>{d[response.id as keyof typeof d] as unknown as string}</Text>
                       </Flex>
-                    ))}
-                  </>
-                )}
+                    ))
+                  )}
+                </>
               </Flex>
             )}
           </ScrollArea>
