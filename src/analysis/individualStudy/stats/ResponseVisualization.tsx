@@ -190,7 +190,7 @@ export function ResponseVisualization({
     }
 
     // Categorical visualization
-    if (response.type === 'radio' || response.type === 'dropdown' || response.type === 'checkbox') {
+    if (response.type === 'radio' || response.type === 'dropdown' || response.type === 'checkbox' || response.type === 'buttons') {
       const spec = {
         ...baseSpec,
         data: { values: questionData },
