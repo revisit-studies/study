@@ -3,8 +3,8 @@
   "configsList": [
     "tutorial",
     "demo-html",
-    "demo-html-video",
     "demo-html-input",
+    "demo-screen-recording",
     "demo-survey",
     "demo-training",
     "demo-html-trrack",
@@ -58,8 +58,8 @@
     "demo-html": {
       "path": "demo-html/config.json"
     },
-    "demo-html-video": {
-      "path": "demo-html-video/config.json"
+    "demo-screen-recording": {
+      "path": "demo-screen-recording/config.json"
     },
     "demo-html-input": {
       "path": "demo-html-input/config.json"
