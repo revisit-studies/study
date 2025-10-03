@@ -46,7 +46,8 @@
     "test-parser-errors",
     "test-randomization",
     "test-skip-logic",
-    "test-step-logic"
+    "test-step-logic",
+    "aireplicate-vibe-exp1"
   ],
   "configs": {
     "tutorial": {
@@ -210,6 +211,9 @@
     "example-VLAT-adaptive": {
       "path": "example-VLAT-adaptive/config.json",
       "test": true
+    },
+    "aireplicate-vibe-exp1": {
+      "path": "aireplicate-vibe-exp1/config.json"
     }
   }
 }

@@ -1,0 +1,608 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Quantifying Visualization Vibes (Study 1)",
+    "version": "1.0",
+    "authors": [],
+    "date": "2024-12-19",
+    "description": "This study investigated whether social attributions about a visualization's creator and context could be elicited asynchronously via an online survey. Participants viewed a series of five message-obscured visualizations and answered questions about the perceived skills, politics, values, and identity of the creator.",
+    "organizations": []
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "aireplicate-vibe-exp1/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "nextOnEnter": true
+  },
+  "baseComponents": {
+    "trial": {
+      "type": "image",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "instruction": "Please look at this visualization and answer the following questions about your perceptions of the creator.",
+      "response": [
+        {
+          "id": "graphic-design-expertise",
+          "prompt": "Are the person(s) most likely responsible for creating this image... likely ___ or ___ in graphic design?",
+          "location": "sidebar",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "layperson",
+              "value": 0
+            },
+            {
+              "label": "professional",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "id": "data-analysis-expertise",
+          "prompt": "Are they likely ___ or ___ in data analysis?",
+          "location": "sidebar",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "layperson",
+              "value": 0
+            },
+            {
+              "label": "professional",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "id": "political-leaning",
+          "prompt": "Are their politics more likely ___ or ___?",
+          "location": "sidebar",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "left-leaning",
+              "value": 0
+            },
+            {
+              "label": "right-leaning",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "id": "value-alignment",
+          "prompt": "Do they likely share your values?",
+          "location": "sidebar",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "does NOT share",
+              "value": 0
+            },
+            {
+              "label": "DOES share",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "prompt": "Is their intent more likely to ___ or ___?",
+          "location": "sidebar",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "inform",
+              "value": 0
+            },
+            {
+              "label": "persuade",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "id": "trustworthiness",
+          "prompt": "How trustworthy are they?",
+          "location": "sidebar",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "untrustworthy",
+              "value": 0
+            },
+            {
+              "label": "trustworthy",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "id": "aesthetic-appeal",
+          "prompt": "How aesthetically pleasing is the image?",
+          "location": "sidebar",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "not at all",
+              "value": 0
+            },
+            {
+              "label": "very much",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "id": "maker-identity",
+          "prompt": "Who do you think is most likely responsible for having this image created?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Individual",
+            "organization",
+            "education",
+            "business",
+            "political"
+          ]
+        },
+        {
+          "id": "confidence-maker-identity",
+          "prompt": "Following your response to 'Maker Identity', how confident are you in your answer?",
+          "location": "sidebar",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "0",
+              "value": 0
+            },
+            {
+              "label": "100",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "id": "generation",
+          "prompt": "What generation are they most likely from?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "boomer",
+            "millennial",
+            "gen-z"
+          ]
+        },
+        {
+          "id": "confidence-age",
+          "prompt": "Following your response to 'Maker Age', how confident are you in your answer?",
+          "location": "sidebar",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "0",
+              "value": 0
+            },
+            {
+              "label": "100",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "id": "gender",
+          "prompt": "What gender do they most likely identify with?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "other",
+            "female",
+            "male"
+          ]
+        },
+        {
+          "id": "confidence-gender",
+          "prompt": "Following your response to 'Maker Gender', how confident are you in your answer?",
+          "location": "sidebar",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "0",
+              "value": 0
+            },
+            {
+              "label": "100",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "id": "feed-behavior",
+          "prompt": "As you're scrolling through your feed, you see this image. What would you do?",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "scroll past",
+            "stop and read"
+          ]
+        },
+        {
+          "id": "reasoning",
+          "prompt": "Please explain your reasoning for the answers above.",
+          "location": "sidebar",
+          "type": "longText",
+          "placeholder": "Enter your reasoning here..."
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "aireplicate-vibe-exp1/assets/introduction.md",
+      "response": []
+    },
+    "trial1-common": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 1,
+        "stimulus": "B0-D",
+        "block": "common"
+      },
+      "description": "Common stimulus trial - B0-D",
+      "path": "aireplicate-vibe-exp1/assets/B0-D.png"
+    },
+    "trial2-b1a": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B1-A",
+        "block": "B1",
+        "category": "A"
+      },
+      "description": "Block 1 Category A stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B1-A.png"
+    },
+    "trial2-b1b": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B1-B",
+        "block": "B1",
+        "category": "B"
+      },
+      "description": "Block 1 Category B stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B1-B.png"
+    },
+    "trial2-b1c": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B1-C",
+        "block": "B1",
+        "category": "C"
+      },
+      "description": "Block 1 Category C stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B1-C.png"
+    },
+    "trial2-b1d": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B1-D",
+        "block": "B1",
+        "category": "D"
+      },
+      "description": "Block 1 Category D stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B1-D.png"
+    },
+    "trial2-b2a": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B2-A",
+        "block": "B2",
+        "category": "A"
+      },
+      "description": "Block 2 Category A stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B2-A.png"
+    },
+    "trial2-b2b": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B2-B",
+        "block": "B2",
+        "category": "B"
+      },
+      "description": "Block 2 Category B stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B2-B.png"
+    },
+    "trial2-b2c": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B2-C",
+        "block": "B2",
+        "category": "C"
+      },
+      "description": "Block 2 Category C stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B2-C.png"
+    },
+    "trial2-b2d": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B2-D",
+        "block": "B2",
+        "category": "D"
+      },
+      "description": "Block 2 Category D stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B2-D.png"
+    },
+    "trial2-b3a": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B3-A",
+        "block": "B3",
+        "category": "A"
+      },
+      "description": "Block 3 Category A stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B3-A.png"
+    },
+    "trial2-b3b": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B3-B",
+        "block": "B3",
+        "category": "B"
+      },
+      "description": "Block 3 Category B stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B3-B.png"
+    },
+    "trial2-b3c": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B3-C",
+        "block": "B3",
+        "category": "C"
+      },
+      "description": "Block 3 Category C stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B3-C.png"
+    },
+    "trial2-b3d": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B3-D",
+        "block": "B3",
+        "category": "D"
+      },
+      "description": "Block 3 Category D stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B3-D.png"
+    },
+    "trial2-b4a": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B4-A",
+        "block": "B4",
+        "category": "A"
+      },
+      "description": "Block 4 Category A stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B4-A.png"
+    },
+    "trial2-b4b": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B4-B",
+        "block": "B4",
+        "category": "B"
+      },
+      "description": "Block 4 Category B stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B4-B.png"
+    },
+    "trial2-b4c": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B4-C",
+        "block": "B4",
+        "category": "C"
+      },
+      "description": "Block 4 Category C stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B4-C.png"
+    },
+    "trial2-b4d": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B4-D",
+        "block": "B4",
+        "category": "D"
+      },
+      "description": "Block 4 Category D stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B4-D.png"
+    },
+    "trial2-b5a": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B5-A",
+        "block": "B5",
+        "category": "A"
+      },
+      "description": "Block 5 Category A stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B5-A.png"
+    },
+    "trial2-b5b": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B5-B",
+        "block": "B5",
+        "category": "B"
+      },
+      "description": "Block 5 Category B stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B5-B.png"
+    },
+    "trial2-b5c": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B5-C",
+        "block": "B5",
+        "category": "C"
+      },
+      "description": "Block 5 Category C stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B5-C.png"
+    },
+    "trial2-b5d": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B5-D",
+        "block": "B5",
+        "category": "D"
+      },
+      "description": "Block 5 Category D stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B5-D.png"
+    },
+    "trial2-b6a": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B6-A",
+        "block": "B6",
+        "category": "A"
+      },
+      "description": "Block 6 Category A stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B6-A.png"
+    },
+    "trial2-b6b": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B6-B",
+        "block": "B6",
+        "category": "B"
+      },
+      "description": "Block 6 Category B stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B6-B.png"
+    },
+    "trial2-b6c": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B6-C",
+        "block": "B6",
+        "category": "C"
+      },
+      "description": "Block 6 Category C stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B6-C.png"
+    },
+    "trial2-b6d": {
+      "baseComponent": "trial",
+      "meta": {
+        "trial": 2,
+        "stimulus": "B6-D",
+        "block": "B6",
+        "category": "D"
+      },
+      "description": "Block 6 Category D stimulus",
+      "path": "aireplicate-vibe-exp1/assets/B6-D.png"
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "trial1-common",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+          {
+            "order": "latinSquare",
+            "numSamples": 4,
+            "components": [
+              "trial2-b1a",
+              "trial2-b1b",
+              "trial2-b1c",
+              "trial2-b1d"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "numSamples": 4,
+            "components": [
+              "trial2-b2a",
+              "trial2-b2b",
+              "trial2-b2c",
+              "trial2-b2d"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "numSamples": 4,
+            "components": [
+              "trial2-b3a",
+              "trial2-b3b",
+              "trial2-b3c",
+              "trial2-b3d"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "numSamples": 4,
+            "components": [
+              "trial2-b4a",
+              "trial2-b4b",
+              "trial2-b4c",
+              "trial2-b4d"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "numSamples": 4,
+            "components": [
+              "trial2-b5a",
+              "trial2-b5b",
+              "trial2-b5c",
+              "trial2-b5d"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "numSamples": 4,
+            "components": [
+              "trial2-b6a",
+              "trial2-b6b",
+              "trial2-b6c",
+              "trial2-b6d"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
