@@ -37,7 +37,7 @@ export function ResponseVisualization({
       return [];
     }
 
-    const data = participantData.map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)).map((p) => p.map(([, value]) => {
+    const data = participantData.map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)).map((p) => p.filter(([, value]) => value.startTime > 0).map(([, value]) => {
       const answerData = { ...value.answer };
 
       if (correctAnswer) {
