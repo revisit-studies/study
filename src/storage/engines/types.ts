@@ -42,10 +42,6 @@ export type SequenceAssignment = {
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
 
-/**
- * Calculates progress data including total, answered, and isDynamic.
- * Uses the same logic as the progress bar in AppHeader.tsx
- */
 export function calculateProgressData(
   answers: ParticipantData['answers'],
   flatSequence: string[],
@@ -55,16 +51,13 @@ export function calculateProgressData(
 ): { total: number; answered: string[]; isDynamic: boolean } {
   const answered = Object.values(answers).filter((answer) => answer.endTime > -1).map((answer) => answer.componentName);
 
-  // Check if the study contains dynamic blocks
   const isDynamic = funcIndex !== undefined;
 
   const total = flatSequence.map((step) => {
-    // If the step is a component, it adds 1 to the total
     if (studyConfig.components[step]) {
       return 1;
     }
 
-    // Otherwise, count the number of answers for this dynamic block
     return Object.entries(answers).filter(([key, _]) => key.includes(`${step}_`)).length;
   }).reduce((a, b) => a + b, 0);
 

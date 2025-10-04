@@ -7,7 +7,6 @@ export interface ProgressHeatmapProps{
 }
 
 export function ProgressHeatmap({ total, answered, isDynamic }: ProgressHeatmapProps) {
-  // Only render if total is a valid number and greater than 0
   if (!total || total <= 0 || Number.isNaN(total)) {
     return null;
   }
