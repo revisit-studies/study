@@ -21,6 +21,7 @@ import {
   getDoc,
   getDocs,
   initializeFirestore,
+  onSnapshot,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -180,6 +181,33 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
       } as SequenceAssignment))
       .sort((a, b) => a.timestamp - b.timestamp);
+  }
+
+  // Set up realtime listener for sequence assignments
+  _setupSequenceAssignmentListener(studyId: string, callback: (assignments: SequenceAssignment[]) => void) {
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+    );
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+
+    return onSnapshot(sequenceAssignmentCollection, (snapshot) => {
+      const assignments = snapshot.docs
+        .map((d) => d.data())
+        .map((data) => ({
+          ...data,
+          timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
+          createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
+          completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+        } as SequenceAssignment))
+        .sort((a, b) => a.timestamp - b.timestamp);
+
+      callback(assignments);
+    });
   }
 
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean = false) {

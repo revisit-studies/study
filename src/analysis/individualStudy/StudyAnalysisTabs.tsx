@@ -6,6 +6,7 @@ import {
   IconChartDonut2, IconTable, IconSettings,
   IconInfoCircle,
   IconChartPie,
+  IconDashboard,
 } from '@tabler/icons-react';
 import {
   useEffect, useMemo, useState,
@@ -14,6 +15,7 @@ import { useResizeObserver } from '@mantine/hooks';
 import { AppHeader } from '../interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
+import { LiveMonitorView } from './LiveMonitor/LiveMonitorView';
 import { SummaryView } from './summary/SummaryView';
 import { TableView } from './table/TableView';
 import { StatsView } from './stats/StatsView';
@@ -142,11 +144,15 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)}
             >
               <Tabs.List>
+                <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />}>Live Monitor</Tabs.Tab>
                 <Tabs.Tab value="summary" leftSection={<IconChartPie size={16} />}>Study Summary</Tabs.Tab>
                 <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Participant View</Tabs.Tab>
                 <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
               </Tabs.List>
+              <Tabs.Panel style={{ overflow: 'auto' }} value="live-monitor" pt="xs">
+                {studyConfig && <LiveMonitorView studyConfig={studyConfig} visibleParticipants={visibleParticipants} storageEngine={storageEngine} studyId={studyId} />}
+              </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
                 {studyConfig && <SummaryView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
               </Tabs.Panel>
