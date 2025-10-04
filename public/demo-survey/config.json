@@ -193,6 +193,35 @@
           ]
         }
       ]
+    },
+    "aboveStimulus": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-checkbox",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "withOther": true,
+          "location": "aboveStimulus"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q-checkbox",
+          "answer": [
+            "Option 1",
+            "Option 3"
+          ]
+        }
+      ]
     }
   },
   "sequence": {
@@ -204,7 +233,8 @@
       "matrix-radio",
       "matrix-checkbox",
       "slider",
-      "checkboxOrder"
+      "checkboxOrder",
+      "aboveStimulus"
     ]
   }
 }
