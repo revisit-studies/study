@@ -61,10 +61,27 @@ export function ProgressHeatmap({ total, answered, isDynamic }: ProgressHeatmapP
         overflow-x: auto;
         overflow-y: hidden;
         white-space: nowrap;
+
       }
       .progress-heatmap svg {
         display: inline-block;
         vertical-align: top;
+      }
+      
+      /* Custom scrollbar styling */
+      .progress-heatmap::-webkit-scrollbar {
+        height: 8px;
+      }
+      .progress-heatmap::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      .progress-heatmap::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+      }
+      .progress-heatmap::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
       }
       
       @media (max-width: 900px) {
