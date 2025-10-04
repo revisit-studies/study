@@ -124,7 +124,7 @@ export function AllTasksTimeline({
                   const [id, componentAnswer] = a;
                   const correctAnswer = component?.correctAnswer?.find((c) => c.id === id)?.answer;
 
-                  return <Text key={id}>{`${id}: ${componentAnswer} ${correctAnswer ? `[${correctAnswer}]` : ''}`}</Text>;
+                  return <Text key={id}>{`${id}: ${componentAnswer} ${correctAnswer ? `[${typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer}]` : ''}`}</Text>;
                 })}
               </Stack>
             )}
