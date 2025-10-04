@@ -244,7 +244,7 @@ export function ResponseVisualization({
         </Box>
 
         <SimpleGrid cols={2} h={360}>
-          <ScrollArea mih={200} type="scroll">
+          <ScrollArea mih={200}>
             {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'reactive' && response.type !== 'textOnly') ? (
               <VegaLite
                 spec={vegaLiteSpec as VisualizationSpec}
