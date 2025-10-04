@@ -1,27 +1,89 @@
 import {
-  Stack, Group, Card, Text, Title, Grid, Badge, ActionIcon, RingProgress, Center,
+  Stack, Group, Card, Text, Title, Grid, Badge, ActionIcon, RingProgress, Center, Indicator, Tooltip, Button, Flex,
 } from '@mantine/core';
 import { useMemo, useEffect, useState } from 'react';
-import { IconUsers, IconClock, IconCheck } from '@tabler/icons-react';
-import { ParticipantData } from '../../../storage/types';
+import {
+  IconCheck, IconWifi, IconWifiOff, IconRefresh,
+} from '@tabler/icons-react';
 import { StudyConfig } from '../../../parser/types';
 import { StorageEngine, SequenceAssignment } from '../../../storage/engines/types';
 import { ProgressHeatmap } from './ProgressHeatmap';
 
-export function LiveMonitorView({
-  visibleParticipants, studyConfig: _studyConfig, storageEngine, studyId,
-}: {
-  visibleParticipants: ParticipantData[];
+export function LiveMonitorView({ studyConfig: _studyConfig, storageEngine, studyId }: {
   studyConfig: StudyConfig;
   storageEngine?: StorageEngine;
   studyId?: string;
 }) {
   const [sequenceAssignments, setSequenceAssignments] = useState<SequenceAssignment[]>([]);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connecting');
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+
+  // Function to handle successful data update
+  const handleDataUpdate = (assignments: SequenceAssignment[]) => {
+    setSequenceAssignments(assignments);
+    setConnectionStatus('connected');
+    setLastUpdateTime(new Date());
+    setIsReconnecting(false);
+  };
+
+  // Function to manually reconnect
+  const handleReconnect = async () => {
+    if (!storageEngine || !studyId || isReconnecting) return;
+
+    // Check if browser is online before attempting reconnection
+    if (!navigator.onLine) {
+      setConnectionStatus('disconnected');
+      return;
+    }
+
+    setIsReconnecting(true);
+    setConnectionStatus('connecting');
+
+    // Set up a timeout to handle connection failures
+    const connectionTimeout = setTimeout(() => {
+      if (connectionStatus === 'connecting') {
+        setConnectionStatus('disconnected');
+        setIsReconnecting(false);
+      }
+    }, 5000); // 5 second timeout
+
+    try {
+      // Reinitialize the connection
+      storageEngine.initializeStudyDb(studyId);
+
+      // For Firebase, we need to access the realtime listener
+      if (storageEngine.getEngine() === 'firebase') {
+        // Try to get current data immediately
+        const assignments = await (storageEngine as StorageEngine & { _getAllSequenceAssignments: (studyId: string) => Promise<SequenceAssignment[]> })._getAllSequenceAssignments(studyId);
+
+        // Clear the timeout since connection was successful
+        clearTimeout(connectionTimeout);
+        handleDataUpdate(assignments);
+      } else {
+        // For non-Firebase engines, fetch data immediately
+        const assignments = await (storageEngine as StorageEngine & { _getAllSequenceAssignments: (studyId: string) => Promise<SequenceAssignment[]> })._getAllSequenceAssignments(studyId);
+
+        // Clear the timeout since connection was successful
+        clearTimeout(connectionTimeout);
+        handleDataUpdate(assignments);
+      }
+    } catch (error) {
+      console.error('Reconnection failed:', error);
+      clearTimeout(connectionTimeout);
+      setConnectionStatus('disconnected');
+      setIsReconnecting(false);
+    }
+  };
 
   // Set up realtime listener for sequence assignments
   useEffect(() => {
-    if (!storageEngine || !studyId) return undefined;
+    if (!storageEngine || !studyId) {
+      setConnectionStatus('disconnected');
+      return undefined;
+    }
 
+    setConnectionStatus('connecting');
     storageEngine.initializeStudyDb(studyId);
 
     // For Firebase, we need to access the realtime listener
@@ -31,50 +93,65 @@ export function LiveMonitorView({
 
       // Set up the realtime listener
       const unsubscribe = firebaseEngine._setupSequenceAssignmentListener?.(studyId, (assignments: SequenceAssignment[]) => {
-        setSequenceAssignments(assignments);
+        handleDataUpdate(assignments);
       });
 
-      return unsubscribe;
-    }
+      // Set connected status after a brief delay to show connection is established
+      const initialConnectionTimeout = setTimeout(() => {
+        if (connectionStatus === 'connecting') {
+          setConnectionStatus('connected');
+        }
+      }, 1000);
 
-    // For non-Firebase engines, poll periodically
-    const interval = setInterval(async () => {
-      try {
-        const assignments = await (storageEngine as StorageEngine & { _getAllSequenceAssignments: (studyId: string) => Promise<SequenceAssignment[]> })._getAllSequenceAssignments(studyId);
-
-        setSequenceAssignments(assignments);
-      } catch (error) {
-        console.error('Error fetching sequence assignments:', error);
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [storageEngine, studyId]);
-
-  const liveStats = useMemo(() => {
-    if (visibleParticipants.length === 0) {
-      return {
-        totalParticipants: 0,
-        completedParticipants: 0,
-        inProgressParticipants: 0,
-        rejectedParticipants: 0,
-        completionRate: 0,
-        avgCompletionTime: 0,
+      return () => {
+        unsubscribe?.();
+        clearTimeout(initialConnectionTimeout);
       };
     }
 
-    const totalParticipants = visibleParticipants.length;
-    const completedParticipants = visibleParticipants.filter((p) => p.completed && !p.rejected).length;
-    const inProgressParticipants = visibleParticipants.filter((p) => !p.completed && !p.rejected).length;
-    const rejectedParticipants = visibleParticipants.filter((p) => p.rejected).length;
-
-    return {
-      totalParticipants,
-      completedParticipants,
-      inProgressParticipants,
-      rejectedParticipants,
+    // For non-Firebase engines, poll periodically
+    const fetchData = async () => {
+      try {
+        const assignments = await (storageEngine as StorageEngine & { _getAllSequenceAssignments: (studyId: string) => Promise<SequenceAssignment[]> })._getAllSequenceAssignments(studyId);
+        handleDataUpdate(assignments);
+      } catch (error) {
+        console.error('Error fetching sequence assignments:', error);
+        setConnectionStatus('disconnected');
+      }
     };
-  }, [visibleParticipants]);
+
+    // Initial fetch
+    fetchData();
+
+    const interval = setInterval(fetchData, 5000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [storageEngine, studyId]);
+
+  // Monitor browser online/offline status
+  useEffect(() => {
+    const handleOnline = () => {
+      if (storageEngine && studyId && connectionStatus === 'disconnected') {
+        // Trigger a reconnection attempt when coming back online
+        handleReconnect();
+      }
+    };
+
+    const handleOffline = () => {
+      setConnectionStatus('disconnected');
+      setIsReconnecting(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [storageEngine, studyId]);
 
   // Calculate progress for each participant using live monitor data
   const participantProgress = useMemo(() => sequenceAssignments.map((assignment) => {
@@ -89,63 +166,97 @@ export function LiveMonitorView({
   }).sort((a, b) => b.assignment.createdTime - a.assignment.createdTime), [sequenceAssignments]);
 
   return (
-    <Stack gap="md">
-      <Title order={3}>Live Monitor</Title>
-
-      <Grid>
-        <Grid.Col span={6}>
-          <Card shadow="sm" padding="lg" radius="md" withBorder>
-            <Group gap="apart" mb="xs">
-              <Text fw={500}>Participants</Text>
-              <IconUsers size={20} />
-            </Group>
-            <Text size="xl" fw={700}>{liveStats.totalParticipants}</Text>
-            <Group gap="xs" mt="sm">
-              <Badge color="green" variant="light">
-                {liveStats.completedParticipants}
-                {' '}
-                Completed
-              </Badge>
-              <Badge color="orange" variant="light">
-                {liveStats.inProgressParticipants}
-                {' '}
-                In Progress
-              </Badge>
-              <Badge color="red" variant="light">
-                {liveStats.rejectedParticipants}
-                {' '}
-                Rejected
-              </Badge>
-            </Group>
-          </Card>
-        </Grid.Col>
-        <Grid.Col span={6}>
-          <Card shadow="sm" padding="lg" radius="md" withBorder>
-            <Group gap="apart" mb="xs">
-              <Text fw={500}>Live Monitor</Text>
-              <IconClock size={20} />
-            </Group>
-            <Text size="xl" fw={700}>{sequenceAssignments.length}</Text>
-            <Group gap="xs" mt="sm">
-              <Badge color="green" variant="light">
+    <Stack gap="sm">
+      {/* Compact Banner Header - Sticky */}
+      <Card
+        shadow="sm"
+        padding="sm"
+        radius="md"
+        withBorder
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          backgroundColor: 'white',
+          marginBottom: '1rem',
+        }}
+      >
+        <Flex justify="space-between" align="center">
+          {/* Left side: Title and Stats */}
+          <Group gap="md">
+            <Title order={5} size="h5">Live Monitor</Title>
+            <Text size="sm" c="dimmed">
+              Total:
+              {' '}
+              {sequenceAssignments.length}
+            </Text>
+            <Group gap="xs">
+              <Badge color="green" variant="light" size="sm">
                 {sequenceAssignments.filter((a) => a.completed).length}
                 {' '}
                 Completed
               </Badge>
-              <Badge color="orange" variant="light">
+              <Badge color="orange" variant="light" size="sm">
                 {sequenceAssignments.filter((a) => !a.completed && !a.rejected).length}
                 {' '}
-                In Progress
+                Active
               </Badge>
-              <Badge color="red" variant="light">
+              <Badge color="red" variant="light" size="sm">
                 {sequenceAssignments.filter((a) => a.rejected).length}
                 {' '}
                 Rejected
               </Badge>
             </Group>
-          </Card>
-        </Grid.Col>
-      </Grid>
+          </Group>
+
+          <Group gap="xs">
+            {/* Reconnect button - only show when disconnected */}
+            {connectionStatus === 'disconnected' && (
+              <Button
+                size="xs"
+                variant="light"
+                color="blue"
+                leftSection={<IconRefresh size={12} />}
+                loading={isReconnecting}
+                onClick={handleReconnect}
+                disabled={!storageEngine || !studyId}
+              >
+                Reconnect
+              </Button>
+            )}
+
+            <Tooltip
+              label={
+                connectionStatus === 'connected'
+                  ? `Connected${lastUpdateTime ? ` - Established since: ${lastUpdateTime.toLocaleTimeString()}` : ''}`
+                  : connectionStatus === 'connecting'
+                    ? 'Connecting...'
+                    : 'Disconnected'
+              }
+              position="bottom-end"
+            >
+              <Indicator
+                color={
+                  connectionStatus === 'connected'
+                    ? 'green'
+                    : connectionStatus === 'connecting'
+                      ? 'yellow'
+                      : 'red'
+                }
+                position="top-end"
+                size={10}
+                withBorder
+              >
+                {connectionStatus === 'connected' ? (
+                  <IconWifi size={22} color="green" />
+                ) : (
+                  <IconWifiOff size={22} color={connectionStatus === 'connecting' ? 'orange' : 'red'} />
+                )}
+              </Indicator>
+            </Tooltip>
+          </Group>
+        </Flex>
+      </Card>
 
       {/* Participant Progress Section */}
       <Title order={4} mt="lg">Participant Progress</Title>
@@ -168,17 +279,22 @@ export function LiveMonitorView({
                 <Grid>
                   {inProgress.map(({ assignment, progress }, index) => (
                     <Grid.Col span={12} key={assignment.participantId || `inprogress-${index}`}>
-                      <Card shadow="sm" padding="lg" radius="md" withBorder>
+                      <Card shadow="sm" padding="sm" radius="md" withBorder>
                         <Group justify="space-between" align="center">
                           <div>
-                            <Text fw={500} size="sm">
-                              Participant:
-                              {' '}
-                              {assignment.participantId || `#${index + 1}`}
-                            </Text>
-                            <Text size="sm" c="dimmed">
-                              In Progress
-                            </Text>
+                            <Group gap="xs" align="center">
+                              <Text fw={500} size="sm">
+                                Participant:
+                                {' '}
+                                {assignment.participantId || `#${index + 1}`}
+                              </Text>
+                              {assignment.isDynamic && (
+                                <Badge size="xs" color="cyan">
+                                  DYNAMIC
+                                </Badge>
+                              )}
+                            </Group>
+
                             <Text size="xs" c="dimmed">
                               Started:
                               {' '}
@@ -186,12 +302,12 @@ export function LiveMonitorView({
                             </Text>
                           </div>
 
-                          <ProgressHeatmap total={assignment.total} answered={assignment.answered} />
+                          <ProgressHeatmap total={assignment.total} answered={assignment.answered} isDynamic={assignment.isDynamic} />
                           <RingProgress
-                            size={80}
-                            thickness={8}
+                            size={60}
+                            thickness={6}
                             sections={[{
-                              value: progress,
+                              value: assignment.isDynamic ? 50 : progress,
                               color: 'orange',
                             }]}
                             label={(
@@ -199,12 +315,12 @@ export function LiveMonitorView({
                                 c="orange"
                                 fw={700}
                                 ta="center"
-                                size="sm"
+                                size="xs"
                               >
-                                {Math.round(progress)}
+                                {assignment.isDynamic ? '?' : Math.round(progress)}
                                 %
                               </Text>
-                              )}
+                                )}
                           />
                         </Group>
                       </Card>
@@ -225,7 +341,7 @@ export function LiveMonitorView({
                 <Grid>
                   {completed.map(({ assignment }, index) => (
                     <Grid.Col span={12} key={assignment.participantId || `completed-${index}`}>
-                      <Card shadow="sm" padding="lg" radius="md" withBorder>
+                      <Card shadow="sm" padding="sm" radius="md" withBorder>
                         <Group justify="space-between" align="center">
                           <div>
                             <Text fw={500} size="sm">
@@ -233,9 +349,7 @@ export function LiveMonitorView({
                               {' '}
                               {assignment.participantId || `#${index + 1}`}
                             </Text>
-                            <Text size="sm" c="dimmed">
-                              Completed
-                            </Text>
+
                             <Text size="xs" c="dimmed">
                               Started:
                               {' '}
@@ -243,16 +357,16 @@ export function LiveMonitorView({
                             </Text>
                           </div>
                           <RingProgress
-                            size={80}
-                            thickness={8}
+                            size={60}
+                            thickness={6}
                             sections={[{
                               value: 100,
                               color: 'teal',
                             }]}
                             label={(
                               <Center>
-                                <ActionIcon color="teal" variant="light" radius="xl" size="xl">
-                                  <IconCheck size={22} />
+                                <ActionIcon color="teal" variant="light" radius="xl" size="sm">
+                                  <IconCheck size={16} />
                                 </ActionIcon>
                               </Center>
                             )}
@@ -276,7 +390,7 @@ export function LiveMonitorView({
                 <Grid>
                   {rejected.map(({ assignment, progress }, index) => (
                     <Grid.Col span={12} key={assignment.participantId || `rejected-${index}`}>
-                      <Card shadow="sm" padding="lg" radius="md" withBorder>
+                      <Card shadow="sm" padding="sm" radius="md" withBorder>
                         <Group justify="space-between" align="center">
                           <div>
                             <Text fw={500} size="sm">
@@ -284,9 +398,7 @@ export function LiveMonitorView({
                               {' '}
                               {assignment.participantId || `#${index + 1}`}
                             </Text>
-                            <Text size="sm" c="dimmed">
-                              Rejected
-                            </Text>
+
                             <Text size="xs" c="dimmed">
                               Started:
                               {' '}
@@ -294,8 +406,8 @@ export function LiveMonitorView({
                             </Text>
                           </div>
                           <RingProgress
-                            size={80}
-                            thickness={8}
+                            size={60}
+                            thickness={6}
                             sections={[{
                               value: progress,
                               color: 'red',
@@ -305,7 +417,7 @@ export function LiveMonitorView({
                                 c="red"
                                 fw={700}
                                 ta="center"
-                                size="sm"
+                                size="xs"
                               >
                                 {Math.round(progress)}
                                 %

@@ -24,7 +24,7 @@ import {
 import {
   useEffect, useMemo, useRef, useState,
 } from 'react';
-import { useHref } from 'react-router';
+import { useHref, useParams } from 'react-router';
 import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
@@ -84,6 +84,7 @@ export function AppHeader({
   const lastProgressRef = useRef<number>(0);
 
   const isRecording = useStoreSelector((store) => store.isRecording);
+  const { funcIndex } = useParams();
 
   useEffect(() => {
     const element = titleRef.current;
@@ -100,6 +101,7 @@ export function AppHeader({
         flatSequence,
         studyConfig,
         currentStep,
+        funcIndex,
       );
 
       // Calculate progress percentage for comparison
@@ -113,7 +115,7 @@ export function AppHeader({
         });
       }
     }
-  }, [answers, flatSequence, studyConfig, currentStep, storageEngine, dataCollectionEnabled]);
+  }, [answers, flatSequence, studyConfig, currentStep, storageEngine, dataCollectionEnabled, funcIndex]);
 
   return (
     <AppShell.Header className="header" p="md">

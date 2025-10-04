@@ -51,47 +51,24 @@ export function calculateProgressData(
   flatSequence: string[],
   studyConfig: StudyConfig,
   currentStep: number | string,
+  funcIndex: string,
 ): { total: number; answered: number; isDynamic: boolean } {
   const answered = Object.values(answers).filter((answer) => answer.endTime > -1).length;
 
   // Check if the study contains dynamic blocks
-  const isDynamic = flatSequence.some((step) => {
-    // If we're in a dynamic block, it's dynamic
-    if (typeof currentStep === 'number' && currentStep <= flatSequence.indexOf(step) && step !== 'end') {
-      return true;
-    }
-    // Check if this step has dynamic answers (contains underscore pattern)
-    return Object.keys(answers).some((key) => key.includes(`${step}_`));
-  });
+  const isDynamic = funcIndex !== undefined;
 
-  const total = flatSequence.map((step, idx) => {
+  const total = flatSequence.map((step) => {
     // If the step is a component, it adds 1 to the total
     if (studyConfig.components[step]) {
       return 1;
     }
-    // If we're in a dynamic block, guess a maximum of 30 steps
-    if (typeof currentStep === 'number' && currentStep <= idx && step !== 'end') {
-      return 55;
-    }
+
     // Otherwise, count the number of answers for this dynamic block
     return Object.entries(answers).filter(([key, _]) => key.includes(`${step}_`)).length;
   }).reduce((a, b) => a + b, 0);
 
   return { total, answered, isDynamic };
-}
-
-/**
- * Calculates progress percentage based on answered questions.
- * Uses the same logic as the progress bar in AppHeader.tsx
- */
-export function calculateProgressPercentage(
-  answers: ParticipantData['answers'],
-  flatSequence: string[],
-  studyConfig: StudyConfig,
-  currentStep: number | string,
-): number {
-  const { total, answered } = calculateProgressData(answers, flatSequence, studyConfig, currentStep);
-  return total > 0 ? (answered / total) * 100 : 0;
 }
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;

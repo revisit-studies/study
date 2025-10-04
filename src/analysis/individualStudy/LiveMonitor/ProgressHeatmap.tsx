@@ -1,18 +1,19 @@
 export interface ProgressHeatmapProps{
     total:number;
     answered:number;
+    isDynamic:boolean;
 }
 
-export function ProgressHeatmap({ total, answered }: ProgressHeatmapProps) {
+export function ProgressHeatmap({ total, answered, isDynamic }: ProgressHeatmapProps) {
   // Only render if total is a valid number and greater than 0
   if (!total || total <= 0 || Number.isNaN(total)) {
     return null;
   }
-
+  const totalCiercle = isDynamic ? answered : total;
   const createCircles = () => {
-    const circles = [];
-    for (let i = 0; i < total; i += 1) {
-      circles.push(
+    const elements = [];
+    for (let i = 0; i < totalCiercle; i += 1) {
+      elements.push(
         <circle
           key={i}
           cx={`${25 + i * 30}`}
@@ -20,11 +21,27 @@ export function ProgressHeatmap({ total, answered }: ProgressHeatmapProps) {
           r="10"
           stroke="black"
           strokeWidth="2"
-          fill={i < answered ? 'green' : 'grey'}
+          fill={isDynamic ? 'teal' : (i < answered ? 'green' : 'grey')}
         />,
       );
     }
-    return circles;
+
+    // Add question mark when isDynamic is true
+    if (isDynamic && totalCiercle > 0) {
+      elements.push(
+        <text
+          key="question"
+          x={`${25 + totalCiercle * 30}`}
+          y="58"
+          fontSize="25"
+          fill="teal"
+        >
+          ?
+        </text>,
+      );
+    }
+
+    return elements;
   };
 
   const styles = `
@@ -32,7 +49,6 @@ export function ProgressHeatmap({ total, answered }: ProgressHeatmapProps) {
         display: inline-block;
         overflow-x: auto;
         overflow-y: hidden;
-        min-width: 200px;
         vertical-align: top;
         width: 50%;
       }
@@ -49,7 +65,7 @@ export function ProgressHeatmap({ total, answered }: ProgressHeatmapProps) {
     <>
       <style>{styles}</style>
       <div className="progress-heatmap">
-        <svg width={25 + total * 30 + 25} height="100">
+        <svg width="100%" height="100">
           {createCircles()}
         </svg>
       </div>
