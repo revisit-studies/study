@@ -694,7 +694,14 @@ export function StepsPanel({
       }}
     >
       {isPanelOpened ? (
-        <Box style={{ borderLeft: '1px solid #e9ecef' }} ref={parentRef}>
+        <Box
+          style={{
+            borderLeft: '1px solid #e9ecef',
+            maxHeight: flattenedItems.length > 100 ? '600px' : 'none',
+            overflow: flattenedItems.length > 100 ? 'auto' : 'visible',
+          }}
+          ref={parentRef}
+        >
           <div
             style={{
               height: `${virtualizer.getTotalSize()}px`,
