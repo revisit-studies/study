@@ -721,6 +721,8 @@ export function StepsPanel({
           >
             {virtualizer.getVirtualItems().map((virtualItem) => {
               const item = flattenedItems[virtualItem.index];
+              // Calculate indentation based on depth (32px per level)
+              const indentation = item.depth * 32;
 
               return (
                 <div
@@ -732,6 +734,7 @@ export function StepsPanel({
                     width: '100%',
                     height: `${virtualItem.size}px`,
                     transform: `translateY(${virtualItem.start}px)`,
+                    paddingLeft: `${indentation}px`,
                   }}
                 >
                   {item.type === 'step' ? (
