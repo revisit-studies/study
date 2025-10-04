@@ -12,7 +12,7 @@ import {
 } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import {
-  IconDatabase, IconFlame, IconGraph, IconGraphOff, IconInfoCircle, IconSettings, IconUserPlus,
+  IconDatabase, IconFlame, IconGraph, IconGraphOff, IconInfoCircle, IconSettingsShare, IconUserPlus,
 } from '@tabler/icons-react';
 import { useHref } from 'react-router';
 import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
@@ -116,7 +116,7 @@ export function AppAside() {
                 href={useHref(`/analysis/stats/${studyId}/manage`)}
                 p={0}
               >
-                <IconSettings style={{ width: '70%', height: '70%' }} stroke={1.5} size={16} />
+                <IconSettingsShare style={{ width: '70%', height: '70%' }} stroke={1.5} size={16} />
               </ActionIcon>
             </Tooltip>
             {modes?.analyticsInterfacePubliclyAccessible
