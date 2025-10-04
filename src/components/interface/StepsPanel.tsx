@@ -376,10 +376,15 @@ function flattenStepTree(
   if (isBlockOpened) {
     toLoopOver.forEach((step, idx) => {
       if (typeof step === 'string') {
+        // Check if this step exists in participantSequence at any index, not just at idx
+        const isInParticipantSequence = participantView && participantSequence
+          ? participantSequence.components.includes(step)
+          : true;
+
         items.push({
           type: 'step',
           step,
-          disabled: participantView && participantSequence?.components[idx] !== step,
+          disabled: participantView && !isInParticipantSequence,
           fullSequence,
           startIndex: idx,
           interruption: (configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false,
@@ -593,10 +598,15 @@ export function StepsPanel({
     const items: FlattenedItem[] = [];
     toLoopOver.forEach((step, idx) => {
       if (typeof step === 'string') {
+        // Check if this step exists in participantSequence at any index, not just at idx
+        const isInParticipantSequence = participantView && participantSequence
+          ? participantSequence.components.includes(step)
+          : true;
+
         items.push({
           type: 'step',
           step,
-          disabled: participantView && participantSequence?.components[idx] !== step,
+          disabled: participantView && !isInParticipantSequence,
           fullSequence,
           startIndex: idx,
           interruption: (configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false,
