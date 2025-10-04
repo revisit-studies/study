@@ -197,9 +197,6 @@ export class SupabaseStorageEngine extends StorageEngine {
 
   protected async _rejectParticipantRealtime(participantId: string) {
     await this.verifyStudyDatabase();
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
     if (!this.studyId) {
       throw new Error('Study ID is not set');
     }
