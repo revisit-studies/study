@@ -160,7 +160,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="live-monitor" pt="xs">
-                {studyConfig && <LiveMonitorView studyConfig={studyConfig} visibleParticipants={visibleParticipants} storageEngine={storageEngine} studyId={studyId} />}
+                {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={studyId} includedParticipants={includedParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel value="manage" pt="xs">
                 {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={() => execute(studyConfig, storageEngine, studyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
