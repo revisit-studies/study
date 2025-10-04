@@ -5,7 +5,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   IconArrowsShuffle, IconBrain, IconCheck, IconPackageImport, IconX, IconDice3,
 } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   ComponentBlock, DynamicBlock, ParticipantData, StudyConfig,
 } from '../../parser/types';
@@ -20,6 +21,38 @@ import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
 export type ComponentBlockWithOrderPath =
   Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] }
   | (DynamicBlock & { orderPath: string; interruptions?: { components: string[] }[]; components: (ComponentBlockWithOrderPath | string)[]; });
+
+// Types for flattened items used in virtualization
+type FlattenedStepItem = {
+  type: 'step';
+  step: string;
+  disabled: boolean;
+  fullSequence: Sequence;
+  startIndex: number;
+  interruption: boolean;
+  participantView: boolean;
+  studyConfig: StudyConfig;
+  subSequence?: Sequence;
+  analysisNavigation?: boolean;
+  parentBlock: Sequence;
+  parentActive: boolean;
+  answers: ParticipantData['answers'];
+  depth: number;
+};
+
+type FlattenedBlockItem = {
+  type: 'block';
+  configSequence: ComponentBlockWithOrderPath;
+  fullSequence: Sequence;
+  participantSequence?: Sequence;
+  participantView: boolean;
+  studyConfig: StudyConfig;
+  analysisNavigation?: boolean;
+  depth: number;
+  isOpened: boolean;
+};
+
+type FlattenedItem = FlattenedStepItem | FlattenedBlockItem;
 
 function findTaskIndexInSequence(sequence: Sequence, step: string, startIndex: number, requestedPath: string): number {
   let index = 0;
@@ -303,6 +336,173 @@ function StepItem({
   );
 }
 
+// Helper function to flatten the tree structure for virtualization
+function flattenStepTree(
+  configSequence: ComponentBlockWithOrderPath,
+  fullSequence: Sequence,
+  participantSequence: Sequence | undefined,
+  participantView: boolean,
+  studyConfig: StudyConfig,
+  analysisNavigation: boolean | undefined,
+  answers: ParticipantData['answers'],
+  openedBlocks: Set<string>,
+  depth: number = 0,
+): FlattenedItem[] {
+  const items: FlattenedItem[] = [];
+
+  // Prepare components
+  let components = structuredClone(configSequence.components);
+  if (participantSequence && participantView) {
+    const reorderedComponents = reorderComponents(structuredClone(configSequence.components), structuredClone(participantSequence.components));
+    components = reorderedComponents;
+  }
+
+  if (!participantView) {
+    // Add interruptions to the sequence
+    components = [
+      ...(configSequence.interruptions?.flatMap((interruption) => interruption.components) || []),
+      ...(components || []),
+    ];
+  }
+
+  const indexofDynamicBlock = configSequence.id ? 0 : -1; // This will be recalculated properly
+  const toLoopOver = [
+    ...components,
+    ...Object.entries(answers).filter(([key, _]) => key.startsWith(`${configSequence.id}_${indexofDynamicBlock}_`)).map(([_, value]) => value.componentName),
+  ];
+
+  const isBlockOpened = openedBlocks.has(configSequence.id || configSequence.orderPath);
+
+  if (isBlockOpened) {
+    toLoopOver.forEach((step, idx) => {
+      if (typeof step === 'string') {
+        items.push({
+          type: 'step',
+          step,
+          disabled: participantView && participantSequence?.components[idx] !== step,
+          fullSequence,
+          startIndex: idx,
+          interruption: (configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false,
+          participantView,
+          studyConfig,
+          subSequence: participantSequence,
+          analysisNavigation,
+          parentBlock: configSequence,
+          parentActive: false, // Will be calculated in rendering
+          answers,
+          depth,
+        });
+      } else {
+        const newSequence = participantSequence?.components.find((s) => typeof s !== 'string' && s.orderPath === step.orderPath) as Sequence | undefined;
+
+        // Add the block header
+        items.push({
+          type: 'block',
+          configSequence: step,
+          fullSequence,
+          participantSequence: newSequence,
+          participantView,
+          studyConfig,
+          analysisNavigation,
+          depth,
+          isOpened: openedBlocks.has(step.id || step.orderPath),
+        });
+
+        // Recursively add children if this block is opened
+        if (openedBlocks.has(step.id || step.orderPath)) {
+          const childItems = flattenStepTree(
+            step,
+            fullSequence,
+            newSequence,
+            participantView,
+            studyConfig,
+            analysisNavigation,
+            answers,
+            openedBlocks,
+            depth + 1,
+          );
+          items.push(...childItems);
+        }
+      }
+    });
+  }
+
+  return items;
+}
+
+// Component to render nested block headers
+function NestedBlockHeader({
+  item,
+  toggleBlock,
+  currentStep,
+  flatSequence,
+  participantId,
+  analysisNavigation,
+  participantView,
+  answers,
+}: {
+  item: FlattenedBlockItem;
+  toggleBlock: (blockId: string) => void;
+  currentStep: string | number;
+  flatSequence: string[];
+  participantId: string | null;
+  analysisNavigation?: boolean;
+  participantView: boolean;
+  answers: ParticipantData['answers'];
+}) {
+  const studyId = useStudyId();
+  const navigate = useNavigate();
+
+  const { configSequence, participantSequence } = item;
+
+  const dynamicBlockActive = typeof currentStep === 'number' && configSequence.order === 'dynamic' && flatSequence[currentStep] === configSequence.id;
+  const indexofDynamicBlock = (configSequence.id && flatSequence.indexOf(configSequence.id)) || -1;
+
+  const sequenceStepsLength = useMemo(() => (participantSequence ? getSequenceFlatMap(participantSequence).length - countInterruptionsRecursively(configSequence, participantSequence) : 0), [configSequence, participantSequence]);
+  const orderSteps = useMemo(() => getSequenceFlatMap(configSequence), [configSequence]);
+
+  const navigateTo = () => navigate(`/${studyId}/${encryptIndex(indexofDynamicBlock)}/${encryptIndex(0)}${participantId ? `?participantId=${participantId}` : ''}`);
+
+  return (
+    <NavLink
+      active={dynamicBlockActive}
+      label={(
+        <Box
+          style={{
+            opacity: sequenceStepsLength > 0 ? 1 : 0.5,
+          }}
+        >
+          <Text size="sm" display="inline" fw={dynamicBlockActive ? 900 : 700}>
+            {configSequence.id ? configSequence.id : configSequence.order}
+          </Text>
+          {configSequence.order === 'random' || configSequence.order === 'latinSquare' ? (
+            <Tooltip label={configSequence.order} position="right" withArrow>
+              <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
+            </Tooltip>
+          ) : null}
+          {participantView && (
+            <Badge ml={5} variant="light">
+              {configSequence.order === 'dynamic' ? `${Object.keys(answers).filter((keys) => keys.startsWith(`${configSequence.id}_`)).length} / ?` : `${sequenceStepsLength}/${orderSteps.length}`}
+            </Badge>
+          )}
+          {participantView && configSequence.interruptions && (
+            <Badge ml={5} color="orange" variant="light">
+              {participantSequence?.components.filter((s) => typeof s === 'string' && configSequence.interruptions?.flatMap((i) => i.components).includes(s)).length || 0}
+            </Badge>
+          )}
+        </Box>
+      )}
+      opened={item.isOpened}
+      onClick={() => (configSequence.order === 'dynamic' && !analysisNavigation && participantView ? navigateTo() : toggleBlock(configSequence.id || configSequence.orderPath))}
+      childrenOffset={32}
+      style={{
+        lineHeight: '32px',
+        height: '32px',
+      }}
+    />
+  );
+}
+
 export function StepsPanel({
   configSequence,
   fullSequence,
@@ -318,13 +518,6 @@ export function StepsPanel({
   studyConfig: StudyConfig;
   analysisNavigation?: boolean;
 }) {
-  // If the participantSequence is provided, reorder the components
-  let components = structuredClone(configSequence.components);
-  if (participantSequence && participantView) {
-    const reorderedComponents = reorderComponents(structuredClone(configSequence.components), structuredClone(participantSequence.components));
-    components = reorderedComponents;
-  }
-
   // Hacky. This call is not conditional, it either always happens or never happens. Not ideal.
   const { analysisTab } = useParams();
   let answers: ParticipantData['answers'] = {};
@@ -333,19 +526,31 @@ export function StepsPanel({
     answers = useStoreSelector((state) => state.answers);
   }
 
-  if (!participantView) {
-    // Add interruptions to the sequence
-    components = [
-      ...(configSequence.interruptions?.flatMap((interruption) => interruption.components) || []),
-      ...(components || []),
-    ];
-  }
-
   // Count tasks - interruptions
   const sequenceStepsLength = useMemo(() => (participantSequence ? getSequenceFlatMap(participantSequence).length - countInterruptionsRecursively(configSequence, participantSequence) : 0), [configSequence, participantSequence]);
   const orderSteps = useMemo(() => getSequenceFlatMap(configSequence), [configSequence]);
 
-  const [isPanelOpened, setIsPanelOpened] = useState<boolean>(sequenceStepsLength > 0);
+  // Track which blocks are opened
+  const [openedBlocks, setOpenedBlocks] = useState<Set<string>>(() => {
+    const initialSet = new Set<string>();
+    // Start with the root block opened if it has content
+    if (sequenceStepsLength > 0) {
+      initialSet.add(configSequence.id || configSequence.orderPath);
+    }
+    return initialSet;
+  });
+
+  const toggleBlock = (blockId: string) => {
+    setOpenedBlocks((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(blockId)) {
+        newSet.delete(blockId);
+      } else {
+        newSet.add(blockId);
+      }
+      return newSet;
+    });
+  };
 
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
@@ -359,10 +564,96 @@ export function StepsPanel({
   const navigate = useNavigate();
   const navigateTo = () => navigate(`/${studyId}/${encryptIndex(indexofDynamicBlock)}/${encryptIndex(0)}${participantId ? `?participantId=${participantId}` : ''}`);
 
+  const isPanelOpened = openedBlocks.has(configSequence.id || configSequence.orderPath);
+
+  // Prepare components for the root level display
+  let components = structuredClone(configSequence.components);
+  if (participantSequence && participantView) {
+    const reorderedComponents = reorderComponents(structuredClone(configSequence.components), structuredClone(participantSequence.components));
+    components = reorderedComponents;
+  }
+
+  if (!participantView) {
+    // Add interruptions to the sequence
+    components = [
+      ...(configSequence.interruptions?.flatMap((interruption) => interruption.components) || []),
+      ...(components || []),
+    ];
+  }
+
   const toLoopOver = [
     ...components,
     ...Object.entries(answers).filter(([key, _]) => key.startsWith(`${configSequence.id}_${indexofDynamicBlock}_`)).map(([_, value]) => value.componentName),
   ];
+
+  // Flatten the tree for virtualization
+  const flattenedItems = useMemo(() => {
+    if (!isPanelOpened) return [];
+
+    const items: FlattenedItem[] = [];
+    toLoopOver.forEach((step, idx) => {
+      if (typeof step === 'string') {
+        items.push({
+          type: 'step',
+          step,
+          disabled: participantView && participantSequence?.components[idx] !== step,
+          fullSequence,
+          startIndex: idx,
+          interruption: (configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false,
+          participantView,
+          studyConfig,
+          subSequence: participantSequence,
+          analysisNavigation,
+          parentBlock: configSequence,
+          parentActive: dynamicBlockActive,
+          answers,
+          depth: 1,
+        });
+      } else {
+        const newSequence = participantSequence?.components.find((s) => typeof s !== 'string' && s.orderPath === step.orderPath) as Sequence | undefined;
+
+        // Add the block header
+        items.push({
+          type: 'block',
+          configSequence: step,
+          fullSequence,
+          participantSequence: newSequence,
+          participantView,
+          studyConfig,
+          analysisNavigation,
+          depth: 1,
+          isOpened: openedBlocks.has(step.id || step.orderPath),
+        });
+
+        // Recursively add children if this block is opened
+        if (openedBlocks.has(step.id || step.orderPath)) {
+          const childItems = flattenStepTree(
+            step,
+            fullSequence,
+            newSequence,
+            participantView,
+            studyConfig,
+            analysisNavigation,
+            answers,
+            openedBlocks,
+            2,
+          );
+          items.push(...childItems);
+        }
+      }
+    });
+
+    return items;
+  }, [isPanelOpened, toLoopOver, participantView, participantSequence, configSequence, fullSequence, studyConfig, analysisNavigation, dynamicBlockActive, answers, openedBlocks]);
+
+  // Setup virtualizer
+  const parentRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: flattenedItems.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 32, // Each item is 32px high
+    overscan: 10, // Render 10 extra items above and below the visible area
+  });
 
   return (
     <NavLink
@@ -395,7 +686,7 @@ export function StepsPanel({
         </Box>
             )}
       opened={isPanelOpened}
-      onClick={() => (configSequence.order === 'dynamic' && !analysisNavigation && participantView ? navigateTo() : setIsPanelOpened(!isPanelOpened))}
+      onClick={() => (configSequence.order === 'dynamic' && !analysisNavigation && participantView ? navigateTo() : toggleBlock(configSequence.id || configSequence.orderPath))}
       childrenOffset={32}
       style={{
         lineHeight: '32px',
@@ -403,42 +694,60 @@ export function StepsPanel({
       }}
     >
       {isPanelOpened ? (
-        <Box style={{ borderLeft: '1px solid #e9ecef' }}>
-          {toLoopOver.map((step, idx) => {
-            if (typeof step === 'string') {
+        <Box style={{ borderLeft: '1px solid #e9ecef' }} ref={parentRef}>
+          <div
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const item = flattenedItems[virtualItem.index];
+
               return (
-                <StepItem
-                  key={idx}
-                  step={step}
-                  disabled={participantView && participantSequence?.components[idx] !== step}
-                  fullSequence={fullSequence}
-                  startIndex={idx}
-                  interruption={(configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false}
-                  participantView={participantView}
-                  studyConfig={studyConfig}
-                  subSequence={participantSequence}
-                  analysisNavigation={analysisNavigation}
-                  parentBlock={configSequence}
-                  parentActive={dynamicBlockActive}
-                  answers={answers}
-                />
+                <div
+                  key={virtualItem.key}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: `${virtualItem.size}px`,
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                >
+                  {item.type === 'step' ? (
+                    <StepItem
+                      step={item.step}
+                      disabled={item.disabled}
+                      fullSequence={item.fullSequence}
+                      startIndex={item.startIndex}
+                      interruption={item.interruption}
+                      participantView={item.participantView}
+                      studyConfig={item.studyConfig}
+                      subSequence={item.subSequence}
+                      analysisNavigation={item.analysisNavigation}
+                      parentBlock={item.parentBlock}
+                      parentActive={item.parentActive}
+                      answers={item.answers}
+                    />
+                  ) : (
+                    <NestedBlockHeader
+                      item={item}
+                      toggleBlock={toggleBlock}
+                      currentStep={currentStep}
+                      flatSequence={flatSequence}
+                      participantId={participantId}
+                      analysisNavigation={analysisNavigation}
+                      participantView={participantView}
+                      answers={answers}
+                    />
+                  )}
+                </div>
               );
-            }
-
-            const newSequence = participantSequence?.components.find((s) => typeof s !== 'string' && s.orderPath === step.orderPath) as Sequence | undefined;
-
-            return (
-              <StepsPanel
-                key={idx}
-                configSequence={step}
-                participantSequence={newSequence}
-                fullSequence={fullSequence}
-                participantView={participantView}
-                studyConfig={studyConfig}
-                analysisNavigation={analysisNavigation}
-              />
-            );
-          })}
+            })}
+          </div>
         </Box>
       ) : null }
     </NavLink>
