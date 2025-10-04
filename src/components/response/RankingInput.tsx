@@ -1,5 +1,4 @@
 import {
-  closestCenter,
   DndContext,
   DragEndEvent,
   KeyboardSensor,
@@ -7,6 +6,7 @@ import {
   useSensor,
   useSensors,
   useDroppable,
+  rectIntersection,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -42,7 +42,9 @@ function SortableItem({ item, index }: { item: Item; index?: number }) {
   return (
     <Paper
       ref={setNodeRef}
-      style={style}
+      style={{
+        ...style, margin: '0 auto',
+      }}
       className={cx(classes.item, { [classes.itemDragging]: isDragging })}
       {...attributes}
       {...listeners}
@@ -162,8 +164,8 @@ function RankingSublistComponent({
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <Stack gap="md" maw="600px" mx="auto">
+    <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd}>
+      <Stack gap="md" w="600px" mx="auto">
         <DroppableZone id="selected" title="">
           <Text size="md" fw={500} ta="center" mb="sm">HIGH</Text>
           <SortableContext items={state.selected.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
@@ -260,8 +262,8 @@ function RankingCategoricalComponent({
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <Stack gap="md" maw="600px" mx="auto">
+    <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd}>
+      <Stack gap="md" w="600px" mx="auto">
         {(['HIGH', 'MEDIUM', 'LOW', 'unassigned'] as const).map((category) => (
           <DroppableZone key={category} id={category} title={category === 'unassigned' ? 'Available Items' : category}>
             <SortableContext items={state[category].map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
@@ -331,27 +333,29 @@ function RankingPairwiseComponent({
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd}>
       <Flex justify="flex-end" mb="md">
         <Button variant="outline" onClick={() => !disabled && setPairCount((p) => p + 1)}>
           Add New Pair
         </Button>
       </Flex>
 
-      <Stack gap="md" maw="600px" mx="auto">
+      <Stack gap="md" w="600px" mx="auto">
         {Object.entries(pairs).map(([pairId, pair]) => (
-          <Group key={pairId} justify="center" gap="md" wrap="wrap">
+          <Group key={pairId} justify="center" wrap="wrap">
             {(['high', 'low'] as const).map((position) => (
-              <DroppableZone key={position} id={`pair-${pairId}-${position}`} title={position.toUpperCase()}>
-                <SortableContext items={pair[position]} strategy={verticalListSortingStrategy}>
-                  <Stack gap="md">
-                    {pair[position].map((itemId) => {
-                      const item = items.find((i) => i.id === itemId);
-                      return item ? <SortableItem key={itemId} item={item} /> : null;
-                    })}
-                  </Stack>
-                </SortableContext>
-              </DroppableZone>
+              <Box key={position} style={{ width: '300px' }}>
+                <DroppableZone id={`pair-${pairId}-${position}`} title={position.toUpperCase()}>
+                  <SortableContext items={pair[position]} strategy={verticalListSortingStrategy}>
+                    <Stack>
+                      {pair[position].map((itemId) => {
+                        const item = items.find((i) => i.id === itemId);
+                        return item ? <SortableItem key={itemId} item={item} /> : null;
+                      })}
+                    </Stack>
+                  </SortableContext>
+                </DroppableZone>
+              </Box>
             ))}
           </Group>
         ))}
