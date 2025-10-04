@@ -257,21 +257,22 @@ export function ResponseVisualization({
               />
             ) : (
               <Flex direction="column" gap="xs" style={{ overflowX: 'clip' }}>
-                {response.type === 'metadata' && (
+                {response.type === 'metadata' ? (
                   <Code block>{`${JSON.stringify(trialConfig, null, 2)}`}</Code>
+                ) : (
+                  <>
+                    <Text fw={700}>Response Values: </Text>
+                    {(response.type === 'textOnly') ? (
+                      <Text>N/A</Text>
+                    ) : (
+                      questionData.map((d, idx) => (
+                        <Flex key={idx} align="center" gap="xs">
+                          <Text>{d[response.id] as unknown as string}</Text>
+                        </Flex>
+                      ))
+                    )}
+                  </>
                 )}
-                <>
-                  <Text fw={700}>Response Values: </Text>
-                  {(response.type === 'textOnly') ? (
-                    <Text>N/A</Text>
-                  ) : (
-                    questionData.map((d, idx) => (
-                      <Flex key={idx} align="center" gap="xs">
-                        <Text>{d[response.id] as unknown as string}</Text>
-                      </Flex>
-                    ))
-                  )}
-                </>
               </Flex>
             )}
           </ScrollArea>
