@@ -1,6 +1,8 @@
 import {
   DndContext,
+  DragStartEvent,
   DragEndEvent,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -43,7 +45,7 @@ function SortableItem({ item, index }: { item: Item; index?: number }) {
     <Paper
       ref={setNodeRef}
       style={{
-        ...style, margin: '0 auto',
+        ...style, margin: '0 auto', minWidth: '200px',
       }}
       className={cx(classes.item, { [classes.itemDragging]: isDragging })}
       {...attributes}
@@ -110,6 +112,8 @@ function RankingSublistComponent({
   const { sensors, updateAnswer } = useRankingLogic(responseId, onChange);
   const items = useMemo(() => createItems(options), [options]);
 
+  const [activeId, setActiveId] = useState<string | null>(null);
+
   const initialState = useMemo(() => {
     let selected: Item[] = [];
     if (answer?.value && Object.keys(answer.value).length > 0) {
@@ -129,16 +133,21 @@ function RankingSublistComponent({
     setState(initialState);
   }, [initialState]);
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
     if (disabled) return;
     const { active, over } = event;
     if (!over) return;
 
-    const activeId = active.id as string;
+    const id = active.id as string;
     const overId = over.id as string;
 
-    const fromSelected = state.selected.find((i) => i.symbol === activeId);
-    const fromUnassigned = state.unassigned.find((i) => i.symbol === activeId);
+    const fromSelected = state.selected.find((i) => i.symbol === id);
+    const fromUnassigned = state.unassigned.find((i) => i.symbol === id);
     const toSelected = overId === 'selected' || state.selected.find((i) => i.symbol === overId);
     const toUnassigned = overId === 'unassigned';
 
@@ -163,8 +172,10 @@ function RankingSublistComponent({
     updateAnswer(answerValue);
   };
 
+  const activeItem = activeId ? items.find((i) => i.symbol === activeId) : null;
+
   return (
-    <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <Stack gap="md" w="600px" mx="auto">
         <DroppableZone id="selected" title="">
           <Text size="md" fw={500} ta="center" mb="sm">HIGH</Text>
@@ -188,6 +199,10 @@ function RankingSublistComponent({
           </SortableContext>
         </DroppableZone>
       </Stack>
+
+      <DragOverlay>
+        {activeItem ? <SortableItem item={activeItem} /> : undefined}
+      </DragOverlay>
     </DndContext>
   );
 }
@@ -204,6 +219,8 @@ function RankingCategoricalComponent({
   const { onChange } = answer as { onChange?: (value: Record<string, string>) => void };
   const { sensors, updateAnswer } = useRankingLogic(responseId, onChange);
   const items = useMemo(() => createItems(options), [options]);
+
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const initialState = useMemo(() => {
     const state = {
@@ -227,7 +244,12 @@ function RankingCategoricalComponent({
     setState(initialState);
   }, [initialState]);
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
     if (disabled) return;
     const { active, over } = event;
     if (!over) return;
@@ -261,8 +283,10 @@ function RankingCategoricalComponent({
     });
   };
 
+  const activeItem = activeId ? items.find((i) => i.id === activeId) : null;
+
   return (
-    <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <Stack gap="md" w="600px" mx="auto">
         {(['HIGH', 'MEDIUM', 'LOW', 'unassigned'] as const).map((category) => (
           <DroppableZone key={category} id={category} title={category === 'unassigned' ? 'Available Items' : category}>
@@ -276,6 +300,10 @@ function RankingCategoricalComponent({
           </DroppableZone>
         ))}
       </Stack>
+
+      <DragOverlay>
+        {activeItem ? <SortableItem item={activeItem} /> : undefined}
+      </DragOverlay>
     </DndContext>
   );
 }
@@ -292,6 +320,7 @@ function RankingPairwiseComponent({
   const { sensors, updateAnswer } = useRankingLogic(responseId, onChange);
   const items = useMemo(() => createItems(options), [options]);
   const [pairCount, setPairCount] = useState(1);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const { pairs, unassigned } = useMemo(() => {
     const pairMap: Record<string, { high: string[], low: string[] }> = {};
@@ -314,7 +343,12 @@ function RankingPairwiseComponent({
     return { pairs: pairMap, unassigned: items.filter((item) => !assigned.has(item.id)) };
   }, [items, answer, pairCount]);
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
     if (disabled) return;
     const { active, over } = event;
     if (!over) return;
@@ -332,8 +366,10 @@ function RankingPairwiseComponent({
     updateAnswer(newAnswer);
   };
 
+  const activeItem = activeId ? items.find((i) => i.id === activeId) : null;
+
   return (
-    <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <Flex justify="flex-end" mb="md">
         <Button variant="outline" onClick={() => !disabled && setPairCount((p) => p + 1)}>
           Add New Pair
@@ -344,7 +380,7 @@ function RankingPairwiseComponent({
         {Object.entries(pairs).map(([pairId, pair]) => (
           <Group key={pairId} justify="center" wrap="wrap">
             {(['high', 'low'] as const).map((position) => (
-              <Box key={position} style={{ width: '300px' }}>
+              <Box key={position} style={{ width: '290px' }}>
                 <DroppableZone id={`pair-${pairId}-${position}`} title={position.toUpperCase()}>
                   <SortableContext items={pair[position]} strategy={verticalListSortingStrategy}>
                     <Stack>
@@ -370,6 +406,10 @@ function RankingPairwiseComponent({
           </SortableContext>
         </DroppableZone>
       </Stack>
+
+      <DragOverlay>
+        {activeItem ? <SortableItem item={activeItem} /> : undefined}
+      </DragOverlay>
     </DndContext>
   );
 }
