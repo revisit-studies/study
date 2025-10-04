@@ -1,9 +1,9 @@
 import { Tooltip } from '@mantine/core';
 
-export interface ProgressHeatmapProps{
-    total:number;
-    answered:string[];
-    isDynamic:boolean;
+export interface ProgressHeatmapProps {
+    total: number;
+    answered: string[];
+    isDynamic: boolean;
 }
 
 export function ProgressHeatmap({ total, answered, isDynamic }: ProgressHeatmapProps) {
