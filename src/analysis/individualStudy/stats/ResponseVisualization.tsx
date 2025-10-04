@@ -5,7 +5,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import {
-  IconAdjustmentsHorizontal, IconBubbleText, IconChevronDown, IconCodePlus, IconCopyCheck, IconDots, IconGridPattern, IconHtml, IconLetterCase, IconMatrix, IconNumber123, IconRadio, IconSelect, IconSquares,
+  IconAdjustmentsHorizontal, IconBubbleText, IconChartGridDots, IconChevronDown, IconCodePlus, IconCopyCheck, IconDots, IconGridDots, IconHtml, IconLetterCase, IconNumber123, IconRadio, IconSelect, IconSquares,
 } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
@@ -220,8 +220,8 @@ export function ResponseVisualization({
           {response.type === 'slider' && <IconAdjustmentsHorizontal size={20} />}
           {response.type === 'radio' && <IconRadio size={20} />}
           {response.type === 'checkbox' && <IconSquares size={20} />}
-          {response.type === 'matrix-radio' && <IconMatrix size={20} />}
-          {response.type === 'matrix-checkbox' && <IconGridPattern size={20} />}
+          {response.type === 'matrix-radio' && <IconGridDots size={20} />}
+          {response.type === 'matrix-checkbox' && <IconChartGridDots size={20} />}
           {response.type === 'buttons' && <IconCopyCheck size={20} />}
           {response.type === 'reactive' && <IconHtml size={20} />}
           {response.type === 'textOnly' && <IconLetterCase size={20} />}
