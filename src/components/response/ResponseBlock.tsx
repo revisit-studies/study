@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { useNavigate } from 'react-router';
 import { Registry, initializeTrrack } from '@trrack/core';
+import { isEqual } from 'lodash';
 import {
   IndividualComponent,
   ResponseBlockLocation,
@@ -194,13 +195,7 @@ export function ResponseBlock({
       const configCorrectAnswer = configInUse?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
       const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id];
 
-      return [response.id, Array.isArray(suppliedAnswer)
-        ? (
-          typeof configCorrectAnswer === 'string'
-            ? (suppliedAnswer.length === 1 && configCorrectAnswer === suppliedAnswer[0])
-            : (suppliedAnswer.length === configCorrectAnswer.length && suppliedAnswer.every((answer) => configCorrectAnswer.includes(answer)))
-        )
-        : configCorrectAnswer === suppliedAnswer];
+      return [response.id, isEqual(suppliedAnswer, configCorrectAnswer)];
     }));
 
     if (hasCorrectAnswerFeedback) {
