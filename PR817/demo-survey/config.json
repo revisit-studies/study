@@ -421,7 +421,7 @@
         {
           "id": "ranking-sublist",
           "type": "ranking-sublist",
-          "prompt": "Rank your top 2 favorite fruits from the list below",
+          "prompt": "Rank your top 2 favorite fruits from the list below.",
           "location": "belowStimulus",
           "options": ["Apple", "Banana", "Orange", "Strawberry", "Grapes"],
           "numItems": 2
@@ -436,7 +436,7 @@
         {
           "id": "ranking-pairwise-food",
           "type": "ranking-pairwise",
-          "prompt": "Which meal would you prefer",
+          "prompt": "Which meal would you prefer?",
           "location": "belowStimulus",
           "options": ["Pizza", "Sushi", "Burger", "Pasta", "Salad", "Tacos"]
         }
