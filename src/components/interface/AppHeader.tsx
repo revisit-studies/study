@@ -105,7 +105,7 @@ export function AppHeader({
       );
 
       // Calculate progress percentage for comparison
-      const currentProgressPercent = progressData.total > 0 ? (progressData.answered / progressData.total) * 100 : 0;
+      const currentProgressPercent = progressData.total > 0 ? (progressData.answered.length / progressData.total) * 100 : 0;
 
       // Only update if progress has changed, is greater than 0, and we have a valid progress value
       if (currentProgressPercent !== lastProgressRef.current && currentProgressPercent > 0 && !Number.isNaN(currentProgressPercent)) {

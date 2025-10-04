@@ -144,15 +144,12 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)}
             >
               <Tabs.List>
-                <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />}>Live Monitor</Tabs.Tab>
                 <Tabs.Tab value="summary" leftSection={<IconChartPie size={16} />}>Study Summary</Tabs.Tab>
                 <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Participant View</Tabs.Tab>
                 <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
+                <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />}>Live Monitor</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
               </Tabs.List>
-              <Tabs.Panel style={{ overflow: 'auto' }} value="live-monitor" pt="xs">
-                {studyConfig && <LiveMonitorView studyConfig={studyConfig} visibleParticipants={visibleParticipants} storageEngine={storageEngine} studyId={studyId} />}
-              </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
                 {studyConfig && <SummaryView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
               </Tabs.Panel>
@@ -161,6 +158,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               </Tabs.Panel>
               <Tabs.Panel value="stats" pt="xs">
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
+              </Tabs.Panel>
+              <Tabs.Panel style={{ overflow: 'auto' }} value="live-monitor" pt="xs">
+                {studyConfig && <LiveMonitorView studyConfig={studyConfig} visibleParticipants={visibleParticipants} storageEngine={storageEngine} studyId={studyId} />}
               </Tabs.Panel>
               <Tabs.Panel value="manage" pt="xs">
                 {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={() => execute(studyConfig, storageEngine, studyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}

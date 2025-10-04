@@ -36,7 +36,7 @@ export type SequenceAssignment = {
   completed: number | null;
   createdTime: number;
   total: number; // Total number of questions/steps
-  answered: number; // Number of answered questions
+  answered: string[]; // Number of answered questions
   isDynamic: boolean; // Whether the study contains dynamic blocks
 };
 
@@ -51,9 +51,9 @@ export function calculateProgressData(
   flatSequence: string[],
   studyConfig: StudyConfig,
   currentStep: number | string,
-  funcIndex: string,
-): { total: number; answered: number; isDynamic: boolean } {
-  const answered = Object.values(answers).filter((answer) => answer.endTime > -1).length;
+  funcIndex: string | undefined,
+): { total: number; answered: string[]; isDynamic: boolean } {
+  const answered = Object.values(answers).filter((answer) => answer.endTime > -1).map((answer) => answer.componentName);
 
   // Check if the study contains dynamic blocks
   const isDynamic = funcIndex !== undefined;
@@ -389,7 +389,7 @@ export abstract class StorageEngine {
           completed: null,
           createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
           total: 0,
-          answered: 0,
+          answered: [],
           isDynamic: false,
         };
         // Mark the first reject as claimed
@@ -407,7 +407,7 @@ export abstract class StorageEngine {
         completed: null,
         createdTime: timestamp, // Placeholder, will be set to server timestamp in cloud engines
         total: 0,
-        answered: 0,
+        answered: [],
         isDynamic: false,
       };
       await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
@@ -731,7 +731,7 @@ export abstract class StorageEngine {
 
   // Updates the progress data in the sequence assignment
   async updateProgressData(
-    progressData: { total: number; answered: number; isDynamic: boolean },
+    progressData: { total: number; answered: string[]; isDynamic: boolean },
     participantId?: string,
   ) {
     if (!this.studyId) {

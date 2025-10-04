@@ -155,7 +155,7 @@ export function LiveMonitorView({ studyConfig: _studyConfig, storageEngine, stud
 
   // Calculate progress for each participant using live monitor data
   const participantProgress = useMemo(() => sequenceAssignments.map((assignment) => {
-    const progress = assignment.total > 0 ? (assignment.answered / assignment.total) * 100 : 0;
+    const progress = assignment.total > 0 ? (assignment.answered.length / assignment.total) * 100 : 0;
 
     return {
       assignment,
@@ -269,167 +269,161 @@ export function LiveMonitorView({ studyConfig: _studyConfig, storageEngine, stud
         return (
           <Stack gap="md">
             {/* In Progress Section */}
+            <Title order={5} c="orange">
+              In Progress (
+              {inProgress.length}
+              )
+            </Title>
             {inProgress.length > 0 && (
-              <>
-                <Title order={5} c="orange">
-                  In Progress (
-                  {inProgress.length}
-                  )
-                </Title>
-                <Grid>
-                  {inProgress.map(({ assignment, progress }, index) => (
-                    <Grid.Col span={12} key={assignment.participantId || `inprogress-${index}`}>
-                      <Card shadow="sm" padding="sm" radius="md" withBorder>
-                        <Group justify="space-between" align="center">
-                          <div>
-                            <Group gap="xs" align="center">
-                              <Text fw={500} size="sm">
-                                Participant:
-                                {' '}
-                                {assignment.participantId || `#${index + 1}`}
-                              </Text>
-                              {assignment.isDynamic && (
-                                <Badge size="xs" color="cyan">
-                                  DYNAMIC
-                                </Badge>
-                              )}
-                            </Group>
-
-                            <Text size="xs" c="dimmed">
-                              Started:
+              <Grid>
+                {inProgress.map(({ assignment, progress }, index) => (
+                  <Grid.Col span={12} key={assignment.participantId || `inprogress-${index}`}>
+                    <Card shadow="sm" padding="sm" radius="md" withBorder>
+                      <Group justify="space-between" align="center">
+                        <div>
+                          <Group gap="xs" align="center">
+                            <Text fw={500} size="sm">
+                              Participant:
                               {' '}
-                              {new Date(assignment.createdTime).toLocaleString()}
+                              {assignment.participantId || `#${index + 1}`}
                             </Text>
-                          </div>
+                            {assignment.isDynamic && (
+                              <Badge size="xs" color="cyan">
+                                DYNAMIC
+                              </Badge>
+                            )}
+                          </Group>
 
-                          <ProgressHeatmap total={assignment.total} answered={assignment.answered} isDynamic={assignment.isDynamic} />
-                          <RingProgress
-                            size={60}
-                            thickness={6}
-                            sections={[{
-                              value: assignment.isDynamic ? 50 : progress,
-                              color: 'orange',
-                            }]}
-                            label={(
-                              <Text
-                                c="orange"
-                                fw={700}
-                                ta="center"
-                                size="xs"
-                              >
-                                {assignment.isDynamic ? '?' : Math.round(progress)}
-                                %
-                              </Text>
-                                )}
-                          />
-                        </Group>
-                      </Card>
-                    </Grid.Col>
-                  ))}
-                </Grid>
-              </>
+                          <Text size="xs" c="dimmed">
+                            Started:
+                            {' '}
+                            {new Date(assignment.createdTime).toLocaleString()}
+                          </Text>
+                        </div>
+
+                        <ProgressHeatmap total={assignment.total} answered={assignment.answered} isDynamic={assignment.isDynamic} />
+                        <RingProgress
+                          size={60}
+                          thickness={6}
+                          sections={[{
+                            value: assignment.isDynamic ? 50 : progress,
+                            color: 'orange',
+                          }]}
+                          label={(
+                            <Text
+                              c="orange"
+                              fw={700}
+                              ta="center"
+                              size="xs"
+                            >
+                              {assignment.isDynamic ? '?' : Math.round(progress)}
+                              %
+                            </Text>
+                              )}
+                        />
+                      </Group>
+                    </Card>
+                  </Grid.Col>
+                ))}
+              </Grid>
             )}
 
             {/* Completed Section */}
+            <Title order={5} c="teal">
+              Completed (
+              {completed.length}
+              )
+            </Title>
             {completed.length > 0 && (
-              <>
-                <Title order={5} c="teal">
-                  Completed (
-                  {completed.length}
-                  )
-                </Title>
-                <Grid>
-                  {completed.map(({ assignment }, index) => (
-                    <Grid.Col span={12} key={assignment.participantId || `completed-${index}`}>
-                      <Card shadow="sm" padding="sm" radius="md" withBorder>
-                        <Group justify="space-between" align="center">
-                          <div>
-                            <Text fw={500} size="sm">
-                              Participant:
-                              {' '}
-                              {assignment.participantId || `#${index + 1}`}
-                            </Text>
+              <Grid>
+                {completed.map(({ assignment }, index) => (
+                  <Grid.Col span={12} key={assignment.participantId || `completed-${index}`}>
+                    <Card shadow="sm" padding="sm" radius="md" withBorder>
+                      <Group justify="space-between" align="center">
+                        <div>
+                          <Text fw={500} size="sm">
+                            Participant:
+                            {' '}
+                            {assignment.participantId || `#${index + 1}`}
+                          </Text>
 
-                            <Text size="xs" c="dimmed">
-                              Started:
-                              {' '}
-                              {new Date(assignment.createdTime).toLocaleString()}
-                            </Text>
-                          </div>
-                          <RingProgress
-                            size={60}
-                            thickness={6}
-                            sections={[{
-                              value: 100,
-                              color: 'teal',
-                            }]}
-                            label={(
-                              <Center>
-                                <ActionIcon color="teal" variant="light" radius="xl" size="sm">
-                                  <IconCheck size={16} />
-                                </ActionIcon>
-                              </Center>
-                            )}
-                          />
-                        </Group>
-                      </Card>
-                    </Grid.Col>
-                  ))}
-                </Grid>
-              </>
+                          <Text size="xs" c="dimmed">
+                            Started:
+                            {' '}
+                            {new Date(assignment.createdTime).toLocaleString()}
+                          </Text>
+                        </div>
+                        <RingProgress
+                          size={60}
+                          thickness={6}
+                          sections={[{
+                            value: 100,
+                            color: 'teal',
+                          }]}
+                          label={(
+                            <Center>
+                              <ActionIcon color="teal" variant="light" radius="xl" size="sm">
+                                <IconCheck size={16} />
+                              </ActionIcon>
+                            </Center>
+                          )}
+                        />
+                      </Group>
+                    </Card>
+                  </Grid.Col>
+                ))}
+              </Grid>
             )}
 
             {/* Rejected Section */}
+            <Title order={5} c="red">
+              Rejected (
+              {rejected.length}
+              )
+            </Title>
             {rejected.length > 0 && (
-              <>
-                <Title order={5} c="red">
-                  Rejected (
-                  {rejected.length}
-                  )
-                </Title>
-                <Grid>
-                  {rejected.map(({ assignment, progress }, index) => (
-                    <Grid.Col span={12} key={assignment.participantId || `rejected-${index}`}>
-                      <Card shadow="sm" padding="sm" radius="md" withBorder>
-                        <Group justify="space-between" align="center">
-                          <div>
-                            <Text fw={500} size="sm">
-                              Participant:
-                              {' '}
-                              {assignment.participantId || `#${index + 1}`}
-                            </Text>
+              <Grid>
+                {rejected.map(({ assignment, progress }, index) => (
+                  <Grid.Col span={12} key={assignment.participantId || `rejected-${index}`}>
+                    <Card shadow="sm" padding="sm" radius="md" withBorder>
+                      <Group justify="space-between" align="center">
+                        <div>
+                          <Text fw={500} size="sm">
+                            Participant:
+                            {' '}
+                            {assignment.participantId || `#${index + 1}`}
+                          </Text>
 
-                            <Text size="xs" c="dimmed">
-                              Started:
-                              {' '}
-                              {new Date(assignment.createdTime).toLocaleString()}
+                          <Text size="xs" c="dimmed">
+                            Started:
+                            {' '}
+                            {new Date(assignment.createdTime).toLocaleString()}
+                          </Text>
+                        </div>
+                        <RingProgress
+                          size={60}
+                          thickness={6}
+                          sections={[{
+                            value: progress,
+                            color: 'red',
+                          }]}
+                          label={(
+                            <Text
+                              c="red"
+                              fw={700}
+                              ta="center"
+                              size="xs"
+                            >
+                              {Math.round(progress)}
+                              %
                             </Text>
-                          </div>
-                          <RingProgress
-                            size={60}
-                            thickness={6}
-                            sections={[{
-                              value: progress,
-                              color: 'red',
-                            }]}
-                            label={(
-                              <Text
-                                c="red"
-                                fw={700}
-                                ta="center"
-                                size="xs"
-                              >
-                                {Math.round(progress)}
-                                %
-                              </Text>
-                            )}
-                          />
-                        </Group>
-                      </Card>
-                    </Grid.Col>
-                  ))}
-                </Grid>
-              </>
+                          )}
+                        />
+                      </Group>
+                    </Card>
+                  </Grid.Col>
+                ))}
+              </Grid>
             )}
           </Stack>
         );
