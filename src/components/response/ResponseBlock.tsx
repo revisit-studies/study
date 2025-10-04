@@ -287,6 +287,7 @@ export function ResponseBlock({
       <Box className={`responseBlock responseBlock-${location}`} style={style}>
         {responsesWithDefaults.map((response) => {
           const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+          const correctAnswer = typeof configCorrectAnswer === 'object' ? JSON.stringify(configCorrectAnswer) : configCorrectAnswer;
 
           // Increment index for each response, unless it is a textOnly response
           if (response.type !== 'textOnly') {
@@ -334,7 +335,7 @@ export function ResponseBlock({
                       )}
                       <br />
                       <br />
-                      {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && configCorrectAnswer && ` The correct answer was: ${configCorrectAnswer}.`}
+                      {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && correctAnswer && ` The correct answer was: ${correctAnswer}.`}
                     </Alert>
                   )}
                 </>
