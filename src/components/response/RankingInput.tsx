@@ -321,10 +321,10 @@ function RankingPairwiseComponent({
   const items = useMemo(() => createItems(options), [options]);
   const [pairCount, setPairCount] = useState(1);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [instanceCounter, setInstanceCounter] = useState(0);
 
   const { pairs, unassigned } = useMemo(() => {
     const pairMap: Record<string, { high: string[], low: string[] }> = {};
-    const assigned = new Set<string>();
 
     Object.entries(answer?.value || {}).forEach(([itemId, location]) => {
       const match = location.match(/^pair-(\d+)-(high|low)$/);
@@ -332,7 +332,6 @@ function RankingPairwiseComponent({
         const [, pairId, position] = match;
         if (!pairMap[pairId]) pairMap[pairId] = { high: [], low: [] };
         pairMap[pairId][position as 'high' | 'low'].push(itemId);
-        assigned.add(itemId);
       }
     });
 
@@ -340,7 +339,7 @@ function RankingPairwiseComponent({
       if (!pairMap[i.toString()]) pairMap[i.toString()] = { high: [], low: [] };
     }
 
-    return { pairs: pairMap, unassigned: items.filter((item) => !assigned.has(item.id)) };
+    return { pairs: pairMap, unassigned: items };
   }, [items, answer, pairCount]);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -353,20 +352,45 @@ function RankingPairwiseComponent({
     const { active, over } = event;
     if (!over) return;
 
-    const itemId = active.id as string;
+    const draggedId = active.id as string;
     const targetId = over.id as string;
     const newAnswer = { ...answer.value };
 
     if (targetId === 'unassigned') {
-      delete newAnswer[itemId];
+      const instanceId = draggedId.split('-').slice(0, -3).join('-');
+      delete newAnswer[instanceId];
     } else {
-      newAnswer[itemId] = targetId;
+      const isFromUnassigned = !draggedId.includes('_');
+      const baseItemId = isFromUnassigned ? draggedId : draggedId.split('_')[0];
+
+      const existingInTarget = Object.entries(newAnswer).some(([instId, loc]) => {
+        const existingBaseId = instId.split('_')[0];
+        return loc === targetId && existingBaseId === baseItemId;
+      });
+
+      if (existingInTarget) {
+        return;
+      }
+
+      if (isFromUnassigned) {
+        const uniqueId = `${draggedId}_${instanceCounter}`;
+        newAnswer[uniqueId] = targetId;
+        setInstanceCounter((c) => c + 1);
+      } else {
+        const instanceId = draggedId.split('-').slice(0, -3).join('-');
+        delete newAnswer[instanceId];
+        newAnswer[instanceId] = targetId;
+      }
     }
 
     updateAnswer(newAnswer);
   };
 
-  const activeItem = activeId ? items.find((i) => i.id === activeId) : null;
+  const activeItem = useMemo(() => {
+    if (!activeId) return null;
+    const baseItemId = activeId.includes('_') ? activeId.split('_')[0] : activeId.split('-')[0];
+    return items.find((i) => i.id === baseItemId) || null;
+  }, [activeId, items]);
 
   return (
     <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -382,11 +406,20 @@ function RankingPairwiseComponent({
             {(['high', 'low'] as const).map((position) => (
               <Box key={position} style={{ width: '290px' }}>
                 <DroppableZone id={`pair-${pairId}-${position}`} title={position.toUpperCase()}>
-                  <SortableContext items={pair[position]} strategy={verticalListSortingStrategy}>
+                  <SortableContext
+                    items={pair[position].map((itemId, idx) => `${itemId}-${pairId}-${position}-${idx}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
                     <Stack>
-                      {pair[position].map((itemId) => {
-                        const item = items.find((i) => i.id === itemId);
-                        return item ? <SortableItem key={itemId} item={item} /> : null;
+                      {pair[position].map((instanceId) => {
+                        const baseItemId = instanceId.split('_')[0];
+                        const item = items.find((i) => i.id === baseItemId);
+                        return item ? (
+                          <SortableItem
+                            key={instanceId}
+                            item={{ ...item, id: baseItemId, symbol: instanceId }}
+                          />
+                        ) : null;
                       })}
                     </Stack>
                   </SortableContext>
