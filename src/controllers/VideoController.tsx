@@ -25,10 +25,10 @@ function isValidVimeoUrl(url: string): boolean {
 }
 
 // eslint-disable-next-line react/display-name
-const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() => void; errorCallback: () => void }>(
+const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() => void; }>(
   (props, ref) => {
     const {
-      source, options = null, endedCallback, errorCallback,
+      source, options = null, endedCallback,
     } = props;
     const raptorRef = usePlyr(ref, { options, source });
 
@@ -36,7 +36,6 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
       const { current } = ref as RefObject<APITypes>;
       if (current.plyr.source === null) return;
       current.plyr.on('ended', endedCallback);
-      current.plyr.on('error', errorCallback);
     });
 
     return (
@@ -175,7 +174,6 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
           source={{ type: 'video', sources }}
           options={options}
           endedCallback={endedCallback}
-          errorCallback={() => {}}
         />
       </Box>
     )
