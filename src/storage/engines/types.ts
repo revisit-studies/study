@@ -35,9 +35,64 @@ export type SequenceAssignment = {
   claimed: boolean;
   completed: number | null;
   createdTime: number;
+  total: number; // Total number of questions/steps
+  answered: number; // Number of answered questions
+  isDynamic: boolean; // Whether the study contains dynamic blocks
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
+
+/**
+ * Calculates progress data including total, answered, and isDynamic.
+ * Uses the same logic as the progress bar in AppHeader.tsx
+ */
+export function calculateProgressData(
+  answers: ParticipantData['answers'],
+  flatSequence: string[],
+  studyConfig: StudyConfig,
+  currentStep: number | string,
+): { total: number; answered: number; isDynamic: boolean } {
+  const answered = Object.values(answers).filter((answer) => answer.endTime > -1).length;
+
+  // Check if the study contains dynamic blocks
+  const isDynamic = flatSequence.some((step) => {
+    // If we're in a dynamic block, it's dynamic
+    if (typeof currentStep === 'number' && currentStep <= flatSequence.indexOf(step) && step !== 'end') {
+      return true;
+    }
+    // Check if this step has dynamic answers (contains underscore pattern)
+    return Object.keys(answers).some((key) => key.includes(`${step}_`));
+  });
+
+  const total = flatSequence.map((step, idx) => {
+    // If the step is a component, it adds 1 to the total
+    if (studyConfig.components[step]) {
+      return 1;
+    }
+    // If we're in a dynamic block, guess a maximum of 30 steps
+    if (typeof currentStep === 'number' && currentStep <= idx && step !== 'end') {
+      return 55;
+    }
+    // Otherwise, count the number of answers for this dynamic block
+    return Object.entries(answers).filter(([key, _]) => key.includes(`${step}_`)).length;
+  }).reduce((a, b) => a + b, 0);
+
+  return { total, answered, isDynamic };
+}
+
+/**
+ * Calculates progress percentage based on answered questions.
+ * Uses the same logic as the progress bar in AppHeader.tsx
+ */
+export function calculateProgressPercentage(
+  answers: ParticipantData['answers'],
+  flatSequence: string[],
+  studyConfig: StudyConfig,
+  currentStep: number | string,
+): number {
+  const { total, answered } = calculateProgressData(answers, flatSequence, studyConfig, currentStep);
+  return total > 0 ? (answered / total) * 100 : 0;
+}
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
@@ -356,6 +411,9 @@ export abstract class StorageEngine {
           claimed: false,
           completed: null,
           createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
+          total: 0,
+          answered: 0,
+          isDynamic: false,
         };
         // Mark the first reject as claimed
         await this._claimSequenceAssignment(firstReject.participantId, firstReject);
@@ -371,6 +429,9 @@ export abstract class StorageEngine {
         claimed: false,
         completed: null,
         createdTime: timestamp, // Placeholder, will be set to server timestamp in cloud engines
+        total: 0,
+        answered: 0,
+        isDynamic: false,
       };
       await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
     }
@@ -689,6 +750,40 @@ export abstract class StorageEngine {
     };
 
     await this.__throttleSaveAnswers(answers);
+  }
+
+  // Updates the progress data in the sequence assignment
+  async updateProgressData(
+    progressData: { total: number; answered: number; isDynamic: boolean },
+    participantId?: string,
+  ) {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const targetParticipantId = participantId || this.currentParticipantId;
+    if (!targetParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
+    const sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
+    const existingAssignment = sequenceAssignments.find(
+      (assignment) => assignment.participantId === targetParticipantId,
+    );
+
+    if (existingAssignment) {
+      // Ensure backward compatibility by providing default values if fields don't exist
+      const updatedAssignment: SequenceAssignment = {
+        ...existingAssignment,
+        total: existingAssignment.total ?? progressData.total,
+        answered: existingAssignment.answered ?? progressData.answered,
+        isDynamic: existingAssignment.isDynamic ?? progressData.isDynamic,
+      };
+      updatedAssignment.total = progressData.total;
+      updatedAssignment.answered = progressData.answered;
+      updatedAssignment.isDynamic = progressData.isDynamic;
+      await this._createSequenceAssignment(targetParticipantId, updatedAssignment, false);
+    }
   }
 
   // Verifies if the current participant has completed the study. Checks that the throttled answers are saved and marks the participant as complete if so.
