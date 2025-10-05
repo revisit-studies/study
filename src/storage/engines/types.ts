@@ -42,28 +42,6 @@ export type SequenceAssignment = {
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
 
-export function calculateProgressData(
-  answers: ParticipantData['answers'],
-  flatSequence: string[],
-  studyConfig: StudyConfig,
-  currentStep: number | string,
-  funcIndex: string | undefined,
-): { total: number; answered: string[]; isDynamic: boolean } {
-  const answered = Object.values(answers).filter((answer) => answer.endTime > -1).map((answer) => answer.componentName);
-
-  const isDynamic = funcIndex !== undefined;
-
-  const total = flatSequence.map((step) => {
-    if (studyConfig.components[step]) {
-      return 1;
-    }
-
-    return Object.entries(answers).filter(([key, _]) => key.includes(`${step}_`)).length;
-  }).reduce((a, b) => a + b, 0);
-
-  return { total, answered, isDynamic };
-}
-
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
   T extends 'sequenceArray'
@@ -729,6 +707,10 @@ export abstract class StorageEngine {
   ) {
     if (!this.studyId) {
       throw new Error('Study ID is not set');
+    }
+
+    if (this.getEngine() !== 'firebase') {
+      return;
     }
 
     const targetParticipantId = participantId || this.currentParticipantId;

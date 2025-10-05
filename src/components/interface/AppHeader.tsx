@@ -30,7 +30,7 @@ import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
 } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { calculateProgressData } from '../../storage/engines/types';
+import { calculateProgressData } from '../../storage/engines/utils';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';

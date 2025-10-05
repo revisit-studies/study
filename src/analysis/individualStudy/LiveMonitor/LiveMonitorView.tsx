@@ -10,6 +10,7 @@ import {
 import { StudyConfig } from '../../../parser/types';
 import { StorageEngine, SequenceAssignment } from '../../../storage/engines/types';
 import { ParticipantSection } from './ParticipantSection';
+import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
 
 // Progress label components
 function InProgressLabel({ assignment, progress }: { assignment: SequenceAssignment; progress: number }) {
@@ -58,6 +59,7 @@ export function LiveMonitorView({
   studyId?: string;
   includedParticipants: string[];
 }) {
+  const firebaseStoreageEngine = storageEngine as FirebaseStorageEngine;
   const [sequenceAssignments, setSequenceAssignments] = useState<SequenceAssignment[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connecting');
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
@@ -72,7 +74,7 @@ export function LiveMonitorView({
 
   // Function to manually reconnect
   const handleReconnect = useCallback(async () => {
-    if (!storageEngine || !studyId || isReconnecting) return;
+    if (!firebaseStoreageEngine || !studyId || isReconnecting) return;
 
     if (!navigator.onLine) {
       setConnectionStatus('disconnected');
@@ -91,8 +93,8 @@ export function LiveMonitorView({
     }, 10000); // 10 second timeout
 
     try {
-      storageEngine.initializeStudyDb(studyId);
-      const assignments = await (storageEngine as StorageEngine & { _getAllSequenceAssignments: (studyId: string) => Promise<SequenceAssignment[]> })._getAllSequenceAssignments(studyId);
+      firebaseStoreageEngine.initializeStudyDb(studyId);
+      const assignments = await (firebaseStoreageEngine as FirebaseStorageEngine & { _getAllSequenceAssignments: (studyId: string) => Promise<SequenceAssignment[]> })._getAllSequenceAssignments(studyId);
       clearTimeout(connectionTimeout);
       handleDataUpdate(assignments);
       setConnectionStatus('connected');
@@ -102,26 +104,26 @@ export function LiveMonitorView({
       setConnectionStatus('disconnected');
       setIsReconnecting(false);
     }
-  }, [storageEngine, studyId, isReconnecting, connectionStatus]);
+  }, [firebaseStoreageEngine, studyId, isReconnecting, connectionStatus]);
 
   // Set up realtime listener for sequence assignments
   useEffect(() => {
-    if (!storageEngine || !studyId) {
+    if (!firebaseStoreageEngine || !studyId) {
       setConnectionStatus('disconnected');
       return undefined;
     }
 
     setConnectionStatus('connecting');
-    storageEngine.initializeStudyDb(studyId);
+    firebaseStoreageEngine.initializeStudyDb(studyId);
 
-    const firebaseEngine = storageEngine as StorageEngine & { _setupSequenceAssignmentListener?: (studyId: string, callback: (assignments: SequenceAssignment[]) => void) => () => void };
+    const firebaseEngine = firebaseStoreageEngine as FirebaseStorageEngine & { _setupSequenceAssignmentListener?: (studyId: string, callback: (assignments: SequenceAssignment[]) => void) => () => void };
 
     const unsubscribe = firebaseEngine._setupSequenceAssignmentListener?.(studyId, (assignments: SequenceAssignment[]) => {
       handleDataUpdate(assignments);
     });
 
     // Set connection status based on listener availability
-    if (unsubscribe) {
+    if (typeof unsubscribe === 'function') {
       setConnectionStatus('connected');
     } else {
       setConnectionStatus('disconnected');
@@ -130,12 +132,12 @@ export function LiveMonitorView({
     return () => {
       unsubscribe?.();
     };
-  }, [storageEngine, studyId]);
+  }, [firebaseStoreageEngine, studyId]);
 
   // Monitor browser online/offline status
   useEffect(() => {
     const handleOnline = () => {
-      if (storageEngine && studyId && connectionStatus === 'disconnected') {
+      if (firebaseStoreageEngine && studyId && connectionStatus === 'disconnected') {
         // Trigger a reconnection attempt when coming back online
         handleReconnect();
       }
@@ -153,7 +155,7 @@ export function LiveMonitorView({
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [storageEngine, studyId, connectionStatus, handleReconnect]);
+  }, [firebaseStoreageEngine, studyId, connectionStatus, handleReconnect]);
 
   const filteredParticipantProgress = useMemo(() => sequenceAssignments
     .map((assignment) => {
@@ -176,6 +178,15 @@ export function LiveMonitorView({
       return includedParticipants.includes(status);
     })
     .sort((a, b) => b.assignment.createdTime - a.assignment.createdTime), [sequenceAssignments, includedParticipants]);
+
+  // Group participants by status
+  const participantGroups = useMemo(() => {
+    const inProgress = filteredParticipantProgress.filter((p) => !p.isCompleted && !p.isRejected);
+    const completed = filteredParticipantProgress.filter((p) => p.isCompleted && !p.isRejected);
+    const rejected = filteredParticipantProgress.filter((p) => p.isRejected);
+
+    return { inProgress, completed, rejected };
+  }, [filteredParticipantProgress]);
 
   // Check if storage engine is Firebase
   if (!storageEngine || storageEngine.getEngine() !== 'firebase') {
@@ -284,44 +295,36 @@ export function LiveMonitorView({
 
       <Title order={4} mt="lg">Participant Progress</Title>
 
-      {(() => {
-        const inProgress = filteredParticipantProgress.filter((p) => !p.isCompleted && !p.isRejected);
-        const completed = filteredParticipantProgress.filter((p) => p.isCompleted && !p.isRejected);
-        const rejected = filteredParticipantProgress.filter((p) => p.isRejected);
+      <Stack gap="md">
+        <ParticipantSection
+          title="In Progress"
+          titleColor="orange"
+          participants={participantGroups.inProgress}
+          showProgressHeatmap
+          showDynamicBadge
+          progressValue={(assignment, progress) => (assignment.isDynamic ? 50 : progress)}
+          progressColor="orange"
+          progressLabel={InProgressLabel}
+        />
 
-        return (
-          <Stack gap="md">
-            <ParticipantSection
-              title="In Progress"
-              titleColor="orange"
-              participants={inProgress}
-              showProgressHeatmap
-              showDynamicBadge
-              progressValue={(assignment, progress) => (assignment.isDynamic ? 50 : progress)}
-              progressColor="orange"
-              progressLabel={InProgressLabel}
-            />
+        <ParticipantSection
+          title="Completed"
+          titleColor="teal"
+          participants={participantGroups.completed}
+          progressValue={() => 100}
+          progressColor="teal"
+          progressLabel={CompletedLabel}
+        />
 
-            <ParticipantSection
-              title="Completed"
-              titleColor="teal"
-              participants={completed}
-              progressValue={() => 100}
-              progressColor="teal"
-              progressLabel={CompletedLabel}
-            />
-
-            <ParticipantSection
-              title="Rejected"
-              titleColor="red"
-              participants={rejected}
-              progressValue={(_, progress) => progress}
-              progressColor="red"
-              progressLabel={RejectedLabel}
-            />
-          </Stack>
-        );
-      })()}
+        <ParticipantSection
+          title="Rejected"
+          titleColor="red"
+          participants={participantGroups.rejected}
+          progressValue={(_, progress) => progress}
+          progressColor="red"
+          progressLabel={RejectedLabel}
+        />
+      </Stack>
 
     </Stack>
   );
