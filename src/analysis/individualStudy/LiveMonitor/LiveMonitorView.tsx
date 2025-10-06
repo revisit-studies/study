@@ -1,5 +1,5 @@
 import {
-  Stack, Group, Card, Text, Title, Badge, ActionIcon, Center, Indicator, Tooltip, Button, Flex,
+  Stack, Group, Card, Text, Title, Badge, ActionIcon, Center, Indicator, Tooltip, Button, Flex, Select,
 } from '@mantine/core';
 import {
   useMemo, useEffect, useState, useCallback,
@@ -64,6 +64,8 @@ export function LiveMonitorView({
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connecting');
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
+  const [selectedStage, setSelectedStage] = useState<string>('ALL');
+  const [availableStages, setAvailableStages] = useState<string[]>(['ALL']);
 
   // Function to handle successful data update
   const handleDataUpdate = (assignments: SequenceAssignment[]) => {
@@ -71,6 +73,22 @@ export function LiveMonitorView({
     setLastUpdateTime(new Date());
     setIsReconnecting(false);
   };
+
+  // Load available stages when component mounts or studyId changes
+  useEffect(() => {
+    const loadStages = async () => {
+      if (storageEngine && studyId) {
+        try {
+          const stages = await storageEngine.getAllStages(studyId);
+          setAvailableStages(['ALL', ...stages]);
+        } catch (error) {
+          console.error('Failed to load stages:', error);
+          setAvailableStages(['ALL']);
+        }
+      }
+    };
+    loadStages();
+  }, [storageEngine, studyId]);
 
   // Function to manually reconnect
   const handleReconnect = useCallback(async () => {
@@ -168,14 +186,19 @@ export function LiveMonitorView({
         isRejected,
       };
     })
-    .filter(({ isCompleted, isRejected }) => {
+    .filter(({ isCompleted, isRejected, assignment }) => {
       // Determine participant status
       const status = isRejected ? 'rejected' : (isCompleted ? 'completed' : 'inprogress');
 
       // Check if this status is included in the filter
-      return includedParticipants.includes(status);
+      const statusMatch = includedParticipants.includes(status);
+
+      // Check stage filter
+      const stageMatch = selectedStage === 'ALL' || assignment.stage === selectedStage;
+
+      return statusMatch && stageMatch;
     })
-    .sort((a, b) => b.assignment.createdTime - a.assignment.createdTime), [sequenceAssignments, includedParticipants]);
+    .sort((a, b) => b.assignment.createdTime - a.assignment.createdTime), [sequenceAssignments, includedParticipants, selectedStage]);
 
   // Group participants by status
   const participantGroups = useMemo(() => {
@@ -226,6 +249,15 @@ export function LiveMonitorView({
                 Rejected
               </Badge>
             </Group>
+            <Select
+              label="Filter by Stage"
+              placeholder="Select stage"
+              data={availableStages}
+              value={selectedStage}
+              onChange={(value) => setSelectedStage(value || 'ALL')}
+              size="sm"
+              style={{ minWidth: '150px' }}
+            />
           </Group>
 
           <Group gap="xs">
