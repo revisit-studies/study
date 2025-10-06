@@ -308,6 +308,38 @@ function RankingCategoricalComponent({
   );
 }
 
+function checkForDuplicatePair(answer: Record<string, string>, targetPairId: string): boolean {
+  const pairMap: Record<string, Set<string>> = {};
+
+  Object.entries(answer).forEach(([itemId, location]) => {
+    const match = location.match(/^pair-(\d+)-(high|low)$/);
+    if (match) {
+      const [, pairId] = match;
+      const baseItemId = itemId.split('_')[0];
+
+      if (!pairMap[pairId]) {
+        pairMap[pairId] = new Set();
+      }
+      pairMap[pairId].add(baseItemId);
+    }
+  });
+
+  const targetPairSignature = [...(pairMap[targetPairId] || [])].sort().join('|');
+
+  if (!targetPairSignature) return false;
+
+  for (const [pairId, itemSet] of Object.entries(pairMap)) {
+    if (pairId !== targetPairId) {
+      const pairSignature = [...itemSet].sort().join('|');
+      if (pairSignature === targetPairSignature) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 function RankingPairwiseComponent({
   options, disabled, answer, responseId,
 }: {
@@ -370,6 +402,36 @@ function RankingPairwiseComponent({
 
       if (existingInTarget) {
         return;
+      }
+
+      // Prevent placing both items of the same pair in the same target position or creating duplicate pairs
+      const targetMatch = targetId.match(/^pair-(\d+)-(high|low)$/);
+      if (targetMatch) {
+        const [, targetPairId, targetPosition] = targetMatch;
+        const oppositePosition = targetPosition === 'high' ? 'low' : 'high';
+        const oppositeLocationId = `pair-${targetPairId}-${oppositePosition}`;
+
+        const existingInOpposite = Object.entries(newAnswer).some(([instId, loc]) => {
+          const existingBaseId = instId.split('_')[0];
+          return loc === oppositeLocationId && existingBaseId === baseItemId;
+        });
+
+        if (existingInOpposite) {
+          return;
+        }
+
+        if (isFromUnassigned) {
+          const tempAnswer = { ...newAnswer, [`${draggedId}_temp`]: targetId };
+          const isDuplicate = checkForDuplicatePair(tempAnswer, targetPairId);
+          if (isDuplicate) return;
+        } else {
+          const instanceId = draggedId.split('-').slice(0, -3).join('-');
+          const tempAnswer = { ...newAnswer };
+          delete tempAnswer[instanceId];
+          tempAnswer[instanceId] = targetId;
+          const isDuplicate = checkForDuplicatePair(tempAnswer, targetPairId);
+          if (isDuplicate) return;
+        }
       }
 
       if (isFromUnassigned) {
