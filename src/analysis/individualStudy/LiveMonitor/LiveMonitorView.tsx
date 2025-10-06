@@ -116,9 +116,7 @@ export function LiveMonitorView({
     setConnectionStatus('connecting');
     firebaseStoreageEngine.initializeStudyDb(studyId);
 
-    const firebaseEngine = firebaseStoreageEngine as FirebaseStorageEngine & { _setupSequenceAssignmentListener?: (studyId: string, callback: (assignments: SequenceAssignment[]) => void) => () => void };
-
-    const unsubscribe = firebaseEngine._setupSequenceAssignmentListener?.(studyId, (assignments: SequenceAssignment[]) => {
+    const unsubscribe = firebaseStoreageEngine._setupSequenceAssignmentListener?.(studyId, (assignments: SequenceAssignment[]) => {
       handleDataUpdate(assignments);
     });
 
@@ -188,21 +186,6 @@ export function LiveMonitorView({
     return { inProgress, completed, rejected };
   }, [filteredParticipantProgress]);
 
-  // Check if storage engine is Firebase
-  if (!storageEngine || storageEngine.getEngine() !== 'firebase') {
-    return (
-      <Stack gap="sm">
-        <Card shadow="sm" padding="lg" radius="md" withBorder>
-          <Center>
-            <Text size="lg" c="dimmed">
-              Live monitor only support firebase
-            </Text>
-          </Center>
-        </Card>
-      </Stack>
-    );
-  }
-
   return (
     <Stack gap="sm">
       <Card
@@ -254,7 +237,7 @@ export function LiveMonitorView({
                 leftSection={<IconRefresh size={12} />}
                 loading={isReconnecting}
                 onClick={handleReconnect}
-                disabled={!storageEngine || !studyId}
+                disabled={!firebaseStoreageEngine || !studyId}
               >
                 Reconnect
               </Button>
