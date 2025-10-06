@@ -566,6 +566,48 @@ export interface CheckboxResponse extends BaseResponse {
 }
 
 /**
+ * The RankingResponse interface is used to define the properties of a ranking widget response.
+ * RankingResponses render as a ranking widget with user specified options.
+ *
+ * There are three types of ranking widgets:
+ * Ranking Sublist: The participant is asked to rank a subset of items from a larger list.
+ * Ranking Categorical: The participant is asked to rank items within categories: HIGH, MEDIUM, and LOW.
+ * Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.
+ *
+ ```js
+{
+  "id": "ranking-sublist",
+  "type": "ranking-sublist",
+  "prompt": "Rank your top 2 favorite fruits from the list below",
+  "location": "belowStimulus",
+  "options": ["Apple", "Banana", "Orange", "Strawberry", "Grapes"],
+  "numItems": 2
+},
+{
+  "id": "ranking-categorical",
+  "type": "ranking-categorical",
+  "prompt": "Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.",
+  "location": "belowStimulus",
+  "options": ["Drawing", "Singing", "Hiking", "Dancing", "Photography"]
+},
+{
+  "id": "ranking-pairwise",
+  "type": "ranking-pairwise",
+  "prompt": "Which meal would you prefer",
+  "location": "belowStimulus",
+  "options": ["Pizza", "Sushi", "Burger", "Pasta", "Salad", "Tacos"]
+}
+```
+*/
+export interface RankingResponse extends BaseResponse {
+  type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise';
+  /** The options that are displayed as ranking options, provided as an array of objects, with label and value fields. */
+  options: (StringOption | string)[];
+  /** The number of items to rank. Applies only to sublist and categorical ranking widgets. */
+  numItems?: number;
+}
+
+/**
  * The ReactiveResponse interface is used to define the properties of a reactive response.
  * ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list.
  *
@@ -644,7 +686,7 @@ export interface TextOnlyResponse extends Omit<BaseResponse, 'secondaryText' | '
   withDontKnow?: undefined;
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse;
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.

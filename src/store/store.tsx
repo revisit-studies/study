@@ -127,6 +127,7 @@ export async function studyStoreCreator(
     provenanceJumpTime: 0,
     modes,
     matrixAnswers: {},
+    rankingAnswers: {},
     participantId,
     funcSequence: {},
   };
@@ -271,6 +272,14 @@ export async function studyStoreCreator(
           };
         } else {
           state.matrixAnswers = {};
+        }
+      },
+      setRankingAnswers: (state, action: PayloadAction<{ responseId: string, values: Record<string, string> } | null>) => {
+        if (action.payload) {
+          const { responseId, values } = action.payload;
+          state.rankingAnswers = { ...state.rankingAnswers, [responseId]: { ...values } };
+        } else {
+          state.rankingAnswers = {};
         }
       },
       updateResponseBlockValidation: (
