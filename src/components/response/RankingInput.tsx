@@ -67,6 +67,7 @@ function DroppableZone({ id, title, children }: { id: string; title: string; chi
       style={{
         backgroundColor: isOver ? '#f0f8ff' : undefined,
         borderColor: isOver ? '#4dabf7' : undefined,
+        maxWidth: '600px',
       }}
       withBorder
       p="sm"
@@ -478,11 +479,11 @@ function RankingPairwiseComponent({
         </Button>
       </Flex>
 
-      <Stack gap="md" w="600px" mx="auto">
+      <Stack gap="md" w="650px" mx="auto">
         {Object.entries(pairs).map(([pairId, pair]) => (
           <Group key={pairId} justify="center" wrap="nowrap" align="flex">
             {(['high', 'low'] as const).map((position) => (
-              <Box key={position} style={{ width: '290px' }}>
+              <Box key={position} style={{ width: '300px' }}>
                 <DroppableZone id={`pair-${pairId}-${position}`} title={position.toUpperCase()}>
                   <SortableContext
                     items={pair[position]}
