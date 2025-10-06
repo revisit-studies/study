@@ -13,12 +13,7 @@ export function useRecordings() {
 
   const studyHasScreenRecording = useMemo(() => (recordScreen || participantSequence.some((comp) => studyConfig.components[comp]?.recordScreen)), [participantSequence, studyConfig, recordScreen]);
 
-  const studyHasAudioRecording = useMemo(() => {
-    if (recordAudio) {
-      return true;
-    }
-    return participantSequence.some((comp) => studyConfig.components[comp]?.recordAudio);
-  }, [participantSequence, studyConfig, recordAudio]);
+  const studyHasAudioRecording = useMemo(() => (recordAudio || participantSequence.some((comp) => studyConfig.components[comp]?.recordAudio)), [participantSequence, studyConfig, recordAudio]);
 
   const currentComponentHasScreenRecording = useMemo(
     () => stepConfig?.recordScreen ?? !!recordScreen,
