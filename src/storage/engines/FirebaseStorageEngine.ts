@@ -160,7 +160,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await setDoc(configHashDoc, { configHash });
   }
 
-  protected async _getAllSequenceAssignments(studyId: string) {
+  public async getAllSequenceAssignments(studyId: string) {
     const studyCollection = collection(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,

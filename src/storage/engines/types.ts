@@ -149,7 +149,7 @@ export abstract class StorageEngine {
 
   /* General/Realtime ---------------------------------------------------- */
   // Gets all sequence assignments for the given studyId. The sequence assignments are sorted ascending by timestamp.
-  protected abstract _getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
+  public abstract getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
 
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
@@ -340,7 +340,7 @@ export abstract class StorageEngine {
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
-    let sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
+    let sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
     const modes = await this.getModes(this.studyId);
 
@@ -385,7 +385,7 @@ export abstract class StorageEngine {
     }
 
     // Query all the intents to get a sequence and find our position in the queue
-    sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
+    sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
     // Get the latin square
     const sequenceArray = await this.getSequenceArray();
@@ -486,7 +486,7 @@ export abstract class StorageEngine {
     if (studyIdToUse === undefined) {
       throw new Error('Study ID is not set');
     }
-    const sequenceAssignments = await this._getAllSequenceAssignments(studyIdToUse);
+    const sequenceAssignments = await this.getAllSequenceAssignments(studyIdToUse);
     return sequenceAssignments.map((assignment) => assignment.participantId);
   }
 
@@ -652,7 +652,7 @@ export abstract class StorageEngine {
   }
 
   async getParticipantsStatusCounts(studyId: string) {
-    const sequenceAssignments = await this._getAllSequenceAssignments(studyId);
+    const sequenceAssignments = await this.getAllSequenceAssignments(studyId);
 
     const completed = sequenceAssignments.filter((assignment) => assignment.completed && !assignment.rejected).length;
     const rejected = sequenceAssignments.filter((assignment) => assignment.rejected).length;
@@ -718,7 +718,7 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    const sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
+    const sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
     const existingAssignment = sequenceAssignments.find(
       (assignment) => assignment.participantId === targetParticipantId,
     );

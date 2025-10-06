@@ -94,7 +94,7 @@ export function LiveMonitorView({
 
     try {
       firebaseStoreageEngine.initializeStudyDb(studyId);
-      const assignments = await (firebaseStoreageEngine as FirebaseStorageEngine & { _getAllSequenceAssignments: (studyId: string) => Promise<SequenceAssignment[]> })._getAllSequenceAssignments(studyId);
+      const assignments = await firebaseStoreageEngine.getAllSequenceAssignments(studyId);
       clearTimeout(connectionTimeout);
       handleDataUpdate(assignments);
       setConnectionStatus('connected');

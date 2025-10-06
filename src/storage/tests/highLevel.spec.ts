@@ -171,7 +171,7 @@ describe.each([
     await storageEngine.rejectParticipant(participantId1, 'Participant rejected for testing');
 
     // @ts-expect-error using protected method for testing
-    let sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
+    let sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
 
     let sequenceAssignment1 = sequenceAssignments.find((assignment) => assignment.participantId === participantId1);
@@ -186,7 +186,7 @@ describe.each([
     expect(participantId2).not.toBe(participantId1);
 
     // @ts-expect-error using protected method for testing
-    sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
+    sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
 
     let sequenceAssignment2 = sequenceAssignments.find((assignment) => assignment.participantId === participantId2);
@@ -205,7 +205,7 @@ describe.each([
     await storageEngine.rejectParticipant(participantId2, 'Participant rejected for testing');
 
     // @ts-expect-error using protected method for testing
-    sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
+    sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
     sequenceAssignment2 = sequenceAssignments.find((assignment) => assignment.participantId === participantId2);
     expect(sequenceAssignment2).toBeDefined();
@@ -225,7 +225,7 @@ describe.each([
     expect(participantId3).not.toBe(participantId2);
 
     // @ts-expect-error using protected method for testing
-    sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
+    sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
     const sequenceAssignment3 = sequenceAssignments.find((assignment) => assignment.participantId === participantId3);
     expect(sequenceAssignment3).toBeDefined();
@@ -254,7 +254,7 @@ describe.each([
     expect(participantId4).not.toBe(participantId2);
     expect(participantId4).not.toBe(participantId3);
     // @ts-expect-error using protected method for testing
-    sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
+    sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
     const sequenceAssignment4 = sequenceAssignments.find((assignment) => assignment.participantId === participantId4);
     expect(sequenceAssignment4).toBeDefined();
@@ -268,7 +268,7 @@ describe.each([
 
     // Check the length of sequence assignments
     // @ts-expect-error using protected method for testing
-    sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
+    sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sequenceAssignments.find((assignment) => assignment.participantId === participantId1)).toBeDefined();
     expect(sequenceAssignments.find((assignment) => assignment.participantId === participantId2)).toBeDefined();
     expect(sequenceAssignments.find((assignment) => assignment.participantId === participantId3)).toBeDefined();
