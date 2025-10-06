@@ -30,6 +30,7 @@ export function useScreenRecording() {
   const currentMediaStream = useRef<MediaStream>(null);
   const currentMediaRecorder = useRef<MediaRecorder | null>(null);
   const audioMediaStream = useRef<MediaStream | null>(null);
+  const audioMediaRecorder = useRef<MediaRecorder | null>(null); // recorder for audio. Necessary to save audio file to get transcription.
   const screenMediaStream = useRef<MediaStream>(null);
 
   const { storageEngine } = useStorageEngine();
@@ -106,7 +107,11 @@ export function useScreenRecording() {
     const stream = currentMediaStream.current;
 
     const mediaRecorder = new MediaRecorder(stream);
+
     currentMediaRecorder.current = mediaRecorder;
+
+    const audioRecorder = (currentComponentHasAudioRecording && audioMediaStream.current) ? new MediaRecorder(audioMediaStream.current) : null;
+    audioMediaRecorder.current = audioRecorder;
 
     let chunks : Blob[] = [];
     mediaRecorder.addEventListener('dataavailable', (event: BlobEvent) => {
@@ -115,8 +120,19 @@ export function useScreenRecording() {
       }
     });
 
+    let audioChunks: Blob[] = [];
+    audioRecorder?.addEventListener('dataavailable', (event: BlobEvent) => {
+      if (event.data && event.data.size > 0) {
+        audioChunks.push(event.data);
+      }
+    });
+
     mediaRecorder.addEventListener('start', () => {
       chunks = [];
+    });
+
+    audioRecorder?.addEventListener('start', () => {
+      audioChunks = [];
     });
 
     if (currentComponentHasScreenRecording) {
@@ -125,6 +141,13 @@ export function useScreenRecording() {
 
         const blob = new Blob(chunks, { type: mimeType });
         storageEngine?.saveScreenRecording(blob, trialName);
+      });
+
+      audioRecorder?.addEventListener('stop', () => {
+        const { mimeType } = audioRecorder;
+
+        const blob = new Blob(audioChunks, { type: mimeType });
+        storageEngine?.saveAudioRecording(blob, trialName);
       });
     } else {
       mediaRecorder.addEventListener('stop', () => {
@@ -144,6 +167,7 @@ export function useScreenRecording() {
     setIsScreenRecording(currentComponentHasScreenRecording);
 
     mediaRecorder.start(1000); // 1s chunks
+    audioRecorder?.start(1000);
   }, [currentComponentHasAudioRecording, currentComponentHasScreenRecording, storageEngine]);
 
   // Start screen recording. This does not stop screen capture.
