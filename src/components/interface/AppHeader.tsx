@@ -24,12 +24,13 @@ import {
 import {
   useEffect, useMemo, useRef, useState,
 } from 'react';
-import { useHref } from 'react-router';
+import { useHref, useParams } from 'react-router';
 import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
 } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { calculateProgressData } from '../../storage/engines/utils';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
@@ -80,8 +81,10 @@ export function AppHeader({
 
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [isTruncated, setIsTruncated] = useState(false);
+  const lastProgressRef = useRef<number>(0);
 
   const isRecording = useStoreSelector((store) => store.isRecording);
+  const { funcIndex } = useParams();
 
   useEffect(() => {
     const element = titleRef.current;
@@ -89,6 +92,30 @@ export function AppHeader({
       setIsTruncated(element.scrollWidth > element.offsetWidth);
     }
   }, [studyConfig]);
+
+  // Update progress data in Firebase when progress changes
+  useEffect(() => {
+    if (studyConfig && storageEngine && dataCollectionEnabled) {
+      const progressData = calculateProgressData(
+        answers,
+        flatSequence,
+        studyConfig,
+        currentStep,
+        funcIndex,
+      );
+
+      // Calculate progress percentage for comparison
+      const currentProgressPercent = progressData.total > 0 ? (progressData.answered.length / progressData.total) * 100 : 0;
+
+      // Only update if progress has changed, is greater than 0, and we have a valid progress value
+      if (currentProgressPercent !== lastProgressRef.current && currentProgressPercent > 0 && !Number.isNaN(currentProgressPercent)) {
+        lastProgressRef.current = currentProgressPercent;
+        storageEngine.updateProgressData(progressData).catch((error: unknown) => {
+          console.warn('Failed to update progress data:', error);
+        });
+      }
+    }
+  }, [answers, flatSequence, studyConfig, currentStep, storageEngine, dataCollectionEnabled, funcIndex]);
 
   return (
     <AppShell.Header className="header" p="md">

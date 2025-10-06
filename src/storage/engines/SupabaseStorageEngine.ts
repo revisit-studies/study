@@ -127,7 +127,7 @@ export class SupabaseStorageEngine extends StorageEngine {
       .eq('docId', 'currentConfigHash');
   }
 
-  protected async _getAllSequenceAssignments(studyId: string) {
+  public async getAllSequenceAssignments(studyId: string) {
     // get all sequence assignments from the study collection
     const { data, error } = await this.supabase
       .from('revisit')
