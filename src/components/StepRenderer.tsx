@@ -42,9 +42,7 @@ export function StepRenderer() {
 
   const screenRecording = useScreenRecording();
 
-  const {
-    isScreenRecording, screenWithAudioRecording, isRejected: isScreenRecordingUserRejected,
-  } = screenRecording;
+  const { isRejected: isScreenRecordingUserRejected } = screenRecording;
 
   const analysisHasScreenRecording = useStoreSelector((state) => state.analysisHasScreenRecording);
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
@@ -149,7 +147,7 @@ export function StepRenderer() {
           <AppNavBar />
           <AppAside />
           {showTitleBar && (
-          <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} screenRecording={isScreenRecording} screenWithAudioRecording={screenWithAudioRecording} />
+          <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
           )}
           <ResolutionWarning />
           {isScreenRecordingUserRejected && <ScreenRecordingRejection />}

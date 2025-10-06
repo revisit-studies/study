@@ -14,7 +14,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
     stopScreenCapture: stopCapture,
     isScreenCapturing: screenCapturing,
     screenRecordingError: error,
-    audioRecordingStream,
+    audioMediaStream,
   } = useScreenRecordingContext();
 
   // audioCapturingSuccess is set to true when we detect sound.
@@ -34,7 +34,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
     if (!screenCapturing) {
       return;
     }
-    const stream = audioRecordingStream.current;
+    const stream = audioMediaStream.current;
     if (!stream) {
       return;
     }
@@ -72,7 +72,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
     };
 
     window.requestAnimationFrame(detectSound);
-  }, [audioRecordingStream, screenCapturing, setAnswer]);
+  }, [audioMediaStream, screenCapturing, setAnswer]);
 
   return (
     <Box p="md">
