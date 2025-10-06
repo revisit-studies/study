@@ -226,7 +226,7 @@ export function ComponentController() {
       const funcIndexNumber = trialOrderFuncIndex ? Number(trialOrderFuncIndex) : undefined;
 
       if (indexNumber > currentStep || (indexNumber === currentStep && funcIndexNumber !== undefined && funcIndex !== undefined && funcIndexNumber > Number(decryptIndex(funcIndex)))) {
-        navigate(`/${studyId}/${encryptIndex(indexNumber)}${funcIndexNumber !== undefined ? `/${funcIndexNumber}` : ''}`);
+        navigate(`/${studyId}/${encryptIndex(indexNumber)}${funcIndexNumber !== undefined ? `/${encryptIndex(funcIndexNumber)}` : ''}`);
       }
     }
   }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.studyNavigatorEnabled, navigate, status, studyId]);
