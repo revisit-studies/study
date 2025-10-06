@@ -242,9 +242,12 @@
                 },
                 {
                     "id": "Custom-Stimuli/b0-obscured-explain",
-                    "prompt": "Explain what the maker of this chart is trying to demonstrate:",
+                    "prompt": "Explain what the maker of this chart is trying to demonstrate (please speak into mic)",
                     "location": "sidebar",
-                    "type": "longText"
+                    "type": "checkbox",
+                    "options": [
+                        "Click here once finished responding"
+                    ]
                 }
             ]
         },
@@ -468,7 +471,10 @@
                     "id": "Custom-Stimuli/b0-unobscured-explain",
                     "prompt": "Explain what the maker of this chart is trying to demonstrate:",
                     "location": "sidebar",
-                    "type": "longText"
+                    "type": "checkbox",
+                    "options": [
+                        "Click here once finished responding"
+                    ]
                 }
             ]
         },
@@ -692,7 +698,10 @@
                     "id": "Custom-Stimuli/b2a-obscured-explain",
                     "prompt": "Explain what the maker of this chart is trying to demonstrate:",
                     "location": "sidebar",
-                    "type": "longText"
+                    "type": "checkbox",
+                    "options": [
+                        "Click here once finished responding"
+                    ]
                 }
             ]
         },
@@ -916,7 +925,10 @@
                     "id": "Custom-Stimuli/b2a-unobscured-explain",
                     "prompt": "Explain what the maker of this chart is trying to demonstrate:",
                     "location": "sidebar",
-                    "type": "longText"
+                    "type": "checkbox",
+                    "options": [
+                        "Click here once finished responding"
+                    ]
                 }
             ]
         },
@@ -1140,7 +1152,10 @@
                     "id": "Custom-Stimuli/B1D-obscured-explain",
                     "prompt": "Explain what the maker of this chart is trying to demonstrate:",
                     "location": "sidebar",
-                    "type": "longText"
+                    "type": "checkbox",
+                    "options": [
+                        "Click here once finished responding"
+                    ]
                 }
             ]
         },
@@ -1364,7 +1379,10 @@
                     "id": "Custom-Stimuli/B1D-unobscured-explain",
                     "prompt": "Explain what the maker of this chart is trying to demonstrate:",
                     "location": "sidebar",
-                    "type": "longText"
+                    "type": "checkbox",
+                    "options": [
+                        "Click here once finished responding"
+                    ]
                 }
             ]
         },
@@ -1588,7 +1606,10 @@
                     "id": "Custom-Stimuli/b1b-obscured-explain",
                     "prompt": "Explain what the maker of this chart is trying to demonstrate:",
                     "location": "sidebar",
-                    "type": "longText"
+                    "type": "checkbox",
+                    "options": [
+                        "Click here once finished responding"
+                    ]
                 }
             ]
         },
@@ -1812,7 +1833,10 @@
                     "id": "Custom-Stimuli/b1b-unobscured-explain",
                     "prompt": "Explain what the maker of this chart is trying to demonstrate:",
                     "location": "sidebar",
-                    "type": "longText"
+                    "type": "checkbox",
+                    "options": [
+                        "Click here once finished responding"
+                    ]
                 }
             ]
         },
@@ -2036,7 +2060,10 @@
                     "id": "Custom-Stimuli/b1c-obscured-explain",
                     "prompt": "Explain what the maker of this chart is trying to demonstrate:",
                     "location": "sidebar",
-                    "type": "longText"
+                    "type": "checkbox",
+                    "options": [
+                        "Click here once finished responding"
+                    ]
                 }
             ]
         },
@@ -2260,7 +2287,10 @@
                     "id": "Custom-Stimuli/b1c-unobscured-explain",
                     "prompt": "Explain what the maker of this chart is trying to demonstrate:",
                     "location": "sidebar",
-                    "type": "longText"
+                    "type": "checkbox",
+                    "options": [
+                        "Click here once finished responding"
+                    ]
                 }
             ]
         },
@@ -2402,9 +2432,13 @@
 
         }
     },
+    "importedLibraries": [
+        "mic-check"
+    ],
     "sequence": {
         "order": "fixed",
         "components": [
+            "$mic-check.co.audioTest",
             "B0-obscured",
             "B0-unobscured",
             "B2A-obscured",
