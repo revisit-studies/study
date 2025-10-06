@@ -44,26 +44,35 @@ export function ResponseSwitcher({
   otherInput?: GetInputPropsReturnType;
   disabled?: boolean;
 }) {
-  const isAnalysis = useIsAnalysis();
-  // Don't update if we're in analysis mode
-  const ans = (isAnalysis ? { value: storedAnswer![response.id] } : form) || { value: undefined };
-  const dontKnowValue = (Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined };
-  const otherValue = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
-  const inputDisabled = Object.keys(storedAnswer || {}).length > 0 || disabled;
-
-  const [searchParams] = useSearchParams();
-
   const studyConfig = useStudyConfig();
-
-  const enumerateQuestions = useMemo(() => configInUse?.enumerateQuestions ?? studyConfig.uiConfig.enumerateQuestions ?? false, [configInUse, studyConfig]);
+  const isAnalysis = useIsAnalysis();
 
   const sequence = useStoreSelector((state) => state.sequence);
   const flatSequence = getSequenceFlatMap(sequence);
   const currentStep = useCurrentStep();
+  const nextComponent = typeof currentStep === 'number' ? flatSequence[currentStep + 1] : undefined;
+  const nextConfig = nextComponent ? studyConfig.components[nextComponent] : undefined;
+
+  const completed = useStoreSelector((state) => state.completed);
+
+  // Don't update if we're in analysis mode
+  const ans = useMemo(() => (isAnalysis || (Object.keys(storedAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed ? { value: storedAnswer![response.id] } : form) || { value: undefined }, [isAnalysis, storedAnswer, response.id, form, nextConfig?.previousButton, completed]);
+  const dontKnowValue = (Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined };
+  const otherValue = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
+  const inputDisabled = Object.keys(storedAnswer || {}).length > 0 || disabled || completed;
+
+  const [searchParams] = useSearchParams();
+
+  const enumerateQuestions = useMemo(() => configInUse?.enumerateQuestions ?? studyConfig.uiConfig.enumerateQuestions ?? false, [configInUse, studyConfig]);
 
   useFetchStylesheet(response.stylesheetPath);
 
   const isDisabled = useMemo(() => {
+    // Always disable if participant is completed
+    if (completed) {
+      return true;
+    }
+
     // Do not disable if we're at the last element before a dynamic block
     if (typeof currentStep === 'number') {
       const currentComponent = flatSequence[currentStep];
@@ -83,8 +92,6 @@ export function ResponseSwitcher({
 
     // Do not disable if the next page has previousButton enabled
     if (typeof currentStep === 'number' && currentStep + 1 < flatSequence.length) {
-      const nextComponent = flatSequence[currentStep + 1];
-      const nextConfig = studyConfig.components[nextComponent];
       if (nextConfig?.previousButton) {
         return false;
       }
@@ -94,8 +101,8 @@ export function ResponseSwitcher({
       const responseParam = searchParams.get(response.paramCapture);
       return inputDisabled || !!responseParam;
     }
-    return disabled;
-  }, [disabled, response.paramCapture, searchParams, currentStep, flatSequence, studyConfig.components, sequence, inputDisabled]);
+    return inputDisabled || disabled;
+  }, [currentStep, flatSequence, response.paramCapture, inputDisabled, disabled, sequence.components, nextConfig?.previousButton, searchParams]);
 
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {

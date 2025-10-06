@@ -180,4 +180,5 @@ export interface StoreState {
   modes: Record<REVISIT_MODE, boolean>;
   matrixAnswers: Record<string, Record<string, string>>;
   funcSequence: Record<string, string[]>;
+  completed: boolean;
 }

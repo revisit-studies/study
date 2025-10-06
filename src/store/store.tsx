@@ -22,6 +22,7 @@ export async function studyStoreCreator(
   answers: ParticipantData['answers'],
   modes: Record<REVISIT_MODE, boolean>,
   participantId: string,
+  completed: boolean,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
@@ -129,6 +130,7 @@ export async function studyStoreCreator(
     matrixAnswers: {},
     participantId,
     funcSequence: {},
+    completed,
   };
 
   const storeSlice = createSlice({
@@ -352,6 +354,9 @@ export async function studyStoreCreator(
         if (state.funcSequence[funcName]?.length === 0) {
           delete state.funcSequence[funcName];
         }
+      },
+      setParticipantCompleted(state, { payload }: PayloadAction<boolean>) {
+        state.completed = payload;
       },
     },
   });
