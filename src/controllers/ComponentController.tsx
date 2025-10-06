@@ -56,13 +56,14 @@ export function ComponentController() {
   const screenCaptureTrialName = useRef<string | null>(null);
 
   const identifier = useCurrentIdentifier();
-const {
+
+  const {
     studyHasScreenRecording, studyHasAudioRecording, currentComponentHasAudioRecording, currentComponentHasScreenRecording,
-  } = useRecordings();
+  } = useRecordingConfig();
 
   const {
     isMediaCapturing, stopScreenCapture, startScreenRecording, stopScreenRecording, combinedMediaRecorder: screenRecordingStream,
-} = useScreenRecordingContext();
+  } = useScreenRecordingContext();
 
   const isAnalysis = useIsAnalysis();
 
