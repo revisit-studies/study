@@ -25,6 +25,7 @@ import { useAuth } from '../../store/hooks/useAuth';
 import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
+import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import 'mantine-react-table/styles.css';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
@@ -112,8 +113,17 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
         <Stack ref={ref} style={{ height: '100%', maxHeight: '100dvh', overflow: 'hidden' }} justify="space-between">
 
           <Flex direction="row" align="center" justify="space-between">
-            <Title order={5} mr="sm">{studyId}</Title>
-
+            <Flex direction="row" align="center">
+              <Title order={5} mr="sm">{studyId}</Title>
+              {studyConfig && (
+                <DownloadButtons
+                  visibleParticipants={visibleParticipants}
+                  studyId={studyId || ''}
+                  gap="10px"
+                  hasAudio={studyConfig?.uiConfig?.recordAudio}
+                />
+              )}
+            </Flex>
             <Flex direction="row" align="center">
               <Text mt={-2} size="sm">Participants: </Text>
               <Checkbox.Group

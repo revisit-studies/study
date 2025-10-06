@@ -194,7 +194,6 @@ export function TableView({
       <MantineReactTable
         table={table}
       />
-
     ) : (
       <>
         <Space h="xl" />
