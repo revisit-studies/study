@@ -4,7 +4,7 @@ import {
 import { useStudyConfig } from './useStudyConfig';
 import { useCurrentComponent } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { useRecordings } from './useRecordings';
+import { useRecordingConfig } from './useRecordingConfig';
 
 /**
  * Captures and records the screen and audio.
@@ -44,7 +44,7 @@ export function useScreenRecording() {
     studyHasAudioRecording,
     currentComponentHasAudioRecording,
     currentComponentHasScreenRecording,
-  } = useRecordings();
+  } = useRecordingConfig();
 
   // Screen capture starts once and stops at the end of the study.
   // At the beginning of each stimulus, recording starts by calling `startScreenRecording`.

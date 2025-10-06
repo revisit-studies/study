@@ -3,7 +3,7 @@ import { useStudyConfig } from './useStudyConfig';
 import { useFlatSequence } from '../store';
 import { useCurrentComponent } from '../../routes/utils';
 
-export function useRecordings() {
+export function useRecordingConfig() {
   const studyConfig = useStudyConfig();
   const participantSequence = useFlatSequence();
   const currentComponent = useCurrentComponent();

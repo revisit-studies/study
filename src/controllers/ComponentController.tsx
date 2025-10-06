@@ -33,7 +33,7 @@ import { studyComponentToIndividualComponent } from '../utils/handleComponentInh
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { ScreenRecordingReplay } from '../components/screenRecording/ScreenRecordingReplay';
 import { useScreenRecordingContext } from '../store/hooks/useScreenRecording';
-import { useRecordings } from '../store/hooks/useRecordings';
+import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
 
 // current active stimuli presented to the user
 export function ComponentController() {
@@ -61,7 +61,7 @@ export function ComponentController() {
 
   const {
     studyHasScreenRecording, studyHasAudioRecording, currentComponentHasAudioRecording, currentComponentHasScreenRecording,
-  } = useRecordings();
+  } = useRecordingConfig();
 
   const {
     isMediaCapturing, stopScreenCapture, startScreenRecording, stopScreenRecording, combinedMediaRecorder: screenRecordingStream,
