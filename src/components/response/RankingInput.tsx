@@ -347,9 +347,10 @@ function RankingPairwiseComponent({
   const { onChange } = answer as { onChange?: (value: Record<string, string>) => void };
   const { sensors, updateAnswer } = useRankingLogic(responseId, onChange);
   const items = useMemo(() => createItems(options), [options]);
-  const [pairCount, setPairCount] = useState(1);
+  const [pairIds, setPairIds] = useState<string[]>(['0']);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [instanceCounter, setInstanceCounter] = useState(0);
+  const [nextPairId, setNextPairId] = useState(1);
 
   const { pairs, unassigned } = useMemo(() => {
     const pairMap: Record<string, { high: string[], low: string[] }> = {};
@@ -363,12 +364,12 @@ function RankingPairwiseComponent({
       }
     });
 
-    for (let i = 0; i < pairCount; i += 1) {
-      if (!pairMap[i.toString()]) pairMap[i.toString()] = { high: [], low: [] };
-    }
+    pairIds.forEach((pairId) => {
+      if (!pairMap[pairId]) pairMap[pairId] = { high: [], low: [] };
+    });
 
     return { pairs: pairMap, unassigned: items };
-  }, [items, answer, pairCount]);
+  }, [items, answer, pairIds]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -446,17 +447,40 @@ function RankingPairwiseComponent({
     return items.find((i) => i.id === baseItemId) || null;
   }, [activeId, items]);
 
+  const handleRemovePair = (pairId: string) => {
+    if (disabled) return;
+
+    const newAnswer = { ...answer.value };
+    Object.keys(newAnswer).forEach((key) => {
+      if (newAnswer[key].startsWith(`pair-${pairId}-`)) {
+        delete newAnswer[key];
+      }
+    });
+
+    setPairIds((prev) => prev.filter((id) => id !== pairId));
+    setError?.(null);
+    updateAnswer(newAnswer);
+  };
+
   return (
     <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <Flex justify="flex-end" mb="md">
-        <Button variant="outline" onClick={() => !disabled && setPairCount((p) => p + 1)}>
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (!disabled) {
+              setPairIds((prev) => [...prev, nextPairId.toString()]);
+              setNextPairId((prev) => prev + 1);
+            }
+          }}
+        >
           Add New Pair
         </Button>
       </Flex>
 
       <Stack gap="md" w="600px" mx="auto">
         {Object.entries(pairs).map(([pairId, pair]) => (
-          <Group key={pairId} justify="center" wrap="wrap">
+          <Group key={pairId} justify="center" wrap="nowrap" align="flex">
             {(['high', 'low'] as const).map((position) => (
               <Box key={position} style={{ width: '290px' }}>
                 <DroppableZone id={`pair-${pairId}-${position}`} title={position.toUpperCase()}>
@@ -480,6 +504,15 @@ function RankingPairwiseComponent({
                 </DroppableZone>
               </Box>
             ))}
+            <Button
+              variant="white"
+              color="red"
+              size="xs"
+              onClick={() => handleRemovePair(pairId)}
+              disabled={disabled}
+            >
+              X
+            </Button>
           </Group>
         ))}
 
