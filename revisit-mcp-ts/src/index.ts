@@ -69,6 +69,111 @@ function validateGlobalConfig(data: any): { isValid: boolean; errors: any[] } {
   };
 }
 
+// Helper function to check if a component is an inherited component
+function isInheritedComponent(comp: any): boolean {
+  return comp && typeof comp === 'object' && comp.baseComponent !== undefined;
+}
+
+// Helper function to check if a sequence is a dynamic block
+function isDynamicBlock(sequence: any): boolean {
+  return sequence && sequence.order === 'dynamic';
+}
+
+// Helper function to get flat map of components from sequence (including interruptions)
+function getSequenceFlatMapWithInterruptions(sequence: any): string[] {
+  const components: string[] = [];
+  
+  if (isDynamicBlock(sequence)) {
+    return components; // Dynamic blocks can't be statically analyzed
+  }
+  
+  if (!sequence.components || !Array.isArray(sequence.components)) {
+    return components;
+  }
+  
+  sequence.components.forEach((component: any) => {
+    if (typeof component === 'string') {
+      components.push(component);
+    } else if (component && typeof component === 'object') {
+      // Recursively handle nested blocks
+      components.push(...getSequenceFlatMapWithInterruptions(component));
+    }
+  });
+  
+  // Handle interruptions
+  if (sequence.interruptions && Array.isArray(sequence.interruptions)) {
+    sequence.interruptions.forEach((interruption: any) => {
+      if (interruption.components && Array.isArray(interruption.components)) {
+        interruption.components.forEach((comp: any) => {
+          if (typeof comp === 'string') {
+            components.push(comp);
+          }
+        });
+      }
+    });
+  }
+  
+  return components;
+}
+
+// Helper function to verify skip logic
+function verifyStudySkip(
+  sequence: any,
+  skipTargets: string[] = [],
+  errors: any[] = []
+): string[] {
+  if (isDynamicBlock(sequence)) {
+    return skipTargets; // Can't verify skip logic for dynamic blocks
+  }
+
+  // Base case: empty sequence
+  if (!sequence.components || sequence.components.length === 0) {
+    errors.push({
+      message: 'Sequence has an empty components array',
+      instancePath: '/sequence/',
+      params: { action: 'remove empty components block' },
+    });
+    return skipTargets;
+  }
+
+  // If the block has an ID, remove it from the skipTargets array
+  if (sequence.id) {
+    const idxToRemove = skipTargets
+      .map((target, idx) => (target === sequence.id ? idx : null))
+      .filter(idx => idx !== null);
+    idxToRemove.forEach((idx, i) => {
+      skipTargets.splice(idx - i, 1);
+    });
+  }
+
+  // Process components
+  sequence.components.forEach((component: any) => {
+    if (typeof component === 'string') {
+      // If the component is a string, check if it is in the skipTargets array
+      const idxToRemove = skipTargets
+        .map((target, idx) => (target === component ? idx : null))
+        .filter(idx => idx !== null);
+      idxToRemove.forEach((idx, i) => {
+        skipTargets.splice(idx - i, 1);
+      });
+    } else if (component && typeof component === 'object') {
+      // Recursive case: component is a block
+      verifyStudySkip(component, skipTargets, errors);
+    }
+  });
+
+  // If this block has a skip, add the skip.to component to the skipTargets array
+  if (sequence.skip && Array.isArray(sequence.skip)) {
+    sequence.skip.forEach((skip: any) => {
+      if (skip.to && skip.to !== 'end') {
+        skipTargets.push(skip.to);
+      }
+    });
+  }
+
+  return skipTargets;
+}
+
 // Validation function for study config (following Revisit's approach)
 function validateStudyConfig(data: any): { isValid: boolean; errors: any[] } {
   if (!studyValidate) {
@@ -84,7 +189,7 @@ function validateStudyConfig(data: any): { isValid: boolean; errors: any[] } {
   if (data.components && typeof data.components === 'object') {
     Object.entries(data.components).forEach(([componentName, component]: [string, any]) => {
       // Verify baseComponent is defined in baseComponents object
-      if (component.baseComponent && !data.baseComponents?.[component.baseComponent]) {
+      if (isInheritedComponent(component) && !data.baseComponents?.[component.baseComponent]) {
         customErrors.push({
           message: `Base component \`${component.baseComponent}\` is not defined in baseComponents object`,
           instancePath: `/components/${componentName}`,
@@ -92,6 +197,155 @@ function validateStudyConfig(data: any): { isValid: boolean; errors: any[] } {
         });
       }
     });
+  }
+
+  // Verify components are well defined in sequence
+  if (data.sequence) {
+    const usedComponents = getSequenceFlatMapWithInterruptions(data.sequence);
+    
+    usedComponents.forEach((componentName) => {
+      // Verify component is defined in components object
+      if (!data.components?.[componentName]) {
+        const isBaseComponent = data.baseComponents?.[componentName];
+        customErrors.push({
+          message: isBaseComponent
+            ? `Component \`${componentName}\` is a base component and cannot be used in the sequence`
+            : `Component \`${componentName}\` is not defined in components object`,
+          instancePath: '/sequence/',
+          params: { action: 'add the component to the components object' },
+        });
+      }
+    });
+  }
+
+  // Verify skip blocks are well defined
+  if (data.sequence) {
+    const missingSkipTargets = verifyStudySkip(data.sequence, [], customErrors);
+    missingSkipTargets.forEach((skipTarget) => {
+      customErrors.push({
+        message: `Skip target \`${skipTarget}\` does not occur after the skip block it is used in`,
+        instancePath: '/sequence/',
+        params: { action: 'add the target to the sequence after the skip block' },
+      });
+    });
+  }
+
+  // Validate response types and their properties
+  if (data.components && typeof data.components === 'object') {
+    Object.entries(data.components).forEach(([componentName, component]: [string, any]) => {
+      if (component.response && Array.isArray(component.response)) {
+        component.response.forEach((response: any, responseIndex: number) => {
+          const responsePath = `/components/${componentName}/response/${responseIndex}`;
+          
+          // Validate response type
+          if (!response.type) {
+            customErrors.push({
+              message: 'Response must have a type',
+              instancePath: responsePath,
+              params: { action: 'specify a response type' },
+            });
+          }
+          
+          // Validate new response types
+          if (response.type === 'textOnly') {
+            // TextOnly responses don't need required fields
+            if (response.required !== undefined) {
+              customErrors.push({
+                message: 'TextOnly responses cannot be required',
+                instancePath: responsePath,
+                params: { action: 'remove the required field from TextOnly response' },
+              });
+            }
+          }
+          
+          // Validate matrix responses
+          if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
+            if (!response.answerOptions) {
+              customErrors.push({
+                message: 'Matrix responses must have answerOptions',
+                instancePath: responsePath,
+                params: { action: 'add answerOptions to matrix response' },
+              });
+            }
+            if (!response.questionOptions || !Array.isArray(response.questionOptions)) {
+              customErrors.push({
+                message: 'Matrix responses must have questionOptions array',
+                instancePath: responsePath,
+                params: { action: 'add questionOptions array to matrix response' },
+              });
+            }
+          }
+          
+          // Validate buttons responses
+          if (response.type === 'buttons') {
+            if (!response.options || !Array.isArray(response.options)) {
+              customErrors.push({
+                message: 'Buttons responses must have options array',
+                instancePath: responsePath,
+                params: { action: 'add options array to buttons response' },
+              });
+            }
+          }
+          
+          // Validate slider responses
+          if (response.type === 'slider') {
+            if (!response.options || !Array.isArray(response.options)) {
+              customErrors.push({
+                message: 'Slider responses must have options array',
+                instancePath: responsePath,
+                params: { action: 'add options array to slider response' },
+              });
+            }
+          }
+        });
+      }
+    });
+  }
+
+  // Validate library usage if importedLibraries are present
+  if (data.importedLibraries && Array.isArray(data.importedLibraries)) {
+    data.importedLibraries.forEach((libraryName: string, index: number) => {
+      if (typeof libraryName !== 'string' || !libraryName.trim()) {
+        customErrors.push({
+          message: 'Library name must be a non-empty string',
+          instancePath: `/importedLibraries/${index}`,
+          params: { action: 'provide a valid library name' },
+        });
+      }
+    });
+  }
+
+  // Validate UI config enhancements
+  if (data.uiConfig) {
+    const uiConfig = data.uiConfig;
+    
+    // Validate screen recording requirements
+    if (uiConfig.recordScreen && uiConfig.recordScreenFPS) {
+      if (typeof uiConfig.recordScreenFPS !== 'number' || uiConfig.recordScreenFPS <= 0) {
+        customErrors.push({
+          message: 'recordScreenFPS must be a positive number',
+          instancePath: '/uiConfig/recordScreenFPS',
+          params: { action: 'provide a valid FPS value' },
+        });
+      }
+    }
+    
+    // Validate screen size requirements
+    if (uiConfig.minWidthSize && (typeof uiConfig.minWidthSize !== 'number' || uiConfig.minWidthSize <= 0)) {
+      customErrors.push({
+        message: 'minWidthSize must be a positive number',
+        instancePath: '/uiConfig/minWidthSize',
+        params: { action: 'provide a valid width size' },
+      });
+    }
+    
+    if (uiConfig.minHeightSize && (typeof uiConfig.minHeightSize !== 'number' || uiConfig.minHeightSize <= 0)) {
+      customErrors.push({
+        message: 'minHeightSize must be a positive number',
+        instancePath: '/uiConfig/minHeightSize',
+        params: { action: 'provide a valid height size' },
+      });
+    }
   }
   
   return {
@@ -232,16 +486,47 @@ server.registerTool("getstudytemplatemetadata",
       {"path": "public/test-likert-matrix", "tags": ["stimuli: react-component", "sequence: fixed", "basecomponent: false", "response: likert"]},
       {"path": "public/test-parser-errors", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
       {"path": "public/test-randomization", "tags": ["stimuli: generic-web-component", "sequence: randomized", "basecomponent: false", "response: none"]},
-      {"path": "public/test-skip-logic", "tags": ["stimuli: markdown", "sequence: fixed", "basecomponent: false", "response: none"]},
+      {"path": "public/test-skip-logic", "tags": ["stimuli: markdown", "sequence: fixed", "basecomponent: false", "response: none", "features: skip-logic"]},
       {"path": "public/test-step-logic", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
       {"path": "public/test-uncert", "tags": ["stimuli: generic-web-component", "sequence: fixed", "basecomponent: false", "response: none"]},
       {"path": "public/tutorial", "tags": ["stimuli: markdown", "sequence: fixed", "basecomponent: false", "response: none"]}
     ];
     
+    // Add information about new response types and features
+    const responseTypesInfo = {
+      "newResponseTypes": [
+        "textOnly - Display-only text responses for instructions",
+        "matrix-radio - Matrix-style radio button responses with rows/columns", 
+        "matrix-checkbox - Matrix-style checkbox responses with rows/columns",
+        "buttons - Button-based responses with keyboard navigation"
+      ],
+      "enhancedFeatures": [
+        "skip-logic - Advanced skip conditions for complex study flows",
+        "interruptions - Deterministic and random breaks/attention checks",
+        "dynamic-blocks - Function-based sequence generation",
+        "library-system - Import and reuse components from external libraries",
+        "styling - CSS styling and external stylesheet support",
+        "screen-recording - Audio and screen recording capabilities",
+        "enhanced-ui - New UI options like screen size requirements"
+      ],
+      "responseProperties": [
+        "withDivider - Add trailing dividers to responses",
+        "withDontKnow - Add 'I don't know' option to responses", 
+        "stylesheetPath - External stylesheet support",
+        "style - Inline CSS styling",
+        "horizontal - Horizontal layout for radio/checkbox",
+        "withOther - 'Other' option for radio/checkbox",
+        "restartEnumeration - Restart question numbering"
+      ]
+    };
+    
     return {
       content: [{ 
         type: "text", 
-        text: JSON.stringify(templateData, null, 2)
+        text: JSON.stringify({
+          templates: templateData,
+          newFeatures: responseTypesInfo
+        }, null, 2)
       }]
     };
   }
@@ -284,19 +569,41 @@ ${description}
 
 ---
 
+## 🆕 New Response Types Available:
+- **textOnly**: Display-only text responses for instructions (cannot be required)
+- **matrix-radio**: Matrix-style radio buttons with rows/columns (requires answerOptions and questionOptions)
+- **matrix-checkbox**: Matrix-style checkboxes with rows/columns (requires answerOptions and questionOptions)
+- **buttons**: Button-based responses with keyboard navigation (requires options array)
+
+## 🆕 Enhanced Response Features:
+- **withDivider**: Add trailing dividers to responses
+- **withDontKnow**: Add "I don't know" option to responses
+- **stylesheetPath**: External stylesheet support
+- **style**: Inline CSS styling (React CSSProperties)
+- **horizontal**: Horizontal layout for radio/checkbox
+- **withOther**: "Other" option for radio/checkbox
+- **restartEnumeration**: Restart question numbering (for textOnly)
+
+## 🆕 Advanced Study Flow Features:
+- **Skip Logic**: Use skip conditions for complex study flows
+- **Interruptions**: Add deterministic or random breaks/attention checks
+- **Dynamic Blocks**: Use function-based sequence generation
+- **Library System**: Import and reuse components from external libraries
+
 ## ⚛️ React Component Support:
 - If the study stimuli is a React component:
   - Create the React component under: \`src/public/\`
   - Use existing templates with react-component stimuli as reference
-  - If the response type is reactive,in config file, the id in response need to be passed to react component use parameters for each trial. So taskid in all trials should be same as in response. 
+  - If the response type is reactive, in config file, the id in response need to be passed to react component use parameters for each trial. So taskid in all trials should be same as in response. 
 
 ---
 
-## ⚛️ Note:
+## ⚛️ Important Notes:
 - You can leave author and organization fields empty in the config file.
 - You can create \`basecomponent\` if many components share common attributes, but **do not** put response attributes into \`basecomponent\`.
 - "$schema", "uiconfig", "studymetadata", "components", and "sequence" are required for every config file.
 - The chart generation function in chart generator MCP should return the URL of the image.
+- For matrix responses, use predefined answer options like 'satisfaction5', 'satisfaction7', 'likely5', 'likely7' or provide custom arrays.
 
 ---
 
