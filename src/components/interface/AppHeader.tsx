@@ -34,10 +34,9 @@ import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { useScreenRecordingContext } from '../../store/hooks/useScreenRecording';
 
-export function AppHeader({
-  studyNavigatorEnabled, dataCollectionEnabled, screenRecording, screenWithAudioRecording,
-}: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean, screenRecording: boolean, screenWithAudioRecording: boolean }) {
+export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
 
   const answers = useStoreSelector((state) => state.answers);
@@ -82,6 +81,9 @@ export function AppHeader({
   const [isTruncated, setIsTruncated] = useState(false);
 
   const isRecording = useStoreSelector((store) => store.isRecording);
+  const { isScreenRecording, isAudioRecording: isScreenWithAudioRecording } = useScreenRecordingContext();
+
+  const isAudioRecording = isRecording || isScreenWithAudioRecording;
 
   useEffect(() => {
     const element = titleRef.current;
@@ -119,22 +121,17 @@ export function AppHeader({
 
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
-            {(isRecording || screenRecording) && (() => {
-              const recordingAudio = isRecording || (screenWithAudioRecording && screenRecording);
-              const recordingScreen = screenRecording;
-
-              return (
-                <Group ml="xl" gap={20} wrap="nowrap">
-                  <Text c="red">
-                    Recording
-                    {recordingScreen && ' screen'}
-                    {recordingScreen && recordingAudio && ' and'}
-                    {recordingAudio && ' audio'}
-                  </Text>
-                  {recordingAudio && <RecordingAudioWaveform />}
-                </Group>
-              );
-            })()}
+            {(isAudioRecording || isScreenRecording) && (
+            <Group ml="xl" gap={20} wrap="nowrap">
+              <Text c="red">
+                Recording
+                {isScreenRecording && ' screen'}
+                {isScreenRecording && isAudioRecording && ' and'}
+                {isAudioRecording && ' audio'}
+              </Text>
+              {isAudioRecording && <RecordingAudioWaveform />}
+            </Group>
+            )}
             {!dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button

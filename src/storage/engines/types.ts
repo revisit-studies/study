@@ -807,50 +807,26 @@ export abstract class StorageEngine {
 
   async saveAsset(
     prefix: string,
-    recorder: MediaRecorder,
+    blob: Blob,
     taskName: string,
   ) {
-    let debounceTimeout: NodeJS.Timeout | null = null;
-
     const assetKey = `${prefix}/${taskName}`;
     const participantKey = `${prefix}/${this.currentParticipantId}`;
 
     this.uploadingAssetIds.push(assetKey);
 
-    const listener = async (data: BlobEvent) => {
-      if (debounceTimeout) {
-        return;
-      }
+    await this._pushToStorage(participantKey, taskName, blob);
+    await this._cacheStorageObject(participantKey, taskName);
 
-      debounceTimeout = setTimeout(async () => {
-        await this._pushToStorage(participantKey, taskName, data.data);
-        await this._cacheStorageObject(participantKey, taskName);
-
-        this.uploadingAssetIds = this.uploadingAssetIds.filter((id) => id !== assetKey);
-      }, 500);
-    };
-
-    recorder.addEventListener('dataavailable', listener);
-
-    // Detect Safari
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    // When stopping recording:
-    if (isSafari) {
-      recorder.stop(); // This will trigger ondataavailable with the full recording
-    } else {
-      // For Chrome/Firefox, you can use requestData or chunked data
-      recorder.requestData();
-    }
-
-    // Don't clean up the listener. The stream will be destroyed.
+    this.uploadingAssetIds = this.uploadingAssetIds.filter((id) => id !== assetKey);
   }
 
-  // Saves the audio stream to the storage engine. This method is used to save the audio data from a MediaRecorder stream.
-  async saveAudio(
-    audioStream: MediaRecorder,
+  // Saves the audio stream to the storage engine. This method is used to save the audio recorded data from a MediaRecorder stream.
+  async saveAudioRecording(
+    blob: Blob,
     taskName: string,
   ) {
-    return this.saveAsset('audio', audioStream, taskName);
+    return this.saveAsset('audio', blob, taskName);
   }
 
   // Gets the screen recording for a specific task and participantId.
@@ -867,16 +843,7 @@ export abstract class StorageEngine {
     blob: Blob,
     taskName: string,
   ) {
-    const prefix = 'screenRecording';
-    const assetKey = `${prefix}/${taskName}`;
-    const participantKey = `${prefix}/${this.currentParticipantId}`;
-
-    this.uploadingAssetIds.push(assetKey);
-
-    await this._pushToStorage(participantKey, taskName, blob);
-    await this._cacheStorageObject(participantKey, taskName);
-
-    this.uploadingAssetIds = this.uploadingAssetIds.filter((id) => id !== assetKey);
+    return this.saveAsset('screenRecording', blob, taskName);
   }
 
   // Gets the sequence array from the storage engine.

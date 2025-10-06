@@ -1,0 +1,44 @@
+import { useMemo } from 'react';
+import { useStudyConfig } from './useStudyConfig';
+import { useFlatSequence } from '../store';
+import { useCurrentComponent } from '../../routes/utils';
+
+export function useRecordings() {
+  const studyConfig = useStudyConfig();
+  const participantSequence = useFlatSequence();
+  const currentComponent = useCurrentComponent();
+  const stepConfig = studyConfig.components[currentComponent];
+
+  const { recordScreen, recordAudio } = studyConfig.uiConfig;
+
+  const studyHasScreenRecording = useMemo(() => {
+    if (recordScreen) {
+      return true;
+    }
+    return participantSequence.some((comp) => studyConfig.components[comp]?.recordScreen);
+  }, [participantSequence, studyConfig, recordScreen]);
+
+  const studyHasAudioRecording = useMemo(() => {
+    if (recordAudio) {
+      return true;
+    }
+    return participantSequence.some((comp) => studyConfig.components[comp]?.recordAudio);
+  }, [participantSequence, studyConfig, recordAudio]);
+
+  const currentComponentHasScreenRecording = useMemo(
+    () => stepConfig?.recordScreen ?? !!recordScreen,
+    [recordScreen, stepConfig],
+  );
+
+  const currentComponentHasAudioRecording = useMemo(
+    () => stepConfig?.recordAudio ?? !!recordAudio,
+    [recordAudio, stepConfig],
+  );
+
+  return {
+    studyHasAudioRecording,
+    studyHasScreenRecording,
+    currentComponentHasAudioRecording,
+    currentComponentHasScreenRecording,
+  };
+}

@@ -244,10 +244,8 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
             safe(storageEngine.getScreenRecording(identifier, participantId)),
           ]);
 
-          if (screenUrl) {
-            // Audio is played from the screen recording video.
-            wavesurfer.current?.setMuted(true);
-          }
+          // Mute wavesurfer if audio is played from the screen recorded video.
+          wavesurfer.current?.setMuted(!!screenUrl);
 
           const url = audioUrl ?? screenUrl ?? null;
           await waveSurfer.load(url!);
