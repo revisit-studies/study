@@ -100,13 +100,14 @@ const useRankingLogic = (responseId: string, onChange?: (value: Record<string, s
 };
 
 function RankingSublistComponent({
-  options, responseId, answer, disabled, numItems,
+  options, responseId, answer, disabled, numItems, setError,
 }: {
   options: (StringOption | string)[];
   responseId: string;
   answer: { value: Record<string, string> };
   disabled: boolean;
   numItems?: number;
+  setError?: (error: string | null) => void;
 }) {
   const { onChange } = answer as { onChange?: (value: Record<string, string>) => void };
   const { sensors, updateAnswer } = useRankingLogic(responseId, onChange);
@@ -158,7 +159,10 @@ function RankingSublistComponent({
       const newIndex = overId === 'selected' ? state.selected.length - 1 : state.selected.findIndex((i) => i.symbol === overId);
       newState.selected = arrayMove(state.selected, oldIndex, newIndex);
     } else if (fromUnassigned && toSelected) {
-      if (numItems && state.selected.length >= numItems) return;
+      if (numItems && state.selected.length >= numItems) {
+        setError?.(`You can only add up to ${numItems} items.`);
+        return;
+      }
       newState.unassigned = state.unassigned.filter((i) => i.symbol !== activeId);
       newState.selected = [...state.selected, fromUnassigned];
     } else if (fromSelected && toUnassigned) {
@@ -166,6 +170,7 @@ function RankingSublistComponent({
       newState.unassigned = [...state.unassigned, fromSelected];
     } else return;
 
+    setError?.(null);
     setState(newState);
     const answerValue: Record<string, string> = {};
     newState.selected.forEach((item, idx) => { answerValue[item.id] = idx.toString(); });
@@ -208,13 +213,14 @@ function RankingSublistComponent({
 }
 
 function RankingCategoricalComponent({
-  options, disabled, answer, responseId, numItems,
+  options, disabled, answer, responseId, numItems, setError,
 }: {
   options: (StringOption | string)[];
   disabled: boolean;
   answer: { value: Record<string, string> };
   responseId: string;
   numItems?: number;
+  setError?: (error: string | null) => void;
 }) {
   const { onChange } = answer as { onChange?: (value: Record<string, string>) => void };
   const { sensors, updateAnswer } = useRankingLogic(responseId, onChange);
@@ -265,9 +271,12 @@ function RankingCategoricalComponent({
       const item = prev[sourceCategory as keyof typeof prev].find((i: Item) => i.id === itemId);
       if (!item) return prev;
 
-      if (targetCategory !== 'unassigned' && numItems
-          && (prev[targetCategory as keyof typeof prev] as Item[]).length >= numItems) return prev;
+      if (targetCategory !== 'unassigned' && numItems && (prev[targetCategory as keyof typeof prev] as Item[]).length >= numItems) {
+        setError?.(`You can only add up to ${numItems} items.`);
+        return prev;
+      }
 
+      setError?.(null);
       const newState = { ...prev };
       newState[sourceCategory as keyof typeof newState] = newState[sourceCategory as keyof typeof newState].filter((i: Item) => i.id !== itemId);
       newState[targetCategory as keyof typeof newState] = [...newState[targetCategory as keyof typeof newState] as Item[], item];
@@ -341,12 +350,13 @@ function checkForDuplicatePair(answer: Record<string, string>, targetPairId: str
 }
 
 function RankingPairwiseComponent({
-  options, disabled, answer, responseId,
+  options, disabled, answer, responseId, setError,
 }: {
   options: (StringOption | string)[];
   disabled?: boolean;
   answer: { value: Record<string, string> };
   responseId: string;
+  setError?: (error: string | null) => void;
 }) {
   const { onChange } = answer as { onChange?: (value: Record<string, string>) => void };
   const { sensors, updateAnswer } = useRankingLogic(responseId, onChange);
@@ -391,60 +401,61 @@ function RankingPairwiseComponent({
     if (targetId === 'unassigned') {
       const instanceId = draggedId.split('-').slice(0, -3).join('-');
       delete newAnswer[instanceId];
-    } else {
-      const isFromUnassigned = !draggedId.includes('_');
-      const baseItemId = isFromUnassigned ? draggedId : draggedId.split('_')[0];
+      setError?.(null);
+      updateAnswer(newAnswer);
+      return;
+    }
+    const isFromUnassigned = !draggedId.includes('_');
+    const baseItemId = isFromUnassigned ? draggedId : draggedId.split('_')[0];
 
-      const existingInTarget = Object.entries(newAnswer).some(([instId, loc]) => {
+    const existingInTarget = Object.entries(newAnswer).some(([instId, loc]) => {
+      const existingBaseId = instId.split('_')[0];
+      return loc === targetId && existingBaseId === baseItemId;
+    });
+
+    if (existingInTarget) {
+      return;
+    }
+
+    // Prevent placing both items of the same pair in the same target position or creating duplicate pairs
+    const targetMatch = targetId.match(/^pair-(\d+)-(high|low)$/);
+    if (targetMatch) {
+      const [, targetPairId, targetPosition] = targetMatch;
+      const oppositePosition = targetPosition === 'high' ? 'low' : 'high';
+      const oppositeLocationId = `pair-${targetPairId}-${oppositePosition}`;
+
+      const existingInOpposite = Object.entries(newAnswer).some(([instId, loc]) => {
         const existingBaseId = instId.split('_')[0];
-        return loc === targetId && existingBaseId === baseItemId;
+        return loc === oppositeLocationId && existingBaseId === baseItemId;
       });
 
-      if (existingInTarget) {
+      if (existingInOpposite) {
+        const itemLabel = items.find((i) => i.id === baseItemId)?.label;
+        setError?.(`Item "${itemLabel}" cannot be in both HIGH and LOW.`);
         return;
       }
 
-      // Prevent placing both items of the same pair in the same target position or creating duplicate pairs
-      const targetMatch = targetId.match(/^pair-(\d+)-(high|low)$/);
-      if (targetMatch) {
-        const [, targetPairId, targetPosition] = targetMatch;
-        const oppositePosition = targetPosition === 'high' ? 'low' : 'high';
-        const oppositeLocationId = `pair-${targetPairId}-${oppositePosition}`;
-
-        const existingInOpposite = Object.entries(newAnswer).some(([instId, loc]) => {
-          const existingBaseId = instId.split('_')[0];
-          return loc === oppositeLocationId && existingBaseId === baseItemId;
-        });
-
-        if (existingInOpposite) {
+      if (isFromUnassigned) {
+        const tempAnswer = { ...newAnswer, [`${draggedId}_temp`]: targetId };
+        const isDuplicate = checkForDuplicatePair(tempAnswer, targetPairId);
+        if (isDuplicate) {
+          setError?.('This would create a duplicate pair.');
           return;
         }
-
-        if (isFromUnassigned) {
-          const tempAnswer = { ...newAnswer, [`${draggedId}_temp`]: targetId };
-          const isDuplicate = checkForDuplicatePair(tempAnswer, targetPairId);
-          if (isDuplicate) return;
-        } else {
-          const instanceId = draggedId.split('-').slice(0, -3).join('-');
-          const tempAnswer = { ...newAnswer };
-          delete tempAnswer[instanceId];
-          tempAnswer[instanceId] = targetId;
-          const isDuplicate = checkForDuplicatePair(tempAnswer, targetPairId);
-          if (isDuplicate) return;
-        }
-      }
-
-      if (isFromUnassigned) {
-        const uniqueId = `${draggedId}_${instanceCounter}`;
-        newAnswer[uniqueId] = targetId;
-        setInstanceCounter((c) => c + 1);
-      } else {
-        const instanceId = draggedId.split('-').slice(0, -3).join('-');
-        delete newAnswer[instanceId];
-        newAnswer[instanceId] = targetId;
       }
     }
 
+    if (isFromUnassigned) {
+      const uniqueId = `${draggedId}_${instanceCounter}`;
+      newAnswer[uniqueId] = targetId;
+      setInstanceCounter((c) => c + 1);
+    } else {
+      const instanceId = draggedId.split('-').slice(0, -3).join('-');
+      delete newAnswer[instanceId];
+      newAnswer[instanceId] = targetId;
+    }
+
+    setError?.(null);
     updateAnswer(newAnswer);
   };
 
@@ -525,6 +536,9 @@ export function RankingInput({
   const {
     prompt, required, options, secondaryText, numItems,
   } = response;
+
+  const [error, setError] = useState<string | null>(null);
+
   const componentProps = {
     disabled, options, answer, responseId: response.id, numItems,
   };
@@ -536,10 +550,15 @@ export function RankingInput({
       )}
       {secondaryText && <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>}
       <Box mt="md">
-        {response.type === 'ranking-sublist' && <RankingSublistComponent {...componentProps} />}
-        {response.type === 'ranking-categorical' && <RankingCategoricalComponent {...componentProps} />}
-        {response.type === 'ranking-pairwise' && <RankingPairwiseComponent {...componentProps} />}
+        {response.type === 'ranking-sublist' && <RankingSublistComponent {...componentProps} setError={setError} />}
+        {response.type === 'ranking-categorical' && <RankingCategoricalComponent {...componentProps} setError={setError} />}
+        {response.type === 'ranking-pairwise' && <RankingPairwiseComponent {...componentProps} setError={setError} />}
       </Box>
+      {error && (
+        <Text c="red" size="sm" mt="xs">
+          {error}
+        </Text>
+      )}
     </Box>
   );
 }
