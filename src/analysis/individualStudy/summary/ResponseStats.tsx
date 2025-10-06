@@ -75,6 +75,9 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
     initialState: {
       sorting: [{ id: 'component', desc: false }],
     },
+    mantinePaperProps: {
+      style: { overflow: 'hidden' },
+    },
     mantineTableContainerProps: {
       style: { overflow: 'auto' },
     },
