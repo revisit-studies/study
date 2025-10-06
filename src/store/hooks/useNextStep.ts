@@ -58,7 +58,7 @@ export function useNextStep() {
 
   const storeDispatch = useStoreDispatch();
   const {
-    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox,
+    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, setRankingAnswers,
   } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
@@ -128,6 +128,7 @@ export function useNextStep() {
       storeDispatch(setReactiveAnswers({}));
       storeDispatch(setMatrixAnswersCheckbox(null));
       storeDispatch(setMatrixAnswersRadio(null));
+      storeDispatch(setRankingAnswers(null));
     }
 
     let nextStep = currentStep + 1;
