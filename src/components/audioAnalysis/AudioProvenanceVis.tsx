@@ -248,6 +248,12 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
           wavesurfer.current?.setMuted(!!screenUrl);
 
           const url = screenUrl ?? audioUrl ?? null;
+
+          if (!url) {
+            storeDispatch(setAnalysisHasAudio(false));
+            return;
+          }
+
           await waveSurfer.load(url!);
           setWaveSurferLoading(false);
           storeDispatch(setAnalysisHasAudio(true));
