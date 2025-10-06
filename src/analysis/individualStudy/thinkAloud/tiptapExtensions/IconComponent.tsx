@@ -8,8 +8,8 @@ import { Tag } from '../types';
 import { TagSelector } from '../TextEditorComponents/TagSelector';
 
 export function IconComponent({
-  annotation, setAnnotation, start, current, end, text, tags, selectedTags, onTextChange, deleteRowCallback, addRowCallback, onSelectTags, addRef, index, editTagCallback, createTagCallback,
-} : {annotation: string; setAnnotation: (i: number, s: string) => void; start: number, end: number, current: number, text: string, tags: Tag[], selectedTags: Tag[], onTextChange: (i: number, v: string) => void, deleteRowCallback: (i: number) => void, addRowCallback: (i: number, textIndex: number) => void, onSelectTags: (i: number, t: Tag[]) => void, addRef: (i: number, ref: HTMLTextAreaElement) => void, index: number, editTagCallback: (oldTag: Tag, newTag: Tag) => void, createTagCallback: (t: Tag) => void }) {
+  annotation, setAnnotation, start, current, end, text, tags, selectedTags, onTextChange, deleteRowCallback, addRowCallback, onSelectTags, addRef, index, editTagCallback, createTagCallback, onClickLine,
+} : {annotation: string; setAnnotation: (i: number, s: string) => void; start: number, end: number, current: number, text: string, tags: Tag[], selectedTags: Tag[], onTextChange: (i: number, v: string) => void, deleteRowCallback: (i: number) => void, addRowCallback: (i: number, textIndex: number) => void, onSelectTags: (i: number, t: Tag[]) => void, addRef: (i: number, ref: HTMLTextAreaElement) => void, index: number, editTagCallback: (oldTag: Tag, newTag: Tag) => void, createTagCallback: (t: Tag) => void, onClickLine: (focusedLine: number) => void }) {
   const [annotationVal, setAnnotationVal] = useState<string>(annotation);
 
   const indexRef = useRef<number>(0);
@@ -20,15 +20,16 @@ export function IconComponent({
 
   const memoizedRender = useMemo(() => (
     <Group justify="space-between" style={{ width: '100%' }} wrap="nowrap">
-      <Group wrap="nowrap" gap={0} style={{ width: '100%', backgroundColor: current >= start && current <= end ? 'rgba(100, 149, 237, 0.3)' : 'white' }}>
+      <Group wrap="nowrap" gap={0} px={10} style={{ width: '100%', borderRadius: '10px', backgroundColor: current >= start && current <= end ? 'rgba(100, 149, 237, 0.3)' : 'white' }}>
         <Textarea
           ref={(r) => (r ? addRef(indexRef.current, r) : null)}
           autosize
           minRows={1}
-          maxRows={3}
+          maxRows={4}
           style={{ width: '100%' }}
           variant="unstyled"
           value={text}
+          onFocus={() => onClickLine(indexRef.current)}
           onChange={(e) => { onTextChange(indexRef.current, e.currentTarget.value); }}
           onKeyDown={((e) => {
             if (e.key === 'Enter' && e.currentTarget.selectionStart !== null) {
@@ -62,7 +63,7 @@ export function IconComponent({
         />
       </Group>
     </Group>
-  ), [addRef, addRowCallback, annotationVal, createTagCallback, current, deleteRowCallback, editTagCallback, end, onSelectTags, onTextChange, selectedTags, setAnnotation, start, tags, text]);
+  ), [addRef, addRowCallback, annotationVal, createTagCallback, current, deleteRowCallback, editTagCallback, end, onClickLine, onSelectTags, onTextChange, selectedTags, setAnnotation, start, tags, text]);
 
   return memoizedRender;
 }

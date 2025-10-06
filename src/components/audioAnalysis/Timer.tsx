@@ -17,6 +17,8 @@ export function Timer({
       const time = initialTime !== undefined ? initialTime : startTime;
       timer.current = time - startTime;
       updateTimer(time, (time - startTime) / duration);
+
+      localStorage.setItem('currentTime', `${startTime + timer.current}_${(timer.current / duration).toString()}_${timer.current}`);
     }
   }, [startTime, updateTimer, initialTime, duration]);
 
@@ -26,7 +28,6 @@ export function Timer({
     }
 
     const temp = Date.now();
-    console.log(temp, startDate.current, timer.current, speed);
 
     timer.current += (temp - startDate.current) * speed;
     startDate.current = temp;
@@ -63,8 +64,8 @@ export function Timer({
   }, [duration, incrementTimer, isPlaying]);
 
   useEffect(() => {
-    const listener = (e) => {
-      if (e.key === 'currentTime') {
+    const listener = (e: StorageEvent) => {
+      if (e.key === 'currentTime' && e.newValue) {
         timer.current = +e.newValue.split('_')[2];
         startDate.current = Date.now() - timer.current;
 

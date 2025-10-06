@@ -17,7 +17,7 @@ import { useAsync } from '../../../store/hooks/useAsync';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { useAuth } from '../../../store/hooks/useAuth';
 import {
-  EditedText, TranscribedAudio, TranscriptLinesWithTimes,
+  EditedText, Tag, TranscribedAudio, TranscriptLinesWithTimes,
 } from './types';
 import { AudioProvenanceVis } from '../../../components/audioAnalysis/AudioProvenanceVis';
 import { StorageEngine } from '../../../storage/engines/types';
@@ -58,13 +58,13 @@ async function getTags(storageEngine: StorageEngine | undefined, type: 'particip
 }
 
 export function ThinkAloudFooter({
-  visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance,
-} : {visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance?: (prov: any) => void}) {
+  visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance, jumpedToLine = 0,
+} : {visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance?: (prov: unknown) => void, jumpedToLine?: number}) {
   const { storageEngine } = useStorageEngine();
 
   const auth = useAuth();
 
-  const [speed, setSpeed] = useState<number>(2);
+  const [speed, setSpeed] = useState<number>(1);
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -72,7 +72,7 @@ export function ThinkAloudFooter({
 
   const { value: participant } = useAsync(getParticipantData, [participantId, storageEngine]);
 
-  const { value: taskTags } = useAsync(getTags, [storageEngine, 'task']);
+  const { value: taskTags, execute: pullTags } = useAsync(getTags, [storageEngine, 'task']);
 
   const [analysisIsPlaying, _setAnalysisIsPlaying] = useState(false);
 
@@ -172,11 +172,33 @@ export function ThinkAloudFooter({
     setSearchParams({ participantId, currentTrial: newTrialName });
   }, [currentTrial, participant, participantId, setSearchParams]);
 
+  const setTags = useCallback((_tags: Tag[]) => {
+    if (storageEngine) {
+      storageEngine.saveTags(_tags, 'task').then(() => pullTags(storageEngine, 'task'));
+    }
+  }, [pullTags, storageEngine]);
+
+  const editTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
+    if (!taskTags) {
+      return;
+    }
+
+    const tagIndex = taskTags.findIndex((t) => t.id === oldTag.id);
+    const tagsCopy = Array.from(taskTags);
+    tagsCopy[tagIndex] = newTag;
+
+    setTags(tagsCopy);
+  }, [setTags, taskTags]);
+
+  const createTagCallback = useCallback((t: Tag) => { setTags([...(taskTags || []), t]); }, [setTags, taskTags]);
+
+  const jumpedToTime = useMemo(() => (transcriptLines ? transcriptLines[jumpedToLine].start : 0), [jumpedToLine, transcriptLines]);
+
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
       <Stack style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '200px' }} gap={5} justify="center">
 
-        <AudioProvenanceVis speed={speed} saveProvenance={saveProvenance} analysisIsPlaying={analysisIsPlaying} setAnalysisIsPlaying={setAnalysisIsPlaying} setTime={onTimeUpdate} setTimeString={(_t) => null} answers={participant ? participant.answers : {}} taskName={currentTrial} context={isReplay ? 'provenanceVis' : 'audioAnalysis'} />
+        <AudioProvenanceVis jumpedToAudioTime={jumpedToTime} speed={speed} saveProvenance={saveProvenance} analysisIsPlaying={analysisIsPlaying} setAnalysisIsPlaying={setAnalysisIsPlaying} setTime={onTimeUpdate} setTimeString={(_t) => null} answers={participant ? participant.answers : {}} taskName={currentTrial} context={isReplay ? 'provenanceVis' : 'audioAnalysis'} />
         {xScale && transcriptLines ? <TranscriptLines startTime={xScale.domain()[0]} xScale={xScale} transcriptLines={transcriptLines} currentShownTranscription={currentShownTranscription || 0} /> : null }
 
         <Group style={{ width: '100%' }} justify="center" align="center" wrap="nowrap" mx={20}>
@@ -186,39 +208,32 @@ export function ThinkAloudFooter({
                 {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled /> }
               </ActionIcon>
             </Tooltip>
-            <Tooltip label="Speed">
-              <Popover position="bottom" withArrow shadow="md">
-                <Popover.Target>
-                  <ActionIcon style={{ width: '50px' }} mt={25} variant="light" onClick={() => setAnalysisIsPlaying(!analysisIsPlaying)}>
+            <Popover styles={{ dropdown: { padding: 0 } }} position="bottom" withArrow shadow="md">
+              <Popover.Target>
+                <Tooltip label="Speed">
+                  <ActionIcon style={{ width: '50px' }} mt={25} variant="light">
                     {`${speed}x`}
                   </ActionIcon>
-                </Popover.Target>
-                <Popover.Dropdown m={0}>
-                  <SegmentedControl
-                    value={speed.toString()}
-                    onChange={(s) => setSpeed(+s)}
-                    orientation="vertical"
-                    data={[
-                      { label: '0.5x', value: '0.5' },
-                      { label: '1x', value: '1' },
-                      { label: '1.5x', value: '1.5' },
-                      { label: '2x', value: '2' },
-                      { label: '4x', value: '4' },
-                      { label: '8x', value: '8' },
-                    ]}
-                  />
-                  <Stack gap="xs" />
-                  {/* <Slider
-                    color="blue"
-                    value={speed}
-                    min={0.25}
-                    max={32}
-                    onChange={setSpeed}
-                  /> */}
-                </Popover.Dropdown>
-              </Popover>
+                </Tooltip>
+              </Popover.Target>
+              <Popover.Dropdown>
+                <SegmentedControl
+                  value={speed.toString()}
+                  onChange={(s) => setSpeed(+s)}
+                  orientation="vertical"
+                  data={[
+                    { label: '0.5x', value: '0.5' },
+                    { label: '1x', value: '1' },
+                    { label: '1.5x', value: '1.5' },
+                    { label: '2x', value: '2' },
+                    { label: '4x', value: '4' },
+                    { label: '8x', value: '8' },
+                  ]}
+                />
+                <Stack gap="xs" />
+              </Popover.Dropdown>
+            </Popover>
 
-            </Tooltip>
             <Select
               leftSection={(
                 <Tooltip label="Previous Participant">
@@ -278,6 +293,8 @@ export function ThinkAloudFooter({
               <Text size="sm" fw={500}>Task Tags</Text>
               <TagSelector
                 tags={taskTags || []}
+                editTagCallback={editTagCallback}
+                createTagCallback={createTagCallback}
                 tagsEmptyText="Add Task Tags"
                 onSelectTags={(tempTag) => {
                   if (storageEngine && partTags) {

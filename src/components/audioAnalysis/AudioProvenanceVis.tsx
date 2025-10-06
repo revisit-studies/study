@@ -27,8 +27,8 @@ const margin = {
 };
 
 export function AudioProvenanceVis({
-  setTimeString, answers, setTime, taskName, context, saveProvenance, analysisIsPlaying, setAnalysisIsPlaying, speed,
-}: { setTimeString: (time: string) => void; answers: Record<string, StoredAnswer>, setTime?: (time: number) => void, taskName: string, context: 'audioAnalysis' | 'provenanceVis', saveProvenance?: ((state: unknown) => void), analysisIsPlaying: boolean, setAnalysisIsPlaying: (b: boolean) => void, speed: number }) {
+  setTimeString, answers, setTime, taskName, context, saveProvenance, analysisIsPlaying, setAnalysisIsPlaying, speed, jumpedToAudioTime = 0,
+}: { setTimeString: (time: string) => void; answers: Record<string, StoredAnswer>, setTime?: (time: number) => void, taskName: string, context: 'audioAnalysis' | 'provenanceVis', saveProvenance?: ((state: unknown) => void), analysisIsPlaying: boolean, setAnalysisIsPlaying: (b: boolean) => void, speed: number, jumpedToAudioTime?: number }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
 
@@ -122,6 +122,10 @@ export function AudioProvenanceVis({
   }, 100); // 100ms throttle
 
   useEffect(() => {
+    _setPlayTime(startTime + jumpedToAudioTime * 1000 + 1, undefined);
+  }, [_setPlayTime, jumpedToAudioTime, startTime, totalAudioLength]);
+
+  useEffect(() => {
     if (taskName) {
       localStorage.setItem('currentTrial', taskName);
       if (answers[taskName]?.trialOrder) {
@@ -132,7 +136,6 @@ export function AudioProvenanceVis({
 
   useEffect(() => {
     const listener = (e: StorageEvent) => {
-      console.log(e);
       if (!e.newValue) {
         return;
       }
@@ -305,7 +308,7 @@ export function AudioProvenanceVis({
       }
     },
     // adding speed here makes this remount which is bad
-    [isAnalysis, taskName, storageEngine, participantId],
+    [isAnalysis, taskName, storageEngine, participantId, speed],
   );
 
   useEffect(() => {
@@ -379,6 +382,7 @@ export function AudioProvenanceVis({
         {xScale ? (
           <Timer
             duration={totalAudioLength * 1000}
+            initialTime={startTime + jumpedToAudioTime * 1000 + 1}
             height={(analysisHasAudio ? 50 : 0) + 25}
             isPlaying={analysisIsPlaying}
             speed={speed}
@@ -386,7 +390,7 @@ export function AudioProvenanceVis({
             width={width}
             xScale={xScale}
             updateTimer={_setPlayTime}
-            initialTime={replayTimestamp ? startTime + replayTimestamp : undefined}
+            // initialTime={replayTimestamp ? startTime + replayTimestamp : undefined}
           />
         ) : null}
       </Stack>

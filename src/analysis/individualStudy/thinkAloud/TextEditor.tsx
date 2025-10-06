@@ -29,8 +29,8 @@ async function getTags(storageEngine: StorageEngine | undefined) {
 }
 
 export function TextEditor({
-  currentShownTranscription, transcriptList, setTranscriptList,
-} : {currentShownTranscription: number, transcriptList: EditedText[], setTranscriptList: (e: EditedText[]) => void}) {
+  currentShownTranscription, transcriptList, setTranscriptList, onClickLine,
+} : {currentShownTranscription: number, transcriptList: EditedText[], setTranscriptList: (e: EditedText[]) => void, onClickLine: (focusedLine: number) => void}) {
   const { storageEngine } = useStorageEngine();
 
   const { value: tags, execute: pullTags } = useAsync(getTags, [storageEngine]);
@@ -115,8 +115,6 @@ export function TextEditor({
       return;
     }
 
-    console.log(oldTag, newTag);
-
     const tagIndex = tags.findIndex((t) => t.id === oldTag.id);
     const tagsCopy = Array.from(tags);
     tagsCopy[tagIndex] = newTag;
@@ -124,7 +122,7 @@ export function TextEditor({
     setTags(tagsCopy);
   }, [setTags, tags]);
 
-  const createTagCallback = useCallback((t: Tag) => { setTags([...(tags || []), t]); console.log('creating tag'); }, [setTags, tags]);
+  const createTagCallback = useCallback((t: Tag) => { setTags([...(tags || []), t]); }, [setTags, tags]);
 
   const addTextRefCallback = useCallback((i: number, ref: HTMLTextAreaElement) => {
     textRefs.current[i] = ref;
@@ -132,6 +130,7 @@ export function TextEditor({
 
   const transcript = useMemo(() => (transcriptList.map((line, i) => (
     <IconComponent
+      onClickLine={onClickLine}
       editTagCallback={editTagCallback}
       createTagCallback={createTagCallback}
       annotation={line.annotation}
@@ -150,13 +149,13 @@ export function TextEditor({
       end={line.transcriptMappingEnd}
       current={currentShownTranscription === null ? 0 : currentShownTranscription}
     />
-  ))), [addRowCallback, addTagCallback, addTextRefCallback, createTagCallback, currentShownTranscription, deleteRowCallback, editTagCallback, setAnnotationCallback, tags, textChangeCallback, transcriptList]);
+  ))), [addRowCallback, addTagCallback, addTextRefCallback, createTagCallback, currentShownTranscription, deleteRowCallback, editTagCallback, onClickLine, setAnnotationCallback, tags, textChangeCallback, transcriptList]);
 
   return (
     <Stack gap={0}>
       <Group mb="sm" justify="space-between" wrap="nowrap" style={{ width: '100%' }}>
         <Text fw={700} size="xl">Transcripts</Text>
-        <Group justify="space-between" style={{ width: '500px' }}>
+        <Group gap="175" justify="flex-start" style={{ width: '500px' }}>
           <Text fw={700} ml="lg" size="xl">Text Tags</Text>
           <Text fw={700} ml="lg" size="xl">Annotations</Text>
 

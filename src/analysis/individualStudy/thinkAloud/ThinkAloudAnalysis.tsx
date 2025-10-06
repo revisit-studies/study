@@ -43,6 +43,7 @@ export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipant
   const auth = useAuth();
 
   const [searchParams] = useSearchParams();
+  const [jumpedToLine, setJumpedToLine] = useState<number>(0);
 
   const currentTrial = useMemo(() => searchParams.get('currentTrial') || '', [searchParams]);
 
@@ -142,6 +143,12 @@ export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipant
     }
   }, [storageEngine, studyId, participantId, currentTrial, setEditedTranscript, setCurrentShownTranscription, onlineTranscriptList, transcriptStatus, editedTranscript]);
 
+  const changeLine = useCallback((focusedLine: number) => {
+    const currentLine = editedTranscript[focusedLine].transcriptMappingStart;
+
+    setJumpedToLine(currentLine);
+  }, [editedTranscript]);
+
   return (
     <Group wrap="nowrap" gap={25}>
       <Stack ref={ref} style={{ width: '100%' }} gap={10}>
@@ -149,11 +156,11 @@ export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipant
         {!participantId || !currentTrial ? <Center><Text c="dimmed" size="24">Select a Participant and Trial to Analyze</Text></Center> : (
 
           <Stack>
-            <TextEditor transcriptList={editedTranscript} setTranscriptList={setEditedTranscript} currentShownTranscription={currentShownTranscription} />
+            <TextEditor onClickLine={changeLine} transcriptList={editedTranscript} setTranscriptList={setEditedTranscript} currentShownTranscription={currentShownTranscription} />
           </Stack>
         )}
 
-        <ThinkAloudFooter editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} />
+        <ThinkAloudFooter jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} />
       </Stack>
 
     </Group>
