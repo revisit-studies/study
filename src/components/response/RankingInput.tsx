@@ -549,16 +549,16 @@ export function RankingInput({
         <InputLabel prompt={prompt} required={required} index={idx} enumerateQuestions={enumerateQuestions} />
       )}
       {secondaryText && <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>}
-      <Box mt="md">
-        {response.type === 'ranking-sublist' && <RankingSublistComponent {...componentProps} setError={setError} />}
-        {response.type === 'ranking-categorical' && <RankingCategoricalComponent {...componentProps} setError={setError} />}
-        {response.type === 'ranking-pairwise' && <RankingPairwiseComponent {...componentProps} setError={setError} />}
-      </Box>
       {error && (
         <Text c="red" size="sm" mt="xs">
           {error}
         </Text>
       )}
+      <Box mt="md">
+        {response.type === 'ranking-sublist' && <RankingSublistComponent {...componentProps} setError={setError} />}
+        {response.type === 'ranking-categorical' && <RankingCategoricalComponent {...componentProps} setError={setError} />}
+        {response.type === 'ranking-pairwise' && <RankingPairwiseComponent {...componentProps} setError={setError} />}
+      </Box>
     </Box>
   );
 }
