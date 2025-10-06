@@ -127,7 +127,7 @@ export class SupabaseStorageEngine extends StorageEngine {
       .eq('docId', 'currentConfigHash');
   }
 
-  protected async _getAllSequenceAssignments(studyId: string) {
+  public async getAllSequenceAssignments(studyId: string) {
     // get all sequence assignments from the study collection
     const { data, error } = await this.supabase
       .from('revisit')
@@ -197,9 +197,6 @@ export class SupabaseStorageEngine extends StorageEngine {
 
   protected async _rejectParticipantRealtime(participantId: string) {
     await this.verifyStudyDatabase();
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
     if (!this.studyId) {
       throw new Error('Study ID is not set');
     }

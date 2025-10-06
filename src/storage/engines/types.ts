@@ -35,6 +35,9 @@ export type SequenceAssignment = {
   claimed: boolean;
   completed: number | null;
   createdTime: number;
+  total: number; // Total number of questions/steps
+  answered: string[]; // Number of answered questions
+  isDynamic: boolean; // Whether the study contains dynamic blocks
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
@@ -146,7 +149,7 @@ export abstract class StorageEngine {
 
   /* General/Realtime ---------------------------------------------------- */
   // Gets all sequence assignments for the given studyId. The sequence assignments are sorted ascending by timestamp.
-  protected abstract _getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
+  public abstract getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
 
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
@@ -337,7 +340,7 @@ export abstract class StorageEngine {
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
-    let sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
+    let sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
     const modes = await this.getModes(this.studyId);
 
@@ -356,6 +359,9 @@ export abstract class StorageEngine {
           claimed: false,
           completed: null,
           createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
+          total: 0,
+          answered: [],
+          isDynamic: false,
         };
         // Mark the first reject as claimed
         await this._claimSequenceAssignment(firstReject.participantId, firstReject);
@@ -371,12 +377,15 @@ export abstract class StorageEngine {
         claimed: false,
         completed: null,
         createdTime: timestamp, // Placeholder, will be set to server timestamp in cloud engines
+        total: 0,
+        answered: [],
+        isDynamic: false,
       };
       await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
     }
 
     // Query all the intents to get a sequence and find our position in the queue
-    sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
+    sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
     // Get the latin square
     const sequenceArray = await this.getSequenceArray();
@@ -477,7 +486,7 @@ export abstract class StorageEngine {
     if (studyIdToUse === undefined) {
       throw new Error('Study ID is not set');
     }
-    const sequenceAssignments = await this._getAllSequenceAssignments(studyIdToUse);
+    const sequenceAssignments = await this.getAllSequenceAssignments(studyIdToUse);
     return sequenceAssignments.map((assignment) => assignment.participantId);
   }
 
@@ -643,7 +652,7 @@ export abstract class StorageEngine {
   }
 
   async getParticipantsStatusCounts(studyId: string) {
-    const sequenceAssignments = await this._getAllSequenceAssignments(studyId);
+    const sequenceAssignments = await this.getAllSequenceAssignments(studyId);
 
     const completed = sequenceAssignments.filter((assignment) => assignment.completed && !assignment.rejected).length;
     const rejected = sequenceAssignments.filter((assignment) => assignment.rejected).length;
@@ -689,6 +698,44 @@ export abstract class StorageEngine {
     };
 
     await this.__throttleSaveAnswers(answers);
+  }
+
+  // Updates the progress data in the sequence assignment
+  async updateProgressData(
+    progressData: { total: number; answered: string[]; isDynamic: boolean },
+    participantId?: string,
+  ) {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    if (this.getEngine() !== 'firebase') {
+      return;
+    }
+
+    const targetParticipantId = participantId || this.currentParticipantId;
+    if (!targetParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
+    const sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
+    const existingAssignment = sequenceAssignments.find(
+      (assignment) => assignment.participantId === targetParticipantId,
+    );
+
+    if (existingAssignment) {
+      // Ensure backward compatibility by providing default values if fields don't exist
+      const updatedAssignment: SequenceAssignment = {
+        ...existingAssignment,
+        total: existingAssignment.total ?? progressData.total,
+        answered: existingAssignment.answered ?? progressData.answered,
+        isDynamic: existingAssignment.isDynamic ?? progressData.isDynamic,
+      };
+      updatedAssignment.total = progressData.total;
+      updatedAssignment.answered = progressData.answered;
+      updatedAssignment.isDynamic = progressData.isDynamic;
+      await this._createSequenceAssignment(targetParticipantId, updatedAssignment, false);
+    }
   }
 
   // Verifies if the current participant has completed the study. Checks that the throttled answers are saved and marks the participant as complete if so.
