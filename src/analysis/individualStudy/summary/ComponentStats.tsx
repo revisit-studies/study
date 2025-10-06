@@ -90,9 +90,6 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
       placeholder: 'Search components...',
       leftSection: <IconSearch size={16} />,
     },
-    mantinePaperProps: {
-      style: { overflow: 'hidden' },
-    },
     mantineTableContainerProps: {
       style: { overflow: 'auto' },
     },
