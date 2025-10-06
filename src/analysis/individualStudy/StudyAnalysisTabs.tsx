@@ -1,5 +1,5 @@
 import {
-  Alert, AppShell, Checkbox, Container, Flex, Group, LoadingOverlay, Stack, Tabs, Text, Title,
+  Alert, AppShell, Checkbox, Container, Flex, Group, LoadingOverlay, Stack, Tabs, Text, Title, Select,
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router';
 import {
@@ -57,6 +57,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
 
   const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inprogress', 'rejected']);
+  const [selectedStage, setSelectedStage] = useState<string>('ALL');
+  const [availableStages, setAvailableStages] = useState<string[]>(['ALL']);
 
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
@@ -75,8 +77,33 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const comp = includedParticipants.includes('completed') ? expList.filter((d) => !d.rejected && d.completed) : [];
     const prog = includedParticipants.includes('inprogress') ? expList.filter((d) => !d.rejected && !d.completed) : [];
     const rej = includedParticipants.includes('rejected') ? expList.filter((d) => d.rejected) : [];
-    return [...comp, ...prog, ...rej].sort(sortByStartTime);
-  }, [expData, includedParticipants]);
+
+    const statusFiltered = [...comp, ...prog, ...rej];
+
+    // Apply stage filter
+    const stageFiltered = selectedStage === 'ALL'
+      ? statusFiltered
+      : statusFiltered.filter((d) => d.stage === selectedStage);
+
+    return stageFiltered.sort(sortByStartTime);
+  }, [expData, includedParticipants, selectedStage]);
+
+  // Load available stages
+  useEffect(() => {
+    if (!studyId || !storageEngine) return;
+
+    const loadStages = async () => {
+      try {
+        const stages = await storageEngine.getAllStages(studyId);
+        setAvailableStages(['ALL', ...stages]);
+      } catch (error) {
+        console.error('Failed to load stages:', error);
+        setAvailableStages(['ALL']);
+      }
+    };
+
+    loadStages();
+  }, [studyId, storageEngine]);
 
   useEffect(() => {
     if (!studyId) return () => { };
@@ -114,7 +141,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
           <Flex direction="row" align="center" justify="space-between">
             <Title order={5} mr="sm">{studyId}</Title>
 
-            <Flex direction="row" align="center">
+            <Flex direction="row" align="center" gap="md">
               <Text mt={-2} size="sm">Participants: </Text>
               <Checkbox.Group
                 value={includedParticipants}
@@ -129,6 +156,16 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   <Checkbox value="rejected" label="Rejected" />
                 </Group>
               </Checkbox.Group>
+
+              <Select
+                label="Stage"
+                placeholder="Select stage"
+                data={availableStages}
+                value={selectedStage}
+                onChange={(value) => setSelectedStage(value || 'ALL')}
+                w={150}
+                size="sm"
+              />
             </Flex>
           </Flex>
           <LoadingOverlay visible={status === 'pending'} />
