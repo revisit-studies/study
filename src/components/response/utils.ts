@@ -56,7 +56,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
           response.questionOptions.map((entry) => [entry, '']),
         );
       } else if (response.type === 'slider' && response.startingValue) {
-        initField = response.startingValue;
+        initField = response.startingValue.toString();
       }
 
       initObj = {
