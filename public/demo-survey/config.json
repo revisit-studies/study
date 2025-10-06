@@ -20,7 +20,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "withSidebar": false,
+    "withSidebar": true,
     "enumerateQuestions": true,
     "provideFeedback": true
   },
@@ -222,6 +222,76 @@
           ]
         }
       ]
+    },
+    "belowStimulus": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-checkbox",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "withOther": true,
+          "location": "sidebar"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q-checkbox",
+          "answer": [
+            "Option 1",
+            "Option 3"
+          ]
+        }
+      ]
+    },
+    "questionnaire": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-likert",
+          "prompt": "Likert scale example",
+          "secondaryText": "A likert example with 9 items, also showing how to add a divider after the element.",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike",
+          "withDivider": true
+        },
+         {
+          "id": "q-checkbox",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "withOther": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q-likert",
+          "answer": 5
+        },
+        {
+          "id": "q-checkbox",
+          "answer": [
+            "Option 1",
+            "Option 3"
+          ]
+        }]
     }
   },
   "sequence": {
@@ -234,7 +304,9 @@
       "matrix-checkbox",
       "slider",
       "checkboxOrder",
-      "aboveStimulus"
+      "aboveStimulus",
+      "belowStimulus",
+      "questionnaire"
     ]
   }
 }
