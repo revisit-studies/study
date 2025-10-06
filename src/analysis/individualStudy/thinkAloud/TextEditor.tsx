@@ -1,47 +1,36 @@
 import {
   useCallback,
-  useEffect, useMemo, useRef, useState,
+  useMemo, useRef,
 } from 'react';
-import { useParams } from 'react-router';
 import {
-  Group, Loader, Popover, Stack, Text,
+  Group, Stack, Text,
 } from '@mantine/core';
-import { IconPlus } from '@tabler/icons-react';
-import { ParticipantData } from '../../../storage/types';
-import { useStudyConfig } from '../../../store/hooks/useStudyConfig';
+import { isArray } from 'lodash';
 import { useEvent } from '../../../store/hooks/useEvent';
 import {
-  EditedText, Tag, TranscribedAudio, TranscriptLinesWithTimes,
+  EditedText, Tag,
 } from './types';
 import { IconComponent } from './tiptapExtensions/IconComponent';
-import { TagEditor } from './TextEditorComponents/TagEditor';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
-import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
-import { useCurrentComponent } from '../../../routes/utils';
-import { StorageEngine } from '../../../storage/engines/StorageEngine';
 import { useAsync } from '../../../store/hooks/useAsync';
-import { useAuth } from '../../../store/hooks/useAuth';
+import { StorageEngine } from '../../../storage/engines/types';
 
 async function getTags(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
-    return await storageEngine.getTags('text');
+    const tags = await storageEngine.getTags('text');
+
+    if (isArray(tags)) {
+      return tags;
+    }
+    return [];
   }
 
   return [];
 }
 
 export function TextEditor({
-  participant, playTime, setTranscriptLines, currentShownTranscription, setCurrentShownTranscription, transcriptList, setTranscriptList,
-} : {participant: ParticipantData, playTime: number, setTranscriptLines: (lines: TranscriptLinesWithTimes[]) => void; setCurrentShownTranscription: (i: number) => void; currentShownTranscription: number, transcriptList: EditedText[], setTranscriptList: (e: EditedText[]) => void}) {
-  const [transcription, setTranscription] = useState<TranscribedAudio | null>(null);
-
-  const auth = useAuth();
-
-  const { trrackId, studyId, index: taskIndex } = useParams();
-  const _trialFilter = useCurrentComponent();
-
-  const trialFilter = taskIndex ? _trialFilter : null;
-
+  currentShownTranscription, transcriptList, setTranscriptList,
+} : {currentShownTranscription: number, transcriptList: EditedText[], setTranscriptList: (e: EditedText[]) => void}) {
   const { storageEngine } = useStorageEngine();
 
   const { value: tags, execute: pullTags } = useAsync(getTags, [storageEngine]);
@@ -52,17 +41,7 @@ export function TextEditor({
     }
   }, [pullTags, storageEngine]);
 
-  const config = useStudyConfig();
-
   const textRefs = useRef<HTMLTextAreaElement[]>([]);
-
-  const trialFilterAnswersName = useMemo(() => {
-    if (!trialFilter || !participant) {
-      return null;
-    }
-
-    return Object.keys(participant.answers).find((key) => key.startsWith(trialFilter)) || null;
-  }, [participant, trialFilter]);
 
   const textChangeCallback = useEvent((index: number, newVal: string) => {
     const tempList = [...transcriptList];
@@ -131,120 +110,30 @@ export function TextEditor({
     }, 1);
   });
 
-  // Create a separate object, transcriptLines, with additional time information so that I can create the actual lines under the waveform.
-  useEffect(() => {
-    const lines:TranscriptLinesWithTimes[] = [];
-
-    if (transcription && transcriptList.length > transcription.results.length) {
-      return;
-    }
-
-    transcriptList.forEach((l, i) => {
-      if (transcription && (i === 0 || l.transcriptMappingStart !== transcriptList[i - 1].transcriptMappingStart)) {
-        lines.push({
-          start: i === 0 ? 0 : transcription.results[l.transcriptMappingStart - 1].resultEndTime as number,
-          end: transcription.results[l.transcriptMappingEnd].resultEndTime as number,
-          lineStart: l.transcriptMappingStart,
-          lineEnd: l.transcriptMappingEnd,
-          tags: transcriptList.filter((t) => t.transcriptMappingStart === l.transcriptMappingStart && t.transcriptMappingEnd === l.transcriptMappingEnd).map((t) => t.selectedTags),
-        });
-      }
-    });
-
-    setTranscriptLines(lines);
-  }, [transcriptList, setTranscriptLines, transcription]);
-
-  // Get transcription, and merge all of the transcriptions into one, correcting for time problems.
-  useEffect(() => {
-    if (studyId && trrackId && participant) {
-      storageEngine?.getTranscription(getSequenceFlatMap(participant.sequence).filter((seq) => config.tasksToNotRecordAudio === undefined || !config.tasksToNotRecordAudio.includes(seq)).filter((seq) => (trialFilter ? seq === trialFilter : true)), trrackId).then((data) => {
-        const fullTranscription = data.map((d) => JSON.parse(d) as TranscribedAudio);
-        let taskEndTime = 0;
-
-        const newTranscription = fullTranscription.map((task) => {
-          const newTimeTask = task.results.map((res) => ({ ...res, resultEndTime: +(res.resultEndTime as string).split('s')[0] + taskEndTime }));
-
-          taskEndTime += +(task.results[task.results.length - 1].resultEndTime as string).split('s')[0];
-
-          return newTimeTask;
-        }).flat();
-
-        setTranscription({ results: newTranscription });
-
-        if (transcriptList.length === 0) {
-          setTranscriptList(newTranscription.map((t, i) => ({
-            transcriptMappingStart: i,
-            transcriptMappingEnd: i,
-            text: t.alternatives[0].transcript?.trim() || '',
-            selectedTags: [],
-            annotation: '',
-          })));
-        }
-
-        setCurrentShownTranscription(0);
-      });
-    }
-    //  WARNING WARNING ADDING TRANSCRIPT.LENGTH BAD BECAUSE I AM A BAD CODER
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageEngine, studyId, trrackId, config.tasksToNotRecordAudio, participant, trialFilter, setTranscriptList, setCurrentShownTranscription]);
-
-  // Update the current transcription based on the playTime.
-  // TODO:: this is super unperformant, but I don't have a solution atm. think about it harder
-  useEffect(() => {
-    if (transcription && currentShownTranscription !== null && participant && playTime > 0) {
-      let tempCurrentShownTranscription = currentShownTranscription;
-      const startTime = (trialFilterAnswersName ? participant.answers[trialFilterAnswersName].startTime : participant.answers.audioTest.startTime);
-
-      const timeInSeconds = Math.abs(playTime - startTime) / 1000;
-
-      if (timeInSeconds > (transcription.results[tempCurrentShownTranscription].resultEndTime as number)) {
-        while (timeInSeconds > (transcription.results[tempCurrentShownTranscription].resultEndTime as number)) {
-          tempCurrentShownTranscription += 1;
-
-          if (tempCurrentShownTranscription > transcription.results.length - 1) {
-            tempCurrentShownTranscription = transcription.results.length - 1;
-            break;
-          }
-        }
-      } else if (tempCurrentShownTranscription > 0 && timeInSeconds < (transcription.results[tempCurrentShownTranscription - 1].resultEndTime as number)) {
-        while (tempCurrentShownTranscription > 0 && timeInSeconds < (transcription.results[tempCurrentShownTranscription - 1].resultEndTime as number)) {
-          tempCurrentShownTranscription -= 1;
-        }
-      }
-
-      if (currentShownTranscription === tempCurrentShownTranscription) return;
-
-      setCurrentShownTranscription(tempCurrentShownTranscription);
-    }
-  }, [currentShownTranscription, participant, playTime, setCurrentShownTranscription, transcription, trialFilterAnswersName]);
-
   const editTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
     if (!tags) {
       return;
     }
 
+    console.log(oldTag, newTag);
+
     const tagIndex = tags.findIndex((t) => t.id === oldTag.id);
     const tagsCopy = Array.from(tags);
     tagsCopy[tagIndex] = newTag;
 
-    const newTranscriptList = Array.from(transcriptList);
-
-    // loop over and change all tags. Will need to do this smarter once we have it hooked up to firebase
-    newTranscriptList.forEach((t) => {
-      t.selectedTags = t.selectedTags.map((tag) => (tag.id === oldTag.id ? newTag : tag));
-    });
-
-    setTranscriptList(newTranscriptList);
-
     setTags(tagsCopy);
-  }, [setTags, setTranscriptList, tags, transcriptList]);
+  }, [setTags, tags]);
+
+  const createTagCallback = useCallback((t: Tag) => { setTags([...(tags || []), t]); console.log('creating tag'); }, [setTags, tags]);
 
   const addTextRefCallback = useCallback((i: number, ref: HTMLTextAreaElement) => {
     textRefs.current[i] = ref;
   }, []);
 
-  const transcript = useMemo(() => (tags ? transcriptList.map((line, i) => (
+  const transcript = useMemo(() => (transcriptList.map((line, i) => (
     <IconComponent
+      editTagCallback={editTagCallback}
+      createTagCallback={createTagCallback}
       annotation={line.annotation}
       setAnnotation={setAnnotationCallback}
       addRef={addTextRefCallback}
@@ -252,7 +141,7 @@ export function TextEditor({
       addRowCallback={addRowCallback}
       deleteRowCallback={deleteRowCallback}
       onTextChange={textChangeCallback}
-      tags={tags}
+      tags={tags || []}
       selectedTags={line.selectedTags}
       text={line.text}
       key={i}
@@ -261,14 +150,19 @@ export function TextEditor({
       end={line.transcriptMappingEnd}
       current={currentShownTranscription === null ? 0 : currentShownTranscription}
     />
-  )) : <Loader />), [addRowCallback, addTagCallback, addTextRefCallback, currentShownTranscription, deleteRowCallback, setAnnotationCallback, tags, textChangeCallback, transcriptList]);
+  ))), [addRowCallback, addTagCallback, addTextRefCallback, createTagCallback, currentShownTranscription, deleteRowCallback, editTagCallback, setAnnotationCallback, tags, textChangeCallback, transcriptList]);
 
   return (
     <Stack gap={0}>
-      <Group mb="sm" justify="space-between" wrap="nowrap">
-        <Text style={{ flexGrow: 1, textAlign: 'center' }}>Transcript</Text>
-        <TagEditor createTagCallback={(t: Tag) => { setTags([...(tags || []), t]); }} editTagCallback={editTagCallback} tags={tags || []} email={auth.user.user?.email || ''} />
+      <Group mb="sm" justify="space-between" wrap="nowrap" style={{ width: '100%' }}>
+        <Text fw={700} size="xl">Transcripts</Text>
+        <Group justify="space-between" style={{ width: '500px' }}>
+          <Text fw={700} ml="lg" size="xl">Text Tags</Text>
+          <Text fw={700} ml="lg" size="xl">Annotations</Text>
+
+        </Group>
       </Group>
+
       <Stack gap={5}>
         {transcript}
       </Stack>

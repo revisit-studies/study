@@ -33,7 +33,6 @@ export function StepRenderer() {
   useFetchStylesheet(studyConfig?.uiConfig.stylesheetPath);
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
-  const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
   const modes = useStoreSelector((state) => state.modes);
 
   // Attach event listeners
@@ -131,7 +130,7 @@ export function StepRenderer() {
         header={{ height: showTitleBar ? 70 : 0 }}
         navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !sidebarOpen, mobile: !sidebarOpen } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
-        footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
+        footer={{ height: (isAnalysis ? 200 : 0) }}
       >
         <AppNavBar />
         <AppAside />

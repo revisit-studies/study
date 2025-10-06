@@ -6,6 +6,8 @@ import {
   IconChartDonut2, IconTable, IconSettings,
   IconInfoCircle,
   IconChartPie,
+  IconMicrophone,
+  IconTags,
 } from '@tabler/icons-react';
 import {
   useEffect, useMemo, useState,
@@ -21,10 +23,10 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { ManageAccordion } from './management/ManageAccordion';
 import { useAuth } from '../../store/hooks/useAuth';
 import { parseStudyConfig } from '../../parser/parser';
-import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
 import 'mantine-react-table/styles.css';
+import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 
@@ -146,6 +148,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 <Tabs.Tab value="summary" leftSection={<IconChartPie size={16} />}>Study Summary</Tabs.Tab>
                 <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Participant View</Tabs.Tab>
                 <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
+                <Tabs.Tab value="tagging" leftSection={<IconTags size={16} />}>Coding</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
@@ -156,6 +159,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               </Tabs.Panel>
               <Tabs.Panel value="stats" pt="xs">
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
+              </Tabs.Panel>
+              <Tabs.Panel value="tagging" pt="xs">
+                {studyConfig && <ThinkAloudAnalysis studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel value="manage" pt="xs">
                 {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={() => execute(studyConfig, storageEngine, studyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}

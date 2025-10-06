@@ -32,6 +32,14 @@ export interface EditedText {
     annotation: string;
 }
 
+export interface TaglessEditedText {
+    transcriptMappingStart: number;
+    transcriptMappingEnd: number;
+    text: string;
+    selectedTags: string[];
+    annotation: string;
+}
+
 export interface TranscriptLinesWithTimes {
     start: number,
     end: number,

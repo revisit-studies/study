@@ -1,52 +1,24 @@
 import {
-  ActionIcon,
-  Box, Center, Group, Loader, Select, Stack,
+  Center,
+  Group, Stack, Text,
 } from '@mantine/core';
-import { useNavigate, useParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 import {
-  useCallback, useEffect, useMemo, useRef, useState,
+  useCallback, useEffect, useMemo, useState,
 } from 'react';
-import { useResizeObserver, useThrottledState } from '@mantine/hooks';
-import { WaveForm, useWavesurfer } from 'wavesurfer-react';
-import WaveSurferContext from 'wavesurfer-react/dist/contexts/WaveSurferContext';
-import Crunker from 'crunker';
-import * as d3 from 'd3';
-import { Registry, Trrack, initializeTrrack } from '@trrack/core';
-import WaveSurfer from 'wavesurfer.js';
-import {
-  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled,
-  IconPlayerPlayFilled,
-} from '@tabler/icons-react';
 import debounce from 'lodash.debounce';
-import throttle from 'lodash.throttle';
 
+import { useResizeObserver } from '@mantine/hooks';
 import { useAsync } from '../../../store/hooks/useAsync';
-import { StorageEngine } from '../../../storage/engines/StorageEngine';
-import { useStudyConfig } from '../../../store/hooks/useStudyConfig';
-import { useEvent } from '../../../store/hooks/useEvent';
-import { useStoreActions, useStoreDispatch } from '../../../store/store';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
-import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
-import { useCurrentComponent } from '../../../routes/utils';
 import { useAuth } from '../../../store/hooks/useAuth';
 import { ParticipantData } from '../../../storage/types';
-import { StudyConfig } from '../../../parser/types';
-import { EditedText, TranscriptLinesWithTimes } from './types';
-import { AllTasksTimeline } from '../replay/AllTasksTimeline';
+import {
+  EditedText, TranscribedAudio,
+} from './types';
 import { TextEditor } from './TextEditor';
-import { AudioProvenanceVis } from '../../../components/audioAnalysis/AudioProvenanceVis';
-
-const margin = {
-  left: 5, top: 0, right: 5, bottom: 0,
-};
-
-function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
-  if (storageEngine) {
-    return storageEngine.getParticipantData(trrackId);
-  }
-
-  return null;
-}
+import { StorageEngine } from '../../../storage/engines/types';
+import { ThinkAloudFooter } from './ThinkAloudFooter';
 
 async function getTranscript(storageEngine: StorageEngine | undefined, partId: string | undefined, trialName: string | undefined, authEmail: string | null | undefined) {
   if (storageEngine && partId && trialName && authEmail) {
@@ -56,72 +28,31 @@ async function getTranscript(storageEngine: StorageEngine | undefined, partId: s
   return null;
 }
 
-async function getParticipantTags(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
-  if (storageEngine && trrackId) {
-    return (await storageEngine.getAllParticipantAndTaskTags());
+function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
+  if (storageEngine) {
+    return storageEngine.getParticipantData(trrackId);
   }
 
   return null;
 }
 
-async function getTags(storageEngine: StorageEngine | undefined, type: 'participant' | 'task' | 'text') {
-  if (storageEngine) {
-    return await storageEngine.getTags(type);
-  }
-
-  return [];
-}
-
-export function ThinkAloudAnalysis({ visibleParticipants, studyConfig } : {visibleParticipants: ParticipantData[]; studyConfig: StudyConfig}) {
-  // const trialFilter = useCurrentComponent();
-
+export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipants: ParticipantData[]}) {
   const { storageEngine } = useStorageEngine();
+  const [rawTranscript, setRawTranscript] = useState<TranscribedAudio | null>(null);
 
   const auth = useAuth();
 
-  const allPartIds = useMemo(() => {
-    if (visibleParticipants && visibleParticipants.length > 0) {
-      return visibleParticipants.map((part) => part.participantId);
-    }
-    return [];
-  }, [visibleParticipants]);
+  const [searchParams] = useSearchParams();
+
+  const currentTrial = useMemo(() => searchParams.get('currentTrial') || '', [searchParams]);
+
+  const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
 
   const [currentShownTranscription, setCurrentShownTranscription] = useState(0);
 
-  const [ref, { width }] = useResizeObserver();
+  const { value: participant } = useAsync(getParticipantData, [participantId, storageEngine]);
 
-  const [participantId, setParticipantId] = useState<string>(visibleParticipants.length > 0 ? visibleParticipants[0].participantId : '');
-  const [currentTrial, setCurrentTrial] = useState<string | undefined>();
-
-  const [currentNode, setCurrentNode] = useState<string | null>(null);
-
-  const { value: participant, status } = useAsync(getParticipantData, [participantId, storageEngine]);
-
-  const { value: partTags, execute: pullPartTags } = useAsync(getParticipantTags, [participantId, storageEngine]);
-
-  // const { saveAnalysisState } = useStoreActions();
-  // const storeDispatch = useStoreDispatch();
-
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [playTime, setPlayTime] = useThrottledState<number>(0, 200);
-
-  const waveSurferDiv = useRef(null);
-
-  const navigate = useNavigate();
-
-  //   const { analysisTrialName: trialName, analysisWaveformTime } = useStoreSelector((state) => state);
-
-  //   const { setAnalysisTrialName, setAnalysisParticipantName, setAnalysisWaveformTime } = useStoreActions();
-
-  const { value: taskTags, execute: pullTaskTags } = useAsync(getTags, [storageEngine, 'task']);
-
-  const [waveSurferLoading, setWaveSurferLoading] = useState<boolean>(true);
-
-  const trrackForTrial = useRef<Trrack<object, string> | null>(null);
-
-  const [transcriptLines, setTranscriptLines] = useState<TranscriptLinesWithTimes[]>([]);
-
-  const [transcriptList, _setTranscriptList] = useState<EditedText[] | null>(null);
+  const [editedTranscript, _setEditedTranscript] = useState<EditedText[]>([]);
 
   const debouncedSave = useMemo(() => {
     if (storageEngine && participantId && currentTrial) {
@@ -131,191 +62,100 @@ export function ThinkAloudAnalysis({ visibleParticipants, studyConfig } : {visib
     return (_editedText: EditedText[]) => null;
   }, [currentTrial, auth.user.user?.email, storageEngine, participantId]);
 
-  const setTranscriptList = useCallback((editedText: EditedText[]) => {
-    _setTranscriptList(editedText);
+  const setEditedTranscript = useCallback((editedText: EditedText[]) => {
+    _setEditedTranscript(editedText);
     debouncedSave(editedText);
   }, [debouncedSave]);
 
-  const { value: onlineTranscriptList, status: transcriptStatus } = useAsync(getTranscript, [storageEngine, participant?.participantId, currentTrial, auth.user.user?.email]);
+  const { value: onlineTranscriptList, status: transcriptStatus } = useAsync(getTranscript, [storageEngine, participantId, currentTrial, auth.user.user?.email || 'temp']);
 
   useEffect(() => {
     if (onlineTranscriptList && transcriptStatus === 'success') {
-      _setTranscriptList(onlineTranscriptList);
+      _setEditedTranscript(onlineTranscriptList);
     } else {
-      _setTranscriptList(null);
+      _setEditedTranscript([]);
     }
   }, [onlineTranscriptList, transcriptStatus]);
 
-  const trialFilterAnswersName = useMemo(() => {
-    if (!currentTrial || !participant) {
-      return null;
+  const { studyId } = useParams();
+
+  const [ref, { width }] = useResizeObserver();
+
+  // Update the current transcription based on the playTime.
+  // TODO:: this is super unperformant, but I don't have a solution atm. think about it harder
+  const onTimeUpdate = useCallback((playTime: number) => {
+    if (rawTranscript && currentShownTranscription !== null && participant && playTime > 0) {
+      let tempCurrentShownTranscription = currentShownTranscription;
+      const startTime = (currentTrial ? participant.answers[currentTrial].startTime : participant.answers.audioTest.startTime);
+
+      const timeInSeconds = Math.abs(playTime - startTime) / 1000;
+
+      if (timeInSeconds > (rawTranscript.results[tempCurrentShownTranscription].resultEndTime as number)) {
+        while (timeInSeconds > (rawTranscript.results[tempCurrentShownTranscription].resultEndTime as number)) {
+          tempCurrentShownTranscription += 1;
+
+          if (tempCurrentShownTranscription > rawTranscript.results.length - 1) {
+            tempCurrentShownTranscription = rawTranscript.results.length - 1;
+            break;
+          }
+        }
+      } else if (tempCurrentShownTranscription > 0 && timeInSeconds < (rawTranscript.results[tempCurrentShownTranscription - 1].resultEndTime as number)) {
+        while (tempCurrentShownTranscription > 0 && timeInSeconds < (rawTranscript.results[tempCurrentShownTranscription - 1].resultEndTime as number)) {
+          tempCurrentShownTranscription -= 1;
+        }
+      }
+
+      if (currentShownTranscription === tempCurrentShownTranscription) return;
+
+      setCurrentShownTranscription(tempCurrentShownTranscription);
     }
+  }, [rawTranscript, currentShownTranscription, participant, currentTrial]);
 
-    return Object.keys(participant.answers).find((key) => key.startsWith(currentTrial)) || null;
-  }, [participant, currentTrial]);
-    // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
+  // Get transcription, and merge all of the transcriptions into one, correcting for time problems. Only do this if we already checked that we dont have an edited transcript
+  useEffect(() => {
+    if (studyId && participantId) {
+      storageEngine?.getTranscription(currentTrial, participantId, studyId).then((data) => {
+        if (!data) {
+          return;
+        }
 
-  //   const setSelectedTask = useCallback((s: string) => {
-  //     storeDispatch(setAnalysisTrialName(s));
-  //     storeDispatch(saveAnalysisState(null));
-  //     setCurrentShownTranscription(0);
+        const newTranscription = data.results.map((task) => {
+          const newTimeTask = ({ ...task, resultEndTime: +(task.resultEndTime as string).split('s')[0] });
 
-  //     const sFullName = participant ? Object.keys(participant.answers).find((key) => key.startsWith(s)) : '';
+          return newTimeTask;
+        }).flat();
 
-  //     if (participant && sFullName && participant.answers[sFullName].provenanceGraph) {
-  //       const reg = Registry.create();
-  //     }
-  //   }, [_setCurrentNode, mini, participant, saveAnalysisState, setAnalysisTrialName, storeDispatch]);
+        setRawTranscript({ results: newTranscription });
 
-  //   useEffect(() => {
-  //     if (trialFilter) {
-  //       setSelectedTask(trialFilter);
-  //     }
-  //   }, [setSelectedTask, trialFilter]);
+        if ((!onlineTranscriptList || onlineTranscriptList.length === 0) && editedTranscript.length === 0) {
+          setEditedTranscript(newTranscription.map((t, i) => ({
+            transcriptMappingStart: i,
+            transcriptMappingEnd: i,
+            text: t.alternatives[0].transcript?.trim() || '',
+            selectedTags: [],
+            annotation: '',
+          })));
+        }
 
-  //   const _setPlayTime = useCallback((n: number, percent: number) => {
-  //     setPlayTime(n);
-
-  //     if (wavesurfer && percent) {
-  //       setTimeout(() => {
-  //         wavesurfer.seekTo(percent);
-  //       });
-  //     }
-  //   }, [setPlayTime, wavesurfer]);
-
-  //   const _setIsPlaying = useCallback((b: boolean) => {
-  //     setIsPlaying(b);
-
-  //     if (wavesurfer) {
-  //       if (b) {
-  //         wavesurfer.play();
-  //       } else {
-  //         wavesurfer.pause();
-  //       }
-  //     }
-  //   }, [wavesurfer]);
-
-  //   useEffect(() => {
-  //     timeUpdate(analysisWaveformTime, false);
-
-  //     if (wavesurfer && Math.abs(wavesurfer.getCurrentTime() - analysisWaveformTime) > 0.8) {
-  //       setTimeout(() => {
-  //         wavesurfer.setTime(analysisWaveformTime);
-  //       });
-  //     }
-  //   }, [analysisWaveformTime, timeUpdate, wavesurfer]);
-
-  const xScale = useMemo(() => {
-    if (!participant) {
-      return null;
+        setCurrentShownTranscription(0);
+      });
     }
-
-    const allStartTimes = Object.values(participant.answers || {}).map((answer) => [answer.startTime, answer.endTime]).flat();
-
-    const extent = d3.extent(allStartTimes) as [number, number];
-
-    const scale = d3.scaleLinear([margin.left, width + margin.left + margin.right]).domain(trialFilterAnswersName ? [participant.answers[trialFilterAnswersName].startTime, participant.answers[trialFilterAnswersName].endTime] : extent).clamp(true);
-
-    return scale;
-  }, [participant, trialFilterAnswersName, width]);
-
-  //   const clickNextNode = useCallback((node: string | undefined) => {
-  //     if (!node) {
-  //       return;
-  //     }
-
-  //     if (trialFilterAnswersName && participant && trrackForTrial.current && xScale) {
-  //       const fullNode = participant.answers[trialFilterAnswersName].provenanceGraph!.nodes[node];
-  //       storeDispatch(saveAnalysisState(trrackForTrial.current.getState(participant.answers[trialFilterAnswersName].provenanceGraph?.nodes[node])));
-
-  //       trrackForTrial.current.to(node);
-
-  //       const totalLength = xScale.domain()[1] - xScale.domain()[0];
-
-  //       _setPlayTime(fullNode.createdOn + 1, (fullNode.createdOn - xScale.domain()[0]) / totalLength);
-  //     }
-  //   }, [_setPlayTime, participant, saveAnalysisState, storeDispatch, trialFilterAnswersName, xScale]);
-
-  //   const nextParticipantCallback = useCallback((positive: boolean) => {
-  //     if (!participant) {
-  //       return;
-  //     }
-
-  //     const _index = allPartIds.indexOf(participant.participantId);
-
-  //     if (positive) {
-  //       navigate(`../../${trialFilter ? '../' : ''}${allPartIds[_index + 1]}/ui/reviewer-${trialFilter || ''}`, { relative: 'path' });
-  //     } else {
-  //       navigate(`../../${trialFilter ? '../' : ''}${allPartIds[_index - 1]}/ui/reviewer-${trialFilter || ''}`, { relative: 'path' });
-  //     }
-  //   }, [allPartIds, navigate, participant, trialFilter]);
+  }, [storageEngine, studyId, participantId, currentTrial, setEditedTranscript, setCurrentShownTranscription, onlineTranscriptList, transcriptStatus, editedTranscript]);
 
   return (
     <Group wrap="nowrap" gap={25}>
-      <Stack ref={ref} style={{ width: '100%' }} gap={25}>
-        {/* <Center>
-          <Group>
-            <ActionIcon>
-              <IconArrowLeft onClick={() => nextParticipantCallback(false)} />
-            </ActionIcon>
-            <Select
-              style={{ width: '300px' }}
-              value={participant?.participantId}
-              onChange={(e) => {
-                storeDispatch(setAnalysisParticipantName(e));
-                navigate(`../../${trialFilter ? '../' : ''}${e}/ui/reviewer-${trialFilter || ''}`, { relative: 'path' });
-              }}
-              data={allPartIds}
-            />
-            <Select
-              style={{ width: '300px' }}
-              clearable
-              value={trialFilter}
-              data={participant ? [...getSequenceFlatMap(participant.sequence)] : []}
-              onChange={(val) => navigate(`${trialFilter ? '../' : ''}reviewer-${val || ''}`, { relative: 'path' })}
-            />
-            <ActionIcon>
-              <IconArrowRight onClick={() => nextParticipantCallback(true)} />
-            </ActionIcon>
-          </Group>
-        </Center> */}
-        <AudioProvenanceVis setTimeString={(t) => console.log(t)} />
-        <Group align="center" justify="center">
-          {/* <ActionIcon variant="subtle"><IconArrowLeft onClick={() => clickNextNode((trrackForTrial.current?.current as any).parent)} /></ActionIcon> */}
-          {/* <ActionIcon variant="light" size={50} onClick={() => _setIsPlaying(!isPlaying)}>{isPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}</ActionIcon> */}
-          {/* {taskTags && partTags && trialFilter && trrackId ? (
-            <TagSelector
-              tags={taskTags || []}
-              onSelectTags={(tempTag) => {
-                if (storageEngine && partTags) {
-                  const copy = deepCopy(partTags);
-                  if (copy[trrackId as string]) {
-                    copy[trrackId].taskTags[trialFilter] = tempTag;
-                  } else {
-                    copy[trrackId] = { partTags: [], taskTags: {} };
+      <Stack ref={ref} style={{ width: '100%' }} gap={10}>
 
-                    copy[trrackId].taskTags[trialFilter] = tempTag;
-                  }
+        {!participantId || !currentTrial ? <Center><Text c="dimmed" size="24">Select a Participant and Trial to Analyze</Text></Center> : (
 
-                  storageEngine.saveAllParticipantAndTaskTags(copy).then(() => {
-                    pullPartTags(trrackId, storageEngine);
-                  });
-                }
-              }}
-              selectedTags={partTags && (partTags as Record<string, ParticipantTags>)[trrackId] ? (partTags as Record<string, ParticipantTags>)[trrackId].taskTags[trialFilter] || [] : []}
-            />
-          ) : null} */}
-          {/* <Button onClick={() => _setIsPlaying(true)}>Play</Button>
-            <Button onClick={() => _setIsPlaying(false)}>Pause</Button> */}
-          {/* <ActionIcon variant="subtle"><IconArrowRight onClick={() => clickNextNode(trrackForTrial.current?.current.children[0])} /></ActionIcon> */}
-        </Group>
-
-        {/* { trialFilter ? (
           <Stack>
-            {participant && onlineTranscriptList && transcriptStatus === 'success' && transcriptList ? <TextEditor transcriptList={transcriptList} setTranscriptList={setTranscriptList} setCurrentShownTranscription={setCurrentShownTranscription} currentShownTranscription={currentShownTranscription} participant={participant} playTime={playTime} setTranscriptLines={setTranscriptLines as any} /> : <Loader /> }
+            <TextEditor transcriptList={editedTranscript} setTranscriptList={setEditedTranscript} currentShownTranscription={currentShownTranscription} />
           </Stack>
-        ) : null} */}
+        )}
+
+        <ThinkAloudFooter editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} />
       </Stack>
+
     </Group>
   );
 }

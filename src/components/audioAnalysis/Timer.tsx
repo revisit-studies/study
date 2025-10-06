@@ -5,8 +5,8 @@ import {
 import { useEvent } from '../../store/hooks/useEvent';
 
 export function Timer({
-  width, height, updateTimer, duration, isPlaying, xScale, startTime, initialTime,
-}: { width: number, height: number, updateTimer: (time: number, percent: number | undefined) => void, duration: number, isPlaying: boolean, xScale: d3.ScaleLinear<number, number>, startTime: number, initialTime?: number }) {
+  width, height, updateTimer, duration, isPlaying, xScale, startTime, initialTime, speed,
+}: { width: number, height: number, updateTimer: (time: number, percent: number | undefined) => void, duration: number, isPlaying: boolean, xScale: d3.ScaleLinear<number, number>, startTime: number, initialTime?: number, speed: number }) {
   const timer = useRef<number>(0);
   const startDate = useRef<number>(Date.now());
   const [forceRerenderInt, setForceRerenderInt] = useState<number>(0);
@@ -26,8 +26,10 @@ export function Timer({
     }
 
     const temp = Date.now();
+    console.log(temp, startDate.current, timer.current, speed);
 
-    timer.current = temp - startDate.current;
+    timer.current += (temp - startDate.current) * speed;
+    startDate.current = temp;
     updateTimer(startTime + timer.current, undefined);
     setForceRerenderInt(forceRerenderInt + 1);
   });
@@ -44,7 +46,7 @@ export function Timer({
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isPlaying && timer.current < duration) {
-      startDate.current = Date.now() - timer.current;
+      startDate.current = Date.now();
 
       interval = setInterval(() => {
         if (isPlaying) {
@@ -60,10 +62,28 @@ export function Timer({
     };
   }, [duration, incrementTimer, isPlaying]);
 
+  useEffect(() => {
+    const listener = (e) => {
+      if (e.key === 'currentTime') {
+        timer.current = +e.newValue.split('_')[2];
+        startDate.current = Date.now() - timer.current;
+
+        updateTimer(+e.newValue.split('_')[0], +e.newValue.split('_')[1]);
+        setForceRerenderInt(forceRerenderInt + 1);
+      }
+    };
+
+    window.addEventListener('storage', listener);
+
+    return () => window.removeEventListener('storage', listener);
+  }, [forceRerenderInt, updateTimer, xScale]);
+
   const clickOnSvg = useCallback((e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
     timer.current = xScale.invert(e.clientX - 10) - xScale.domain()[0];
     startDate.current = Date.now() - timer.current;
     setForceRerenderInt(forceRerenderInt + 1);
+
+    localStorage.setItem('currentTime', `${startTime + timer.current}_${(timer.current / duration).toString()}_${timer.current}`);
 
     updateTimer(startTime + timer.current, timer.current / duration);
   }, [duration, forceRerenderInt, startTime, updateTimer, xScale]);
