@@ -402,10 +402,19 @@ export class SupabaseStorageEngine extends StorageEngine {
     // Get existing modes first
     const modes = await this.getModes(studyId);
 
+    // Get current allStages array or initialize with default
+    const currentAllStages = modes.allStages || ['default'];
+
+    // Add new stage to allStages if it's not already there
+    const updatedAllStages = currentAllStages.includes(stage)
+      ? currentAllStages
+      : [...currentAllStages, stage];
+
     // Update the stage in the modes data
     const updatedData = {
       ...modes,
       stage,
+      allStages: updatedAllStages,
     };
 
     // Save the updated data
@@ -418,6 +427,27 @@ export class SupabaseStorageEngine extends StorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
+  }
+
+  async getAllStages(studyId: string) {
+    // Get the modes from the study collection
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'metadata');
+
+    if (error) {
+      throw new Error('Failed to get all stages');
+    }
+
+    if (data.length > 0) {
+      const metadata = data[0].data;
+      return metadata.allStages || ['default'];
+    }
+
+    // Return default stages if no data exists
+    return ['default'];
   }
 
   protected async _getAudioUrl(task: string, participantId?: string) {

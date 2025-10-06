@@ -398,7 +398,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     // Set default stage if it doesn't exist
     const defaultStage = 'default';
-    await setDoc(revisitModesDoc, { stage: defaultStage }, { merge: true });
+    await setDoc(revisitModesDoc, {
+      stage: defaultStage,
+      allStages: [defaultStage],
+    }, { merge: true });
     return defaultStage;
   }
 
@@ -409,7 +412,37 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       'modes',
     );
 
-    return await setDoc(revisitModesDoc, { stage }, { merge: true });
+    // Get current data to update allStages array
+    const currentData = await getDoc(revisitModesDoc);
+    const existingData = currentData.exists() ? currentData.data() : {};
+    const currentAllStages = existingData.allStages || ['default'];
+
+    // Add new stage to allStages if it's not already there
+    const updatedAllStages = currentAllStages.includes(stage)
+      ? currentAllStages
+      : [...currentAllStages, stage];
+
+    return await setDoc(revisitModesDoc, {
+      stage,
+      allStages: updatedAllStages,
+    }, { merge: true });
+  }
+
+  async getAllStages(studyId: string) {
+    const revisitModesDoc = doc(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+      'modes',
+    );
+    const revisitModesData = await getDoc(revisitModesDoc);
+
+    if (revisitModesData.exists()) {
+      const data = revisitModesData.data();
+      return data.allStages || ['default'];
+    }
+
+    // Return default stages if no data exists
+    return ['default'];
   }
 
   protected async _getAudioUrl(

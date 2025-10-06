@@ -1,5 +1,5 @@
 import {
-  Stack, Switch, TextInput, Button, Group, Flex,
+  Stack, Switch, TextInput, Button, Group, Flex, Badge, Text,
 } from '@mantine/core';
 import React, { useEffect, useState } from 'react';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
@@ -15,17 +15,20 @@ export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
   const [editingStage, setEditingStage] = useState(false);
   const [tempStage, setTempStage] = useState('default');
   const [stageError, setStageError] = useState('');
+  const [allStages, setAllStages] = useState<string[]>(['default']);
 
   useEffect(() => {
     const fetchData = async () => {
       if (storageEngine) {
         const modes = await storageEngine.getModes(studyId);
         const stageValue = await storageEngine.getStage(studyId);
+        const allStagesValue = await storageEngine.getAllStages(studyId);
         setDataCollectionEnabled(modes.dataCollectionEnabled);
         setStudyNavigatorEnabled(modes.studyNavigatorEnabled);
         setAnalyticsInterfacePubliclyAccessible(modes.analyticsInterfacePubliclyAccessible);
         setStage(stageValue);
         setTempStage(stageValue);
+        setAllStages(allStagesValue);
         setAsyncStatus(true);
       }
     };
@@ -81,6 +84,11 @@ export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
     setStageError('');
   };
 
+  const handleStageLabelClick = (stageName: string) => {
+    setTempStage(stageName);
+    setStageError('');
+  };
+
   return (
     asyncStatus && (
       <Stack>
@@ -112,6 +120,25 @@ export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
               )}
             </Group>
           </Flex>
+          {editingStage && allStages.length > 0 && (
+            <div style={{ marginTop: '8px' }}>
+              <Text size="sm" c="dimmed" mb="xs">
+                Click to select from existing stages:
+              </Text>
+              <Group gap="xs">
+                {allStages.map((stageName) => (
+                  <Badge
+                    key={stageName}
+                    variant={tempStage === stageName ? 'filled' : 'outline'}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleStageLabelClick(stageName)}
+                  >
+                    {stageName}
+                  </Badge>
+                ))}
+              </Group>
+            </div>
+          )}
         </div>
         <Switch
           label="Data Collection Enabled"

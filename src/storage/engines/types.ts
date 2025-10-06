@@ -186,6 +186,9 @@ export abstract class StorageEngine {
   // Sets the stage for the given studyId.
   abstract setStage(studyId: string, stage: string): Promise<void>;
 
+  // Gets all stages that have been used for the given studyId.
+  abstract getAllStages(studyId: string): Promise<string[]>;
+
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
 

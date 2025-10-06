@@ -199,7 +199,7 @@ export class LocalStorageEngine extends StorageEngine {
 
   async getStage(studyId: string) {
     const key = `${this.collectionPrefix}${studyId}/modes`;
-    const modes = await this.studyDatabase.getItem(key) as Record<string, boolean | string> | null;
+    const modes = await this.studyDatabase.getItem(key) as Record<string, boolean | string | string[]> | null;
 
     if (modes && modes.stage && typeof modes.stage === 'string') {
       return modes.stage;
@@ -213,14 +213,37 @@ export class LocalStorageEngine extends StorageEngine {
 
   async setStage(studyId: string, stage: string) {
     const key = `${this.collectionPrefix}${studyId}/modes`;
-    const existingData = await this.studyDatabase.getItem(key) as Record<string, boolean | string> | null;
+    const existingData = await this.studyDatabase.getItem(key) as Record<string, boolean | string | string[]> | null;
+
+    // Get current allStages array or initialize with default
+    const currentAllStages = (existingData?.allStages && Array.isArray(existingData.allStages))
+      ? existingData.allStages
+      : ['default'];
+
+    // Add new stage to allStages if it's not already there
+    const updatedAllStages = currentAllStages.includes(stage)
+      ? currentAllStages
+      : [...currentAllStages, stage];
 
     const updatedData = {
       ...existingData,
       stage,
+      allStages: updatedAllStages,
     };
 
     await this.studyDatabase.setItem(key, updatedData);
+  }
+
+  async getAllStages(studyId: string) {
+    const key = `${this.collectionPrefix}${studyId}/modes`;
+    const modes = await this.studyDatabase.getItem(key) as Record<string, boolean | string | string[]> | null;
+
+    if (modes && modes.allStages && Array.isArray(modes.allStages)) {
+      return modes.allStages;
+    }
+
+    // Return default stages if no data exists
+    return ['default'];
   }
 
   protected async _getAudioUrl(task: string, participantId?: string) {
