@@ -63,7 +63,6 @@ export function ComponentController() {
 
   const navigate = useNavigate();
 
-  const screenRecording = useScreenRecordingContext();
   const {
     studyHasScreenRecording, studyHasAudioRecording, currentComponentHasAudioRecording, currentComponentHasScreenRecording,
   } = useRecordingConfig();
