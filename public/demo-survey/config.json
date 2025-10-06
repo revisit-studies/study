@@ -25,39 +25,36 @@
     "provideFeedback": true
   },
   "components": {
-    "introduction": {
-      "type": "markdown",
-      "path": "demo-survey/assets/introduction.md",
-      "response": []
-    },
-    "likert": {
+    "matrix-radio": {
       "type": "questionnaire",
-      "provideFeedback": true,
       "response": [
         {
-          "id": "q-likert",
-          "prompt": "Likert scale example",
-          "secondaryText": "A likert example with 9 items, also showing how to add a divider after the element.",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "Like",
-          "leftLabel": "Dislike",
-          "withDivider": true
+          "id": "q-matrix-radio",
+          "prompt": "Rate your satisfaction from 1 (Highly Unsatisfied) to 5 (Highly Satisfied) for the following items.",
+          "secondaryText": "\"answer\": [\"1\", \"2\", \"1\"]",
+          "type": "matrix-radio",
+          "answerOptions": ["1", "2"],
+          "questionOptions": [
+            "The tool we created",
+            "The technique we developed",
+            "The authors of the tools"
+          ]
         }
       ],
       "correctAnswer": [
         {
-          "id": "q-likert",
-          "answer": 5
-        }]
+          "id": "q-matrix-radio",
+          "answer": ["1", "2", "1"]
+        }
+      ]
     },
-    "matrix-radio-satisfaction": {
+    "matrix-radio-satisfaction-5": {
       "type": "questionnaire",
       "response": [
         {
-          "id": "q-multi-satisfaction",
+          "id": "q-matrix-radio-satisfaction-5",
           "prompt": "Rate your satisfaction from 1 (Highly Unsatisfied) to 5 (Highly Satisfied) for the following items.",
-          "secondaryText": "A simple matrix of Likert responses with predefined options for satisfaction.",
+          "secondaryText": "answer: [\"Satisfied\", \"Satisfied\", \"Highly Unsatisfied\"]",
           "type": "matrix-radio",
           "answerOptions": "satisfaction5",
           "questionOptions": [
@@ -69,34 +66,8 @@
       ],
       "correctAnswer": [
         {
-          "id": "q-multi-satisfaction",
+          "id": "q-matrix-radio-satisfaction-5",
           "answer": ["Satisfied", "Satisfied", "Highly Unsatisfied"]
-        }]
-    },
-    "matrix-radio": {
-      "type": "questionnaire",
-      "response": [
-        {
-          "id": "q-multi-satisfaction",
-          "prompt": "Rate your satisfaction from 1 (Highly Unsatisfied) to 5 (Highly Satisfied) for the following items.",
-          "secondaryText": "A simple matrix of Likert responses with predefined options for satisfaction.",
-          "type": "matrix-radio",
-          "answerOptions": ["1","2"],
-          "questionOptions": [
-            "The tool we created",
-            "The technique we developed",
-            "The authors of the tools"
-          ]
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "q-multi-satisfaction",
-          "answer": [
-            "1",
-            "2",
-            "1"
-          ]
         }]
     },
     "matrix-checkbox": {
@@ -105,7 +76,7 @@
         {
           "id": "multi-custom",
           "prompt": "Which categories do the following items belong to?",
-          "secondaryText": "A matrix of checkboxes with custom options for categorization.",
+          "secondaryText": " [  \"Has Legs\"],[\"Has Legs\"], [\"Has Wings\"], [\"Can Swim\"], [\"Has Legs\", \"Can Swim\"]],",
           "type": "matrix-checkbox",
           "answerOptions": [
             "Has Legs",
@@ -133,13 +104,56 @@
           ]
         }]
     },
+     "matrix-checkbox-likely-7": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-multi-likely-7",
+          "prompt": "Rate your satisfaction from 1 to 7 for the following items.",
+          "secondaryText": "\"answer\": [[\"Neutral\"], [\"Neutral\"], [\"Likely\", \"Neutral\"]]",
+          "type": "matrix-checkbox",
+          "answerOptions": "likely7",
+          "questionOptions": [
+            "The tool we created",
+            "The technique we developed",
+            "The authors of the tools"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q-multi-likely-7",
+          "answer": [["Neutral"], ["Neutral"], ["Likely", "Neutral"]]
+        }]
+    },
+    "likert": {
+      "type": "questionnaire",
+      "provideFeedback": true,
+      "response": [
+        {
+          "id": "q-likert",
+          "prompt": "Likert scale example",
+          "secondaryText": "5",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike",
+          "withDivider": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q-likert",
+          "answer": 5
+        }]
+    },
     "slider": {
       "type": "questionnaire",
       "response": [
         {
           "id": "q-slider",
           "prompt": "Slider example",
-          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
+          "secondaryText": "50",
           "type": "slider",
           "startingValue": 50,
           "spacing": 50,
@@ -172,7 +186,7 @@
         {
           "id": "q-checkbox",
           "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
-          "secondaryText": "Checkboxes for multi-selection",
+          "secondaryText": "Option 1, Option 3",
           "minSelections": 2,
           "maxSelections": 2,
           "type": "checkbox",
@@ -200,7 +214,7 @@
         {
           "id": "q-checkbox",
           "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
-          "secondaryText": "Checkboxes for multi-selection",
+          "secondaryText": "Option 1, Option 3",
           "minSelections": 2,
           "maxSelections": 2,
           "type": "checkbox",
@@ -229,7 +243,7 @@
         {
           "id": "q-checkbox",
           "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
-          "secondaryText": "Checkboxes for multi-selection",
+          "secondaryText": "Option 1, Option 3",
           "minSelections": 2,
           "maxSelections": 2,
           "type": "checkbox",
@@ -258,9 +272,9 @@
         {
           "id": "q-likert",
           "prompt": "Likert scale example",
-          "secondaryText": "A likert example with 9 items, also showing how to add a divider after the element.",
+          "secondaryText": "5",
           "type": "likert",
-          "numItems": 9,
+          "numItems": 9,  
           "rightLabel": "Like",
           "leftLabel": "Dislike",
           "withDivider": true
@@ -268,7 +282,7 @@
          {
           "id": "q-checkbox",
           "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
-          "secondaryText": "Checkboxes for multi-selection",
+          "secondaryText": "Option 1, Option 3",
           "minSelections": 2,
           "maxSelections": 2,
           "type": "checkbox",
@@ -297,11 +311,11 @@
   "sequence": {
     "order": "fixed",
     "components": [
-      "introduction",
-      "likert",
-      "matrix-radio-satisfaction",
       "matrix-radio",
+      "matrix-radio-satisfaction-5",
       "matrix-checkbox",
+      "matrix-checkbox-likely-7",
+      "likert",
       "slider",
       "checkboxOrder",
       "aboveStimulus",
