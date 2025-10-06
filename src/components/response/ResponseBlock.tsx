@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import { useNavigate } from 'react-router';
 import { Registry, initializeTrrack } from '@trrack/core';
-import { isEqual } from 'lodash';
 import {
   IndividualComponent,
   ResponseBlockLocation,
@@ -25,6 +24,7 @@ import { FormElementProvenance, StoredAnswer } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
+import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
 
 type Props = {
   status?: StoredAnswer;
@@ -193,9 +193,9 @@ export function ResponseBlock({
 
     const correctAnswers = Object.fromEntries(responsesWithDefaults.map((response) => {
       const configCorrectAnswer = configInUse?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
-      const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id];
+      const suppliedAnswer = (answerValidator.values as StoredAnswer['answer'])[response.id];
 
-      return [response.id, isEqual(suppliedAnswer, configCorrectAnswer)];
+      return [response.id, responseAnswerIsCorrect(suppliedAnswer, configCorrectAnswer)];
     }));
 
     if (hasCorrectAnswerFeedback) {
