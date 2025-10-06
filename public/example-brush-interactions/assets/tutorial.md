@@ -20,5 +20,3 @@ Use the handles of the sliders to the right of the chart to edit the selection.
 
 Click and drag to select points. Use the tool above the scatterplot to switch to deselect if you want to deselect points in your selection.
 <img src="./example-brush-interactions/assets/paintbrush.gif" width="auto" height="300px"/>
-
-<!-- end -->

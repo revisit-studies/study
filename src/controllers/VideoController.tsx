@@ -10,13 +10,25 @@ import 'plyr-react/plyr.css';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 // eslint-disable-next-line import/order
-import { Box } from '@mantine/core';
+import { Box, LoadingOverlay } from '@mantine/core';
+
+function isValidYouTubeUrl(url: string): boolean {
+  // Basic check for YouTube video ID in URL
+  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}/;
+  return youtubeRegex.test(url);
+}
+
+function isValidVimeoUrl(url: string): boolean {
+  // Basic check for Vimeo video ID in URL
+  const vimeoRegex = /^(https?:\/\/)?(www\.)?vimeo\.com\/\d+/;
+  return vimeoRegex.test(url);
+}
 
 // eslint-disable-next-line react/display-name
-const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() => void; errorCallback: () => void }>(
+const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() => void; }>(
   (props, ref) => {
     const {
-      source, options = null, endedCallback, errorCallback,
+      source, options = null, endedCallback,
     } = props;
     const raptorRef = usePlyr(ref, { options, source });
 
@@ -24,7 +36,6 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
       const { current } = ref as RefObject<APITypes>;
       if (current.plyr.source === null) return;
       current.plyr.on('ended', endedCallback);
-      current.plyr.on('error', errorCallback);
     });
 
     return (
@@ -48,11 +59,25 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
 
   useEffect(() => {
     async function fetchVideo() {
-      if (url.startsWith('http')) {
-        // It is impossible to check whether a video exists on a remote server because of CORS
-        // We just assume it exists and if it doesn't, the player will throw an error
-        // We use that error callback to set assetFound to false and show not found component
-        setAssetFound(true);
+      setLoading(true);
+      if (url.includes('youtube')) {
+      // Try YouTube oEmbed API
+        const oEmbedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+        try {
+          const res = await fetch(oEmbedUrl);
+          setAssetFound(res.ok);
+        } catch {
+          setAssetFound(false);
+        }
+      } else if (url.includes('vimeo')) {
+      // Try Vimeo oEmbed API
+        const oEmbedUrl = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`;
+        try {
+          const res = await fetch(oEmbedUrl);
+          setAssetFound(res.ok);
+        } catch {
+          setAssetFound(false);
+        }
       } else {
         const asset = await getStaticAssetByPath(url);
         setAssetFound(!!asset);
@@ -65,6 +90,10 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
 
   const sources = useMemo<Plyr.Source[]>(() => {
     if (url.includes('youtube')) {
+      if (!isValidYouTubeUrl(url)) {
+        setAssetFound(false);
+        return [];
+      }
       return [
         {
           src: url,
@@ -73,6 +102,10 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
       ];
     }
     if (url.includes('vimeo')) {
+      if (!isValidVimeoUrl(url)) {
+        setAssetFound(false);
+        return [];
+      }
       return [
         {
           src: url,
@@ -130,13 +163,9 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
     }
   }, [currentComponent, currentConfig.forceCompletion, currentStep, storeDispatch, updateResponseBlockValidation]);
 
-  const errorCallback = useCallback(() => {
-    setAssetFound(false);
-  }, []);
-
   const ref = useRef<APITypes>(null);
 
-  return loading || assetFound
+  return (assetFound && sources.length > 0)
     ? (
       // Box required for proper react node handling in the component tree
       <Box>
@@ -145,9 +174,10 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
           source={{ type: 'video', sources }}
           options={options}
           endedCallback={endedCallback}
-          errorCallback={errorCallback}
         />
       </Box>
     )
-    : <ResourceNotFound path={currentConfig.path} />;
+    : loading
+      ? <LoadingOverlay />
+      : <ResourceNotFound path={currentConfig.path} />;
 }
