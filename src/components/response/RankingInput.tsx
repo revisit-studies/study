@@ -140,12 +140,10 @@ function RankingSublistComponent({
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveId(null);
-    if (disabled) return;
-    const { active, over } = event;
-    if (!over) return;
+    if (disabled || !event.over) return;
 
-    const id = active.id as string;
-    const overId = over.id as string;
+    const id = event.active.id as string;
+    const overId = event.over.id as string;
 
     const fromSelected = state.selected.find((i) => i.symbol === id);
     const fromUnassigned = state.unassigned.find((i) => i.symbol === id);
@@ -155,7 +153,7 @@ function RankingSublistComponent({
     const newState = { ...state };
 
     if (fromSelected && toSelected) {
-      const oldIndex = state.selected.findIndex((i) => i.symbol === activeId);
+      const oldIndex = state.selected.findIndex((i) => i.symbol === id);
       const newIndex = overId === 'selected' ? state.selected.length - 1 : state.selected.findIndex((i) => i.symbol === overId);
       newState.selected = arrayMove(state.selected, oldIndex, newIndex);
     } else if (fromUnassigned && toSelected) {
@@ -163,12 +161,14 @@ function RankingSublistComponent({
         setError?.(`You can only add up to ${numItems} items.`);
         return;
       }
-      newState.unassigned = state.unassigned.filter((i) => i.symbol !== activeId);
+      newState.unassigned = state.unassigned.filter((i) => i.symbol !== id);
       newState.selected = [...state.selected, fromUnassigned];
     } else if (fromSelected && toUnassigned) {
-      newState.selected = state.selected.filter((i) => i.symbol !== activeId);
+      newState.selected = state.selected.filter((i) => i.symbol !== id);
       newState.unassigned = [...state.unassigned, fromSelected];
-    } else return;
+    } else {
+      return;
+    }
 
     setError?.(null);
     setState(newState);
@@ -256,12 +256,10 @@ function RankingCategoricalComponent({
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveId(null);
-    if (disabled) return;
-    const { active, over } = event;
-    if (!over) return;
+    if (disabled || !event.over) return;
 
-    const itemId = active.id as string;
-    const targetCategory = over.id as string;
+    const itemId = event.active.id as string;
+    const targetCategory = event.over.id as string;
     const sourceCategory = Object.keys(state).find((cat) => state[cat as keyof typeof state].find((item: Item) => item.id === itemId));
 
     if (!sourceCategory || sourceCategory === targetCategory) return;
@@ -271,7 +269,8 @@ function RankingCategoricalComponent({
       const item = prev[sourceCategory as keyof typeof prev].find((i: Item) => i.id === itemId);
       if (!item) return prev;
 
-      if (targetCategory !== 'unassigned' && numItems && (prev[targetCategory as keyof typeof prev] as Item[]).length >= numItems) {
+      if (targetCategory !== 'unassigned' && numItems
+          && (prev[targetCategory as keyof typeof prev] as Item[]).length >= numItems) {
         setError?.(`You can only add up to ${numItems} items.`);
         return prev;
       }
@@ -323,30 +322,17 @@ function checkForDuplicatePair(answer: Record<string, string>, targetPairId: str
   Object.entries(answer).forEach(([itemId, location]) => {
     const match = location.match(/^pair-(\d+)-(high|low)$/);
     if (match) {
-      const [, pairId] = match;
+      const pairId = match[1];
       const baseItemId = itemId.split('_')[0];
-
-      if (!pairMap[pairId]) {
-        pairMap[pairId] = new Set();
-      }
+      if (!pairMap[pairId]) pairMap[pairId] = new Set();
       pairMap[pairId].add(baseItemId);
     }
   });
 
   const targetPairSignature = [...(pairMap[targetPairId] || [])].sort().join('|');
-
   if (!targetPairSignature) return false;
 
-  for (const [pairId, itemSet] of Object.entries(pairMap)) {
-    if (pairId !== targetPairId) {
-      const pairSignature = [...itemSet].sort().join('|');
-      if (pairSignature === targetPairSignature) {
-        return true;
-      }
-    }
-  }
-
-  return false;
+  return Object.entries(pairMap).some(([pairId, itemSet]) => pairId !== targetPairId && [...itemSet].sort().join('|') === targetPairSignature);
 }
 
 function RankingPairwiseComponent({
@@ -390,37 +376,35 @@ function RankingPairwiseComponent({
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveId(null);
-    if (disabled) return;
-    const { active, over } = event;
-    if (!over) return;
+    if (disabled || !event.over) return;
 
-    const draggedId = active.id as string;
-    const targetId = over.id as string;
+    const draggedId = event.active.id as string;
+    const targetId = event.over.id as string;
     const newAnswer = { ...answer.value };
 
     if (targetId === 'unassigned') {
-      const instanceId = draggedId.split('-').slice(0, -3).join('-');
-      delete newAnswer[instanceId];
+      delete newAnswer[draggedId];
       setError?.(null);
       updateAnswer(newAnswer);
       return;
     }
+
     const isFromUnassigned = !draggedId.includes('_');
     const baseItemId = isFromUnassigned ? draggedId : draggedId.split('_')[0];
-
-    const existingInTarget = Object.entries(newAnswer).some(([instId, loc]) => {
-      const existingBaseId = instId.split('_')[0];
-      return loc === targetId && existingBaseId === baseItemId;
-    });
-
-    if (existingInTarget) {
-      return;
-    }
-
-    // Prevent placing both items of the same pair in the same target position or creating duplicate pairs
     const targetMatch = targetId.match(/^pair-(\d+)-(high|low)$/);
+
     if (targetMatch) {
       const [, targetPairId, targetPosition] = targetMatch;
+
+      const currentItemsInPosition = Object.entries(newAnswer).filter(
+        ([instId, loc]) => loc === targetId && instId !== draggedId,
+      ).length;
+
+      if (currentItemsInPosition >= 1) {
+        setError?.('You can only place one item in each box.');
+        return;
+      }
+
       const oppositePosition = targetPosition === 'high' ? 'low' : 'high';
       const oppositeLocationId = `pair-${targetPairId}-${oppositePosition}`;
 
@@ -437,8 +421,7 @@ function RankingPairwiseComponent({
 
       if (isFromUnassigned) {
         const tempAnswer = { ...newAnswer, [`${draggedId}_temp`]: targetId };
-        const isDuplicate = checkForDuplicatePair(tempAnswer, targetPairId);
-        if (isDuplicate) {
+        if (checkForDuplicatePair(tempAnswer, targetPairId)) {
           setError?.('This would create a duplicate pair.');
           return;
         }
@@ -446,13 +429,11 @@ function RankingPairwiseComponent({
     }
 
     if (isFromUnassigned) {
-      const uniqueId = `${draggedId}_${instanceCounter}`;
-      newAnswer[uniqueId] = targetId;
+      newAnswer[`${draggedId}_${instanceCounter}`] = targetId;
       setInstanceCounter((c) => c + 1);
     } else {
-      const instanceId = draggedId.split('-').slice(0, -3).join('-');
-      delete newAnswer[instanceId];
-      newAnswer[instanceId] = targetId;
+      delete newAnswer[draggedId];
+      newAnswer[draggedId] = targetId;
     }
 
     setError?.(null);
@@ -461,7 +442,7 @@ function RankingPairwiseComponent({
 
   const activeItem = useMemo(() => {
     if (!activeId) return null;
-    const baseItemId = activeId.includes('_') ? activeId.split('_')[0] : activeId.split('-')[0];
+    const baseItemId = activeId.includes('_') ? activeId.split('_')[0] : activeId;
     return items.find((i) => i.id === baseItemId) || null;
   }, [activeId, items]);
 
@@ -480,7 +461,7 @@ function RankingPairwiseComponent({
               <Box key={position} style={{ width: '290px' }}>
                 <DroppableZone id={`pair-${pairId}-${position}`} title={position.toUpperCase()}>
                   <SortableContext
-                    items={pair[position].map((itemId, idx) => `${itemId}-${pairId}-${position}-${idx}`)}
+                    items={pair[position]}
                     strategy={verticalListSortingStrategy}
                   >
                     <Stack>
