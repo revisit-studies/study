@@ -67,7 +67,7 @@ jobs:
       - name: Build dev branch
         run: VITE_BASE_PATH=/dev yarn build
         env:
-          VITE_BASE_PATH: "/dev"
+          VITE_BASE_PATH: "/dev/"
 
       - uses: peaceiris/actions-gh-pages@v3
         name: Deploy dev branch
