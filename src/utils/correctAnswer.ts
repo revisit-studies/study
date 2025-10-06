@@ -8,6 +8,13 @@ export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer
     const sortedCorrectAnswer = [...responseCorrectAnswer].sort();
     return isEqual(sortedUserAnswer, sortedCorrectAnswer);
   }
+
+  // Handle numeric-string comparison for likert and slider responses
+  if ((typeof responseUserAnswer === 'number' && typeof responseCorrectAnswer === 'string')
+  || (typeof responseUserAnswer === 'string' && typeof responseCorrectAnswer === 'number')) {
+    return String(responseUserAnswer) === String(responseCorrectAnswer);
+  }
+
   return isEqual(responseUserAnswer, responseCorrectAnswer);
 }
 
