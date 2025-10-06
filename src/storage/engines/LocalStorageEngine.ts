@@ -197,6 +197,32 @@ export class LocalStorageEngine extends StorageEngine {
     this.studyDatabase.setItem(key, modes);
   }
 
+  async getStage(studyId: string) {
+    const key = `${this.collectionPrefix}${studyId}/modes`;
+    const modes = await this.studyDatabase.getItem(key) as Record<string, boolean | string> | null;
+
+    if (modes && modes.stage && typeof modes.stage === 'string') {
+      return modes.stage;
+    }
+
+    // Set default stage if it doesn't exist
+    const defaultStage = 'default';
+    await this.setStage(studyId, defaultStage);
+    return defaultStage;
+  }
+
+  async setStage(studyId: string, stage: string) {
+    const key = `${this.collectionPrefix}${studyId}/modes`;
+    const existingData = await this.studyDatabase.getItem(key) as Record<string, boolean | string> | null;
+
+    const updatedData = {
+      ...existingData,
+      stage,
+    };
+
+    await this.studyDatabase.setItem(key, updatedData);
+  }
+
   protected async _getAudioUrl(task: string, participantId?: string) {
     await this.verifyStudyDatabase();
     if (this.studyId === undefined) {

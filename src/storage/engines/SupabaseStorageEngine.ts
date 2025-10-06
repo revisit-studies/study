@@ -373,6 +373,53 @@ export class SupabaseStorageEngine extends StorageEngine {
       .eq('docId', 'metadata');
   }
 
+  async getStage(studyId: string) {
+    // Get the modes from the study collection
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'metadata');
+
+    if (error) {
+      throw new Error('Failed to get stage');
+    }
+
+    if (data.length > 0) {
+      const metadata = data[0].data;
+      if (metadata && metadata.stage) {
+        return metadata.stage;
+      }
+    }
+
+    // Set default stage if it doesn't exist
+    const defaultStage = 'default';
+    await this.setStage(studyId, defaultStage);
+    return defaultStage;
+  }
+
+  async setStage(studyId: string, stage: string) {
+    // Get existing modes first
+    const modes = await this.getModes(studyId);
+
+    // Update the stage in the modes data
+    const updatedData = {
+      ...modes,
+      stage,
+    };
+
+    // Save the updated data
+    await this.supabase
+      .from('revisit')
+      .upsert({
+        studyId: `${this.collectionPrefix}${studyId}`,
+        docId: 'metadata',
+        data: updatedData,
+      })
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'metadata');
+  }
+
   protected async _getAudioUrl(task: string, participantId?: string) {
     await this.verifyStudyDatabase();
     // If participantId is not provided, use the current participant id

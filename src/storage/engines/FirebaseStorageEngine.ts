@@ -383,6 +383,35 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
   }
 
+  async getStage(studyId: string) {
+    const revisitModesDoc = doc(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+      'modes',
+    );
+    const revisitModesData = await getDoc(revisitModesDoc);
+
+    if (revisitModesData.exists()) {
+      const data = revisitModesData.data();
+      return data.stage || 'default';
+    }
+
+    // Set default stage if it doesn't exist
+    const defaultStage = 'default';
+    await setDoc(revisitModesDoc, { stage: defaultStage }, { merge: true });
+    return defaultStage;
+  }
+
+  async setStage(studyId: string, stage: string) {
+    const revisitModesDoc = doc(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+      'modes',
+    );
+
+    return await setDoc(revisitModesDoc, { stage }, { merge: true });
+  }
+
   protected async _getAudioUrl(
     task: string,
     participantId: string,
