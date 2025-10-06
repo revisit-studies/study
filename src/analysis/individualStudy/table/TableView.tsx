@@ -22,7 +22,6 @@ import { AllTasksTimeline } from '../replay/AllTasksTimeline';
 import { humanReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
-import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 
 function formatDate(date: Date): string | JSX.Element {
@@ -54,8 +53,6 @@ export function TableView({
   const handleRefresh = useCallback(async () => {
     await refresh();
   }, [refresh]);
-
-  const selectedData = useMemo(() => (selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants), [selectedParticipants, visibleParticipants]);
 
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => [
     {
@@ -186,15 +183,8 @@ export function TableView({
     enableDensityToggle: false,
     positionToolbarAlertBanner: 'none',
     renderTopToolbarCustomActions: () => (
-      <Flex justify="space-between" mb={8} p={8}>
-        <Group>
-          <DownloadButtons
-            visibleParticipants={selectedData}
-            studyId={studyId || ''}
-            hasAudio={studyConfig?.uiConfig?.recordAudio}
-          />
-          <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
-        </Group>
+      <Flex mb={8} p={8}>
+        <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
       </Flex>
     ),
   });
