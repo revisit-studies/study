@@ -102,7 +102,7 @@ export function ResponseSwitcher({
       return inputDisabled || !!responseParam;
     }
     return inputDisabled || disabled;
-  }, [currentStep, flatSequence, response.paramCapture, inputDisabled, disabled, sequence.components, nextConfig?.previousButton, searchParams]);
+  }, [completed, currentStep, flatSequence, response.paramCapture, inputDisabled, disabled, sequence.components, nextConfig?.previousButton, searchParams]);
 
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {

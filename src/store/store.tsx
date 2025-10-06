@@ -131,6 +131,7 @@ export async function studyStoreCreator(
     participantId,
     funcSequence: {},
     completed,
+    clickedPrevious: false,
   };
 
   const storeSlice = createSlice({
@@ -357,6 +358,9 @@ export async function studyStoreCreator(
       },
       setParticipantCompleted(state, { payload }: PayloadAction<boolean>) {
         state.completed = payload;
+      },
+      setClickedPrevious(state, { payload }: PayloadAction<boolean>) {
+        state.clickedPrevious = payload;
       },
     },
   });
