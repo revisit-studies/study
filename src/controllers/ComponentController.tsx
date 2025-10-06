@@ -93,7 +93,7 @@ export function ComponentController() {
 
   // For study that does not involve screen recording
   useEffect(() => {
-    if (!studyConfig || !(!studyHasScreenRecording && studyHasAudioRecording) || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+    if (!studyConfig || studyHasScreenRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
