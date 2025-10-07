@@ -8,7 +8,7 @@ import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
 import { RevisitNotification } from '../../utils/notifications';
 import {
-  EditedText, ParticipantTags, StoredParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
+  EditedText, ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
 } from '../../analysis/individualStudy/thinkAloud/types';
 
 export interface StoredUser {
@@ -489,7 +489,7 @@ export abstract class StorageEngine {
         // loop over the transcript and merge the tags
         transcript.forEach((line) => {
           line.selectedTags = line.selectedTags.map((tag) => {
-            const matchingTag = tags.find((t) => t.id === tag);
+            const matchingTag = tags.find((t) => t.id === tag.id);
             return matchingTag!;
           });
         });
@@ -503,7 +503,7 @@ export abstract class StorageEngine {
   }
 
   async saveEditedTranscript(participantId: string, authEmail: string, task: string, editedText: EditedText[]) {
-    const taglessTranscript = editedText.map((line) => ({ ...line, selectedTags: line.selectedTags.filter((tag) => tag !== undefined).map((tag) => tag.id) })) as TaglessEditedText[];
+    const taglessTranscript = editedText.map((line) => ({ ...line, selectedTags: line.selectedTags.filter((tag) => tag !== undefined) })) as TaglessEditedText[];
 
     this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText', taglessTranscript);
   }

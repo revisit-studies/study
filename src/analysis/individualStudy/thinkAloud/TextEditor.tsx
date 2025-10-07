@@ -4,8 +4,10 @@ import {
 } from 'react';
 import {
   Group, Stack, Text,
+  Tooltip,
 } from '@mantine/core';
 import { isArray } from 'lodash';
+import { IconInfoCircle } from '@tabler/icons-react';
 import { useEvent } from '../../../store/hooks/useEvent';
 import {
   EditedText, Tag,
@@ -156,9 +158,18 @@ export function TextEditor({
       <Group mb="sm" justify="space-between" wrap="nowrap" style={{ width: '100%' }}>
         <Text fw={700} size="xl">Transcripts</Text>
         <Group gap="175" justify="flex-start" style={{ width: '500px' }}>
-          <Text fw={700} ml="lg" size="xl">Text Tags</Text>
-          <Text fw={700} ml="lg" size="xl">Annotations</Text>
-
+          <Group gap="xs" align="center">
+            <Text fw={700} ml="lg" size="xl">Text Tags</Text>
+            <Tooltip w={300} multiline label="Text tags allow you to categorize segments of text. Click in the box to add, create, or edit tags.">
+              <IconInfoCircle size={16} />
+            </Tooltip>
+          </Group>
+          <Group gap="xs" align="center">
+            <Text fw={700} ml="lg" size="xl">Annotations</Text>
+            <Tooltip w={300} multiline label="Annotations allow you to add additional context or notes to segments of text.">
+              <IconInfoCircle size={16} />
+            </Tooltip>
+          </Group>
         </Group>
       </Group>
 

@@ -11,7 +11,7 @@ import {
 import * as d3 from 'd3';
 
 import {
-  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled,
+  IconArrowLeft, IconArrowRight, IconInfoCircle, IconPlayerPauseFilled, IconPlayerPlayFilled,
 } from '@tabler/icons-react';
 import { useAsync } from '../../../store/hooks/useAsync';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
@@ -330,7 +330,12 @@ export function ThinkAloudFooter({
               data={participant ? getSequenceFlatMap(participant?.sequence) : []}
             />
             <Stack gap="4">
-              <Text size="sm" fw={500}>Task Tags</Text>
+              <Group gap="xs" align="center">
+                <Text size="sm" fw={500}>Task Tags</Text>
+                <Tooltip w={300} multiline label="Task tags allow you to categorize or label the current task. Click in the box to add, create, or edit tags.">
+                  <IconInfoCircle size={16} />
+                </Tooltip>
+              </Group>
               <TagSelector
                 tags={taskTags || []}
                 editTagCallback={editTaskTagCallback}

@@ -1,11 +1,8 @@
 import {
-  Text,
-  ColorSwatch,
-  Group, Stack, Button, Popover,
+  Stack, Button, Popover,
   Loader,
 } from '@mantine/core';
-import React, { useState } from 'react';
-import { IconEdit } from '@tabler/icons-react';
+import { useState } from 'react';
 import { Tag } from '../types';
 import { AddTagDropdown } from '../tiptapExtensions/AddTagDropdown';
 
