@@ -62,6 +62,7 @@
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
                     "type": "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -89,7 +90,8 @@
                     "id": "Custom-Stimuli/b0-obscured-age-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -116,7 +118,8 @@
                     "id": "Custom-Stimuli/b0-obscured-gender-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -132,7 +135,8 @@
                     "id": "Custom-Stimuli/b0-obscured-design",
                     "prompt": "Are they likely a layperson or professional in graphic design?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -148,7 +152,8 @@
                     "id": "Custom-Stimuli/b0-obscured-data",
                     "prompt": "Are they likely a layperson or professional in data analysis?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -164,7 +169,8 @@
                     "id": "Custom-Stimuli/b0-obscured-politics",
                     "prompt": "Are their politics more likely left-leaning or right-leaning?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Left-Leaning",
@@ -180,7 +186,8 @@
                     "id": "Custom-Stimuli/b0-obscured-alignment",
                     "prompt": "Do they likely share your values?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "No",
@@ -196,7 +203,8 @@
                     "id": "Custom-Stimuli/b0-obscured-intention",
                     "prompt": "Is their intent more likely to persuade or inform?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Persuade",
@@ -212,7 +220,8 @@
                     "id": "Custom-Stimuli/b0-obscured-trust",
                     "prompt": "How trustworthy are they?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Untrustworthy",
@@ -228,7 +237,8 @@
                     "id": "Custom-Stimuli/b0-obscured-beauty",
                     "prompt": "How aesthetically pleasing is this image?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not at all",
@@ -288,7 +298,8 @@
                     "id": "Custom-Stimuli/b0-unobscured-id-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -316,7 +327,8 @@
                     "id": "Custom-Stimuli/b0-unobscured-age-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -343,7 +355,8 @@
                     "id": "Custom-Stimuli/b0-unobscured-gender-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -359,7 +372,8 @@
                     "id": "Custom-Stimuli/b0-unobscured-design",
                     "prompt": "Are they likely a layperson or professional in graphic design?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -375,7 +389,8 @@
                     "id": "Custom-Stimuli/b0-unobscured-data",
                     "prompt": "Are they likely a layperson or professional in data analysis?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -391,7 +406,8 @@
                     "id": "Custom-Stimuli/b0-unobscured-politics",
                     "prompt": "Are their politics more likely left-leaning or right-leaning?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Left-Leaning",
@@ -407,7 +423,8 @@
                     "id": "Custom-Stimuli/b0-unobscured-alignment",
                     "prompt": "Do they likely share your values?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "No",
@@ -423,7 +440,8 @@
                     "id": "Custom-Stimuli/b0-unobscured-intention",
                     "prompt": "Is their intent more likely to persuade or inform?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Persuade",
@@ -439,7 +457,8 @@
                     "id": "Custom-Stimuli/b0-unobscured-trust",
                     "prompt": "How trustworthy are they?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Untrustworthy",
@@ -455,7 +474,8 @@
                     "id": "Custom-Stimuli/b0-unobscured-beauty",
                     "prompt": "How aesthetically pleasing is this image?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not at all",
@@ -515,7 +535,8 @@
                     "id": "Custom-Stimuli/b2a-obscured-id-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -543,7 +564,8 @@
                     "id": "Custom-Stimuli/b2a-obscured-age-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -570,7 +592,8 @@
                     "id": "Custom-Stimuli/b2a-obscured-gender-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -586,7 +609,8 @@
                     "id": "Custom-Stimuli/b2a-obscured-design",
                     "prompt": "Are they likely a layperson or professional in graphic design?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -602,7 +626,8 @@
                     "id": "Custom-Stimuli/b2a-obscured-data",
                     "prompt": "Are they likely a layperson or professional in data analysis?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -618,7 +643,8 @@
                     "id": "Custom-Stimuli/b2a-obscured-politics",
                     "prompt": "Are their politics more likely left-leaning or right-leaning?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Left-Leaning",
@@ -634,7 +660,8 @@
                     "id": "Custom-Stimuli/b2a-obscured-alignment",
                     "prompt": "Do they likely share your values?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "No",
@@ -650,7 +677,8 @@
                     "id": "Custom-Stimuli/b2a-obscured-intention",
                     "prompt": "Is their intent more likely to persuade or inform?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Persuade",
@@ -666,7 +694,8 @@
                     "id": "Custom-Stimuli/b2a-obscured-trust",
                     "prompt": "How trustworthy are they?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Untrustworthy",
@@ -682,7 +711,8 @@
                     "id": "Custom-Stimuli/b2a-obscured-beauty",
                     "prompt": "How aesthetically pleasing is this image?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not at all",
@@ -742,7 +772,8 @@
                     "id": "Custom-Stimuli/b2a-unobscured-id-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -770,7 +801,8 @@
                     "id": "Custom-Stimuli/b2a-unobscured-age-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -797,7 +829,8 @@
                     "id": "Custom-Stimuli/b2a-unobscured-gender-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -813,7 +846,8 @@
                     "id": "Custom-Stimuli/b2a-unobscured-design",
                     "prompt": "Are they likely a layperson or professional in graphic design?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -829,7 +863,8 @@
                     "id": "Custom-Stimuli/b2a-unobscured-data",
                     "prompt": "Are they likely a layperson or professional in data analysis?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -845,7 +880,8 @@
                     "id": "Custom-Stimuli/b2a-unobscured-politics",
                     "prompt": "Are their politics more likely left-leaning or right-leaning?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Left-Leaning",
@@ -861,7 +897,8 @@
                     "id": "Custom-Stimuli/b2a-unobscured-alignment",
                     "prompt": "Do they likely share your values?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "No",
@@ -877,7 +914,8 @@
                     "id": "Custom-Stimuli/b2a-unobscured-intention",
                     "prompt": "Is their intent more likely to persuade or inform?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Persuade",
@@ -893,7 +931,8 @@
                     "id": "Custom-Stimuli/b2a-unobscured-trust",
                     "prompt": "How trustworthy are they?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Untrustworthy",
@@ -909,7 +948,8 @@
                     "id": "Custom-Stimuli/b2a-unobscured-beauty",
                     "prompt": "How aesthetically pleasing is this image?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not at all",
@@ -969,7 +1009,8 @@
                     "id": "Custom-Stimuli/B1D-obscured-id-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -997,7 +1038,8 @@
                     "id": "Custom-Stimuli/B1D-obscured-age-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1024,7 +1066,8 @@
                     "id": "Custom-Stimuli/B1D-obscured-gender-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1040,7 +1083,8 @@
                     "id": "Custom-Stimuli/B1D-obscured-design",
                     "prompt": "Are they likely a layperson or professional in graphic design?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -1056,7 +1100,8 @@
                     "id": "Custom-Stimuli/B1D-obscured-data",
                     "prompt": "Are they likely a layperson or professional in data analysis?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -1072,7 +1117,8 @@
                     "id": "Custom-Stimuli/B1D-obscured-politics",
                     "prompt": "Are their politics more likely left-leaning or right-leaning?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Left-Leaning",
@@ -1088,7 +1134,8 @@
                     "id": "Custom-Stimuli/B1D-obscured-alignment",
                     "prompt": "Do they likely share your values?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "No",
@@ -1104,7 +1151,8 @@
                     "id": "Custom-Stimuli/B1D-obscured-intention",
                     "prompt": "Is their intent more likely to persuade or inform?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Persuade",
@@ -1120,7 +1168,8 @@
                     "id": "Custom-Stimuli/B1D-obscured-trust",
                     "prompt": "How trustworthy are they?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Untrustworthy",
@@ -1136,7 +1185,8 @@
                     "id": "Custom-Stimuli/B1D-obscured-beauty",
                     "prompt": "How aesthetically pleasing is this image?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not at all",
@@ -1196,7 +1246,8 @@
                     "id": "Custom-Stimuli/B1D-unobscured-id-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1224,7 +1275,8 @@
                     "id": "Custom-Stimuli/B1D-unobscured-age-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1251,7 +1303,8 @@
                     "id": "Custom-Stimuli/B1D-unobscured-gender-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1267,7 +1320,8 @@
                     "id": "Custom-Stimuli/B1D-unobscured-design",
                     "prompt": "Are they likely a layperson or professional in graphic design?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -1283,7 +1337,8 @@
                     "id": "Custom-Stimuli/B1D-unobscured-data",
                     "prompt": "Are they likely a layperson or professional in data analysis?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -1299,7 +1354,8 @@
                     "id": "Custom-Stimuli/B1D-unobscured-politics",
                     "prompt": "Are their politics more likely left-leaning or right-leaning?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Left-Leaning",
@@ -1315,7 +1371,8 @@
                     "id": "Custom-Stimuli/B1D-unobscured-alignment",
                     "prompt": "Do they likely share your values?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "No",
@@ -1331,7 +1388,8 @@
                     "id": "Custom-Stimuli/B1D-unobscured-intention",
                     "prompt": "Is their intent more likely to persuade or inform?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Persuade",
@@ -1347,7 +1405,8 @@
                     "id": "Custom-Stimuli/B1D-unobscured-trust",
                     "prompt": "How trustworthy are they?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Untrustworthy",
@@ -1363,7 +1422,8 @@
                     "id": "Custom-Stimuli/B1D-unobscured-beauty",
                     "prompt": "How aesthetically pleasing is this image?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not at all",
@@ -1423,7 +1483,8 @@
                     "id": "Custom-Stimuli/b1b-obscured-id-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1451,7 +1512,8 @@
                     "id": "Custom-Stimuli/b1b-obscured-age-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1478,7 +1540,8 @@
                     "id": "Custom-Stimuli/b1b-obscured-gender-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1494,7 +1557,8 @@
                     "id": "Custom-Stimuli/b1b-obscured-design",
                     "prompt": "Are they likely a layperson or professional in graphic design?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -1510,7 +1574,8 @@
                     "id": "Custom-Stimuli/b1b-obscured-data",
                     "prompt": "Are they likely a layperson or professional in data analysis?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -1526,7 +1591,8 @@
                     "id": "Custom-Stimuli/b1b-obscured-politics",
                     "prompt": "Are their politics more likely left-leaning or right-leaning?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Left-Leaning",
@@ -1542,7 +1608,8 @@
                     "id": "Custom-Stimuli/b1b-obscured-alignment",
                     "prompt": "Do they likely share your values?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "No",
@@ -1558,7 +1625,8 @@
                     "id": "Custom-Stimuli/b1b-obscured-intention",
                     "prompt": "Is their intent more likely to persuade or inform?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Persuade",
@@ -1574,7 +1642,8 @@
                     "id": "Custom-Stimuli/b1b-obscured-trust",
                     "prompt": "How trustworthy are they?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Untrustworthy",
@@ -1590,7 +1659,8 @@
                     "id": "Custom-Stimuli/b1b-obscured-beauty",
                     "prompt": "How aesthetically pleasing is this image?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not at all",
@@ -1650,7 +1720,8 @@
                     "id": "Custom-Stimuli/b1b-unobscured-id-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1678,7 +1749,8 @@
                     "id": "Custom-Stimuli/b1b-unobscured-age-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1705,7 +1777,8 @@
                     "id": "Custom-Stimuli/b1b-unobscured-gender-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1721,7 +1794,8 @@
                     "id": "Custom-Stimuli/b1b-unobscured-design",
                     "prompt": "Are they likely a layperson or professional in graphic design?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -1737,7 +1811,8 @@
                     "id": "Custom-Stimuli/b1b-unobscured-data",
                     "prompt": "Are they likely a layperson or professional in data analysis?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -1753,7 +1828,8 @@
                     "id": "Custom-Stimuli/b1b-unobscured-politics",
                     "prompt": "Are their politics more likely left-leaning or right-leaning?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Left-Leaning",
@@ -1769,7 +1845,8 @@
                     "id": "Custom-Stimuli/b1b-unobscured-alignment",
                     "prompt": "Do they likely share your values?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "No",
@@ -1785,7 +1862,8 @@
                     "id": "Custom-Stimuli/b1b-unobscured-intention",
                     "prompt": "Is their intent more likely to persuade or inform?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Persuade",
@@ -1801,7 +1879,8 @@
                     "id": "Custom-Stimuli/b1b-unobscured-trust",
                     "prompt": "How trustworthy are they?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Untrustworthy",
@@ -1817,7 +1896,8 @@
                     "id": "Custom-Stimuli/b1b-unobscured-beauty",
                     "prompt": "How aesthetically pleasing is this image?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not at all",
@@ -1877,7 +1957,8 @@
                     "id": "Custom-Stimuli/b1c-obscured-id-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1905,7 +1986,8 @@
                     "id": "Custom-Stimuli/b1c-obscured-age-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1932,7 +2014,8 @@
                     "id": "Custom-Stimuli/b1c-obscured-gender-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -1948,7 +2031,8 @@
                     "id": "Custom-Stimuli/b1c-obscured-design",
                     "prompt": "Are they likely a layperson or professional in graphic design?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -1964,7 +2048,8 @@
                     "id": "Custom-Stimuli/b1c-obscured-data",
                     "prompt": "Are they likely a layperson or professional in data analysis?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -1980,7 +2065,8 @@
                     "id": "Custom-Stimuli/b1c-obscured-politics",
                     "prompt": "Are their politics more likely left-leaning or right-leaning?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Left-Leaning",
@@ -1996,7 +2082,8 @@
                     "id": "Custom-Stimuli/b1c-obscured-alignment",
                     "prompt": "Do they likely share your values?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "No",
@@ -2012,7 +2099,8 @@
                     "id": "Custom-Stimuli/b1c-obscured-intention",
                     "prompt": "Is their intent more likely to persuade or inform?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Persuade",
@@ -2028,7 +2116,8 @@
                     "id": "Custom-Stimuli/b1c-obscured-trust",
                     "prompt": "How trustworthy are they?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Untrustworthy",
@@ -2044,7 +2133,8 @@
                     "id": "Custom-Stimuli/b1c-obscured-beauty",
                     "prompt": "How aesthetically pleasing is this image?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not at all",
@@ -2104,7 +2194,8 @@
                     "id": "Custom-Stimuli/b1c-unobscured-id-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -2132,7 +2223,8 @@
                     "id": "Custom-Stimuli/b1c-unobscured-age-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -2159,7 +2251,8 @@
                     "id": "Custom-Stimuli/b1c-unobscured-gender-conf",
                     "prompt": "How confident are you with your answer for the above question?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not Confident",
@@ -2175,7 +2268,8 @@
                     "id": "Custom-Stimuli/b1c-unobscured-design",
                     "prompt": "Are they likely a layperson or professional in graphic design?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -2191,7 +2285,8 @@
                     "id": "Custom-Stimuli/b1c-unobscured-data",
                     "prompt": "Are they likely a layperson or professional in data analysis?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Layperson",
@@ -2207,7 +2302,8 @@
                     "id": "Custom-Stimuli/b1c-unobscured-politics",
                     "prompt": "Are their politics more likely left-leaning or right-leaning?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Left-Leaning",
@@ -2223,7 +2319,8 @@
                     "id": "Custom-Stimuli/b1c-unobscured-alignment",
                     "prompt": "Do they likely share your values?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "No",
@@ -2239,7 +2336,8 @@
                     "id": "Custom-Stimuli/b1c-unobscured-intention",
                     "prompt": "Is their intent more likely to persuade or inform?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Persuade",
@@ -2255,7 +2353,8 @@
                     "id": "Custom-Stimuli/b1c-unobscured-trust",
                     "prompt": "How trustworthy are they?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Untrustworthy",
@@ -2271,7 +2370,8 @@
                     "id": "Custom-Stimuli/b1c-unobscured-beauty",
                     "prompt": "How aesthetically pleasing is this image?",
                     "location": "sidebar",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Not at all",
@@ -2399,7 +2499,8 @@
                 {
                     "id": "Custom-Stimuli/demographics-politics-social",
                     "prompt": "Would you say you are more socially left-leaning or right-leaning?",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Left-Leaning",
@@ -2414,7 +2515,8 @@
                 {
                     "id": "Custom-Stimuli/demographics-politics-fiscal",
                     "prompt": "Would you say you are more fiscally left-leaning or right-leaning?",
-                    "type": "slider",
+                    "type" : "slider",
+                    "startingValue": 50,
                     "options": [
                         {
                             "label": "Left-Leaning",
