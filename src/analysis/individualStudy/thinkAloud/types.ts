@@ -36,7 +36,7 @@ export interface TaglessEditedText {
     transcriptMappingStart: number;
     transcriptMappingEnd: number;
     text: string;
-    selectedTags: string[];
+    selectedTags: Tag[];
     annotation: string;
 }
 

@@ -28,6 +28,7 @@ export function AnalysisFooter() {
   } = useStoreActions();
 
   return (
-    <ThinkAloudFooter currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => console.log('time')} saveProvenance={(prov: any) => dispatch(saveAnalysisState(prov))} />
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <ThinkAloudFooter currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={(prov: any) => dispatch(saveAnalysisState(prov))} />
   );
 }

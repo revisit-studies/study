@@ -22,7 +22,7 @@ export function IconComponent({
     <Group justify="space-between" style={{ width: '100%' }} wrap="nowrap">
       <Group wrap="nowrap" gap={0} px={10} style={{ width: '100%', borderRadius: '10px', backgroundColor: current >= start && current <= end ? 'rgba(100, 149, 237, 0.3)' : 'white' }}>
         <Textarea
-          ref={(r) => (r ? addRef(indexRef.current, r) : null)}
+          ref={(r) => (r ? addRef(indexRef.current, r) : undefined)}
           autosize
           minRows={1}
           maxRows={4}

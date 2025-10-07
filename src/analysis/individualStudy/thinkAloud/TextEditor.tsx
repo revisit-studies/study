@@ -7,6 +7,7 @@ import {
   Tooltip,
 } from '@mantine/core';
 import { isArray } from 'lodash';
+import { IconInfoCircle } from '@tabler/icons-react';
 import { useEvent } from '../../../store/hooks/useEvent';
 import {
   EditedText, Tag,
@@ -15,7 +16,6 @@ import { IconComponent } from './tiptapExtensions/IconComponent';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { useAsync } from '../../../store/hooks/useAsync';
 import { StorageEngine } from '../../../storage/engines/types';
-import { IconInfoCircle } from '@tabler/icons-react';
 
 async function getTags(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {

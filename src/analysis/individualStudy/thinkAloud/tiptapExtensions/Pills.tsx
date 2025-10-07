@@ -23,7 +23,7 @@ export function Pills({
           size={size}
           component={isLink ? Link : null}
           style={{ width: '80px' }}
-        // @ts-ignore
+          // @ts-expect-error to is not an allowed prop, but is on a Link
           to={`${PREFIX}ThinkAloud/analysis/${participantId}/ui/reviewer-${currentTask}`}
           target="_blank"
           key={tag.id + i}

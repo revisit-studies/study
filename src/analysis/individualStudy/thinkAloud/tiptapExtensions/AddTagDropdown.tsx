@@ -17,8 +17,6 @@ export function AddTagDropdown({
   const createTag = useCallback(() => {
     const uuid = uuidFunc();
 
-    console.log('creating tag in the AddTagDropdown');
-
     addTagCallback({ color, name, id: editTag && editableTag ? editableTag.id : uuid });
   }, [addTagCallback, color, editTag, editableTag, name]);
 
