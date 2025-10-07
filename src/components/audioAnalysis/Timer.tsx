@@ -30,6 +30,7 @@ export function Timer({
     const temp = Date.now();
 
     timer.current += (temp - startDate.current) * speed;
+
     startDate.current = temp;
     updateTimer(startTime + timer.current, undefined);
     setForceRerenderInt(forceRerenderInt + 1);
@@ -81,7 +82,7 @@ export function Timer({
 
   const clickOnSvg = useCallback((e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
     timer.current = xScale.invert(e.clientX - 10) - xScale.domain()[0];
-    startDate.current = Date.now() - timer.current;
+    startDate.current = Date.now();
     setForceRerenderInt(forceRerenderInt + 1);
 
     localStorage.setItem('currentTime', `${startTime + timer.current}_${(timer.current / duration).toString()}_${timer.current}`);

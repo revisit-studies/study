@@ -7,7 +7,9 @@ import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
 import { RevisitNotification } from '../../utils/notifications';
-import { EditedText, ParticipantTags, StoredParticipantTags, Tag, TaglessEditedText, TranscribedAudio } from '../../analysis/individualStudy/thinkAloud/types';
+import {
+  EditedText, ParticipantTags, StoredParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
+} from '../../analysis/individualStudy/thinkAloud/types';
 
 export interface StoredUser {
   email: string,
@@ -47,7 +49,7 @@ export type StorageObject<T extends StorageObjectType> =
     : T extends 'participantData'
     ? ParticipantData
     : T extends 'config'
-    ? StudyConfig 
+    ? StudyConfig
     : T extends 'transcription.txt'
     ? TranscribedAudio
     : T extends 'editedText'
@@ -470,35 +472,34 @@ export abstract class StorageEngine {
   }
 
   async getTags(tagType: string) {
-      return await this._getFromStorage(`audio/transcriptAndTags/${tagType}`, 'tags', this.studyId)
+    return await this._getFromStorage(`audio/transcriptAndTags/${tagType}`, 'tags', this.studyId);
   }
 
   async getTranscription(taskName: string, participantId: string, studyId: string) : Promise<TranscribedAudio | null> {
-      return await this._getFromStorage(`audio/${participantId}_${taskName}.wav`, 'transcription.txt', studyId)
+    return await this._getFromStorage(`audio/${participantId}_${taskName}.wav`, 'transcription.txt', studyId);
   }
 
   async getEditedTranscript(participantId: string, authEmail: string, task: string) {
-      const transcript = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText', this.studyId)
+    const transcript = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText', this.studyId);
 
-      if(Array.isArray(transcript)){
-        const tags = await this.getTags('text');
+    if (Array.isArray(transcript)) {
+      const tags = await this.getTags('text');
 
-        if(tags) {
-        //loop over the transcript and merge the tags
+      if (tags) {
+        // loop over the transcript and merge the tags
         transcript.forEach((line) => {
           line.selectedTags = line.selectedTags.map((tag) => {
             const matchingTag = tags.find((t) => t.id === tag);
             return matchingTag!;
           });
         });
-        }
-
-        return transcript as EditedText[];
       }
 
-      this.saveEditedTranscript(participantId, authEmail, task, []);
-      return [];
-      
+      return transcript as EditedText[];
+    }
+
+    this.saveEditedTranscript(participantId, authEmail, task, []);
+    return [];
   }
 
   async saveEditedTranscript(participantId: string, authEmail: string, task: string, editedText: EditedText[]) {
@@ -508,18 +509,15 @@ export abstract class StorageEngine {
   }
 
   async getAllParticipantAndTaskTags(authEmail: string, participantId: string, task: string): Promise<ParticipantTags | null> {
+    const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'partTags', this.studyId);
 
-    const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'partTags', this.studyId)
-
-    if(tags?.partTags) {
+    if (tags?.partTags) {
       return tags;
-
     }
-    else {
-      this.saveAllParticipantAndTaskTags(authEmail, participantId, task, { partTags: [], taskTags: {} });
 
-      return { partTags: [], taskTags: {} };
-    }
+    this.saveAllParticipantAndTaskTags(authEmail, participantId, task, { partTags: [], taskTags: {} });
+
+    return { partTags: [], taskTags: {} };
   }
 
   async saveAllParticipantAndTaskTags(authEmail: string, participantId: string, task: string, participantTags: ParticipantTags) {

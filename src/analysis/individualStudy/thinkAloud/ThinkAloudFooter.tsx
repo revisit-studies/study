@@ -74,6 +74,7 @@ export function ThinkAloudFooter({
 
   const { value: taskTags, execute: pullTags } = useAsync(getTags, [storageEngine, 'task']);
 
+  const { value: allPartTags, execute: pullAllPartTags } = useAsync(getTags, [storageEngine, 'participant']);
   const [analysisIsPlaying, _setAnalysisIsPlaying] = useState(false);
 
   const setAnalysisIsPlaying = useCallback((playing: boolean) => {
@@ -172,13 +173,13 @@ export function ThinkAloudFooter({
     setSearchParams({ participantId, currentTrial: newTrialName });
   }, [currentTrial, participant, participantId, setSearchParams]);
 
-  const setTags = useCallback((_tags: Tag[]) => {
+  const setTags = useCallback((_tags: Tag[], type: 'task' | 'participant') => {
     if (storageEngine) {
-      storageEngine.saveTags(_tags, 'task').then(() => pullTags(storageEngine, 'task'));
+      storageEngine.saveTags(_tags, type).then(() => { type === 'task' ? pullTags(storageEngine, type) : pullAllPartTags(storageEngine, type); });
     }
-  }, [pullTags, storageEngine]);
+  }, [pullAllPartTags, pullTags, storageEngine]);
 
-  const editTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
+  const editTaskTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
     if (!taskTags) {
       return;
     }
@@ -187,10 +188,24 @@ export function ThinkAloudFooter({
     const tagsCopy = Array.from(taskTags);
     tagsCopy[tagIndex] = newTag;
 
-    setTags(tagsCopy);
+    setTags(tagsCopy, 'task');
   }, [setTags, taskTags]);
 
-  const createTagCallback = useCallback((t: Tag) => { setTags([...(taskTags || []), t]); }, [setTags, taskTags]);
+  const editParticipantTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
+    if (!allPartTags) {
+      return;
+    }
+
+    const tagIndex = allPartTags.findIndex((t) => t.id === oldTag.id);
+    const tagsCopy = Array.from(allPartTags);
+    tagsCopy[tagIndex] = newTag;
+
+    setTags(tagsCopy, 'participant');
+  }, [setTags, allPartTags]);
+
+  const createTaskTagCallback = useCallback((t: Tag) => { setTags([...(taskTags || []), t], 'task'); }, [setTags, taskTags]);
+
+  const createParticipantTagCallback = useCallback((t: Tag) => { setTags([...(taskTags || []), t], 'participant'); }, [setTags, taskTags]);
 
   const jumpedToTime = useMemo(() => (transcriptLines ? transcriptLines[jumpedToLine].start : 0), [jumpedToLine, transcriptLines]);
 
@@ -260,6 +275,31 @@ export function ThinkAloudFooter({
               data={visibleParticipants.map((part) => part)}
             />
 
+            <Stack gap="4">
+              <Text size="sm" fw={500}>Participant Tags</Text>
+              <TagSelector
+                tags={allPartTags || []}
+                editTagCallback={editParticipantTagCallback}
+                createTagCallback={createParticipantTagCallback}
+                tagsEmptyText="Add Participant Tags"
+                onSelectTags={(tempTags) => {
+                  if (storageEngine && partTags) {
+                    let copy = structuredClone(partTags);
+                    if (copy) {
+                      copy.partTags = tempTags;
+                    } else {
+                      copy = { partTags: [], taskTags: {} };
+                      copy.partTags = tempTags;
+                    }
+                    storageEngine.saveAllParticipantAndTaskTags(auth.user.user?.email || 'temp', participantId, currentTrial, copy).then(() => {
+                      pullPartTags(auth.user.user?.email || 'temp', participantId, currentTrial, storageEngine);
+                    });
+                  }
+                }}
+                selectedTags={partTags ? partTags.partTags : []}
+              />
+            </Stack>
+
             <Select
               leftSection={(
                 <Tooltip label="Previous Task">
@@ -293,8 +333,8 @@ export function ThinkAloudFooter({
               <Text size="sm" fw={500}>Task Tags</Text>
               <TagSelector
                 tags={taskTags || []}
-                editTagCallback={editTagCallback}
-                createTagCallback={createTagCallback}
+                editTagCallback={editTaskTagCallback}
+                createTagCallback={createTaskTagCallback}
                 tagsEmptyText="Add Task Tags"
                 onSelectTags={(tempTag) => {
                   if (storageEngine && partTags) {
@@ -303,7 +343,6 @@ export function ThinkAloudFooter({
                       copy.taskTags[currentTrial] = tempTag;
                     } else {
                       copy = { partTags: [], taskTags: {} };
-
                       copy.taskTags[currentTrial] = tempTag;
                     }
                     storageEngine.saveAllParticipantAndTaskTags(auth.user.user?.email || 'temp', participantId, currentTrial, copy).then(() => {
