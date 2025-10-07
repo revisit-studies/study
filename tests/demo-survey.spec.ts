@@ -110,6 +110,8 @@ test('test', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+
   // Check that the thank you message is displayed
   const endText = await page.getByText('Please wait while your answers are uploaded.');
   await expect(endText).toBeVisible();

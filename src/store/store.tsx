@@ -121,9 +121,13 @@ export async function studyStoreCreator(
     analysisPlaybackTrial: '',
     analysisIsPlaying: false,
     analysisHasAudio: false,
+    analysisHasScreenRecording: false,
+    analysisCanPlayScreenRecording: true,
     analysisHasProvenance: false,
+    provenanceJumpTime: 0,
     modes,
     matrixAnswers: {},
+    rankingAnswers: {},
     participantId,
     funcSequence: {},
   };
@@ -211,8 +215,17 @@ export async function studyStoreCreator(
       setAnalysisHasAudio(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasAudio = payload;
       },
+      setAnalysisHasScreenRecording(state, { payload }: PayloadAction<boolean>) {
+        state.analysisHasScreenRecording = payload;
+      },
+      setAnalysisCanPlayScreenRecording(state, { payload }: PayloadAction<boolean>) {
+        state.analysisCanPlayScreenRecording = payload;
+      },
       setAnalysisHasProvenance(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasProvenance = payload;
+      },
+      setProvenanceJumpTime(state, { payload }: PayloadAction<number>) {
+        state.provenanceJumpTime = payload;
       },
       setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string } | null>) => {
         if (action.payload) {
@@ -259,6 +272,14 @@ export async function studyStoreCreator(
           };
         } else {
           state.matrixAnswers = {};
+        }
+      },
+      setRankingAnswers: (state, action: PayloadAction<{ responseId: string, values: Record<string, string> } | null>) => {
+        if (action.payload) {
+          const { responseId, values } = action.payload;
+          state.rankingAnswers = { ...state.rankingAnswers, [responseId]: { ...values } };
+        } else {
+          state.rankingAnswers = {};
         }
       },
       updateResponseBlockValidation: (

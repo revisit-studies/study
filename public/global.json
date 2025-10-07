@@ -1,9 +1,10 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/GlobalConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/GlobalConfigSchema.json",
   "configsList": [
     "tutorial",
     "demo-html",
     "demo-html-input",
+    "demo-screen-recording",
     "demo-survey",
     "demo-training",
     "demo-html-trrack",
@@ -16,27 +17,30 @@
     "demo-dynamic",
     "demo-style",
     "demo-yaml",
+    "demo-ranking-widget",
     "example-brush-interactions",
     "example-cleveland",
     "example-mvnv",
     "example-VLAT-adaptive",
     "example-VLAT-full-randomized",
     "example-VLAT-mini-randomized",
+    "library-adaptive-vlat",
     "library-beauvis",
     "library-berlin-num",
     "library-calvi",
     "library-color-blindness",
     "library-demographics",
+    "library-graph-literacy-scale",
     "library-mic-check",
     "library-mini-vlat",
     "library-nasa-tlx",
     "library-previs",
     "library-quis",
     "library-sam",
+    "library-screen-recording",
     "library-smeq",
     "library-sus",
     "library-vlat",
-    "library-adaptive-vlat",
     "test-audio",
     "test-library",
     "test-likert-matrix",
@@ -54,6 +58,9 @@
     },
     "demo-html": {
       "path": "demo-html/config.json"
+    },
+    "demo-screen-recording": {
+      "path": "demo-screen-recording/config.json"
     },
     "demo-html-input": {
       "path": "demo-html-input/config.json"
@@ -90,6 +97,9 @@
     },
     "demo-yaml": {
       "path": "demo-yaml/config.yaml"
+    },
+    "demo-ranking-widget": {
+      "path": "demo-ranking-widget/config.json"
     },
     "example-brush-interactions": {
       "path": "example-brush-interactions/config.json"
@@ -130,6 +140,10 @@
       "path": "library-demographics/config.json",
       "test": true
     },
+    "library-graph-literacy-scale": {
+      "path": "library-graph-literacy-scale/config.json",
+      "test": true
+    },
     "library-mic-check": {
       "path": "library-mic-check/config.json",
       "test": true
@@ -152,6 +166,10 @@
     },
     "library-sam": {
       "path": "library-sam/config.json",
+      "test": true
+    },
+    "library-screen-recording": {
+      "path": "library-screen-recording/config.json",
       "test": true
     },
     "library-smeq": {

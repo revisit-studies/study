@@ -8,7 +8,75 @@ on:
   pull_request:
 
 jobs:
-  deploy:
+  deploy-main:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    if: ${{ github.ref == 'refs/heads/main' }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+          cache: 'yarn'
+
+      - run: yarn install --immutable
+
+      # If on main without env vars, build with .env file
+      - name: Build with .env file
+        if: ${{ vars.VITE_STORAGE_ENGINE == '' }}
+        run: yarn build
+
+      # If on main with env vars, build with github environment variables
+      - name: Build with github environment variables
+        if: ${{ vars.VITE_STORAGE_ENGINE != '' }}
+        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE yarn build
+        env:
+          VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
+
+      - uses: peaceiris/actions-gh-pages@v3
+        name: Deploy
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/dev'}}
+    permissions:
+      contents: write
+    concurrency:
+      group: dev-deploy
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+          cache: 'yarn'
+
+      - run: yarn install --immutable
+
+      - name: Build dev branch
+        run: VITE_BASE_PATH=/dev yarn build
+        env:
+          VITE_BASE_PATH: "/dev/"
+
+      - uses: peaceiris/actions-gh-pages@v3
+        name: Deploy dev branch
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          destination_dir: "dev"
+
+  pr-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -16,11 +84,11 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
+    if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' }}
 
     steps:
       - name: Comment on PR
         uses: hasura/comment-progress@v2.2.0
-        if: ${{ github.ref != 'refs/heads/main' }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
@@ -37,28 +105,9 @@ jobs:
 
       - run: yarn install --immutable
 
-      # If on main without env vars, build with .env file
-      - name: Build with .env file
-        if: ${{ vars.VITE_STORAGE_ENGINE == '' && github.ref == 'refs/heads/main' }}
-        run: yarn build
-
-      # If on main with env vars, build with github environment variables
+      # Build with github environment variables
       - name: Build with github environment variables
-        if: ${{ vars.VITE_STORAGE_ENGINE != '' && github.ref == 'refs/heads/main' }}
-        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE yarn build
-        env:
-          VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
-
-      - uses: peaceiris/actions-gh-pages@v3
-        name: Deploy
-        if: ${{ github.ref == 'refs/heads/main' }}
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-
-      # If on PR, build with github environment variables
-      - name: Build with github environment variables
-        if: ${{ vars.VITE_STORAGE_ENGINE != '' && github.ref != 'refs/heads/main' }}
+        if: ${{ vars.VITE_STORAGE_ENGINE != '' }}
         run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_PATH=$VITE_BASE_PATH yarn build
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
@@ -66,7 +115,6 @@ jobs:
 
       - name: Push PR deploy preview
         uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.ref != 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
@@ -74,7 +122,6 @@ jobs:
 
       - name: Update comment
         uses: hasura/comment-progress@v2.2.0
-        if: ${{ github.ref != 'refs/heads/main' }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}

@@ -40,7 +40,7 @@ export default [{
     },
 
     parser: tsParser,
-    ecmaVersion: 2022,
+    ecmaVersion: 'latest',
     sourceType: 'module',
   },
 

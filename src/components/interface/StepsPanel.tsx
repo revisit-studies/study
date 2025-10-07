@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
-  IconArrowsShuffle, IconBrain, IconCheck, IconPackageImport, IconX, IconDice3,
+  IconArrowsShuffle, IconBrain, IconCheck, IconPackageImport, IconX, IconDice3, IconInfoCircle,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import {
@@ -15,6 +15,7 @@ import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useFlatSequence, useStoreSelector } from '../../store/store';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
 
 export type ComponentBlockWithOrderPath =
   Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] }
@@ -152,16 +153,16 @@ function StepItem({
     : (step.includes('.components.') ? '.components.' : false);
   const cleanedStep = step.includes('$') && coOrComponents && step.includes(coOrComponents) ? step.split(coOrComponents).at(-1) : step;
 
-  const matchingAnswer = parentBlock.order === 'dynamic' ? Object.entries(answers).find(([key, _]) => key === `${parentBlock.id}_${flatSequence.indexOf(parentBlock.id!)}_${cleanedStep}_${startIndex}`) : Object.entries(answers).find(([key, _]) => key === `${cleanedStep}_${startIndex}` || key === `${step}_${startIndex}`);
+  const matchingAnswer = parentBlock.order === 'dynamic' ? Object.entries(answers).find(([key, _]) => key === `${parentBlock.id}_${flatSequence.indexOf(parentBlock.id!)}_${cleanedStep}_${startIndex}`) : Object.entries(answers).find(([key, _]) => key === `${cleanedStep}_${stepIndex}` || key === `${step}_${stepIndex}`);
   const taskAnswer: StoredAnswer | null = matchingAnswer ? matchingAnswer[1] : null;
 
   const correctAnswer = taskAnswer && taskAnswer.correctAnswer.length > 0 && Object.keys(taskAnswer.answer).length > 0 && taskAnswer.correctAnswer;
-  const correct = correctAnswer && taskAnswer && Object.values(correctAnswer).every((value) => taskAnswer.answer[value.id] === value.answer);
+  const correct = correctAnswer && taskAnswer && componentAnswersAreCorrect(taskAnswer.answer, correctAnswer);
 
   const correctIncorrectIcon = taskAnswer && correctAnswer ? (
     correct
-      ? <IconCheck size={16} style={{ marginRight: 4, marginBottom: -3 }} color="green" />
-      : <IconX size={16} style={{ marginRight: 4, marginBottom: -3 }} color="red" />
+      ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
+      : <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="red" />
   ) : null;
 
   const INITIAL_CLAMP = 6;
@@ -176,39 +177,57 @@ function StepItem({
   const [correctAnswerClamp, setCorrectAnswerClamp] = useState<number | undefined>(INITIAL_CLAMP);
 
   return (
-    <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0}>
-      <HoverCard.Target>
-        <NavLink
-          active={active}
-          style={{
-            lineHeight: '32px',
-            height: '32px',
-          }}
-          label={(
-            <Box>
-              {interruption && (
-                <Tooltip label="Interruption" position="right" withArrow>
-                  <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />
-                </Tooltip>
-              )}
-              {step !== cleanedStep && (
-                <Tooltip label="Package import" position="right" withArrow>
-                  <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="blue" />
-                </Tooltip>
-              )}
-              {task?.responseOrder === 'random' && (
-                <Tooltip label="Random responses" position="right" withArrow>
-                  <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, marginTop: -4, verticalAlign: 'middle' }} color="black" />
-                </Tooltip>
-              )}
-              {correctIncorrectIcon}
-              <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline" style={{ textWrap: 'nowrap' }}>{cleanedStep}</Text>
-            </Box>
+    <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0} closeDelay={0}>
+      <NavLink
+        active={active}
+        style={{
+          lineHeight: '32px',
+          height: '32px',
+        }}
+        label={(
+          <Flex align="center">
+            {interruption && (
+            <Tooltip label="Interruption" position="right" withArrow>
+              <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="orange" />
+            </Tooltip>
+            )}
+            {step !== cleanedStep && (
+            <Tooltip label="Package import" position="right" withArrow>
+              <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
+            </Tooltip>
+            )}
+            {task?.responseOrder === 'random' && (
+            <Tooltip label="Random responses" position="right" withArrow>
+              <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
+            </Tooltip>
+            )}
+            {correctIncorrectIcon}
+            <Text
+              size="sm"
+              span={active}
+              fw={active ? '700' : undefined}
+              display="inline"
+              title={cleanedStep}
+              style={{
+                textWrap: 'nowrap',
+                flexGrow: 1,
+                width: 0,
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+              }}
+            >
+              {cleanedStep}
+            </Text>
+            {cleanedStep !== 'end' && (
+              <HoverCard.Target>
+                <IconInfoCircle size={16} style={{ marginLeft: '5px', verticalAlign: 'middle' }} opacity={0.5} />
+              </HoverCard.Target>
+            )}
+          </Flex>
           )}
-          onClick={navigateTo}
-          disabled={disabled && parentBlock.order !== 'dynamic'}
-        />
-      </HoverCard.Target>
+        onClick={navigateTo}
+        disabled={disabled && parentBlock.order !== 'dynamic'}
+      />
       {task && (
         <HoverCard.Dropdown>
           <Box mah={700} maw={500} style={{ overflow: 'auto' }}>
@@ -368,12 +387,20 @@ export function StepsPanel({
       key={configSequence.id}
       active={dynamicBlockActive}
       label={(
-        <Box
-          style={{
-            opacity: sequenceStepsLength > 0 ? 1 : 0.5,
-          }}
-        >
-          <Text size="sm" display="inline" fw={dynamicBlockActive ? 900 : 700}>
+        <Flex align="center" style={{ opacity: sequenceStepsLength > 0 ? 1 : 0.5 }}>
+          <Text
+            size="sm"
+            display="inline"
+            fw={dynamicBlockActive ? 900 : 700}
+            title={configSequence.id ? configSequence.id : configSequence.order}
+            style={{
+              textWrap: 'nowrap',
+              flexGrow: 1,
+              width: 0,
+              textOverflow: 'ellipsis',
+              overflow: 'hidden',
+            }}
+          >
             {configSequence.id ? configSequence.id : configSequence.order}
           </Text>
           {configSequence.order === 'random' || configSequence.order === 'latinSquare' ? (
@@ -391,8 +418,8 @@ export function StepsPanel({
               {participantSequence?.components.filter((s) => typeof s === 'string' && configSequence.interruptions?.flatMap((i) => i.components).includes(s)).length || 0}
             </Badge>
           )}
-        </Box>
-            )}
+        </Flex>
+      )}
       opened={isPanelOpened}
       onClick={() => (configSequence.order === 'dynamic' && !analysisNavigation && participantView ? navigateTo() : setIsPanelOpened(!isPanelOpened))}
       childrenOffset={32}

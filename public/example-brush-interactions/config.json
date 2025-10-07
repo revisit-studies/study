@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Interactive Selections in Scatterplots",
     "version": "pilot",
@@ -79,7 +79,6 @@
     "tutorial": {
       "type": "markdown",
       "path": "example-brush-interactions/assets/tutorial.md",
-      "nextButtonText": "",
       "response": []
     },
     "rectangleBrush_q1": {

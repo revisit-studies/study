@@ -174,8 +174,12 @@ export interface StoreState {
   analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };
   analysisIsPlaying: boolean;
   analysisHasAudio: boolean;
+  analysisHasScreenRecording: boolean;
+  analysisCanPlayScreenRecording: boolean;
+  provenanceJumpTime: number;
   analysisHasProvenance: boolean;
   modes: Record<REVISIT_MODE, boolean>;
   matrixAnswers: Record<string, Record<string, string>>;
+  rankingAnswers: Record<string, Record<string, string>>;
   funcSequence: Record<string, string[]>;
 }

@@ -11,6 +11,7 @@ import { Reactive } from './ReactiveInput';
 import { LikertInput } from './LikertInput';
 import { NumericInput } from './NumericInput';
 import { RadioInput } from './RadioInput';
+import { RankingInput } from './RankingInput';
 import { SliderInput } from './SliderInput';
 import { StringInput } from './StringInput';
 import { TextAreaInput } from './TextAreaInput';
@@ -46,7 +47,7 @@ export function ResponseSwitcher({
 }) {
   const isAnalysis = useIsAnalysis();
   // Don't update if we're in analysis mode
-  const ans = (isAnalysis || Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![response.id] } : form) || { value: undefined };
+  const ans = (isAnalysis ? { value: storedAnswer![response.id] } : form) || { value: undefined };
   const dontKnowValue = (Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined };
   const otherValue = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
   const inputDisabled = Object.keys(storedAnswer || {}).length > 0 || disabled;
@@ -195,6 +196,15 @@ export function ResponseSwitcher({
         index={index}
         enumerateQuestions={enumerateQuestions}
         otherValue={otherValue}
+      />
+      )}
+      {(response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') && (
+      <RankingInput
+        response={response}
+        disabled={isDisabled || dontKnowCheckbox?.checked}
+        answer={ans as { value: Record<string, string> }}
+        index={index}
+        enumerateQuestions={enumerateQuestions}
       />
       )}
       {response.type === 'reactive' && (

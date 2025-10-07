@@ -42,11 +42,6 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
   return foundConfigComponentConfig.correctAnswer.every((correctAnswerEntry) => answers[correctAnswerEntry.id] === correctAnswerEntry.answer);
 }
 
-export function checkAnswerCorrect(answer: Record<string, string | number | boolean | string[]>, correctAnswer: Answer[]) {
-  // Check that the response is matches the correct answer
-  return correctAnswer.every((correctAnswerEntry) => answer[correctAnswerEntry.id] === correctAnswerEntry.answer);
-}
-
 export function useNextStep() {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();
@@ -62,7 +57,7 @@ export function useNextStep() {
 
   const storeDispatch = useStoreDispatch();
   const {
-    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox,
+    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, setRankingAnswers,
   } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
@@ -132,6 +127,7 @@ export function useNextStep() {
       storeDispatch(setReactiveAnswers({}));
       storeDispatch(setMatrixAnswersCheckbox(null));
       storeDispatch(setMatrixAnswersRadio(null));
+      storeDispatch(setRankingAnswers(null));
     }
 
     let nextStep = currentStep + 1;
@@ -220,7 +216,7 @@ export function useNextStep() {
     } else {
       navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, funcIndex, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, funcIndex, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, studyConfig, participantSequence]);
 
   return {
     isNextDisabled,

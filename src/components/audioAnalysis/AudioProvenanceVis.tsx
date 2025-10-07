@@ -26,6 +26,10 @@ const margin = {
   left: 0, top: 0, right: 0, bottom: 0,
 };
 
+function safe<T>(p: Promise<T>): Promise<T | null> {
+  return p.catch(() => null);
+}
+
 export function AudioProvenanceVis({
   setTimeString, answers, setTime, taskName, context, saveProvenance, analysisIsPlaying, setAnalysisIsPlaying, speed, jumpedToAudioTime = 0,
 }: { setTimeString: (time: string) => void; answers: Record<string, StoredAnswer>, setTime?: (time: number) => void, taskName: string, context: 'audioAnalysis' | 'provenanceVis', saveProvenance?: ((state: unknown) => void), analysisIsPlaying: boolean, setAnalysisIsPlaying: (b: boolean) => void, speed: number, jumpedToAudioTime?: number }) {
@@ -57,8 +61,6 @@ export function AudioProvenanceVis({
   // wrap these in useMemo to avoid unnecessary re-renders
   const [analysisHasAudio, setAnalysisHasAudio] = useState(true);
 
-  // useEffect(() => { saveAnalysisState({ prov: undefined, location: 'stimulus' }); }, []);
-
   const [ref, { width }] = useResizeObserver();
   const [waveSurferWidth, setWaveSurferWidth] = useState<number>(0);
 
@@ -78,6 +80,7 @@ export function AudioProvenanceVis({
   const [playTime, setPlayTime] = useState<number>(0);
 
   const wavesurfer = useRef<WaveSurferType | null>(null);
+  const currentTimeRef = useRef<number>(0); // time in seconds
 
   const waveSurferDiv = useRef(null);
 
@@ -280,6 +283,7 @@ export function AudioProvenanceVis({
   useEffect(() => {
     if (startTime) {
       setPlayTime(startTime + (replayTimestamp || 0));
+      currentTimeRef.current = replayTimestamp || 0;
     }
   }, [startTime, replayTimestamp]);
 
@@ -305,12 +309,26 @@ export function AudioProvenanceVis({
     async (waveSurfer: WaveSurferType | null) => {
       wavesurfer.current = waveSurfer;
 
+      if (taskName.includes('__dynamicLoading')) {
+        return;
+      }
+
       if (waveSurfer && isAnalysis && taskName && storageEngine) {
         try {
           if (!participantId) {
             throw new Error('Participant ID is required to load audio');
           }
-          const url = await storageEngine.getAudio(taskName, participantId);
+
+          const [audioUrl, screenUrl] = await Promise.all([
+            safe(storageEngine.getAudio(taskName, participantId)),
+            safe(storageEngine.getScreenRecording(taskName, participantId)),
+          ]);
+
+          // Mute wavesurfer if audio is played from the screen recorded video.
+          wavesurfer.current?.setMuted(!!screenUrl);
+
+          const url = screenUrl ?? audioUrl ?? null;
+
           await waveSurfer.load(url!);
           setWaveSurferLoading(false);
           // setAnalysisHasAudio(true);

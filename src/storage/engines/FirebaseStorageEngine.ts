@@ -21,6 +21,7 @@ import {
   getDoc,
   getDocs,
   initializeFirestore,
+  onSnapshot,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -159,7 +160,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await setDoc(configHashDoc, { configHash });
   }
 
-  protected async _getAllSequenceAssignments(studyId: string) {
+  public async getAllSequenceAssignments(studyId: string) {
     const studyCollection = collection(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
@@ -180,6 +181,33 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
       } as SequenceAssignment))
       .sort((a, b) => a.timestamp - b.timestamp);
+  }
+
+  // Set up realtime listener for sequence assignments
+  _setupSequenceAssignmentListener(studyId: string, callback: (assignments: SequenceAssignment[]) => void) {
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+    );
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+
+    return onSnapshot(sequenceAssignmentCollection, (snapshot) => {
+      const assignments = snapshot.docs
+        .map((d) => d.data())
+        .map((data) => ({
+          ...data,
+          timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
+          createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
+          completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+        } as SequenceAssignment))
+        .sort((a, b) => a.timestamp - b.timestamp);
+
+      callback(assignments);
+    });
   }
 
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean = false) {
@@ -224,9 +252,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
   protected async _rejectParticipantRealtime(participantId: string) {
     await this.verifyStudyDatabase();
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
     if (!this.studyId) {
       throw new Error('Study ID is not set');
     }
@@ -247,6 +272,32 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       participantId,
     );
     await updateDoc(participantSequenceAssignmentDoc, { rejected: true });
+  }
+
+  protected async _undoRejectParticipantRealtime(participantId: string) {
+    await this.verifyStudyDatabase();
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${this.studyId}`,
+    );
+
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      participantId,
+    );
+    await updateDoc(participantSequenceAssignmentDoc, { rejected: false });
   }
 
   protected async _claimSequenceAssignment(participantId: string) {
@@ -343,6 +394,36 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       return await getDownloadURL(audioRef);
     } catch {
       console.warn(`Audio for task ${task} and participant ${participantId} not found.`);
+      return null;
+    }
+  }
+
+  protected async _getScreenRecordingUrl(
+    task: string,
+    participantId: string,
+  ): Promise<string | null> {
+    const storage = getStorage();
+    const screenRecordingRef = ref(storage, `${this.collectionPrefix}${this.studyId}/screenRecording/${participantId}_${task}`);
+
+    try {
+      return await getDownloadURL(screenRecordingRef);
+    } catch {
+      console.warn(`Screen recording for task ${task} and participant ${participantId} not found.`);
+      return null;
+    }
+  }
+
+  protected async _getTranscriptUrl(
+    task: string,
+    participantId: string,
+  ): Promise<string | null> {
+    const storage = getStorage();
+    const transcriptRef = ref(storage, `${this.collectionPrefix}${this.studyId}/audio/${participantId}_${task}.wav_transcription.txt`);
+
+    try {
+      return await getDownloadURL(transcriptRef);
+    } catch {
+      console.warn(`Transcript for task ${task} and participant ${participantId} not found.`);
       return null;
     }
   }

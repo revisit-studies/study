@@ -110,6 +110,7 @@ export function ResponseBlock({
   const reactiveAnswers = useStoreSelector((state) => state.reactiveAnswers);
 
   const matrixAnswers = useStoreSelector((state) => state.matrixAnswers);
+  const rankingAnswers = useStoreSelector((state) => state.rankingAnswers);
 
   const studyConfig = useStudyConfig();
 
@@ -135,25 +136,33 @@ export function ResponseBlock({
   }, [reactiveAnswers]);
 
   useEffect(() => {
-    // Checks if there are any matrix responses.
+    // Checks if there are any matrix or ranking responses.
     const matrixResponse = responsesWithDefaults.filter((r) => r.type === 'matrix-radio' || r.type === 'matrix-checkbox');
-    if (matrixAnswers && matrixResponse.length > 0) {
-      // Create blank object with current values
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const updatedValues: Record<string, any> = { ...answerValidator.values };
-      // Adjust object to have new matrix response values
-      matrixResponse.forEach((r) => {
-        const { id } = r;
-        updatedValues[id] = {
-          ...answerValidator.getInputProps(id).value,
-          ...matrixAnswers[id],
-        };
-      });
-      // update answerValidator
-      answerValidator.setValues(updatedValues);
-    }
+    // Create blank object with current values
+    const rankingResponse = responsesWithDefaults.filter((r) => r.type === 'ranking-sublist' || r.type === 'ranking-categorical' || r.type === 'ranking-pairwise');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updatedValues: Record<string, any> = { ...answerValidator.values };
+    // Adjust object to have new matrix response values
+    matrixResponse.forEach((r) => {
+      const { id } = r;
+      updatedValues[id] = {
+        ...answerValidator.getInputProps(id).value,
+        ...matrixAnswers[id],
+      };
+    });
+
+    rankingResponse.forEach((r) => {
+      const { id } = r;
+      updatedValues[id] = {
+        ...answerValidator.getInputProps(id).value,
+        ...rankingAnswers[id],
+      };
+    });
+
+    // update answerValidator
+    answerValidator.setValues(updatedValues);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matrixAnswers]);
+  }, [matrixAnswers, rankingAnswers]);
 
   useEffect(() => {
     trrack.apply('update', actions.updateFormAction(structuredClone(answerValidator.values)));

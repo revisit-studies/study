@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Question Types and Form Elements Demo",
     "version": "pilot",
@@ -414,6 +414,36 @@
         }
       ],
       "responseOrder": "random"
+    },
+    "survey-ranking-widget": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "ranking-sublist",
+          "type": "ranking-sublist",
+          "prompt": "Rank your top 2 favorite fruits from the list below.",
+          "location": "belowStimulus",
+          "options": ["Apple", "Banana", "Orange", "Strawberry", "Grapes"],
+          "numItems": 2,
+          "required": false
+        },
+        {
+          "id": "ranking-categorical",
+          "type": "ranking-categorical",
+          "prompt": "Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.",
+          "location": "belowStimulus",
+          "options": ["Drawing", "Singing", "Hiking", "Dancing", "Photography"],
+          "required": false
+        },
+        {
+          "id": "ranking-pairwise",
+          "type": "ranking-pairwise",
+          "prompt": "Which meal would you prefer?",
+          "location": "belowStimulus",
+          "options": ["Pizza", "Sushi", "Burger", "Pasta", "Salad", "Tacos"],
+          "required": false
+        }
+      ]
     }
   },
   "sequence": {
@@ -422,7 +452,8 @@
       "introduction",
       "survey",
       "survey_randomized_options",
-      "survey_randomized_form"
+      "survey_randomized_form",
+      "survey-ranking-widget"
     ]
   }
 }

@@ -127,7 +127,7 @@ export class SupabaseStorageEngine extends StorageEngine {
       .eq('docId', 'currentConfigHash');
   }
 
-  protected async _getAllSequenceAssignments(studyId: string) {
+  public async getAllSequenceAssignments(studyId: string) {
     // get all sequence assignments from the study collection
     const { data, error } = await this.supabase
       .from('revisit')
@@ -197,9 +197,6 @@ export class SupabaseStorageEngine extends StorageEngine {
 
   protected async _rejectParticipantRealtime(participantId: string) {
     await this.verifyStudyDatabase();
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
     if (!this.studyId) {
       throw new Error('Study ID is not set');
     }
@@ -242,6 +239,36 @@ export class SupabaseStorageEngine extends StorageEngine {
       .update({ data: { ...claimedData.data, claimed: false } })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${claimedData.data.participantId}`);
+  }
+
+  protected async _undoRejectParticipantRealtime(participantId: string) {
+    await this.verifyStudyDatabase();
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentPath = `sequenceAssignment_${participantId}`;
+    // Get the sequence assignment for the participant
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', sequenceAssignmentPath)
+      .single();
+
+    if (error || !data) {
+      throw new Error('Failed to retrieve sequence assignment for current participant');
+    }
+
+    // Update the sequence assignment for the participant to mark it as un-rejected
+    await this.supabase
+      .from('revisit')
+      .update({ data: { ...data.data, rejected: false } })
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', sequenceAssignmentPath);
   }
 
   protected async _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
@@ -357,6 +384,19 @@ export class SupabaseStorageEngine extends StorageEngine {
     // Get the audio from the storage
     const audio = await this._getFromStorage(`/audio/${id}`, task);
     return audio ? URL.createObjectURL(audio) : null;
+  }
+
+  protected async _getScreenRecordingUrl(task: string, participantId?: string) {
+    await this.verifyStudyDatabase();
+    // If participantId is not provided, use the current participant id
+    const id = participantId || this.currentParticipantId;
+    if (!id) {
+      throw new Error('Participant not initialized');
+    }
+
+    // Get the screen recording from the storage
+    const screenRecording = await this._getFromStorage(`/screenRecording/${id}`, task);
+    return screenRecording ? URL.createObjectURL(screenRecording) : null;
   }
 
   protected async _testingReset(studyId: string) {
