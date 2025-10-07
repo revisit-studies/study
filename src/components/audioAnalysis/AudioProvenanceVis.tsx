@@ -121,6 +121,29 @@ export function AudioProvenanceVis({
     }
   }, 100); // 100ms throttle
 
+  const setWavesurferTime = useCallback((n: number, percent: number | undefined) => {
+    // if were past the end, pause the timer
+    const audioEndTime = totalAudioLength * 1000 + startTime;
+    if (n > audioEndTime) {
+      setAnalysisIsPlaying(false);
+      setPlayTime(n);
+
+      return;
+    }
+
+    setPlayTime(n);
+
+    if (wavesurfer.current && percent !== undefined && !Number.isNaN(percent)) {
+      setTimeout(() => {
+        wavesurfer.current?.seekTo(percent);
+      });
+    }
+
+    if (setTime) {
+      setTime(n);
+    }
+  }, [setAnalysisIsPlaying, setTime, startTime, totalAudioLength]);
+
   useEffect(() => {
     _setPlayTime(startTime + jumpedToAudioTime * 1000 + 1, undefined);
   }, [_setPlayTime, jumpedToAudioTime, startTime, totalAudioLength]);
@@ -278,7 +301,7 @@ export function AudioProvenanceVis({
 
   const isAnalysis = useIsAnalysis();
 
-  const handleWSMount = useCallback(
+  const handleWSMount = useEvent(
     async (waveSurfer: WaveSurferType | null) => {
       wavesurfer.current = waveSurfer;
 
@@ -307,8 +330,6 @@ export function AudioProvenanceVis({
         setTotalAudioLength(0);
       }
     },
-    // adding speed here makes this remount which is bad
-    [isAnalysis, taskName, storageEngine, participantId, speed],
   );
 
   useEffect(() => {
@@ -346,9 +367,6 @@ export function AudioProvenanceVis({
 
   return (
     <Group wrap="nowrap" gap={10} mx={10}>
-      {/* <ActionIcon variant="filled" size={30} onClick={() => setAnalysisIsPlaying(!analysisIsPlaying)}>
-        {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
-      </ActionIcon> */}
       <Stack ref={ref} style={{ width: '100%' }} gap={0}>
         {participantId !== undefined && taskName
           ? (
@@ -389,7 +407,8 @@ export function AudioProvenanceVis({
             startTime={startTime}
             width={width}
             xScale={xScale}
-            updateTimer={_setPlayTime}
+            debounceUpdateTimer={_setPlayTime}
+            directUpdateTimer={setWavesurferTime}
             // initialTime={replayTimestamp ? startTime + replayTimestamp : undefined}
           />
         ) : null}

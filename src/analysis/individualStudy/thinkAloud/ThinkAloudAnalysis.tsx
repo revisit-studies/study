@@ -14,11 +14,12 @@ import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { useAuth } from '../../../store/hooks/useAuth';
 import { ParticipantData } from '../../../storage/types';
 import {
-  EditedText, TranscribedAudio,
+  EditedText,
 } from './types';
 import { TextEditor } from './TextEditor';
 import { StorageEngine } from '../../../storage/engines/types';
 import { ThinkAloudFooter } from './ThinkAloudFooter';
+import { useEvent } from '../../../store/hooks/useEvent';
 
 async function getTranscript(storageEngine: StorageEngine | undefined, partId: string | undefined, trialName: string | undefined, authEmail: string | null | undefined) {
   if (storageEngine && partId && trialName && authEmail) {
@@ -36,13 +37,32 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
   return null;
 }
 
+function getRawTranscript(storageEngine: StorageEngine | undefined, currentTrial: string, participantId: string, studyId: string | undefined) {
+  if (storageEngine && studyId) {
+    return storageEngine?.getTranscription(currentTrial, participantId, studyId).then((data) => {
+      if (!data || !data.results) {
+        return null;
+      }
+
+      const newTranscription = data.results.map((task) => {
+        const newTimeTask = ({ ...task, resultEndTime: +(task.resultEndTime as string).split('s')[0] });
+
+        return newTimeTask;
+      }).flat();
+
+      return { results: newTranscription };
+    });
+  }
+
+  return null;
+}
+
 export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipants: ParticipantData[]}) {
   const { storageEngine } = useStorageEngine();
-  const [rawTranscript, setRawTranscript] = useState<TranscribedAudio | null>(null);
 
   const auth = useAuth();
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [jumpedToLine, setJumpedToLine] = useState<number>(0);
 
   const currentTrial = useMemo(() => searchParams.get('currentTrial') || '', [searchParams]);
@@ -52,8 +72,13 @@ export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipant
   const [currentShownTranscription, setCurrentShownTranscription] = useState(0);
 
   const { value: participant } = useAsync(getParticipantData, [participantId, storageEngine]);
+  const { studyId } = useParams();
+
+  const [ref, { width }] = useResizeObserver();
 
   const [editedTranscript, _setEditedTranscript] = useState<EditedText[]>([]);
+
+  const { value: rawTranscript, status: rawTranscriptStatus } = useAsync(getRawTranscript, [storageEngine, currentTrial, participantId, studyId]);
 
   const debouncedSave = useMemo(() => {
     if (storageEngine && participantId && currentTrial) {
@@ -62,6 +87,15 @@ export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipant
 
     return (_editedText: EditedText[]) => null;
   }, [currentTrial, auth.user.user?.email, storageEngine, participantId]);
+
+  useEffect(() => {
+    if (!currentTrial && !participantId && visibleParticipants.length > 0) {
+      // why doesnt this show on the type
+      // @ts-ignore
+      setSearchParams({ participantId: visibleParticipants[0].participantId, currentTrial: Object.values(visibleParticipants[0].answers).find((ans) => +ans.trialOrder.split('_')[0] === 0)?.identifier });
+    }
+    // I really only want to do this on mount, so leaving this empty
+  }, []);
 
   const setEditedTranscript = useCallback((editedText: EditedText[]) => {
     _setEditedTranscript(editedText);
@@ -78,13 +112,9 @@ export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipant
     }
   }, [onlineTranscriptList, transcriptStatus]);
 
-  const { studyId } = useParams();
-
-  const [ref, { width }] = useResizeObserver();
-
   // Update the current transcription based on the playTime.
   // TODO:: this is super unperformant, but I don't have a solution atm. think about it harder
-  const onTimeUpdate = useCallback((playTime: number) => {
+  const onTimeUpdate = useEvent((playTime: number) => {
     if (rawTranscript && currentShownTranscription !== null && participant && playTime > 0) {
       let tempCurrentShownTranscription = currentShownTranscription;
       const startTime = (currentTrial ? participant.answers[currentTrial].startTime : participant.answers.audioTest.startTime);
@@ -110,38 +140,20 @@ export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipant
 
       setCurrentShownTranscription(tempCurrentShownTranscription);
     }
-  }, [rawTranscript, currentShownTranscription, participant, currentTrial]);
+  });
 
   // Get transcription, and merge all of the transcriptions into one, correcting for time problems. Only do this if we already checked that we dont have an edited transcript
   useEffect(() => {
-    if (studyId && participantId) {
-      storageEngine?.getTranscription(currentTrial, participantId, studyId).then((data) => {
-        if (!data) {
-          return;
-        }
-
-        const newTranscription = data.results.map((task) => {
-          const newTimeTask = ({ ...task, resultEndTime: +(task.resultEndTime as string).split('s')[0] });
-
-          return newTimeTask;
-        }).flat();
-
-        setRawTranscript({ results: newTranscription });
-
-        if ((!onlineTranscriptList || onlineTranscriptList.length === 0) && editedTranscript.length === 0) {
-          setEditedTranscript(newTranscription.map((t, i) => ({
-            transcriptMappingStart: i,
-            transcriptMappingEnd: i,
-            text: t.alternatives[0].transcript?.trim() || '',
-            selectedTags: [],
-            annotation: '',
-          })));
-        }
-
-        setCurrentShownTranscription(0);
-      });
+    if (transcriptStatus === 'success' && (!onlineTranscriptList || onlineTranscriptList.length === 0) && rawTranscriptStatus === 'success' && rawTranscript) {
+      setEditedTranscript(rawTranscript.results.map((t, i) => ({
+        transcriptMappingStart: i,
+        transcriptMappingEnd: i,
+        text: t.alternatives[0].transcript?.trim() || '',
+        selectedTags: [],
+        annotation: '',
+      })));
     }
-  }, [storageEngine, studyId, participantId, currentTrial, setEditedTranscript, setCurrentShownTranscription, onlineTranscriptList, transcriptStatus, editedTranscript]);
+  }, [storageEngine, studyId, participantId, currentTrial, setEditedTranscript, setCurrentShownTranscription, onlineTranscriptList, transcriptStatus, editedTranscript, rawTranscript, rawTranscriptStatus]);
 
   const changeLine = useCallback((focusedLine: number) => {
     const currentLine = editedTranscript[focusedLine].transcriptMappingStart;
@@ -160,7 +172,7 @@ export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipant
           </Stack>
         )}
 
-        <ThinkAloudFooter jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} />
+        <ThinkAloudFooter studyId={studyId || ''} jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} />
       </Stack>
 
     </Group>

@@ -5,8 +5,8 @@ import {
 import { useEvent } from '../../store/hooks/useEvent';
 
 export function Timer({
-  width, height, updateTimer, duration, isPlaying, xScale, startTime, initialTime, speed,
-}: { width: number, height: number, updateTimer: (time: number, percent: number | undefined) => void, duration: number, isPlaying: boolean, xScale: d3.ScaleLinear<number, number>, startTime: number, initialTime?: number, speed: number }) {
+  width, height, debounceUpdateTimer, directUpdateTimer, duration, isPlaying, xScale, startTime, initialTime, speed,
+}: { width: number, height: number, debounceUpdateTimer: (time: number, percent: number | undefined) => void, directUpdateTimer: (time: number, percent: number | undefined) => void, duration: number, isPlaying: boolean, xScale: d3.ScaleLinear<number, number>, startTime: number, initialTime?: number, speed: number }) {
   const timer = useRef<number>(0);
   const startDate = useRef<number>(Date.now());
   const [forceRerenderInt, setForceRerenderInt] = useState<number>(0);
@@ -16,11 +16,11 @@ export function Timer({
       // Initial time is the time the user wants to start at, if it's not provided, we start at the beginning
       const time = initialTime !== undefined ? initialTime : startTime;
       timer.current = time - startTime;
-      updateTimer(time, (time - startTime) / duration);
+      directUpdateTimer(time, (time - startTime) / duration);
 
       localStorage.setItem('currentTime', `${startTime + timer.current}_${(timer.current / duration).toString()}_${timer.current}`);
     }
-  }, [startTime, updateTimer, initialTime, duration]);
+  }, [startTime, directUpdateTimer, initialTime, duration]);
 
   const incrementTimer = useEvent(() => {
     if (timer.current >= duration) {
@@ -32,18 +32,18 @@ export function Timer({
     timer.current += (temp - startDate.current) * speed;
 
     startDate.current = temp;
-    updateTimer(startTime + timer.current, undefined);
+    debounceUpdateTimer(startTime + timer.current, undefined);
     setForceRerenderInt(forceRerenderInt + 1);
   });
 
   useEffect(() => {
     // if were past the end of the timer but someone hit play, reset the timer to the beginning
     if (isPlaying && timer.current >= duration) {
-      updateTimer(startTime, 0);
+      directUpdateTimer(startTime, 0);
       startDate.current = Date.now() - timer.current;
       timer.current = 0;
     }
-  }, [startTime, isPlaying, duration, updateTimer]);
+  }, [startTime, isPlaying, duration, directUpdateTimer]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -70,7 +70,7 @@ export function Timer({
         timer.current = +e.newValue.split('_')[2];
         startDate.current = Date.now() - timer.current;
 
-        updateTimer(+e.newValue.split('_')[0], +e.newValue.split('_')[1]);
+        directUpdateTimer(+e.newValue.split('_')[0], +e.newValue.split('_')[1]);
         setForceRerenderInt(forceRerenderInt + 1);
       }
     };
@@ -78,7 +78,7 @@ export function Timer({
     window.addEventListener('storage', listener);
 
     return () => window.removeEventListener('storage', listener);
-  }, [forceRerenderInt, updateTimer, xScale]);
+  }, [directUpdateTimer, forceRerenderInt, xScale]);
 
   const clickOnSvg = useCallback((e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
     timer.current = xScale.invert(e.clientX - 10) - xScale.domain()[0];
@@ -87,8 +87,8 @@ export function Timer({
 
     localStorage.setItem('currentTime', `${startTime + timer.current}_${(timer.current / duration).toString()}_${timer.current}`);
 
-    updateTimer(startTime + timer.current, timer.current / duration);
-  }, [duration, forceRerenderInt, startTime, updateTimer, xScale]);
+    directUpdateTimer(startTime + timer.current, timer.current / duration);
+  }, [directUpdateTimer, duration, forceRerenderInt, startTime, xScale]);
 
   return (
     <svg

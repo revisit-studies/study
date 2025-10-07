@@ -1,4 +1,5 @@
 import { useDispatch } from 'react-redux';
+import { useParams } from 'react-router';
 import { useAsync } from '../../store/hooks/useAsync';
 
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -23,12 +24,14 @@ export function AnalysisFooter() {
 
   const dispatch = useDispatch();
 
+  const { studyId } = useParams();
+
   const {
     saveAnalysisState,
   } = useStoreActions();
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <ThinkAloudFooter currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={(prov: any) => dispatch(saveAnalysisState(prov))} />
+    <ThinkAloudFooter studyId={studyId || ''} currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={(prov: any) => dispatch(saveAnalysisState(prov))} />
   );
 }

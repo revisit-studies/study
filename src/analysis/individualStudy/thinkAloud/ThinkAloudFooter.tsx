@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   AppShell,
+  Button,
   Group, Popover, SegmentedControl, Select, Stack, Text,
   Tooltip,
 } from '@mantine/core';
@@ -24,6 +25,7 @@ import { StorageEngine } from '../../../storage/engines/types';
 import { TranscriptLines } from './TextEditorComponents/TranscriptLines';
 import { TagSelector } from './TextEditorComponents/TagSelector';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
+import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
@@ -58,8 +60,8 @@ async function getTags(storageEngine: StorageEngine | undefined, type: 'particip
 }
 
 export function ThinkAloudFooter({
-  visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance, jumpedToLine = 0,
-} : {visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance?: (prov: unknown) => void, jumpedToLine?: number}) {
+  visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance, jumpedToLine = 0, studyId,
+} : {visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance?: (prov: unknown) => void, jumpedToLine?: number, studyId: string}) {
   const { storageEngine } = useStorageEngine();
 
   const auth = useAuth();
@@ -217,148 +219,149 @@ export function ThinkAloudFooter({
         {xScale && transcriptLines ? <TranscriptLines startTime={xScale.domain()[0]} xScale={xScale} transcriptLines={transcriptLines} currentShownTranscription={currentShownTranscription || 0} /> : null }
 
         <Group style={{ width: '100%' }} justify="center" align="center" wrap="nowrap" mx={20}>
-          <Group>
-            <Tooltip label="Play">
-              <ActionIcon mt={25} variant="light" onClick={() => setAnalysisIsPlaying(!analysisIsPlaying)}>
-                {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled /> }
-              </ActionIcon>
-            </Tooltip>
-            <Popover styles={{ dropdown: { padding: 0 } }} position="bottom" withArrow shadow="md">
-              <Popover.Target>
-                <Tooltip label="Speed">
-                  <ActionIcon style={{ width: '50px' }} mt={25} variant="light">
-                    {`${speed}x`}
-                  </ActionIcon>
-                </Tooltip>
-              </Popover.Target>
-              <Popover.Dropdown>
-                <SegmentedControl
-                  value={speed.toString()}
-                  onChange={(s) => setSpeed(+s)}
-                  orientation="vertical"
-                  data={[
-                    { label: '0.5x', value: '0.5' },
-                    { label: '1x', value: '1' },
-                    { label: '1.5x', value: '1.5' },
-                    { label: '2x', value: '2' },
-                    { label: '4x', value: '4' },
-                    { label: '8x', value: '8' },
-                  ]}
-                />
-                <Stack gap="xs" />
-              </Popover.Dropdown>
-            </Popover>
-
-            <Select
-              leftSection={(
-                <Tooltip label="Previous Participant">
-                  <ActionIcon size="sm" variant="light" onClick={() => nextParticipantCallback(-1)}>
-                    <IconArrowLeft />
-                  </ActionIcon>
-                </Tooltip>
-                  )}
-              rightSection={(
-                <Tooltip label="Next Participant">
-                  <ActionIcon size="sm" variant="light" onClick={() => nextParticipantCallback(1)}>
-                    <IconArrowRight />
-                  </ActionIcon>
-                </Tooltip>
-                  )}
-              label="Participant Id"
-              style={{ width: '300px' }}
-              styles={{ dropdown: { zIndex: 10001 } }}
-              value={participantId}
-              onChange={(e: string | null) => {
-                setSearchParams({ currentTrial, participantId: e || '' });
-                localStorage.setItem('participantId', e || '');
-              }}
-              data={visibleParticipants.map((part) => part)}
-            />
-
-            <Stack gap="4">
-              <Text size="sm" fw={500}>Participant Tags</Text>
-              <TagSelector
-                tags={allPartTags || []}
-                editTagCallback={editParticipantTagCallback}
-                createTagCallback={createParticipantTagCallback}
-                tagsEmptyText="Add Participant Tags"
-                onSelectTags={(tempTags) => {
-                  if (storageEngine && partTags) {
-                    let copy = structuredClone(partTags);
-                    if (copy) {
-                      copy.partTags = tempTags;
-                    } else {
-                      copy = { partTags: [], taskTags: {} };
-                      copy.partTags = tempTags;
-                    }
-                    storageEngine.saveAllParticipantAndTaskTags(auth.user.user?.email || 'temp', participantId, currentTrial, copy).then(() => {
-                      pullPartTags(auth.user.user?.email || 'temp', participantId, currentTrial, storageEngine);
-                    });
-                  }
-                }}
-                selectedTags={partTags ? partTags.partTags : []}
+          <Tooltip label="Play">
+            <ActionIcon mt={25} variant="light" onClick={() => setAnalysisIsPlaying(!analysisIsPlaying)}>
+              {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled /> }
+            </ActionIcon>
+          </Tooltip>
+          <Popover styles={{ dropdown: { padding: 0 } }} position="bottom" withArrow shadow="md">
+            <Popover.Target>
+              <Tooltip label="Speed">
+                <ActionIcon style={{ width: '50px' }} mt={25} variant="light">
+                  {`${speed}x`}
+                </ActionIcon>
+              </Tooltip>
+            </Popover.Target>
+            <Popover.Dropdown>
+              <SegmentedControl
+                value={speed.toString()}
+                onChange={(s) => setSpeed(+s)}
+                orientation="vertical"
+                data={[
+                  { label: '0.5x', value: '0.5' },
+                  { label: '1x', value: '1' },
+                  { label: '1.5x', value: '1.5' },
+                  { label: '2x', value: '2' },
+                  { label: '4x', value: '4' },
+                  { label: '8x', value: '8' },
+                ]}
               />
-            </Stack>
+              <Stack gap="xs" />
+            </Popover.Dropdown>
+          </Popover>
 
-            <Select
-              leftSection={(
-                <Tooltip label="Previous Task">
-                  <ActionIcon size="sm" variant="light" onClick={() => nextTaskCallback(-1)}>
-                    <IconArrowLeft />
-                  </ActionIcon>
-                </Tooltip>
+          <Select
+            leftSection={(
+              <Tooltip label="Previous Participant">
+                <ActionIcon size="sm" variant="light" onClick={() => nextParticipantCallback(-1)}>
+                  <IconArrowLeft />
+                </ActionIcon>
+              </Tooltip>
                   )}
-              rightSection={(
-                <Tooltip label="Next Task">
-                  <ActionIcon size="sm" variant="light" onClick={() => nextTaskCallback(1)}>
-                    <IconArrowRight />
-                  </ActionIcon>
-                </Tooltip>
+            rightSection={(
+              <Tooltip label="Next Participant">
+                <ActionIcon size="sm" variant="light" onClick={() => nextParticipantCallback(1)}>
+                  <IconArrowRight />
+                </ActionIcon>
+              </Tooltip>
                   )}
-              label="Task"
-              style={{ width: '300px' }}
-              styles={{ dropdown: { zIndex: 10001 } }}
-              value={currentTrialClean}
-            // this needs to be in a helper or two which we dont currently have
-              onChange={(e: string | null) => {
-                if (participant && e) {
-                  const trial = Object.entries(participant.answers).find(([_key, ans]) => +ans.trialOrder.split('_')[0] === getSequenceFlatMap(participant?.sequence).indexOf(e))?.[0] || '';
-                  setSearchParams({ participantId, currentTrial: trial });
-                  localStorage.setItem('currentTrial', trial);
+            label="Participant Id"
+            style={{ width: '300px' }}
+            styles={{ dropdown: { zIndex: 10001 } }}
+            value={participantId}
+            onChange={(e: string | null) => {
+              setSearchParams({ currentTrial, participantId: e || '' });
+              localStorage.setItem('participantId', e || '');
+            }}
+            data={visibleParticipants.map((part) => part)}
+          />
+
+          <Stack gap="4">
+            <Text size="sm" fw={500}>Participant Tags</Text>
+            <TagSelector
+              tags={allPartTags || []}
+              editTagCallback={editParticipantTagCallback}
+              createTagCallback={createParticipantTagCallback}
+              tagsEmptyText="Add Participant Tags"
+              onSelectTags={(tempTags) => {
+                if (storageEngine && partTags) {
+                  let copy = structuredClone(partTags);
+                  if (copy) {
+                    copy.partTags = tempTags;
+                  } else {
+                    copy = { partTags: [], taskTags: {} };
+                    copy.partTags = tempTags;
+                  }
+                  storageEngine.saveAllParticipantAndTaskTags(auth.user.user?.email || 'temp', participantId, currentTrial, copy).then(() => {
+                    pullPartTags(auth.user.user?.email || 'temp', participantId, currentTrial, storageEngine);
+                  });
                 }
               }}
-              data={participant ? getSequenceFlatMap(participant?.sequence) : []}
+              selectedTags={partTags ? partTags.partTags : []}
             />
-            <Stack gap="4">
-              <Group gap="xs" align="center">
-                <Text size="sm" fw={500}>Task Tags</Text>
-                <Tooltip w={300} multiline label="Task tags allow you to categorize or label the current task. Click in the box to add, create, or edit tags.">
-                  <IconInfoCircle size={16} />
-                </Tooltip>
-              </Group>
-              <TagSelector
-                tags={taskTags || []}
-                editTagCallback={editTaskTagCallback}
-                createTagCallback={createTaskTagCallback}
-                tagsEmptyText="Add Task Tags"
-                onSelectTags={(tempTag) => {
-                  if (storageEngine && partTags) {
-                    let copy = structuredClone(partTags);
-                    if (copy) {
-                      copy.taskTags[currentTrial] = tempTag;
-                    } else {
-                      copy = { partTags: [], taskTags: {} };
-                      copy.taskTags[currentTrial] = tempTag;
-                    }
-                    storageEngine.saveAllParticipantAndTaskTags(auth.user.user?.email || 'temp', participantId, currentTrial, copy).then(() => {
-                      pullPartTags(auth.user.user?.email || 'temp', participantId, currentTrial, storageEngine);
-                    });
+          </Stack>
+
+          <Select
+            leftSection={(
+              <Tooltip label="Previous Task">
+                <ActionIcon size="sm" variant="light" onClick={() => nextTaskCallback(-1)}>
+                  <IconArrowLeft />
+                </ActionIcon>
+              </Tooltip>
+                  )}
+            rightSection={(
+              <Tooltip label="Next Task">
+                <ActionIcon size="sm" variant="light" onClick={() => nextTaskCallback(1)}>
+                  <IconArrowRight />
+                </ActionIcon>
+              </Tooltip>
+                  )}
+            label="Task"
+            style={{ width: '300px' }}
+            styles={{ dropdown: { zIndex: 10001 } }}
+            value={currentTrialClean}
+            // this needs to be in a helper or two which we dont currently have
+            onChange={(e: string | null) => {
+              if (participant && e) {
+                const trial = Object.entries(participant.answers).find(([_key, ans]) => +ans.trialOrder.split('_')[0] === getSequenceFlatMap(participant?.sequence).indexOf(e))?.[0] || '';
+                setSearchParams({ participantId, currentTrial: trial });
+                localStorage.setItem('currentTrial', trial);
+              }
+            }}
+            data={participant ? getSequenceFlatMap(participant?.sequence) : []}
+          />
+          <Stack gap="4">
+            <Group gap="xs" align="center">
+              <Text size="sm" fw={500}>Task Tags</Text>
+              <Tooltip w={300} multiline label="Task tags allow you to categorize or label the current task. Click in the box to add, create, or edit tags.">
+                <IconInfoCircle size={16} />
+              </Tooltip>
+            </Group>
+            <TagSelector
+              tags={taskTags || []}
+              editTagCallback={editTaskTagCallback}
+              createTagCallback={createTaskTagCallback}
+              tagsEmptyText="Add Task Tags"
+              onSelectTags={(tempTag) => {
+                if (storageEngine && partTags) {
+                  let copy = structuredClone(partTags);
+                  if (copy) {
+                    copy.taskTags[currentTrial] = tempTag;
+                  } else {
+                    copy = { partTags: [], taskTags: {} };
+                    copy.taskTags[currentTrial] = tempTag;
                   }
-                }}
-                selectedTags={partTags ? partTags.taskTags[currentTrial] || [] : []}
-              />
-            </Stack>
-          </Group>
+                  storageEngine.saveAllParticipantAndTaskTags(auth.user.user?.email || 'temp', participantId, currentTrial, copy).then(() => {
+                    pullPartTags(auth.user.user?.email || 'temp', participantId, currentTrial, storageEngine);
+                  });
+                }
+              }}
+              selectedTags={partTags ? partTags.taskTags[currentTrial] || [] : []}
+            />
+          </Stack>
+          <Button mt="lg" variant="light" component="a" href={isReplay ? `/analysis/stats/${studyId}/tagging?participantId=${participantId}&currentTrial=${currentTrial}` : `/${studyId}/${encryptIndex(participant ? +participant.answers[currentTrial].trialOrder.split('_')[0] : 0)}?participantId=${participantId}&currentTrial=${currentTrial}`} target="_blank">
+            {isReplay ? 'Open Audio Analysis' : 'Open Replay'}
+          </Button>
         </Group>
       </Stack>
     </AppShell.Footer>
