@@ -163,19 +163,19 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   <Checkbox
                     value="completed"
                     label={selectedParticipants.length > 0
-                      ? `Completed (${selectedParticipantCounts.completed} selected / ${participantCounts.completed} total)`
+                      ? `Completed (${selectedParticipantCounts.completed} of ${participantCounts.completed})`
                       : `Completed (${participantCounts.completed})`}
                   />
                   <Checkbox
                     value="inprogress"
                     label={selectedParticipants.length > 0
-                      ? `In Progress (${selectedParticipantCounts.inprogress} selected / ${participantCounts.inprogress} total)`
+                      ? `In Progress (${selectedParticipantCounts.inprogress} of ${participantCounts.inprogress})`
                       : `In Progress (${participantCounts.inprogress})`}
                   />
                   <Checkbox
                     value="rejected"
                     label={selectedParticipants.length > 0
-                      ? `Rejected (${selectedParticipantCounts.rejected} selected / ${participantCounts.rejected} total)`
+                      ? `Rejected (${selectedParticipantCounts.rejected} of ${participantCounts.rejected})`
                       : `Rejected (${participantCounts.rejected})`}
                   />
                 </Group>
