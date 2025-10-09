@@ -3,9 +3,9 @@ import {
 } from 'react';
 import { useSearchParams } from 'react-router';
 import {
-  Box, Center, Loader, Text, Title,
+  Box, Center, Loader, Text, Title, Tooltip,
 } from '@mantine/core';
-import { IconPlugConnectedX } from '@tabler/icons-react';
+import { IconPlugConnectedX, IconInfoCircle } from '@tabler/icons-react';
 import { ResponseBlock } from '../components/response/ResponseBlock';
 import { IframeController } from './IframeController';
 import { ImageController } from './ImageController';
@@ -272,6 +272,11 @@ export function ComponentController() {
   return (
     <>
       {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
+      {currentConfig?.hoverDescription && (
+        <Tooltip label={currentConfig.hoverDescription}>
+          <IconInfoCircle size={16} opacity={0.5} />
+        </Tooltip>
+      )}
       <ResponseBlock
         key={`${currentStep}-above-response-block`}
         status={status}
