@@ -55,7 +55,7 @@ export function Login() {
             <Text mb={20}>
               To access admin settings, please sign in using
               {' '}
-              {engine === 'supabase' ? ' Supabase ' : ' Google '}
+              {engine === 'supabase' ? ' Supabase' : ' Google'}
               .
             </Text>
             <Button onClick={() => signIn(storageEngine, setLoading)} leftSection={engine === 'supabase' ? <IconBrandSupabase /> : <IconBrandGoogleFilled />} variant="filled">
