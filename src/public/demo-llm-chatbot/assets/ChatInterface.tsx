@@ -200,7 +200,7 @@ export default function ChatInterface(
   
     try {
       // Load CSV data (small enough to inline)
-      const csvResponse = await fetch(`/demo-llm-chatbot/data/${chartType}.csv`);
+      const csvResponse = await fetch(`/demo-llm-chatbot/assets/data/${chartType}.csv`);
       const csvData = await csvResponse.text();
   
       // Build input for Responses API

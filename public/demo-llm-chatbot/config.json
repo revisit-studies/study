@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "HTML as a Stimulus",
+    "title": "LLM Chatbot",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-14",
-    "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
+    "date": "2025-10-09",
+    "description": "A simple demo of using LLM chatbot.",
     "organizations": [
       "University of Utah",
       "WPI",
@@ -29,11 +29,11 @@
       "path": "demo-llm-chatbot/assets/introduction.md",
       "response": []
     },
-    "prePrompt": {
+    "systemPrompt": {
       "type": "questionnaire",
       "response": [
       {
-          "id": "q-prePrompt",
+          "id": "q-systemPrompt",
           "prompt": "System Prompt",
           "location": "aboveStimulus",
           "type": "longText",
@@ -41,12 +41,12 @@
       }
     ]
   },
-    "testComponent": {
+    "chatbot": {
       "type": "react-component",
       "path": "demo-llm-chatbot/assets/LLMInterface.tsx",
       "response": [],
       "parameters": {
-        "chartType": "violin-plot",
+        "chartType": "clustered-heatmap",
         "modality": "tactile"
       }
     }
@@ -55,8 +55,8 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "prePrompt",
-      "testComponent"
+      "systemPrompt",
+      "chatbot"
     ]
   }
 }
