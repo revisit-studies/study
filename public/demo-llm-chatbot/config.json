@@ -1,0 +1,62 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "HTML as a Stimulus",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-html/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "windowEventDebounceTime": 200
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-llm-chatbot/assets/introduction.md",
+      "response": []
+    },
+    "prePrompt": {
+      "type": "questionnaire",
+      "response": [
+      {
+          "id": "q-prePrompt",
+          "prompt": "System Prompt",
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Please enter the system prompt for the LLM."
+      }
+    ]
+  },
+    "testComponent": {
+      "type": "react-component",
+      "path": "demo-llm-chatbot/assets/LLMInterface.tsx",
+      "response": [],
+      "parameters": {
+        "chartType": "violin-plot",
+        "modality": "tactile"
+      }
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "prePrompt",
+      "testComponent"
+    ]
+  }
+}
