@@ -63,10 +63,6 @@
             "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
             "type": "string"
           },
-          "hoverDescription": {
-            "description": "The description that is displayed when the participant hovers over the component. This does not accept markdown.",
-            "type": "string"
-          },
           "instruction": {
             "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
             "type": "string"
@@ -720,10 +716,6 @@
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the component. This does not accept markdown.",
-          "type": "string"
-        },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
@@ -981,10 +973,6 @@
         },
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
-          "type": "string"
-        },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the component. This does not accept markdown.",
           "type": "string"
         },
         "instruction": {
@@ -1440,10 +1428,6 @@
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the component. This does not accept markdown.",
-          "type": "string"
-        },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
@@ -1813,10 +1797,6 @@
         },
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
-          "type": "string"
-        },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the component. This does not accept markdown.",
           "type": "string"
         },
         "instruction": {
@@ -2195,10 +2175,6 @@
         },
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
-          "type": "string"
-        },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the component. This does not accept markdown.",
           "type": "string"
         },
         "instruction": {
@@ -2970,10 +2946,6 @@
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the component. This does not accept markdown.",
-          "type": "string"
-        },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
@@ -3123,10 +3095,6 @@
         },
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
-          "type": "string"
-        },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the component. This does not accept markdown.",
           "type": "string"
         },
         "instruction": {
@@ -3288,10 +3256,6 @@
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the component. This does not accept markdown.",
-          "type": "string"
-        },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
@@ -3445,10 +3409,6 @@
         },
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
-          "type": "string"
-        },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the component. This does not accept markdown.",
           "type": "string"
         },
         "instruction": {

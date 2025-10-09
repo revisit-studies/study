@@ -749,8 +749,6 @@ export interface BaseIndividualComponent {
   meta?: Record<string, unknown>;
   /** The description of the component. This is used to identify and provide additional information for the component in the admin panel. */
   description?: string;
-  /** The description that is displayed when the participant hovers over the component. This does not accept markdown. */
-  hoverDescription?: string;
   /** Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig. */
   withProgressBar?: boolean;
   /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig. */
