@@ -3,8 +3,8 @@ import { Answer, IndividualComponent, StoredAnswer } from '../parser/types';
 
 export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer'][string], responseCorrectAnswer: Answer['answer']) {
   // Handle numeric-string comparison for likert and slider responses
-  if ((typeof responseUserAnswer === 'number' && typeof responseCorrectAnswer === 'string')
-  || (typeof responseUserAnswer === 'string' && typeof responseCorrectAnswer === 'number')) {
+  if ((typeof responseUserAnswer === 'number' || typeof responseUserAnswer === 'string')
+  && (typeof responseCorrectAnswer === 'string' || typeof responseCorrectAnswer === 'number')) {
     return String(responseUserAnswer) === String(responseCorrectAnswer);
   }
 
