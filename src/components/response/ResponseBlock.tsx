@@ -305,7 +305,7 @@ export function ResponseBlock({
       <Box className={`responseBlock responseBlock-${location}`} style={style}>
         {allResponsesWithDefaults.map((response) => {
           const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
-          const correctAnswer = typeof configCorrectAnswer === 'object' ? JSON.stringify(configCorrectAnswer) : configCorrectAnswer;
+          const correctAnswer = Array.isArray(configCorrectAnswer) && configCorrectAnswer.length > 0 ? JSON.stringify(configCorrectAnswer) : configCorrectAnswer;
           // Check if this response is in the current location
           const isInCurrentLocation = responses.some((r) => r.id === response.id);
 
