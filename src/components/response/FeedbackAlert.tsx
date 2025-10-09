@@ -2,7 +2,7 @@ import { Alert, Anchor } from '@mantine/core';
 import { Response } from '../../parser/types';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
 
-export function ResponseAlert({
+export function FeedbackAlert({
   response,
   correctAnswer,
   alertConfig,
