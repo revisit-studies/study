@@ -73,13 +73,23 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const participantCounts = useMemo(() => {
     if (!expData) return { completed: 0, inprogress: 0, rejected: 0 };
     const expList = Object.values(expData);
-    
+
     return {
       completed: expList.filter((d) => !d.rejected && d.completed).length,
       inprogress: expList.filter((d) => !d.rejected && !d.completed).length,
       rejected: expList.filter((d) => d.rejected).length,
     };
   }, [expData]);
+
+  const selectedParticipantCounts = useMemo(() => {
+    if (selectedParticipants.length === 0) return { completed: 0, inprogress: 0, rejected: 0 };
+
+    return {
+      completed: selectedParticipants.filter((d) => !d.rejected && d.completed).length,
+      inprogress: selectedParticipants.filter((d) => !d.rejected && !d.completed).length,
+      rejected: selectedParticipants.filter((d) => d.rejected).length,
+    };
+  }, [selectedParticipants]);
 
   const visibleParticipants = useMemo(() => {
     if (!expData) return [];
@@ -150,9 +160,24 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 ml="xs"
               >
                 <Group>
-                  <Checkbox value="completed" label={`Completed (${participantCounts.completed})`} />
-                  <Checkbox value="inprogress" label={`In Progress (${participantCounts.inprogress})`} />
-                  <Checkbox value="rejected" label={`Rejected (${participantCounts.rejected})`} />
+                  <Checkbox
+                    value="completed"
+                    label={selectedParticipants.length > 0
+                      ? `Completed (${selectedParticipantCounts.completed} selected / ${participantCounts.completed} total)`
+                      : `Completed (${participantCounts.completed})`}
+                  />
+                  <Checkbox
+                    value="inprogress"
+                    label={selectedParticipants.length > 0
+                      ? `In Progress (${selectedParticipantCounts.inprogress} selected / ${participantCounts.inprogress} total)`
+                      : `In Progress (${participantCounts.inprogress})`}
+                  />
+                  <Checkbox
+                    value="rejected"
+                    label={selectedParticipants.length > 0
+                      ? `Rejected (${selectedParticipantCounts.rejected} selected / ${participantCounts.rejected} total)`
+                      : `Rejected (${participantCounts.rejected})`}
+                  />
                 </Group>
               </Checkbox.Group>
             </Flex>
