@@ -272,17 +272,13 @@ export function ComponentController() {
   return (
     <>
       {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
-      {currentConfig?.hoverDescription && (
-        <Tooltip label={currentConfig.hoverDescription}>
-          <IconInfoCircle size={16} opacity={0.5} />
-        </Tooltip>
-      )}
       <ResponseBlock
         key={`${currentStep}-above-response-block`}
         status={status}
         config={currentConfig}
         location="aboveStimulus"
       />
+
       <Box
         id={currentComponent}
         className={currentConfig.type}
@@ -294,8 +290,14 @@ export function ComponentController() {
           ...currentConfig.style,
         }}
       >
+
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
           <>
+            {currentConfig?.hoverDescription && (
+              <Tooltip label={currentConfig.hoverDescription}>
+                <IconInfoCircle size={16} opacity={0.5} />
+              </Tooltip>
+            )}
             {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
             {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
             {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
