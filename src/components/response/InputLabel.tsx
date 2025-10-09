@@ -7,13 +7,13 @@ export function InputLabel({
   required,
   index,
   enumerateQuestions,
-  hoverDescription,
+  infoText,
 }: {
   prompt: string;
   required?: boolean;
   index?: number;
   enumerateQuestions: boolean;
-  hoverDescription?: string;
+  infoText?: string;
 }) {
   return (
     <Flex direction="row" wrap="nowrap" gap={4}>
@@ -21,8 +21,8 @@ export function InputLabel({
       <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
         <ReactMarkdownWrapper text={prompt} required={required} />
       </Box>
-      {hoverDescription && (
-      <Tooltip label={hoverDescription} multiline maw={400} position="bottom">
+      {infoText && (
+      <Tooltip label={infoText} multiline maw={400} position="bottom">
         <IconInfoCircle size={16} opacity={0.5} style={{ marginTop: 6 }} />
       </Tooltip>
       )}

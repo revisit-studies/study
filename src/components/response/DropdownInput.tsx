@@ -23,7 +23,7 @@ export function DropdownInput({
     required,
     options,
     secondaryText,
-    hoverDescription,
+    infoText,
   } = response;
 
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
@@ -31,7 +31,7 @@ export function DropdownInput({
   return (
     <Select
       disabled={disabled}
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} hoverDescription={hoverDescription} />}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       placeholder={placeholder}
       data={optionsAsStringOptions}

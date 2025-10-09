@@ -17,12 +17,12 @@ export function Reactive({
     prompt,
     required,
     secondaryText,
-    hoverDescription,
+    infoText,
   } = response;
 
   return (
     <Input.Wrapper
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} hoverDescription={hoverDescription} />}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       size="md"
     >

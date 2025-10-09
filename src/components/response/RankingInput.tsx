@@ -553,7 +553,7 @@ export function RankingInput({
     required,
     options,
     secondaryText,
-    hoverDescription,
+    infoText,
     numItems,
   } = response;
 
@@ -566,7 +566,7 @@ export function RankingInput({
   return (
     <Box>
       {prompt.length > 0 && (
-        <InputLabel prompt={prompt} required={required} index={idx} enumerateQuestions={enumerateQuestions} hoverDescription={hoverDescription} />
+        <InputLabel prompt={prompt} required={required} index={idx} enumerateQuestions={enumerateQuestions} infoText={infoText} />
       )}
       {secondaryText && <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>}
       {error && (

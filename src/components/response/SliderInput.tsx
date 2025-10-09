@@ -26,7 +26,7 @@ export function SliderInput({
     required,
     options,
     secondaryText,
-    hoverDescription,
+    infoText,
     snap,
     step,
     withBar,
@@ -65,7 +65,7 @@ export function SliderInput({
 
   return (
     <Input.Wrapper
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} hoverDescription={hoverDescription} />}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       error={errorMessage}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}

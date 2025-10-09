@@ -26,7 +26,7 @@ export function ButtonsInput({
     required,
     secondaryText,
     options,
-    hoverDescription,
+    infoText,
   } = response;
 
   const storedAnswer = useStoredAnswer();
@@ -40,7 +40,7 @@ export function ButtonsInput({
     <FocusTrap>
       <Radio.Group
         name={`radioInput${response.id}`}
-        label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} hoverDescription={hoverDescription} />}
+        label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
         key={response.id}
         {...answer}

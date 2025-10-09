@@ -122,7 +122,7 @@ export function MatrixInput({
     prompt,
     secondaryText,
     required,
-    hoverDescription,
+    infoText,
   } = response;
 
   const _choiceStringToColumns: Record<string, string[]> = {
@@ -165,7 +165,7 @@ export function MatrixInput({
   const _m = orderedQuestions.length;
   return (
     <>
-      {prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} hoverDescription={hoverDescription} />}
+      {prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
       <Box
         style={{
