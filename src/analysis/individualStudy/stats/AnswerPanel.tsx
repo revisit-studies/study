@@ -26,7 +26,7 @@ export function AnswerPanel({ data, config }: { data: Record<string, Record<stri
         if (correctAnswer) {
           for (const [user, answers] of Object.entries(data)) {
             const ans = answers[id];
-            if (responseAnswerIsCorrect(ans as StoredAnswer['answer'][string], correctAnswer.find((answ) => answ.id === id)?.answer || [])) {
+            if (responseAnswerIsCorrect(ans as StoredAnswer['answer'][string], correctAnswer)) {
               correct.push(user);
             } else {
               incorrect.push(user);

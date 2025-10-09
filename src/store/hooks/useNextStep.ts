@@ -18,13 +18,13 @@ import { useWindowEvents } from './useWindowEvents';
 import { findBlockForStep, findIndexOfBlock } from '../../utils/getSequenceFlatMap';
 import { useStudyConfig } from './useStudyConfig';
 import {
-  Answer, IndividualComponent, InheritedComponent, StudyConfig,
+  IndividualComponent, InheritedComponent, StudyConfig,
 } from '../../parser/types';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
 import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
 
-function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
+function checkAllAnswersCorrect(answers: StoredAnswer['answer'], componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
   const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
 
   // Find the matching component in the study config
@@ -39,8 +39,7 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
     return true;
   }
 
-  // Check that the response is matches the correct answer
-  return componentAnswersAreCorrect(answers as unknown as Record<string, string | number | boolean | string[]>, foundConfigComponentConfig.correctAnswer);
+  return componentAnswersAreCorrect(answers, foundConfigComponentConfig.correctAnswer);
 }
 
 export function useNextStep() {
