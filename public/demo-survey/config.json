@@ -461,6 +461,159 @@
           "required": false
         }
       ]
+    },
+     "Sidebar Form Elements": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "title",
+          "type": "textOnly",
+          "prompt": "# Form Elements in Sidebars \n\n This page shows form elements that can be used in the sidebar. \n\n For all elements that have horizontal and vertical variants, you should always use the vertical one in the sidebars. \n\n Matrix form elements are not supported in the sidebar. \n\n Limit Likert scales to 7 or less to fit. \n\n Limit the number of buttons to avoid overflow.",
+          "restartEnumeration": true
+        },
+       {
+          "id": "numericalInputTitle",
+          "type": "textOnly",
+          "prompt": "## Numerical Inputs",
+          "restartEnumeration": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-numerical",
+          "prompt": "Numerical example",
+          "secondaryText": "A numeric example that is required to complete and has an option to say 'Don't know'.",
+          "type": "numerical",
+          "placeholder": "Enter your age here, range from 0 - 100",
+          "max": 100,
+          "min": 0,
+          "withDontKnow": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-slider",
+          "prompt": "Slider example",
+          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
+          "type": "slider",
+          "startingValue": 50,
+          "spacing": 50,
+          "options": [
+            {
+              "label": "Bad",
+              "value": 0
+            },
+            {
+              "label": "Mid",
+              "value": 50
+            },
+            {
+              "label": "Good",
+              "value": 100
+            }
+          ],
+          "location": "sidebar"
+        },
+        {
+          "id": "textInputTitle",
+          "type": "textOnly",
+          "prompt": "## Text Inputs",
+          "restartEnumeration": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-short-text",
+          "prompt": "Short text example",
+          "secondaryText": "A short text example",
+          "type": "shortText",
+          "placeholder": "Enter your answer here",
+          "location": "sidebar"
+        },
+        {
+          "id": "q-long-text",
+          "prompt": "Long text example",
+          "secondaryText": "A text box for long text",
+          "type": "longText",
+          "placeholder": "Enter your long comments here",
+          "location": "sidebar"
+        },
+        {
+          "id": "radioInputTitle",
+          "type": "textOnly",
+          "prompt": "## Dropdowns, Radios, Checkboxes and Buttons",
+          "restartEnumeration": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-dropdown",
+          "prompt": "Dropdown example – which chart do you like best?",
+          "secondaryText": "You can specify secondary text to clarify your question.",
+          "type": "dropdown",
+          "placeholder": "Enter your preference",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar"
+          ],
+          "location": "sidebar"
+        },
+        {
+          "id": "q-checkbox",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "withOther": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-radio",
+          "prompt": "Radio button example",
+          "secondaryText": "Radio buttons for single selection",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "withOther": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "withDivider": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "matrixHeaderTitle",
+          "type": "textOnly",
+          "prompt": "## Likert Scales and Matrix Form Elements\n\n Matrix form elements allow you to ask a series of related questions that share the same set of answer options. This is useful for Likert scales, satisfaction ratings, and categorization tasks.",
+          "restartEnumeration": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-likert",
+          "prompt": "Likert scale example",
+          "secondaryText": "A Likert example with 7 items",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike",
+          "location": "sidebar"
+        }
+      ]
     }
   },
   "sequence": {
@@ -470,7 +623,8 @@
       "Form Elements",
       "Randomizing Options",
       "Randomizing Questions",
-      "Ranking Widgets"
+      "Ranking Widgets",
+      "Sidebar Form Elements"
     ]
   }
 }
