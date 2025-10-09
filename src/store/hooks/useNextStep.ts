@@ -22,6 +22,7 @@ import {
 } from '../../parser/types';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
+import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
 
 function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
   const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
@@ -39,7 +40,7 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
   }
 
   // Check that the response is matches the correct answer
-  return foundConfigComponentConfig.correctAnswer.every((correctAnswerEntry) => answers[correctAnswerEntry.id] === correctAnswerEntry.answer);
+  return componentAnswersAreCorrect(answers as unknown as Record<string, string | number | boolean | string[]>, foundConfigComponentConfig.correctAnswer);
 }
 
 export function useNextStep() {

@@ -1,10 +1,13 @@
 import {
   Box, Card, Container, Flex, Title,
 } from '@mantine/core';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
-import { IndividualComponent, InheritedComponent, RadioResponse } from '../../../parser/types';
+import {
+  IndividualComponent, InheritedComponent, RadioResponse, StoredAnswer,
+} from '../../../parser/types';
+import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 
 export function AnswerPanel({ data, config }: { data: Record<string, Record<string, unknown>>, config: IndividualComponent | InheritedComponent | undefined }) {
   const [correctUser, setCorrectUser] = useState<string[]>([]);
@@ -23,7 +26,7 @@ export function AnswerPanel({ data, config }: { data: Record<string, Record<stri
         if (correctAnswer) {
           for (const [user, answers] of Object.entries(data)) {
             const ans = answers[id];
-            if (ans === correctAnswer) {
+            if (responseAnswerIsCorrect(ans as StoredAnswer['answer'][string], correctAnswer.find((answ) => answ.id === id)?.answer || [])) {
               correct.push(user);
             } else {
               incorrect.push(user);
