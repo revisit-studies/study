@@ -89,15 +89,6 @@ export default function LLMInterface({ parameters, setAnswer, answers, provenanc
   return (
     <>
       <ImageDisplay chartType={parameters.chartType} onOpenChat={() => setModal(true)} />
-{/*       
-      <Card shadow="md" style={{ flex: 1 }} withBorder>
-        <InstructionsDisplay 
-          modality={parameters.modality} 
-          chartType={parameters.chartType}
-          onOpenChat={() => setModal(true)}
-        />
-      </Card> */}
-
       <Modal
         opened={isModalOpen}
         onClose={() => setModal(false)}
@@ -110,8 +101,6 @@ export default function LLMInterface({ parameters, setAnswer, answers, provenanc
         }}
       >
         <ChatInterface 
-          modality={parameters.modality}
-          chartType={parameters.chartType} 
           setAnswer={setAnswer} 
           provenanceState={provenanceState} 
           testSystemPrompt={answers.systemPrompt_1.answer["q-systemPrompt"] as string}

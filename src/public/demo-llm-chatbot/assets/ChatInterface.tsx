@@ -23,10 +23,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 export default function ChatInterface(
-  { modality, chartType, setAnswer, provenanceState, testSystemPrompt, onClose, trrack, actions, updateProvenanceState, modalOpened }:
+  { setAnswer, provenanceState, testSystemPrompt, onClose, trrack, actions, updateProvenanceState, modalOpened }:
   {
-    modality: 'tactile' | 'text',
-    chartType: 'violin-plot' | 'clustered-heatmap',
     setAnswer: StimulusParams<never>['setAnswer'],
     provenanceState?: ChatProvenanceState,
     testSystemPrompt?: string,
@@ -46,25 +44,7 @@ export default function ChatInterface(
 
 
   // Define the system prompt
-  const prePrompt = modality === 'tactile'
-    ? `This is a tactile chart exploration session. You will be provided with tactile instructions to explore the chart.
-    Please follow the tactile instructions carefully and ask the AI assistant any questions you have about the chart.
-    
-    IMPORTANT: You will receive both the CSV data and the visual image for the chart. Use them to:
-    1. Analyze the CSV data to understand the underlying data structure, statistics, and relationships
-    2. Interpret the visual image to understand how the data is represented graphically
-    3. Combine both data and visual analysis to provide comprehensive, accurate answers
-    4. When appropriate, suggest Python code examples for data analysis
-    5. Help participants understand the connection between the raw data and the visual representation`
-    : `This is a text-based learning session about ${chartType.replace('-', ' ')} charts.
-    You will receive text instructions to help you understand the chart. Feel free to ask the AI assistant any questions you have about the chart.
-    
-    IMPORTANT: You will receive both the CSV data and the visual image for the chart. Use them to:
-    1. Analyze the CSV data to understand the underlying data structure, statistics, and relationships
-    2. Interpret the visual image to understand how the data is represented graphically
-    3. Combine both data and visual analysis to provide comprehensive, accurate answers
-    4. When appropriate, suggest Python code examples for data analysis
-    5. Help participants understand the connection between the raw data and the visual representation`;
+  const prePrompt = `You are a helpful assistant to help users understand the clustered heatmap.`;
 
   const initialMessages: ChatMessage[] = useMemo(() => [
     {
@@ -73,7 +53,7 @@ export default function ChatInterface(
       timestamp: new Date().getTime(),
       display: false,
     },
-  ], [chartType, prePrompt, testSystemPrompt]);
+  ], [prePrompt, testSystemPrompt]);
 
   // Local React states for chat history
   const [messages, setMessages] = useState<ChatMessage[]>([...initialMessages]);
@@ -95,68 +75,65 @@ export default function ChatInterface(
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
 
+  async function summarizeHistory(oldMessages: ChatMessage[]) {
+    const summaryPrompt = `
+    Summarize the following conversation between the user and assistant.
+    Capture important facts, conclusions, and tone, but omit greetings or filler.
 
-    // ---------- Compact session memory ----------
+    Conversation:
+    ${oldMessages.map(m => `${m.role}: ${m.content}`).join("\n")}
+    `;
 
-    async function summarizeHistory(oldMessages: ChatMessage[]) {
-      const summaryPrompt = `
-      Summarize the following conversation between the user and assistant.
-      Capture important facts, conclusions, and tone, but omit greetings or filler.
-    
-      Conversation:
-      ${oldMessages.map(m => `${m.role}: ${m.content}`).join("\n")}
-      `;
-    
-      const resp = await fetch(`${import.meta.env.VITE_OPENAI_API_URL}/v1/responses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          input: [{ role: "system", content: [{ type: "input_text", text: summaryPrompt }] }],
-          max_output_tokens: 250,
-          temperature: 0.3,
-        }),
-      });
-    
-      const data = await resp.json();
-      const text = data.output?.[0]?.content?.[0]?.text || "";
-      setShortSummary(prev => prev ? `${prev}\n${text}` : text);
-    }
+    const resp = await fetch(`${import.meta.env.VITE_OPENAI_API_URL}/v1/responses`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        input: [{ role: "system", content: [{ type: "input_text", text: summaryPrompt }] }],
+        max_output_tokens: 250,
+        temperature: 0.3,
+      }),
+    });
 
-    const getCompactContext = (msgList: ChatMessage[]) => {
-      const recent = msgList.slice(-5);
-      const context = [];
-    
+    const data = await resp.json();
+    const text = data.output?.[0]?.content?.[0]?.text || "";
+    setShortSummary(prev => prev ? `${prev}\n${text}` : text);
+  }
+
+  const getCompactContext = (msgList: ChatMessage[]) => {
+    const recent = msgList.slice(-5);
+    const context = [];
+
+    context.push({
+      role: "system",
+      content: [{ type: "input_text", text: initialMessages[0].content }],
+    });
+
+    if (shortSummary) {
       context.push({
         role: "system",
-        content: [{ type: "input_text", text: initialMessages[0].content }],
+        content: [{ type: "input_text", text: `Summary of earlier conversation:\n${shortSummary}` }],
       });
-    
-      if (shortSummary) {
+      console.log("shortSummary:", shortSummary);
+    }
+
+    recent.forEach((m) => {
+      if (m.role === "assistant") {
         context.push({
-          role: "system",
-          content: [{ type: "input_text", text: `Summary of earlier conversation:\n${shortSummary}` }],
+          role: "assistant",
+          content: [{ type: "output_text", text: m.content }],
         });
-        console.log("shortSummary:", shortSummary);
+      } else {
+        context.push({
+          role: m.role,
+          content: [{ type: "input_text", text: m.content }],
+        });
       }
-    
-      recent.forEach((m) => {
-        if (m.role === "assistant") {
-          context.push({
-            role: "assistant",
-            content: [{ type: "output_text", text: m.content }],
-          });
-        } else {
-          context.push({
-            role: m.role,
-            content: [{ type: "input_text", text: m.content }],
-          });
-        }
-      });
-    
-      return context;
-    };
-    
+    });
+
+    return context;
+  };
+
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -200,7 +177,7 @@ export default function ChatInterface(
   
     try {
       // Load CSV data (small enough to inline)
-      const csvResponse = await fetch(`/demo-llm-chatbot/assets/data/${chartType}.csv`);
+      const csvResponse = await fetch(`/demo-llm-chatbot/assets/data/clustered-heatmap.csv`);
       const csvData = await csvResponse.text();
   
       // Build input for Responses API
@@ -214,14 +191,11 @@ export default function ChatInterface(
             { type: "input_text", text: userMessage.content },
             {
               type: "input_text",
-              text: `Here is the CSV data for the ${chartType}:\n\n${csvData}`,
+              text: `Here is the CSV data for the example clustered heatmap:\n\n${csvData}`,
             },
             {
               type: "input_image",
-              file_id:
-                chartType === "violin-plot"
-                  ? "file-G2dZ13wc5eGeVUmg8Znb9S" // File ID for Violin Plot
-                  : "file-RndV3st6F83sM7y9SKDDkW", // File ID for Clustered Heatmap
+              file_id: "file-RndV3st6F83sM7y9SKDDkW"
             },
           ],
         },
@@ -362,10 +336,7 @@ export default function ChatInterface(
             <IconMessage size={48} style={{ opacity: 0.5, marginBottom: rem(12) }} />
             <Text size="lg" fw={500} mb={4}>Start a conversation</Text>
             <Text size="sm" color="dimmed">
-              Ask me anything about
-              {' '}
-              {chartType.replace('-', ' ')}
-              s!
+              Ask me anything about the clustered heatmap!
             </Text>
           </Flex>
         ) : (
