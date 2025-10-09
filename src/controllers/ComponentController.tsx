@@ -287,17 +287,24 @@ export function ComponentController() {
           display: 'flex',
           flexGrow: currentConfig.type === 'website' ? 1 : undefined,
           flexDirection: 'column',
+          position: 'relative',
           ...currentConfig.style,
         }}
       >
-
+        {currentConfig?.hoverDescription && (
+        <Box
+          style={{
+            position: 'absolute',
+            right: 0,
+          }}
+        >
+          <Tooltip label={currentConfig.hoverDescription} multiline maw={400} style={{ whiteSpace: 'normal' }} withinPortal position="bottom">
+            <IconInfoCircle size={16} opacity={0.5} />
+          </Tooltip>
+        </Box>
+        )}
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
           <>
-            {currentConfig?.hoverDescription && (
-              <Tooltip label={currentConfig.hoverDescription}>
-                <IconInfoCircle size={16} opacity={0.5} />
-              </Tooltip>
-            )}
             {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
             {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
             {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}

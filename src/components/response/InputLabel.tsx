@@ -22,8 +22,8 @@ export function InputLabel({
         <ReactMarkdownWrapper text={prompt} required={required} />
       </Box>
       {hoverDescription && (
-      <Tooltip label={hoverDescription}>
-        <IconInfoCircle size={16} opacity={0.5} />
+      <Tooltip label={hoverDescription} multiline maw={400} style={{ whiteSpace: 'normal' }} withinPortal position="bottom">
+        <IconInfoCircle size={16} opacity={0.5} style={{ marginTop: 6 }} />
       </Tooltip>
       )}
     </Flex>
