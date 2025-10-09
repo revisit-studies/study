@@ -299,7 +299,7 @@ export function ComponentController() {
           }}
         >
           <Tooltip label={currentConfig.hoverDescription} multiline maw={400} style={{ whiteSpace: 'normal' }} withinPortal position="bottom">
-            <IconInfoCircle size={16} opacity={0.5} />
+            <IconInfoCircle size={20} opacity={0.5} />
           </Tooltip>
         </Box>
         )}
