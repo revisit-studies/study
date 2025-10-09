@@ -32,6 +32,7 @@ export function CheckBoxInput({
     horizontal,
     withOther,
     options,
+    hoverDescription,
   } = response;
 
   const storedAnswer = useStoredAnswer();
@@ -45,7 +46,7 @@ export function CheckBoxInput({
 
   return (
     <Checkbox.Group
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} hoverDescription={hoverDescription} />}
       description={secondaryText}
       {...answer}
       error={error}

@@ -13,11 +13,16 @@ export function Reactive({
   index: number;
   enumerateQuestions: boolean;
 }) {
-  const { prompt, required, secondaryText } = response;
+  const {
+    prompt,
+    required,
+    secondaryText,
+    hoverDescription,
+  } = response;
 
   return (
     <Input.Wrapper
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} hoverDescription={hoverDescription} />}
       description={secondaryText}
       size="md"
     >

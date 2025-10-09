@@ -549,7 +549,12 @@ export function RankingInput({
   enumerateQuestions: boolean;
 }) {
   const {
-    prompt, required, options, secondaryText, numItems,
+    prompt,
+    required,
+    options,
+    secondaryText,
+    hoverDescription,
+    numItems,
   } = response;
 
   const [error, setError] = useState<string | null>(null);
@@ -561,7 +566,7 @@ export function RankingInput({
   return (
     <Box>
       {prompt.length > 0 && (
-        <InputLabel prompt={prompt} required={required} index={idx} enumerateQuestions={enumerateQuestions} />
+        <InputLabel prompt={prompt} required={required} index={idx} enumerateQuestions={enumerateQuestions} hoverDescription={hoverDescription} />
       )}
       {secondaryText && <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>}
       {error && (

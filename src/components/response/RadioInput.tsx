@@ -34,6 +34,7 @@ export function RadioInput({
     leftLabel,
     rightLabel,
     secondaryText,
+    hoverDescription,
     horizontal,
     withOther,
     options,
@@ -51,7 +52,7 @@ export function RadioInput({
   return (
     <Radio.Group
       name={`radioInput${response.id}`}
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} hoverDescription={hoverDescription} />}
       description={secondaryText}
       key={response.id}
       {...answer}
