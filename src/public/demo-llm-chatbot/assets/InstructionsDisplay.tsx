@@ -22,6 +22,13 @@ export default function InstructionsDisplay({ chartType, modality, onOpenChat }:
   const [instructions, setInstructions] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string>('');
+
+  useEffect(() => {
+    if (chartType === 'clustered-heatmap') {
+      setImageUrl(`${PREFIX}${studyId}/demo-llm-chatbot/assets/data/clustered-heatmap.png`);
+    }
+  }, [chartType, studyId]);
 
   useEffect(() => {
     const loadInstructions = async () => {
