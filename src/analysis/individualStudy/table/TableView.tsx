@@ -3,7 +3,7 @@ import {
   Text, Flex, Group, Space, Tooltip, Badge, RingProgress, Stack,
 } from '@mantine/core';
 import {
-  JSX, useCallback, useMemo, useState,
+  JSX, useCallback, useEffect, useMemo, useState,
 } from 'react';
 import { useParams } from 'react-router';
 import {
@@ -37,18 +37,25 @@ export function TableView({
   studyConfig,
   refresh,
   width,
+  selectedParticipants,
+  onSelectionChange,
 }: {
   visibleParticipants: ParticipantData[];
   studyConfig: StudyConfig;
   refresh: () => Promise<Record<number, ParticipantData>>;
   width: number;
+  selectedParticipants: ParticipantData[];
+  onSelectionChange: (participants: ParticipantData[]) => void;
 }) {
   const { studyId } = useParams();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
 
-  const selectedParticipants = useMemo(() => Object.keys(checked).filter((v) => checked[v])
-    .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
-    .filter((p) => p !== undefined) as ParticipantData[], [checked, visibleParticipants]);
+  useEffect(() => {
+    const newSelectedParticipants = Object.keys(checked).filter((v) => checked[v])
+      .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
+      .filter((p) => p !== undefined) as ParticipantData[];
+    onSelectionChange(newSelectedParticipants);
+  }, [checked, visibleParticipants, onSelectionChange]);
 
   const handleRefresh = useCallback(async () => {
     await refresh();

@@ -58,6 +58,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
 
   const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inprogress', 'rejected']);
+  const [selectedParticipants, setSelectedParticipants] = useState<ParticipantData[]>([]);
 
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
@@ -69,6 +70,17 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   const { value: expData, execute, status } = useAsync(getParticipantsData, [studyConfig, storageEngine, studyId]);
 
+  const participantCounts = useMemo(() => {
+    if (!expData) return { completed: 0, inprogress: 0, rejected: 0 };
+    const expList = Object.values(expData);
+    
+    return {
+      completed: expList.filter((d) => !d.rejected && d.completed).length,
+      inprogress: expList.filter((d) => !d.rejected && !d.completed).length,
+      rejected: expList.filter((d) => d.rejected).length,
+    };
+  }, [expData]);
+
   const visibleParticipants = useMemo(() => {
     if (!expData) return [];
     const expList = Object.values(expData);
@@ -78,6 +90,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const rej = includedParticipants.includes('rejected') ? expList.filter((d) => d.rejected) : [];
     return [...comp, ...prog, ...rej].sort(sortByStartTime);
   }, [expData, includedParticipants]);
+
+  useEffect(() => {
+    setSelectedParticipants([]);
+  }, [analysisTab]);
 
   useEffect(() => {
     if (!studyId) return () => { };
@@ -117,7 +133,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               <Title order={5} mr="sm">{studyId}</Title>
               {studyConfig && (
                 <DownloadButtons
-                  visibleParticipants={visibleParticipants}
+                  visibleParticipants={selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants}
                   studyId={studyId || ''}
                   gap="10px"
                   hasAudio={studyConfig?.uiConfig?.recordAudio}
@@ -134,9 +150,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 ml="xs"
               >
                 <Group>
-                  <Checkbox value="completed" label="Completed" />
-                  <Checkbox value="inprogress" label="In Progress" />
-                  <Checkbox value="rejected" label="Rejected" />
+                  <Checkbox value="completed" label={`Completed (${participantCounts.completed})`} />
+                  <Checkbox value="inprogress" label={`In Progress (${participantCounts.inprogress})`} />
+                  <Checkbox value="rejected" label={`Rejected (${participantCounts.rejected})`} />
                 </Group>
               </Checkbox.Group>
             </Flex>
@@ -166,7 +182,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {studyConfig && <SummaryView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ height: `calc(100% - ${TABLE_HEADER_HEIGHT}px)` }} value="table" pt="xs">
-                {studyConfig && <TableView width={width} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, studyId)} />}
+                {studyConfig && <TableView width={width} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, studyId)} selectedParticipants={selectedParticipants} onSelectionChange={setSelectedParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="stats" pt="xs">
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
