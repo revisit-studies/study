@@ -278,7 +278,6 @@ export function ComponentController() {
         config={currentConfig}
         location="aboveStimulus"
       />
-
       <Box
         id={currentComponent}
         className={currentConfig.type}
@@ -290,7 +289,6 @@ export function ComponentController() {
           ...currentConfig.style,
         }}
       >
-
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
           <>
             {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
