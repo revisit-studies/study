@@ -7,8 +7,9 @@ import { IconUserPlus, IconAt, IconTrashX } from '@tabler/icons-react';
 import { useAuth } from '../../store/hooks/useAuth';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StoredUser } from '../../storage/engines/types';
-import { signInWithGoogle } from '../../Login';
+import { signIn } from '../../Login';
 import { isCloudStorageEngine } from '../../storage/engines/utils';
+import { SupabaseStorageEngine } from '../../storage/engines/SupabaseStorageEngine';
 
 export function GlobalSettings() {
   const { user, triggerAuth, logout } = useAuth();
@@ -41,7 +42,7 @@ export function GlobalSettings() {
         setAuthEnabled(authInfo?.isEnabled || false);
         const adminUsers = await storageEngine?.getUserManagementData('adminUsers');
         if (adminUsers && adminUsers.adminUsersList) {
-          setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email));
+          setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null));
         }
       } else {
         setAuthEnabled(false);
@@ -54,7 +55,21 @@ export function GlobalSettings() {
   const handleEnableAuth = async () => {
     setLoading(true);
     if (storageEngine && isCloudStorageEngine(storageEngine)) {
-      const newUser = await signInWithGoogle(storageEngine, setLoading);
+      // Check if we're in supabase and have a session already
+      if (storageEngine.getEngine() === 'supabase') {
+        const { data } = await (storageEngine as unknown as SupabaseStorageEngine).getSession();
+        if (data.session && data.session.user && data.session.user.email) {
+          setEnableAuthUser({
+            email: data.session.user.email,
+            uid: data.session.user.id,
+          });
+          setModalEnableAuthOpened(true);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const newUser = await signIn(storageEngine, setLoading);
       if (newUser && newUser.email) {
         setEnableAuthUser({
           email: newUser.email,
@@ -74,7 +89,7 @@ export function GlobalSettings() {
       if (rootUser) {
         await storageEngine.changeAuth(true);
         await storageEngine.addAdminUser(rootUser);
-        setAuthenticatedUsers([rootUser.email]);
+        setAuthenticatedUsers([rootUser.email!]);
         setAuthEnabled(true);
         triggerAuth();
       }
@@ -88,7 +103,7 @@ export function GlobalSettings() {
     if (storageEngine && isCloudStorageEngine(storageEngine)) {
       await storageEngine.addAdminUser({ email: form.values.email, uid: null });
       const adminUsers = await storageEngine.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email) || []);
+      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null) || []);
     }
     setLoading(false);
     setModalAddOpened(false);
@@ -107,7 +122,7 @@ export function GlobalSettings() {
     if (storageEngine && isCloudStorageEngine(storageEngine)) {
       await storageEngine.removeAdminUser(userToRemove);
       const adminUsers = await storageEngine.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email) || []);
+      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null) || []);
     }
     setModalRemoveOpened(false);
     setLoading(false);
@@ -127,7 +142,7 @@ export function GlobalSettings() {
                 <Box>
                   <Text>Authentication is currently disabled.</Text>
                 </Box>
-                <Tooltip label="You can only enable auth when using Firebase" disabled={storageEngineIsCloud}>
+                <Tooltip label="You can only enable auth when using a cloud storage engine (Firebase/Supabase)" disabled={storageEngineIsCloud}>
                   <Button
                     onClick={(event) => (!storageEngineIsCloud ? event.preventDefault() : handleEnableAuth())}
                     color="green"
@@ -176,7 +191,7 @@ export function GlobalSettings() {
         <Box component="form" onSubmit={(form.onSubmit(() => handleAddUser()))}>
           <TextInput
             leftSection={<IconAt />}
-            placeholder="User Gmail Account"
+            placeholder="User Email Address"
             {...form.getInputProps('email')}
           />
           <Flex mt={30} justify="right">
