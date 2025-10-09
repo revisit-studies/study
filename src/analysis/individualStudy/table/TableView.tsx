@@ -174,6 +174,11 @@ export function TableView({
     layoutMode: 'grid',
     renderDetailPanel: ({ row }) => {
       const r = row.original;
+
+      if (!r.participantId) {
+        return null;
+      }
+
       return (
         <AllTasksTimeline maxLength={undefined} studyConfig={studyConfig} studyId={studyId || ''} participantData={r} width={width - 60} />
       );
