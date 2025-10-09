@@ -247,7 +247,7 @@ export interface BaseResponse {
   /** The secondary text that is displayed to the participant under the prompt. This does not accept markdown. */
   secondaryText?: string;
   /** The description that is displayed when the participant hovers over the response. This does not accept markdown. */
-  hoverDescription?: string;
+  infoText?: string;
   /** Controls whether the response is required to be answered. Defaults to true. */
   required?: boolean;
   /** Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus` */

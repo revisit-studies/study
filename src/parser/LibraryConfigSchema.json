@@ -249,12 +249,12 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -346,12 +346,12 @@
           "description": "Whether to render the checkboxes horizontally. Defaults to false, so they render horizontally.",
           "type": "boolean"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -577,12 +577,12 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -1242,12 +1242,12 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "leftLabel": {
@@ -1334,12 +1334,12 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -1587,12 +1587,12 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -1697,12 +1697,12 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -1930,12 +1930,12 @@
           "description": "Whether to render the radio buttons horizontally. Defaults to false, so they render horizontally.",
           "type": "boolean"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "leftLabel": {
@@ -2064,12 +2064,12 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -2314,12 +2314,12 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -2467,12 +2467,12 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -2562,12 +2562,12 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -2843,12 +2843,12 @@
         "hidden": {
           "not": {}
         },
-        "hoverDescription": {
-          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
-          "type": "string"
-        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
