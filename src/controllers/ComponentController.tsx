@@ -3,9 +3,9 @@ import {
 } from 'react';
 import { useSearchParams } from 'react-router';
 import {
-  Box, Center, Loader, Text, Title, Tooltip,
+  Box, Center, Loader, Text, Title,
 } from '@mantine/core';
-import { IconPlugConnectedX, IconInfoCircle } from '@tabler/icons-react';
+import { IconPlugConnectedX } from '@tabler/icons-react';
 import { ResponseBlock } from '../components/response/ResponseBlock';
 import { IframeController } from './IframeController';
 import { ImageController } from './ImageController';
@@ -287,22 +287,10 @@ export function ComponentController() {
           display: 'flex',
           flexGrow: currentConfig.type === 'website' ? 1 : undefined,
           flexDirection: 'column',
-          position: 'relative',
           ...currentConfig.style,
         }}
       >
-        {currentConfig?.hoverDescription && (
-        <Box
-          style={{
-            position: 'absolute',
-            right: 0,
-          }}
-        >
-          <Tooltip label={currentConfig.hoverDescription} multiline maw={400} style={{ whiteSpace: 'normal' }} withinPortal position="bottom">
-            <IconInfoCircle size={20} opacity={0.5} />
-          </Tooltip>
-        </Box>
-        )}
+
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
           <>
             {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
