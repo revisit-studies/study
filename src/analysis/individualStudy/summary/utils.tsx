@@ -75,10 +75,7 @@ export function calculateCorrectnessStats(visibleParticipants: ParticipantData[]
     if (answers.length > 0) {
       answers.forEach((answer) => {
         totalQuestions += answer.correctAnswer.length;
-        const isCorrect = answer.correctAnswer.every((correctAnswer) => {
-          const participantAnswer = answer.answer[correctAnswer.id];
-          return correctAnswer.answer === participantAnswer;
-        });
+        const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
         if (isCorrect) {
           acc.correctSum += answer.correctAnswer.length;
         }
