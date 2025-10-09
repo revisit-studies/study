@@ -247,7 +247,7 @@ export interface BaseResponse {
   /** The secondary text that is displayed to the participant under the prompt. This does not accept markdown. */
   secondaryText?: string;
   /** The description that is displayed when the participant hovers over the response. This does not accept markdown. */
-  description?: string;
+  hoverDescription?: string;
   /** Controls whether the response is required to be answered. Defaults to true. */
   required?: boolean;
   /** Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus` */
@@ -749,6 +749,8 @@ export interface BaseIndividualComponent {
   meta?: Record<string, unknown>;
   /** The description of the component. This is used to identify and provide additional information for the component in the admin panel. */
   description?: string;
+  /** The description that is displayed when the participant hovers over the component. This does not accept markdown. */
+  hoverDescription?: string;
   /** Controls whether the progress bar is rendered. If present, will override the progress bar setting in the uiConfig. */
   withProgressBar?: boolean;
   /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig. */
