@@ -1,5 +1,5 @@
 import {
-  Alert, Anchor, Box, Button,
+  Box, Button,
 } from '@mantine/core';
 
 import React, {
@@ -20,6 +20,7 @@ import {
 import { NextButton } from '../NextButton';
 import { useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
+import { ResponseAlert } from './ResponseAlert';
 import { FormElementProvenance, StoredAnswer, ValidationStatus } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
@@ -52,7 +53,7 @@ export function ResponseBlock({
   const { storageEngine } = useStorageEngine();
   const storeDispatch = useStoreDispatch();
   const {
-    updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
+    updateResponseBlockValidation, saveIncorrectAnswer,
   } = useStoreActions();
 
   const currentStep = useCurrentStep();
@@ -298,27 +299,6 @@ export function ResponseBlock({
 
   const nextButtonText = useMemo(() => configInUse?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [configInUse, studyConfig]);
 
-  const renderAlert = (response: Response, correctAnswer: string | undefined) => (
-    alertConfig[response.id]?.visible && (
-      <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
-        {alertConfig[response.id].message}
-        {alertConfig[response.id].message.includes('Please try again') && (
-          <>
-            <br />
-            <br />
-            If you&apos;re unsure
-            {' '}
-            <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier })); }}>review the help text.</Anchor>
-            {' '}
-          </>
-        )}
-        <br />
-        <br />
-        {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && correctAnswer && ` The correct answer was: ${correctAnswer}.`}
-      </Alert>
-    )
-  );
-
   let index = 0;
   return (
     <>
@@ -361,11 +341,25 @@ export function ResponseBlock({
                       configInUse={configInUse}
                       disabled={disabledAttempts}
                     />
-                    {renderAlert(response, correctAnswer)}
+                    <ResponseAlert
+                      response={response}
+                      correctAnswer={correctAnswer}
+                      alertConfig={alertConfig}
+                      identifier={identifier}
+                      attemptsUsed={attemptsUsed}
+                      trainingAttempts={trainingAttempts}
+                    />
                   </>
                 )
               ) : (
-                renderAlert(response, correctAnswer)
+                <ResponseAlert
+                  response={response}
+                  correctAnswer={correctAnswer}
+                  alertConfig={alertConfig}
+                  identifier={identifier}
+                  attemptsUsed={attemptsUsed}
+                  trainingAttempts={trainingAttempts}
+                />
               )}
             </React.Fragment>
           );
