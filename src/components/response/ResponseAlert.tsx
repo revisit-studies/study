@@ -20,7 +20,7 @@ export function ResponseAlert({
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText, incrementHelpCounter } = useStoreActions();
 
-  return (
+  return alertConfig[response.id]?.visible ? (
     <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
       {alertConfig[response.id].message}
       {alertConfig[response.id].message.includes('Please try again') && (
@@ -37,5 +37,5 @@ export function ResponseAlert({
       <br />
       {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && correctAnswer && ` The correct answer was: ${correctAnswer}.`}
     </Alert>
-  );
+  ) : null;
 }
