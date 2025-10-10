@@ -26,7 +26,7 @@ import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import 'mantine-react-table/styles.css';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
@@ -54,31 +54,6 @@ function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine
   return storageEngine.getAllParticipantsData(studyId);
 }
 
-/**
- * Determines if the study has audio and screen recordings.
- */
-function studyHasAudioScreenRecording(studyConfig: StudyConfig | undefined) {
-  if (!studyConfig) return { hasAudio: false, hasScreenRecording: false };
-
-  const hasAudio = studyConfig.uiConfig.recordAudio;
-  const hasScreenRecording = studyConfig.uiConfig.recordScreen;
-
-  const sequence = getSequenceFlatMap(studyConfig.sequence);
-  const componentConfig = sequence.map((componentId) => {
-    const c = studyConfig.components[componentId];
-
-    if ('baseComponent' in c && studyConfig.baseComponents) {
-      return { ...studyConfig.baseComponents[c.baseComponent], ...c };
-    }
-    return c;
-  });
-
-  return {
-    hasAudio: hasAudio || componentConfig.some((a) => a.recordAudio),
-    hasScreenRecording: hasScreenRecording || componentConfig.some((a) => a.recordScreen),
-  };
-}
-
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
   const { studyId } = useParams();
   const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
@@ -86,7 +61,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inprogress', 'rejected']);
   const [selectedParticipants, setSelectedParticipants] = useState<ParticipantData[]>([]);
 
-  const { hasAudio, hasScreenRecording } = studyHasAudioScreenRecording(studyConfig);
+  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
 
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
@@ -174,7 +149,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   visibleParticipants={selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants}
                   studyId={studyId || ''}
                   gap="10px"
-                  hasAudio={hasAudio}
+                  hasAudio={hasAudioRecording}
                   hasScreenRecording={hasScreenRecording}
                 />
               )}
