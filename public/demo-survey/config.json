@@ -135,7 +135,7 @@
         },
         {
           "id": "q-checkbox-horizontal",
-          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "prompt": "Horizontal Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
           "secondaryText": "Checkboxes for multi-selection",
           "minSelections": 2,
           "maxSelections": 2,
@@ -243,7 +243,7 @@
         },
         {
           "id": "q-multi-satisfaction",
-          "prompt": "Matrix Radio Example",
+          "prompt": "Matrix Radio example",
           "secondaryText": "The order of questions is randomized",
           "type": "matrix-radio",
           "answerOptions": "satisfaction5",
@@ -256,7 +256,7 @@
         },
         {
           "id": "multi-custom",
-          "prompt": "Matrix Checkbox Example",
+          "prompt": "Matrix Checkbox example",
           "secondaryText": "The order of questions is randomized",
           "type": "matrix-checkbox",
           "answerOptions": [
@@ -273,7 +273,7 @@
         },
         {
           "id": "q-checkbox",
-          "prompt": "Checkbox Example",
+          "prompt": "Checkbox example",
           "secondaryText": "The order of options is randomized",
           "minSelections": 2,
           "maxSelections": 2,
@@ -288,7 +288,7 @@
         },
         {
           "id": "q-checkbox-horizontal",
-          "prompt": "Horizontal Checkbox Example",
+          "prompt": "Horizontal Checkbox example",
           "secondaryText": "The order of options is randomized",
           "minSelections": 2,
           "maxSelections": 2,
