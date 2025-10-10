@@ -127,7 +127,7 @@ const generateValidation = (responses: Response[]) => {
             }
             return value.length === 0 ? 'Empty input' : null;
           }
-          // Check numerical min/max constraints (but don't return yet - we need to check required too)
+
           const numericalError = response.type === 'numerical' ? checkNumericalResponse(response, value) : null;
           if (numericalError) {
             return numericalError;
