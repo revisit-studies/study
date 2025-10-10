@@ -28,6 +28,11 @@ function checkCheckboxResponse(response: Response, value: string[]) {
 function checkNumericalResponse(response: Response, value: unknown): string | null {
   if (response.type === 'numerical' && (typeof value === 'string' || typeof value === 'number')) {
     const numericalResponse = response as NumericalResponse;
+
+    if (value === '' || value === null || value === undefined) {
+      return null;
+    }
+
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
 
     const { min, max } = numericalResponse;
@@ -122,9 +127,12 @@ const generateValidation = (responses: Response[]) => {
             }
             return value.length === 0 ? 'Empty input' : null;
           }
-          if (response.type === 'numerical') {
-            return checkNumericalResponse(response, value);
+          // Check numerical min/max constraints (but don't return yet - we need to check required too)
+          const numericalError = response.type === 'numerical' ? checkNumericalResponse(response, value) : null;
+          if (numericalError) {
+            return numericalError;
           }
+
           if (response.required && response.requiredValue != null && value != null) {
             return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
           }
