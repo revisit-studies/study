@@ -1,7 +1,7 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
 import {
-  CheckboxResponse, NumberOption, RadioResponse, Response, StringOption,
+  CheckboxResponse, NumberOption, NumericalResponse, RadioResponse, Response, StringOption,
 } from '../../parser/types';
 import { StoredAnswer } from '../../store/types';
 
@@ -20,6 +20,26 @@ function checkCheckboxResponse(response: Response, value: string[]) {
     }
     if (maxNotSelected) {
       return `Please select at most ${checkboxResponse.maxSelections} options`;
+    }
+  }
+  return null;
+}
+
+function checkNumericalResponse(response: Response, value: unknown): string | null {
+  if (response.type === 'numerical' && (typeof value === 'string' || typeof value === 'number')) {
+    const numericalResponse = response as NumericalResponse;
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+
+    const { min, max } = numericalResponse;
+
+    if (min !== undefined && max !== undefined && (numValue < min || numValue > max)) {
+      return `Please enter a value between ${min} and ${max}`;
+    }
+    if (min !== undefined && numValue < min) {
+      return `Please enter a value of ${min} or greater`;
+    }
+    if (max !== undefined && numValue > max) {
+      return `Please enter a value of ${max} or less`;
     }
   }
   return null;
@@ -102,6 +122,9 @@ const generateValidation = (responses: Response[]) => {
             }
             return value.length === 0 ? 'Empty input' : null;
           }
+          if (response.type === 'numerical') {
+            return checkNumericalResponse(response, value);
+          }
           if (response.required && response.requiredValue != null && value != null) {
             return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
           }
@@ -157,6 +180,8 @@ export function generateErrorMessage(
     error = requiredValue && [...requiredValue].sort().toString() !== [...answer.checked].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
   } else if (answer.checked && response.required) {
     error = checkCheckboxResponse(response, answer.checked);
+  } else if (checkNumericalResponse(response, answer.value)) {
+    error = checkNumericalResponse(response, answer.value);
   } else {
     error = answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.` : null;
   }
