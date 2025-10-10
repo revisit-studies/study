@@ -49,10 +49,10 @@ export function ResponseSwitcher({
   const isAnalysis = useIsAnalysis();
 
   const sequence = useStoreSelector((state) => state.sequence);
-  const flatSequence = getSequenceFlatMap(sequence);
+  const flatSequence = useMemo(() => getSequenceFlatMap(sequence), [sequence]);
   const currentStep = useCurrentStep();
-  const nextComponent = typeof currentStep === 'number' ? flatSequence[currentStep + 1] : undefined;
-  const nextConfig = nextComponent ? studyConfig.components[nextComponent] : undefined;
+  const nextComponent = useMemo(() => (typeof currentStep === 'number' ? flatSequence[currentStep + 1] : undefined), [currentStep, flatSequence]);
+  const nextConfig = useMemo(() => (nextComponent ? studyConfig.components[nextComponent] : undefined), [nextComponent, studyConfig]);
 
   const completed = useStoreSelector((state) => state.completed);
 

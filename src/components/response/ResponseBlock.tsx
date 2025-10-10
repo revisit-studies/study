@@ -138,7 +138,8 @@ export function ResponseBlock({
         provenanceGraph: trrack.graph.backend,
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Disable exhaustive-deps because we only want this to run when there is a new storedAnswer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [responses, storedAnswer]);
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
