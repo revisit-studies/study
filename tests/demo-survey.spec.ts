@@ -28,18 +28,18 @@ test('test', async ({ page }) => {
   await page.getByRole('option', { name: 'Bar', exact: true }).click();
 
   // Vertical Checkbox
-  await page.getByRole('checkbox', { name: 'Option 2' }).nth(1).click();
+  await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();
   const minSelectionsText = await page.getByText('Please select at least 2 options');
   await expect(minSelectionsText).toBeVisible();
-  await page.getByRole('checkbox', { name: 'Option 1' }).nth(1).click();
-  await page.getByRole('checkbox', { name: 'Option 3' }).nth(1).click();
+  await page.getByRole('checkbox', { name: 'Option 1' }).nth(0).click();
+  await page.getByRole('checkbox', { name: 'Option 3' }).nth(0).click();
   const maxSelectionsText = await page.getByText('Please select at most 2 options');
   await expect(maxSelectionsText).toBeVisible();
-  await page.getByRole('checkbox', { name: 'Option 1' }).nth(1).click();
+  await page.getByRole('checkbox', { name: 'Option 1' }).nth(0).click();
 
   // Horizontal Checkbox
-  await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();
-  await page.getByRole('checkbox', { name: 'Option 3' }).nth(0).click();
+  await page.getByRole('checkbox', { name: 'Option 2' }).nth(1).click();
+  await page.getByRole('checkbox', { name: 'Option 3' }).nth(1).click();
 
   // Vertical Radio
   await page.getByRole('radio', { name: 'Option 2' }).nth(0).click();
@@ -150,17 +150,17 @@ test('test', async ({ page }) => {
   await page.getByRole('option', { name: 'Bar', exact: true }).click();
 
   // Vertical Checkbox
-  await page.getByRole('checkbox', { name: 'Option 2' }).nth(1).click();
-  await page.getByRole('checkbox', { name: 'Option 1' }).nth(1).click();
+  await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();
+  await page.getByRole('checkbox', { name: 'Option 1' }).nth(0).click();
 
   // Vertical Radio
   await page.getByRole('radio', { name: 'Option 2' }).nth(0).click();
 
   // Button
-  await page.getByRole('radio', { name: 'Option 4' }).nth(0).click();
+  await page.getByRole('radio', { name: 'Option 1' }).nth(1).click();
 
   // Likert scale
-  await page.getByRole('radio', { name: '3' }).nth(0).click();
+  await page.getByRole('radio', { name: '6' }).nth(0).click();
 
   // Go to the next page
   await page.getByRole('button', { name: 'Next', exact: true }).click();
