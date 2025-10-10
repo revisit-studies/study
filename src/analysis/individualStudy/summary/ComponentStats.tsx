@@ -94,7 +94,7 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
       style: { overflow: 'hidden' },
     },
     mantineTableContainerProps: {
-      style: { overflow: 'hidden' },
+      style: { overflow: 'auto' },
     },
   });
 
