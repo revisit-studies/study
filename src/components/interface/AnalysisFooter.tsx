@@ -120,7 +120,7 @@ export function AnalysisFooter() {
       storageEngine,
       participantId,
       identifier,
-      audioUrl,
+      screenRecordingUrl,
     });
   }, [storageEngine, participantId, identifier, audioUrl]);
 
