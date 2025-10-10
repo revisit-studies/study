@@ -52,6 +52,7 @@
           "id": "q-numerical",
           "prompt": "Numerical example",
           "secondaryText": "A numeric example that is required to complete and has an option to say 'Don't know'.",
+          "infoText": "This numerical input accepts values between 0 and 100.",
           "type": "numerical",
           "placeholder": "Enter your age here, range from 0 - 100",
           "max": 100,
@@ -62,6 +63,7 @@
           "id": "q-slider",
           "prompt": "Slider example",
           "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
+          "infoText": "Use the slider to indicate your rating on a scale from 'Bad' to 'Good'.",
           "type": "slider",
           "startingValue": 50,
           "spacing": 50,
@@ -90,6 +92,7 @@
           "id": "q-short-text",
           "prompt": "Short text example",
           "secondaryText": "A short text example",
+          "infoText": "Your response can be a few words or a short sentence.",
           "type": "shortText",
           "placeholder": "Enter your answer here"
         },
@@ -97,6 +100,7 @@
           "id": "q-long-text",
           "prompt": "Long text example",
           "secondaryText": "A text box for long text",
+          "infoText": "Your response can be a detailed explanation or multiple sentences.",
           "type": "longText",
           "placeholder": "Enter your long comments here"
         },
@@ -110,6 +114,7 @@
           "id": "q-dropdown",
           "prompt": "Dropdown example – which chart do you like best?",
           "secondaryText": "You can specify secondary text to clarify your question.",
+          "infoText": "Select the chart type you prefer from the dropdown menu.",
           "type": "dropdown",
           "placeholder": "Enter your preference",
           "options": [
@@ -123,6 +128,7 @@
           "id": "q-checkbox",
           "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
           "secondaryText": "Checkboxes for multi-selection",
+          "infoText": "Select your top 2 choices from the available options.",
           "minSelections": 2,
           "maxSelections": 2,
           "type": "checkbox",
@@ -137,6 +143,7 @@
           "id": "q-checkbox-horizontal",
           "prompt": "Horizontal Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
           "secondaryText": "Checkboxes for multi-selection",
+          "infoText": "Select your top 2 choices from the available options.",
           "minSelections": 2,
           "maxSelections": 2,
           "type": "checkbox",
@@ -152,6 +159,7 @@
           "id": "q-radio",
           "prompt": "Radio button example",
           "secondaryText": "Radio buttons for single selection",
+          "infoText": "Select the option that best represents your choice.",
           "type": "radio",
           "options": [
             "Option 1",
@@ -163,6 +171,7 @@
           "id": "q-radio-horizontal",
           "prompt": "Horizontal Radio button example",
           "secondaryText": "Radio buttons for single selection",
+          "infoText": "Select the option that best represents your choice.",  
           "type": "radio",
           "options": [
             "Option 1",
@@ -176,6 +185,7 @@
           "type": "buttons",
           "prompt": "Buttons example",
           "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
+          "infoText": "Choose the option that best represents your answer.",
           "options": [
             "Option 1",
             "Option 2",
@@ -194,6 +204,7 @@
           "id": "q-likert",
           "prompt": "Likert scale example",
           "secondaryText": "A Likert example with 9 items, also showing how to add a divider after the element.",
+          "infoText": "This is a 9-point Likert scale from 'Dislike' to 'Like'. Select the number that best represents your opinion.",
           "type": "likert",
           "numItems": 9,
           "rightLabel": "Like",
@@ -204,6 +215,7 @@
           "id": "q-multi-satisfaction",
           "prompt": "Rate your satisfaction from 1 (Highly Unsatisfied) to 5 (Highly Satisfied) for the following items.",
           "secondaryText": "A simple matrix of Likert responses with predefined options for satisfaction.",
+          "infoText": "This is a matrix radio where you rate each item on a 5 point scale from 'Highly Unsatisfied' to 'Highly Satisfied'.",
           "type": "matrix-radio",
           "answerOptions": "satisfaction5",
           "questionOptions": [
@@ -216,6 +228,7 @@
           "id": "multi-custom",
           "prompt": "Which categories do the following items belong to?",
           "secondaryText": "A matrix of checkboxes with custom options for categorization.",
+          "infoText": "For each animal, select all the categories that apply. You can select multiple checkboxes per row.",
           "type": "matrix-checkbox",
           "answerOptions": [
             "Has Legs",
