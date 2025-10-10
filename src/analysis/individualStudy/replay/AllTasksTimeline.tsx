@@ -123,8 +123,13 @@ export function AllTasksTimeline({
                 {Object.entries(answer.answer).map((a) => {
                   const [id, componentAnswer] = a;
                   const correctAnswer = component?.correctAnswer?.find((c) => c.id === id)?.answer;
+                  const participantAnswer = (componentAnswer === undefined || componentAnswer === null || componentAnswer === '')
+                    ? 'N/A'
+                    : typeof componentAnswer === 'object'
+                      ? JSON.stringify(componentAnswer)
+                      : componentAnswer;
 
-                  return <Text key={id}>{`${id}: ${componentAnswer} ${correctAnswer ? `[${correctAnswer}]` : ''}`}</Text>;
+                  return <Text key={id}>{`${id}: ${participantAnswer} ${correctAnswer ? `[${typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer}]` : ''}`}</Text>;
                 })}
               </Stack>
             )}
