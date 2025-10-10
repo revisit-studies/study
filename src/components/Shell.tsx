@@ -143,6 +143,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         participantSession.answers,
         modes,
         participantSession.participantId,
+        participantSession.completed,
       );
       setStore(newStore);
 

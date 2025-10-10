@@ -3,7 +3,7 @@ import {
   Text, Flex, Group, Space, Tooltip, Badge, RingProgress, Stack,
 } from '@mantine/core';
 import {
-  JSX, useCallback, useMemo, useState,
+  JSX, useCallback, useEffect, useMemo, useState,
 } from 'react';
 import { useParams } from 'react-router';
 import {
@@ -22,7 +22,6 @@ import { AllTasksTimeline } from '../replay/AllTasksTimeline';
 import { humanReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
-import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 
 function formatDate(date: Date): string | JSX.Element {
@@ -38,24 +37,29 @@ export function TableView({
   studyConfig,
   refresh,
   width,
+  selectedParticipants,
+  onSelectionChange,
 }: {
   visibleParticipants: ParticipantData[];
   studyConfig: StudyConfig;
   refresh: () => Promise<Record<number, ParticipantData>>;
   width: number;
+  selectedParticipants: ParticipantData[];
+  onSelectionChange: (participants: ParticipantData[]) => void;
 }) {
   const { studyId } = useParams();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
 
-  const selectedParticipants = useMemo(() => Object.keys(checked).filter((v) => checked[v])
-    .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
-    .filter((p) => p !== undefined) as ParticipantData[], [checked, visibleParticipants]);
+  useEffect(() => {
+    const newSelectedParticipants = Object.keys(checked).filter((v) => checked[v])
+      .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
+      .filter((p) => p !== undefined) as ParticipantData[];
+    onSelectionChange(newSelectedParticipants);
+  }, [checked, visibleParticipants, onSelectionChange]);
 
   const handleRefresh = useCallback(async () => {
     await refresh();
   }, [refresh]);
-
-  const selectedData = useMemo(() => (selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants), [selectedParticipants, visibleParticipants]);
 
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => [
     {
@@ -174,6 +178,11 @@ export function TableView({
     layoutMode: 'grid',
     renderDetailPanel: ({ row }) => {
       const r = row.original;
+
+      if (!r.participantId) {
+        return null;
+      }
+
       return (
         <AllTasksTimeline maxLength={undefined} studyConfig={studyConfig} studyId={studyId || ''} participantData={r} width={width - 60} />
       );
@@ -186,15 +195,8 @@ export function TableView({
     enableDensityToggle: false,
     positionToolbarAlertBanner: 'none',
     renderTopToolbarCustomActions: () => (
-      <Flex justify="space-between" mb={8} p={8}>
-        <Group>
-          <DownloadButtons
-            visibleParticipants={selectedData}
-            studyId={studyId || ''}
-            hasAudio={studyConfig?.uiConfig?.recordAudio}
-          />
-          <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
-        </Group>
+      <Flex mb={8} p={8}>
+        <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
       </Flex>
     ),
   });
@@ -204,7 +206,6 @@ export function TableView({
       <MantineReactTable
         table={table}
       />
-
     ) : (
       <>
         <Space h="xl" />

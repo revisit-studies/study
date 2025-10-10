@@ -765,6 +765,8 @@ export abstract class StorageEngine {
     if (this.participantData && serverEndTime === localEndTime) {
       this.participantData.completed = true;
       if (modes.dataCollectionEnabled) {
+        await this._completeCurrentParticipantRealtime();
+
         await this._pushToStorage(
           `participants/${this.currentParticipantId}`,
           'participantData',
@@ -774,8 +776,6 @@ export abstract class StorageEngine {
           `participants/${this.currentParticipantId}`,
           'participantData',
         );
-
-        await this._completeCurrentParticipantRealtime();
       }
 
       return true;
