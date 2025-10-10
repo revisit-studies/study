@@ -122,7 +122,7 @@ export function AnalysisFooter() {
       identifier,
       screenRecordingUrl,
     });
-  }, [storageEngine, participantId, identifier, audioUrl]);
+  }, [storageEngine, participantId, identifier, screenRecordingUrl]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
