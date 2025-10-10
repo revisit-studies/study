@@ -181,4 +181,6 @@ export interface StoreState {
   matrixAnswers: Record<string, Record<string, string>>;
   rankingAnswers: Record<string, Record<string, string>>;
   funcSequence: Record<string, string[]>;
+  completed: boolean;
+  clickedPrevious: boolean;
 }

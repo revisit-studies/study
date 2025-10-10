@@ -18,7 +18,7 @@ import {
 } from '../../store/store';
 
 import { NextButton } from '../NextButton';
-import { useAnswerField } from './utils';
+import { generateInitFields, useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
 import { FormElementProvenance, StoredAnswer, ValidationStatus } from '../../store/types';
@@ -96,7 +96,6 @@ export function ResponseBlock({
     return response;
   }), [allResponses]);
 
-  const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
   // Set up trrack to store provenance graph of the answerValidator status
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -142,6 +141,22 @@ export function ResponseBlock({
   const showBtnsInLocation = useMemo(() => location === (configInUse?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [configInUse, studyConfig, location]);
   const identifier = useCurrentIdentifier();
 
+  const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
+  useEffect(() => {
+    if (storedAnswer) {
+      answerValidator.setInitialValues(generateInitFields(responses, storedAnswer));
+      answerValidator.reset();
+      updateResponseBlockValidation({
+        location,
+        identifier,
+        status: answerValidator.isValid(),
+        values: structuredClone(answerValidator.values),
+        provenanceGraph: trrack.graph.backend,
+      });
+    }
+    // Disable exhaustive-deps because we only want this to run when there is a new storedAnswer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [responses, storedAnswer]);
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
     if (reactiveAnswers && ReactiveResponse) {
