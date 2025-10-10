@@ -7,6 +7,7 @@ import {
 } from 'react';
 import {
   IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser, IconMusicDown,
+  IconDeviceDesktopDown,
 } from '@tabler/icons-react';
 import { useAsync } from '../../store/hooks/useAsync';
 
@@ -20,7 +21,7 @@ import {
 import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { handleTaskAudio } from '../../utils/handleDownloadAudio';
+import { handleTaskAudio, handleTaskScreenRecording } from '../../utils/handleDownloadAudio';
 import { ParticipantRejectModal } from '../../analysis/individualStudy/ParticipantRejectModal';
 
 function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
@@ -70,9 +71,10 @@ export function AnalysisFooter() {
   const isEnd = useMemo(() => currentStep === flatSequence.length, [currentStep, flatSequence.length]);
   const identifier = useCurrentIdentifier();
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [screenRecordingUrl, setScreenRecordingUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchAudioUrl() {
+    async function fetchAssetsUrl() {
       if (!storageEngine || !participantId || !identifier) {
         setAudioUrl(null);
         return;
@@ -84,9 +86,16 @@ export function AnalysisFooter() {
       } catch {
         setAudioUrl(null);
       }
+
+      try {
+        const url = await storageEngine.getScreenRecording(identifier, participantId);
+        setScreenRecordingUrl(url);
+      } catch {
+        setScreenRecordingUrl(null);
+      }
     }
 
-    fetchAudioUrl();
+    fetchAssetsUrl();
   }, [storageEngine, participantId, identifier]);
 
   const handleDownloadAudio = useCallback(async () => {
@@ -101,6 +110,19 @@ export function AnalysisFooter() {
       audioUrl,
     });
   }, [storageEngine, participantId, identifier, audioUrl]);
+
+  const handleDownloadScreenRecording = useCallback(async () => {
+    if (!storageEngine || !participantId || !identifier) {
+      return;
+    }
+
+    await handleTaskScreenRecording({
+      storageEngine,
+      participantId,
+      identifier,
+      screenRecordingUrl,
+    });
+  }, [storageEngine, participantId, identifier, screenRecordingUrl]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
@@ -177,6 +199,13 @@ export function AnalysisFooter() {
             <Tooltip label="Download audio">
               <ActionIcon variant="filled" size={30} onClick={handleDownloadAudio}>
                 <IconMusicDown />
+              </ActionIcon>
+            </Tooltip>
+            )}
+            {screenRecordingUrl && (
+            <Tooltip label="Download screen recording">
+              <ActionIcon variant="filled" size={30} onClick={handleDownloadScreenRecording}>
+                <IconDeviceDesktopDown />
               </ActionIcon>
             </Tooltip>
             )}

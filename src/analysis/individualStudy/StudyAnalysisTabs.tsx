@@ -26,6 +26,7 @@ import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
+import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import 'mantine-react-table/styles.css';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
@@ -59,6 +60,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inprogress', 'rejected']);
   const [selectedParticipants, setSelectedParticipants] = useState<ParticipantData[]>([]);
+
+  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
 
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
@@ -146,7 +149,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   visibleParticipants={selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants}
                   studyId={studyId || ''}
                   gap="10px"
-                  hasAudio={studyConfig?.uiConfig?.recordAudio}
+                  hasAudio={hasAudioRecording}
+                  hasScreenRecording={hasScreenRecording}
                 />
               )}
             </Flex>
