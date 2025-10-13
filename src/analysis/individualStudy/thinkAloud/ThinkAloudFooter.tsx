@@ -12,7 +12,7 @@ import {
 import * as d3 from 'd3';
 
 import {
-  IconArrowLeft, IconArrowRight, IconInfoCircle, IconPlayerPauseFilled, IconPlayerPlayFilled,
+  IconArrowLeft, IconArrowRight, IconDeviceDesktopDown, IconInfoCircle, IconMusicDown, IconPlayerPauseFilled, IconPlayerPlayFilled,
 } from '@tabler/icons-react';
 import { useAsync } from '../../../store/hooks/useAsync';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
@@ -27,6 +27,8 @@ import { TagSelector } from './TextEditorComponents/TagSelector';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { PREFIX } from '../../../utils/Prefix';
+import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadAudio';
+import { ParticipantRejectModal } from '../ParticipantRejectModal';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
@@ -80,6 +82,60 @@ export function ThinkAloudFooter({
   const { value: allPartTags, execute: pullAllPartTags } = useAsync(getTags, [storageEngine, 'participant']);
   const [analysisIsPlaying, _setAnalysisIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [screenRecordingUrl, setScreenRecordingUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchAssetsUrl() {
+      if (!storageEngine || !participantId || !currentTrial) {
+        setAudioUrl(null);
+        return;
+      }
+
+      try {
+        const url = await storageEngine.getAudioUrl(currentTrial, participantId);
+        setAudioUrl(url);
+      } catch {
+        setAudioUrl(null);
+      }
+
+      try {
+        const url = await storageEngine.getScreenRecording(currentTrial, participantId);
+        setScreenRecordingUrl(url);
+      } catch {
+        setScreenRecordingUrl(null);
+      }
+    }
+
+    fetchAssetsUrl();
+  }, [storageEngine, participantId, currentTrial]);
+
+  const handleDownloadAudio = useCallback(async () => {
+    if (!storageEngine || !participantId || !currentTrial) {
+      return;
+    }
+
+    await handleTaskAudio({
+      storageEngine,
+      participantId,
+      identifier: currentTrial,
+      audioUrl,
+    });
+  }, [storageEngine, participantId, currentTrial, audioUrl]);
+
+  const handleDownloadScreenRecording = useCallback(async () => {
+    if (!storageEngine || !participantId || !currentTrial) {
+      return;
+    }
+
+    await handleTaskScreenRecording({
+      storageEngine,
+      participantId,
+      identifier: currentTrial,
+      screenRecordingUrl,
+    });
+  }, [storageEngine, participantId, currentTrial, screenRecordingUrl]);
 
   const setAnalysisIsPlaying = useCallback((playing: boolean) => {
     localStorage.setItem('analysisIsPlaying', playing ? 'true' : 'false');
@@ -380,6 +436,23 @@ export function ThinkAloudFooter({
           <Button mt="lg" variant="light" component="a" href={isReplay ? `${PREFIX}analysis/stats/${studyId}/tagging?participantId=${participantId}&currentTrial=${currentTrial}` : `${PREFIX}${studyId}/${encryptIndex(participant ? +(participant.answers[currentTrial]?.trialOrder.split('_')[0] || 0) : 0)}?participantId=${participantId}&currentTrial=${currentTrial}`} target="_blank">
             {isReplay ? 'Open Transcript' : 'Open Replay'}
           </Button>
+          <Group mt="lg">
+            {audioUrl && (
+            <Tooltip label="Download audio">
+              <ActionIcon variant="light" size={30} onClick={handleDownloadAudio}>
+                <IconMusicDown />
+              </ActionIcon>
+            </Tooltip>
+            )}
+            {screenRecordingUrl && (
+            <Tooltip label="Download screen recording">
+              <ActionIcon variant="filled" size={30} onClick={handleDownloadScreenRecording}>
+                <IconDeviceDesktopDown />
+              </ActionIcon>
+            </Tooltip>
+            )}
+            <ParticipantRejectModal selectedParticipants={[]} />
+          </Group>
         </Group>
       </Stack>
     </AppShell.Footer>
