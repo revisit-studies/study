@@ -43,6 +43,16 @@ export type SequenceAssignment = {
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
 
+export interface StageInfo {
+  stageName: string;
+  color: string;
+}
+
+export interface StageData {
+  currentStage: StageInfo;
+  allStages: StageInfo[];
+}
+
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
   T extends 'sequenceArray'
@@ -180,14 +190,14 @@ export abstract class StorageEngine {
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
 
-  // Gets the stage for the given studyId.
-  abstract getStage(studyId: string): Promise<string>;
+  // Gets the stage data for the given studyId.
+  abstract getStageData(studyId: string): Promise<StageData>;
 
-  // Sets the stage for the given studyId.
-  abstract setStage(studyId: string, stage: string): Promise<void>;
+  // Sets the current stage for the given studyId.
+  abstract setCurrentStage(studyId: string, stageName: string, color?: string): Promise<void>;
 
-  // Gets all stages that have been used for the given studyId.
-  abstract getAllStages(studyId: string): Promise<string[]>;
+  // Updates the color of a stage in allStages
+  abstract updateStageColor(studyId: string, stageName: string, color: string): Promise<void>;
 
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
@@ -353,7 +363,8 @@ export abstract class StorageEngine {
     let sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
     const modes = await this.getModes(this.studyId);
-    const currentStage = await this.getStage(this.studyId);
+    const stageData = await this.getStageData(this.studyId);
+    const currentStage = stageData.currentStage.stageName;
 
     // Find all rejected documents
     const rejectedDocs = sequenceAssignments
@@ -460,7 +471,8 @@ export abstract class StorageEngine {
 
     // Get modes
     const modes = await this.getModes(this.studyId);
-    const currentStage = await this.getStage(this.studyId);
+    const stageData = await this.getStageData(this.studyId);
+    const currentStage = stageData.currentStage.stageName;
 
     if (isParticipantData(participant)) {
       // Participant already initialized

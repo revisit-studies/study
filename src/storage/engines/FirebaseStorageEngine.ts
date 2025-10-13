@@ -383,7 +383,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
   }
 
-  async getStage(studyId: string) {
+  async getStageData(studyId: string) {
     const revisitModesDoc = doc(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
@@ -393,56 +393,99 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     if (revisitModesData.exists()) {
       const data = revisitModesData.data();
-      return data.stage || 'default';
+      if (data.stage && data.stage.currentStage && data.stage.allStages) {
+        return data.stage;
+      }
     }
 
-    // Set default stage if it doesn't exist
-    const defaultStage = 'default';
-    await setDoc(revisitModesDoc, {
-      stage: defaultStage,
-      allStages: [defaultStage],
-    }, { merge: true });
-    return defaultStage;
+    // Set default stage data if it doesn't exist
+    const defaultStageData = {
+      currentStage: { stageName: 'DEFAULT', color: '#F05A30' },
+      allStages: [{ stageName: 'DEFAULT', color: '#F05A30' }],
+    };
+    await this.setCurrentStage(studyId, 'DEFAULT', '#F05A30');
+    return defaultStageData;
   }
 
-  async setStage(studyId: string, stage: string) {
+  async setCurrentStage(studyId: string, stageName: string, color: string = '#F05A30') {
     const revisitModesDoc = doc(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
       'modes',
     );
 
-    // Get current data to update allStages array
+    // Get current data
     const currentData = await getDoc(revisitModesDoc);
     const existingData = currentData.exists() ? currentData.data() : {};
-    const currentAllStages = existingData.allStages || ['default'];
 
-    // Add new stage to allStages if it's not already there
-    const updatedAllStages = currentAllStages.includes(stage)
-      ? currentAllStages
-      : [...currentAllStages, stage];
+    // Get current stage data or initialize with default
+    let stageData = existingData.stage;
 
-    return await setDoc(revisitModesDoc, {
-      stage,
-      allStages: updatedAllStages,
-    }, { merge: true });
+    // Initialize if doesn't exist or invalid
+    if (!stageData || !stageData.currentStage || !stageData.allStages) {
+      stageData = {
+        currentStage: { stageName: 'DEFAULT', color: '#F05A30' },
+        allStages: [{ stageName: 'DEFAULT', color: '#F05A30' }],
+      };
+    }
+
+    // Check if stage already exists in allStages
+    const existingStageIndex = stageData.allStages.findIndex(
+      (s: { stageName: string; color: string }) => s.stageName === stageName,
+    );
+
+    if (existingStageIndex === -1) {
+      // Add new stage to allStages
+      stageData.allStages.push({ stageName, color });
+    }
+
+    // Update current stage
+    stageData.currentStage = { stageName, color };
+
+    // Create update data
+    const updateData: Record<string, unknown> = {
+      stage: stageData,
+    };
+
+    return await setDoc(revisitModesDoc, updateData, { merge: true });
   }
 
-  async getAllStages(studyId: string) {
+  async updateStageColor(studyId: string, stageName: string, color: string) {
     const revisitModesDoc = doc(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
       'modes',
     );
-    const revisitModesData = await getDoc(revisitModesDoc);
 
-    if (revisitModesData.exists()) {
-      const data = revisitModesData.data();
-      return data.allStages || ['default'];
+    // Get current data
+    const currentData = await getDoc(revisitModesDoc);
+    if (!currentData.exists()) {
+      throw new Error('Stage data not initialized');
     }
 
-    // Return default stages if no data exists
-    return ['default'];
+    const existingData = currentData.data();
+    const stageData = existingData.stage;
+
+    if (!stageData || !stageData.allStages) {
+      throw new Error('Stage data not initialized');
+    }
+
+    // Update the color in allStages
+    const updatedAllStages = stageData.allStages.map(
+      (s: { stageName: string; color: string }) => (s.stageName === stageName ? { ...s, color } : s),
+    );
+
+    // Update current stage color if it matches
+    const updatedCurrentStage = stageData.currentStage.stageName === stageName
+      ? { ...stageData.currentStage, color }
+      : stageData.currentStage;
+
+    const updatedStageData = {
+      currentStage: updatedCurrentStage,
+      allStages: updatedAllStages,
+    };
+
+    return await setDoc(revisitModesDoc, { stage: updatedStageData }, { merge: true });
   }
 
   protected async _getAudioUrl(

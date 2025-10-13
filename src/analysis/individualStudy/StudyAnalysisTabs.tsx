@@ -58,7 +58,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inprogress', 'rejected']);
   const [selectedStage, setSelectedStage] = useState<string>('ALL');
-  const [availableStages, setAvailableStages] = useState<string[]>(['ALL']);
+  const [availableStages, setAvailableStages] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
+  const [stageColors, setStageColors] = useState<Record<string, string>>({});
 
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
@@ -94,11 +95,22 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
     const loadStages = async () => {
       try {
-        const stages = await storageEngine.getAllStages(studyId);
-        setAvailableStages(['ALL', ...stages]);
+        const stageData = await storageEngine.getStageData(studyId);
+        const stageOptions = stageData.allStages.map((stage) => ({
+          value: stage.stageName,
+          label: stage.stageName,
+        }));
+        setAvailableStages([{ value: 'ALL', label: 'ALL' }, ...stageOptions]);
+        // Create a map of stage names to colors
+        const colors: Record<string, string> = {};
+        stageData.allStages.forEach((stage) => {
+          colors[stage.stageName] = stage.color;
+        });
+        setStageColors(colors);
       } catch (error) {
         console.error('Failed to load stages:', error);
-        setAvailableStages(['ALL']);
+        setAvailableStages([{ value: 'ALL', label: 'ALL' }]);
+        setStageColors({});
       }
     };
 
@@ -142,6 +154,16 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
             <Title order={5} mr="sm">{studyId}</Title>
 
             <Flex direction="row" align="center" gap="md">
+              <Text size="sm" fw={500}>Stage:</Text>
+              <Select
+                placeholder="Select stage"
+                data={availableStages}
+                value={selectedStage}
+                onChange={(value) => setSelectedStage(value || 'ALL')}
+                w={150}
+                size="sm"
+              />
+
               <Text mt={-2} size="sm">Participants: </Text>
               <Checkbox.Group
                 value={includedParticipants}
@@ -156,16 +178,6 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   <Checkbox value="rejected" label="Rejected" />
                 </Group>
               </Checkbox.Group>
-
-              <Select
-                label="Stage"
-                placeholder="Select stage"
-                data={availableStages}
-                value={selectedStage}
-                onChange={(value) => setSelectedStage(value || 'ALL')}
-                w={150}
-                size="sm"
-              />
             </Flex>
           </Flex>
           <LoadingOverlay visible={status === 'pending'} />
@@ -193,14 +205,14 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {studyConfig && <SummaryView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ height: `calc(100% - ${TABLE_HEADER_HEIGHT}px)` }} value="table" pt="xs">
-                {studyConfig && <TableView width={width} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, studyId)} />}
+                {studyConfig && <TableView width={width} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, studyId)} stageColors={stageColors} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="stats" pt="xs">
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
               </Tabs.Panel>
               {storageEngine?.getEngine() === 'firebase' && (
                 <Tabs.Panel style={{ overflow: 'auto' }} value="live-monitor" pt="xs">
-                  {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={studyId} includedParticipants={includedParticipants} />}
+                  {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={studyId} includedParticipants={includedParticipants} selectedStage={selectedStage} />}
                 </Tabs.Panel>
               )}
               <Tabs.Panel value="manage" pt="xs">

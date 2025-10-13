@@ -373,7 +373,7 @@ export class SupabaseStorageEngine extends StorageEngine {
       .eq('docId', 'metadata');
   }
 
-  async getStage(studyId: string) {
+  async getStageData(studyId: string) {
     // Get the modes from the study collection
     const { data, error } = await this.supabase
       .from('revisit')
@@ -382,39 +382,57 @@ export class SupabaseStorageEngine extends StorageEngine {
       .eq('docId', 'metadata');
 
     if (error) {
-      throw new Error('Failed to get stage');
+      throw new Error('Failed to get stage data');
     }
 
     if (data.length > 0) {
       const metadata = data[0].data;
-      if (metadata && metadata.stage) {
+      if (metadata && metadata.stage && metadata.stage.currentStage && metadata.stage.allStages) {
         return metadata.stage;
       }
     }
 
-    // Set default stage if it doesn't exist
-    const defaultStage = 'default';
-    await this.setStage(studyId, defaultStage);
-    return defaultStage;
+    // Set default stage data if it doesn't exist
+    const defaultStageData = {
+      currentStage: { stageName: 'DEFAULT', color: '#F05A30' },
+      allStages: [{ stageName: 'DEFAULT', color: '#F05A30' }],
+    };
+    await this.setCurrentStage(studyId, 'DEFAULT', '#F05A30');
+    return defaultStageData;
   }
 
-  async setStage(studyId: string, stage: string) {
+  async setCurrentStage(studyId: string, stageName: string, color: string = '#F05A30') {
     // Get existing modes first
     const modes = await this.getModes(studyId);
 
-    // Get current allStages array or initialize with default
-    const currentAllStages = modes.allStages || ['default'];
+    // Get current stage data or initialize with default
+    let stageData = modes.stage;
 
-    // Add new stage to allStages if it's not already there
-    const updatedAllStages = currentAllStages.includes(stage)
-      ? currentAllStages
-      : [...currentAllStages, stage];
+    // Initialize if doesn't exist or invalid
+    if (!stageData || !stageData.currentStage || !stageData.allStages) {
+      stageData = {
+        currentStage: { stageName: 'DEFAULT', color: '#F05A30' },
+        allStages: [{ stageName: 'DEFAULT', color: '#F05A30' }],
+      };
+    }
+
+    // Check if stage already exists in allStages
+    const existingStageIndex = stageData.allStages.findIndex(
+      (s: { stageName: string; color: string }) => s.stageName === stageName,
+    );
+
+    if (existingStageIndex === -1) {
+      // Add new stage to allStages
+      stageData.allStages.push({ stageName, color });
+    }
+
+    // Update current stage
+    stageData.currentStage = { stageName, color };
 
     // Update the stage in the modes data
     const updatedData = {
       ...modes,
-      stage,
-      allStages: updatedAllStages,
+      stage: stageData,
     };
 
     // Save the updated data
@@ -429,25 +447,46 @@ export class SupabaseStorageEngine extends StorageEngine {
       .eq('docId', 'metadata');
   }
 
-  async getAllStages(studyId: string) {
-    // Get the modes from the study collection
-    const { data, error } = await this.supabase
+  async updateStageColor(studyId: string, stageName: string, color: string) {
+    // Get existing modes first
+    const modes = await this.getModes(studyId);
+    const stageData = modes.stage;
+
+    if (!stageData || !stageData.allStages) {
+      throw new Error('Stage data not initialized');
+    }
+
+    // Update the color in allStages
+    const updatedAllStages = stageData.allStages.map(
+      (s: { stageName: string; color: string }) => (s.stageName === stageName ? { ...s, color } : s),
+    );
+
+    // Update current stage color if it matches
+    const updatedCurrentStage = stageData.currentStage.stageName === stageName
+      ? { ...stageData.currentStage, color }
+      : stageData.currentStage;
+
+    const updatedStageData = {
+      currentStage: updatedCurrentStage,
+      allStages: updatedAllStages,
+    };
+
+    // Update the stage in the modes data
+    const updatedData = {
+      ...modes,
+      stage: updatedStageData,
+    };
+
+    // Save the updated data
+    await this.supabase
       .from('revisit')
-      .select('data')
+      .upsert({
+        studyId: `${this.collectionPrefix}${studyId}`,
+        docId: 'metadata',
+        data: updatedData,
+      })
       .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
-
-    if (error) {
-      throw new Error('Failed to get all stages');
-    }
-
-    if (data.length > 0) {
-      const metadata = data[0].data;
-      return metadata.allStages || ['default'];
-    }
-
-    // Return default stages if no data exists
-    return ['default'];
   }
 
   protected async _getAudioUrl(task: string, participantId?: string) {

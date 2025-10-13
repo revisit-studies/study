@@ -1,5 +1,5 @@
 import {
-  Stack, Group, Card, Text, Title, Badge, ActionIcon, Center, Indicator, Tooltip, Button, Flex, Select,
+  Stack, Group, Card, Text, Title, Badge, ActionIcon, Center, Indicator, Tooltip, Button, Flex,
 } from '@mantine/core';
 import {
   useMemo, useEffect, useState, useCallback,
@@ -52,20 +52,19 @@ function RejectedLabel({ progress }: { progress: number }) {
 }
 
 export function LiveMonitorView({
-  studyConfig: _studyConfig, storageEngine, studyId, includedParticipants,
+  studyConfig: _studyConfig, storageEngine, studyId, includedParticipants, selectedStage,
 }: {
   studyConfig: StudyConfig;
   storageEngine?: StorageEngine;
   studyId?: string;
   includedParticipants: string[];
+  selectedStage: string;
 }) {
   const firebaseStoreageEngine = storageEngine as FirebaseStorageEngine;
   const [sequenceAssignments, setSequenceAssignments] = useState<SequenceAssignment[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connecting');
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
-  const [selectedStage, setSelectedStage] = useState<string>('ALL');
-  const [availableStages, setAvailableStages] = useState<string[]>(['ALL']);
 
   // Function to handle successful data update
   const handleDataUpdate = (assignments: SequenceAssignment[]) => {
@@ -73,22 +72,6 @@ export function LiveMonitorView({
     setLastUpdateTime(new Date());
     setIsReconnecting(false);
   };
-
-  // Load available stages when component mounts or studyId changes
-  useEffect(() => {
-    const loadStages = async () => {
-      if (storageEngine && studyId) {
-        try {
-          const stages = await storageEngine.getAllStages(studyId);
-          setAvailableStages(['ALL', ...stages]);
-        } catch (error) {
-          console.error('Failed to load stages:', error);
-          setAvailableStages(['ALL']);
-        }
-      }
-    };
-    loadStages();
-  }, [storageEngine, studyId]);
 
   // Function to manually reconnect
   const handleReconnect = useCallback(async () => {
@@ -249,15 +232,6 @@ export function LiveMonitorView({
                 Rejected
               </Badge>
             </Group>
-            <Select
-              label="Filter by Stage"
-              placeholder="Select stage"
-              data={availableStages}
-              value={selectedStage}
-              onChange={(value) => setSelectedStage(value || 'ALL')}
-              size="sm"
-              style={{ minWidth: '150px' }}
-            />
           </Group>
 
           <Group gap="xs">
