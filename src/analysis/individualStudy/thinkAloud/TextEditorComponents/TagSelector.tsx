@@ -4,6 +4,8 @@ import {
   ActionIcon,
   Box,
   CheckIcon,
+  Text,
+  Tooltip,
 } from '@mantine/core';
 import { IconEdit } from '@tabler/icons-react';
 import { useCallback, useMemo } from 'react';
@@ -42,12 +44,15 @@ export function TagSelector({
         justify="space-between"
         gap="sm"
         style={{ width: '100%' }}
+        wrap="nowrap"
       >
-        <Group>
-          <CheckIcon size={12} />
-          <ColorSwatch size={10} color={tag.color} />
-          <span>{tag.name}</span>
-        </Group>
+        <Tooltip label={tag.name} withArrow openDelay={600}>
+          <Group wrap="nowrap">
+            <CheckIcon size={12} />
+            <ColorSwatch size={10} color={tag.color} />
+            <Text style={{ width: '130px' }} truncate="end">{tag.name}</Text>
+          </Group>
+        </Tooltip>
         <Box onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -80,12 +85,15 @@ export function TagSelector({
 
   const options = useMemo(() => tags.filter((tag) => tag !== undefined && !selectedTags.find((selT) => selT && selT.id === tag.id)).map((tag) => (
     <Combobox.Option value={tag.id} key={tag.id}>
-      <Group justify="space-between" gap="sm" style={{ width: '100%' }}>
-        <Group>
-          <ColorSwatch size={10} color={tag.color} />
+      <Group justify="space-between" gap="sm" style={{ width: '100%' }} wrap="nowrap">
+        <Tooltip label={tag.name} withArrow openDelay={600}>
 
-          <span>{tag.name}</span>
-        </Group>
+          <Group wrap="nowrap">
+            <ColorSwatch size={10} color={tag.color} />
+
+            <Text style={{ width: '150px' }} truncate="end">{tag.name}</Text>
+          </Group>
+        </Tooltip>
         <Box onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -121,9 +129,9 @@ export function TagSelector({
   )), [editTagCallback, selectedTags, tags]);
 
   return (
-    <Combobox disabled={disabled} width={200} store={combobox} onOptionSubmit={handleValueSelect} withinPortal>
+    <Combobox disabled={disabled} width={250} store={combobox} onOptionSubmit={handleValueSelect} withinPortal>
       <Combobox.DropdownTarget>
-        <PillsInput style={{ width: '200px' }} pointer onClick={() => combobox.toggleDropdown()}>
+        <PillsInput style={{ width: '250px' }} pointer onClick={() => combobox.toggleDropdown()}>
           <Pill.Group>
             {selectedTags.length > 0 ? (
               values

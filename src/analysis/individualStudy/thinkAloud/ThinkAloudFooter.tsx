@@ -26,6 +26,7 @@ import { TranscriptLines } from './TextEditorComponents/TranscriptLines';
 import { TagSelector } from './TextEditorComponents/TagSelector';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
+import { PREFIX } from '../../../utils/Prefix';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
@@ -93,11 +94,18 @@ export function ThinkAloudFooter({
     const split = currentTrial.split('_');
     const joinExceptLast = split.slice(0, split.length - 1).join('_');
 
+    // if we find ourselves with a wrong current trial, erase it
+    if (participant && !participant.answers[currentTrial]) {
+      // still dont know why this isnt in the type
+      // @ts-ignore
+      setSearchParams({ participantId, currentTrial: Object.values(participant.answers).find((ans) => +ans.trialOrder.split('_')[0] === 0)?.identifier });
+    }
+
     return joinExceptLast;
-  }, [currentTrial]);
+  }, [currentTrial, participant, participantId, setSearchParams]);
 
   const xScale = useMemo(() => {
-    if (!participant) {
+    if (!participant || !participant.answers[currentTrial]) {
       return null;
     }
 
@@ -144,8 +152,8 @@ export function ThinkAloudFooter({
     }
 
     localStorage.setItem('participantId', visibleParticipants[index]);
-    setSearchParams({ currentTrial, participantId: visibleParticipants[index] || '' });
-  }, [currentTrial, participantId, setSearchParams, visibleParticipants]);
+    setSearchParams({ participantId: visibleParticipants[index] || '' });
+  }, [participantId, setSearchParams, visibleParticipants]);
 
   const nextTaskCallback = useCallback((indexChange: number) => {
     if (!participant || !currentTrial) {
@@ -362,7 +370,7 @@ export function ThinkAloudFooter({
             </Stack>
 
           </Group>
-          <Button mt="lg" variant="light" component="a" href={isReplay ? `/analysis/stats/${studyId}/tagging?participantId=${participantId}&currentTrial=${currentTrial}` : `/${studyId}/${encryptIndex(participant ? +(participant.answers[currentTrial]?.trialOrder.split('_')[0] || 0) : 0)}?participantId=${participantId}&currentTrial=${currentTrial}`} target="_blank">
+          <Button mt="lg" variant="light" component="a" href={isReplay ? `${PREFIX}analysis/stats/${studyId}/tagging?participantId=${participantId}&currentTrial=${currentTrial}` : `${PREFIX}${studyId}/${encryptIndex(participant ? +(participant.answers[currentTrial]?.trialOrder.split('_')[0] || 0) : 0)}?participantId=${participantId}&currentTrial=${currentTrial}`} target="_blank">
             {isReplay ? 'Open Transcript' : 'Open Replay'}
           </Button>
         </Group>

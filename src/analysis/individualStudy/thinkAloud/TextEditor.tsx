@@ -165,7 +165,7 @@ export function TextEditor({
             </Tooltip>
           </Group>
           <Group gap="xs" align="center">
-            <Text fw={700} ml="lg" size="xl">Annotations</Text>
+            <Text fw={700} size="xl">Annotations</Text>
             <Tooltip w={300} multiline label="Annotations allow you to add additional context or notes to segments of text.">
               <IconInfoCircle size={16} />
             </Tooltip>

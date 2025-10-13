@@ -155,7 +155,7 @@ export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipant
         annotation: '',
       })));
     }
-  }, [storageEngine, studyId, participantId, currentTrial, setEditedTranscript, setCurrentShownTranscription, onlineTranscriptList, transcriptStatus, editedTranscript, rawTranscript, rawTranscriptStatus]);
+  }, [auth.user.user?.email, currentTrial, onlineTranscriptList, participantId, rawTranscript, rawTranscriptStatus, setEditedTranscript, storageEngine, transcriptStatus]);
 
   const changeLine = useCallback((focusedLine: number) => {
     const currentLine = editedTranscript[focusedLine].transcriptMappingStart;
