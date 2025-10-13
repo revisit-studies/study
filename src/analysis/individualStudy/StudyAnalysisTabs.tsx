@@ -26,6 +26,8 @@ import { useAuth } from '../../store/hooks/useAuth';
 import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
+import { DownloadButtons } from '../../components/downloader/DownloadButtons';
+import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import 'mantine-react-table/styles.css';
 import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 
@@ -59,6 +61,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
 
   const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inprogress', 'rejected']);
+  const [selectedParticipants, setSelectedParticipants] = useState<ParticipantData[]>([]);
+
+  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
 
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
@@ -70,6 +75,27 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   const { value: expData, execute, status } = useAsync(getParticipantsData, [studyConfig, storageEngine, studyId]);
 
+  const participantCounts = useMemo(() => {
+    if (!expData) return { completed: 0, inprogress: 0, rejected: 0 };
+    const expList = Object.values(expData);
+
+    return {
+      completed: expList.filter((d) => !d.rejected && d.completed).length,
+      inprogress: expList.filter((d) => !d.rejected && !d.completed).length,
+      rejected: expList.filter((d) => d.rejected).length,
+    };
+  }, [expData]);
+
+  const selectedParticipantCounts = useMemo(() => {
+    if (selectedParticipants.length === 0) return { completed: 0, inprogress: 0, rejected: 0 };
+
+    return {
+      completed: selectedParticipants.filter((d) => !d.rejected && d.completed).length,
+      inprogress: selectedParticipants.filter((d) => !d.rejected && !d.completed).length,
+      rejected: selectedParticipants.filter((d) => d.rejected).length,
+    };
+  }, [selectedParticipants]);
+
   const visibleParticipants = useMemo(() => {
     if (!expData) return [];
     const expList = Object.values(expData);
@@ -79,6 +105,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const rej = includedParticipants.includes('rejected') ? expList.filter((d) => d.rejected) : [];
     return [...comp, ...prog, ...rej].sort(sortByStartTime);
   }, [expData, includedParticipants]);
+
+  useEffect(() => {
+    setSelectedParticipants([]);
+  }, [analysisTab]);
 
   useEffect(() => {
     if (!studyId) return () => { };
@@ -114,8 +144,18 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
         <Stack ref={ref} style={{ height: '100%', maxHeight: '100dvh', overflow: 'hidden' }} justify="space-between">
 
           <Flex direction="row" align="center" justify="space-between">
-            <Title order={5} mr="sm">{studyId}</Title>
-
+            <Flex direction="row" align="center">
+              <Title order={5} mr="sm">{studyId}</Title>
+              {studyConfig && (
+                <DownloadButtons
+                  visibleParticipants={selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants}
+                  studyId={studyId || ''}
+                  gap="10px"
+                  hasAudio={hasAudioRecording}
+                  hasScreenRecording={hasScreenRecording}
+                />
+              )}
+            </Flex>
             <Flex direction="row" align="center">
               <Text mt={-2} size="sm">Participants: </Text>
               <Checkbox.Group
@@ -126,9 +166,24 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 ml="xs"
               >
                 <Group>
-                  <Checkbox value="completed" label="Completed" />
-                  <Checkbox value="inprogress" label="In Progress" />
-                  <Checkbox value="rejected" label="Rejected" />
+                  <Checkbox
+                    value="completed"
+                    label={selectedParticipants.length > 0
+                      ? `Completed (${selectedParticipantCounts.completed} of ${participantCounts.completed})`
+                      : `Completed (${participantCounts.completed})`}
+                  />
+                  <Checkbox
+                    value="inprogress"
+                    label={selectedParticipants.length > 0
+                      ? `In Progress (${selectedParticipantCounts.inprogress} of ${participantCounts.inprogress})`
+                      : `In Progress (${participantCounts.inprogress})`}
+                  />
+                  <Checkbox
+                    value="rejected"
+                    label={selectedParticipants.length > 0
+                      ? `Rejected (${selectedParticipantCounts.rejected} of ${participantCounts.rejected})`
+                      : `Rejected (${participantCounts.rejected})`}
+                  />
                 </Group>
               </Checkbox.Group>
             </Flex>
@@ -159,7 +214,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {studyConfig && <SummaryView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ height: `calc(100% - ${TABLE_HEADER_HEIGHT}px)` }} value="table" pt="xs">
-                {studyConfig && <TableView width={width} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, studyId)} />}
+                {studyConfig && <TableView width={width} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, studyId)} selectedParticipants={selectedParticipants} onSelectionChange={setSelectedParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="stats" pt="xs">
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}

@@ -193,7 +193,7 @@
           },
           "style": {
             "$ref": "#/definitions/Styles",
-            "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+            "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
           },
           "stylesheetPath": {
             "description": "The path to the external stylesheet file.",
@@ -253,6 +253,10 @@
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
@@ -303,7 +307,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -344,6 +348,10 @@
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -405,7 +413,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -573,6 +581,10 @@
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
@@ -620,7 +632,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -794,7 +806,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1093,7 +1105,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1234,6 +1246,10 @@
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
         "leftLabel": {
           "description": "The left label of the likert scale. E.g Strongly Disagree",
           "type": "string"
@@ -1283,7 +1299,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1322,6 +1338,10 @@
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
@@ -1355,7 +1375,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1498,7 +1518,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1571,6 +1591,10 @@
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
@@ -1615,7 +1639,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1677,6 +1701,10 @@
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
@@ -1718,7 +1746,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1857,7 +1885,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1904,6 +1932,10 @@
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "leftLabel": {
@@ -1965,7 +1997,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2026,7 +2058,7 @@
     },
     "RankingResponse": {
       "additionalProperties": false,
-      "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options. There are three types of ranking widgets: sublist, categorical, and pairwise.\n\n```js { \"id\": \"ranking-sublist\", \"type\": \"ranking-sublist\", \"prompt\": \"Rank the following options\", \"location\": \"belowStimulus\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] \"numItems\": 2 } ```",
+      "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options.\n\nThere are three types of ranking widgets: Ranking Sublist: The participant is asked to rank a subset of items from a larger list. Ranking Categorical: The participant is asked to rank items within categories: HIGH, MEDIUM, and LOW. Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.\n\n```js { \"id\": \"ranking-sublist\", \"type\": \"ranking-sublist\", \"prompt\": \"Rank your top 2 favorite fruits from the list below\", \"location\": \"belowStimulus\", \"options\": [\"Apple\", \"Banana\", \"Orange\", \"Strawberry\", \"Grapes\"], \"numItems\": 2 }, { \"id\": \"ranking-categorical\", \"type\": \"ranking-categorical\", \"prompt\": \"Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.\", \"location\": \"belowStimulus\", \"options\": [\"Drawing\", \"Singing\", \"Hiking\", \"Dancing\", \"Photography\"] }, { \"id\": \"ranking-pairwise\", \"type\": \"ranking-pairwise\", \"prompt\": \"Which meal would you prefer\", \"location\": \"belowStimulus\", \"options\": [\"Pizza\", \"Sushi\", \"Burger\", \"Pasta\", \"Salad\", \"Tacos\"] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -2036,12 +2068,16 @@
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "numItems": {
-          "description": "The number of options to render. Applies only to sublist and categorical ranking widgets.",
+          "description": "The number of items to rank. Applies only to sublist and categorical ranking widgets.",
           "type": "number"
         },
         "options": {
@@ -2083,7 +2119,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2236,7 +2272,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2282,6 +2318,10 @@
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
@@ -2311,7 +2351,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2431,6 +2471,10 @@
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
@@ -2464,7 +2508,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2520,6 +2564,10 @@
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -2578,7 +2626,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2799,6 +2847,10 @@
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
@@ -2828,7 +2880,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2980,7 +3032,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -3135,7 +3187,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -3294,7 +3346,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -3454,7 +3506,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
