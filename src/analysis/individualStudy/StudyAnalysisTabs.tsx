@@ -1,5 +1,5 @@
 import {
-  Alert, AppShell, Checkbox, Container, Flex, Group, LoadingOverlay, Stack, Tabs, Text, Title, Select,
+  Alert, AppShell, Checkbox, Container, Flex, Group, LoadingOverlay, Stack, Tabs, Text, Title, MultiSelect,
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router';
 import {
@@ -57,7 +57,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
 
   const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inprogress', 'rejected']);
-  const [selectedStage, setSelectedStage] = useState<string>('ALL');
+  const [selectedStages, setSelectedStages] = useState<string[]>(['ALL']);
   const [availableStages, setAvailableStages] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
   const [stageColors, setStageColors] = useState<Record<string, string>>({});
 
@@ -81,13 +81,13 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
     const statusFiltered = [...comp, ...prog, ...rej];
 
-    // Apply stage filter
-    const stageFiltered = selectedStage === 'ALL'
+    // Apply stage filter - if "ALL" is selected, show all participants
+    const stageFiltered = selectedStages.includes('ALL')
       ? statusFiltered
-      : statusFiltered.filter((d) => d.stage === selectedStage);
+      : statusFiltered.filter((d) => selectedStages.includes(d.stage || ''));
 
     return stageFiltered.sort(sortByStartTime);
-  }, [expData, includedParticipants, selectedStage]);
+  }, [expData, includedParticipants, selectedStages]);
 
   // Load available stages
   useEffect(() => {
@@ -155,13 +155,33 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
             <Flex direction="row" align="center" gap="md">
               <Text size="sm" fw={500}>Stage:</Text>
-              <Select
-                placeholder="Select stage"
+              <MultiSelect
                 data={availableStages}
-                value={selectedStage}
-                onChange={(value) => setSelectedStage(value || 'ALL')}
-                w={150}
+                value={selectedStages}
+                onChange={(values) => {
+                  // If "ALL" is selected, select only "ALL"
+                  if (values.includes('ALL') && !selectedStages.includes('ALL')) {
+                    setSelectedStages(['ALL']);
+                  } else if (values.includes('ALL') && selectedStages.includes('ALL')) {
+                    // If "ALL" was already selected and user adds another stage, remove "ALL"
+                    setSelectedStages(values.filter((v) => v !== 'ALL'));
+                  } else if (values.length === 0) {
+                    // If user deselects all, default to "ALL"
+                    setSelectedStages(['ALL']);
+                  } else {
+                    setSelectedStages(values);
+                  }
+                }}
+                w={250}
                 size="sm"
+                clearable={false}
+                hidePickedOptions
+                maxValues={5}
+                styles={{
+                  input: {
+                    minHeight: '36px',
+                  },
+                }}
               />
 
               <Text mt={-2} size="sm">Participants: </Text>
@@ -212,7 +232,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               </Tabs.Panel>
               {storageEngine?.getEngine() === 'firebase' && (
                 <Tabs.Panel style={{ overflow: 'auto' }} value="live-monitor" pt="xs">
-                  {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={studyId} includedParticipants={includedParticipants} selectedStage={selectedStage} />}
+                  {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={studyId} includedParticipants={includedParticipants} selectedStages={selectedStages} />}
                 </Tabs.Panel>
               )}
               <Tabs.Panel value="manage" pt="xs">
