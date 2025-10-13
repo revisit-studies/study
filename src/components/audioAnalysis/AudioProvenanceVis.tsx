@@ -31,8 +31,8 @@ function safe<T>(p: Promise<T>): Promise<T | null> {
 }
 
 export function AudioProvenanceVis({
-  setTimeString, answers, setTime, taskName, context, saveProvenance, analysisIsPlaying, setAnalysisIsPlaying, speed, jumpedToAudioTime = 0, setHasAudio,
-}: { setTimeString: (time: string) => void; answers: Record<string, StoredAnswer>, setTime?: (time: number) => void, taskName: string, context: 'audioAnalysis' | 'provenanceVis', saveProvenance?: ((state: unknown) => void), analysisIsPlaying: boolean, setAnalysisIsPlaying: (b: boolean) => void, speed: number, jumpedToAudioTime?: number, setHasAudio: (b: boolean) => void }) {
+  setTimeString, answers, setTime, taskName, context, saveProvenance, analysisIsPlaying, setAnalysisIsPlaying, speed, jumpedToAudioTime = 0, setHasAudio, setSpeed, isMuted,
+}: { setTimeString: (time: string) => void; answers: Record<string, StoredAnswer>, setTime?: (time: number) => void, taskName: string, context: 'audioAnalysis' | 'provenanceVis', saveProvenance?: ((state: unknown) => void), analysisIsPlaying: boolean, setAnalysisIsPlaying: (b: boolean) => void, speed: number, jumpedToAudioTime?: number, setHasAudio: (b: boolean) => void, setSpeed: (n: number) => void, isMuted: boolean }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
 
@@ -186,6 +186,10 @@ export function AudioProvenanceVis({
         });
       }
 
+      if (e.key === 'currentSpeed') {
+        setSpeed(+e.newValue);
+      }
+
       if (e.key === 'analysisIsPlaying') {
         setAnalysisIsPlaying(e.newValue === 'true');
       }
@@ -196,15 +200,15 @@ export function AudioProvenanceVis({
         }
       }
 
-      if (e.key === 'currentTime') {
-        _setPlayTime(+e.newValue.split('_')[0], +e.newValue.split('_')[1]);
-      }
+      // if (e.key === 'currentTime') {
+      //   setWavesurferTime(+e.newValue.split('_')[0], +e.newValue.split('_')[1]);
+      // }
     };
 
     window.addEventListener('storage', listener);
 
     return () => window.removeEventListener('storage', listener);
-  }, [_setPlayTime, context, navigate, participantId, setAnalysisIsPlaying, setSearchParams, taskName]);
+  }, [_setPlayTime, context, navigate, participantId, setAnalysisIsPlaying, setSearchParams, setSpeed, setWavesurferTime, taskName]);
 
   useUpdateProvenance('aboveStimulus', playTime, answers[taskName]?.provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes, saveProvenance);
 
@@ -375,6 +379,10 @@ export function AudioProvenanceVis({
       wavesurfer.current.setPlaybackRate(speed);
     }
   }, [speed]);
+
+  useEffect(() => {
+    wavesurfer.current?.setMuted(isMuted);
+  }, [isMuted]);
 
   const xScale = useMemo(() => {
     if (!answers[taskName]?.startTime || !answers[taskName]?.endTime) {

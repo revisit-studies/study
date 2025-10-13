@@ -68,7 +68,7 @@ export function Timer({
     const listener = (e: StorageEvent) => {
       if (e.key === 'currentTime' && e.newValue) {
         timer.current = +e.newValue.split('_')[2];
-        startDate.current = Date.now() - timer.current;
+        startDate.current = Date.now();
 
         directUpdateTimer(+e.newValue.split('_')[0], +e.newValue.split('_')[1]);
         setForceRerenderInt(forceRerenderInt + 1);

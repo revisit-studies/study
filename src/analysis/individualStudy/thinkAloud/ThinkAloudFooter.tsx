@@ -79,9 +79,13 @@ export function ThinkAloudFooter({
 
   const { value: allPartTags, execute: pullAllPartTags } = useAsync(getTags, [storageEngine, 'participant']);
   const [analysisIsPlaying, _setAnalysisIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
 
   const setAnalysisIsPlaying = useCallback((playing: boolean) => {
     localStorage.setItem('analysisIsPlaying', playing ? 'true' : 'false');
+    if (!playing) {
+      setIsMuted(true);
+    }
     _setAnalysisIsPlaying(playing);
   }, []);
 
@@ -217,7 +221,7 @@ export function ThinkAloudFooter({
     <AppShell.Footer zIndex={101} withBorder={false}>
       <Stack style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '100%' }} gap={5} justify="center">
 
-        <AudioProvenanceVis setHasAudio={setHasAudio} jumpedToAudioTime={jumpedToTime} speed={speed} saveProvenance={saveProvenance} analysisIsPlaying={analysisIsPlaying} setAnalysisIsPlaying={setAnalysisIsPlaying} setTime={onTimeUpdate} setTimeString={(_t) => setTimeString(_t)} answers={participant ? participant.answers : {}} taskName={currentTrial} context={isReplay ? 'provenanceVis' : 'audioAnalysis'} />
+        <AudioProvenanceVis isMuted={isMuted} setHasAudio={setHasAudio} jumpedToAudioTime={jumpedToTime} speed={speed} setSpeed={setSpeed} saveProvenance={saveProvenance} analysisIsPlaying={analysisIsPlaying} setAnalysisIsPlaying={setAnalysisIsPlaying} setTime={onTimeUpdate} setTimeString={(_t) => setTimeString(_t)} answers={participant ? participant.answers : {}} taskName={currentTrial} context={isReplay ? 'provenanceVis' : 'audioAnalysis'} />
         {xScale && transcriptLines ? <TranscriptLines startTime={xScale.domain()[0]} xScale={xScale} transcriptLines={transcriptLines} currentShownTranscription={currentShownTranscription || 0} /> : null }
 
         <Group gap="xs" style={{ width: '100%' }} justify="center" wrap="nowrap">
@@ -225,7 +229,7 @@ export function ThinkAloudFooter({
             <Text ff="monospace" style={{ textAlign: 'right' }} mt="lg" c="dimmed">{timeString}</Text>
 
             <Tooltip label="Play">
-              <ActionIcon mt={25} size="xl" variant="light" onClick={() => setAnalysisIsPlaying(!analysisIsPlaying)}>
+              <ActionIcon mt={25} size="xl" variant="light" onClick={() => { setAnalysisIsPlaying(!analysisIsPlaying); setIsMuted(!isMuted); }}>
                 {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled /> }
               </ActionIcon>
             </Tooltip>
@@ -241,7 +245,10 @@ export function ThinkAloudFooter({
               <Popover.Dropdown>
                 <SegmentedControl
                   value={speed.toString()}
-                  onChange={(s) => setSpeed(+s)}
+                  onChange={(s) => {
+                    setSpeed(+s);
+                    localStorage.setItem('currentSpeed', s);
+                  }}
                   orientation="vertical"
                   data={[
                     { label: '0.5x', value: '0.5' },
