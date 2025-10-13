@@ -6,7 +6,7 @@ import {
   CheckIcon,
 } from '@mantine/core';
 import { IconEdit } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Tag } from '../types';
 import { Pills } from '../tiptapExtensions/Pills';
 import { TagEditor } from './TagEditor';
@@ -17,9 +17,18 @@ export function TagSelector({
 } : {tags: Tag[], selectedTags: Tag[], onSelectTags: (t: Tag[]) => void, disabled?: boolean, taskTags?: Tag[], partTags?: Tag[], tagsEmptyText: string, editTagCallback: (oldTag: Tag, newTag: Tag) => void, createTagCallback: (t: Tag) => void}) {
   const combobox = useCombobox();
 
-  const handleValueSelect = (val: string) => onSelectTags([...selectedTags, [...tags, ...(taskTags || []), ...(partTags || [])].find((t) => t.id === val)!]);
+  const handleValueRemove = useCallback((val: string) => onSelectTags(selectedTags.filter((t: Tag) => t !== undefined && t.id !== val)), [onSelectTags, selectedTags]);
 
-  const handleValueRemove = (val: string) => onSelectTags(selectedTags.filter((t: Tag) => t !== undefined && t.id !== val));
+  const handleValueSelect = useCallback(
+    (val: string) => {
+      if (selectedTags.find((t) => t.id === val)) {
+        handleValueRemove(val);
+        return;
+      }
+      onSelectTags([...selectedTags, [...tags, ...(taskTags || []), ...(partTags || [])].find((t) => t.id === val)!]);
+    },
+    [handleValueRemove, onSelectTags, partTags, selectedTags, tags, taskTags],
+  );
 
   const values = <Pills selectedTags={selectedTags} removeFunc={handleValueRemove} />;
 
@@ -30,10 +39,6 @@ export function TagSelector({
       active
     >
       <Group
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
         justify="space-between"
         gap="sm"
         style={{ width: '100%' }}
@@ -116,9 +121,9 @@ export function TagSelector({
   )), [editTagCallback, selectedTags, tags]);
 
   return (
-    <Combobox disabled={disabled} width={300} store={combobox} onOptionSubmit={handleValueSelect} withinPortal>
+    <Combobox disabled={disabled} width={200} store={combobox} onOptionSubmit={handleValueSelect} withinPortal>
       <Combobox.DropdownTarget>
-        <PillsInput style={{ width: '250px' }} pointer onClick={() => combobox.toggleDropdown()}>
+        <PillsInput style={{ width: '200px' }} pointer onClick={() => combobox.toggleDropdown()}>
           <Pill.Group>
             {selectedTags.length > 0 ? (
               values

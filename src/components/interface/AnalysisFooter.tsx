@@ -15,7 +15,7 @@ function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   return null;
 }
 
-export function AnalysisFooter() {
+export function AnalysisFooter({ setHasAudio }: {setHasAudio: (b: boolean) => void}) {
   const { storageEngine } = useStorageEngine();
 
   const { value: allParticipants } = useAsync(getAllParticipantsNames, [storageEngine]);
@@ -32,6 +32,6 @@ export function AnalysisFooter() {
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <ThinkAloudFooter studyId={studyId || ''} currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={(prov: any) => dispatch(saveAnalysisState(prov))} />
+    <ThinkAloudFooter setHasAudio={setHasAudio} studyId={studyId || ''} currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={(prov: any) => dispatch(saveAnalysisState(prov))} />
   );
 }
