@@ -7,7 +7,7 @@ import { ResponseBlock } from '../response/ResponseBlock';
 import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
-export function AppNavBar() {
+export function AppNavBar({ width, top, sidebarOpen }: { width: number, top: number, sidebarOpen: boolean }) {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentComponent = useCurrentComponent();
@@ -30,7 +30,7 @@ export function AppNavBar() {
   const instructionInSideBar = instructionLocation === 'sidebar';
 
   return trialHasSideBar && currentConfig ? (
-    <AppShell.Navbar className="sidebar" bg="gray.1" display="block" style={{ zIndex: 0 }}>
+    <Box className="sidebar" bg="gray.1" display={sidebarOpen ? 'block' : 'none'} style={{ zIndex: 0, top, position: 'relative' }} w={width} miw={width}>
       {instructionInSideBar && instruction !== '' && (
         <Box
           bg="gray.3"
@@ -53,7 +53,7 @@ export function AppNavBar() {
           />
         </Box>
       )}
-    </AppShell.Navbar>
+    </Box>
   ) : (
     <AppShell.Navbar bg="gray.1" display="block" style={{ zIndex: 0 }}>
       <ResponseBlock
