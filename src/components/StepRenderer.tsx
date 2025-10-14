@@ -151,9 +151,10 @@ export function StepRenderer() {
           {isScreenRecordingUserRejected && <ScreenRecordingRejection />}
           <HelpModal />
           <AlertModal />
-          <Flex direction="row" gap="xxs">
+          <Flex direction="row" gap="xs">
             <AppNavBar width={sidebarWidth} top={showTitleBar ? 70 : 0} sidebarOpen={sidebarOpen} />
-            <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }} w={sidebarOpen ? `calc(100% - ${sidebarWidth}px)` : '100%'}>
+            {/* 10px is the gap between the sidebar and the main content */}
+            <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }} w={sidebarOpen ? `calc(100% - ${sidebarWidth}px - 10px)` : '100%'}>
               {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
               <Button
                 variant="subtle"
