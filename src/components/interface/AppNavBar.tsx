@@ -1,4 +1,4 @@
-import { Box, Text } from '@mantine/core';
+import { AppShell, Box, Text } from '@mantine/core';
 import { useMemo } from 'react';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
@@ -30,12 +30,11 @@ export function AppNavBar() {
   const instructionInSideBar = instructionLocation === 'sidebar';
 
   return trialHasSideBar && currentConfig ? (
-    <Box className="sidebar" bg="gray.1">
+    <AppShell.Navbar className="sidebar" bg="gray.1" display="block" style={{ zIndex: 0 }}>
       {instructionInSideBar && instruction !== '' && (
         <Box
           bg="gray.3"
           p="md"
-          style={{ height: '100%' }}
         >
           <Text span c="orange.8" fw={700} inherit>
             Task:
@@ -45,10 +44,7 @@ export function AppNavBar() {
       )}
 
       {trialHasSideBarResponses && (
-        <Box
-          p="md"
-          style={{ height: '100%' }}
-        >
+        <Box p="md">
           <ResponseBlock
             key={`${currentComponent}-sidebar-response-block`}
             status={status}
@@ -57,9 +53,9 @@ export function AppNavBar() {
           />
         </Box>
       )}
-    </Box>
+    </AppShell.Navbar>
   ) : (
-    <Box bg="gray.1">
+    <AppShell.Navbar bg="gray.1" display="block" style={{ zIndex: 0 }}>
       <ResponseBlock
         key={`${currentComponent}-sidebar-response-block`}
         status={status}
@@ -67,6 +63,6 @@ export function AppNavBar() {
         location="sidebar"
         style={{ display: 'hidden' }}
       />
-    </Box>
+    </AppShell.Navbar>
   );
 }

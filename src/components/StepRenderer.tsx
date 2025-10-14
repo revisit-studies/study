@@ -1,6 +1,4 @@
-import {
-  AppShell, Button, Box, ScrollArea,
-} from '@mantine/core';
+import { AppShell, Button } from '@mantine/core';
 import { Outlet } from 'react-router';
 import { useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash.debounce';
@@ -136,17 +134,17 @@ export function StepRenderer() {
     return studyNavigatorEnabled && showStudyBrowser;
   }, [studyNavigatorEnabled, showStudyBrowser, isAnalysis]);
 
-  const headerHeight = showTitleBar ? 70 : 0;
-  const footerHeight = (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0);
-
   return (
     <WindowEventsContext.Provider value={windowEvents}>
       <ScreenRecordingContext.Provider value={screenRecording}>
         <AppShell
+          padding="md"
           header={{ height: showTitleBar ? 70 : 0 }}
+          navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !sidebarOpen, mobile: !sidebarOpen } }}
           aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
           footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
         >
+          <AppNavBar />
           <AppAside />
           {showTitleBar && (
           <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
@@ -156,34 +154,18 @@ export function StepRenderer() {
           <HelpModal />
           <AlertModal />
           <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }}>
-            <ScrollArea h={`calc(100vh - ${headerHeight}px - ${footerHeight}px)`} offsetScrollbars>
-              <Box style={{ display: 'flex', height: '100%' }}>
-                {sidebarOpen && (
-                  <Box
-                    style={{
-                      width: sidebarWidth,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <AppNavBar />
-                  </Box>
-                )}
-                <Box style={{ flex: 1, padding: 'var(--mantine-spacing-md)', height: '100%' }}>
-                  {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
-                  <Button
-                    variant="transparent"
-                    leftSection={<IconArrowLeft size={14} />}
-                    onClick={() => dispatch(toggleStudyBrowser())}
-                    size="xs"
-                    style={{ position: 'fixed', top: '10px', right: '10px' }}
-                  >
-                    Study Browser
-                  </Button>
-                  )}
-                  <Outlet />
-                </Box>
-              </Box>
-            </ScrollArea>
+            {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
+            <Button
+              variant="transparent"
+              leftSection={<IconArrowLeft size={14} />}
+              onClick={() => dispatch(toggleStudyBrowser())}
+              size="xs"
+              style={{ position: 'fixed', top: '10px', right: '10px' }}
+            >
+              Study Browser
+            </Button>
+            )}
+            <Outlet />
           </AppShell.Main>
           {isAnalysis && (
           <AnalysisFooter />
