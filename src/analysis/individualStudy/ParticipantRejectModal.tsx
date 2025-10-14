@@ -13,9 +13,11 @@ import { useAuth } from '../../store/hooks/useAuth';
 export function ParticipantRejectModal({
   selectedParticipants = [],
   refresh,
+  footer = false,
 }: {
   selectedParticipants: ParticipantData[];
   refresh?: () => Promise<void>;
+  footer: boolean;
 }) {
   const { storageEngine } = useStorageEngine();
   const { user } = useAuth();
@@ -107,18 +109,16 @@ export function ParticipantRejectModal({
       {rejectedParticipantsCount > 0 && (
       <Tooltip label="Only admins can undo rejection" disabled={user.isAdmin}>
         <Button disabled={!user.isAdmin} onClick={() => setModalUndoRejectOpened(true)} color="blue">
-          Undo Reject Participants (
-          {rejectedParticipantsCount}
-          )
+          Undo Reject
+          {!footer ? ` Participants (${rejectedParticipantsCount})` : ''}
         </Button>
       </Tooltip>
       )}
       {nonRejectedParticipantsCount > 0 && (
       <Tooltip label="Only admins can reject participants" disabled={user.isAdmin}>
         <Button disabled={!user.isAdmin} onClick={() => setModalRejectOpened(true)} color="red">
-          Reject Participants (
-          {nonRejectedParticipantsCount}
-          )
+          Reject
+          {!footer ? ` Participants (${nonRejectedParticipantsCount})` : ''}
         </Button>
       </Tooltip>
       )}

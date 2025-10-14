@@ -539,23 +539,23 @@ export abstract class StorageEngine {
   async saveEditedTranscript(participantId: string, authEmail: string, task: string, editedText: EditedText[]) {
     const taglessTranscript = editedText.map((line) => ({ ...line, selectedTags: line.selectedTags.filter((tag) => tag !== undefined) })) as TaglessEditedText[];
 
-    this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText', taglessTranscript);
+    return this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText', taglessTranscript);
   }
 
-  async getAllParticipantAndTaskTags(authEmail: string, participantId: string, task: string): Promise<ParticipantTags | null> {
-    const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'participantTags', this.studyId);
+  async getAllParticipantAndTaskTags(authEmail: string, participantId: string, studyId: string): Promise<ParticipantTags | null> {
+    const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags', studyId);
 
     if (tags?.participantTags) {
       return tags;
     }
 
-    this.saveAllParticipantAndTaskTags(authEmail, participantId, task, { participantTags: [], taskTags: {} });
+    this.saveAllParticipantAndTaskTags(authEmail, participantId, { participantTags: [], taskTags: {} });
 
     return { participantTags: [], taskTags: {} };
   }
 
-  async saveAllParticipantAndTaskTags(authEmail: string, participantId: string, task: string, participantTags: ParticipantTags) {
-    await this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'participantTags', participantTags);
+  async saveAllParticipantAndTaskTags(authEmail: string, participantId: string, participantTags: ParticipantTags) {
+    return this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags', participantTags);
   }
 
   // Gets the participant data for the current participant or a specific participantId.

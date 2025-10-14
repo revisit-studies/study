@@ -48,7 +48,7 @@ export function TranscriptLine({
       </Group>
       <Group wrap="nowrap" style={{ width: '500px' }}>
         <Divider orientation="vertical" size="xs" />
-        <TagSelector createTagCallback={createTagCallback} editTagCallback={editTagCallback} onSelectTags={(t) => onSelectTags(indexRef.current, t)} selectedTags={selectedTags} tags={tags} tagsEmptyText="Add Text Tags" />
+        <TagSelector width={250} createTagCallback={createTagCallback} editTagCallback={editTagCallback} onSelectTags={(t) => onSelectTags(indexRef.current, t)} selectedTags={selectedTags} tags={tags} tagsEmptyText="Add Text Tags" />
         <Divider orientation="vertical" size="xs" />
 
         <Textarea

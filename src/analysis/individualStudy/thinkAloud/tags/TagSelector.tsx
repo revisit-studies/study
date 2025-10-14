@@ -15,8 +15,8 @@ import { TagEditor } from './TagEditor';
 import { AddTagDropdown } from './AddTagDropdown';
 
 export function TagSelector({
-  tags, selectedTags, onSelectTags, disabled = false, tagsEmptyText, createTagCallback, editTagCallback,
-} : {tags: Tag[], selectedTags: Tag[], onSelectTags: (t: Tag[]) => void, disabled?: boolean, tagsEmptyText: string, editTagCallback: (oldTag: Tag, newTag: Tag) => void, createTagCallback: (t: Tag) => void}) {
+  tags, selectedTags, onSelectTags, disabled = false, tagsEmptyText, createTagCallback, editTagCallback, width,
+} : {tags: Tag[], selectedTags: Tag[], onSelectTags: (t: Tag[]) => void, disabled?: boolean, tagsEmptyText: string, editTagCallback: (oldTag: Tag, newTag: Tag) => void, createTagCallback: (t: Tag) => void, width: number}) {
   const combobox = useCombobox();
 
   const handleValueRemove = useCallback((val: string) => onSelectTags(selectedTags.filter((t: Tag) => t !== undefined && t.id !== val)), [onSelectTags, selectedTags]);
@@ -50,7 +50,7 @@ export function TagSelector({
           <Group wrap="nowrap">
             <CheckIcon size={12} />
             <ColorSwatch size={10} color={tag.color} />
-            <Text style={{ width: '130px' }} truncate="end">{tag.name}</Text>
+            <Text style={{ width: width - 120 }} truncate="end">{tag.name}</Text>
           </Group>
         </Tooltip>
         <Box onClick={(e) => {
@@ -81,7 +81,7 @@ export function TagSelector({
         </Box>
       </Group>
     </Combobox.Option>
-  )), [editTagCallback, selectedTags, tags]);
+  )), [editTagCallback, selectedTags, tags, width]);
 
   const options = useMemo(() => tags.filter((tag) => tag !== undefined && !selectedTags.find((selT) => selT && selT.id === tag.id)).map((tag) => (
     <Combobox.Option value={tag.id} key={tag.id}>
@@ -91,7 +91,7 @@ export function TagSelector({
           <Group wrap="nowrap">
             <ColorSwatch size={10} color={tag.color} />
 
-            <Text style={{ width: '150px' }} truncate="end">{tag.name}</Text>
+            <Text style={{ width: width - 100 }} truncate="end">{tag.name}</Text>
           </Group>
         </Tooltip>
         <Box onClick={(e) => {
@@ -126,12 +126,12 @@ export function TagSelector({
         </Box>
       </Group>
     </Combobox.Option>
-  )), [editTagCallback, selectedTags, tags]);
+  )), [editTagCallback, selectedTags, tags, width]);
 
   return (
-    <Combobox disabled={disabled} width={250} store={combobox} onOptionSubmit={handleValueSelect} withinPortal>
+    <Combobox disabled={disabled} width={width} store={combobox} onOptionSubmit={handleValueSelect} withinPortal>
       <Combobox.DropdownTarget>
-        <PillsInput style={{ width: '250px' }} pointer onClick={() => combobox.toggleDropdown()}>
+        <PillsInput style={{ width }} pointer onClick={() => combobox.toggleDropdown()}>
           <Pill.Group>
             {selectedTags.length > 0 ? (
               values
