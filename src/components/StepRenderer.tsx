@@ -153,7 +153,7 @@ export function StepRenderer() {
           <AlertModal />
           <Flex direction="row" gap="xxs">
             <AppNavBar width={sidebarWidth} top={showTitleBar ? 70 : 0} sidebarOpen={sidebarOpen} />
-            <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }}>
+            <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }} w={sidebarOpen ? `calc(100% - ${sidebarWidth}px)` : '100%'}>
               {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
               <Button
                 variant="subtle"
