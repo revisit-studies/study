@@ -57,7 +57,7 @@ export type StorageObject<T extends StorageObjectType> =
     ? TranscribedAudio
     : T extends 'editedText'
     ? TaglessEditedText[]
-    : T extends 'partTags'
+    : T extends 'participantTags'
     ? ParticipantTags
     : T extends 'tags'
     ? Tag[]
@@ -543,19 +543,19 @@ export abstract class StorageEngine {
   }
 
   async getAllParticipantAndTaskTags(authEmail: string, participantId: string, task: string): Promise<ParticipantTags | null> {
-    const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'partTags', this.studyId);
+    const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'participantTags', this.studyId);
 
-    if (tags?.partTags) {
+    if (tags?.participantTags) {
       return tags;
     }
 
-    this.saveAllParticipantAndTaskTags(authEmail, participantId, task, { partTags: [], taskTags: {} });
+    this.saveAllParticipantAndTaskTags(authEmail, participantId, task, { participantTags: [], taskTags: {} });
 
-    return { partTags: [], taskTags: {} };
+    return { participantTags: [], taskTags: {} };
   }
 
   async saveAllParticipantAndTaskTags(authEmail: string, participantId: string, task: string, participantTags: ParticipantTags) {
-    await this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'partTags', participantTags);
+    await this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'participantTags', participantTags);
   }
 
   // Gets the participant data for the current participant or a specific participantId.

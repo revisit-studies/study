@@ -10,13 +10,13 @@ import {
 import { IconEdit } from '@tabler/icons-react';
 import { useCallback, useMemo } from 'react';
 import { Tag } from '../types';
-import { Pills } from '../tiptapExtensions/Pills';
+import { Pills } from './Pills';
 import { TagEditor } from './TagEditor';
-import { AddTagDropdown } from '../tiptapExtensions/AddTagDropdown';
+import { AddTagDropdown } from './AddTagDropdown';
 
 export function TagSelector({
-  tags, selectedTags, onSelectTags, disabled = false, taskTags, partTags, tagsEmptyText, createTagCallback, editTagCallback,
-} : {tags: Tag[], selectedTags: Tag[], onSelectTags: (t: Tag[]) => void, disabled?: boolean, taskTags?: Tag[], partTags?: Tag[], tagsEmptyText: string, editTagCallback: (oldTag: Tag, newTag: Tag) => void, createTagCallback: (t: Tag) => void}) {
+  tags, selectedTags, onSelectTags, disabled = false, tagsEmptyText, createTagCallback, editTagCallback,
+} : {tags: Tag[], selectedTags: Tag[], onSelectTags: (t: Tag[]) => void, disabled?: boolean, tagsEmptyText: string, editTagCallback: (oldTag: Tag, newTag: Tag) => void, createTagCallback: (t: Tag) => void}) {
   const combobox = useCombobox();
 
   const handleValueRemove = useCallback((val: string) => onSelectTags(selectedTags.filter((t: Tag) => t !== undefined && t.id !== val)), [onSelectTags, selectedTags]);
@@ -27,9 +27,9 @@ export function TagSelector({
         handleValueRemove(val);
         return;
       }
-      onSelectTags([...selectedTags, [...tags, ...(taskTags || []), ...(partTags || [])].find((t) => t.id === val)!]);
+      onSelectTags([...selectedTags, [...tags].find((t) => t.id === val)!]);
     },
-    [handleValueRemove, onSelectTags, partTags, selectedTags, tags, taskTags],
+    [handleValueRemove, onSelectTags, selectedTags, tags],
   );
 
   const values = <Pills selectedTags={selectedTags} removeFunc={handleValueRemove} />;
@@ -142,7 +142,6 @@ export function TagSelector({
             <Combobox.EventsTarget>
               <PillsInput.Field
                 type="hidden"
-                // onBlur={() => combobox.closeDropdown()}
               />
             </Combobox.EventsTarget>
           </Pill.Group>
@@ -151,7 +150,7 @@ export function TagSelector({
 
       <Combobox.Dropdown>
         <Combobox.Options>
-          {options.length === 0 && selectedOptions.length === 0 ? <Combobox.Empty>No additional tags</Combobox.Empty> : taskTags || partTags ? <Combobox.Group label="Text Tags">{[...selectedOptions, ...options]}</Combobox.Group> : [...selectedOptions, ...options]}
+          {options.length === 0 && selectedOptions.length === 0 ? <Combobox.Empty>No additional tags</Combobox.Empty> : [...selectedOptions, ...options]}
           <TagEditor createTagCallback={createTagCallback} tags={tags || []} />
         </Combobox.Options>
       </Combobox.Dropdown>

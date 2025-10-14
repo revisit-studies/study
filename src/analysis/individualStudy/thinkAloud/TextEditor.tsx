@@ -12,7 +12,9 @@ import { useEvent } from '../../../store/hooks/useEvent';
 import {
   EditedText, Tag,
 } from './types';
-import { IconComponent } from './tiptapExtensions/IconComponent';
+import {
+  TranscriptLine,
+} from './TranscriptLine';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { useAsync } from '../../../store/hooks/useAsync';
 import { StorageEngine } from '../../../storage/engines/types';
@@ -131,7 +133,7 @@ export function TextEditor({
   }, []);
 
   const transcript = useMemo(() => (transcriptList.map((line, i) => (
-    <IconComponent
+    <TranscriptLine
       onClickLine={onClickLine}
       editTagCallback={editTagCallback}
       createTagCallback={createTagCallback}

@@ -22,8 +22,8 @@ import {
 } from './types';
 import { AudioProvenanceVis } from '../../../components/audioAnalysis/AudioProvenanceVis';
 import { StorageEngine } from '../../../storage/engines/types';
-import { TranscriptLines } from './TextEditorComponents/TranscriptLines';
-import { TagSelector } from './TextEditorComponents/TagSelector';
+import { TranscriptSegmentsVis } from './TranscriptSegmentsVis';
+import { TagSelector } from './tags/TagSelector';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { PREFIX } from '../../../utils/Prefix';
@@ -64,7 +64,7 @@ async function getTags(storageEngine: StorageEngine | undefined, type: 'particip
 
 export function ThinkAloudFooter({
   visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance, jumpedToLine = 0, studyId, setHasAudio,
-} : {visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance?: (prov: unknown) => void, jumpedToLine?: number, studyId: string, setHasAudio: (b: boolean) => void}) {
+} : {visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance: (prov: unknown) => void, jumpedToLine?: number, studyId: string, setHasAudio: (b: boolean) => void}) {
   const { storageEngine } = useStorageEngine();
 
   const auth = useAuth();
@@ -79,7 +79,7 @@ export function ThinkAloudFooter({
 
   const { value: taskTags, execute: pullTags } = useAsync(getTags, [storageEngine, 'task']);
 
-  const { value: allPartTags, execute: pullAllPartTags } = useAsync(getTags, [storageEngine, 'participant']);
+  const { value: allParticipantTags, execute: pullAllParticipantTags } = useAsync(getTags, [storageEngine, 'participant']);
   const [analysisIsPlaying, _setAnalysisIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
@@ -147,7 +147,7 @@ export function ThinkAloudFooter({
 
   const [transcriptLines, setTranscriptLines] = useState<TranscriptLinesWithTimes[] | null>(null);
 
-  const { value: partTags, execute: pullPartTags } = useAsync(getParticipantTags, [auth.user.user?.email || 'temp', participantId, currentTrial, storageEngine]);
+  const { value: participantTags, execute: pullParticipantTags } = useAsync(getParticipantTags, [auth.user.user?.email || 'temp', participantId, currentTrial, storageEngine]);
 
   // shouldnt this not work? I thought we needed to do something smarter because of dynamic stuff
   const currentTrialClean = useMemo(() => {
@@ -237,9 +237,9 @@ export function ThinkAloudFooter({
 
   const setTags = useCallback((_tags: Tag[], type: 'task' | 'participant') => {
     if (storageEngine) {
-      storageEngine.saveTags(_tags, type).then(() => { type === 'task' ? pullTags(storageEngine, type) : pullAllPartTags(storageEngine, type); });
+      storageEngine.saveTags(_tags, type).then(() => { type === 'task' ? pullTags(storageEngine, type) : pullAllParticipantTags(storageEngine, type); });
     }
-  }, [pullAllPartTags, pullTags, storageEngine]);
+  }, [pullAllParticipantTags, pullTags, storageEngine]);
 
   const editTaskTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
     if (!taskTags) {
@@ -254,16 +254,16 @@ export function ThinkAloudFooter({
   }, [setTags, taskTags]);
 
   const editParticipantTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
-    if (!allPartTags) {
+    if (!allParticipantTags) {
       return;
     }
 
-    const tagIndex = allPartTags.findIndex((t) => t.id === oldTag.id);
-    const tagsCopy = Array.from(allPartTags);
+    const tagIndex = allParticipantTags.findIndex((t) => t.id === oldTag.id);
+    const tagsCopy = Array.from(allParticipantTags);
     tagsCopy[tagIndex] = newTag;
 
     setTags(tagsCopy, 'participant');
-  }, [setTags, allPartTags]);
+  }, [setTags, allParticipantTags]);
 
   const createTaskTagCallback = useCallback((t: Tag) => { setTags([...(taskTags || []), t], 'task'); }, [setTags, taskTags]);
 
@@ -278,7 +278,7 @@ export function ThinkAloudFooter({
       <Stack style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '100%' }} gap={5} justify="center">
 
         <AudioProvenanceVis isMuted={isMuted} setHasAudio={setHasAudio} jumpedToAudioTime={jumpedToTime} speed={speed} setSpeed={setSpeed} saveProvenance={saveProvenance} analysisIsPlaying={analysisIsPlaying} setAnalysisIsPlaying={setAnalysisIsPlaying} setTime={onTimeUpdate} setTimeString={(_t) => setTimeString(_t)} answers={participant ? participant.answers : {}} taskName={currentTrial} context={isReplay ? 'provenanceVis' : 'audioAnalysis'} />
-        {xScale && transcriptLines ? <TranscriptLines startTime={xScale.domain()[0]} xScale={xScale} transcriptLines={transcriptLines} currentShownTranscription={currentShownTranscription || 0} /> : null }
+        {xScale && transcriptLines ? <TranscriptSegmentsVis startTime={xScale.domain()[0]} xScale={xScale} transcriptLines={transcriptLines} currentShownTranscription={currentShownTranscription || 0} /> : null }
 
         <Group gap="xs" style={{ width: '100%' }} justify="center" wrap="nowrap">
           <Group wrap="nowrap">
@@ -351,25 +351,25 @@ export function ThinkAloudFooter({
             <Stack gap="4">
               <Text size="sm" fw={500}>Participant Tags</Text>
               <TagSelector
-                tags={allPartTags || []}
+                tags={allParticipantTags || []}
                 editTagCallback={editParticipantTagCallback}
                 createTagCallback={createParticipantTagCallback}
                 tagsEmptyText="Add Participant Tags"
                 onSelectTags={(tempTags) => {
-                  if (storageEngine && partTags) {
-                    let copy = structuredClone(partTags);
+                  if (storageEngine && participantTags) {
+                    let copy = structuredClone(participantTags);
                     if (copy) {
-                      copy.partTags = tempTags;
+                      copy.participantTags = tempTags;
                     } else {
-                      copy = { partTags: [], taskTags: {} };
-                      copy.partTags = tempTags;
+                      copy = { participantTags: [], taskTags: {} };
+                      copy.participantTags = tempTags;
                     }
                     storageEngine.saveAllParticipantAndTaskTags(auth.user.user?.email || 'temp', participantId, currentTrial, copy).then(() => {
-                      pullPartTags(auth.user.user?.email || 'temp', participantId, currentTrial, storageEngine);
+                      pullParticipantTags(auth.user.user?.email || 'temp', participantId, currentTrial, storageEngine);
                     });
                   }
                 }}
-                selectedTags={partTags ? partTags.partTags : []}
+                selectedTags={participantTags ? participantTags.participantTags : []}
               />
             </Stack>
 
@@ -415,20 +415,20 @@ export function ThinkAloudFooter({
                 createTagCallback={createTaskTagCallback}
                 tagsEmptyText="Add Task Tags"
                 onSelectTags={(tempTag) => {
-                  if (storageEngine && partTags) {
-                    let copy = structuredClone(partTags);
+                  if (storageEngine && participantTags) {
+                    let copy = structuredClone(participantTags);
                     if (copy) {
                       copy.taskTags[currentTrial] = tempTag;
                     } else {
-                      copy = { partTags: [], taskTags: {} };
+                      copy = { participantTags: [], taskTags: {} };
                       copy.taskTags[currentTrial] = tempTag;
                     }
                     storageEngine.saveAllParticipantAndTaskTags(auth.user.user?.email || 'temp', participantId, currentTrial, copy).then(() => {
-                      pullPartTags(auth.user.user?.email || 'temp', participantId, currentTrial, storageEngine);
+                      pullParticipantTags(auth.user.user?.email || 'temp', participantId, currentTrial, storageEngine);
                     });
                   }
                 }}
-                selectedTags={partTags ? partTags.taskTags[currentTrial] || [] : []}
+                selectedTags={participantTags ? participantTags.taskTags[currentTrial] || [] : []}
               />
             </Stack>
 

@@ -4,11 +4,9 @@ import {
 } from '@mantine/core';
 import { useState } from 'react';
 import { Tag } from '../types';
-import { AddTagDropdown } from '../tiptapExtensions/AddTagDropdown';
+import { AddTagDropdown } from './AddTagDropdown';
 
-export function TagEditor({
-  createTagCallback, tags,
-} : { createTagCallback : (tag: Tag) => void, tags: Tag[] }) {
+export function TagEditor({ createTagCallback, tags } : { createTagCallback : (tag: Tag) => void, tags: Tag[] }) {
   const [addDialogOpen, setAddDialogOpen] = useState<boolean>(false);
 
   return (

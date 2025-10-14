@@ -15,12 +15,12 @@ export interface Tag {
 }
 
 export interface ParticipantTags {
-    partTags: Tag[],
+    participantTags: Tag[],
     taskTags: Record<string, Tag[]>
 }
 
 export interface StoredParticipantTags {
-    partTags: string[],
+    participantTags: string[],
     taskTags: Record<string, string[]>
 }
 

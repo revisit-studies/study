@@ -4,10 +4,10 @@ import {
 import {
   useEffect, useMemo, useRef, useState,
 } from 'react';
-import { Tag } from '../types';
-import { TagSelector } from '../TextEditorComponents/TagSelector';
+import { Tag } from './types';
+import { TagSelector } from './tags/TagSelector';
 
-export function IconComponent({
+export function TranscriptLine({
   annotation, setAnnotation, start, current, end, text, tags, selectedTags, onTextChange, deleteRowCallback, addRowCallback, onSelectTags, addRef, index, editTagCallback, createTagCallback, onClickLine,
 } : {annotation: string; setAnnotation: (i: number, s: string) => void; start: number, end: number, current: number, text: string, tags: Tag[], selectedTags: Tag[], onTextChange: (i: number, v: string) => void, deleteRowCallback: (i: number) => void, addRowCallback: (i: number, textIndex: number) => void, onSelectTags: (i: number, t: Tag[]) => void, addRef: (i: number, ref: HTMLTextAreaElement) => void, index: number, editTagCallback: (oldTag: Tag, newTag: Tag) => void, createTagCallback: (t: Tag) => void, onClickLine: (focusedLine: number) => void }) {
   const [annotationVal, setAnnotationVal] = useState<string>(annotation);

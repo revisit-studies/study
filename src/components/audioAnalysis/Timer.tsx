@@ -6,7 +6,7 @@ import { useEvent } from '../../store/hooks/useEvent';
 
 export function Timer({
   width, height, debounceUpdateTimer, directUpdateTimer, duration, isPlaying, xScale, startTime, initialTime, speed,
-}: { width: number, height: number, debounceUpdateTimer: (time: number, percent: number | undefined) => void, directUpdateTimer: (time: number, percent: number | undefined) => void, duration: number, isPlaying: boolean, xScale: d3.ScaleLinear<number, number>, startTime: number, initialTime?: number, speed: number }) {
+}: { width: number, height: number, debounceUpdateTimer: (time: number, percent: number | undefined) => void, directUpdateTimer: (time: number, percent: number | undefined) => void, duration: number, isPlaying: boolean, xScale: d3.ScaleLinear<number, number>, startTime: number, initialTime: number, speed: number }) {
   const timer = useRef<number>(0);
   const startDate = useRef<number>(Date.now());
   const [forceRerenderInt, setForceRerenderInt] = useState<number>(0);
