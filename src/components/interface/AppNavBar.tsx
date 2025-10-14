@@ -30,7 +30,7 @@ export function AppNavBar({ width, top, sidebarOpen }: { width: number, top: num
   const instructionInSideBar = instructionLocation === 'sidebar';
 
   return trialHasSideBar && currentConfig ? (
-    <Box className="sidebar" bg="gray.1" display={sidebarOpen ? 'block' : 'none'} style={{ zIndex: 0, top, position: 'relative' }} w={width} miw={width}>
+    <Box className="sidebar" bg="gray.1" display={sidebarOpen ? 'block' : 'none'} style={{ zIndex: 0, marginTop: top, position: 'relative' }} w={width} miw={width}>
       {instructionInSideBar && instruction !== '' && (
         <Box
           bg="gray.3"
