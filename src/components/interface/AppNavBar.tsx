@@ -1,4 +1,4 @@
-import { AppShell, Text } from '@mantine/core';
+import { AppShell, Box, Text } from '@mantine/core';
 import { useMemo } from 'react';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
@@ -7,7 +7,7 @@ import { ResponseBlock } from '../response/ResponseBlock';
 import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
-export function AppNavBar() {
+export function AppNavBar({ width, top, sidebarOpen }: { width: number, top: number, sidebarOpen: boolean }) {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentComponent = useCurrentComponent();
@@ -30,9 +30,9 @@ export function AppNavBar() {
   const instructionInSideBar = instructionLocation === 'sidebar';
 
   return trialHasSideBar && currentConfig ? (
-    <AppShell.Navbar className="sidebar" bg="gray.1" display="block" style={{ zIndex: 0, overflowY: 'scroll' }}>
+    <Box className="sidebar" bg="gray.1" display={sidebarOpen ? 'block' : 'none'} style={{ zIndex: 0, marginTop: top, position: 'relative' }} w={width} miw={width}>
       {instructionInSideBar && instruction !== '' && (
-        <AppShell.Section
+        <Box
           bg="gray.3"
           p="md"
         >
@@ -40,22 +40,22 @@ export function AppNavBar() {
             Task:
           </Text>
           <ReactMarkdownWrapper text={instruction} />
-        </AppShell.Section>
+        </Box>
       )}
 
       {trialHasSideBarResponses && (
-        <AppShell.Section p="md">
+        <Box p="md">
           <ResponseBlock
             key={`${currentComponent}-sidebar-response-block`}
             status={status}
             config={currentConfig}
             location="sidebar"
           />
-        </AppShell.Section>
+        </Box>
       )}
-    </AppShell.Navbar>
+    </Box>
   ) : (
-    <AppShell.Navbar bg="gray.1" display="block" style={{ zIndex: 0, overflowY: 'scroll' }}>
+    <AppShell.Navbar bg="gray.1" display="block" style={{ zIndex: 0 }}>
       <ResponseBlock
         key={`${currentComponent}-sidebar-response-block`}
         status={status}

@@ -1,4 +1,4 @@
-import { AppShell, Button } from '@mantine/core';
+import { AppShell, Button, Flex } from '@mantine/core';
 import { Outlet } from 'react-router';
 import { useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash.debounce';
@@ -140,11 +140,9 @@ export function StepRenderer() {
         <AppShell
           padding="md"
           header={{ height: showTitleBar ? 70 : 0 }}
-          navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !sidebarOpen, mobile: !sidebarOpen } }}
           aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
           footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
         >
-          <AppNavBar />
           <AppAside />
           {showTitleBar && (
           <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
@@ -153,20 +151,24 @@ export function StepRenderer() {
           {isScreenRecordingUserRejected && <ScreenRecordingRejection />}
           <HelpModal />
           <AlertModal />
-          <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }}>
-            {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
-            <Button
-              variant="transparent"
-              leftSection={<IconArrowLeft size={14} />}
-              onClick={() => dispatch(toggleStudyBrowser())}
-              size="xs"
-              style={{ position: 'fixed', top: '10px', right: '10px' }}
-            >
-              Study Browser
-            </Button>
-            )}
-            <Outlet />
-          </AppShell.Main>
+          <Flex direction="row" gap="xs">
+            <AppNavBar width={sidebarWidth} top={showTitleBar ? 70 : 0} sidebarOpen={sidebarOpen} />
+            {/* 10px is the gap between the sidebar and the main content */}
+            <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }} w={sidebarOpen ? `calc(100% - ${sidebarWidth}px - 10px)` : '100%'}>
+              {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
+              <Button
+                variant="subtle"
+                leftSection={<IconArrowLeft size={14} />}
+                onClick={() => dispatch(toggleStudyBrowser())}
+                size="xs"
+                style={{ position: 'fixed', top: '10px', right: '10px' }}
+              >
+                Study Browser
+              </Button>
+              )}
+              <Outlet />
+            </AppShell.Main>
+          </Flex>
           {isAnalysis && (
           <AnalysisFooter />
           )}
