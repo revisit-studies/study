@@ -164,9 +164,7 @@ export function ThinkAloudFooter({
 
     // if we find ourselves with a wrong current trial, erase it
     if (participant && !participant.answers[currentTrial]) {
-      // still dont know why this isnt in the type
-      // @ts-ignore
-      setSearchParams({ participantId, currentTrial: Object.values(participant.answers).find((ans) => +ans.trialOrder.split('_')[0] === 0)?.identifier });
+      setSearchParams({ participantId, currentTrial: Object.values(participant.answers).find((ans) => +ans.trialOrder.split('_')[0] === 0)!.identifier });
     }
 
     return joinExceptLast;

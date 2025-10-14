@@ -17,7 +17,7 @@ export function ParticipantRejectModal({
 }: {
   selectedParticipants: ParticipantData[];
   refresh?: () => Promise<void>;
-  footer: boolean;
+  footer?: boolean;
 }) {
   const { storageEngine } = useStorageEngine();
   const { user } = useAuth();
