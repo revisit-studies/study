@@ -85,7 +85,7 @@ export function Timer({
     startDate.current = Date.now();
     setForceRerenderInt(forceRerenderInt + 1);
 
-    localStorage.setItem('currentTime', `${startTime + timer.current}_${(timer.current / duration).toString()}_${timer.current}`);
+    localStorage.setItem('currentTime', `${startTime + timer.current}_${(timer.current / duration)}_${timer.current}`);
 
     directUpdateTimer(startTime + timer.current, timer.current / duration);
   }, [directUpdateTimer, duration, forceRerenderInt, startTime, xScale]);

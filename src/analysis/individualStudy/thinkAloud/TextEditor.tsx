@@ -34,7 +34,9 @@ async function getTags(storageEngine: StorageEngine | undefined) {
 
 export function TextEditor({
   currentShownTranscription, transcriptList, setTranscriptList, onClickLine,
-} : {currentShownTranscription: number, transcriptList: EditedText[], setTranscriptList: (e: EditedText[]) => void, onClickLine: (focusedLine: number) => void}) {
+} : {
+  currentShownTranscription: number, transcriptList: EditedText[], setTranscriptList: (e: EditedText[]) => void, onClickLine: (focusedLine: number) => void
+}) {
   const { storageEngine } = useStorageEngine();
 
   const { value: tags, execute: pullTags } = useAsync(getTags, [storageEngine]);

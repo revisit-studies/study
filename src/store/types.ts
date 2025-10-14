@@ -170,7 +170,6 @@ export interface StoreState {
   trialValidation: TrialValidation;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;
-  analysisPlaybackTrial: string | null;
   analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };
   analysisIsPlaying: boolean;
   analysisHasAudio: boolean;

@@ -12,7 +12,9 @@ const margin = {
 
 export function TranscriptSegmentsVis({
   transcriptLines, xScale, startTime, currentShownTranscription,
-} : {transcriptLines: TranscriptLinesWithTimes[], xScale: d3.ScaleLinear<number, number>; startTime: number; currentShownTranscription: number}) {
+} : {
+  transcriptLines: TranscriptLinesWithTimes[], xScale: d3.ScaleLinear<number, number>; startTime: number; currentShownTranscription: number
+}) {
   const lines = useMemo(() => transcriptLines.map((line) => (
     <g key={line.start}>
       <line
@@ -35,7 +37,9 @@ export function TranscriptSegmentsVis({
 
             return (
               <foreignObject key={tag.name} x={startLoc + ((endLoc - startLoc) / line.tags.length) * (i + 0.5) - 6 + (((-(topTags.length - 1) * 15) / 2) + (tagIndex) * 15)} y={15} height="20px" width="20px">
-                <Tooltip label={tag.name} withArrow arrowSize={6}><ColorSwatch size={12} color={tag.color} /></Tooltip>
+                <Tooltip label={tag.name} withArrow arrowSize={6}>
+                  <ColorSwatch size={12} color={tag.color} />
+                </Tooltip>
               </foreignObject>
             );
           })}

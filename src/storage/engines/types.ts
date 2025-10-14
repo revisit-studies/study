@@ -506,15 +506,15 @@ export abstract class StorageEngine {
   }
 
   async getTags(tagType: string) {
-    return await this._getFromStorage(`audio/transcriptAndTags/${tagType}`, 'tags', this.studyId);
+    return await this._getFromStorage(`audio/transcriptAndTags/${tagType}`, 'tags');
   }
 
-  async getTranscription(taskName: string, participantId: string, studyId: string) : Promise<TranscribedAudio | null> {
+  async getTranscription(taskName: string, participantId: string, studyId: string) {
     return await this._getFromStorage(`audio/${participantId}_${taskName}.wav`, 'transcription.txt', studyId);
   }
 
   async getEditedTranscript(participantId: string, authEmail: string, task: string) {
-    const transcript = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText', this.studyId);
+    const transcript = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText');
 
     if (Array.isArray(transcript)) {
       const tags = await this.getTags('text');
@@ -542,7 +542,7 @@ export abstract class StorageEngine {
     return this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText', taglessTranscript);
   }
 
-  async getAllParticipantAndTaskTags(authEmail: string, participantId: string, studyId: string): Promise<ParticipantTags | null> {
+  async getAllParticipantAndTaskTags(authEmail: string, participantId: string, studyId: string) {
     const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags', studyId);
 
     if (tags?.participantTags) {

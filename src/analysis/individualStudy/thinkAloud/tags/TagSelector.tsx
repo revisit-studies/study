@@ -16,7 +16,9 @@ import { AddTagDropdown } from './AddTagDropdown';
 
 export function TagSelector({
   tags, selectedTags, onSelectTags, disabled = false, tagsEmptyText, createTagCallback, editTagCallback, width,
-} : {tags: Tag[], selectedTags: Tag[], onSelectTags: (t: Tag[]) => void, disabled?: boolean, tagsEmptyText: string, editTagCallback: (oldTag: Tag, newTag: Tag) => void, createTagCallback: (t: Tag) => void, width: number}) {
+}: {
+  tags: Tag[], selectedTags: Tag[], onSelectTags: (t: Tag[]) => void, disabled?: boolean, tagsEmptyText: string, editTagCallback: (oldTag: Tag, newTag: Tag) => void, createTagCallback: (t: Tag) => void, width: number
+}) {
   const combobox = useCombobox();
 
   const handleValueRemove = useCallback((val: string) => onSelectTags(selectedTags.filter((t: Tag) => t !== undefined && t.id !== val)), [onSelectTags, selectedTags]);

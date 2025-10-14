@@ -120,7 +120,6 @@ export async function studyStoreCreator(
       stimulus: undefined,
       sidebar: undefined,
     },
-    analysisPlaybackTrial: '',
     analysisIsPlaying: false,
     analysisHasAudio: false,
     analysisHasScreenRecording: false,

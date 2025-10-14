@@ -58,7 +58,6 @@ export function AudioProvenanceVis({
 
   const { storageEngine } = useStorageEngine();
 
-  // wrap these in useMemo to avoid unnecessary re-renders
   const [analysisHasAudio, _setAnalysisHasAudio] = useState(true);
 
   const setAnalysisHasAudio = useCallback((b: boolean) => {
@@ -199,10 +198,6 @@ export function AudioProvenanceVis({
           navigate(taskName ? `./../${encryptIndex(+e.newValue)}?participantId=${participantId}&currentTrial=${taskName}` : `./${e.newValue}?participantId=${participantId}&currentTrial=${taskName}`);
         }
       }
-
-      // if (e.key === 'currentTime') {
-      //   setWavesurferTime(+e.newValue.split('_')[0], +e.newValue.split('_')[1]);
-      // }
     };
 
     window.addEventListener('storage', listener);
@@ -216,10 +211,6 @@ export function AudioProvenanceVis({
 
   useUpdateProvenance('sidebar', playTime, answers[taskName]?.provenanceGraph.sidebar, currentResponseNodes.sidebar, _setCurrentResponseNodes, saveProvenance);
 
-  // Make sure we always pause analysis when we change participants or tasks
-  // useEffect(() => {
-  //   setAnalysisIsPlaying(false);
-  // }, [participantId, taskName]);
   // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
   useEffect(() => {
     if (taskName && answers[taskName]?.provenanceGraph) {
@@ -375,9 +366,7 @@ export function AudioProvenanceVis({
   }, [wavesurfer, analysisIsPlaying, totalAudioLength, startTime, setPlayTime]);
 
   useEffect(() => {
-    if (wavesurfer.current) {
-      wavesurfer.current.setPlaybackRate(speed);
-    }
+    wavesurfer.current?.setPlaybackRate(speed);
   }, [speed]);
 
   useEffect(() => {
@@ -448,7 +437,6 @@ export function AudioProvenanceVis({
             xScale={xScale}
             debounceUpdateTimer={_setPlayTime}
             directUpdateTimer={setWavesurferTime}
-            // initialTime={replayTimestamp ? startTime + replayTimestamp : undefined}
           />
         ) : null}
       </Stack>
