@@ -56,13 +56,13 @@ export function ParticipantRejectModal({
   const rejectParticipant = useCallback(async (rejectParticipantId: string, reason: string) => {
     if (storageEngine && studyId) {
       const finalReason = reason === '' ? 'Rejected by admin' : reason;
-      await storageEngine.rejectParticipant(rejectParticipantId, finalReason, studyId);
+      await storageEngine.rejectParticipant(rejectParticipantId, finalReason);
     }
   }, [storageEngine, studyId]);
 
   const undoRejectParticipant = useCallback(async (rejectParticipantId: string) => {
     if (storageEngine && studyId) {
-      await storageEngine.undoRejectParticipant(rejectParticipantId, studyId);
+      await storageEngine.undoRejectParticipant(rejectParticipantId);
     }
   }, [storageEngine, studyId]);
 

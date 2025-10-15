@@ -48,12 +48,14 @@ function sortByStartTime(a: ParticipantData, b: ParticipantData) {
   return bStartTimes[0] - aStartTimes[0];
 }
 
-function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined) : Promise<Record<number, ParticipantData>> {
-  if (!studyConfig || !storageEngine || !studyId) return Promise.resolve([]);
+async function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined) : Promise<Record<number, ParticipantData>> {
+  if (studyId && storageEngine) {
+    await storageEngine.initializeStudyDb(studyId);
+  }
 
-  storageEngine?.initializeStudyDb(studyId);
+  if (!studyConfig || !storageEngine || !studyId) return [];
 
-  return storageEngine.getAllParticipantsData(studyId);
+  return await storageEngine.getAllParticipantsData(studyId);
 }
 
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {

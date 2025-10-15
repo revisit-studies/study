@@ -509,8 +509,8 @@ export abstract class StorageEngine {
     return await this._getFromStorage(`audio/transcriptAndTags/${tagType}`, 'tags');
   }
 
-  async getTranscription(taskName: string, participantId: string, studyId: string) {
-    return await this._getFromStorage(`audio/${participantId}_${taskName}.wav`, 'transcription.txt', studyId);
+  async getTranscription(taskName: string, participantId: string) {
+    return await this._getFromStorage(`audio/${participantId}_${taskName}.wav`, 'transcription.txt');
   }
 
   async getEditedTranscript(participantId: string, authEmail: string, task: string) {
@@ -542,8 +542,8 @@ export abstract class StorageEngine {
     return this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText', taglessTranscript);
   }
 
-  async getAllParticipantAndTaskTags(authEmail: string, participantId: string, studyId: string) {
-    const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags', studyId);
+  async getAllParticipantAndTaskTags(authEmail: string, participantId: string) {
+    const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags');
 
     if (tags?.participantTags) {
       return tags;
@@ -618,11 +618,10 @@ export abstract class StorageEngine {
   }
 
   // Rejects a participant with the given participantId and reason.
-  async rejectParticipant(participantId: string, reason: string, studyId?: string) {
+  async rejectParticipant(participantId: string, reason: string) {
     const participant = await this._getFromStorage(
       `participants/${participantId}`,
       'participantData',
-      studyId,
     );
 
     try {
@@ -661,11 +660,10 @@ export abstract class StorageEngine {
   }
 
   // Un-rejects a participant with the given participantId.
-  async undoRejectParticipant(participantId: string, studyId?: string) {
+  async undoRejectParticipant(participantId: string) {
     const participant = await this._getFromStorage(
       `participants/${participantId}`,
       'participantData',
-      studyId,
     );
 
     try {

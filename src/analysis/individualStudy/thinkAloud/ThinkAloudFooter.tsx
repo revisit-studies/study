@@ -44,7 +44,7 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
 
 async function getParticipantTags(authEmail: string, trrackId: string | undefined, studyId: string, storageEngine: StorageEngine | undefined) {
   if (storageEngine && trrackId) {
-    return (await storageEngine.getAllParticipantAndTaskTags(authEmail, trrackId, studyId));
+    return (await storageEngine.getAllParticipantAndTaskTags(authEmail, trrackId));
   }
 
   return null;
@@ -164,7 +164,8 @@ export function ThinkAloudFooter({
 
     // if we find ourselves with a wrong current trial, erase it
     if (participant && !participant.answers[currentTrial]) {
-      setSearchParams({ participantId, currentTrial: Object.values(participant.answers).find((ans) => +ans.trialOrder.split('_')[0] === 0)!.identifier });
+      console.log(currentTrial, participant.answers);
+      setSearchParams({ participantId, currentTrial: Object.values(participant.answers).find((ans) => +ans.trialOrder.split('_')[0] === 0)?.identifier } as never);
     }
 
     return joinExceptLast;

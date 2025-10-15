@@ -39,7 +39,7 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
 
 function getRawTranscript(storageEngine: StorageEngine | undefined, currentTrial: string, participantId: string, studyId: string | undefined) {
   if (storageEngine && studyId) {
-    return storageEngine?.getTranscription(currentTrial, participantId, studyId).then((data) => {
+    return storageEngine?.getTranscription(currentTrial, participantId).then((data) => {
       if (!data || !data.results) {
         return null;
       }
@@ -92,7 +92,7 @@ export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipant
 
   useEffect(() => {
     if (!currentTrial && !participantId && visibleParticipants.length > 0) {
-      setSearchParams({ participantId: visibleParticipants[0].participantId, currentTrial: Object.values(visibleParticipants[0].answers).find((ans) => +ans.trialOrder.split('_')[0] === 0)!.identifier });
+      setSearchParams({ participantId: visibleParticipants[0].participantId, currentTrial: Object.values(visibleParticipants[0].answers).find((ans) => +ans.trialOrder.split('_')[0] === 0)?.identifier });
     }
     // I really only want to do this on mount, so leaving this empty
     // eslint-disable-next-line react-hooks/exhaustive-deps
