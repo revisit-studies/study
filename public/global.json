@@ -40,6 +40,7 @@
     "library-vlat",
     "library-adaptive-vlat",
     "library-graph-literacy-scale",
+    "library-virtual-chinrest",
     "test-audio",
     "test-library",
     "test-likert-matrix",
@@ -205,6 +206,10 @@
     },
     "test-step-logic": {
       "path": "test-step-logic/config.json",
+      "test": true
+    },
+    "library-virtual-chinrest": {
+      "path": "library-virtual-chinrest/config.json",
       "test": true
     },
     "example-VLAT-adaptive": {
