@@ -7,7 +7,7 @@ import { ParticipantData } from '../../../storage/types';
 
 export function ManageAccordion({ studyId, refresh }: { studyId: string, refresh: () => Promise<Record<number, ParticipantData>> }) {
   return (
-    <Container>
+    <Container size="xl">
       <Box>
         <Title order={2} mb="md">ReVISit Modes</Title>
         <RevisitModesItem studyId={studyId} />
