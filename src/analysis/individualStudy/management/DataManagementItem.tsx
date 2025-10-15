@@ -17,7 +17,7 @@ type SnapshotAction =
   | { type: 'deleteSnapshot', snapshot: string }
   | { type: 'deleteLive' };
 
-export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<Record<number, ParticipantData>> }) {
+export function DataManagementItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<Record<number, ParticipantData>> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
   const [modalDeleteSnapshotOpened, setModalDeleteSnapshotOpened] = useState<boolean>(false);
   const [modalRenameSnapshotOpened, setModalRenameSnapshotOpened] = useState<boolean>(false);

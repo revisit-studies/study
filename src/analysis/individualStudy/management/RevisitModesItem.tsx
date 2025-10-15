@@ -1,8 +1,8 @@
-import { Stack, Switch } from '@mantine/core';
-import React, { useEffect, useState } from 'react';
+import { Flex, Switch } from '@mantine/core';
+import { useEffect, useState } from 'react';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 
-export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
+export function RevisitModesItem({ studyId }: { studyId: string }) {
   const { storageEngine } = useStorageEngine();
 
   const [asyncStatus, setAsyncStatus] = useState(false);
@@ -39,7 +39,7 @@ export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
 
   return (
     asyncStatus && (
-      <Stack>
+      <Flex justify="space-between" align="center">
         <Switch
           label="Data Collection Enabled"
           checked={dataCollectionEnabled}
@@ -55,7 +55,7 @@ export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
           checked={analyticsInterfacePubliclyAccessible}
           onChange={(event) => handleSwitch('analyticsInterfacePubliclyAccessible', event.currentTarget.checked)}
         />
-      </Stack>
+      </Flex>
     )
   );
 }
