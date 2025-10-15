@@ -210,12 +210,19 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
       <Space h="xl" />
 
       <Flex direction="column">
-        <Flex style={{ borderBottom: '1px solid #dedede' }} direction="row" justify="space-between" mb="xs" pb="sm">
+        <Box style={{ borderBottom: '1px solid #dedede' }} mb="xs" pb="sm">
           <Title order={5}>Snapshots</Title>
-        </Flex>
+          <Text>
+            Snapshots save your data, but restoring snapshots only works if your reVISit config, your components, and the reVISit version are still compatible with the data you collected.
+            <br />
+            Make sure to also backup your data, for example, to your local computer regularly.
+            <br />
+          </Text>
+        </Box>
 
         {/* Position relative keeps the loading overlay only on the list */}
         <Box style={{ position: 'relative' }}>
+
           <LoadingOverlay visible={snapshotListLoading} />
           {Object.keys(snapshots).length > 0
             ? (
