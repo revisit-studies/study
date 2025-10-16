@@ -141,6 +141,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
 
   return (
     <>
+      <Title order={2} mb="md">Data Management</Title>
       <LoadingOverlay visible={loading} />
       <Flex justify="space-between" align="center">
         <Box style={{ width: '90%' }}>
