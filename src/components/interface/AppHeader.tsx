@@ -37,7 +37,7 @@ import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { useScreenRecordingContext } from '../../store/hooks/useScreenRecording';
 
-export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
+export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
 
   const answers = useStoreSelector((state) => state.answers);
@@ -183,7 +183,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
-                {studyNavigatorEnabled && (
+                {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconSchema size={14} />}
                     onClick={() => storeDispatch(toggleStudyBrowser())}
@@ -202,7 +202,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 >
                   Contact
                 </Menu.Item>
-                {studyNavigatorEnabled && (
+                {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconUserPlus size={14} />}
                     onClick={() => getNewParticipant(storageEngine, studyHref)}
@@ -210,7 +210,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                     Next Participant
                   </Menu.Item>
                 )}
-                {studyNavigatorEnabled && (
+                {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconChartHistogram size={14} />}
                     component="a"

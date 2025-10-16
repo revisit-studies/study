@@ -143,7 +143,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
     <>
       <LoadingOverlay visible={loading} />
       <Flex justify="space-between" align="center">
-        <Box style={{ width: '70%' }}>
+        <Box style={{ width: '90%' }}>
           <Title order={3}>Create a Snapshot</Title>
           <Text>
             This will create a snapshot of the live
@@ -168,7 +168,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
       <Space h="lg" />
 
       <Flex justify="space-between" align="center">
-        <Box style={{ width: '70%' }}>
+        <Box style={{ width: '90%' }}>
           <Title order={3}>Archive Data</Title>
           <Text>
             This will create a snapshot of the live
@@ -189,7 +189,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
       <Space h="lg" />
 
       <Flex justify="space-between" align="center">
-        <Box style={{ width: '70%' }}>
+        <Box style={{ width: '90%' }}>
           <Title order={3}>Delete Data</Title>
           <Text>
             This will delete the live

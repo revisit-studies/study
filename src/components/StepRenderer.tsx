@@ -122,7 +122,7 @@ export function StepRenderer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { studyNavigatorEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
+  const { developmentModeEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
   // No default value for withSidebar since it's a required field in uiConfig
   const sidebarOpen = useMemo(() => ((analysisHasScreenRecording && analysisCanPlayScreenRecording) ? false : (componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar)), [componentConfig, studyConfig, analysisHasScreenRecording, analysisCanPlayScreenRecording]);
@@ -131,8 +131,8 @@ export function StepRenderer() {
 
   const asideOpen = useMemo(() => {
     if (isAnalysis) return true;
-    return studyNavigatorEnabled && showStudyBrowser;
-  }, [studyNavigatorEnabled, showStudyBrowser, isAnalysis]);
+    return developmentModeEnabled && showStudyBrowser;
+  }, [developmentModeEnabled, showStudyBrowser, isAnalysis]);
 
   return (
     <WindowEventsContext.Provider value={windowEvents}>
@@ -145,7 +145,7 @@ export function StepRenderer() {
         >
           <AppAside />
           {showTitleBar && (
-          <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
+          <AppHeader developmentModeEnabled={developmentModeEnabled} dataCollectionEnabled={dataCollectionEnabled} />
           )}
           <ResolutionWarning />
           {isScreenRecordingUserRejected && <ScreenRecordingRejection />}
@@ -155,7 +155,7 @@ export function StepRenderer() {
             <AppNavBar width={sidebarWidth} top={showTitleBar ? 70 : 0} sidebarOpen={sidebarOpen} />
             {/* 10px is the gap between the sidebar and the main content */}
             <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }} w={sidebarOpen ? `calc(100% - ${sidebarWidth}px - 10px)` : '100%'}>
-              {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
+              {!showTitleBar && !showStudyBrowser && developmentModeEnabled && (
               <Button
                 variant="subtle"
                 leftSection={<IconArrowLeft size={14} />}

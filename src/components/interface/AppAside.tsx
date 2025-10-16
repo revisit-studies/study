@@ -119,9 +119,9 @@ export function AppAside() {
                 <IconSettingsShare style={{ width: '70%', height: '70%' }} stroke={1.5} size={16} />
               </ActionIcon>
             </Tooltip>
-            {modes?.analyticsInterfacePubliclyAccessible
-              ? <Tooltip label="Analytics interface publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
-              : <Tooltip label="Analytics interface not publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
+            {modes?.dataSharingEnabled
+              ? <Tooltip label="Data sharing enabled" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
+              : <Tooltip label="Data sharing disabled" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
             {storageEngine?.getEngine() === 'localStorage'
               ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
               : <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconFlame size={16} color="green" /></Tooltip>}
