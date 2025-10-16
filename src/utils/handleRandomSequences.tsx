@@ -4,6 +4,21 @@ import { ComponentBlock, DynamicBlock, StudyConfig } from '../parser/types';
 import { Sequence } from '../store/types';
 import { isDynamicBlock } from '../parser/utils';
 
+function shuffle(array: (string | ComponentBlock | DynamicBlock)[]) {
+  let currentIndex = array.length;
+
+  // While there remain elements to shuffle...
+  while (currentIndex !== 0) {
+    // Pick a remaining element...
+    const randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+}
+
 function _componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
@@ -22,7 +37,9 @@ function _componentBlockToSequence(
   let computedComponents = order.components;
 
   if (order.order === 'random') {
-    const randomArr = structuredClone(order.components).sort(() => 0.5 - Math.random());
+    const randomArr = structuredClone(order.components);
+
+    shuffle(randomArr);
 
     computedComponents = randomArr;
   } else if (order.order === 'latinSquare' && latinSquareObject) {
