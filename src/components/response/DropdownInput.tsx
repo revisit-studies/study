@@ -62,8 +62,6 @@ export function DropdownInput({
         error={generateErrorMessage(response, answer, optionsAsStringOptions)}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
-        clearable
-        searchable
       />
     )
   );
