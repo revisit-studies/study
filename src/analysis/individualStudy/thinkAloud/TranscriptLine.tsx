@@ -1,9 +1,10 @@
 import {
-  Divider, Group, Textarea,
+  Grid, Group, Textarea,
 } from '@mantine/core';
 import {
   useEffect, useMemo, useRef, useState,
 } from 'react';
+import { useResizeObserver } from '@mantine/hooks';
 import { Tag } from './types';
 import { TagSelector } from './tags/TagSelector';
 
@@ -18,42 +19,48 @@ export function TranscriptLine({
     indexRef.current = index;
   }, [index]);
 
+  const [ref, { width }] = useResizeObserver();
+
   const memoizedRender = useMemo(() => (
-    <Group justify="space-between" style={{ width: '100%' }} wrap="nowrap">
-      <Group wrap="nowrap" gap={0} px={10} style={{ width: '100%', borderRadius: '10px', backgroundColor: current >= start && current <= end ? 'rgba(100, 149, 237, 0.3)' : 'white' }}>
-        <Textarea
-          ref={(r) => (r ? addRef(indexRef.current, r) : undefined)}
-          autosize
-          minRows={1}
-          maxRows={4}
-          style={{ width: '100%' }}
-          variant="unstyled"
-          value={text}
-          onFocus={() => onClickLine(indexRef.current)}
-          onChange={(e) => { onTextChange(indexRef.current, e.currentTarget.value); }}
-          onKeyDown={((e) => {
-            if (e.key === 'Enter' && e.currentTarget.selectionStart !== null) {
-              addRowCallback(indexRef.current, e.currentTarget.selectionStart);
-              e.preventDefault();
-              e.stopPropagation();
-            } else if (e.key === 'Backspace') {
-              if (e.currentTarget.selectionStart === 0 && e.currentTarget.selectionEnd === 0) {
-                deleteRowCallback(indexRef.current);
+    <Grid justify="space-between" style={{ width: '100%' }}>
+      <Grid.Col span={8}>
+
+        <Group wrap="nowrap" gap={0} px={10} style={{ width: '100%', borderRadius: '10px', backgroundColor: current >= start && current <= end ? 'rgba(100, 149, 237, 0.3)' : 'white' }}>
+          <Textarea
+            ref={(r) => (r ? addRef(indexRef.current, r) : undefined)}
+            autosize
+            minRows={1}
+            maxRows={4}
+            style={{ width: '100%' }}
+            variant="unstyled"
+            value={text}
+            onFocus={() => onClickLine(indexRef.current)}
+            onChange={(e) => { onTextChange(indexRef.current, e.currentTarget.value); }}
+            onKeyDown={((e) => {
+              if (e.key === 'Enter' && e.currentTarget.selectionStart !== null) {
+                addRowCallback(indexRef.current, e.currentTarget.selectionStart);
                 e.preventDefault();
                 e.stopPropagation();
+              } else if (e.key === 'Backspace') {
+                if (e.currentTarget.selectionStart === 0 && e.currentTarget.selectionEnd === 0) {
+                  deleteRowCallback(indexRef.current);
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
               }
-            }
-          })}
-        />
-      </Group>
-      <Group wrap="nowrap" style={{ width: '500px' }}>
-        <Divider orientation="vertical" size="xs" />
-        <TagSelector width={250} createTagCallback={createTagCallback} editTagCallback={editTagCallback} onSelectTags={(t) => onSelectTags(indexRef.current, t)} selectedTags={selectedTags} tags={tags} tagsEmptyText="Add Text Tags" />
-        <Divider orientation="vertical" size="xs" />
+            })}
+          />
+        </Group>
+      </Grid.Col>
+      <Grid.Col ref={ref} span={2}>
+        <TagSelector width={width} createTagCallback={createTagCallback} editTagCallback={editTagCallback} onSelectTags={(t) => onSelectTags(indexRef.current, t)} selectedTags={selectedTags} tags={tags} tagsEmptyText="Add Text Tags" />
+      </Grid.Col>
+      <Grid.Col span={2}>
 
         <Textarea
+          px="lg"
           autosize
-          style={{ width: '200px' }}
+          style={{ width }}
           minRows={1}
           maxRows={4}
           value={annotationVal}
@@ -61,9 +68,9 @@ export function TranscriptLine({
           placeholder="Add Annotation"
           onBlur={() => setAnnotation(indexRef.current, annotationVal)}
         />
-      </Group>
-    </Group>
-  ), [addRef, addRowCallback, annotationVal, createTagCallback, current, deleteRowCallback, editTagCallback, end, onClickLine, onSelectTags, onTextChange, selectedTags, setAnnotation, start, tags, text]);
+      </Grid.Col>
+    </Grid>
+  ), [addRef, addRowCallback, annotationVal, createTagCallback, current, deleteRowCallback, editTagCallback, end, onClickLine, onSelectTags, onTextChange, ref, selectedTags, setAnnotation, start, tags, text, width]);
 
   return memoizedRender;
 }
