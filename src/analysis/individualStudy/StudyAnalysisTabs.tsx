@@ -116,35 +116,42 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   }, [expData, includedParticipants, selectedStages]);
 
   // Load available stages
-  useEffect(() => {
+  const loadStages = async () => {
     if (!studyId || !storageEngine) return;
 
-    const loadStages = async () => {
-      try {
-        const stageData = await storageEngine.getStageData(studyId);
-        const stageOptions = stageData.allStages.map((stage) => ({
-          value: stage.stageName,
-          label: stage.stageName,
-        }));
-        setAvailableStages([{ value: 'ALL', label: 'ALL' }, ...stageOptions]);
-        // Create a map of stage names to colors
-        const colors: Record<string, string> = {};
-        stageData.allStages.forEach((stage) => {
-          colors[stage.stageName] = stage.color;
-        });
-        setStageColors(colors);
-      } catch (error) {
-        console.error('Failed to load stages:', error);
-        setAvailableStages([{ value: 'ALL', label: 'ALL' }]);
-        setStageColors({});
-      }
-    };
+    try {
+      const stageData = await storageEngine.getStageData(studyId);
+      const stageOptions = stageData.allStages.map((stage) => ({
+        value: stage.stageName,
+        label: stage.stageName,
+      }));
+      setAvailableStages([{ value: 'ALL', label: 'ALL' }, ...stageOptions]);
+      // Create a map of stage names to colors
+      const colors: Record<string, string> = {};
+      stageData.allStages.forEach((stage) => {
+        colors[stage.stageName] = stage.color;
+      });
+      setStageColors(colors);
+    } catch (error) {
+      console.error('Failed to load stages:', error);
+      setAvailableStages([{ value: 'ALL', label: 'ALL' }]);
+      setStageColors({});
+    }
+  };
 
+  useEffect(() => {
     loadStages();
-  }, [studyId, storageEngine, setStageColors]);
+  }, [studyId, storageEngine]);
 
   useEffect(() => {
     setSelectedParticipants([]);
+  }, [analysisTab]);
+
+  // Refresh stage data when switching to participant view tab to get updated colors
+  useEffect(() => {
+    if (analysisTab === 'table') {
+      loadStages();
+    }
   }, [analysisTab]);
 
   useEffect(() => {
