@@ -22,7 +22,7 @@ export function TranscriptLine({
   const [ref, { width }] = useResizeObserver();
 
   const memoizedRender = useMemo(() => (
-    <Grid justify="space-between" style={{ width: '100%' }}>
+    <Grid style={{ width: '100%' }}>
       <Grid.Col span={8}>
 
         <Group wrap="nowrap" gap={0} px={10} style={{ width: '100%', borderRadius: '10px', backgroundColor: current >= start && current <= end ? 'rgba(100, 149, 237, 0.3)' : 'white' }}>
@@ -53,14 +53,12 @@ export function TranscriptLine({
         </Group>
       </Grid.Col>
       <Grid.Col ref={ref} span={2}>
-        <TagSelector width={width} createTagCallback={createTagCallback} editTagCallback={editTagCallback} onSelectTags={(t) => onSelectTags(indexRef.current, t)} selectedTags={selectedTags} tags={tags} tagsEmptyText="Add Text Tags" />
+        <TagSelector width={width - 20} createTagCallback={createTagCallback} editTagCallback={editTagCallback} onSelectTags={(t) => onSelectTags(indexRef.current, t)} selectedTags={selectedTags} tags={tags} tagsEmptyText="Add Text Tags" />
       </Grid.Col>
       <Grid.Col span={2}>
-
         <Textarea
-          px="lg"
           autosize
-          style={{ width }}
+          style={{ width: width - 20 }}
           minRows={1}
           maxRows={4}
           value={annotationVal}

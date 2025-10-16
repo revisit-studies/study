@@ -160,7 +160,7 @@ export function TextEditor({
 
   return (
     <Stack gap={0}>
-      <Grid mb="sm" justify="space-between" style={{ width: '100%' }}>
+      <Grid style={{ width: '100%' }} mb="sm">
         <Grid.Col span={8}>
           <Text fw={700} size="xl">Transcripts</Text>
         </Grid.Col>
