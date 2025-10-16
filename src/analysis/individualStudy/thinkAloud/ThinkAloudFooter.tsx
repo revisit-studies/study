@@ -350,7 +350,8 @@ export function ThinkAloudFooter({
                 setSearchParams({ currentTrial, participantId: e || '' });
                 localStorage.setItem('participantId', e || '');
               }}
-              data={visibleParticipants.map((part) => part)}
+              data={visibleParticipants.map((part) => part).sort()}
+              searchable
             />
 
             <Stack gap="4">
@@ -413,6 +414,7 @@ export function ThinkAloudFooter({
                 }
               }}
               data={participant ? getSequenceFlatMap(participant?.sequence) : []}
+              searchable
             />
             <Stack gap="4">
               <Group gap="xs" align="center">
