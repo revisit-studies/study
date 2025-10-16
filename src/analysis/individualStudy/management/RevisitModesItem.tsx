@@ -1,6 +1,9 @@
 import {
-  Box, Space, Switch, Text, Title,
+  Box, Space, Switch, Text, Title, Tooltip,
 } from '@mantine/core';
+import {
+  IconSchema, IconSchemaOff, IconGraph, IconGraphOff, IconDatabase, IconFlame, IconChartBarPopular, IconChartBarOff,
+} from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 
@@ -42,6 +45,20 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
   return (
     asyncStatus && (
       <>
+        <Box style={{ display: 'flex', gap: 10 }}>
+          {dataCollectionEnabled
+            ? <Tooltip label="Data collection enabled" withinPortal><IconChartBarPopular size={18} color="green" /></Tooltip>
+            : <Tooltip label="Data collection disabled" withinPortal><IconChartBarOff size={18} color="red" /></Tooltip>}
+          {developmentModeEnabled
+            ? <Tooltip label="Development mode enabled" withinPortal><IconSchema size={18} color="green" /></Tooltip>
+            : <Tooltip label="Development mode disabled" withinPortal><IconSchemaOff size={18} color="red" /></Tooltip>}
+          {dataSharingEnabled
+            ? <Tooltip label="Data sharing enabled" withinPortal><IconGraph size={18} color="green" /></Tooltip>
+            : <Tooltip label="Data sharing disabled" withinPortal><IconGraphOff size={18} color="red" /></Tooltip>}
+          {storageEngine?.getEngine() === 'localStorage'
+            ? <Tooltip label="Local storage enabled" withinPortal><IconDatabase size={18} color="green" /></Tooltip>
+            : <Tooltip label="Firebase enabled" withinPortal><IconFlame size={18} color="green" /></Tooltip>}
+        </Box>
         <Text>
           ReVISit modes let you control what happens when you visit your study when designing/debugging your study, actively collecting data, and analyzing data when data collection is concluded.
         </Text>
