@@ -125,6 +125,25 @@
           ]
         },
         {
+          "id": "q-multiselect-dropdown",
+          "prompt": "Multiselect dropdown example - which chart have you used before?",
+          "secondaryText": "Dropdown fun multi-selection",
+          "infoText": "Select the chart types you have used before. You have to select at least 2 options and up to 3 options.",
+          "type": "dropdown",
+          "placeholder": "Enter your responses",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar",
+            "Line",
+            "Scatter",
+            "Histogram"
+          ],
+          "minSelections": 2,
+          "maxSelections": 3
+        },
+        {
           "id": "q-checkbox",
           "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
           "secondaryText": "Checkboxes for multi-selection",
@@ -568,6 +587,26 @@
             "Stacked Bar"
           ],
           "location": "sidebar"
+        },
+        {
+          "id": "q-multiselect-dropdown",
+          "prompt": "Multiselect dropdown example - which chart have you used before?",
+          "secondaryText": "Dropdown fun multi-selection",
+          "infoText": "Select the chart types you have used before. You have to select at least 2 options and up to 3 options.",
+          "type": "dropdown",
+          "placeholder": "Enter your responses",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar",
+            "Line",
+            "Scatter",
+            "Histogram"
+          ],
+          "location": "sidebar",
+          "minSelections": 2,
+          "maxSelections": 3
         },
         {
           "id": "q-checkbox",
