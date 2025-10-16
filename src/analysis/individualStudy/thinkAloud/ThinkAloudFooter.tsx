@@ -15,13 +15,11 @@ import {
   IconArrowLeft, IconArrowRight, IconDeviceDesktopDown, IconInfoCircle, IconMusicDown, IconPlayerPauseFilled, IconPlayerPlayFilled,
 } from '@tabler/icons-react';
 import { useAsync } from '../../../store/hooks/useAsync';
-import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { useAuth } from '../../../store/hooks/useAuth';
 import {
   EditedText, ParticipantTags, Tag, TranscribedAudio, TranscriptLinesWithTimes,
 } from './types';
 import { AudioProvenanceVis } from '../../../components/audioAnalysis/AudioProvenanceVis';
-import { StorageEngine } from '../../../storage/engines/types';
 import { TranscriptSegmentsVis } from './TranscriptSegmentsVis';
 import { TagSelector } from './tags/TagSelector';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
@@ -29,12 +27,13 @@ import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { PREFIX } from '../../../utils/Prefix';
 import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadAudio';
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
+import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
 };
 
-function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
+function getParticipantData(trrackId: string | undefined, storageEngine: FirebaseStorageEngine) {
   if (storageEngine) {
     return storageEngine.getParticipantData(trrackId);
   }
@@ -42,7 +41,7 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
   return null;
 }
 
-async function getParticipantTags(authEmail: string, trrackId: string | undefined, studyId: string, storageEngine: StorageEngine | undefined) {
+async function getParticipantTags(authEmail: string, trrackId: string | undefined, studyId: string, storageEngine: FirebaseStorageEngine) {
   if (storageEngine && trrackId) {
     return (await storageEngine.getAllParticipantAndTaskTags(authEmail, trrackId));
   }
@@ -50,7 +49,7 @@ async function getParticipantTags(authEmail: string, trrackId: string | undefine
   return null;
 }
 
-async function getTags(storageEngine: StorageEngine | undefined, type: 'participant' | 'task' | 'text') {
+async function getTags(storageEngine: FirebaseStorageEngine, type: 'participant' | 'task' | 'text') {
   if (storageEngine) {
     const tags = await storageEngine.getTags(type);
     if (Array.isArray(tags)) {
@@ -63,10 +62,10 @@ async function getTags(storageEngine: StorageEngine | undefined, type: 'particip
 }
 
 export function ThinkAloudFooter({
-  visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance, jumpedToLine = 0, studyId, setHasAudio,
-} : {visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance: (prov: unknown) => void, jumpedToLine?: number, studyId: string, setHasAudio: (b: boolean) => void}) {
-  const { storageEngine } = useStorageEngine();
-
+  visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance, jumpedToLine = 0, studyId, setHasAudio, storageEngine,
+} : {
+  visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance: (prov: unknown) => void, jumpedToLine?: number, studyId: string, setHasAudio: (b: boolean) => void, storageEngine: FirebaseStorageEngine,
+}) {
   const auth = useAuth();
 
   const [speed, setSpeed] = useState<number>(1);
@@ -164,8 +163,7 @@ export function ThinkAloudFooter({
 
     // if we find ourselves with a wrong current trial, erase it
     if (participant && !participant.answers[currentTrial]) {
-      console.log(currentTrial, participant.answers);
-      setSearchParams({ participantId, currentTrial: Object.values(participant.answers).find((ans) => +ans.trialOrder.split('_')[0] === 0)?.identifier } as never);
+      setSearchParams({ participantId, currentTrial: Object.entries(participant.answers).find(([_, ans]) => +ans.trialOrder.split('_')[0] === 0)?.[0] || '' });
     }
 
     return joinExceptLast;

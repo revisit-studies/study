@@ -35,7 +35,6 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   protected async _verifyStudyDatabase() {
-    console.log(this.studyDatabase, this.studyId);
     if (!this.studyDatabase || !this.studyId) {
       throw new Error('Study database not initialized');
     }

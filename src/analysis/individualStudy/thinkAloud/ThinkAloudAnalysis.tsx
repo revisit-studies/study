@@ -10,18 +10,17 @@ import debounce from 'lodash.debounce';
 
 import { useResizeObserver } from '@mantine/hooks';
 import { useAsync } from '../../../store/hooks/useAsync';
-import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { useAuth } from '../../../store/hooks/useAuth';
 import { ParticipantData } from '../../../storage/types';
 import {
   EditedText,
 } from './types';
 import { TextEditor } from './TextEditor';
-import { StorageEngine } from '../../../storage/engines/types';
 import { ThinkAloudFooter } from './ThinkAloudFooter';
 import { useEvent } from '../../../store/hooks/useEvent';
+import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
 
-async function getTranscript(storageEngine: StorageEngine | undefined, partId: string | undefined, trialName: string | undefined, authEmail: string | null | undefined) {
+async function getTranscript(storageEngine: FirebaseStorageEngine, partId: string | undefined, trialName: string | undefined, authEmail: string | null | undefined) {
   if (storageEngine && partId && trialName && authEmail) {
     return await storageEngine.getEditedTranscript(partId, authEmail, trialName);
   }
@@ -29,7 +28,7 @@ async function getTranscript(storageEngine: StorageEngine | undefined, partId: s
   return null;
 }
 
-function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
+function getParticipantData(trrackId: string | undefined, storageEngine: FirebaseStorageEngine) {
   if (storageEngine) {
     return storageEngine.getParticipantData(trrackId);
   }
@@ -37,9 +36,9 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
   return null;
 }
 
-function getRawTranscript(storageEngine: StorageEngine | undefined, currentTrial: string, participantId: string, studyId: string | undefined) {
+function getRawTranscript(storageEngine: FirebaseStorageEngine, currentTrial: string, participantId: string, studyId: string | undefined) {
   if (storageEngine && studyId) {
-    return storageEngine?.getTranscription(currentTrial, participantId).then((data) => {
+    return storageEngine.getTranscription(currentTrial, participantId).then((data) => {
       if (!data || !data.results) {
         return null;
       }
@@ -57,9 +56,7 @@ function getRawTranscript(storageEngine: StorageEngine | undefined, currentTrial
   return null;
 }
 
-export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipants: ParticipantData[]}) {
-  const { storageEngine } = useStorageEngine();
-
+export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { visibleParticipants: ParticipantData[], storageEngine: FirebaseStorageEngine }) {
   const auth = useAuth();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -92,7 +89,7 @@ export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipant
 
   useEffect(() => {
     if (!currentTrial && !participantId && visibleParticipants.length > 0) {
-      setSearchParams({ participantId: visibleParticipants[0].participantId, currentTrial: Object.values(visibleParticipants[0].answers).find((ans) => +ans.trialOrder.split('_')[0] === 0)?.identifier });
+      setSearchParams({ participantId: visibleParticipants[0].participantId, currentTrial: Object.entries(visibleParticipants[0].answers).find(([_, ans]) => +ans.trialOrder.split('_')[0] === 0)?.[0] || '' });
     }
     // I really only want to do this on mount, so leaving this empty
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -179,7 +176,7 @@ export function ThinkAloudAnalysis({ visibleParticipants } : {visibleParticipant
             </Stack>
           )}
 
-        <ThinkAloudFooter setHasAudio={setHasAudio} saveProvenance={() => null} studyId={studyId || ''} jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} />
+        <ThinkAloudFooter setHasAudio={setHasAudio} saveProvenance={() => null} studyId={studyId || ''} jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} storageEngine={storageEngine} />
       </Stack>
 
     </Group>

@@ -8,7 +8,7 @@ import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
 import { RevisitNotification } from '../../utils/notifications';
 import {
-  EditedText, ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
+  ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
 } from '../../analysis/individualStudy/thinkAloud/types';
 
 export interface StoredUser {
@@ -507,39 +507,6 @@ export abstract class StorageEngine {
 
   async getTags(tagType: string) {
     return await this._getFromStorage(`audio/transcriptAndTags/${tagType}`, 'tags');
-  }
-
-  async getTranscription(taskName: string, participantId: string) {
-    return await this._getFromStorage(`audio/${participantId}_${taskName}.wav`, 'transcription.txt');
-  }
-
-  async getEditedTranscript(participantId: string, authEmail: string, task: string) {
-    const transcript = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText');
-
-    if (Array.isArray(transcript)) {
-      const tags = await this.getTags('text');
-
-      if (tags) {
-        // loop over the transcript and merge the tags
-        transcript.forEach((line) => {
-          line.selectedTags = line.selectedTags.map((tag) => {
-            const matchingTag = tags.find((t) => t.id === tag.id);
-            return matchingTag!;
-          });
-        });
-      }
-
-      return transcript as EditedText[];
-    }
-
-    this.saveEditedTranscript(participantId, authEmail, task, []);
-    return [];
-  }
-
-  async saveEditedTranscript(participantId: string, authEmail: string, task: string, editedText: EditedText[]) {
-    const taglessTranscript = editedText.map((line) => ({ ...line, selectedTags: line.selectedTags.filter((tag) => tag !== undefined) })) as TaglessEditedText[];
-
-    return this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText', taglessTranscript);
   }
 
   async getAllParticipantAndTaskTags(authEmail: string, participantId: string) {
