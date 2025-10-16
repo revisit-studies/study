@@ -35,7 +35,7 @@ export function DropdownInput({
         disabled={disabled}
         label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
-        placeholder={Array.isArray(answer.value) && answer.value.length === 0 ? placeholder : null}
+        placeholder={answer.value.length === 0 ? placeholder : undefined}
         data={optionsAsStringOptions}
         radius="md"
         size="md"
