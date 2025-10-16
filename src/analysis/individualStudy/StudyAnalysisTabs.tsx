@@ -49,7 +49,7 @@ function sortByStartTime(a: ParticipantData, b: ParticipantData) {
 async function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined) : Promise<Record<number, ParticipantData>> {
   if (!studyConfig || !storageEngine || !studyId) return Promise.resolve([]);
 
-  await storageEngine.initializeStudyDb(studyId);
+  await storageEngine?.initializeStudyDb(studyId);
 
   return storageEngine.getAllParticipantsData(studyId);
 }
