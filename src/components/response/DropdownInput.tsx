@@ -43,7 +43,6 @@ export function DropdownInput({
         value={answer.value === '' ? [] : Array.isArray(answer.value) ? answer.value : [answer.value]}
         error={generateErrorMessage(response, answer, optionsAsStringOptions)}
         classNames={{ input: classes.fixDisabled }}
-        maxValues={response.maxSelections}
         maxDropdownHeight={200}
         clearable
         searchable
