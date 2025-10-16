@@ -60,54 +60,46 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
           </Box>
         </Flex>
 
-        <Text>
+        <Text w="90%">
           ReVISit modes let you control what happens when you visit your study when designing/debugging your study, actively collecting data, and analyzing data when data collection is concluded.
         </Text>
 
         <Space h="md" />
-
-        <Flex justify="space-between" align="center">
-          <Title order={5}>Data Collection</Title>
-          <Switch
-            label="Data Collection Enabled"
-            labelPosition="left"
-            checked={dataCollectionEnabled}
-            onChange={(event) => handleSwitch('dataCollectionEnabled', event.currentTarget.checked)}
-          />
-        </Flex>
-        <Text w="80%">
+        <Title order={5}>Data Collection</Title>
+        <Text>
           When enabling data collection, data is written to your data store. Make sure to turn this on when actively collecting data, and turn it off after you have concluded data collection, so you don&apos;t pollute your data by accident.
         </Text>
-
+        <Switch
+          label={<Text fw={500} size="sm">Data Collection Enabled</Text>}
+          labelPosition="left"
+          checked={dataCollectionEnabled}
+          onChange={(event) => handleSwitch('dataCollectionEnabled', event.currentTarget.checked)}
+        />
         <Space h="md" />
 
-        <Flex justify="space-between" align="center">
-          <Title order={5}>Development Mode</Title>
-          <Switch
-            label="Development Mode Enabled"
-            labelPosition="left"
-            checked={developmentModeEnabled}
-            onChange={(event) => handleSwitch('developmentModeEnabled', event.currentTarget.checked)}
-          />
-        </Flex>
-        <Text w="80%">
+        <Title order={5}>Development Mode</Title>
+
+        <Text>
           Debug and development mode enables the study navigator, letting visitors jump between tasks. It also disables device checks, such as minimum screen size, and lets you navigate to the analytics interface.
         </Text>
-
+        <Switch
+          label={<Text fw={500} size="sm">Development Mode Enabled</Text>}
+          labelPosition="left"
+          checked={developmentModeEnabled}
+          onChange={(event) => handleSwitch('developmentModeEnabled', event.currentTarget.checked)}
+        />
         <Space h="md" />
 
-        <Flex justify="space-between" align="center">
-          <Title order={5}>Data Sharing</Title>
-          <Switch
-            label="Share Data and Make Analytics Interface Public"
-            labelPosition="left"
-            checked={dataSharingEnabled}
-            onChange={(event) => handleSwitch('dataSharingEnabled', event.currentTarget.checked)}
-          />
-        </Flex>
-        <Text w="80%">
+        <Title order={5}>Data Sharing</Title>
+        <Text>
           When you enabling data sharing, anyone visiting your study website can access the analytics interface and download all of your data. If you disable data sharing, only authenticated users with permissions can access the analytics interface and the associated data.
         </Text>
+        <Switch
+          label={<Text fw={500} size="sm">Share Data and Make Analytics Interface Public</Text>}
+          labelPosition="left"
+          checked={dataSharingEnabled}
+          onChange={(event) => handleSwitch('dataSharingEnabled', event.currentTarget.checked)}
+        />
       </>
     )
   );
