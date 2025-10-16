@@ -27,13 +27,13 @@ import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { PREFIX } from '../../../utils/Prefix';
 import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadAudio';
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
-import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
+import { StorageEngine } from '../../../storage/engines/types';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
 };
 
-function getParticipantData(trrackId: string | undefined, storageEngine: FirebaseStorageEngine) {
+function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
     return storageEngine.getParticipantData(trrackId);
   }
@@ -41,7 +41,7 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Firebas
   return null;
 }
 
-async function getParticipantTags(authEmail: string, trrackId: string | undefined, studyId: string, storageEngine: FirebaseStorageEngine) {
+async function getParticipantTags(authEmail: string, trrackId: string | undefined, studyId: string, storageEngine: StorageEngine | undefined) {
   if (storageEngine && trrackId) {
     return (await storageEngine.getAllParticipantAndTaskTags(authEmail, trrackId));
   }
@@ -49,7 +49,7 @@ async function getParticipantTags(authEmail: string, trrackId: string | undefine
   return null;
 }
 
-async function getTags(storageEngine: FirebaseStorageEngine, type: 'participant' | 'task' | 'text') {
+async function getTags(storageEngine: StorageEngine | undefined, type: 'participant' | 'task' | 'text') {
   if (storageEngine) {
     const tags = await storageEngine.getTags(type);
     if (Array.isArray(tags)) {
@@ -64,7 +64,7 @@ async function getTags(storageEngine: FirebaseStorageEngine, type: 'participant'
 export function ThinkAloudFooter({
   visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance, jumpedToLine = 0, studyId, setHasAudio, storageEngine,
 } : {
-  visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance: (prov: unknown) => void, jumpedToLine?: number, studyId: string, setHasAudio: (b: boolean) => void, storageEngine: FirebaseStorageEngine,
+  visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance: (prov: unknown) => void, jumpedToLine?: number, studyId: string, setHasAudio: (b: boolean) => void, storageEngine: StorageEngine | undefined,
 }) {
   const auth = useAuth();
 

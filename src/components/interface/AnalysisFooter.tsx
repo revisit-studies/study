@@ -33,6 +33,6 @@ export function AnalysisFooter({ setHasAudio }: {setHasAudio: (b: boolean) => vo
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <ThinkAloudFooter setHasAudio={setHasAudio} studyId={studyId || ''} currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={(prov: any) => dispatch(saveAnalysisState(prov))} />
+    <ThinkAloudFooter storageEngine={storageEngine} setHasAudio={setHasAudio} studyId={studyId || ''} currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={(prov: any) => dispatch(saveAnalysisState(prov))} />
   );
 }
