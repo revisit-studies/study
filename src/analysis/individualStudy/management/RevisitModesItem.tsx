@@ -46,7 +46,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
     asyncStatus && (
       <>
         <Title order={4} mb="sm">ReVISit Modes</Title>
-        <Text size="sm" mb="sm">
+        <Text mb="sm">
           ReVISit modes let you control what happens when you visit your study when designing/debugging your study, actively collecting data, and analyzing data when data collection is concluded.
         </Text>
 
@@ -63,7 +63,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
             />
           </Tooltip>
         </Flex>
-        <Text size="sm" mb="sm" w="90%">
+        <Text mb="sm" w="90%">
           When enabling data collection, data is written to your data store. Make sure to turn this on when actively collecting data, and turn it off after you have concluded data collection, so you don&apos;t pollute your data by accident.
         </Text>
 
@@ -80,7 +80,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
             />
           </Tooltip>
         </Flex>
-        <Text size="sm" mb="sm" w="90%">
+        <Text mb="sm" w="90%">
           Debug and development mode enables the study navigator, letting visitors jump between tasks. It also disables device checks, such as minimum screen size, and lets you navigate to the analytics interface.
         </Text>
 
@@ -97,7 +97,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
             />
           </Tooltip>
         </Flex>
-        <Text size="sm" w="90%">
+        <Text w="90%">
           When you enabling data sharing, anyone visiting your study website can access the analytics interface and download all of your data. If you disable data sharing, only authenticated users with permissions can access the analytics interface and the associated data.
         </Text>
       </>

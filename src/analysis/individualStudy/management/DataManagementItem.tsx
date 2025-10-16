@@ -141,8 +141,9 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
 
   return (
     <>
-      <Title order={4} mb="md">Data Management</Title>
+      <Title order={4} mb="sm">Data Management</Title>
       <LoadingOverlay visible={loading} />
+
       <Flex justify="space-between" align="center">
         <Box style={{ width: '90%' }}>
           <Title order={5}>Create a Snapshot</Title>
@@ -166,7 +167,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
         </Tooltip>
       </Flex>
 
-      <Space h="md" />
+      <Space h="sm" />
 
       <Flex justify="space-between" align="center">
         <Box style={{ width: '90%' }}>
@@ -187,7 +188,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
         </Tooltip>
       </Flex>
 
-      <Space h="md" />
+      <Space h="sm" />
 
       <Flex justify="space-between" align="center">
         <Box style={{ width: '90%' }}>
@@ -208,7 +209,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
         </Tooltip>
       </Flex>
 
-      <Space h="lg" />
+      <Space h="sm" />
 
       <Flex direction="column">
         <Box style={{ borderBottom: '1px solid #dedede' }} mb="xs" pb="sm">
