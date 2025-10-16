@@ -214,9 +214,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
           <Title order={3}>Snapshots</Title>
           <Text>
             Snapshots save your data, but restoring snapshots only works if your reVISit config, your components, and the reVISit version are still compatible with the data you collected.
-            <br />
             Make sure to also backup your data, for example, to your local computer regularly.
-            <br />
           </Text>
         </Box>
 
