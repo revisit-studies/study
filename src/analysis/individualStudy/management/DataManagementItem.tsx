@@ -141,11 +141,11 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
 
   return (
     <>
-      <Title order={2} mb="md">Data Management</Title>
+      <Title order={4} mb="md">Data Management</Title>
       <LoadingOverlay visible={loading} />
       <Flex justify="space-between" align="center">
         <Box style={{ width: '90%' }}>
-          <Title order={3}>Create a Snapshot</Title>
+          <Title order={5}>Create a Snapshot</Title>
           <Text>
             This will create a snapshot of the live
             {' '}
@@ -170,7 +170,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
 
       <Flex justify="space-between" align="center">
         <Box style={{ width: '90%' }}>
-          <Title order={3}>Archive Data</Title>
+          <Title order={5}>Archive Data</Title>
           <Text>
             This will create a snapshot of the live
             {' '}
@@ -191,7 +191,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
 
       <Flex justify="space-between" align="center">
         <Box style={{ width: '90%' }}>
-          <Title order={3}>Delete Data</Title>
+          <Title order={5}>Delete Data</Title>
           <Text>
             This will delete the live
             {' '}
@@ -212,7 +212,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
 
       <Flex direction="column">
         <Box style={{ borderBottom: '1px solid #dedede' }} mb="xs" pb="sm">
-          <Title order={3}>Snapshots</Title>
+          <Title order={5}>Snapshots</Title>
           <Text>
             Snapshots save your data, but restoring snapshots only works if your reVISit config, your components, and the reVISit version are still compatible with the data you collected.
             Make sure to also backup your data, for example, to your local computer regularly.

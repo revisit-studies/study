@@ -46,7 +46,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
     asyncStatus && (
       <>
         <Flex justify="space-between" align="center">
-          <Title order={2}>ReVISit Modes</Title>
+          <Title order={4}>ReVISit Modes</Title>
           <Box style={{ display: 'flex', gap: 10 }}>
             {dataCollectionEnabled
               ? <Tooltip label="Data collection enabled" withinPortal><IconChartBarPopular size={18} color="green" /></Tooltip>
@@ -67,7 +67,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
         <Space h="md" />
 
         <Flex justify="space-between" align="center">
-          <Title order={3}>Data Collection</Title>
+          <Title order={5}>Data Collection</Title>
           <Switch
             label="Data Collection Enabled"
             labelPosition="left"
@@ -82,7 +82,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
         <Space h="md" />
 
         <Flex justify="space-between" align="center">
-          <Title order={3}>Development Mode</Title>
+          <Title order={5}>Development Mode</Title>
           <Switch
             label="Development Mode Enabled"
             labelPosition="left"
@@ -97,7 +97,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
         <Space h="md" />
 
         <Flex justify="space-between" align="center">
-          <Title order={3}>Data Sharing</Title>
+          <Title order={5}>Data Sharing</Title>
           <Switch
             label="Share Data and Make Analytics Interface Public"
             labelPosition="left"
