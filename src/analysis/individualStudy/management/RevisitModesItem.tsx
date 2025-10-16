@@ -62,7 +62,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
         <Text>
           ReVISit modes let you control what happens when you visit your study when designing/debugging your study, actively collecting data, and analyzing data when data collection is concluded.
         </Text>
-        <Space h="lg" />
+        <Space h="md" />
         <Box>
           <Title order={3}>Data Collection</Title>
           <Text>

@@ -165,7 +165,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
         </Tooltip>
       </Flex>
 
-      <Space h="lg" />
+      <Space h="md" />
 
       <Flex justify="space-between" align="center">
         <Box style={{ width: '90%' }}>
@@ -186,7 +186,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
         </Tooltip>
       </Flex>
 
-      <Space h="lg" />
+      <Space h="md" />
 
       <Flex justify="space-between" align="center">
         <Box style={{ width: '90%' }}>
@@ -207,7 +207,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
         </Tooltip>
       </Flex>
 
-      <Space h="xl" />
+      <Space h="lg" />
 
       <Flex direction="column">
         <Box style={{ borderBottom: '1px solid #dedede' }} mb="xs" pb="sm">
