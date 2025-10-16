@@ -66,7 +66,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
           <Title order={3}>Data Sharing</Title>
           <Text>When you enabling data sharing, anyone visiting your study website can access the analytics interface and download all of your data. If you disable data sharing, only authenticated users with permissions can access the analytics interface and the associated data.</Text>
           <Switch
-            label="Data Sharing Enabled"
+            label="Share Data and Make Analytics Interface Public"
             checked={dataSharingEnabled}
             onChange={(event) => handleSwitch('dataSharingEnabled', event.currentTarget.checked)}
           />
