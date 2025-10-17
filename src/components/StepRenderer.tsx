@@ -1,6 +1,9 @@
 import { AppShell, Button, Flex } from '@mantine/core';
 import { Outlet } from 'react-router';
-import { useEffect, useMemo, useRef } from 'react';
+import {
+  useEffect, useMemo, useRef,
+  useState,
+} from 'react';
 import debounce from 'lodash.debounce';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { AppAside } from './interface/AppAside';
@@ -37,7 +40,6 @@ export function StepRenderer() {
   useFetchStylesheet(studyConfig?.uiConfig.stylesheetPath);
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
-  const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
   const modes = useStoreSelector((state) => state.modes);
 
   const screenRecording = useScreenRecording();
@@ -129,10 +131,9 @@ export function StepRenderer() {
   const sidebarWidth = useMemo(() => componentConfig?.sidebarWidth ?? studyConfig.uiConfig.sidebarWidth ?? 300, [componentConfig, studyConfig]);
   const showTitleBar = useMemo(() => componentConfig.showTitleBar ?? studyConfig.uiConfig.showTitleBar ?? true, [componentConfig, studyConfig]);
 
-  const asideOpen = useMemo(() => {
-    if (isAnalysis) return true;
-    return studyNavigatorEnabled && showStudyBrowser;
-  }, [studyNavigatorEnabled, showStudyBrowser, isAnalysis]);
+  const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
+
+  const [hasAudio, setHasAudio] = useState<boolean>();
 
   return (
     <WindowEventsContext.Provider value={windowEvents}>
@@ -141,7 +142,7 @@ export function StepRenderer() {
           padding="md"
           header={{ height: showTitleBar ? 70 : 0 }}
           aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
-          footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
+          footer={{ height: isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0 }}
         >
           <AppAside />
           {showTitleBar && (
@@ -170,7 +171,7 @@ export function StepRenderer() {
             </AppShell.Main>
           </Flex>
           {isAnalysis && (
-          <AnalysisFooter />
+          <AnalysisFooter setHasAudio={setHasAudio} />
           )}
         </AppShell>
       </ScreenRecordingContext.Provider>

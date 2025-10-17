@@ -13,9 +13,11 @@ import { useAuth } from '../../store/hooks/useAuth';
 export function ParticipantRejectModal({
   selectedParticipants = [],
   refresh,
+  footer = false,
 }: {
   selectedParticipants: ParticipantData[];
   refresh?: () => Promise<void>;
+  footer?: boolean;
 }) {
   const { storageEngine } = useStorageEngine();
   const { user } = useAuth();
@@ -54,13 +56,13 @@ export function ParticipantRejectModal({
   const rejectParticipant = useCallback(async (rejectParticipantId: string, reason: string) => {
     if (storageEngine && studyId) {
       const finalReason = reason === '' ? 'Rejected by admin' : reason;
-      await storageEngine.rejectParticipant(rejectParticipantId, finalReason, studyId);
+      await storageEngine.rejectParticipant(rejectParticipantId, finalReason);
     }
   }, [storageEngine, studyId]);
 
   const undoRejectParticipant = useCallback(async (rejectParticipantId: string) => {
     if (storageEngine && studyId) {
-      await storageEngine.undoRejectParticipant(rejectParticipantId, studyId);
+      await storageEngine.undoRejectParticipant(rejectParticipantId);
     }
   }, [storageEngine, studyId]);
 
@@ -107,18 +109,16 @@ export function ParticipantRejectModal({
       {rejectedParticipantsCount > 0 && (
       <Tooltip label="Only admins can undo rejection" disabled={user.isAdmin}>
         <Button disabled={!user.isAdmin} onClick={() => setModalUndoRejectOpened(true)} color="blue">
-          Undo Reject Participants (
-          {rejectedParticipantsCount}
-          )
+          Undo Reject
+          {!footer ? ` Participants (${rejectedParticipantsCount})` : ''}
         </Button>
       </Tooltip>
       )}
       {nonRejectedParticipantsCount > 0 && (
       <Tooltip label="Only admins can reject participants" disabled={user.isAdmin}>
         <Button disabled={!user.isAdmin} onClick={() => setModalRejectOpened(true)} color="red">
-          Reject Participants (
-          {nonRejectedParticipantsCount}
-          )
+          Reject
+          {!footer ? ` Participants (${nonRejectedParticipantsCount})` : ''}
         </Button>
       </Tooltip>
       )}
