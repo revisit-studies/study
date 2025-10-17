@@ -217,7 +217,6 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 w={250}
                 size="sm"
                 clearable={false}
-                hidePickedOptions
                 maxValues={5}
                 styles={{
                   input: {
