@@ -111,7 +111,6 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
   }, [onlineTranscriptList, transcriptStatus]);
 
   // Update the current transcription based on the playTime.
-  // TODO:: this is super unperformant, but I don't have a solution atm. think about it harder
   const onTimeUpdate = useEvent((playTime: number) => {
     if (rawTranscript && currentShownTranscription !== null && participant && playTime > 0) {
       let tempCurrentShownTranscription = currentShownTranscription;

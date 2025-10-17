@@ -156,17 +156,13 @@ export function ThinkAloudFooter({
     }
   }, [participantTags]);
 
-  // shouldnt this not work? I thought we needed to do something smarter because of dynamic stuff
   const currentTrialClean = useMemo(() => {
-    const split = currentTrial.split('_');
-    const joinExceptLast = split.slice(0, split.length - 1).join('_');
-
     // if we find ourselves with a wrong current trial, erase it
     if (participant && !participant.answers[currentTrial]) {
       setSearchParams({ participantId, currentTrial: Object.entries(participant.answers).find(([_, ans]) => +ans.trialOrder.split('_')[0] === 0)?.[0] || '' });
     }
 
-    return joinExceptLast;
+    return participant ? participant.answers[currentTrial].componentName : '';
   }, [currentTrial, participant, participantId, setSearchParams]);
 
   const xScale = useMemo(() => {
