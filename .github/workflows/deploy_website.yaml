@@ -107,8 +107,10 @@ jobs:
 
       # Build with github environment variables
       - name: Build with github environment variables
-        run: VITE_BASE_PATH=$VITE_BASE_PATH yarn build
+        if: ${{ vars.VITE_STORAGE_ENGINE != '' }}
+        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_PATH=$VITE_BASE_PATH yarn build
         env:
+          VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
           VITE_BASE_PATH: "/study/PR${{ github.event.number }}/"
 
       - name: Push PR deploy preview
