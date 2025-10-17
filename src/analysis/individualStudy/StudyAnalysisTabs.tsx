@@ -80,12 +80,17 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     if (!expData) return { completed: 0, inprogress: 0, rejected: 0 };
     const expList = Object.values(expData);
 
+    // Apply stage filter before counting
+    const stageFiltered = selectedStages.includes('ALL')
+      ? expList
+      : expList.filter((d) => selectedStages.includes(d.stage || ''));
+
     return {
-      completed: expList.filter((d) => !d.rejected && d.completed).length,
-      inprogress: expList.filter((d) => !d.rejected && !d.completed).length,
-      rejected: expList.filter((d) => d.rejected).length,
+      completed: stageFiltered.filter((d) => !d.rejected && d.completed).length,
+      inprogress: stageFiltered.filter((d) => !d.rejected && !d.completed).length,
+      rejected: stageFiltered.filter((d) => d.rejected).length,
     };
-  }, [expData]);
+  }, [expData, selectedStages]);
 
   const selectedParticipantCounts = useMemo(() => {
     if (selectedParticipants.length === 0) return { completed: 0, inprogress: 0, rejected: 0 };
