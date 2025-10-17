@@ -41,6 +41,7 @@ import {
   SnapshotDocContent,
   StoredUser,
 } from './types';
+import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -740,5 +741,38 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   async logout() {
     const auth = getAuth();
     await signOut(auth);
+  }
+
+  async getTranscription(taskName: string, participantId: string) {
+    return await this._getFromStorage(`audio/${participantId}_${taskName}.wav`, 'transcription.txt');
+  }
+
+  async getEditedTranscript(participantId: string, authEmail: string, task: string) {
+    const transcript = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText');
+
+    if (Array.isArray(transcript)) {
+      const tags = await this.getTags('text');
+
+      if (tags) {
+        // loop over the transcript and merge the tags
+        transcript.forEach((line) => {
+          line.selectedTags = line.selectedTags.map((tag) => {
+            const matchingTag = tags.find((t) => t.id === tag.id);
+            return matchingTag!;
+          });
+        });
+      }
+
+      return transcript as EditedText[];
+    }
+
+    this.saveEditedTranscript(participantId, authEmail, task, []);
+    return [];
+  }
+
+  async saveEditedTranscript(participantId: string, authEmail: string, task: string, editedText: EditedText[]) {
+    const taglessTranscript = editedText.map((line) => ({ ...line, selectedTags: line.selectedTags.filter((tag) => tag !== undefined) })) as TaglessEditedText[];
+
+    return this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText', taglessTranscript);
   }
 }
