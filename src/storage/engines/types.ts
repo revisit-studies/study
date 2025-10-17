@@ -53,6 +53,8 @@ export interface StageData {
   allStages: StageInfo[];
 }
 
+export const defaultStageColor = '#F05A30';
+
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
   T extends 'sequenceArray'

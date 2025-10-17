@@ -9,7 +9,7 @@ import {
   IconDashboard,
 } from '@tabler/icons-react';
 import {
-  useEffect, useMemo, useState,
+  useCallback, useEffect, useMemo, useState,
 } from 'react';
 import { useResizeObserver } from '@mantine/hooks';
 import { AppHeader } from '../interface/AppHeader';
@@ -121,7 +121,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   }, [expData, includedParticipants, selectedStages]);
 
   // Load available stages
-  const loadStages = async () => {
+  const loadStages = useCallback(async () => {
     if (!studyId || !storageEngine) return;
 
     try {
@@ -142,22 +142,13 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       setAvailableStages([{ value: 'ALL', label: 'ALL' }]);
       setStageColors({});
     }
-  };
-
-  useEffect(() => {
-    loadStages();
   }, [studyId, storageEngine]);
 
+  // Load stages and clear selection when dependencies change or tab switches
   useEffect(() => {
+    loadStages();
     setSelectedParticipants([]);
-  }, [analysisTab]);
-
-  // Refresh stage data when switching to participant view tab to get updated colors
-  useEffect(() => {
-    if (analysisTab === 'table') {
-      loadStages();
-    }
-  }, [analysisTab]);
+  }, [loadStages, analysisTab]);
 
   useEffect(() => {
     if (!studyId) return () => { };

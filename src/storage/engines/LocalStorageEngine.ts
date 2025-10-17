@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import {
-  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType,
+  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, defaultStageColor,
 } from './types';
 
 export class LocalStorageEngine extends StorageEngine {
@@ -212,14 +212,14 @@ export class LocalStorageEngine extends StorageEngine {
 
     // Set default stage data if it doesn't exist
     const defaultStageData = {
-      currentStage: { stageName: 'DEFAULT', color: '#F05A30' },
-      allStages: [{ stageName: 'DEFAULT', color: '#F05A30' }],
+      currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
+      allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
     };
-    await this.setCurrentStage(studyId, 'DEFAULT', '#F05A30');
+    await this.setCurrentStage(studyId, 'DEFAULT', defaultStageColor);
     return defaultStageData;
   }
 
-  async setCurrentStage(studyId: string, stageName: string, color: string = '#F05A30') {
+  async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor) {
     const key = `${this.collectionPrefix}${studyId}/modes`;
     const existingData = await this.studyDatabase.getItem(key) as Record<string, unknown> | null;
 
@@ -231,8 +231,8 @@ export class LocalStorageEngine extends StorageEngine {
         || !(stageData as { currentStage?: unknown; allStages?: unknown }).currentStage
         || !(stageData as { currentStage?: unknown; allStages?: unknown }).allStages) {
       stageData = {
-        currentStage: { stageName: 'DEFAULT', color: '#F05A30' },
-        allStages: [{ stageName: 'DEFAULT', color: '#F05A30' }],
+        currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
+        allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
       };
     }
 

@@ -38,6 +38,7 @@ import {
   UserManagementData,
   SequenceAssignment,
   SnapshotDocContent,
+  defaultStageColor,
 } from './types';
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
@@ -400,14 +401,14 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     // Set default stage data if it doesn't exist
     const defaultStageData = {
-      currentStage: { stageName: 'DEFAULT', color: '#F05A30' },
-      allStages: [{ stageName: 'DEFAULT', color: '#F05A30' }],
+      currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
+      allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
     };
-    await this.setCurrentStage(studyId, 'DEFAULT', '#F05A30');
+    await this.setCurrentStage(studyId, 'DEFAULT', defaultStageColor);
     return defaultStageData;
   }
 
-  async setCurrentStage(studyId: string, stageName: string, color: string = '#F05A30') {
+  async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor) {
     const revisitModesDoc = doc(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
@@ -424,8 +425,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     // Initialize if doesn't exist or invalid
     if (!stageData || !stageData.currentStage || !stageData.allStages) {
       stageData = {
-        currentStage: { stageName: 'DEFAULT', color: '#F05A30' },
-        allStages: [{ stageName: 'DEFAULT', color: '#F05A30' }],
+        currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
+        allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
       };
     }
 

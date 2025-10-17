@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import {
-  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType,
+  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, defaultStageColor,
 } from './types';
 
 export class SupabaseStorageEngine extends StorageEngine {
@@ -394,14 +394,14 @@ export class SupabaseStorageEngine extends StorageEngine {
 
     // Set default stage data if it doesn't exist
     const defaultStageData = {
-      currentStage: { stageName: 'DEFAULT', color: '#F05A30' },
-      allStages: [{ stageName: 'DEFAULT', color: '#F05A30' }],
+      currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
+      allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
     };
-    await this.setCurrentStage(studyId, 'DEFAULT', '#F05A30');
+    await this.setCurrentStage(studyId, 'DEFAULT', defaultStageColor);
     return defaultStageData;
   }
 
-  async setCurrentStage(studyId: string, stageName: string, color: string = '#F05A30') {
+  async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor) {
     // Get existing modes first
     const modes = await this.getModes(studyId);
 
@@ -411,8 +411,8 @@ export class SupabaseStorageEngine extends StorageEngine {
     // Initialize if doesn't exist or invalid
     if (!stageData || !stageData.currentStage || !stageData.allStages) {
       stageData = {
-        currentStage: { stageName: 'DEFAULT', color: '#F05A30' },
-        allStages: [{ stageName: 'DEFAULT', color: '#F05A30' }],
+        currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
+        allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
       };
     }
 
