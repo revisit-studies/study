@@ -1,4 +1,3 @@
-import { User } from '@firebase/auth';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import throttle from 'lodash.throttle';
@@ -7,22 +6,17 @@ import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
 import { RevisitNotification } from '../../utils/notifications';
+import {
+  ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
+} from '../../analysis/individualStudy/thinkAloud/types';
 
 export interface StoredUser {
-  email: string,
+  email: string | null,
   uid: string | null,
 }
 
-export interface LocalStorageUser {
-  name: string,
-  email: string,
-  uid: string,
-}
-
-export type UserOptions = User | LocalStorageUser | null;
-
 export interface UserWrapped {
-  user: UserOptions,
+  user: StoredUser | null,
   determiningStatus: boolean,
   isAdmin: boolean,
   adminVerification:boolean
@@ -63,6 +57,14 @@ export type StorageObject<T extends StorageObjectType> =
     ? ParticipantData
     : T extends 'config'
     ? StudyConfig
+    : T extends 'transcription.txt'
+    ? TranscribedAudio
+    : T extends 'editedText'
+    ? TaglessEditedText[]
+    : T extends 'participantTags'
+    ? ParticipantTags
+    : T extends 'tags'
+    ? Tag[]
     : Blob; // Fallback for any random string
 
 export interface CloudStorageEngineError {
@@ -519,6 +521,30 @@ export abstract class StorageEngine {
     return sequenceAssignments.map((assignment) => assignment.participantId);
   }
 
+  async saveTags(tags: Tag[], tagType: string) {
+    await this._pushToStorage(`audio/transcriptAndTags/${tagType}`, 'tags', tags);
+  }
+
+  async getTags(tagType: string) {
+    return await this._getFromStorage(`audio/transcriptAndTags/${tagType}`, 'tags');
+  }
+
+  async getAllParticipantAndTaskTags(authEmail: string, participantId: string) {
+    const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags');
+
+    if (tags?.participantTags) {
+      return tags;
+    }
+
+    this.saveAllParticipantAndTaskTags(authEmail, participantId, { participantTags: [], taskTags: {} });
+
+    return { participantTags: [], taskTags: {} };
+  }
+
+  async saveAllParticipantAndTaskTags(authEmail: string, participantId: string, participantTags: ParticipantTags) {
+    return this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags', participantTags);
+  }
+
   // Gets the participant data for the current participant or a specific participantId.
   async getParticipantData(participantId?: string) {
     await this.verifyStudyDatabase();
@@ -579,11 +605,10 @@ export abstract class StorageEngine {
   }
 
   // Rejects a participant with the given participantId and reason.
-  async rejectParticipant(participantId: string, reason: string, studyId?: string) {
+  async rejectParticipant(participantId: string, reason: string) {
     const participant = await this._getFromStorage(
       `participants/${participantId}`,
       'participantData',
-      studyId,
     );
 
     try {
@@ -622,11 +647,10 @@ export abstract class StorageEngine {
   }
 
   // Un-rejects a participant with the given participantId.
-  async undoRejectParticipant(participantId: string, studyId?: string) {
+  async undoRejectParticipant(participantId: string) {
     const participant = await this._getFromStorage(
       `participants/${participantId}`,
       'participantData',
-      studyId,
     );
 
     try {
@@ -1189,6 +1213,12 @@ export abstract class CloudStorageEngine extends StorageEngine {
 
   // Removes the admin user with the given email from the storage engine.
   abstract removeAdminUser(email: string): Promise<void>;
+
+  abstract login(): Promise<StoredUser | null | void>;
+
+  abstract unsubscribe(callback: (user: StoredUser | null) => Promise<void>): () => void;
+
+  abstract logout(): Promise<void>;
 
   /*
   * HIGHER-LEVEL METHODS

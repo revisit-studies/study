@@ -121,6 +121,11 @@ services:
       GOTRUE_EXTERNAL_PHONE_ENABLED: ${ENABLE_PHONE_SIGNUP}
       GOTRUE_SMS_AUTOCONFIRM: ${ENABLE_PHONE_AUTOCONFIRM}
 
+      GOTRUE_EXTERNAL_GITHUB_ENABLED: ${ENABLE_GITHUB_OAUTH}
+      GOTRUE_EXTERNAL_GITHUB_CLIENT_ID: ${GITHUB_OAUTH_CLIENT_ID}
+      GOTRUE_EXTERNAL_GITHUB_SECRET: ${GITHUB_OAUTH_SECRET}
+      GOTRUE_EXTERNAL_GITHUB_REDIRECT_URI: ${GITHUB_OAUTH_REDIRECT_URI}
+
   rest:
     container_name: supabase-rest
     image: postgrest/postgrest:v12.2.11
@@ -162,7 +167,7 @@ services:
 
   analytics:
     container_name: supabase-analytics
-    image: supabase/logflare:1.12.0
+    image: supabase/logflare:1.22.1
     restart: unless-stopped
     ports:
       - 4000:4000
@@ -191,6 +196,7 @@ services:
       LOGFLARE_SINGLE_TENANT: true
       LOGFLARE_SUPABASE_MODE: true
       LOGFLARE_MIN_CLUSTER_SIZE: 1
+      LOGFLARE_LOG_LEVEL: warn
 
       POSTGRES_BACKEND_URL: postgresql://supabase_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/_supabase
       POSTGRES_BACKEND_SCHEMA: _analytics

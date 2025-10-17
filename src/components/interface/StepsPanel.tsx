@@ -3,11 +3,11 @@ import {
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
-  IconArrowsShuffle, IconBrain, IconCheck, IconPackageImport, IconX, IconDice3, IconInfoCircle,
+  IconArrowsShuffle, IconBrain, IconCheck, IconPackageImport, IconX, IconDice3, IconDice5, IconInfoCircle,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import {
-  ComponentBlock, DynamicBlock, ParticipantData, StudyConfig,
+  ComponentBlock, DynamicBlock, ParticipantData, StudyConfig, Response,
 } from '../../parser/types';
 import { Sequence, StoredAnswer } from '../../store/types';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
@@ -95,6 +95,18 @@ function reorderComponents(configSequence: ComponentBlockWithOrderPath['componen
   }
 
   return newComponents;
+}
+
+function hasRandomization(responses: Response[]) {
+  return responses.some((response) => {
+    if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons') {
+      return response.optionOrder === 'random';
+    }
+    if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
+      return response.questionOrder === 'random';
+    }
+    return false;
+  });
 }
 
 function StepItem({
@@ -199,6 +211,11 @@ function StepItem({
             {task?.responseOrder === 'random' && (
             <Tooltip label="Random responses" position="right" withArrow>
               <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
+            </Tooltip>
+            )}
+            {(task?.response && hasRandomization(task.response)) && (
+            <Tooltip label="Random options" position="right" withArrow>
+              <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
             </Tooltip>
             )}
             {correctIncorrectIcon}

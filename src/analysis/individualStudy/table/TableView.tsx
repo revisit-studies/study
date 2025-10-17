@@ -19,7 +19,7 @@ import {
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { participantName } from '../../../utils/participantName';
 import { AllTasksTimeline } from '../replay/AllTasksTimeline';
-import { humanReadableDuration } from '../../../utils/humanReadableDuration';
+import { youtubeReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
@@ -143,7 +143,7 @@ export function TableView({
             leftSection={<IconHourglassEmpty width={18} height={18} style={{ paddingTop: 1 }} />}
             pb={1}
           >
-            {`${humanReadableDuration(+cell.getValue()) || 'N/A'}`}
+            {`${youtubeReadableDuration(+cell.getValue()) || 'N/A'}`}
           </Badge>
         ) : 'Incomplete'
       ),
