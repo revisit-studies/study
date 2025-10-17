@@ -1,4 +1,3 @@
-import { User } from '@firebase/auth';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import throttle from 'lodash.throttle';
@@ -12,20 +11,12 @@ import {
 } from '../../analysis/individualStudy/thinkAloud/types';
 
 export interface StoredUser {
-  email: string,
+  email: string | null,
   uid: string | null,
 }
 
-export interface LocalStorageUser {
-  name: string,
-  email: string,
-  uid: string,
-}
-
-export type UserOptions = User | LocalStorageUser | null;
-
 export interface UserWrapped {
-  user: UserOptions,
+  user: StoredUser | null,
   determiningStatus: boolean,
   isAdmin: boolean,
   adminVerification:boolean
@@ -1193,6 +1184,12 @@ export abstract class CloudStorageEngine extends StorageEngine {
 
   // Removes the admin user with the given email from the storage engine.
   abstract removeAdminUser(email: string): Promise<void>;
+
+  abstract login(): Promise<StoredUser | null | void>;
+
+  abstract unsubscribe(callback: (user: StoredUser | null) => Promise<void>): () => void;
+
+  abstract logout(): Promise<void>;
 
   /*
   * HIGHER-LEVEL METHODS
