@@ -697,7 +697,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   async login() {
     const { error } = await this.supabase.auth.signInWithOAuth({
       provider: 'github',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: window.location.href.replace('/settings', '') },
     });
 
     if (error) throw error;
