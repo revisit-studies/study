@@ -7,7 +7,6 @@ import {
   Group, Stack, Text,
   Tooltip,
 } from '@mantine/core';
-import { isArray } from 'lodash';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useEvent } from '../../../store/hooks/useEvent';
 import {
@@ -24,7 +23,7 @@ async function getTags(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
     const tags = await storageEngine.getTags('text');
 
-    if (isArray(tags)) {
+    if (Array.isArray(tags)) {
       return tags;
     }
     return [];
