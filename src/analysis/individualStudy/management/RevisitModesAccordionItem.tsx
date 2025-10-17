@@ -1,6 +1,4 @@
-import {
-  Stack, Switch,
-} from '@mantine/core';
+import { Stack, Switch } from '@mantine/core';
 import React, { useEffect, useState } from 'react';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 
