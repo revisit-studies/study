@@ -1,7 +1,7 @@
 import {
   Stack, TextInput, Button, Group, Table, Text, ColorInput, Loader, ActionIcon, Radio,
 } from '@mantine/core';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   IconEdit, IconCheck, IconX,
 } from '@tabler/icons-react';
