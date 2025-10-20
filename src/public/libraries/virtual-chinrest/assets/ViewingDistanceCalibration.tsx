@@ -1,6 +1,3 @@
-/* eslint-disable react/jsx-indent */
-/* eslint-disable react/jsx-closing-tag-location */
-/* eslint-disable react/jsx-one-expression-per-line */
 import {
   useState, useRef, useEffect, useCallback,
 } from 'react';
@@ -13,8 +10,7 @@ import { useStoreSelector } from '../../../../store/store';
 // Utility functions
 const degToRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function ViewingDistanceCalibration({ parameters, setAnswer }: StimulusParams<any>) {
+export default function ViewingDistanceCalibration({ parameters, setAnswer }: StimulusParams<{ blindspotAngle: number }>) {
   const ballRef = useRef<HTMLDivElement>(null);
   const squareRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -169,65 +165,84 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
     return <div>Please complete card calibration first.</div>;
   }
   return (
-        <Container size="md">
-            <Stack gap="md">
-                <Text>Now we will quickly measure how far away you are sitting. </Text>
-                <Stack gap="xs">
-                    <List>
-                        <List.Item>Put your left hand on the <b>space bar</b>.</List.Item>
-                        <List.Item>Cover your right eye with your right hand.</List.Item>
-                        <List.Item>Using your left eye, focus on the black square. Keep your focus on the black square.</List.Item>
-                        <List.Item>The <span style={{ color: 'red', fontWeight: 'bold' }}>red ball</span> will disappear as it moves from right to left.
-                            Press the space bar as soon as the ball disappears.</List.Item>
-                    </List>
-                    <Text ta="center">
-                        {ballPositions.length >= 5
-                          ? 'All measurements completed!'
-                          : 'Press the space bar when you are ready to begin.'}
-                    </Text>
-                </Stack>
-                <div
-                  style={{
-                    position: 'relative',
-                    width: '900px',
-                    height: '100px',
-                    backgroundColor: '#ffffff',
-                  }}
-                >
-                    <div
-                      ref={ballRef}
-                      style={{
-                        position: 'absolute',
-                        width: '30px',
-                        height: '30px',
-                        backgroundColor: 'rgb(255, 0, 0)',
-                        borderRadius: '30px',
-                        left: '740px',
-                      }}
-                    />
-                    <div
-                      ref={squareRef}
-                      style={{
-                        position: 'absolute',
-                        width: '30px',
-                        height: '30px',
-                        backgroundColor: 'rgb(0, 0, 0)',
-                        left: '870px',
-                      }}
-                    />
-                </div>
-                <Text ta="center">
-                    Remaining measurements: {5 - ballPositions.length}
-                </Text>
+    <Container size="md">
+      <Stack gap="md">
+        <Text>Now we will quickly measure how far away you are sitting. </Text>
+        <Stack gap="xs">
+          <List>
+            <List.Item>
+              Put your left hand on the
+              <b>space bar</b>
+              .
+            </List.Item>
+            <List.Item>Cover your right eye with your right hand.</List.Item>
+            <List.Item>Using your left eye, focus on the black square. Keep your focus on the black square.</List.Item>
+            <List.Item>
+              The
+              <span style={{ color: 'red', fontWeight: 'bold' }}>red ball</span>
+              {' '}
+              will disappear as it moves from right to left.
+              Press the space bar as soon as the ball disappears.
+            </List.Item>
+          </List>
+          <Text ta="center">
+            {ballPositions.length >= 5
+              ? 'All measurements completed!'
+              : 'Press the space bar when you are ready to begin.'}
+          </Text>
+        </Stack>
+        <div
+          style={{
+            position: 'relative',
+            width: '900px',
+            height: '100px',
+            backgroundColor: '#ffffff',
+          }}
+        >
+          <div
+            ref={ballRef}
+            style={{
+              position: 'absolute',
+              width: '30px',
+              height: '30px',
+              backgroundColor: 'rgb(255, 0, 0)',
+              borderRadius: '30px',
+              left: '740px',
+            }}
+          />
+          <div
+            ref={squareRef}
+            style={{
+              position: 'absolute',
+              width: '30px',
+              height: '30px',
+              backgroundColor: 'rgb(0, 0, 0)',
+              left: '870px',
+            }}
+          />
+        </div>
+        <Text ta="center">
+          Remaining measurements:
+          {' '}
+          {5 - ballPositions.length}
+        </Text>
 
-                {viewingDistance && (
-                    <Stack gap="xs">
-                        <Text fw={700} size="lg">Viewing Distance Results</Text>
-                        <Text>Estimated Viewing Distance: {(viewingDistance / 10).toFixed(1)} cm</Text>
-                        <Text>Number of measurements: {ballPositions.length}</Text>
-                    </Stack>
-                )}
-            </Stack>
-        </Container>
+        {viewingDistance && (
+        <Stack gap="xs">
+          <Text fw={700} size="lg">Viewing Distance Results</Text>
+          <Text>
+            Estimated Viewing Distance:
+            {(viewingDistance / 10).toFixed(1)}
+            {' '}
+            cm
+          </Text>
+          <Text>
+            Number of measurements:
+            {ballPositions.length}
+          </Text>
+        </Stack>
+        )}
+      </Stack>
+    </Container>
   );
 }

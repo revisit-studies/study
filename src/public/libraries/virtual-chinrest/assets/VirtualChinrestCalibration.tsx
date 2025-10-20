@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-one-expression-per-line */
 /* eslint-disable react/no-unescaped-entities */
 import { useState, useRef, useEffect } from 'react';
 import {
@@ -7,8 +6,7 @@ import {
 import { StimulusParams } from '../../../../store/types';
 import cardImage from './costco_card.png';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface VirtualChinrestCalibrationProps extends StimulusParams<any> {
+interface VirtualChinrestCalibrationProps extends StimulusParams<{ taskid: string }> {
   itemWidthMM?: number;
   itemHeightMM?: number;
   fixedCorner?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -140,7 +138,9 @@ export default function VirtualChinrestCalibration({
 
       {isCalibrationComplete && (
       <div style={{ textAlign: 'center', color: 'green' }}>
-        Calibration Complete - Pixels per MM: {pixelsPerMM?.toFixed(2)}
+        Calibration Complete - Pixels per MM:
+        {' '}
+        {pixelsPerMM?.toFixed(2)}
       </div>
       )}
     </Stack>
