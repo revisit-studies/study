@@ -39,7 +39,6 @@ import {
   UserManagementData,
   SequenceAssignment,
   SnapshotDocContent,
-  defaultStageColor,
   StoredUser,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
@@ -404,18 +403,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       'modes',
     );
     await setDoc(revisitModesDoc, modesDocument, { merge: true });
-  }
-
-  async getStageData(studyId: string) {
-    return await this._getStageData(studyId);
-  }
-
-  async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor) {
-    return await this._setCurrentStage(studyId, stageName, color);
-  }
-
-  async updateStageColor(studyId: string, stageName: string, color: string) {
-    return await this._updateStageColor(studyId, stageName, color);
   }
 
   protected async _getAudioUrl(

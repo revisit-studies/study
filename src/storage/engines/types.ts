@@ -194,15 +194,6 @@ export abstract class StorageEngine {
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
 
-  // Gets the stage data for the given studyId.
-  abstract getStageData(studyId: string): Promise<StageData>;
-
-  // Sets the current stage for the given studyId.
-  abstract setCurrentStage(studyId: string, stageName: string, color?: string): Promise<void>;
-
-  // Updates the color of a stage in allStages
-  abstract updateStageColor(studyId: string, stageName: string, color: string): Promise<void>;
-
   // Protected helper: Gets the full modes document (including stage data and mode flags)
   protected abstract _getModesDocument(studyId: string): Promise<Record<string, unknown>>;
 
@@ -280,7 +271,7 @@ export abstract class StorageEngine {
     return await this.__throttleVerifyStudyDatabase();
   }
 
-  protected async _getStageData(studyId: string): Promise<StageData> {
+  async getStageData(studyId: string): Promise<StageData> {
     const modesDoc = await this._getModesDocument(studyId);
 
     if (modesDoc && modesDoc.stage) {
@@ -302,7 +293,7 @@ export abstract class StorageEngine {
   }
 
   // Setting current stage
-  protected async _setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor): Promise<void> {
+  async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor): Promise<void> {
     const modesDoc = await this._getModesDocument(studyId);
 
     // Get current stage data or initialize with default
@@ -340,7 +331,7 @@ export abstract class StorageEngine {
   }
 
   // Updating stage color
-  protected async _updateStageColor(studyId: string, stageName: string, color: string): Promise<void> {
+  async updateStageColor(studyId: string, stageName: string, color: string): Promise<void> {
     const modesDoc = await this._getModesDocument(studyId);
 
     if (!modesDoc || !modesDoc.stage) {

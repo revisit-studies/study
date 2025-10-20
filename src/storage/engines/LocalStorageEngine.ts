@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import {
-  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, defaultStageColor,
+  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType,
 } from './types';
 
 export class LocalStorageEngine extends StorageEngine {
@@ -206,18 +206,6 @@ export class LocalStorageEngine extends StorageEngine {
   protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
     const key = `${this.collectionPrefix}${studyId}/modes`;
     await this.studyDatabase.setItem(key, modesDocument);
-  }
-
-  async getStageData(studyId: string) {
-    return await this._getStageData(studyId);
-  }
-
-  async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor) {
-    return await this._setCurrentStage(studyId, stageName, color);
-  }
-
-  async updateStageColor(studyId: string, stageName: string, color: string) {
-    return await this._updateStageColor(studyId, stageName, color);
   }
 
   protected async _getAudioUrl(task: string, participantId?: string) {

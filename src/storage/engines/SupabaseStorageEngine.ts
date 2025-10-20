@@ -1,6 +1,6 @@
 import { AuthError, createClient } from '@supabase/supabase-js';
 import {
-  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, defaultStageColor, StoredUser,
+  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
   CloudStorageEngine,
 } from './types';
 
@@ -412,18 +412,6 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
-  }
-
-  async getStageData(studyId: string) {
-    return await this._getStageData(studyId);
-  }
-
-  async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor) {
-    return await this._setCurrentStage(studyId, stageName, color);
-  }
-
-  async updateStageColor(studyId: string, stageName: string, color: string) {
-    return await this._updateStageColor(studyId, stageName, color);
   }
 
   protected async _getAudioUrl(task: string, participantId?: string) {
