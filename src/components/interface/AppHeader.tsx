@@ -41,6 +41,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   const studyConfig = useStoreSelector((state) => state.config);
 
   const answers = useStoreSelector((state) => state.answers);
+  const storageEngineFailedToConnect = useStoreSelector((state) => state.storageEngineFailedToConnect);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText, toggleStudyBrowser, incrementHelpCounter } = useStoreActions();
@@ -160,7 +161,8 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
               {isAudioRecording && <RecordingAudioWaveform />}
             </Group>
             )}
-            {!dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
+            {storageEngineFailedToConnect && <Tooltip multiline withArrow arrowSize={6} w={300} label="Failed to connect to the storage engine. Study data will not be saved. Check your connection or restart the app."><Badge size="lg" color="red">Storage Disconnected</Badge></Tooltip>}
+            {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"

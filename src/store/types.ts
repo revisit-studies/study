@@ -183,4 +183,5 @@ export interface StoreState {
   funcSequence: Record<string, string[]>;
   completed: boolean;
   clickedPrevious: boolean;
+  storageEngineFailedToConnect: boolean;
 }
