@@ -384,24 +384,6 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .eq('docId', 'metadata');
   }
 
-  protected async _getModesDocument(studyId: string): Promise<Record<string, unknown>> {
-    const { data, error } = await this.supabase
-      .from('revisit')
-      .select('data')
-      .eq('studyId', `${this.collectionPrefix}${studyId}`)
-      .eq('docId', 'metadata');
-
-    if (error) {
-      return {};
-    }
-
-    if (data.length > 0) {
-      return data[0].data || {};
-    }
-
-    return {};
-  }
-
   protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
     await this.supabase
       .from('revisit')

@@ -189,13 +189,10 @@ export abstract class StorageEngine {
   abstract connect(): Promise<void>;
 
   // Gets the modes for the given studyId. The modes are stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
-  abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean>>;
+  abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean> & { stage?: StageData }>;
 
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
-
-  // Protected helper: Gets the full modes document (including stage data and mode flags)
-  protected abstract _getModesDocument(studyId: string): Promise<Record<string, unknown>>;
 
   // Protected helper: Sets the full modes document (including stage data and mode flags)
   protected abstract _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void>;
@@ -272,7 +269,7 @@ export abstract class StorageEngine {
   }
 
   async getStageData(studyId: string): Promise<StageData> {
-    const modesDoc = await this._getModesDocument(studyId);
+    const modesDoc = await this.getModes(studyId);
 
     if (modesDoc && modesDoc.stage) {
       if (typeof modesDoc.stage === 'object' && modesDoc.stage !== null) {
@@ -294,37 +291,32 @@ export abstract class StorageEngine {
 
   // Setting current stage
   async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor): Promise<void> {
-    const modesDoc = await this._getModesDocument(studyId);
-
-    // Get current stage data or initialize with default
-    let stageData = modesDoc?.stage;
+    const modesDoc = await this.getModes(studyId);
 
     // Initialize if doesn't exist or invalid
-    if (!stageData || typeof stageData !== 'object'
-        || !(stageData as { currentStage?: unknown; allStages?: unknown }).currentStage
-        || !(stageData as { currentStage?: unknown; allStages?: unknown }).allStages) {
-      stageData = {
+    if (!modesDoc.stage || typeof modesDoc.stage !== 'object'
+        || !(modesDoc.stage as { currentStage?: unknown; allStages?: unknown }).currentStage
+        || !(modesDoc.stage as { currentStage?: unknown; allStages?: unknown }).allStages) {
+      modesDoc.stage = {
         currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
         allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
       };
     }
 
-    const stageDataTyped = stageData as StageData;
-
     // Check if stage already exists in allStages
-    const existingStageIndex = stageDataTyped.allStages.findIndex(
+    const existingStageIndex = modesDoc.stage.allStages.findIndex(
       (s) => s.stageName === stageName,
     );
 
     if (existingStageIndex === -1) {
-      stageDataTyped.allStages.push({ stageName, color });
+      modesDoc.stage.allStages.push({ stageName, color });
     }
 
-    stageDataTyped.currentStage = { stageName, color };
+    modesDoc.stage.currentStage = { stageName, color };
 
     const updatedModesDoc: Record<string, unknown> = {
       ...modesDoc,
-      stage: stageDataTyped,
+      stage: modesDoc.stage,
     };
 
     await this._setModesDocument(studyId, updatedModesDoc);
@@ -332,25 +324,23 @@ export abstract class StorageEngine {
 
   // Updating stage color
   async updateStageColor(studyId: string, stageName: string, color: string): Promise<void> {
-    const modesDoc = await this._getModesDocument(studyId);
+    const modesDoc = await this.getModes(studyId);
 
     if (!modesDoc || !modesDoc.stage) {
       throw new Error('Stage data not initialized');
     }
 
-    const stageData = modesDoc.stage as StageData;
-
-    if (!stageData.allStages) {
+    if (!modesDoc.stage.allStages) {
       throw new Error('Stage data not initialized');
     }
 
-    const updatedAllStages = stageData.allStages.map(
+    const updatedAllStages = modesDoc.stage.allStages.map(
       (s) => (s.stageName === stageName ? { ...s, color } : s),
     );
 
-    const updatedCurrentStage = stageData.currentStage.stageName === stageName
-      ? { ...stageData.currentStage, color }
-      : stageData.currentStage;
+    const updatedCurrentStage = modesDoc.stage.currentStage.stageName === stageName
+      ? { ...modesDoc.stage.currentStage, color }
+      : modesDoc.stage.currentStage;
 
     const updatedStageData: StageData = {
       currentStage: updatedCurrentStage,
