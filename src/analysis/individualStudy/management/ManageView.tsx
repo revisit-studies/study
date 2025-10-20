@@ -1,5 +1,5 @@
 import {
-  Paper, ScrollArea, Stack,
+  Paper, Stack,
 } from '@mantine/core';
 import { DataManagementItem } from './DataManagementItem';
 import { RevisitModesItem } from './RevisitModesItem';
@@ -7,15 +7,13 @@ import { ParticipantData } from '../../../storage/types';
 
 export function ManageView({ studyId, refresh }: { studyId: string, refresh: () => Promise<Record<number, ParticipantData>> }) {
   return (
-    <ScrollArea style={{ height: '65%', overflow: 'auto' }}>
-      <Stack gap="lg" w="60%" mx="auto">
-        <Paper shadow="sm" p="lg" radius="md" withBorder>
-          <RevisitModesItem studyId={studyId} />
-        </Paper>
-        <Paper shadow="sm" p="lg" radius="md" withBorder>
-          <DataManagementItem studyId={studyId} refresh={refresh} />
-        </Paper>
-      </Stack>
-    </ScrollArea>
+    <Stack gap="lg" w="60%" mx="auto">
+      <Paper shadow="sm" p="lg" radius="md" withBorder>
+        <RevisitModesItem studyId={studyId} />
+      </Paper>
+      <Paper shadow="sm" p="lg" radius="md" withBorder>
+        <DataManagementItem studyId={studyId} refresh={refresh} />
+      </Paper>
+    </Stack>
   );
 }

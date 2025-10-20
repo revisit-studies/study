@@ -221,7 +221,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={studyId} includedParticipants={includedParticipants} />}
                 </Tabs.Panel>
               )}
-              <Tabs.Panel value="manage" pt="xs">
+              <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
                 {studyId && user.isAdmin ? <ManageView studyId={studyId} refresh={() => execute(studyConfig, storageEngine, studyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
               </Tabs.Panel>
             </Tabs>
