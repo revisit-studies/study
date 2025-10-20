@@ -1,1 +1,0 @@
-This study demonstrates reVISit's comprehensive styling capabilities. You'll see examples of how study designers can customize the visual appearance of components and responses using both external stylesheets and inline styles.
