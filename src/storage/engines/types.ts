@@ -195,7 +195,7 @@ export abstract class StorageEngine {
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
 
   // Protected helper: Sets the full modes document (including stage data and mode flags)
-  protected abstract _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void>;
+  protected abstract _setModesDocument(studyId: string, modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData }): Promise<void>;
 
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
@@ -272,12 +272,7 @@ export abstract class StorageEngine {
     const modesDoc = await this.getModes(studyId);
 
     if (modesDoc && modesDoc.stage) {
-      if (typeof modesDoc.stage === 'object' && modesDoc.stage !== null) {
-        const stageObj = modesDoc.stage as { currentStage?: unknown; allStages?: unknown };
-        if (stageObj.currentStage && stageObj.allStages) {
-          return modesDoc.stage as StageData;
-        }
-      }
+      return modesDoc.stage as StageData;
     }
 
     // Set default stage data if it doesn't exist
@@ -294,9 +289,7 @@ export abstract class StorageEngine {
     const modesDoc = await this.getModes(studyId);
 
     // Initialize if doesn't exist or invalid
-    if (!modesDoc.stage || typeof modesDoc.stage !== 'object'
-        || !(modesDoc.stage as { currentStage?: unknown; allStages?: unknown }).currentStage
-        || !(modesDoc.stage as { currentStage?: unknown; allStages?: unknown }).allStages) {
+    if (!modesDoc.stage) {
       modesDoc.stage = {
         currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
         allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
@@ -314,7 +307,7 @@ export abstract class StorageEngine {
 
     modesDoc.stage.currentStage = { stageName, color };
 
-    const updatedModesDoc: Record<string, unknown> = {
+    const updatedModesDoc = {
       ...modesDoc,
       stage: modesDoc.stage,
     };
@@ -326,11 +319,7 @@ export abstract class StorageEngine {
   async updateStageColor(studyId: string, stageName: string, color: string): Promise<void> {
     const modesDoc = await this.getModes(studyId);
 
-    if (!modesDoc || !modesDoc.stage) {
-      throw new Error('Stage data not initialized');
-    }
-
-    if (!modesDoc.stage.allStages) {
+    if (!modesDoc.stage) {
       throw new Error('Stage data not initialized');
     }
 
@@ -342,7 +331,7 @@ export abstract class StorageEngine {
       ? { ...modesDoc.stage.currentStage, color }
       : modesDoc.stage.currentStage;
 
-    const updatedStageData: StageData = {
+    const updatedStageData = {
       currentStage: updatedCurrentStage,
       allStages: updatedAllStages,
     };
