@@ -23,6 +23,7 @@ export async function studyStoreCreator(
   modes: Record<REVISIT_MODE, boolean>,
   participantId: string,
   completed: boolean,
+  storageEngineFailedToConnect: boolean,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
@@ -39,6 +40,7 @@ export async function studyStoreCreator(
         `${id}_${idx}`,
         {
           answer: {},
+          identifier: `${id}_${idx}`,
           trialOrder: `${idx}`,
           componentName: id,
           incorrectAnswers: {},
@@ -118,7 +120,6 @@ export async function studyStoreCreator(
       belowStimulus: undefined,
       stimulus: undefined,
       sidebar: undefined,
-
     },
     analysisIsPlaying: false,
     analysisHasAudio: false,
@@ -133,6 +134,7 @@ export async function studyStoreCreator(
     funcSequence: {},
     completed,
     clickedPrevious: false,
+    storageEngineFailedToConnect,
   };
 
   const storeSlice = createSlice({
@@ -162,6 +164,7 @@ export async function studyStoreCreator(
         state.funcSequence[payload.funcName].push(payload.component);
         state.answers[identifier] = {
           answer: {},
+          identifier,
           incorrectAnswers: {},
           componentName: payload.component,
           trialOrder: `${payload.index}_${payload.funcIndex}`,

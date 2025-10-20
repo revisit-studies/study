@@ -112,18 +112,12 @@ export function useNextStep() {
       };
       storeDispatch(
         saveTrialAnswer({
-          identifier,
           ...toSave,
         }),
       );
       // Update database
       if (storageEngine) {
-        storageEngine.saveAnswers(
-          {
-            ...answers,
-            [identifier]: toSave,
-          },
-        );
+        storageEngine.saveAnswers({ ...answers });
       }
       storeDispatch(setReactiveAnswers({}));
       storeDispatch(setMatrixAnswersCheckbox(null));
