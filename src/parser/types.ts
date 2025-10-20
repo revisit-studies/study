@@ -454,6 +454,10 @@ export interface DropdownResponse extends BaseResponse {
   placeholder?: string;
   /** The options that are displayed in the dropdown. */
   options: (StringOption | string)[];
+  /** The minimum number of selections that are required. This will make the dropdown a multiselect dropdown. */
+  minSelections?: number;
+  /** The maximum number of selections that are required. This will make the dropdown a multiselect dropdown. */
+  maxSelections?: number;
 }
 
 /**

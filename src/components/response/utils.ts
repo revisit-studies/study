@@ -1,9 +1,23 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
 import {
-  CheckboxResponse, NumberOption, RadioResponse, Response, StringOption,
+  CheckboxResponse, DropdownResponse, NumberOption, RadioResponse, Response, StringOption,
 } from '../../parser/types';
 import { StoredAnswer } from '../../store/types';
+
+function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
+  // Check max and min selections
+  const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
+  const maxNotSelected = dropdownResponse.maxSelections && value.length > dropdownResponse.maxSelections;
+
+  if (minNotSelected) {
+    return `Please select at least ${dropdownResponse.minSelections} options`;
+  }
+  if (maxNotSelected) {
+    return `Please select at most ${dropdownResponse.maxSelections} options`;
+  }
+  return null;
+}
 
 function checkCheckboxResponse(response: Response, value: string[]) {
   if (response.type === 'checkbox') {
@@ -100,6 +114,9 @@ const generateValidation = (responses: Response[]) => {
             if (response.type === 'checkbox') {
               return checkCheckboxResponse(response, value);
             }
+            if (response.type === 'dropdown') {
+              return checkDropdownResponse(response, value);
+            }
             return value.length === 0 ? 'Empty input' : null;
           }
           if (response.required && response.requiredValue != null && value != null) {
@@ -157,6 +174,8 @@ export function generateErrorMessage(
     error = requiredValue && [...requiredValue].sort().toString() !== [...answer.checked].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
   } else if (answer.checked && response.required) {
     error = checkCheckboxResponse(response, answer.checked);
+  } else if (answer.value && response.type === 'dropdown') {
+    error = checkDropdownResponse(response, answer.value as string[]);
   } else {
     error = answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.` : null;
   }
