@@ -1,7 +1,7 @@
 import { AuthError, createClient } from '@supabase/supabase-js';
 import {
-  CloudStorageEngine, REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType,
-  StoredUser,
+  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
+  CloudStorageEngine,
 } from './types';
 
 export class SupabaseStorageEngine extends CloudStorageEngine {
@@ -379,6 +379,18 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         studyId: `${this.collectionPrefix}${studyId}`,
         docId: 'metadata',
         data: modes,
+      })
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'metadata');
+  }
+
+  protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
+    await this.supabase
+      .from('revisit')
+      .upsert({
+        studyId: `${this.collectionPrefix}${studyId}`,
+        docId: 'metadata',
+        data: modesDocument,
       })
       .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
