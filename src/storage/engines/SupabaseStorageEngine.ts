@@ -384,8 +384,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .eq('docId', 'metadata');
   }
 
-  async getStageData(studyId: string) {
-    // Get the modes from the study collection
+  protected async _getModesDocument(studyId: string): Promise<Record<string, unknown>> {
     const { data, error } = await this.supabase
       .from('revisit')
       .select('data')
@@ -393,111 +392,38 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .eq('docId', 'metadata');
 
     if (error) {
-      throw new Error('Failed to get stage data');
+      return {};
     }
 
     if (data.length > 0) {
-      const metadata = data[0].data;
-      if (metadata && metadata.stage && metadata.stage.currentStage && metadata.stage.allStages) {
-        return metadata.stage;
-      }
+      return data[0].data || {};
     }
 
-    // Set default stage data if it doesn't exist
-    const defaultStageData = {
-      currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
-      allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
-    };
-    await this.setCurrentStage(studyId, 'DEFAULT', defaultStageColor);
-    return defaultStageData;
+    return {};
+  }
+
+  protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
+    await this.supabase
+      .from('revisit')
+      .upsert({
+        studyId: `${this.collectionPrefix}${studyId}`,
+        docId: 'metadata',
+        data: modesDocument,
+      })
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'metadata');
+  }
+
+  async getStageData(studyId: string) {
+    return await this._getStageData(studyId);
   }
 
   async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor) {
-    // Get existing modes first
-    const modes = await this.getModes(studyId);
-
-    // Get current stage data or initialize with default
-    let stageData = modes.stage;
-
-    // Initialize if doesn't exist or invalid
-    if (!stageData || !stageData.currentStage || !stageData.allStages) {
-      stageData = {
-        currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
-        allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
-      };
-    }
-
-    // Check if stage already exists in allStages
-    const existingStageIndex = stageData.allStages.findIndex(
-      (s: { stageName: string; color: string }) => s.stageName === stageName,
-    );
-
-    if (existingStageIndex === -1) {
-      // Add new stage to allStages
-      stageData.allStages.push({ stageName, color });
-    }
-
-    // Update current stage
-    stageData.currentStage = { stageName, color };
-
-    // Update the stage in the modes data
-    const updatedData = {
-      ...modes,
-      stage: stageData,
-    };
-
-    // Save the updated data
-    await this.supabase
-      .from('revisit')
-      .upsert({
-        studyId: `${this.collectionPrefix}${studyId}`,
-        docId: 'metadata',
-        data: updatedData,
-      })
-      .eq('studyId', `${this.collectionPrefix}${studyId}`)
-      .eq('docId', 'metadata');
+    return await this._setCurrentStage(studyId, stageName, color);
   }
 
   async updateStageColor(studyId: string, stageName: string, color: string) {
-    // Get existing modes first
-    const modes = await this.getModes(studyId);
-    const stageData = modes.stage;
-
-    if (!stageData || !stageData.allStages) {
-      throw new Error('Stage data not initialized');
-    }
-
-    // Update the color in allStages
-    const updatedAllStages = stageData.allStages.map(
-      (s: { stageName: string; color: string }) => (s.stageName === stageName ? { ...s, color } : s),
-    );
-
-    // Update current stage color if it matches
-    const updatedCurrentStage = stageData.currentStage.stageName === stageName
-      ? { ...stageData.currentStage, color }
-      : stageData.currentStage;
-
-    const updatedStageData = {
-      currentStage: updatedCurrentStage,
-      allStages: updatedAllStages,
-    };
-
-    // Update the stage in the modes data
-    const updatedData = {
-      ...modes,
-      stage: updatedStageData,
-    };
-
-    // Save the updated data
-    await this.supabase
-      .from('revisit')
-      .upsert({
-        studyId: `${this.collectionPrefix}${studyId}`,
-        docId: 'metadata',
-        data: updatedData,
-      })
-      .eq('studyId', `${this.collectionPrefix}${studyId}`)
-      .eq('docId', 'metadata');
+    return await this._updateStageColor(studyId, stageName, color);
   }
 
   protected async _getAudioUrl(task: string, participantId?: string) {

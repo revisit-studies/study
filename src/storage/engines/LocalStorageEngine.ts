@@ -197,103 +197,27 @@ export class LocalStorageEngine extends StorageEngine {
     this.studyDatabase.setItem(key, modes);
   }
 
-  async getStageData(studyId: string) {
+  protected async _getModesDocument(studyId: string): Promise<Record<string, unknown>> {
     const key = `${this.collectionPrefix}${studyId}/modes`;
     const modes = await this.studyDatabase.getItem(key) as Record<string, unknown> | null;
+    return modes || {};
+  }
 
-    if (modes && modes.stage) {
-      if (typeof modes.stage === 'object' && modes.stage !== null) {
-        const stageObj = modes.stage as { currentStage?: unknown; allStages?: unknown };
-        if (stageObj.currentStage && stageObj.allStages) {
-          return modes.stage as { currentStage: { stageName: string; color: string }; allStages: { stageName: string; color: string }[] };
-        }
-      }
-    }
+  protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
+    const key = `${this.collectionPrefix}${studyId}/modes`;
+    await this.studyDatabase.setItem(key, modesDocument);
+  }
 
-    // Set default stage data if it doesn't exist
-    const defaultStageData = {
-      currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
-      allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
-    };
-    await this.setCurrentStage(studyId, 'DEFAULT', defaultStageColor);
-    return defaultStageData;
+  async getStageData(studyId: string) {
+    return await this._getStageData(studyId);
   }
 
   async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor) {
-    const key = `${this.collectionPrefix}${studyId}/modes`;
-    const existingData = await this.studyDatabase.getItem(key) as Record<string, unknown> | null;
-
-    // Get current stage data or initialize with default
-    let stageData = existingData?.stage;
-
-    // Initialize if doesn't exist or invalid
-    if (!stageData || typeof stageData !== 'object'
-        || !(stageData as { currentStage?: unknown; allStages?: unknown }).currentStage
-        || !(stageData as { currentStage?: unknown; allStages?: unknown }).allStages) {
-      stageData = {
-        currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
-        allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
-      };
-    }
-
-    const stageDataTyped = stageData as { currentStage: { stageName: string; color: string }; allStages: { stageName: string; color: string }[] };
-
-    // Check if stage already exists in allStages
-    const existingStageIndex = stageDataTyped.allStages.findIndex(
-      (s) => s.stageName === stageName,
-    );
-
-    if (existingStageIndex === -1) {
-      // Add new stage to allStages
-      stageDataTyped.allStages.push({ stageName, color });
-    }
-
-    // Update current stage
-    stageDataTyped.currentStage = { stageName, color };
-
-    const updatedData: Record<string, unknown> = {
-      ...existingData,
-      stage: stageDataTyped,
-    };
-
-    await this.studyDatabase.setItem(key, updatedData);
+    return await this._setCurrentStage(studyId, stageName, color);
   }
 
   async updateStageColor(studyId: string, stageName: string, color: string) {
-    const key = `${this.collectionPrefix}${studyId}/modes`;
-    const existingData = await this.studyDatabase.getItem(key) as Record<string, unknown> | null;
-
-    if (!existingData || !existingData.stage) {
-      throw new Error('Stage data not initialized');
-    }
-
-    const stageData = existingData.stage as { currentStage: { stageName: string; color: string }; allStages: { stageName: string; color: string }[] };
-
-    if (!stageData.allStages) {
-      throw new Error('Stage data not initialized');
-    }
-
-    // Update the color in allStages
-    const updatedAllStages = stageData.allStages.map(
-      (s) => (s.stageName === stageName ? { ...s, color } : s),
-    );
-
-    // Update current stage color if it matches
-    const updatedCurrentStage = stageData.currentStage.stageName === stageName
-      ? { ...stageData.currentStage, color }
-      : stageData.currentStage;
-
-    const updatedStageData = {
-      currentStage: updatedCurrentStage,
-      allStages: updatedAllStages,
-    };
-
-    const updatedData = {
-      ...existingData,
-      stage: updatedStageData,
-    };
-
-    await this.studyDatabase.setItem(key, updatedData);
+    return await this._updateStageColor(studyId, stageName, color);
   }
 
   protected async _getAudioUrl(task: string, participantId?: string) {

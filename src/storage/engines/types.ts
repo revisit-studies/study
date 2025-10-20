@@ -203,6 +203,12 @@ export abstract class StorageEngine {
   // Updates the color of a stage in allStages
   abstract updateStageColor(studyId: string, stageName: string, color: string): Promise<void>;
 
+  // Protected helper: Gets the full modes document (including stage data and mode flags)
+  protected abstract _getModesDocument(studyId: string): Promise<Record<string, unknown>>;
+
+  // Protected helper: Sets the full modes document (including stage data and mode flags)
+  protected abstract _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void>;
+
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
 
@@ -272,6 +278,100 @@ export abstract class StorageEngine {
   // Verify study database using provided primitive from storage engine with a throttle of 10 seconds.
   protected async verifyStudyDatabase() {
     return await this.__throttleVerifyStudyDatabase();
+  }
+
+  protected async _getStageData(studyId: string): Promise<StageData> {
+    const modesDoc = await this._getModesDocument(studyId);
+
+    if (modesDoc && modesDoc.stage) {
+      if (typeof modesDoc.stage === 'object' && modesDoc.stage !== null) {
+        const stageObj = modesDoc.stage as { currentStage?: unknown; allStages?: unknown };
+        if (stageObj.currentStage && stageObj.allStages) {
+          return modesDoc.stage as StageData;
+        }
+      }
+    }
+
+    // Set default stage data if it doesn't exist
+    const defaultStageData: StageData = {
+      currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
+      allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
+    };
+    await this.setCurrentStage(studyId, 'DEFAULT', defaultStageColor);
+    return defaultStageData;
+  }
+
+  // Setting current stage
+  protected async _setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor): Promise<void> {
+    const modesDoc = await this._getModesDocument(studyId);
+
+    // Get current stage data or initialize with default
+    let stageData = modesDoc?.stage;
+
+    // Initialize if doesn't exist or invalid
+    if (!stageData || typeof stageData !== 'object'
+        || !(stageData as { currentStage?: unknown; allStages?: unknown }).currentStage
+        || !(stageData as { currentStage?: unknown; allStages?: unknown }).allStages) {
+      stageData = {
+        currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
+        allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
+      };
+    }
+
+    const stageDataTyped = stageData as StageData;
+
+    // Check if stage already exists in allStages
+    const existingStageIndex = stageDataTyped.allStages.findIndex(
+      (s) => s.stageName === stageName,
+    );
+
+    if (existingStageIndex === -1) {
+      stageDataTyped.allStages.push({ stageName, color });
+    }
+
+    stageDataTyped.currentStage = { stageName, color };
+
+    const updatedModesDoc: Record<string, unknown> = {
+      ...modesDoc,
+      stage: stageDataTyped,
+    };
+
+    await this._setModesDocument(studyId, updatedModesDoc);
+  }
+
+  // Updating stage color
+  protected async _updateStageColor(studyId: string, stageName: string, color: string): Promise<void> {
+    const modesDoc = await this._getModesDocument(studyId);
+
+    if (!modesDoc || !modesDoc.stage) {
+      throw new Error('Stage data not initialized');
+    }
+
+    const stageData = modesDoc.stage as StageData;
+
+    if (!stageData.allStages) {
+      throw new Error('Stage data not initialized');
+    }
+
+    const updatedAllStages = stageData.allStages.map(
+      (s) => (s.stageName === stageName ? { ...s, color } : s),
+    );
+
+    const updatedCurrentStage = stageData.currentStage.stageName === stageName
+      ? { ...stageData.currentStage, color }
+      : stageData.currentStage;
+
+    const updatedStageData: StageData = {
+      currentStage: updatedCurrentStage,
+      allStages: updatedAllStages,
+    };
+
+    const updatedModesDoc = {
+      ...modesDoc,
+      stage: updatedStageData,
+    };
+
+    await this._setModesDocument(studyId, updatedModesDoc);
   }
 
   // Saves the new config for the study. This will overwrite the existing sequence array so that the new sequences are compatible with the new config.
