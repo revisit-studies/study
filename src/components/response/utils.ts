@@ -5,19 +5,16 @@ import {
 } from '../../parser/types';
 import { StoredAnswer } from '../../store/types';
 
-function checkDropdownResponse(response: Response, value: string[]) {
-  if (response.type === 'dropdown') {
-    // Check max and min selections
-    const dropdownResponse = response as DropdownResponse;
-    const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
-    const maxNotSelected = dropdownResponse.maxSelections && value.length > dropdownResponse.maxSelections;
+function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
+  // Check max and min selections
+  const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
+  const maxNotSelected = dropdownResponse.maxSelections && value.length > dropdownResponse.maxSelections;
 
-    if (minNotSelected) {
-      return `Please select at least ${dropdownResponse.minSelections} options`;
-    }
-    if (maxNotSelected) {
-      return `Please select at most ${dropdownResponse.maxSelections} options`;
-    }
+  if (minNotSelected) {
+    return `Please select at least ${dropdownResponse.minSelections} options`;
+  }
+  if (maxNotSelected) {
+    return `Please select at most ${dropdownResponse.maxSelections} options`;
   }
   return null;
 }
