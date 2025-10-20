@@ -2,7 +2,7 @@
 /* eslint-disable react/no-unescaped-entities */
 import { useState, useRef, useEffect } from 'react';
 import {
-  Slider, Button, Container, Stack, Text,
+  Slider, Button, Stack, Text,
 } from '@mantine/core';
 import { StimulusParams } from '../../../../store/types';
 import cardImage from './costco_card.png';
@@ -88,63 +88,61 @@ export default function VirtualChinrestCalibration({
   });
 
   return (
-    // Container component from Mantine that centers content and provides max-width
-    <Container size="md">
-      <Stack gap="lg">
-        <Text size="md"> Drag the slider until the image is the same size as a credit card held up to the screen.</Text>
-        <Text size="md"> You can use any card this is the same size as a credit card, like a membership card or driver's license.</Text>
-        <Text size="md"> If you do not have access to a real card, you can use a ruler to measure the image width to 3.37 inches or 85.6mm. </Text>
-        <Text size="md"> Once you are finished, click 'Confirm Size' and then 'Next'. </Text>
-        <Button
-          onClick={handleCalibrationComplete}
-          size="lg"
-          variant="transparent"
-        >
-          Confirm Size
-        </Button>
-        <Slider
-          min={sliderRange.min}
-          max={sliderRange.max}
-          value={itemWidthPx}
-          label={null}
-          onChange={handleSliderChange}
-          styles={{
-            root: { width: '100%' }, // Makes slider full width
-            track: { cursor: 'pointer' }, // Changes cursor on track
-            thumb: { cursor: 'grab' }, // Changes cursor on thumb
-            bar: { cursor: 'pointer' }, // Changes cursor on filled bar
+  // Container component from Mantine that centers content and provides max-width
+    <Stack gap="lg">
+      <Text size="md"> Drag the slider until the image is the same size as a credit card held up to the screen.</Text>
+      <Text size="md"> You can use any card this is the same size as a credit card, like a membership card or driver's license.</Text>
+      <Text size="md"> If you do not have access to a real card, you can use a ruler to measure the image width to 3.37 inches or 85.6mm. </Text>
+      <Text size="md"> Once you are finished, click 'Confirm Size' and then 'Next'. </Text>
+      <Button
+        onClick={handleCalibrationComplete}
+        size="lg"
+        variant="transparent"
+      >
+        Confirm Size
+      </Button>
+      <Slider
+        min={sliderRange.min}
+        max={sliderRange.max}
+        value={itemWidthPx}
+        label={null}
+        onChange={handleSliderChange}
+        styles={{
+          root: { width: '100%' }, // Makes slider full width
+          track: { cursor: 'pointer' }, // Changes cursor on track
+          thumb: { cursor: 'grab' }, // Changes cursor on thumb
+          bar: { cursor: 'pointer' }, // Changes cursor on filled bar
+        }}
+      />
+
+      {/* Wrapper div that maintains position */}
+      <div ref={wrapperRef} style={getPositionStyles()}>
+        {/* Card container that changes size */}
+        <div
+          ref={containerRef}
+          style={{
+            width: `${itemWidthPx}px`,
+            height: `${calculateHeight(itemWidthPx)}px`,
+            overflow: 'hidden', // Prevents image overflow
           }}
-        />
-
-        {/* Wrapper div that maintains position */}
-        <div ref={wrapperRef} style={getPositionStyles()}>
-          {/* Card container that changes size */}
-          <div
-            ref={containerRef}
+        >
+          <img
+            src={cardImage}
+            alt="Credit Card"
             style={{
-              width: `${itemWidthPx}px`,
-              height: `${calculateHeight(itemWidthPx)}px`,
-              overflow: 'hidden', // Prevents image overflow
+              width: '100%', // Makes image fill container
+              height: '100%',
+              objectFit: 'contain', // Maintains aspect ratio
             }}
-          >
-            <img
-              src={cardImage}
-              alt="Credit Card"
-              style={{
-                width: '100%', // Makes image fill container
-                height: '100%',
-                objectFit: 'contain', // Maintains aspect ratio
-              }}
-            />
-          </div>
+          />
         </div>
+      </div>
 
-        {isCalibrationComplete && (
-          <div style={{ textAlign: 'center', color: 'green' }}>
-            Calibration Complete - Pixels per MM: {pixelsPerMM?.toFixed(2)}
-          </div>
-        )}
-      </Stack>
-    </Container>
+      {isCalibrationComplete && (
+      <div style={{ textAlign: 'center', color: 'green' }}>
+        Calibration Complete - Pixels per MM: {pixelsPerMM?.toFixed(2)}
+      </div>
+      )}
+    </Stack>
   );
 }
