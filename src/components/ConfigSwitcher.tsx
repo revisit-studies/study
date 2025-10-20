@@ -2,7 +2,7 @@ import {
   Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
-  IconAlertTriangle, IconChartHistogram, IconDatabase, IconExternalLink, IconFlame, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
+  IconAlertTriangle, IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -147,8 +147,12 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
                   ? <Tooltip label="Analytics interface publicly accessible" withinPortal><IconGraph size={16} color="green" /></Tooltip>
                   : <Tooltip label="Analytics interface not publicly accessible" withinPortal><IconGraphOff size={16} color="red" /></Tooltip>}
                 {storageEngine?.getEngine() === 'localStorage'
-                  ? <Tooltip label="Local storage enabled" withinPortal><IconDatabase size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Firebase enabled" withinPortal><IconFlame size={16} color="green" /></Tooltip>}
+                  ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
+                  : storageEngine?.getEngine() === 'firebase'
+                    ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="green" /></Tooltip>
+                    : storageEngine?.getEngine() === 'supabase'
+                      ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
+                      : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
               </Flex>
             </Flex>
 

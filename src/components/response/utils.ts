@@ -46,10 +46,10 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         ...otherObj,
       };
     } else {
-      let initField: string | string[] | object | null = '';
+      let initField: string | string[] | number | object | null = '';
       if (response.paramCapture) {
         initField = queryParameters.get(response.paramCapture);
-      } else if (response.type === 'reactive') {
+      } else if (response.type === 'reactive' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
         initField = [];
       } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
         initField = Object.fromEntries(
@@ -79,6 +79,9 @@ const generateValidation = (responses: Response[]) => {
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
           if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+            if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+              return Object.keys(value).length > 0 ? null : 'Empty Input';
+            }
             return Object.values(value).every((val) => val !== '') ? null : 'Empty Input';
           }
           if (Array.isArray(value)) {

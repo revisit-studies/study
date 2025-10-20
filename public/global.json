@@ -17,30 +17,31 @@
     "demo-dynamic",
     "demo-style",
     "demo-yaml",
+    "demo-ranking-widget",
     "example-brush-interactions",
     "example-cleveland",
     "example-mvnv",
     "example-VLAT-adaptive",
     "example-VLAT-full-randomized",
     "example-VLAT-mini-randomized",
+    "library-adaptive-vlat",
     "library-beauvis",
     "library-berlin-num",
     "library-calvi",
     "library-color-blindness",
     "library-demographics",
+    "library-graph-literacy-scale",
     "library-mic-check",
-    "library-screen-recording",
     "library-mini-vlat",
     "library-nasa-tlx",
     "library-previs",
     "library-quis",
     "library-sam",
+    "library-screen-recording",
     "library-smeq",
     "library-sus",
-    "library-vlat",
-    "library-adaptive-vlat",
-    "library-graph-literacy-scale",
     "library-virtual-chinrest",
+    "library-vlat",
     "test-audio",
     "test-library",
     "test-likert-matrix",
@@ -98,6 +99,9 @@
     "demo-yaml": {
       "path": "demo-yaml/config.yaml"
     },
+    "demo-ranking-widget": {
+      "path": "demo-ranking-widget/config.json"
+    },
     "example-brush-interactions": {
       "path": "example-brush-interactions/config.json"
     },
@@ -137,12 +141,12 @@
       "path": "library-demographics/config.json",
       "test": true
     },
-    "library-mic-check": {
-      "path": "library-mic-check/config.json",
+    "library-graph-literacy-scale": {
+      "path": "library-graph-literacy-scale/config.json",
       "test": true
     },
-    "library-screen-recording": {
-      "path": "library-screen-recording/config.json",
+    "library-mic-check": {
+      "path": "library-mic-check/config.json",
       "test": true
     },
     "library-mini-vlat": {
@@ -165,6 +169,10 @@
       "path": "library-sam/config.json",
       "test": true
     },
+    "library-screen-recording": {
+      "path": "library-screen-recording/config.json",
+      "test": true
+    },
     "library-smeq": {
       "path": "library-smeq/config.json",
       "test": true
@@ -175,10 +183,6 @@
     },
     "library-vlat": {
       "path": "library-vlat/config.json",
-      "test": true
-    },
-    "library-graph-literacy-scale": {
-      "path": "library-graph-literacy-scale/config.json",
       "test": true
     },
     "test-audio": {

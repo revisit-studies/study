@@ -1,4 +1,3 @@
-import { User } from '@firebase/auth';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import throttle from 'lodash.throttle';
@@ -7,22 +6,17 @@ import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
 import { RevisitNotification } from '../../utils/notifications';
+import {
+  ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
+} from '../../analysis/individualStudy/thinkAloud/types';
 
 export interface StoredUser {
-  email: string,
+  email: string | null,
   uid: string | null,
 }
 
-export interface LocalStorageUser {
-  name: string,
-  email: string,
-  uid: string,
-}
-
-export type UserOptions = User | LocalStorageUser | null;
-
 export interface UserWrapped {
-  user: UserOptions,
+  user: StoredUser | null,
   determiningStatus: boolean,
   isAdmin: boolean,
   adminVerification:boolean
@@ -35,6 +29,9 @@ export type SequenceAssignment = {
   claimed: boolean;
   completed: number | null;
   createdTime: number;
+  total: number; // Total number of questions/steps
+  answered: string[]; // Number of answered questions
+  isDynamic: boolean; // Whether the study contains dynamic blocks
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
@@ -47,6 +44,14 @@ export type StorageObject<T extends StorageObjectType> =
     ? ParticipantData
     : T extends 'config'
     ? StudyConfig
+    : T extends 'transcription.txt'
+    ? TranscribedAudio
+    : T extends 'editedText'
+    ? TaglessEditedText[]
+    : T extends 'participantTags'
+    ? ParticipantTags
+    : T extends 'tags'
+    ? Tag[]
     : Blob; // Fallback for any random string
 
 export interface CloudStorageEngineError {
@@ -146,7 +151,7 @@ export abstract class StorageEngine {
 
   /* General/Realtime ---------------------------------------------------- */
   // Gets all sequence assignments for the given studyId. The sequence assignments are sorted ascending by timestamp.
-  protected abstract _getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
+  public abstract getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
 
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
@@ -337,7 +342,7 @@ export abstract class StorageEngine {
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
-    let sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
+    let sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
     const modes = await this.getModes(this.studyId);
 
@@ -356,6 +361,9 @@ export abstract class StorageEngine {
           claimed: false,
           completed: null,
           createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
+          total: 0,
+          answered: [],
+          isDynamic: false,
         };
         // Mark the first reject as claimed
         await this._claimSequenceAssignment(firstReject.participantId, firstReject);
@@ -371,12 +379,15 @@ export abstract class StorageEngine {
         claimed: false,
         completed: null,
         createdTime: timestamp, // Placeholder, will be set to server timestamp in cloud engines
+        total: 0,
+        answered: [],
+        isDynamic: false,
       };
       await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
     }
 
     // Query all the intents to get a sequence and find our position in the queue
-    sequenceAssignments = await this._getAllSequenceAssignments(this.studyId);
+    sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
     // Get the latin square
     const sequenceArray = await this.getSequenceArray();
@@ -477,8 +488,32 @@ export abstract class StorageEngine {
     if (studyIdToUse === undefined) {
       throw new Error('Study ID is not set');
     }
-    const sequenceAssignments = await this._getAllSequenceAssignments(studyIdToUse);
+    const sequenceAssignments = await this.getAllSequenceAssignments(studyIdToUse);
     return sequenceAssignments.map((assignment) => assignment.participantId);
+  }
+
+  async saveTags(tags: Tag[], tagType: string) {
+    await this._pushToStorage(`audio/transcriptAndTags/${tagType}`, 'tags', tags);
+  }
+
+  async getTags(tagType: string) {
+    return await this._getFromStorage(`audio/transcriptAndTags/${tagType}`, 'tags');
+  }
+
+  async getAllParticipantAndTaskTags(authEmail: string, participantId: string) {
+    const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags');
+
+    if (tags?.participantTags) {
+      return tags;
+    }
+
+    this.saveAllParticipantAndTaskTags(authEmail, participantId, { participantTags: [], taskTags: {} });
+
+    return { participantTags: [], taskTags: {} };
+  }
+
+  async saveAllParticipantAndTaskTags(authEmail: string, participantId: string, participantTags: ParticipantTags) {
+    return this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags', participantTags);
   }
 
   // Gets the participant data for the current participant or a specific participantId.
@@ -541,11 +576,10 @@ export abstract class StorageEngine {
   }
 
   // Rejects a participant with the given participantId and reason.
-  async rejectParticipant(participantId: string, reason: string, studyId?: string) {
+  async rejectParticipant(participantId: string, reason: string) {
     const participant = await this._getFromStorage(
       `participants/${participantId}`,
       'participantData',
-      studyId,
     );
 
     try {
@@ -584,11 +618,10 @@ export abstract class StorageEngine {
   }
 
   // Un-rejects a participant with the given participantId.
-  async undoRejectParticipant(participantId: string, studyId?: string) {
+  async undoRejectParticipant(participantId: string) {
     const participant = await this._getFromStorage(
       `participants/${participantId}`,
       'participantData',
-      studyId,
     );
 
     try {
@@ -643,7 +676,7 @@ export abstract class StorageEngine {
   }
 
   async getParticipantsStatusCounts(studyId: string) {
-    const sequenceAssignments = await this._getAllSequenceAssignments(studyId);
+    const sequenceAssignments = await this.getAllSequenceAssignments(studyId);
 
     const completed = sequenceAssignments.filter((assignment) => assignment.completed && !assignment.rejected).length;
     const rejected = sequenceAssignments.filter((assignment) => assignment.rejected).length;
@@ -691,6 +724,44 @@ export abstract class StorageEngine {
     await this.__throttleSaveAnswers(answers);
   }
 
+  // Updates the progress data in the sequence assignment
+  async updateProgressData(
+    progressData: { total: number; answered: string[]; isDynamic: boolean },
+    participantId?: string,
+  ) {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    if (this.getEngine() !== 'firebase') {
+      return;
+    }
+
+    const targetParticipantId = participantId || this.currentParticipantId;
+    if (!targetParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
+    const sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
+    const existingAssignment = sequenceAssignments.find(
+      (assignment) => assignment.participantId === targetParticipantId,
+    );
+
+    if (existingAssignment) {
+      // Ensure backward compatibility by providing default values if fields don't exist
+      const updatedAssignment: SequenceAssignment = {
+        ...existingAssignment,
+        total: existingAssignment.total ?? progressData.total,
+        answered: existingAssignment.answered ?? progressData.answered,
+        isDynamic: existingAssignment.isDynamic ?? progressData.isDynamic,
+      };
+      updatedAssignment.total = progressData.total;
+      updatedAssignment.answered = progressData.answered;
+      updatedAssignment.isDynamic = progressData.isDynamic;
+      await this._createSequenceAssignment(targetParticipantId, updatedAssignment, false);
+    }
+  }
+
   // Verifies if the current participant has completed the study. Checks that the throttled answers are saved and marks the participant as complete if so.
   async verifyCompletion() {
     await this.verifyStudyDatabase();
@@ -727,6 +798,8 @@ export abstract class StorageEngine {
     if (this.participantData && serverEndTime === localEndTime) {
       this.participantData.completed = true;
       if (modes.dataCollectionEnabled) {
+        await this._completeCurrentParticipantRealtime();
+
         await this._pushToStorage(
           `participants/${this.currentParticipantId}`,
           'participantData',
@@ -736,8 +809,6 @@ export abstract class StorageEngine {
           `participants/${this.currentParticipantId}`,
           'participantData',
         );
-
-        await this._completeCurrentParticipantRealtime();
       }
 
       return true;
@@ -807,50 +878,26 @@ export abstract class StorageEngine {
 
   async saveAsset(
     prefix: string,
-    recorder: MediaRecorder,
+    blob: Blob,
     taskName: string,
   ) {
-    let debounceTimeout: NodeJS.Timeout | null = null;
-
     const assetKey = `${prefix}/${taskName}`;
     const participantKey = `${prefix}/${this.currentParticipantId}`;
 
     this.uploadingAssetIds.push(assetKey);
 
-    const listener = async (data: BlobEvent) => {
-      if (debounceTimeout) {
-        return;
-      }
+    await this._pushToStorage(participantKey, taskName, blob);
+    await this._cacheStorageObject(participantKey, taskName);
 
-      debounceTimeout = setTimeout(async () => {
-        await this._pushToStorage(participantKey, taskName, data.data);
-        await this._cacheStorageObject(participantKey, taskName);
-
-        this.uploadingAssetIds = this.uploadingAssetIds.filter((id) => id !== assetKey);
-      }, 500);
-    };
-
-    recorder.addEventListener('dataavailable', listener);
-
-    // Detect Safari
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    // When stopping recording:
-    if (isSafari) {
-      recorder.stop(); // This will trigger ondataavailable with the full recording
-    } else {
-      // For Chrome/Firefox, you can use requestData or chunked data
-      recorder.requestData();
-    }
-
-    // Don't clean up the listener. The stream will be destroyed.
+    this.uploadingAssetIds = this.uploadingAssetIds.filter((id) => id !== assetKey);
   }
 
-  // Saves the audio stream to the storage engine. This method is used to save the audio data from a MediaRecorder stream.
-  async saveAudio(
-    audioStream: MediaRecorder,
+  // Saves the audio stream to the storage engine. This method is used to save the audio recorded data from a MediaRecorder stream.
+  async saveAudioRecording(
+    blob: Blob,
     taskName: string,
   ) {
-    return this.saveAsset('audio', audioStream, taskName);
+    return this.saveAsset('audio', blob, taskName);
   }
 
   // Gets the screen recording for a specific task and participantId.
@@ -867,16 +914,7 @@ export abstract class StorageEngine {
     blob: Blob,
     taskName: string,
   ) {
-    const prefix = 'screenRecording';
-    const assetKey = `${prefix}/${taskName}`;
-    const participantKey = `${prefix}/${this.currentParticipantId}`;
-
-    this.uploadingAssetIds.push(assetKey);
-
-    await this._pushToStorage(participantKey, taskName, blob);
-    await this._cacheStorageObject(participantKey, taskName);
-
-    this.uploadingAssetIds = this.uploadingAssetIds.filter((id) => id !== assetKey);
+    return this.saveAsset('screenRecording', blob, taskName);
   }
 
   // Gets the sequence array from the storage engine.
@@ -1146,6 +1184,12 @@ export abstract class CloudStorageEngine extends StorageEngine {
 
   // Removes the admin user with the given email from the storage engine.
   abstract removeAdminUser(email: string): Promise<void>;
+
+  abstract login(): Promise<StoredUser | null | void>;
+
+  abstract unsubscribe(callback: (user: StoredUser | null) => Promise<void>): () => void;
+
+  abstract logout(): Promise<void>;
 
   /*
   * HIGHER-LEVEL METHODS

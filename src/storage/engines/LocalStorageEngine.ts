@@ -52,7 +52,7 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.setItem(key, configHash);
   }
 
-  protected async _getAllSequenceAssignments(studyId: string) {
+  public async getAllSequenceAssignments(studyId: string) {
     const sequenceAssignmentPath = `${this.collectionPrefix}${studyId}/sequenceAssignment`;
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath);
     if (!sequenceAssignments) {

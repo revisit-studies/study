@@ -18,12 +18,13 @@ import { useWindowEvents } from './useWindowEvents';
 import { findBlockForStep, findIndexOfBlock } from '../../utils/getSequenceFlatMap';
 import { useStudyConfig } from './useStudyConfig';
 import {
-  Answer, IndividualComponent, InheritedComponent, StudyConfig,
+  IndividualComponent, InheritedComponent, StudyConfig,
 } from '../../parser/types';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
+import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
 
-function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
+function checkAllAnswersCorrect(answers: StoredAnswer['answer'], componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
   const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
 
   // Find the matching component in the study config
@@ -38,8 +39,7 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
     return true;
   }
 
-  // Check that the response is matches the correct answer
-  return foundConfigComponentConfig.correctAnswer.every((correctAnswerEntry) => answers[correctAnswerEntry.id] === correctAnswerEntry.answer);
+  return componentAnswersAreCorrect(answers, foundConfigComponentConfig.correctAnswer);
 }
 
 export function useNextStep() {
@@ -50,6 +50,7 @@ export function useNextStep() {
   const sequence = useStoreSelector((state) => state.sequence);
   const answers = useStoreSelector((state) => state.answers);
   const modes = useStoreSelector((state) => state.modes);
+  const clickedPrevious = useStoreSelector((state) => state.clickedPrevious);
   const studyConfig = useStudyConfig();
 
   const { funcIndex } = useParams();
@@ -57,7 +58,7 @@ export function useNextStep() {
 
   const storeDispatch = useStoreDispatch();
   const {
-    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox,
+    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, setRankingAnswers,
   } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
@@ -99,7 +100,7 @@ export function useNextStep() {
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
-    if (dataCollectionEnabled) {
+    if (dataCollectionEnabled && (storedAnswer.endTime === -1 || clickedPrevious)) {
       const toSave = {
         ...storedAnswer,
         answer: collectData ? answer : {},
@@ -111,22 +112,17 @@ export function useNextStep() {
       };
       storeDispatch(
         saveTrialAnswer({
-          identifier,
           ...toSave,
         }),
       );
       // Update database
       if (storageEngine) {
-        storageEngine.saveAnswers(
-          {
-            ...answers,
-            [identifier]: toSave,
-          },
-        );
+        storageEngine.saveAnswers({ ...answers });
       }
       storeDispatch(setReactiveAnswers({}));
       storeDispatch(setMatrixAnswersCheckbox(null));
       storeDispatch(setMatrixAnswersRadio(null));
+      storeDispatch(setRankingAnswers(null));
     }
 
     let nextStep = currentStep + 1;
@@ -215,7 +211,7 @@ export function useNextStep() {
     } else {
       navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, funcIndex, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, studyConfig, participantSequence, navigate, studyId]);
 
   return {
     isNextDisabled,

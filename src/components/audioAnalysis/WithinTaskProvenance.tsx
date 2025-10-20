@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 
 import {
-  Affix, Popover, Button, Stack, Group, ColorSwatch,
+  Affix,
 } from '@mantine/core';
 import { useMemo } from 'react';
 import { StoredAnswer, TrrackedProvenance } from '../../store/types';
@@ -41,7 +41,7 @@ export function WithinTaskProvenance({
       {currentNode && provenance && provenance.nodes[currentNode]
         && <rect fill={colorMap.get(provenance.nodes[currentNode].label) || '#9498a0'} x={xScale(provenance.nodes[currentNode].createdOn) - RECT_WIDTH / 2} y={height / 2 - RECT_HEIGHT / 2} width={RECT_WIDTH} height={RECT_HEIGHT} />}
       <Affix position={{ bottom: 10, left: 10 }}>
-        <Popover width={200} position="bottom" withArrow shadow="md">
+        {/* <Popover width={200} position="bottom" withArrow shadow="md">
           <Popover.Target>
             <Button>Show Legend</Button>
           </Popover.Target>
@@ -57,7 +57,7 @@ export function WithinTaskProvenance({
               }
             </Stack>
           </Popover.Dropdown>
-        </Popover>
+        </Popover> */}
       </Affix>
     </g>
   );

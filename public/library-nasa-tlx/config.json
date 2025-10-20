@@ -18,7 +18,7 @@
     "contactEmail": "",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
-    "withSidebar": true
+    "withSidebar": false
   },
   "importedLibraries": [
     "nasa-tlx"

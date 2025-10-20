@@ -24,13 +24,14 @@ export function NumericInput({
     max,
     placeholder,
     secondaryText,
+    infoText,
   } = response;
 
   return (
     <NumberInput
       disabled={disabled}
       placeholder={placeholder}
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       radius="md"
       size="md"
