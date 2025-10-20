@@ -64,7 +64,7 @@ export function GlobalConfigParser() {
   const analysisProtectedCallback = async (studyId:string) => {
     if (storageEngine && isCloudStorageEngine(storageEngine)) {
       const modes = await storageEngine.getModes(studyId);
-      if (modes.analyticsInterfacePubliclyAccessible) {
+      if (modes.dataSharingEnabled) {
         // If accessible, disable
         return false;
       }

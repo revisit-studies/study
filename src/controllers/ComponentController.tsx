@@ -233,7 +233,7 @@ export function ComponentController() {
 
   // Automatically forward a user to their last completed trial if they are returning to the study
   useEffect(() => {
-    if (status && status.endTime > 0 && !isAnalysis && !modes.studyNavigatorEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
+    if (status && status.endTime > 0 && !isAnalysis && !modes.developmentModeEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
       let lastAnsweredTrialOrder = '0';
       Object.values(answers).forEach((a) => {
         if (a.endTime > 0) {
@@ -248,7 +248,7 @@ export function ComponentController() {
         navigate(`/${studyId}/${encryptIndex(indexNumber)}${funcIndexNumber !== undefined ? `/${encryptIndex(funcIndexNumber)}` : ''}`);
       }
     }
-  }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.studyNavigatorEnabled, navigate, status, studyId]);
+  }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
