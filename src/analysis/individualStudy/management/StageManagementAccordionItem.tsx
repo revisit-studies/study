@@ -91,25 +91,25 @@ export function StageManagementAccordionItem({ studyId }: { studyId: string }) {
       return;
     }
 
-    // Convert to lowercase
-    const normalizedStageName = newStageName.trim().toLowerCase();
+    const normalizedStageName = newStageName.trim();
+    const lowerCaseName = normalizedStageName.toLowerCase();
 
-    if (normalizedStageName === 'n/a') {
+    if (lowerCaseName === 'n/a') {
       setNewStageError('Stage name "N/A" is reserved and cannot be used');
       return;
     }
 
-    if (normalizedStageName === 'all') {
+    if (lowerCaseName === 'all') {
       setNewStageError('Stage name "ALL" is reserved and cannot be used');
       return;
     }
 
-    if (normalizedStageName === 'default') {
+    if (lowerCaseName === 'default') {
       setNewStageError('Stage name "DEFAULT" is reserved and cannot be used');
       return;
     }
 
-    if (allStages.some((s) => s.stageName.toLowerCase() === normalizedStageName)) {
+    if (allStages.some((s) => s.stageName === normalizedStageName)) {
       setNewStageError('A stage with this name already exists');
       return;
     }
