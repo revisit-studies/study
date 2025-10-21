@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.0/src/parser/GlobalConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/GlobalConfigSchema.json",
   "configsList": [
     "tutorial",
     "demo-html",
@@ -40,6 +40,7 @@
     "library-screen-recording",
     "library-smeq",
     "library-sus",
+    "library-virtual-chinrest",
     "library-vlat",
     "test-audio",
     "test-library",
@@ -209,6 +210,10 @@
     },
     "test-step-logic": {
       "path": "test-step-logic/config.json",
+      "test": true
+    },
+    "library-virtual-chinrest": {
+      "path": "library-virtual-chinrest/config.json",
       "test": true
     },
     "example-VLAT-adaptive": {
