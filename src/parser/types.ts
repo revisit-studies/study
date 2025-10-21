@@ -864,8 +864,8 @@ export default function CoolComponent({ parameters, setAnswer }: StimulusParams<
 ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v2.3.0/src/public/demo-click-accuracy-test/assets)
- * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.3.0/src/public/example-brush-interactions/assets)
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v2.3.1/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.3.1/src/public/example-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -1557,7 +1557,7 @@ export type BaseComponents = Record<string, Partial<IndividualComponent>>;
 
 ```js
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.0/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     ...
   },
@@ -1603,7 +1603,7 @@ export interface StudyConfig {
  *
  * ```js
  * {
- *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.0/src/parser/LibraryConfigSchema.json",
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json",
  *   "baseComponents": {
  *     // BaseComponents here are defined exactly as is in the StudyConfig
  *   },
