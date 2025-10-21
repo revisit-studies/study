@@ -29,7 +29,7 @@ import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
 
 type Props = {
   status?: StoredAnswer;
-  config: IndividualComponent | null;
+  config: IndividualComponent;
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
 };
@@ -65,14 +65,12 @@ export function ResponseBlock({
 
   const navigate = useNavigate();
 
-  const configInUse = config as IndividualComponent;
-
   const allResponses = useMemo(() => (formOrders?.response
     ? formOrders.response
-      .map((id) => configInUse?.response?.find((r) => r.id === id))
+      .map((id) => config?.response?.find((r) => r.id === id))
       .filter((r): r is Response => r !== undefined)
     : []
-  ), [configInUse?.response, formOrders]);
+  ), [config?.response, formOrders]);
 
   const responses = useMemo(() => allResponses.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')), [allResponses, location]);
 
@@ -129,16 +127,16 @@ export function ResponseBlock({
 
   const studyConfig = useStudyConfig();
 
-  const provideFeedback = useMemo(() => configInUse?.provideFeedback ?? studyConfig.uiConfig.provideFeedback, [configInUse, studyConfig]);
-  const hasCorrectAnswerFeedback = provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
-  const allowFailedTraining = useMemo(() => configInUse?.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [configInUse, studyConfig]);
+  const provideFeedback = useMemo(() => config?.provideFeedback ?? studyConfig.uiConfig.provideFeedback, [config, studyConfig]);
+  const hasCorrectAnswerFeedback = provideFeedback && ((config?.correctAnswer?.length || 0) > 0);
+  const allowFailedTraining = useMemo(() => config?.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [config, studyConfig]);
   const [attemptsUsed, setAttemptsUsed] = useState(0);
-  const trainingAttempts = useMemo(() => configInUse?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [configInUse, studyConfig]);
+  const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
-  const showBtnsInLocation = useMemo(() => location === (configInUse?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [configInUse, studyConfig, location]);
+  const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
   const identifier = useCurrentIdentifier();
 
   const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
@@ -239,7 +237,7 @@ export function ResponseBlock({
     }, {}) : {}) as StoredAnswer['answer'];
 
     const correctAnswers = Object.fromEntries(allResponsesWithDefaults.map((response) => {
-      const configCorrectAnswer = configInUse?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+      const configCorrectAnswer = config?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
       const suppliedAnswer = allAnswers[response.id];
 
       return [response.id, responseAnswerIsCorrect(suppliedAnswer, configCorrectAnswer)];
@@ -278,7 +276,7 @@ export function ResponseBlock({
             message = `Please try again. You have ${trainingAttempts - newAttemptsUsed} attempts left.`;
           }
           if (response.type === 'checkbox') {
-            const correct = configInUse?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+            const correct = config?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
 
             const suppliedAnswer = allAnswers[response.id] as string[];
             const matches = findMatchingStrings(suppliedAnswer, correct);
@@ -301,9 +299,9 @@ export function ResponseBlock({
         ),
       );
     }
-  }, [attemptsUsed, allResponsesWithDefaults, configInUse, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, navigate, identifier, storeDispatch, alertConfig, saveIncorrectAnswer, trialValidation]);
+  }, [attemptsUsed, allResponsesWithDefaults, config, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, navigate, identifier, storeDispatch, alertConfig, saveIncorrectAnswer, trialValidation]);
 
-  const nextOnEnter = configInUse?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
+  const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 
   useEffect(() => {
     if (nextOnEnter) {
@@ -321,14 +319,14 @@ export function ResponseBlock({
     return () => {};
   }, [checkAnswerProvideFeedback, nextOnEnter]);
 
-  const nextButtonText = useMemo(() => configInUse?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [configInUse, studyConfig]);
+  const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
   let index = 0;
   return (
     <>
       <Box className={`responseBlock responseBlock-${location}`} style={style}>
         {allResponsesWithDefaults.map((response) => {
-          const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+          const configCorrectAnswer = config.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
           const correctAnswer = Array.isArray(configCorrectAnswer) && configCorrectAnswer.length > 0 ? JSON.stringify(configCorrectAnswer) : configCorrectAnswer;
           // Check if this response is in the current location
           const isInCurrentLocation = responses.some((r) => r.id === response.id);
@@ -362,7 +360,7 @@ export function ResponseBlock({
                       }}
                       response={response}
                       index={index}
-                      configInUse={configInUse}
+                      config={config}
                       disabled={disabledAttempts}
                     />
                     <FeedbackAlert
@@ -394,7 +392,7 @@ export function ResponseBlock({
       <NextButton
         disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
         label={nextButtonText}
-        configInUse={configInUse}
+        config={config}
         location={location}
         checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
           <Button

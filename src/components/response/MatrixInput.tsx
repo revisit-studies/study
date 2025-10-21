@@ -10,6 +10,7 @@ import checkboxClasses from './css/Checkbox.module.css';
 import radioClasses from './css/Radio.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
+import { generateErrorMessage } from './utils';
 
 function CheckboxComponent({
   _choices,
@@ -161,6 +162,8 @@ export function MatrixInput({
     storeDispatch(setMatrixAnswersCheckbox(payload));
   };
 
+  const error = generateErrorMessage(response, answer);
+
   const _n = _choices.length;
   const _m = orderedQuestions.length;
   return (
@@ -287,6 +290,11 @@ export function MatrixInput({
           ))}
         </div>
       </Box>
+      {error && (
+        <Text c={required ? 'red' : 'orange'} size="sm" mt="xs">
+          {error}
+        </Text>
+      )}
     </>
   );
 }

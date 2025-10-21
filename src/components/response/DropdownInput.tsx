@@ -42,6 +42,8 @@ export function DropdownInput({
         {...answer}
         value={answer.value === '' ? [] : Array.isArray(answer.value) ? answer.value : [answer.value]}
         error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+        withErrorStyles={required}
+        errorProps={{ c: required ? 'red' : 'orange' }}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
         clearable
@@ -59,6 +61,8 @@ export function DropdownInput({
         {...answer}
         value={answer.value === '' ? null : answer.value}
         error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+        withErrorStyles={required}
+        errorProps={{ c: required ? 'red' : 'orange' }}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
       />
