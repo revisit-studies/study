@@ -49,7 +49,6 @@ export function AppNavBar({ width, top, sidebarOpen }: { width: number, top: num
           location="sidebar"
         />
       </Box>
-
     </Box>
   ) : null;
 }
