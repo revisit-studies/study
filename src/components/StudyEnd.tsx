@@ -12,10 +12,13 @@ import { ParticipantData } from '../storage/types';
 import { download } from './downloader/DownloadTidy';
 import { useStudyId } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { useStoreDispatch, useStoreActions } from '../store/store';
 
 export function StudyEnd() {
   const studyConfig = useStudyConfig();
   const { storageEngine } = useStorageEngine();
+  const dispatch = useStoreDispatch();
+  const { setParticipantCompleted } = useStoreActions();
 
   const isAnalysis = useIsAnalysis();
 
@@ -27,6 +30,9 @@ export function StudyEnd() {
       setCompleted(true);
       return;
     }
+
+    // Set completed in the store
+    dispatch(setParticipantCompleted(true));
 
     // verify that storageEngine.verifyCompletion() returns true, loop until it does
     const interval = setInterval(async () => {

@@ -1,11 +1,8 @@
 import {
   Button, Card, Text, Container, Flex, Image, LoadingOverlay,
 } from '@mantine/core';
-import { useState, useEffect } from 'react';
-import {
-  getAuth, signInWithPopup, GoogleAuthProvider, browserPopupRedirectResolver,
-} from '@firebase/auth';
-import { IconBrandGoogleFilled } from '@tabler/icons-react';
+import { useState, useEffect, useMemo } from 'react';
+import { IconBrandGoogleFilled, IconBrandSupabase } from '@tabler/icons-react';
 import { Navigate } from 'react-router';
 import { PREFIX } from './utils/Prefix';
 import { useAuth } from './store/hooks/useAuth';
@@ -14,21 +11,20 @@ import { StorageEngine } from './storage/engines/types';
 import { showNotification } from './utils/notifications';
 import { isCloudStorageEngine } from './storage/engines/utils';
 
-export async function signInWithGoogle(storageEngine: StorageEngine | undefined, setLoading: (val: boolean) => void) {
+export async function signIn(storageEngine: StorageEngine | undefined, setLoading: (val: boolean) => void) {
   if (storageEngine && isCloudStorageEngine(storageEngine)) {
     setLoading(true);
-    const provider = new GoogleAuthProvider();
-    const auth = getAuth();
     try {
-      await signInWithPopup(auth, provider, browserPopupRedirectResolver);
+      const user = await storageEngine.login();
+      return user;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       showNotification({ title: 'Error', message: error.message, color: 'red' });
     } finally {
       setLoading(false);
     }
-    return auth.currentUser;
   }
+
   return null;
 }
 
@@ -44,6 +40,8 @@ export function Login() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.adminVerification]);
 
+  const engine = useMemo(() => storageEngine?.getEngine(), [storageEngine]);
+
   if (!user.determiningStatus && user.isAdmin) {
     return <Navigate to="/" />;
   }
@@ -54,8 +52,17 @@ export function Login() {
         <Flex align="center" direction="column" justify="center">
           <Image maw={200} mt={50} mb={100} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
           <>
-            <Text mb={20}>To access admin settings, please sign in using your Google account.</Text>
-            <Button onClick={() => signInWithGoogle(storageEngine, setLoading)} leftSection={<IconBrandGoogleFilled />} variant="filled">Sign In With Google</Button>
+            <Text mb={20}>
+              To access admin settings, please sign in using
+              {' '}
+              {engine === 'supabase' ? ' Supabase' : ' Google'}
+              .
+            </Text>
+            <Button onClick={() => signIn(storageEngine, setLoading)} leftSection={engine === 'supabase' ? <IconBrandSupabase /> : <IconBrandGoogleFilled />} variant="filled">
+              Sign In With
+              {' '}
+              {engine === 'supabase' ? 'Supabase' : ' Google '}
+            </Button>
           </>
           <LoadingOverlay visible={loading} />
         </Flex>

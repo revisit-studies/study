@@ -21,23 +21,27 @@ import {
   getDoc,
   getDocs,
   initializeFirestore,
+  onSnapshot,
   serverTimestamp,
   setDoc,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
-import { getAuth, signInAnonymously } from '@firebase/auth';
+import {
+  browserPopupRedirectResolver, getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signOut,
+} from '@firebase/auth';
 import {
   CloudStorageEngine,
-  StoredUser,
   REVISIT_MODE,
   StorageObjectType,
   StorageObject,
   UserManagementData,
   SequenceAssignment,
   SnapshotDocContent,
+  StoredUser,
 } from './types';
+import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -159,7 +163,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await setDoc(configHashDoc, { configHash });
   }
 
-  protected async _getAllSequenceAssignments(studyId: string) {
+  public async getAllSequenceAssignments(studyId: string) {
     const studyCollection = collection(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
@@ -180,6 +184,33 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
       } as SequenceAssignment))
       .sort((a, b) => a.timestamp - b.timestamp);
+  }
+
+  // Set up realtime listener for sequence assignments
+  _setupSequenceAssignmentListener(studyId: string, callback: (assignments: SequenceAssignment[]) => void) {
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+    );
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+
+    return onSnapshot(sequenceAssignmentCollection, (snapshot) => {
+      const assignments = snapshot.docs
+        .map((d) => d.data())
+        .map((data) => ({
+          ...data,
+          timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
+          createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
+          completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+        } as SequenceAssignment))
+        .sort((a, b) => a.timestamp - b.timestamp);
+
+      callback(assignments);
+    });
   }
 
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean = false) {
@@ -224,9 +255,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
   protected async _rejectParticipantRealtime(participantId: string) {
     await this.verifyStudyDatabase();
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
     if (!this.studyId) {
       throw new Error('Study ID is not set');
     }
@@ -358,6 +386,15 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
   }
 
+  protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
+    const revisitModesDoc = doc(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+      'modes',
+    );
+    await setDoc(revisitModesDoc, modesDocument, { merge: true });
+  }
+
   protected async _getAudioUrl(
     task: string,
     participantId: string,
@@ -405,98 +442,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
   protected async _testingReset() {
     throw new Error('Testing reset not implemented for FirebaseStorageEngine');
-  }
-
-  // Gets data from the user-management collection based on the inputted string
-  async getUserManagementData(key: 'authentication'): Promise<{ isEnabled: boolean } | undefined>;
-
-  async getUserManagementData(key: 'adminUsers'): Promise<{ adminUsersList: StoredUser[] } | undefined>;
-
-  async getUserManagementData(
-    key: 'authentication' | 'adminUsers',
-  ): Promise<{ isEnabled: boolean } | { adminUsersList: StoredUser[] } | undefined> {
-    if (Object.keys(this.userManagementData).length === 0) {
-      // Get the user-management collection in Firestore
-      const userManagementCollection = collection(
-        this.firestore,
-        'user-management',
-      );
-      // Grabs all user-management data and returns data based on key
-      const querySnapshot = await getDocs(userManagementCollection);
-      // Converts querySnapshot data to Object
-      const docsObject = Object.fromEntries(
-        querySnapshot.docs.map((queryDoc) => [queryDoc.id, queryDoc.data()]),
-      );
-      this.userManagementData = docsObject as UserManagementData;
-    }
-    if (key in this.userManagementData) {
-      // Type narrowing to ensure correct return type
-      if (key === 'authentication') {
-        const value = this.userManagementData[key];
-        if (value && typeof value === 'object' && 'isEnabled' in value) {
-          return value as { isEnabled: boolean };
-        }
-      } else if (key === 'adminUsers') {
-        const value = this.userManagementData[key];
-        if (value && typeof value === 'object' && 'adminUsersList' in value) {
-          return value as { adminUsersList: StoredUser[] };
-        }
-      }
-    }
-    return undefined;
-  }
-
-  protected async _updateAdminUsersList(adminUsers: { adminUsersList: StoredUser[] }) {
-    await setDoc(
-      doc(this.firestore, 'user-management', 'adminUsers'),
-      {
-        adminUsersList: adminUsers.adminUsersList,
-      },
-    );
-  }
-
-  async changeAuth(bool: boolean) {
-    await setDoc(doc(this.firestore, 'user-management', 'authentication'), {
-      isEnabled: bool,
-    });
-  }
-
-  async addAdminUser(user: StoredUser) {
-    const adminUsers = await this.getUserManagementData('adminUsers');
-    if (adminUsers?.adminUsersList) {
-      const adminList = adminUsers.adminUsersList;
-      const isInList = adminList.find(
-        (storedUser: StoredUser) => storedUser.email === user.email,
-      );
-      if (!isInList) {
-        adminList.push({ email: user.email, uid: user.uid });
-        await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
-          adminUsersList: adminList,
-        });
-      }
-    } else {
-      await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
-        adminUsersList: [{ email: user.email, uid: user.uid }],
-      });
-    }
-  }
-
-  async removeAdminUser(email: string) {
-    const adminUsers = await this.getUserManagementData('adminUsers');
-    if (adminUsers?.adminUsersList && adminUsers.adminUsersList.length > 1) {
-      if (
-        adminUsers.adminUsersList.find(
-          (storedUser: StoredUser) => storedUser.email === email,
-        )
-      ) {
-        adminUsers.adminUsersList = adminUsers?.adminUsersList.filter(
-          (storedUser: StoredUser) => storedUser.email !== email,
-        );
-        await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
-          adminUsersList: adminUsers?.adminUsersList,
-        });
-      }
-    }
   }
 
   async getSnapshots(studyId: string) {
@@ -691,5 +636,152 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     } catch (error) {
       console.error('Error copying file:', error);
     }
+  }
+
+  // Gets data from the user-management collection based on the inputted string
+  async getUserManagementData(key: 'authentication'): Promise<{ isEnabled: boolean } | undefined>;
+
+  async getUserManagementData(key: 'adminUsers'): Promise<{ adminUsersList: StoredUser[] } | undefined>;
+
+  async getUserManagementData(
+    key: 'authentication' | 'adminUsers',
+  ): Promise<{ isEnabled: boolean } | { adminUsersList: StoredUser[] } | undefined> {
+    if (Object.keys(this.userManagementData).length === 0) {
+      // Get the user-management collection in Firestore
+      const userManagementCollection = collection(
+        this.firestore,
+        'user-management',
+      );
+      // Grabs all user-management data and returns data based on key
+      const querySnapshot = await getDocs(userManagementCollection);
+      // Converts querySnapshot data to Object
+      const docsObject = Object.fromEntries(
+        querySnapshot.docs.map((queryDoc) => [queryDoc.id, queryDoc.data()]),
+      );
+      this.userManagementData = docsObject as UserManagementData;
+    }
+    if (key in this.userManagementData) {
+      // Type narrowing to ensure correct return type
+      if (key === 'authentication') {
+        const value = this.userManagementData[key];
+        if (value && typeof value === 'object' && 'isEnabled' in value) {
+          return value as { isEnabled: boolean };
+        }
+      } else if (key === 'adminUsers') {
+        const value = this.userManagementData[key];
+        if (value && typeof value === 'object' && 'adminUsersList' in value) {
+          return value as { adminUsersList: StoredUser[] };
+        }
+      }
+    }
+    return undefined;
+  }
+
+  protected async _updateAdminUsersList(adminUsers: { adminUsersList: StoredUser[] }) {
+    await setDoc(
+      doc(this.firestore, 'user-management', 'adminUsers'),
+      {
+        adminUsersList: adminUsers.adminUsersList,
+      },
+    );
+  }
+
+  async changeAuth(bool: boolean) {
+    await setDoc(doc(this.firestore, 'user-management', 'authentication'), {
+      isEnabled: bool,
+    });
+  }
+
+  async addAdminUser(user: StoredUser) {
+    const adminUsers = await this.getUserManagementData('adminUsers');
+    if (adminUsers?.adminUsersList) {
+      const adminList = adminUsers.adminUsersList;
+      const isInList = adminList.find(
+        (storedUser: StoredUser) => storedUser.email === user.email,
+      );
+      if (!isInList) {
+        adminList.push({ email: user.email, uid: user.uid });
+        await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
+          adminUsersList: adminList,
+        });
+      }
+    } else {
+      await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
+        adminUsersList: [{ email: user.email, uid: user.uid }],
+      });
+    }
+  }
+
+  async removeAdminUser(email: string) {
+    const adminUsers = await this.getUserManagementData('adminUsers');
+    if (adminUsers?.adminUsersList && adminUsers.adminUsersList.length > 1) {
+      if (
+        adminUsers.adminUsersList.find(
+          (storedUser: StoredUser) => storedUser.email === email,
+        )
+      ) {
+        adminUsers.adminUsersList = adminUsers?.adminUsersList.filter(
+          (storedUser: StoredUser) => storedUser.email !== email,
+        );
+        await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
+          adminUsersList: adminUsers?.adminUsersList,
+        });
+      }
+    }
+  }
+
+  async login() {
+    const provider = new GoogleAuthProvider();
+    const auth = getAuth();
+    signInWithPopup(auth, provider, browserPopupRedirectResolver);
+
+    return {
+      email: auth.currentUser?.email || null,
+      uid: auth.currentUser?.uid || null,
+    };
+  }
+
+  unsubscribe(callback: (cloudUser: StoredUser | null) => Promise<void>) {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (cloudUser) => await callback(cloudUser));
+    return () => unsubscribe();
+  }
+
+  async logout() {
+    const auth = getAuth();
+    await signOut(auth);
+  }
+
+  async getTranscription(taskName: string, participantId: string) {
+    return await this._getFromStorage(`audio/${participantId}_${taskName}.wav`, 'transcription.txt');
+  }
+
+  async getEditedTranscript(participantId: string, authEmail: string, task: string) {
+    const transcript = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText');
+
+    if (Array.isArray(transcript)) {
+      const tags = await this.getTags('text');
+
+      if (tags) {
+        // loop over the transcript and merge the tags
+        transcript.forEach((line) => {
+          line.selectedTags = line.selectedTags.map((tag) => {
+            const matchingTag = tags.find((t) => t.id === tag.id);
+            return matchingTag!;
+          });
+        });
+      }
+
+      return transcript as EditedText[];
+    }
+
+    this.saveEditedTranscript(participantId, authEmail, task, []);
+    return [];
+  }
+
+  async saveEditedTranscript(participantId: string, authEmail: string, task: string, editedText: EditedText[]) {
+    const taglessTranscript = editedText.map((line) => ({ ...line, selectedTags: line.selectedTags.filter((tag) => tag !== undefined) })) as TaglessEditedText[];
+
+    return this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText', taglessTranscript);
   }
 }

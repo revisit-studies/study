@@ -1,9 +1,23 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
 import {
-  CheckboxResponse, NumberOption, RadioResponse, Response, StringOption,
+  CheckboxResponse, DropdownResponse, NumberOption, RadioResponse, Response, StringOption,
 } from '../../parser/types';
 import { StoredAnswer } from '../../store/types';
+
+function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
+  // Check max and min selections
+  const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
+  const maxNotSelected = dropdownResponse.maxSelections && value.length > dropdownResponse.maxSelections;
+
+  if (minNotSelected) {
+    return `Please select at least ${dropdownResponse.minSelections} options`;
+  }
+  if (maxNotSelected) {
+    return `Please select at most ${dropdownResponse.maxSelections} options`;
+  }
+  return null;
+}
 
 function checkCheckboxResponse(response: Response, value: string[]) {
   if (response.type === 'checkbox') {
@@ -46,10 +60,10 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         ...otherObj,
       };
     } else {
-      let initField: string | string[] | object | null = '';
+      let initField: string | string[] | number | object | null = '';
       if (response.paramCapture) {
         initField = queryParameters.get(response.paramCapture);
-      } else if (response.type === 'reactive') {
+      } else if (response.type === 'reactive' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
         initField = [];
       } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
         initField = Object.fromEntries(
@@ -79,6 +93,9 @@ const generateValidation = (responses: Response[]) => {
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
           if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+            if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+              return Object.keys(value).length > 0 ? null : 'Empty Input';
+            }
             return Object.values(value).every((val) => val !== '') ? null : 'Empty Input';
           }
           if (Array.isArray(value)) {
@@ -96,6 +113,9 @@ const generateValidation = (responses: Response[]) => {
             }
             if (response.type === 'checkbox') {
               return checkCheckboxResponse(response, value);
+            }
+            if (response.type === 'dropdown') {
+              return checkDropdownResponse(response, value);
             }
             return value.length === 0 ? 'Empty input' : null;
           }
@@ -131,17 +151,6 @@ export function useAnswerField(responses: Response[], currentStep: string | numb
   return answerField;
 }
 
-export function areAnswersEqual(
-  ob1: Record<string, unknown>,
-  ob2: Record<string, unknown>,
-) {
-  if (Object.keys(ob1).length !== Object.keys(ob2).length) return false;
-
-  const keys = Object.keys(ob1);
-
-  return keys.every((key) => JSON.stringify(ob1[key]) === JSON.stringify(ob2[key]));
-}
-
 export function generateErrorMessage(
   response: Response,
   answer: { value?: string | string[] | Record<string, string>; checked?: string[] },
@@ -154,6 +163,8 @@ export function generateErrorMessage(
     error = requiredValue && [...requiredValue].sort().toString() !== [...answer.checked].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
   } else if (answer.checked && response.required) {
     error = checkCheckboxResponse(response, answer.checked);
+  } else if (answer.value && response.type === 'dropdown') {
+    error = checkDropdownResponse(response, answer.value as string[]);
   } else {
     error = answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.` : null;
   }

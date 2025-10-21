@@ -52,7 +52,7 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.setItem(key, configHash);
   }
 
-  protected async _getAllSequenceAssignments(studyId: string) {
+  public async getAllSequenceAssignments(studyId: string) {
     const sequenceAssignmentPath = `${this.collectionPrefix}${studyId}/sequenceAssignment`;
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath);
     if (!sequenceAssignments) {
@@ -195,6 +195,11 @@ export class LocalStorageEngine extends StorageEngine {
     // Set the mode
     modes[mode] = value;
     this.studyDatabase.setItem(key, modes);
+  }
+
+  protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
+    const key = `${this.collectionPrefix}${studyId}/modes`;
+    await this.studyDatabase.setItem(key, modesDocument);
   }
 
   protected async _getAudioUrl(task: string, participantId?: string) {

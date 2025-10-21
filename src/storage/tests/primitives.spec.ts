@@ -95,13 +95,12 @@ describe.each([
     expect(updatedHash).toBe(configHash);
   });
 
-  // _getAllSequenceAssignments test
-  test('_getAllSequenceAssignments returns sequence assignment for participant', async () => {
+  // getAllSequenceAssignments test
+  test('getAllSequenceAssignments returns sequence assignment for participant', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;
 
-    // @ts-expect-error using protected method for testing
-    const sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
 
     const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantId);
@@ -120,8 +119,7 @@ describe.each([
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;
 
-    // @ts-expect-error using protected method for testing
-    let sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
+    let sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
 
     const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantId);
@@ -133,8 +131,7 @@ describe.each([
     // @ts-expect-error using protected method for testing
     await storageEngine._completeCurrentParticipantRealtime();
 
-    // @ts-expect-error using protected method for testing
-    sequenceAssignments = await storageEngine._getAllSequenceAssignments(studyId);
+    sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sequenceAssignments).toBeDefined();
 
     const updatedSequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantId);
@@ -260,13 +257,11 @@ describe.each([
     // Ensure source directory exists
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
-    // @ts-expect-error using protected method for testing
-    const sourceSequenceAssignments1 = await storageEngine._getAllSequenceAssignments(studyId);
+    const sourceSequenceAssignments1 = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sourceSequenceAssignments1).toBeDefined();
     expect(sourceSequenceAssignments1.length).toEqual(1);
 
-    // @ts-expect-error using protected method for testing
-    let targetSequenceAssignments = await storageEngine._getAllSequenceAssignments(targetId);
+    let targetSequenceAssignments = await storageEngine.getAllSequenceAssignments(targetId);
     expect(targetSequenceAssignments).toBeDefined();
     expect(targetSequenceAssignments.length).toBe(0);
 
@@ -275,13 +270,11 @@ describe.each([
     await storageEngine._copyRealtimeData(source, target);
 
     // Check if target directory has the copied data
-    // @ts-expect-error using protected method for testing
-    const sourceSequenceAssignments2 = await storageEngine._getAllSequenceAssignments(studyId);
+    const sourceSequenceAssignments2 = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sourceSequenceAssignments2).toBeDefined();
     expect(sourceSequenceAssignments2.length).toEqual(1);
 
-    // @ts-expect-error using protected method for testing
-    targetSequenceAssignments = await storageEngine._getAllSequenceAssignments(targetId);
+    targetSequenceAssignments = await storageEngine.getAllSequenceAssignments(targetId);
     expect(targetSequenceAssignments).toBeDefined();
     expect(targetSequenceAssignments.length).toEqual(1);
     expect(targetSequenceAssignments[0].participantId).toBe(sourceSequenceAssignments2[0].participantId);
@@ -291,8 +284,7 @@ describe.each([
     await storageEngine._deleteRealtimeData(target);
 
     // Verify the target directory is empty
-    // @ts-expect-error using protected method for testing
-    targetSequenceAssignments = await storageEngine._getAllSequenceAssignments(targetId);
+    targetSequenceAssignments = await storageEngine.getAllSequenceAssignments(targetId);
     expect(targetSequenceAssignments).toBeDefined();
     expect(targetSequenceAssignments.length).toBe(0);
   });

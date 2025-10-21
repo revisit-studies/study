@@ -8,7 +8,7 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 // https://stackoverflow.com/questions/48011353/how-to-unwrap-type-of-a-promise
 type Awaited<T> = T extends PromiseLike<infer U> ? { 0: Awaited<U>; 1: U }[U extends PromiseLike<any> ? 0 : 1] : T;
 
-export type useAsyncStatus = 'idle' | 'pending' | 'success' | 'error';
+type useAsyncStatus = 'idle' | 'pending' | 'success' | 'error';
 
 /**
  * Wraps an (async) function and provides value, status and error states.
