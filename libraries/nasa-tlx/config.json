@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.0/src/parser/LibraryConfigSchema.json",
   "description": "The NASA-TLX is a widely used subjective workload assessment tool. It consists of six subscales: Mental Demand, Physical Demand, Temporal Demand, Performance, Effort, and Frustration. The NASA-TLX is designed to assess the perceived workload of a task and is commonly used in human factors and ergonomics research. We provide a component of the NASA-TLX itself, and a sequence that includes a source of load evaluation. The source of load evaluation is based on the pairwise weighting procedure described in the NASA-TLX manual.",
   "reference": "Hart, Sandra G., and Lowell E. Staveland. \"Development of NASA-TLX (Task Load Index): Results of empirical and theoretical research.\" Advances in psychology. Vol. 52. North-Holland, 1988. 139-183.",
   "doi": "10.1016/S0166-4115(08)62386-9",
@@ -16,141 +16,34 @@
           "required": true,
           "location": "aboveStimulus",
           "type": "radio",
+          "optionOrder": "random",
           "options": [
             "Mental demand",
             "Physical demand"
           ]
         },
         {
-          "id": "effort-temporal-demand",
+          "id": "mental-demand-temporal-demand",
           "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
           "required": true,
-          "location": "aboveStimulus", 
+          "location": "aboveStimulus",
           "type": "radio",
+          "optionOrder": "random",
           "options": [
-            "Effort",
+            "Mental demand",
             "Temporal demand"
           ]
         },
         {
-          "id": "performance-frustration",
-          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "radio", 
-          "options": [
-            "Performance",
-            "Frustration"
-          ]
-        },
-        {
-          "id": "temporal-demand-physical-demand",
+          "id": "mental-demand-performance",
           "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
           "required": true,
           "location": "aboveStimulus",
           "type": "radio",
+          "optionOrder": "random",
           "options": [
-            "Temporal demand",
-            "Physical demand"
-          ]
-        },
-        {
-          "id": "effort-frustration",
-          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "radio",
-          "options": [
-            "Effort",
-            "Frustration"
-          ]
-        },
-        {
-          "id": "performance-physical-demand",
-          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "radio",
-          "options": [
-            "Performance",
-            "Physical demand"
-          ]
-        },
-        {
-          "id": "frustration-temporal-demand",
-          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "radio",
-          "options": [
-            "Frustration",
-            "Temporal demand"
-          ]
-        },
-        {
-          "id": "physical-demand-temporal-demand",
-          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "radio",
-          "options": [
-            "Physical demand",
-            "Temporal demand"
-          ]
-        },
-        {
-          "id": "performance-mental-demand",
-          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "radio",
-          "options": [
-            "Performance",
-            "Mental demand"
-          ]
-        },
-        {
-          "id": "frustration-performance",
-          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "radio",
-          "options": [
-            "Frustration",
+            "Mental demand",
             "Performance"
-          ]
-        },
-        {
-          "id": "effort-mental-demand",
-          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "radio",
-          "options": [
-            "Effort",
-            "Mental demand"
-          ]
-        },
-        {
-          "id": "performance-mental-demand-2",
-          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "radio",
-          "options": [
-            "Performance",
-            "Mental demand"
-          ]
-        },
-        {
-          "id": "temporal-demand-effort",
-          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "radio",
-          "options": [
-            "Temporal demand",
-            "Effort"
           ]
         },
         {
@@ -159,8 +52,57 @@
           "required": true,
           "location": "aboveStimulus",
           "type": "radio",
+          "optionOrder": "random",
           "options": [
             "Mental demand",
+            "Effort"
+          ]
+        },
+        {
+          "id": "mental-demand-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Mental demand",
+            "Frustration"
+          ]
+        },
+        {
+          "id": "physical-demand-temporal-demand",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Physical demand",
+            "Temporal demand"
+          ]
+        },
+        {
+          "id": "physical-demand-performance",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Physical demand",
+            "Performance"
+          ]
+        },
+        {
+          "id": "physical-demand-effort",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Physical demand",
             "Effort"
           ]
         },
@@ -170,19 +112,81 @@
           "required": true,
           "location": "aboveStimulus",
           "type": "radio",
+          "optionOrder": "random",
           "options": [
             "Physical demand",
             "Frustration"
           ]
         },
         {
-          "id": "mental-demand-frustration",
+          "id": "temporal-demand-performance",
           "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
           "required": true,
           "location": "aboveStimulus",
           "type": "radio",
+          "optionOrder": "random",
           "options": [
-            "Mental demand",
+            "Temporal demand",
+            "Performance"
+          ]
+        },
+        {
+          "id": "temporal-demand-effort",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus", 
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Temporal demand",
+            "Effort"
+          ]
+        },
+        {
+          "id": "temporal-demand-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Temporal demand",
+            "Frustration"
+          ]
+        },
+        {
+          "id": "performance-effort",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Performance",
+            "Effort"
+          ]
+        },
+        {
+          "id": "performance-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio", 
+          "optionOrder": "random",
+          "options": [
+            "Performance",
+            "Frustration"
+          ]
+        },
+        {
+          "id": "effort-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Effort",
             "Frustration"
           ]
         }
