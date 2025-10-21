@@ -35,6 +35,8 @@ export function NumericInput({
       size="md"
       {...answer}
       error={generateErrorMessage(response, answer)}
+      withErrorStyles={required}
+      errorProps={{ c: required ? 'red' : 'orange' }}
       classNames={{ input: classes.fixDisabled }}
     />
   );

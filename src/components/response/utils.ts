@@ -1,7 +1,7 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
 import {
-  CheckboxResponse, DropdownResponse, NumberOption, NumericalResponse, RadioResponse, Response, StringOption,
+  CheckboxResponse, DropdownResponse, MatrixResponse, NumberOption, NumericalResponse, RadioResponse, Response, StringOption,
 } from '../../parser/types';
 import { StoredAnswer } from '../../store/types';
 
@@ -19,44 +19,46 @@ function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string
   return null;
 }
 
-function checkCheckboxResponse(response: Response, value: string[]) {
-  if (response.type === 'checkbox') {
-    // Check max and min selections
-    const checkboxResponse = response as CheckboxResponse;
-    const minNotSelected = checkboxResponse.minSelections && value.length < checkboxResponse.minSelections;
-    const maxNotSelected = checkboxResponse.maxSelections && value.length > checkboxResponse.maxSelections;
+function checkCheckboxResponse(response: CheckboxResponse, value: string[]) {
+  const minNotSelected = response.minSelections && value.length < response.minSelections;
+  const maxNotSelected = response.maxSelections && value.length > response.maxSelections;
 
-    if (minNotSelected && maxNotSelected) {
-      return `Please select between ${checkboxResponse.minSelections} and ${checkboxResponse.maxSelections} options`;
-    }
-    if (minNotSelected) {
-      return `Please select at least ${checkboxResponse.minSelections} options`;
-    }
-    if (maxNotSelected) {
-      return `Please select at most ${checkboxResponse.maxSelections} options`;
-    }
+  if (minNotSelected && maxNotSelected) {
+    return `Please select between ${response.minSelections} and ${response.maxSelections} options`;
+  }
+  if (minNotSelected) {
+    return `Please select at least ${response.minSelections} options`;
+  }
+  if (maxNotSelected) {
+    return `Please select at most ${response.maxSelections} options`;
   }
   return null;
 }
 
-function checkNumericalError(response: Response, value: number) {
-  if (response.type === 'numerical') {
-    // Check min and max values
-    const numericalResponse = response as NumericalResponse;
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+function checkNumericalError(response: NumericalResponse, value: number) {
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
 
-    const { min, max } = numericalResponse;
+  const { min, max } = response;
 
-    if (min !== undefined && max !== undefined && (numValue < min || numValue > max)) {
-      return `Please enter a value between ${min} and ${max}`;
-    }
-    if (min !== undefined && numValue < min) {
-      return `Please enter a value of ${min} or greater`;
-    }
-    if (max !== undefined && numValue > max) {
-      return `Please enter a value of ${max} or less`;
-    }
+  if (min !== undefined && max !== undefined && (numValue < min || numValue > max)) {
+    return `Please enter a value between ${min} and ${max}`;
   }
+  if (min !== undefined && numValue < min) {
+    return `Please enter a value of ${min} or greater`;
+  }
+  if (max !== undefined && numValue > max) {
+    return `Please enter a value of ${max} or less`;
+  }
+  return null;
+}
+
+function checkMatrixResponse(response: MatrixResponse, value: Record<string, string>) {
+  const unanswered = Object.values(value).some((val) => val === '');
+
+  if (unanswered) {
+    return 'Please answer all questions in the matrix to continue.';
+  }
+
   return null;
 }
 
@@ -119,6 +121,9 @@ const generateValidation = (responses: Response[]) => {
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
           if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+            if (response.type === 'matrix-checkbox' || response.type === 'matrix-radio') {
+              return checkMatrixResponse(response, value);
+            }
             if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
               return Object.keys(value).length > 0 ? null : 'Empty Input';
             }
@@ -192,12 +197,14 @@ export function generateErrorMessage(
 
   if (answer.checked && Array.isArray(requiredValue)) {
     error = requiredValue && [...requiredValue].sort().toString() !== [...answer.checked].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
-  } else if (answer.checked && response.required) {
+  } else if (answer.checked && response.required && response.type === 'checkbox') {
     error = checkCheckboxResponse(response, answer.checked);
   } else if (answer.value && response.type === 'dropdown') {
     error = checkDropdownResponse(response, answer.value as string[]);
-  } else if (answer.value && typeof answer.value === 'number' && checkNumericalError(response, answer.value)) {
+  } else if (answer.value && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalError(response, answer.value)) {
     error = checkNumericalError(response, answer.value);
+  } else if (answer.value && typeof answer.value === 'object' && !Array.isArray(answer.value) && (response.type === 'matrix-radio' || response.type === 'matrix-checkbox')) {
+    return checkMatrixResponse(response, answer.value);
   } else {
     error = answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.` : null;
   }

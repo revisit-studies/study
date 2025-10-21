@@ -37,6 +37,8 @@ export function TextAreaInput({
         // This is necessary so the component doesnt switch from uncontrolled to controlled, which can cause issues.
       value={answer.value || ''}
       error={generateErrorMessage(response, answer)}
+      withErrorStyles={required}
+      errorProps={{ c: required ? 'red' : 'orange' }}
       classNames={{ input: classes.fixDisabled }}
     />
   );
