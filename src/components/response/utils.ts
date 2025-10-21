@@ -151,17 +151,6 @@ export function useAnswerField(responses: Response[], currentStep: string | numb
   return answerField;
 }
 
-export function areAnswersEqual(
-  ob1: Record<string, unknown>,
-  ob2: Record<string, unknown>,
-) {
-  if (Object.keys(ob1).length !== Object.keys(ob2).length) return false;
-
-  const keys = Object.keys(ob1);
-
-  return keys.every((key) => JSON.stringify(ob1[key]) === JSON.stringify(ob2[key]));
-}
-
 export function generateErrorMessage(
   response: Response,
   answer: { value?: string | string[] | Record<string, string>; checked?: string[] },

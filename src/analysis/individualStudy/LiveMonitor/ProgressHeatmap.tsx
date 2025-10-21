@@ -2,10 +2,10 @@ import { Tooltip } from '@mantine/core';
 import { useMemo } from 'react';
 import * as d3 from 'd3';
 
-export interface ProgressHeatmapProps {
-    total: number;
-    answered: string[];
-    isDynamic: boolean;
+interface ProgressHeatmapProps {
+  total: number;
+  answered: string[];
+  isDynamic: boolean;
 }
 
 const TASK_HEIGHT = 20;

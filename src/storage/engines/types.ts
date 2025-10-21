@@ -42,12 +42,12 @@ export interface StageInfo {
   color: string;
 }
 
-export interface StageData {
+interface StageData {
   currentStage: StageInfo;
   allStages: StageInfo[];
 }
 
-export const defaultStageColor = '#F05A30';
+const defaultStageColor = '#F05A30';
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
@@ -67,7 +67,7 @@ export type StorageObject<T extends StorageObjectType> =
     ? Tag[]
     : Blob; // Fallback for any random string
 
-export interface CloudStorageEngineError {
+interface CloudStorageEngineError {
   title: string;
   message: string;
   details?: string;
