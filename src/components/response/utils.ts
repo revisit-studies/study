@@ -35,7 +35,7 @@ function checkCheckboxResponse(response: CheckboxResponse, value: string[]) {
   return null;
 }
 
-function checkNumericalError(response: NumericalResponse, value: number) {
+function checkNumericalResponse(response: NumericalResponse, value: number) {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
 
   const { min, max } = response;
@@ -109,10 +109,6 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
   return { ...initObj };
 };
 
-function checkNumericalResponse(response: NumericalResponse, value: number) {
-  return (response.min && value < response.min) || (response.max && value > response.max);
-}
-
 const generateValidation = (responses: Response[]) => {
   let validateObj = {};
   responses.forEach((response) => {
@@ -145,9 +141,6 @@ const generateValidation = (responses: Response[]) => {
             if (response.type === 'checkbox') {
               return checkCheckboxResponse(response, value);
             }
-            if (response.type === 'numerical') {
-              return checkNumericalResponse(response, value as unknown as number);
-            }
             if (response.type === 'dropdown') {
               return checkDropdownResponse(response, value);
             }
@@ -158,8 +151,15 @@ const generateValidation = (responses: Response[]) => {
             return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
           }
           if (response.required) {
-            return (value === null || value === undefined || value === '') && !values[`${response.id}-dontKnow`] ? 'Empty input' : null;
+            if ((value === null || value === undefined || value === '') && !values[`${response.id}-dontKnow`]) {
+              return 'Empty input';
+            }
+            if (response.type === 'numerical') {
+              return checkNumericalResponse(response, value as unknown as number);
+              // return 'Empty input';
+            }
           }
+
           return value === null ? 'Empty input' : null;
         },
       };
@@ -201,8 +201,8 @@ export function generateErrorMessage(
     error = checkCheckboxResponse(response, answer.checked);
   } else if (answer.value && response.type === 'dropdown') {
     error = checkDropdownResponse(response, answer.value as string[]);
-  } else if (answer.value && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalError(response, answer.value)) {
-    error = checkNumericalError(response, answer.value);
+  } else if (answer.value && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalResponse(response, answer.value)) {
+    error = checkNumericalResponse(response, answer.value);
   } else if (answer.value && typeof answer.value === 'object' && !Array.isArray(answer.value) && (response.type === 'matrix-radio' || response.type === 'matrix-checkbox')) {
     return checkMatrixResponse(response, answer.value);
   } else {
