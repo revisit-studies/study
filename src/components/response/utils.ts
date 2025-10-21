@@ -1,145 +1,28 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
 import {
-  CheckboxResponse, NumberOption, NumericalResponse, RadioResponse, Response, StringOption,
+  CheckboxResponse, DropdownResponse, NumberOption, NumericalResponse, RadioResponse, Response, StringOption,
 } from '../../parser/types';
 import { StoredAnswer } from '../../store/types';
 
-const queryParameters = new URLSearchParams(window.location.search);
+function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
+  // Check max and min selections
+  const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
+  const maxNotSelected = dropdownResponse.maxSelections && value.length > dropdownResponse.maxSelections;
 
-export const generateInitFields = (responses: Response[], storedAnswer: StoredAnswer['answer']) => {
-  let initObj = {};
-
-  responses.forEach((response) => {
-    const answer = storedAnswer ? storedAnswer[response.id] : {};
-
-    const dontKnowAnswer = storedAnswer && storedAnswer[`${response.id}-dontKnow`] !== undefined ? storedAnswer[`${response.id}-dontKnow`] : false;
-    const dontKnowObj = response.withDontKnow ? { [`${response.id}-dontKnow`]: dontKnowAnswer } : {};
-
-    const otherAnswer = storedAnswer && storedAnswer[`${response.id}-other`] !== undefined ? storedAnswer[`${response.id}-other`] : '';
-    const otherObj = (response as RadioResponse | CheckboxResponse).withOther ? { [`${response.id}-other`]: otherAnswer } : {};
-
-    if (answer) {
-      initObj = {
-        ...initObj,
-        [response.id]: answer,
-        ...dontKnowObj,
-        ...otherObj,
-      };
-    } else {
-      let initField: string | string[] | object | null = '';
-      if (response.paramCapture) {
-        initField = queryParameters.get(response.paramCapture);
-      } else if (response.type === 'reactive' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
-        initField = [];
-      } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
-        initField = Object.fromEntries(
-          response.questionOptions.map((entry) => [entry, '']),
-        );
-      } else if (response.type === 'slider' && response.startingValue) {
-        initField = response.startingValue.toString();
-      }
-
-      initObj = {
-        ...initObj,
-        [response.id]: initField,
-        ...dontKnowObj,
-        ...otherObj,
-      };
-    }
-  });
-
-  return { ...initObj };
-};
+  if (minNotSelected) {
+    return `Please select at least ${dropdownResponse.minSelections} options`;
+  }
+  if (maxNotSelected) {
+    return `Please select at most ${dropdownResponse.maxSelections} options`;
+  }
+  return null;
+}
 
 function checkCheckboxResponse(response: Response, value: string[]) {
   if (response.type === 'checkbox') {
+    // Check max and min selections
     const checkboxResponse = response as CheckboxResponse;
-    return (checkboxResponse.minSelections && value.length < checkboxResponse.minSelections) || (checkboxResponse.maxSelections && value.length > checkboxResponse.maxSelections);
-  }
-  return null;
-}
-
-function checkNumericalResponse(response: Response, value: number) {
-  if (response.type === 'numerical') {
-    const numericalResponse = response as NumericalResponse;
-    return (numericalResponse.min && value < numericalResponse.min) || (numericalResponse.max && value > numericalResponse.max);
-  }
-  return null;
-}
-
-const generateValidation = (responses: Response[]) => {
-  let validateObj = {};
-  responses.forEach((response) => {
-    if (response.required) {
-      validateObj = {
-        ...validateObj,
-        [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
-          if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-            if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
-              return Object.keys(value).length > 0 ? null : 'Empty Input';
-            }
-            return Object.values(value).every((val) => val !== '') ? null : 'Empty Input';
-          }
-          if (Array.isArray(value)) {
-            if (response.requiredValue != null && !Array.isArray(response.requiredValue)) {
-              return 'Incorrect required value. Contact study administrator.';
-            }
-            if (response.requiredValue != null && Array.isArray(response.requiredValue)) {
-              if (response.requiredValue.length !== value.length) {
-                return 'Incorrect input';
-              }
-              const sortedReq = [...response.requiredValue].sort();
-              const sortedVal = [...value].sort();
-
-              return sortedReq.every((val, index) => val === sortedVal[index]) ? null : 'Incorrect input';
-            }
-            if (response.type === 'checkbox') {
-              return checkCheckboxResponse(response, value);
-            }
-            if (response.type === 'numerical') {
-              return checkNumericalResponse(response, value as unknown as number);
-            }
-            return value.length === 0 ? 'Empty input' : null;
-          }
-
-          if (response.required && response.requiredValue != null && value != null) {
-            return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
-          }
-          if (response.required) {
-            return (value === null || value === undefined || value === '') && !values[`${response.id}-dontKnow`] ? 'Empty input' : null;
-          }
-          return value === null ? 'Empty input' : null;
-        },
-      };
-    }
-  });
-  return validateObj;
-};
-
-export function useAnswerField(responses: Response[], currentStep: string | number, storedAnswer: StoredAnswer['answer']) {
-  const [_id, setId] = useState<string | number | null>(null);
-
-  const answerField = useForm<StoredAnswer['answer']>({
-    initialValues: generateInitFields(responses, storedAnswer),
-    validate: generateValidation(responses),
-  });
-
-  useEffect(() => {
-    if (_id !== currentStep) {
-      setId(currentStep);
-      answerField.reset();
-    }
-  }, [_id, answerField, currentStep]);
-
-  return answerField;
-}
-
-function checkCheckboxError(response: Response, value: string[]) {
-  if (response.type === 'checkbox') {
-    // Check min and max selections
-    const checkboxResponse = response as CheckboxResponse;
-
     const minNotSelected = checkboxResponse.minSelections && value.length < checkboxResponse.minSelections;
     const maxNotSelected = checkboxResponse.maxSelections && value.length > checkboxResponse.maxSelections;
 
@@ -177,6 +60,127 @@ function checkNumericalError(response: Response, value: number) {
   return null;
 }
 
+const queryParameters = new URLSearchParams(window.location.search);
+
+export const generateInitFields = (responses: Response[], storedAnswer: StoredAnswer['answer']) => {
+  let initObj = {};
+
+  responses.forEach((response) => {
+    const answer = storedAnswer ? storedAnswer[response.id] : {};
+
+    const dontKnowAnswer = storedAnswer && storedAnswer[`${response.id}-dontKnow`] !== undefined ? storedAnswer[`${response.id}-dontKnow`] : false;
+    const dontKnowObj = response.withDontKnow ? { [`${response.id}-dontKnow`]: dontKnowAnswer } : {};
+
+    const otherAnswer = storedAnswer && storedAnswer[`${response.id}-other`] !== undefined ? storedAnswer[`${response.id}-other`] : '';
+    const otherObj = (response as RadioResponse | CheckboxResponse).withOther ? { [`${response.id}-other`]: otherAnswer } : {};
+
+    if (answer) {
+      initObj = {
+        ...initObj,
+        [response.id]: answer,
+        ...dontKnowObj,
+        ...otherObj,
+      };
+    } else {
+      let initField: string | string[] | number | object | null = '';
+      if (response.paramCapture) {
+        initField = queryParameters.get(response.paramCapture);
+      } else if (response.type === 'reactive' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+        initField = [];
+      } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
+        initField = Object.fromEntries(
+          response.questionOptions.map((entry) => [entry, '']),
+        );
+      } else if (response.type === 'slider' && response.startingValue) {
+        initField = response.startingValue.toString();
+      }
+
+      initObj = {
+        ...initObj,
+        [response.id]: initField,
+        ...dontKnowObj,
+        ...otherObj,
+      };
+    }
+  });
+
+  return { ...initObj };
+};
+
+function checkNumericalResponse(response: NumericalResponse, value: number) {
+  return (response.min && value < response.min) || (response.max && value > response.max);
+}
+
+const generateValidation = (responses: Response[]) => {
+  let validateObj = {};
+  responses.forEach((response) => {
+    if (response.required) {
+      validateObj = {
+        ...validateObj,
+        [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
+          if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+            if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+              return Object.keys(value).length > 0 ? null : 'Empty Input';
+            }
+            return Object.values(value).every((val) => val !== '') ? null : 'Empty Input';
+          }
+          if (Array.isArray(value)) {
+            if (response.requiredValue != null && !Array.isArray(response.requiredValue)) {
+              return 'Incorrect required value. Contact study administrator.';
+            }
+            if (response.requiredValue != null && Array.isArray(response.requiredValue)) {
+              if (response.requiredValue.length !== value.length) {
+                return 'Incorrect input';
+              }
+              const sortedReq = [...response.requiredValue].sort();
+              const sortedVal = [...value].sort();
+
+              return sortedReq.every((val, index) => val === sortedVal[index]) ? null : 'Incorrect input';
+            }
+            if (response.type === 'checkbox') {
+              return checkCheckboxResponse(response, value);
+            }
+            if (response.type === 'numerical') {
+              return checkNumericalResponse(response, value as unknown as number);
+            }
+            if (response.type === 'dropdown') {
+              return checkDropdownResponse(response, value);
+            }
+            return value.length === 0 ? 'Empty input' : null;
+          }
+
+          if (response.required && response.requiredValue != null && value != null) {
+            return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
+          }
+          if (response.required) {
+            return (value === null || value === undefined || value === '') && !values[`${response.id}-dontKnow`] ? 'Empty input' : null;
+          }
+          return value === null ? 'Empty input' : null;
+        },
+      };
+    }
+  });
+  return validateObj;
+};
+
+export function useAnswerField(responses: Response[], currentStep: string | number, storedAnswer: StoredAnswer['answer']) {
+  const [_id, setId] = useState<string | number | null>(null);
+
+  const answerField = useForm<StoredAnswer['answer']>({
+    initialValues: generateInitFields(responses, storedAnswer),
+    validate: generateValidation(responses),
+  });
+
+  useEffect(() => {
+    if (_id !== currentStep) {
+      setId(currentStep);
+      answerField.reset();
+    }
+  }, [_id, answerField, currentStep]);
+
+  return answerField;
+}
+
 export function generateErrorMessage(
   response: Response,
   answer: { value?: number | string | string[] | Record<string, string>; checked?: string[] },
@@ -188,8 +192,10 @@ export function generateErrorMessage(
 
   if (answer.checked && Array.isArray(requiredValue)) {
     error = requiredValue && [...requiredValue].sort().toString() !== [...answer.checked].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
-  } else if (answer.checked) {
-    error = checkCheckboxError(response, answer.checked);
+  } else if (answer.checked && response.required) {
+    error = checkCheckboxResponse(response, answer.checked);
+  } else if (answer.value && response.type === 'dropdown') {
+    error = checkDropdownResponse(response, answer.value as string[]);
   } else if (answer.value && typeof answer.value === 'number' && checkNumericalError(response, answer.value)) {
     error = checkNumericalError(response, answer.value);
   } else {

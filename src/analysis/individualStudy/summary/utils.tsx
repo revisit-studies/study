@@ -2,7 +2,6 @@ import { ParticipantData } from '../../../storage/types';
 import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 import { ParticipantCounts } from '../../types';
 import { Response } from '../../../parser/types';
-import { StorageEngine } from '../../../storage/engines/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 
 export function calculateParticipantCounts(visibleParticipants: ParticipantData[]): ParticipantCounts {
@@ -75,10 +74,7 @@ export function calculateCorrectnessStats(visibleParticipants: ParticipantData[]
     if (answers.length > 0) {
       answers.forEach((answer) => {
         totalQuestions += answer.correctAnswer.length;
-        const isCorrect = answer.correctAnswer.every((correctAnswer) => {
-          const participantAnswer = answer.answer[correctAnswer.id];
-          return correctAnswer.answer === participantAnswer;
-        });
+        const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
         if (isCorrect) {
           acc.correctSum += answer.correctAnswer.length;
         }
@@ -219,54 +215,4 @@ export function getResponseOptions(response: Response): string {
     return `${response.leftLabel ? ` ${response.leftLabel} ~ ${response.rightLabel}` : ''} (${response.numItems} items)`;
   }
   return 'N/A';
-}
-
-export async function checkParticipantCountMismatch(
-  calculatedCounts: ParticipantCounts,
-  storageEngine: StorageEngine,
-  studyId: string,
-): Promise<{
-  hasMismatch: boolean;
-  mismatchDetails: {
-    completed: { current: number; calculated: number };
-    inProgress: { current: number; calculated: number };
-    rejected: { current: number; calculated: number };
-  } | null;
-}> {
-  try {
-    const currentCounts = await storageEngine.getParticipantsStatusCounts(studyId);
-
-    const calculatedTotal = calculatedCounts.completed + calculatedCounts.inProgress + calculatedCounts.rejected;
-    const currentTotal = currentCounts.completed + currentCounts.inProgress + currentCounts.rejected;
-
-    const hasMismatch = calculatedTotal === currentTotal && (
-      calculatedCounts.completed !== currentCounts.completed
-      || calculatedCounts.inProgress !== currentCounts.inProgress
-      || calculatedCounts.rejected !== currentCounts.rejected
-    );
-
-    if (!hasMismatch) {
-      return {
-        hasMismatch: false,
-        mismatchDetails: null,
-      };
-    }
-
-    const mismatchDetails = {
-      completed: { current: currentCounts.completed, calculated: calculatedCounts.completed },
-      inProgress: { current: currentCounts.inProgress, calculated: calculatedCounts.inProgress },
-      rejected: { current: currentCounts.rejected, calculated: calculatedCounts.rejected },
-    };
-
-    return {
-      hasMismatch: true,
-      mismatchDetails,
-    };
-  } catch (error) {
-    console.error('Failed to check participant count mismatch:', error);
-    return {
-      hasMismatch: false,
-      mismatchDetails: null,
-    };
-  }
 }
