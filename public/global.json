@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/GlobalConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.0/src/parser/GlobalConfigSchema.json",
   "configsList": [
     "tutorial",
     "demo-html",
