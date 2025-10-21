@@ -44,8 +44,8 @@ export function ButtonsInput({
         description={secondaryText}
         key={response.id}
         {...answer}
-          // This overrides the answers error. Which..is bad?
         error={error}
+        errorProps={{ c: required ? 'red' : 'orange' }}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
         <Flex justify="space-between" align="center" gap="xl" mt="xs">
