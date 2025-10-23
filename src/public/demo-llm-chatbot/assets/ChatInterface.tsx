@@ -62,7 +62,9 @@ export default function ChatInterface(
   // Load existing provenance state
   useEffect(() => {
     if (provenanceState) {
+      console.log("provenanceState:", provenanceState);
       setMessages(provenanceState.messages);
+      console.log("provenanceState.messages:", provenanceState.messages);
     } else {
       setMessages([...initialMessages]);
     }
