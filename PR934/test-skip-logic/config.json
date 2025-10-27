@@ -1,0 +1,220 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Using Skip Logic",
+    "description": "This is a test study to check the functionality of the reVISit' skip logic. This study is not meant to be used for any real data collection.",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2024-02-23",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "jwilburn@sci.utah.edu",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withSidebar": true,
+    "withProgressBar": true
+  },
+  "baseComponents": {
+    "trial": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "prompt": "What is your favorite color?",
+          "location": "belowStimulus",
+          "options": ["Blue", "Red", "Green", "Yellow"]
+        },
+        {
+          "id": "q2",
+          "type": "radio",
+          "prompt": "What is your favorite animal?",
+          "location": "belowStimulus",
+          "options": ["Dog", "Cat", "Bird", "Fish"]
+        }
+      ],
+      "nextButtonLocation": "belowStimulus",
+      "instruction": "Please answer the following questions...",
+      "instructionLocation": "aboveStimulus"
+    }
+  },
+  "components": {
+    "trial1": {
+      "baseComponent": "trial",
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "Blue"
+        },
+        {
+          "id": "q2",
+          "answer": "Cat"
+        }
+      ]
+    },
+    "attentionCheck": {
+      "type": "questionnaire",
+      "instruction": "Are you paying attention?",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "prompt": "Are you paying attention?",
+          "location": "belowStimulus",
+          "options": ["Yes", "No"]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "Yes"
+        }
+      ]
+    },
+    "continuingComponent": {
+      "type": "markdown",
+      "path": "test-skip-logic/continuingComponent.md",
+      "response": []
+    },
+    "targetComponent": {
+      "type": "markdown",
+      "path": "test-skip-logic/targetComponent.md",
+      "response": []
+    },
+    "targetBlockComponent": {
+      "type": "markdown",
+      "path": "test-skip-logic/targetBlockComponent.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      {
+        "order": "fixed",
+        "components": ["trial1"],
+        "skip": [{
+          "name": "trial1",
+          "check": "response",
+          "responseId": "q1",
+          "value": "Blue",
+          "comparison": "notEqual",
+          "to": "targetComponent"
+        }]
+      },
+      "continuingComponent",
+      {
+        "id": "testBlockId",
+        "order": "fixed",
+        "components": ["trial1"],
+        "skip": [{
+          "name": "trial1",
+          "check": "responses",
+          "to": "end"
+        }]
+      },
+      "continuingComponent",
+      {
+        "order": "fixed",
+        "components": ["trial1"],
+        "interruptions": [{
+          "components": ["attentionCheck"],
+          "firstLocation": 0,
+          "spacing": 1
+        }],
+        "skip": [{
+          "name": "attentionCheck",
+          "check": "responses",
+          "to": "end"
+        }]
+      },
+      "continuingComponent",
+      {
+        "order": "fixed",
+        "components": ["trial1", "trial1", "trial1", "trial1"],
+        "interruptions": [{
+          "components": ["attentionCheck"],
+          "firstLocation": 1,
+          "spacing": 1
+        }],
+        "skip": [{
+          "name": "attentionCheck",
+          "check": "repeatedComponent",
+          "condition": "numIncorrect",
+          "value": 2,
+          "to": "targetBlock"
+        }]
+      },
+      "continuingComponent",
+      {
+        "order": "fixed",
+        "components": [
+          "continuingComponent",
+          {
+            "order": "fixed",
+            "components": ["trial1"]
+          },
+          "continuingComponent"
+        ],
+        "skip": [{
+          "name": "trial1",
+          "check": "responses",
+          "to": "end"
+        }]
+      },
+      "continuingComponent",
+      {
+        "order": "fixed",
+        "components": [
+          "trial1",
+          {
+            "order": "fixed",
+            "components": ["trial1", "trial1"]
+          },
+          "continuingComponent"
+        ],
+        "skip": [{
+          "check": "block",
+          "condition": "numIncorrect",
+          "value": 2,
+          "to": "end"
+        }]
+      },
+      "continuingComponent",
+      {
+        "order": "fixed",
+        "components": ["trial1", "trial1", "trial1"],
+        "skip":[{
+          "check": "block",
+          "condition": "numCorrect",
+          "value": 2,
+          "to": "end"
+        }]
+      },
+      "continuingComponent",
+      {
+        "order": "fixed",
+        "components": ["trial1", "trial1", "trial1"],
+        "skip":[{
+          "check": "block",
+          "condition": "numIncorrect",
+          "value": 2,
+          "to": "end"
+        }]
+      },
+      "continuingComponent",
+      {
+        "id": "targetBlock",
+        "order": "fixed",
+        "components": ["targetBlockComponent"]
+      },
+      "targetComponent"
+    ]
+  }
+}
