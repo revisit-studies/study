@@ -171,14 +171,14 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
         <Stack gap="xs">
           <List>
             <List.Item>
-              Put your left hand on the
+              Put your left hand on the&nbsp;
               <b>space bar</b>
               .
             </List.Item>
             <List.Item>Cover your right eye with your right hand.</List.Item>
             <List.Item>Using your left eye, focus on the black square. Keep your focus on the black square.</List.Item>
             <List.Item>
-              The
+              The&nbsp;
               <span style={{ color: 'red', fontWeight: 'bold' }}>red ball</span>
               {' '}
               will disappear as it moves from right to left.
