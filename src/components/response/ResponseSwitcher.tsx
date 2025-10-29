@@ -31,7 +31,7 @@ export function ResponseSwitcher({
   form,
   storedAnswer,
   index,
-  configInUse,
+  config,
   dontKnowCheckbox,
   otherInput,
   disabled,
@@ -40,7 +40,7 @@ export function ResponseSwitcher({
   form: GetInputPropsReturnType;
   storedAnswer?: StoredAnswer['answer'];
   index: number;
-  configInUse: IndividualComponent;
+  config: IndividualComponent;
   dontKnowCheckbox?: GetInputPropsReturnType;
   otherInput?: GetInputPropsReturnType;
   disabled?: boolean;
@@ -64,7 +64,7 @@ export function ResponseSwitcher({
 
   const [searchParams] = useSearchParams();
 
-  const enumerateQuestions = useMemo(() => configInUse?.enumerateQuestions ?? studyConfig.uiConfig.enumerateQuestions ?? false, [configInUse, studyConfig]);
+  const enumerateQuestions = useMemo(() => config?.enumerateQuestions ?? studyConfig.uiConfig.enumerateQuestions ?? false, [config, studyConfig]);
 
   useFetchStylesheet(response.stylesheetPath);
 
@@ -127,7 +127,7 @@ export function ResponseSwitcher({
   }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
 
   const responseStyle = response.style || {};
-  const responseDividers = useMemo(() => response.withDivider ?? configInUse?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, configInUse, studyConfig]);
+  const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
 
   return (
     <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseStyle}>

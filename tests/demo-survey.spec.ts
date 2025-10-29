@@ -27,6 +27,13 @@ test('test', async ({ page }) => {
   await page.getByPlaceholder('Enter your preference').click();
   await page.getByRole('option', { name: 'Bar', exact: true }).click();
 
+  // Multiselect dropdown
+  await page.getByPlaceholder('Enter your responses').click();
+  await page.getByRole('option', { name: 'Line', exact: true }).click();
+  const minDropdownSelectionsText = await page.getByText('Please select at least 2 options');
+  await expect(minDropdownSelectionsText).toBeVisible();
+  await page.getByRole('option', { name: 'Scatter', exact: true }).click();
+
   // Vertical Checkbox
   await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();
   const minSelectionsText = await page.getByText('Please select at least 2 options');
@@ -148,6 +155,11 @@ test('test', async ({ page }) => {
   // Dropdown
   await page.getByPlaceholder('Enter your preference').click();
   await page.getByRole('option', { name: 'Bar', exact: true }).click();
+
+  // Multiselect dropdown
+  await page.getByPlaceholder('Enter your responses').click();
+  await page.getByRole('option', { name: 'Line', exact: true }).click();
+  await page.getByRole('option', { name: 'Scatter', exact: true }).click();
 
   // Vertical Checkbox
   await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();

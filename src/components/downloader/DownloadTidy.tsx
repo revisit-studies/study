@@ -24,7 +24,7 @@ import { getCleanedDuration } from '../../utils/getCleanedDuration';
 import { showNotification } from '../../utils/notifications';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
-export const OPTIONAL_COMMON_PROPS = [
+const OPTIONAL_COMMON_PROPS = [
   'status',
   'rejectReason',
   'rejectTime',
@@ -44,7 +44,7 @@ export const OPTIONAL_COMMON_PROPS = [
   'configHash',
 ] as const;
 
-export const REQUIRED_PROPS = [
+const REQUIRED_PROPS = [
   'participantId',
   'trialId',
   'trialOrder',
@@ -55,10 +55,10 @@ type OptionalProperty = (typeof OPTIONAL_COMMON_PROPS)[number];
 type RequiredProperty = (typeof REQUIRED_PROPS)[number];
 type MetaProperty = `meta-${string}`;
 
-export type Property = OptionalProperty | RequiredProperty | MetaProperty;
+type Property = OptionalProperty | RequiredProperty | MetaProperty;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type TidyRow = Prettify<Record<RequiredProperty, any> & Partial<Record<OptionalProperty | MetaProperty, any>>> & Record<string, number | string[] | boolean | string | null>;
+type TidyRow = Prettify<Record<RequiredProperty, any> & Partial<Record<OptionalProperty | MetaProperty, any>>> & Record<string, number | string[] | boolean | string | null>;
 
 export function download(graph: string, filename: string) {
   const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(graph)}`;

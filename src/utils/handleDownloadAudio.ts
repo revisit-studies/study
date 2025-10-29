@@ -85,7 +85,7 @@ async function downloadZip(zip: JSZip, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
-export async function downloadParticipantsAudio({
+async function downloadParticipantsAudio({
   storageEngine,
   participantId,
   identifier,
@@ -152,7 +152,7 @@ export async function downloadParticipantsAudioZip({
   await downloadZip(zip, `${namePrefix}_audio.zip`);
 }
 
-export async function downloadParticipantsScreenRecording({
+async function downloadParticipantsScreenRecording({
   storageEngine,
   participantId,
   identifier,

@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/no-unresolved
 import latinSquare from '@quentinroy/latin-square';
+import isEqual from 'lodash.isequal';
 import { ComponentBlock, DynamicBlock, StudyConfig } from '../parser/types';
 import { Sequence } from '../store/types';
 import { isDynamicBlock } from '../parser/utils';
@@ -57,7 +58,7 @@ function _componentBlockToSequence(
   for (let i = 0; i < computedComponents.length; i += 1) {
     const curr = computedComponents[i];
     if (typeof curr !== 'string' && !Array.isArray(curr)) {
-      const index = order.components.indexOf(curr);
+      const index = order.components.findIndex((c) => isEqual(c, curr));
       computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${index}`) as unknown as ComponentBlock;
     }
   }
@@ -122,7 +123,7 @@ function componentBlockToSequence(
   return _componentBlockToSequence(orderCopy, latinSquareObject, 'root');
 }
 
-function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], path: string, index = 0) {
+function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], path: string, index: number) {
   const newPath = path.length > 0 ? `${path}-${index}` : 'root';
   if (order.order === 'latinSquare') {
     paths.push(newPath);
@@ -162,7 +163,8 @@ function generateLatinSquare(config: StudyConfig, path: string) {
   });
 
   const options = (locationInSequence as ComponentBlock).components.map((c: unknown, i: number) => (typeof c === 'string' ? c : `_componentBlock${i}`));
-  const newSquare: string[][] = latinSquare<string>(options.sort(() => 0.5 - Math.random()), true);
+  shuffle(options);
+  const newSquare: string[][] = latinSquare<string>(options, true);
   return newSquare;
 }
 

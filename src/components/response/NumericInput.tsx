@@ -20,8 +20,6 @@ export function NumericInput({
   const {
     prompt,
     required,
-    min,
-    max,
     placeholder,
     secondaryText,
     infoText,
@@ -35,10 +33,10 @@ export function NumericInput({
       description={secondaryText}
       radius="md"
       size="md"
-      min={min}
-      max={max}
       {...answer}
       error={generateErrorMessage(response, answer)}
+      withErrorStyles={required}
+      errorProps={{ c: required ? 'red' : 'orange' }}
       classNames={{ input: classes.fixDisabled }}
     />
   );

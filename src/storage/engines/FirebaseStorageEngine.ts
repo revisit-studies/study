@@ -386,6 +386,15 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
   }
 
+  protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
+    const revisitModesDoc = doc(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+      'modes',
+    );
+    await setDoc(revisitModesDoc, modesDocument, { merge: true });
+  }
+
   protected async _getAudioUrl(
     task: string,
     participantId: string,
