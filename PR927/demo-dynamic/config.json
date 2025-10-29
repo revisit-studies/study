@@ -1,0 +1,65 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+      "title": "Dynamic Blocks",
+      "version": "pilot",
+      "authors": [
+        "The reVISit Team"
+      ],
+      "date": "2025-01-10",
+      "description": "A demo of how to use dynamic blocks.",
+      "organizations": [
+        "University of Utah",
+        "WPI"
+      ]
+    },
+    "uiConfig": {
+      "contactEmail": "contact@revisit.dev",
+      "helpTextPath": "demo-dynamic/assets/help.md",
+      "logoPath": "revisitAssets/revisitLogoSquare.svg",
+      "withProgressBar": true,
+      "autoDownloadStudy": false,
+      "withSidebar": false,
+      "nextOnEnter": true
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "demo-dynamic/assets/introduction.md",
+            "response": []
+        },
+        "HSLColorCodes": {
+            "type": "react-component",
+            "path": "demo-dynamic/assets/HSL.tsx",
+            "response": [
+                {
+                    "id": "buttonResponse",
+                    "type": "buttons",
+                    "prompt": "Choose the square with a high saturation",
+                    "location": "belowStimulus",
+                    "options": [
+                        "Left",
+                        "Same",
+                        "Right"
+                    ]
+                }
+            ],
+            "correctAnswer": [
+            ],
+            "provideFeedback": true,
+            "allowFailedTraining": true,
+            "trainingAttempts": 2
+        }
+    },
+    "sequence": {
+      "order": "fixed",
+      "components": [
+        "introduction",
+        {
+            "id": "dynamicBlock",
+            "order": "dynamic",
+            "functionPath": "demo-dynamic/assets/dynamic.tsx"
+        }
+      ]
+    }
+  }
