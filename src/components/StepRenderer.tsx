@@ -24,6 +24,7 @@ import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { ScreenRecordingContext, useScreenRecording } from '../store/hooks/useScreenRecording';
 import { ScreenRecordingRejection } from './interface/ScreenRecordingRejection';
 import { ReplayContext, useReplay } from '../store/hooks/useReplay';
+import { DeviceWarning } from './interface/DeviceWarning';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -151,6 +152,7 @@ export function StepRenderer() {
             {showTitleBar && (
             <AppHeader developmentModeEnabled={developmentModeEnabled} dataCollectionEnabled={dataCollectionEnabled} />
             )}
+            <DeviceWarning />
             <ResolutionWarning />
             {isScreenRecordingUserRejected && <ScreenRecordingRejection />}
             <HelpModal />

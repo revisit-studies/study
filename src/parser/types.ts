@@ -64,6 +64,24 @@ export interface StudyMetadata {
  */
 export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
 export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
+export type UserBrowser = {
+  name: string;
+  minVersion?: number;
+};
+export type BrowserRules = {
+  allowed: UserBrowser[];
+  blockedMessage?: string;
+};
+export type UserDevice = 'desktop' | 'tablet' | 'mobile'
+export type DeviceRules = {
+  allowed: UserDevice[],
+  blockedMessage?: string;
+}
+export type UserInput = 'mouse' | 'touch'
+export type InputRules = {
+  allowed: UserInput[],
+  blockedMessage?: string;
+}
 
 export type Styles = {
   /** Sizing */
@@ -210,6 +228,12 @@ export interface UIConfig {
   minHeightSize?: number;
   /** The path to the external stylesheet file. */
   stylesheetPath?: string;
+  /** Browsers supported by the study */
+  browserRules?: BrowserRules
+  /** Devices suported by the study */
+  deviceRules?: DeviceRules
+  /** Input types suported by the study */
+  inputRules?: InputRules
 }
 
 /**

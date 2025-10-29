@@ -3,16 +3,10 @@
   "studyMetadata": {
     "title": "HTML as a Stimulus",
     "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
+    "authors": ["The reVISit Team"],
     "date": "2023-04-14",
     "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
-    "organizations": [
-      "University of Utah",
-      "WPI",
-      "University of Toronto"
-    ]
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
@@ -23,7 +17,29 @@
     "withSidebar": true,
     "windowEventDebounceTime": 200,
     "minHeightSize": 800,
-    "minWidthSize": 400
+    "minWidthSize": 400,
+    "browserRules": {
+      "allowed": [
+        {
+          "name": "chrome",
+          "minVersion": 100
+        },
+        {
+          "name": "firefox",
+          "minVersion": 100
+        },
+        {
+          "name": "safari",
+          "minVersion": 10
+        }
+      ]
+    },
+    "deviceRules": {
+      "allowed": ["tablet", "desktop"]
+    },
+    "inputRules": {
+      "allowed": ["touch", "mouse"]
+    }
   },
   "components": {
     "introduction": {
@@ -61,10 +77,6 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": [
-      "introduction",
-      "barChart",
-      "external_website"
-    ]
+    "components": ["introduction", "barChart", "external_website"]
   }
 }

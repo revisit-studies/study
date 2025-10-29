@@ -241,6 +241,24 @@
       "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```js \"baseComponents\": { \"my-image-component\": { \"instructionLocation\": \"sidebar\", \"nextButtonLocation\": \"sidebar\", \"path\": \"<study-name>/assets/my-image.jpg\", \"response\": [   {     \"id\": \"my-image-id\",     \"options\": [\"Europe\", \"Japan\", \"USA\"],     \"prompt\": \"Your Selected Answer:\",     \"type\": \"dropdown\"   } ], \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```js \"components\": { \"q1\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with largest GDP\", \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with lowest GDP\", \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with highest exports of Wheat\", \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
       "type": "object"
     },
+    "BrowserRules": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed": {
+          "items": {
+            "$ref": "#/definitions/UserBrowser"
+          },
+          "type": "array"
+        },
+        "blockedMessage": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "allowed"
+      ],
+      "type": "object"
+    },
     "ButtonsResponse": {
       "additionalProperties": false,
       "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys.\n\nExample: ```js {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
@@ -574,6 +592,24 @@
         "firstLocation",
         "spacing",
         "components"
+      ],
+      "type": "object"
+    },
+    "DeviceRules": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed": {
+          "items": {
+            "$ref": "#/definitions/UserDevice"
+          },
+          "type": "array"
+        },
+        "blockedMessage": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "allowed"
       ],
       "type": "object"
     },
@@ -1235,6 +1271,24 @@
       },
       "required": [
         "baseComponent"
+      ],
+      "type": "object"
+    },
+    "InputRules": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed": {
+          "items": {
+            "$ref": "#/definitions/UserInput"
+          },
+          "type": "array"
+        },
+        "blockedMessage": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "allowed"
       ],
       "type": "object"
     },
@@ -3104,9 +3158,17 @@
           "description": "The time in milliseconds to wait before automatically downloading the study data.",
           "type": "number"
         },
+        "browserRules": {
+          "$ref": "#/definitions/BrowserRules",
+          "description": "Browsers supported by the study"
+        },
         "contactEmail": {
           "description": "The email address that used during the study if a participant clicks contact.",
           "type": "string"
+        },
+        "deviceRules": {
+          "$ref": "#/definitions/DeviceRules",
+          "description": "Devices suported by the study"
         },
         "enumerateQuestions": {
           "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.",
@@ -3115,6 +3177,10 @@
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported.",
           "type": "string"
+        },
+        "inputRules": {
+          "$ref": "#/definitions/InputRules",
+          "description": "Input types suported by the study"
         },
         "instructionLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
@@ -3236,6 +3302,36 @@
         "withSidebar"
       ],
       "type": "object"
+    },
+    "UserBrowser": {
+      "additionalProperties": false,
+      "properties": {
+        "minVersion": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "UserDevice": {
+      "enum": [
+        "desktop",
+        "tablet",
+        "mobile"
+      ],
+      "type": "string"
+    },
+    "UserInput": {
+      "enum": [
+        "mouse",
+        "touch"
+      ],
+      "type": "string"
     },
     "VegaComponent": {
       "anyOf": [
