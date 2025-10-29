@@ -5,8 +5,8 @@ export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer
   // Handle numeric-string comparison for likert and slider responses
   if ((typeof responseUserAnswer === 'number' || typeof responseUserAnswer === 'string')
   && (typeof responseCorrectAnswer === 'string' || typeof responseCorrectAnswer === 'number')) {
-    // Check if the user answer can be converted to a number and check acceptable range
     const userAnswerNumber = Number(responseUserAnswer);
+
     if (userAnswerNumber) {
       if (acceptableLow && acceptableHigh) {
         return userAnswerNumber >= acceptableLow && userAnswerNumber <= acceptableHigh;
