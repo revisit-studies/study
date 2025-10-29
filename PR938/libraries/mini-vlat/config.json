@@ -1,0 +1,466 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json",
+  "description": "Mini-VLAT is a short and effective measure of visualization literacy. Mini-VLAT has 12 questions and participants should answer each question within 25 seconds. This library contains 12 components. Each component contains one question of the Mini-VLAT. This library also contains a sequence of all 12 components (the full Mini-VLAT).",
+  "reference": "S. Pandey and A. Ottley, “Mini‐VLAT: A Short and Effective Measure of Visualization Literacy,” Computer Graphics Forum, vol. 42, no. 3, pp. 1–11, Jun. 2023",
+  "doi": "10.1111/cgf.14809",
+  "components": {
+    "treemap": {
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "treemap"
+      },
+      "instruction": "eBay is nested in the Software category.",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/mini-vlat/assets/TreeMap.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000,
+      "response": [
+        {
+          "id": "res-treemap",
+          "prompt": "Your answer",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-treemap",
+          "answer": "False"
+        }
+      ]
+    },
+    "stackedBar100": {
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "stackedBar100"
+      },
+      "instruction": "Which country has the lowest proportion of Gold medals?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/mini-vlat/assets/Stacked100.png",
+      "style": {
+        "width": "600px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000,
+      "response": [
+        {
+          "id": "res-stackedBar100",
+          "prompt": "Your answer",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Great Britain",
+            "USA",
+            "Japan",
+            "Australia",
+            "Skip"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-stackedBar100",
+          "answer": "Great Britain"
+        }
+      ]
+    },
+    "histogram": {
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "histogram"
+      },
+      "instruction": "What distance have customers traveled in the taxi the most?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/mini-vlat/assets/Histogram.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000,
+      "response": [
+        {
+          "id": "res-histogram",
+          "prompt": "Your answer",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "50-70km",
+            "30-40km",
+            "20-30km",
+            "50-60km",
+            "Skip"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res3",
+          "answer": "30-40km"
+        }
+      ]
+    },
+    "choropleth": {
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "choropleth"
+      },
+      "instruction": "In 2020, the unemployment rate for Washington (WA) was higher than that of Wisconsin (WI)?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/mini-vlat/assets/Choropleth.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000,
+      "response": [
+        {
+          "id": "res-choropleth",
+          "prompt": "Your answer",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-choropleth",
+          "answer": "True"
+        }
+      ]
+    },
+    "piechart": {
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "piechart"
+      },
+      "instruction": "What is the approximate global smartphone market share of Samsung?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/mini-vlat/assets/PieChart.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000,
+      "response": [
+        {
+          "id": "res-piechart",
+          "prompt": "Your answer",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "17.6%",
+            "25.3%",
+            "10.9%",
+            "35.2%",
+            "Skip"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-piechart",
+          "answer": "17.6%"
+        }
+      ]
+    },
+    "bubblechart": {
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "bubblechart"
+      },
+      "instruction": "Which city's metro system has the largest number of stations?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/mini-vlat/assets/BubbleChart.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000,
+      "response": [
+        {
+          "id": "res-bubblechart",
+          "prompt": "Your answer",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Beijing",
+            "Shanghai",
+            "London",
+            "Seoul",
+            "Skip"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-bubblechart",
+          "answer": "Shanghai"
+        }
+      ]
+    },
+    "stackedbar": {
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "stackedbar"
+      },
+      "instruction": "What is the cost of peanuts in Seoul?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/mini-vlat/assets/StackedBar.png",
+      "style": {
+        "width": "600px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000,
+      "response": [
+        {
+          "id": "res-stackedbar",
+          "prompt": "Your answer",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "$5.2",
+            "$6.1",
+            "$7.5",
+            "$4.5",
+            "Skip"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-stackedbar",
+          "answer": "$6.1"
+        }
+      ]
+    },
+    "linechart": {
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "linechart"
+      },
+      "instruction": "What was the price of a barrel of oil in February 2020?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/mini-vlat/assets/LineChart.png",
+      "style": {
+        "width": "550px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000,
+      "response": [
+        {
+          "id": "res-linechart",
+          "prompt": "Your answer",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "$50.54",
+            "$47.02",
+            "$42.34",
+            "$43.48",
+            "Skip"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-linechart",
+          "answer": "$50.54"
+        }
+      ]
+    },
+    "barchart": {
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "barchart"
+      },
+      "instruction": "What is the average internet speed in Japan?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/mini-vlat/assets/BarChart.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000,
+      "response": [
+        {
+          "id": "res-barchart",
+          "prompt": "Your answer",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "42.30 Mbps",
+            "40.51 Mbps",
+            "35.25 Mbps",
+            "16.16 Mbps",
+            "Skip"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-barchart",
+          "answer": "40.51 Mbps"
+        }
+      ]
+    },
+    "areachar": {
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "areachart"
+      },
+      "instruction": "What was the average price of a pound of coffee in October 2019?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/mini-vlat/assets/AreaChart.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000,
+      "response": [
+        {
+          "id": "res-areachar",
+          "prompt": "Your answer",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "0.71",
+            "0.90",
+            "0.80",
+            "0.63",
+            "Skip"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-areachar",
+          "answer": "0.71"
+        }
+      ]
+    },
+    "stackedarea": {
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "stackedarea"
+      },
+      "instruction": "What was the ratio of girls named \"Isla\" to girls named \"Amelia\" in 2012 in the UK?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/mini-vlat/assets/StackedArea.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000,
+      "response": [
+        {
+          "id": "res-stackedarea",
+          "prompt": "Your answer",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "1 to 1",
+            "1 to 2",
+            "1 to 3",
+            "1 to 4",
+            "Skip"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-stackedarea",
+          "answer": "1 to 2"
+        }
+      ]
+    },
+    "scatterplot": {
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "scatterplot"
+      },
+      "instruction": "There is a negative relationship between the height and the weight of the 85 males.",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/mini-vlat/assets/Scatterplot.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000,
+      "response": [
+        {
+          "id": "res-scatterplot",
+          "prompt": "Your answer",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-scatterplot",
+          "answer": "False"
+        }
+      ]
+    }
+  },
+  "sequences": {
+    "full": {
+      "id": "mini-vlat",
+      "order": "latinSquare",
+      "components": [
+        "treemap",
+        "stackedBar100",
+        "histogram",
+        "choropleth",
+        "piechart",
+        "bubblechart",
+        "stackedbar",
+        "linechart",
+        "barchart",
+        "areachar",
+        "stackedarea",
+        "scatterplot"
+      ]
+    }
+  }
+}
