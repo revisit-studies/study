@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json",
+  "description": "This is a library for getting screen recording permissions and starting screen recording.",
+  "components": {
+    "screenRecordingPermission": {
+      "description": "Get permission to start Screen recording",
+      "type": "react-component",
+      "path": "libraries/screen-recording/assets/ScreenRecording.tsx",
+      "nextButtonLocation": "belowStimulus",
+      "nextButtonText": "Continue",
+      "recordAudio": false,
+      "response": [{
+        "hidden": true,
+        "type": "reactive",
+        "id": "screenRecordingPermission",
+        "prompt": "Screen recording enabled"
+      }]
+    }
+  },
+  "sequences": {}
+}

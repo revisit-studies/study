@@ -1,0 +1,50 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json",
+  "description": "This is a test library for testing the parser. It is unlikely to be useful for any other purpose.",
+  "baseComponents": {
+    "test-baseComponent": {
+      "type": "markdown",
+      "path": "libraries/test/assets/test.md",
+      "response": []
+    }
+  },
+  "components": {
+    "test-react": {
+      "type": "react-component",
+      "path": "libraries/test/assets/test.tsx",
+      "response": []
+    },
+    "test-md": {
+      "type": "markdown",
+      "path": "libraries/test/assets/test.md",
+      "response": []
+    },
+    "test-inherited": {
+      "baseComponent": "test-baseComponent",
+      "response": [
+        {
+          "id": "test-response",
+          "type": "shortText",
+          "prompt": "What did you think of the test?",
+          "required": false
+        }
+      ]
+    }
+  },
+  "sequences": {
+    "small": {
+      "order": "fixed",
+      "components": [
+        "test-md"
+      ]
+    },
+    "long": {
+      "order": "fixed",
+      "components": [
+        "test-react",
+        "test-md",
+        "test-inherited"
+      ]
+    }
+  }
+}
