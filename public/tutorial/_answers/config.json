@@ -58,8 +58,12 @@
           "secondaryText": "1 being the worst health and 5 being the best health",
           "numItems": 5,
           "rightLabel": "Best health",
-          "leftLabel": "Worst health",
-          "withDivider": true
+          "leftLabel": "Worst health"
+        },
+        {
+          "id": "dividerResponse",
+          "type": "divider",
+          "location": "belowStimulus"
         },
         {
           "id": "fruits",

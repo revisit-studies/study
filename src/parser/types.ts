@@ -189,7 +189,7 @@ export interface UIConfig {
   /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. */
   enumerateQuestions?: boolean;
   /** Whether to show the response dividers. Defaults to false. */
-  responseDividers?: boolean;
+  withDivider?: boolean;
   /** Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second  */
   windowEventDebounceTime?: number;
   /** The message to display when the study ends. */
@@ -825,7 +825,7 @@ export interface BaseIndividualComponent {
   /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig. */
   enumerateQuestions?: boolean;
   /** Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig. */
-  responseDividers?: boolean;
+  withDivider?: boolean;
   /** Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig. */
   windowEventDebounceTime?: number;
   /** The order of the responses. Defaults to 'fixed'. */
