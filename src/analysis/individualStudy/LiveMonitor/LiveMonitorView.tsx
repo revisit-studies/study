@@ -52,12 +52,13 @@ function RejectedLabel({ progress }: { progress: number }) {
 }
 
 export function LiveMonitorView({
-  studyConfig: _studyConfig, storageEngine, studyId, includedParticipants,
+  studyConfig: _studyConfig, storageEngine, studyId, includedParticipants, selectedStages,
 }: {
   studyConfig: StudyConfig;
   storageEngine?: StorageEngine;
   studyId?: string;
   includedParticipants: string[];
+  selectedStages: string[];
 }) {
   const firebaseStoreageEngine = storageEngine as FirebaseStorageEngine;
   const [sequenceAssignments, setSequenceAssignments] = useState<SequenceAssignment[]>([]);
@@ -168,14 +169,19 @@ export function LiveMonitorView({
         isRejected,
       };
     })
-    .filter(({ isCompleted, isRejected }) => {
+    .filter(({ isCompleted, isRejected, assignment }) => {
       // Determine participant status
       const status = isRejected ? 'rejected' : (isCompleted ? 'completed' : 'inprogress');
 
       // Check if this status is included in the filter
-      return includedParticipants.includes(status);
+      const statusMatch = includedParticipants.includes(status);
+
+      // Check stage filter - if "ALL" is selected, show all participants
+      const stageMatch = selectedStages.includes('ALL') || selectedStages.includes(assignment.stage || '');
+
+      return statusMatch && stageMatch;
     })
-    .sort((a, b) => b.assignment.createdTime - a.assignment.createdTime), [sequenceAssignments, includedParticipants]);
+    .sort((a, b) => b.assignment.createdTime - a.assignment.createdTime), [sequenceAssignments, includedParticipants, selectedStages]);
 
   // Group participants by status
   const participantGroups = useMemo(() => {

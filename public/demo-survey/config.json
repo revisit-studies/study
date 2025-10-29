@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Form Elements Demo",
     "version": "pilot",
@@ -123,6 +123,25 @@
             "Pie",
             "Stacked Bar"
           ]
+        },
+        {
+          "id": "q-multiselect-dropdown",
+          "prompt": "Multiselect dropdown example - which chart have you used before?",
+          "secondaryText": "Dropdown for multi-selection",
+          "infoText": "Select the chart types you have used before. You have to select at least 2 options and up to 3 options.",
+          "type": "dropdown",
+          "placeholder": "Enter your responses",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar",
+            "Line",
+            "Scatter",
+            "Histogram"
+          ],
+          "minSelections": 2,
+          "maxSelections": 3
         },
         {
           "id": "q-checkbox",
@@ -568,6 +587,26 @@
             "Stacked Bar"
           ],
           "location": "sidebar"
+        },
+        {
+          "id": "q-multiselect-dropdown",
+          "prompt": "Multiselect dropdown example - which chart have you used before?",
+          "secondaryText": "Dropdown for multi-selection",
+          "infoText": "Select the chart types you have used before. You have to select at least 2 options and up to 3 options.",
+          "type": "dropdown",
+          "placeholder": "Enter your responses",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar",
+            "Line",
+            "Scatter",
+            "Histogram"
+          ],
+          "location": "sidebar",
+          "minSelections": 2,
+          "maxSelections": 3
         },
         {
           "id": "q-checkbox",

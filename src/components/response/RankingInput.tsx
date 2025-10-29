@@ -570,7 +570,7 @@ export function RankingInput({
       )}
       {secondaryText && <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>}
       {error && (
-        <Text c="red" size="sm" mt="xs">
+        <Text c={required ? 'red' : 'orange'} size="sm" mt="xs">
           {error}
         </Text>
       )}

@@ -37,6 +37,7 @@ export function TableView({
   studyConfig,
   refresh,
   width,
+  stageColors,
   selectedParticipants,
   onSelectionChange,
 }: {
@@ -44,6 +45,7 @@ export function TableView({
   studyConfig: StudyConfig;
   refresh: () => Promise<Record<number, ParticipantData>>;
   width: number;
+  stageColors: Record<string, string>;
   selectedParticipants: ParticipantData[];
   onSelectionChange: (participants: ParticipantData[]) => void;
 }) {
@@ -98,6 +100,35 @@ export function TableView({
       },
     },
     { accessorKey: 'participantIndex', header: '#', size: 50 },
+    {
+      accessorKey: 'stage',
+      header: 'Stage',
+      size: 120,
+      Cell: ({ cell }: { cell: MrtCell<ParticipantData, string> }) => {
+        const stageName = cell.getValue();
+        if (!stageName || stageName === '') {
+          return (
+            <Badge
+              color="gray"
+              variant="light"
+              size="md"
+            >
+              N/A
+            </Badge>
+          );
+        }
+        const stageColor = stageColors[stageName] || '#F05A30';
+        return (
+          <Badge
+            color={stageColor}
+            variant="filled"
+            size="md"
+          >
+            {stageName}
+          </Badge>
+        );
+      },
+    },
     { accessorKey: 'participantId', header: 'ID' },
     ...(studyConfig.uiConfig.participantNameField ? [{ accessorFn: (row: ParticipantData) => participantName(row, studyConfig), header: 'Name' }] : []),
     {
@@ -159,7 +190,7 @@ export function TableView({
       Cell: ({ cell }: {cell: MrtCell<ParticipantData, ParticipantData['metadata']>}) => <MetaCell metaData={cell.getValue()} />,
     },
 
-  ], [studyConfig]);
+  ], [studyConfig, stageColors]);
 
   const table = useMantineReactTable({
     columns,
