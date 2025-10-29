@@ -692,7 +692,36 @@ export interface TextOnlyResponse extends Omit<BaseResponse, 'secondaryText' | '
   withDontKnow?: undefined;
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse;
+/*
+ * The DividerResponse interface is used to define the properties of a divider response.
+ * DividerResponses render as a divider between responses.
+ *
+ * Example:
+ * ```js
+ * {
+ *   "id": "dividerResponse",
+ *   "type": "divider",
+ *   "location": "belowStimulus",
+ * }
+ * ```
+ *
+ * In this example, the divider is displayed below the stimulus.
+ */
+export interface DividerResponse extends Omit<BaseResponse, 'prompt' | 'infoText' | 'secondaryText' | 'required' | 'requiredValue' | 'requiredLabel' | 'paramCapture' | 'hidden' | 'withDontKnow'> {
+  type: 'divider';
+
+  prompt?: undefined;
+  infoText?: undefined;
+  secondaryText?: undefined;
+  required?: undefined;
+  requiredValue?: undefined;
+  requiredLabel?: undefined;
+  paramCapture?: undefined;
+  hidden?: undefined;
+  withDontKnow?: undefined;
+}
+
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
