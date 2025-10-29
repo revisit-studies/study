@@ -75,7 +75,7 @@ export function ResponseBlock({
   const responses = useMemo(() => allResponses.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')), [allResponses, location]);
 
   const responsesWithDefaults = useMemo(() => responses.map((response) => {
-    if (response.type !== 'textOnly') {
+    if (response.type !== 'textOnly' && response.type !== 'divider') {
       return {
         ...response,
         required: response.required === undefined ? true : response.required,
@@ -85,7 +85,7 @@ export function ResponseBlock({
   }), [responses]);
 
   const allResponsesWithDefaults = useMemo(() => allResponses.map((response) => {
-    if (response.type !== 'textOnly') {
+    if (response.type !== 'textOnly' && response.type !== 'divider') {
       return {
         ...response,
         required: response.required === undefined ? true : response.required,

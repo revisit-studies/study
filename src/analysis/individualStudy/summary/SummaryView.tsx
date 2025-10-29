@@ -51,7 +51,7 @@ export function SummaryView({ visibleParticipants, studyConfig }: {
           data.push({
             component: stat.name,
             type: response.type,
-            question: response.prompt,
+            question: response.prompt || '',
             options: getResponseOptions(response),
             correctness: correctnessStr,
           });
