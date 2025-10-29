@@ -382,7 +382,7 @@
         {
           "id": "textField",
           "type": "textOnly",
-          "prompt": "# Randomizing Questions in a Form\n\n This shows how to randomize the order of questions in the form. Notice how the number before each question is different from the order number specified in the text. Note that currently the title is also randomized; you can avoid that by putting the title in a markdown file and adding the questions as a response.",
+          "prompt": "# Randomizing Questions in a Form\n\n This shows how to randomize the order of questions in the form. Notice how the number before each question is different from the order number specified in the text. Note that currently the title is not randomized; you can exclude a form element from being randomized if you need to.",
           "excludeFromRandomization": true
         },
         {
