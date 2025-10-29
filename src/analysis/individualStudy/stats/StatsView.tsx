@@ -14,7 +14,6 @@ import { OverviewStats } from './OverviewStats';
 import {
   calculateParticipantCounts, calculateCorrectnessStats, calculateTimeStats, calculateDateStats, calculateComponentStats,
 } from '../summary/utils';
-import { OverviewData } from '../../types';
 
 export function StatsView(
   {
@@ -35,17 +34,12 @@ export function StatsView(
   const { trialId } = useParams();
 
   const filteredParticipants = useMemo(() => {
-    // Before selecting a trial, show all participants
-    if (!trialId || trialId === 'end') return visibleParticipants;
+    if (!trialId) return visibleParticipants;
 
     return visibleParticipants
       .map((p) => {
         const filteredAnswers = Object.fromEntries(
-          Object.entries(p.answers).filter(([key]) => {
-            const parts = key.split('_');
-            const component = parts.length === 4 ? parts[2] : parts[0];
-            return component === trialId;
-          }),
+          Object.entries(p.answers).filter(([_, answer]) => answer.componentName === trialId),
         );
         return { ...p, answers: filteredAnswers } as ParticipantData;
       })
@@ -53,6 +47,24 @@ export function StatsView(
   }, [visibleParticipants, trialId]);
 
   const overviewData = useMemo(() => {
+    if (!trialId) {
+      const participantCounts = calculateParticipantCounts(visibleParticipants);
+      const { avgTime, avgCleanTime } = calculateTimeStats(visibleParticipants);
+      const { startDate, endDate } = calculateDateStats(visibleParticipants);
+      const correctnessStats = calculateCorrectnessStats(visibleParticipants);
+      const componentStats = calculateComponentStats(visibleParticipants);
+      const componentData = componentStats.map((stat) => ({
+        component: stat.name,
+        participants: stat.participantCount,
+        avgTime: Number.isFinite(stat.avgTime) ? `${stat.avgTime.toFixed(1)}s` : 'N/A',
+        avgCleanTime: Number.isFinite(stat.avgCleanTime) ? `${stat.avgCleanTime.toFixed(1)}s` : 'N/A',
+        correctness: !Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A',
+      }));
+      return {
+        participantCounts, avgTime, avgCleanTime, startDate, endDate, correctnessStats, componentData, responseData: [],
+      };
+    }
+
     if (filteredParticipants.length === 0) return null;
 
     const participantCounts = calculateParticipantCounts(filteredParticipants);
@@ -60,8 +72,7 @@ export function StatsView(
     const { startDate, endDate } = calculateDateStats(filteredParticipants);
     const correctnessStats = calculateCorrectnessStats(filteredParticipants);
 
-    // Calculate component data
-    const componentStats = calculateComponentStats(visibleParticipants);
+    const componentStats = calculateComponentStats(filteredParticipants);
     const componentData = componentStats.map((stat) => ({
       component: stat.name,
       participants: stat.participantCount,
@@ -71,13 +82,13 @@ export function StatsView(
     }));
 
     return {
-      participantCounts, avgTime, avgCleanTime, startDate, endDate, correctnessStats, componentData,
+      participantCounts, avgTime, avgCleanTime, startDate, endDate, correctnessStats, componentData, responseData: [],
     };
-  }, [filteredParticipants, studyConfig, trialId, visibleParticipants]);
+  }, [filteredParticipants, trialId, visibleParticipants]);
 
   return (
     <>
-      <OverviewStats overviewData={overviewData as OverviewData | null} mismatchDetails={null} />
+      <OverviewStats overviewData={overviewData} mismatchDetails={null} />
       <Paper shadow="sm" p="md" mt="md" withBorder>
         {
         (visibleParticipants.length === 0)

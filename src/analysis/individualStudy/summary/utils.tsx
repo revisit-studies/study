@@ -97,8 +97,8 @@ export function calculateComponentStats(visibleParticipants: ParticipantData[]) 
 
   validParticipants.forEach((participant) => {
     const components = new Set<string>();
-    Object.entries(participant.answers).forEach(([taskId, answer]) => {
-      const component = `${taskId.split('_')[0]}`;
+    Object.entries(participant.answers).forEach(([_, answer]) => {
+      const component = answer.componentName;
 
       if (!stats[component]) {
         stats[component] = {
@@ -152,9 +152,8 @@ export function calculateResponseStats(visibleParticipants: ParticipantData[]) {
   const stats: Record<string, { name: string; correctness: number; participantCount: number }> = {};
 
   validParticipants.forEach((participant) => {
-    Object.entries(participant.answers).forEach(([taskId, answer]) => {
-      const parts = taskId.split('_');
-      const component = parts.length === 4 ? parts[2] : parts[0];
+    Object.entries(participant.answers).forEach(([_, answer]) => {
+      const component = answer.componentName;
 
       if (!stats[component]) {
         stats[component] = {
@@ -179,12 +178,7 @@ export function calculateResponseStats(visibleParticipants: ParticipantData[]) {
 
   return Object.values(stats)
     .map((stat) => {
-      // Check if any participant has correct answers defined for this component
-      const hasCorrectAnswers = Object.values(validParticipants).some((participant) => Object.entries(participant.answers).some(([key, answer]) => {
-        const parts = key.split('_');
-        const component = parts.length === 4 ? parts[2] : parts[0];
-        return component === stat.name && answer.correctAnswer && answer.correctAnswer.length > 0;
-      }));
+      const hasCorrectAnswers = Object.values(validParticipants).some((participant) => Object.values(participant.answers).some((answer) => answer.componentName === stat.name && answer.correctAnswer && answer.correctAnswer.length > 0));
       return {
         ...stat,
         correctness: hasCorrectAnswers ? (stat.correctness / stat.participantCount) * 100 : NaN,
