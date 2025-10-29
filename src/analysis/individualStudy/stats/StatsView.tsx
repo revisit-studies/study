@@ -10,7 +10,7 @@ import { StudyConfig } from '../../../parser/types';
 import { TrialVisualization } from './TrialVisualization';
 import { ComponentBlockWithOrderPath, StepsPanel } from '../../../components/interface/StepsPanel';
 import { addPathToComponentBlock } from '../../../utils/getSequenceFlatMap';
-import { OverviewStats } from '../summary/OverviewStats';
+import { OverviewStats } from './OverviewStats';
 import {
   calculateParticipantCounts, calculateCorrectnessStats, calculateTimeStats, calculateDateStats, calculateComponentStats,
 } from '../summary/utils';
@@ -73,7 +73,7 @@ export function StatsView(
     return {
       participantCounts, avgTime, avgCleanTime, startDate, endDate, correctnessStats, componentData,
     };
-  }, [filteredParticipants, studyConfig, trialId]);
+  }, [filteredParticipants, studyConfig, trialId, visibleParticipants]);
 
   return (
     <>
