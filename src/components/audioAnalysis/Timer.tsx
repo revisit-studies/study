@@ -14,7 +14,7 @@ export function Timer({
   useEffect(() => {
     if (startTime) {
       // Initial time is the time the user wants to start at, if it's not provided, we start at the beginning
-      const time = initialTime !== undefined ? initialTime : startTime;
+      const time = initialTime;
       timer.current = time - startTime;
       directUpdateTimer(time, (time - startTime) / duration);
 
