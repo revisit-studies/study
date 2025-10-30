@@ -328,9 +328,17 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   async initializeStudyDb(studyId: string) {
     try {
       const auth = getAuth();
+      await auth.authStateReady();
+
       if (!auth.currentUser) {
-        await signInAnonymously(auth);
-        if (!auth.currentUser) throw new Error('Login failed with firebase');
+        try {
+          await signInAnonymously(auth);
+          if (!auth.currentUser) {
+            throw new Error('Login failed with firebase');
+          }
+        } catch (error) {
+          console.error('Firebase anonymous sign-in failed:', error);
+        }
       }
 
       // Create or retrieve database for study

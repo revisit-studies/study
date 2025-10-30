@@ -428,7 +428,7 @@ export function AudioProvenanceVis({
         {xScale ? (
           <Timer
             duration={totalAudioLength * 1000}
-            initialTime={jumpedToAudioTime ? startTime + jumpedToAudioTime * 1000 + 1 : replayTimestamp ? startTime + replayTimestamp : 0}
+            initialTime={jumpedToAudioTime ? startTime + jumpedToAudioTime * 1000 + 1 : replayTimestamp ? startTime + replayTimestamp : startTime}
             height={(analysisHasAudio ? 50 : 0) + 25}
             isPlaying={analysisIsPlaying}
             speed={speed}
