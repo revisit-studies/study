@@ -266,8 +266,10 @@ export interface BaseResponse {
   withDontKnow?: boolean;
   /** The path to the external stylesheet file. */
   stylesheetPath?: string;
-  /**  You can set styles here, using React CSSProperties, for example: `{"width": 100}` or `{"width": "50%"}` */
+  /** You can set styles here, using React CSSProperties, for example: `{"width": 100}` or `{"width": "50%"}` */
   style?: Styles;
+  /** Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false. */
+  excludeFromRandomization?: boolean;
 }
 
 /**
