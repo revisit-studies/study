@@ -11,7 +11,7 @@ export function AlertModal() {
   const storeDispatch = useStoreDispatch();
 
   const [opened, setOpened] = useState(alertModal.show);
-  const close = useCallback(() => storeDispatch(setAlertModal({ ...alertModal, show: false })), [alertModal, setAlertModal, storeDispatch]);
+  const close = useCallback(() => storeDispatch(setAlertModal({ ...alertModal, show: false, title: '' })), [alertModal, setAlertModal, storeDispatch]);
 
   useEffect(() => setOpened(alertModal.show), [alertModal.show]);
 
@@ -20,7 +20,7 @@ export function AlertModal() {
       <Alert
         color="red"
         radius="xs"
-        title="Alert"
+        title={alertModal.title}
         icon={<IconAlertCircle />}
         onClose={close}
         styles={{ root: { backgroundColor: 'unset' } }}
