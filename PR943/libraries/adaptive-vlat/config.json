@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json",
+  "description": "A-VLAT is a short, adaptive visualization literacy test, which are built upon the existing static assessments VLAT. \n\nThis library contains a sequence of the full A-VLAT questionnaire. \n\nThe component `VlatTrial` in this library is part of the sequence and should not be used alone.",
+  "reference": "Y. Cui, L. W. Ge, Y. Ding, F. Yang, L. Harrison and M. Kay, Adaptive Assessment of Visualization Literacy, IEEE Transactions on Visualization and Computer Graphics, vol. 30, no. 1, pp. 628-637, Jan. 2024",
+  "doi": "10.1109/TVCG.2023.3327165",
+  "components": {
+    "VlatTrial": {
+      "type": "react-component",
+      "path": "libraries/adaptive-vlat/assets/VlatTrial.tsx",
+      "response": [
+        {
+          "id": "vlatResp",
+          "prompt": "Your selection is:  ",
+          "location": "belowStimulus",
+          "type": "reactive",
+          "hidden": false
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "vlatResp",
+          "answer": "A"
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": true,
+      "trainingAttempts": 1
+    }
+  },
+  "sequences": {
+    "adaptive-vlat": {
+      "id": "dynamicBlock",
+      "order": "dynamic",
+      "functionPath": "libraries/adaptive-vlat/assets/dynamic.tsx"
+    }
+  }
+}
