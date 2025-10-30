@@ -1,0 +1,78 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json",
+    "description": "A library for visual calibration tasks including virtual chinrest (card size) and viewing distance calibration using blindspot tracking.",
+    "reference": "Custom calibration library for visual perception studies",
+    "doi": "10.1038/s41598-019-57204-1",
+    "externalLink": "https://github.com/QishengLi/virtual_chinrest",
+    "components": {
+      "card-size": {
+        "type": "react-component",
+        "path": "libraries/virtual-chinrest/assets/VirtualChinrestCalibration.tsx",
+        "withSidebar": false,
+        "parameters": {
+          "taskid": "pixelsPerMM",
+          "itemWidthMM": 85.6,
+          "itemHeightMM": 53.98
+        },
+        "nextButtonLocation": "belowStimulus",
+        "response": [
+          {
+            "id": "pixelsPerMM",
+            "prompt": "Calibration results",
+            "required": true,
+            "type": "reactive",
+            "hidden": true
+          }
+        ]
+      },
+      "blindspot-distance": {
+        "type": "react-component",
+        "path": "libraries/virtual-chinrest/assets/ViewingDistanceCalibration.tsx",
+        "nextButtonLocation": "belowStimulus",
+        "withSidebar": false,
+        "parameters": {
+          "blindspotAngle": 13.5
+        },
+        "response": [
+          {
+            "id": "dist-calibration-MM",
+            "prompt": "Distance Calibration results in MM",
+            "required": true,
+            "type": "reactive",
+            "hidden": true
+          },
+          {
+            "id": "dist-calibration-CM",
+            "prompt": "Distance Calibration results in CM",
+            "required": false,
+            "type": "reactive",
+            "hidden": true
+          },
+          {
+            "id": "ball-positions",
+            "prompt": "Position of balls in pixels",
+            "required": false,
+            "type": "reactive",
+            "hidden": true
+          },
+          {
+            "id": "square-position",
+            "prompt": "Position of the black square in pixels",
+            "required": false,
+            "type": "reactive",
+            "hidden": true
+          }
+        ]
+      }
+    },
+    "sequences": {
+      "full": {
+        "id": "virtual-chinrest",
+        "order": "fixed",
+        "components": [
+          "card-size",
+          "blindspot-distance"
+        ]
+      }
+    }
+  }
