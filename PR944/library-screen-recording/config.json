@@ -1,0 +1,47 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Screen Recording",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-01-20",
+    "description": "Example study using the screen-recording library.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": false,
+    "recordScreen": true
+  },
+  "importedLibraries": [
+    "screen-recording"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-screen-recording/assets/screen-recording-introduction.md",
+      "response": []
+    },
+    "demo-recording": {
+      "type": "markdown",
+      "path": "library-screen-recording/assets/screen-recording-page.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$screen-recording.co.screenRecordingPermission",
+      "demo-recording"
+    ]
+  }
+}

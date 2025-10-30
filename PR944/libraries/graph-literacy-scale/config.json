@@ -1,0 +1,343 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json",
+  "description": "The Graph Literacy Scale is a 13-item instrument that measures people’s ability to understand common graphical formats, with a focus on health-related graphs. This library contains 13 components, each corresponding to a question of the Graph Literacy Scale. It also includes a sequence of all 13 components (the full Graph Literacy Scale).",
+  "reference": "Galesic M, Garcia-Retamero R. Graph literacy: a cross-cultural comparison. Med Decis Making. 2011 May-Jun;31(3):444-57.",
+  "doi": "10.1177/0272989X10373805",
+  "baseComponents": {
+    "bar-cancer-recovery": {
+      "type": "image",
+      "path": "libraries/graph-literacy-scale/assets/bar-cancer-recovery.png",
+      "instruction": "Here is some information about cancer therapies.",
+      "instructionLocation": "aboveStimulus",
+      "style": {
+        "width": "400px"
+      },
+      "nextButtonLocation": "sidebar"
+    },
+    "pie-cancer": {
+      "type": "image",
+      "path": "libraries/graph-literacy-scale/assets/pie-cancer.png",
+      "instruction": "Here is some information about different forms of cancer.",
+      "instructionLocation": "aboveStimulus",
+      "style": {
+        "width": "400px"
+      },
+      "nextButtonLocation": "sidebar"
+    },
+    "line-Adeolitis": {
+      "type": "image",
+      "path": "libraries/graph-literacy-scale/assets/line-Adeolitis.png",
+      "instruction": "Here is some information about an imaginary disease called Adeolitis.",
+      "instructionLocation": "aboveStimulus",
+      "style": {
+        "width": "400px"
+      },
+      "nextButtonLocation": "sidebar"
+    },
+    "icon-diseaseX": {
+      "type": "image",
+      "path": "libraries/graph-literacy-scale/assets/icon-diseaseX.png",
+      "instruction": "The following figure shows the number of men and women among patients with disease X. The total number of circles is 100.",
+      "instructionLocation": "aboveStimulus",
+      "style": {
+        "width": "400px"
+      },
+      "nextButtonLocation": "sidebar"
+    },
+    "bar-treat-heart-disease": {
+      "type": "image",
+      "path": "libraries/graph-literacy-scale/assets/bar-treat-heart-disease.png",
+      "instruction": "In a magazine you see two advertisements, one on page 5 and another on page 12. Each is for a different drug for treating heart disease, and each includes a graph showing the effectiveness of the drug compared to a placebo (sugar pill).",
+      "instructionLocation": "aboveStimulus",
+      "style": {
+        "width": "400px"
+      },
+      "nextButtonLocation": "sidebar"
+    },
+    "line-treat-psoriasis": {
+      "type": "image",
+      "path": "libraries/graph-literacy-scale/assets/line-treat-psoriasis.png",
+      "instruction": "In the newspaper you see two advertisements, one on page 15 and another on page 17. Each is for a different treatment of psoriasis, and each includes a graph showing the effectiveness of the treatment over time.",
+      "instructionLocation": "aboveStimulus",
+      "style": {
+        "width": "400px"
+      },
+      "nextButtonLocation": "sidebar"
+    },
+    "line-Coliosis-Tiosis": {
+      "type": "image",
+      "path": "libraries/graph-literacy-scale/assets/line-Coliosis-Tiosis.png",
+      "instruction": "Here is some information about the imaginary diseases Coliosis and Tiosis.",
+      "instructionLocation": "aboveStimulus",
+      "style": {
+        "width": "400px"
+      },
+      "nextButtonLocation": "sidebar"
+    },
+    "bar-cancer-die": {
+      "type": "image",
+      "path": "libraries/graph-literacy-scale/assets/bar-cancer-die.png",
+      "instruction": "Here is some information about cancer therapies.",
+      "instructionLocation": "aboveStimulus",
+      "style": {
+        "width": "400px"
+      },
+      "nextButtonLocation": "sidebar"
+    }
+  },
+  "components": {
+    "Q1": {
+      "baseComponent": "bar-cancer-recovery",
+      "meta": {
+        "trueAnswer": 35,
+        "chartType": "bar"
+      },
+      "response": [
+        {
+          "id": "res-Q1",
+          "prompt": "What percentage of patients recovered after chemotherapy? ___%",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ]
+    },
+    "Q2": {
+      "baseComponent": "bar-cancer-recovery",
+      "meta": {
+        "trueAnswer": 15,
+        "chartType": "bar"
+      },
+      "response": [
+        {
+          "id": "res-Q2",
+          "prompt": "What is the difference between the percentage of patients who recovered after a surgery and the percentage of patients who recovered after radiation therapy? ___%",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ]
+    },
+    "Q3": {
+      "baseComponent": "pie-cancer",
+      "meta": {
+        "trueAnswer": 25,
+        "chartType": "pie"
+      },
+      "response": [
+        {
+          "id": "res-Q3",
+          "prompt": "Of all the people who die from cancer, approximately what percentage dies from lung cancer?___%",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ]
+    },
+    "Q4": {
+      "baseComponent": "pie-cancer",
+      "meta": {
+        "trueAnswer": 25,
+        "chartType": "pie"
+      },
+      "response": [
+        {
+          "id": "res-Q4",
+          "prompt": "Approximately what percentage of people who die from cancer die from colon cancer, breast cancer, and prostate cancer taken together?___%",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ]
+    },
+    "Q5": {
+      "baseComponent": "line-Adeolitis",
+      "meta": {
+        "trueAnswer": 20,
+        "chartType": "line"
+      },
+      "response": [
+        {
+          "id": "res-Q5",
+          "prompt": "Approximately what percentage of people had Adeolitis in the year 2000?___%",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ]
+    },
+    "Q6": {
+      "baseComponent": "line-Adeolitis",
+      "meta": {
+        "trueAnswer": 3,
+        "chartType": "line"
+      },
+      "response": [
+        {
+          "id": "res-Q6",
+          "prompt": "When was the increase in the percentage of people with Adeolitis higher?",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "From 1975 to 1980",
+            "From 2000 to 2005", 
+            "Increase was the same in both intervals",
+            "Don't know"
+          ]
+        }
+      ]
+    },
+    "Q7": {
+      "baseComponent": "line-Adeolitis",
+      "meta": {
+        "trueAnswer": 24,
+        "chartType": "line"
+      },
+      "response": [
+        {
+          "id": "res-Q7",
+          "prompt": "According to your best guess, what will the percentage of people with Adeolitis be in the year 2010?___%",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ]
+    },
+    "Q8": {
+      "baseComponent": "icon-diseaseX",
+      "meta": {
+        "trueAnswer": 40,
+        "chartType": "icon"
+      },
+      "response": [
+        {
+          "id": "res-Q8",
+          "prompt": "Of 100 patients with disease X, how many are women? ___ women",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ]
+    },
+    "Q9": {
+      "baseComponent": "icon-diseaseX",
+      "meta": {
+        "trueAnswer": 20,
+        "chartType": "icon"
+      },
+      "response": [
+        {
+          "id": "res-Q9",
+          "prompt": "How many more men than women are there among 100 patients with disease X? ___ men",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ]
+    },
+    "Q10": {
+      "baseComponent": "bar-treat-heart-disease",
+      "meta": {
+        "trueAnswer": 3,
+        "chartType": "bar"
+      },
+      "response": [
+        {
+          "id": "res-Q10",
+          "prompt": "Compared to the placebo, which treatment leads to a larger decrease in the percentage of patients who die?",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Crosicol",
+            "Hertinol", 
+            "They are equal",
+            "Can't say"
+          ]
+        }
+      ]
+    },
+    "Q11": {
+      "baseComponent": "line-treat-psoriasis",
+      "meta": {
+        "trueAnswer": 4,
+        "chartType": "line"
+      },
+      "response": [
+        {
+          "id": "res-Q11",
+          "prompt": "Which of the treatments contributes to a larger decrease in the percentage of sick patients?",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Apsoriatin",
+            "Nopsorian",
+            "They are equal", 
+            "Can't say"
+          ]
+        }
+      ]
+    },
+    "Q12": {
+      "baseComponent": "line-Coliosis-Tiosis",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "line"
+      },
+      "response": [
+        {
+          "id": "res-Q12",
+          "prompt": "Between 1980 and 1990, which disease had a higher increase in the percentage of people affected?",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Coliosis",
+            "Tiosis",
+            "The increase was equal",
+            "Can't say"
+          ]
+        }
+      ]
+    },
+    "Q13": {
+      "baseComponent": "bar-cancer-die",
+      "meta": {
+        "trueAnswer": 5,
+        "chartType": "bar"
+      },
+      "response": [
+        {
+          "id": "res-Q13",
+          "prompt": "What is the percentage of cancer patients who die after chemotherapy? ___%",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ]
+    }
+  },
+  "sequences": {
+    "full": {
+      "id": "graph-literacy-scale",
+      "order": "fixed",
+      "components": [
+        "Q1",
+        "Q2",
+        "Q3",
+        "Q4",
+        "Q5",
+        "Q6",
+        "Q7",
+        "Q8",
+        "Q9",
+        "Q10",
+        "Q11",
+        "Q12",
+        "Q13"
+      ]
+    }
+  }
+}

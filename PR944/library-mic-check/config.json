@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Testing the Microphone",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-01-20",
+    "description": "Example study using the mic-check library.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": false
+  },
+  "importedLibraries": [
+    "mic-check"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-mic-check/assets/mic-check.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$mic-check.co.audioTest"
+    ]
+  }
+}

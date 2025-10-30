@@ -1,0 +1,42 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Berlin Numeracy Test",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-06-12",
+    "description": "Example study using the berlin-num library.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": false
+  },
+  "importedLibraries": [
+    "berlin-num"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-berlin-num/assets/berlin-num.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$berlin-num.se.adaptive",
+      "$berlin-num.se.four-items",
+      "$berlin-num.se.single-item"
+    ]
+  }
+}
