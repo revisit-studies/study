@@ -24,27 +24,31 @@ import {
 import {
   useEffect, useMemo, useRef, useState,
 } from 'react';
-import { useHref } from 'react-router';
+import { useHref, useParams } from 'react-router';
 import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
 } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { calculateProgressData } from '../../storage/engines/utils';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { useScreenRecordingContext } from '../../store/hooks/useScreenRecording';
 
 export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
-  const metadata = useStoreSelector((state) => state.metadata);
 
   const answers = useStoreSelector((state) => state.answers);
+  const storageEngineFailedToConnect = useStoreSelector((state) => state.storageEngineFailedToConnect);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText, toggleStudyBrowser, incrementHelpCounter } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
   const currentComponent = useCurrentComponent();
+  const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
 
   const currentStep = useCurrentStep();
 
@@ -69,15 +73,22 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   const [menuOpened, setMenuOpened] = useState(false);
 
   const logoPath = studyConfig?.uiConfig.logoPath;
-  const withProgressBar = studyConfig?.uiConfig.withProgressBar;
+  const withProgressBar = useMemo(() => componentConfig.withProgressBar ?? studyConfig.uiConfig.withProgressBar, [componentConfig, studyConfig]);
+  const showTitle = useMemo(() => componentConfig.showTitle ?? studyConfig.uiConfig.showTitle ?? true, [componentConfig, studyConfig]);
 
   const studyId = useStudyId();
   const studyHref = useHref(`/${studyId}`);
 
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [isTruncated, setIsTruncated] = useState(false);
+  const lastProgressRef = useRef<number>(0);
 
   const isRecording = useStoreSelector((store) => store.isRecording);
+  const { isScreenRecording, isAudioRecording: isScreenWithAudioRecording } = useScreenRecordingContext();
+
+  const isAudioRecording = isRecording || isScreenWithAudioRecording;
+
+  const { funcIndex } = useParams();
 
   useEffect(() => {
     const element = titleRef.current;
@@ -86,39 +97,72 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
     }
   }, [studyConfig]);
 
+  // Update progress data in Firebase when progress changes
+  useEffect(() => {
+    if (studyConfig && storageEngine && dataCollectionEnabled) {
+      const progressData = calculateProgressData(
+        answers,
+        flatSequence,
+        studyConfig,
+        currentStep,
+        funcIndex,
+      );
+
+      // Calculate progress percentage for comparison
+      const currentProgressPercent = progressData.total > 0 ? (progressData.answered.length / progressData.total) * 100 : 0;
+
+      // Only update if progress has changed, is greater than 0, and we have a valid progress value
+      if (currentProgressPercent !== lastProgressRef.current && currentProgressPercent > 0 && !Number.isNaN(currentProgressPercent)) {
+        lastProgressRef.current = currentProgressPercent;
+        storageEngine.updateProgressData(progressData).catch((error: unknown) => {
+          console.warn('Failed to update progress data:', error);
+        });
+      }
+    }
+  }, [answers, flatSequence, studyConfig, currentStep, storageEngine, dataCollectionEnabled, funcIndex]);
+
   return (
-    <AppShell.Header p="md">
+    <AppShell.Header className="header" p="md">
       <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">
-            <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
+            <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" className="logoImage" />
             <Space w="md" />
-            <Title
-              ref={titleRef}
-              order={4}
-              style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-              title={isTruncated ? studyConfig?.studyMetadata.title : undefined}
-            >
-              {studyConfig?.studyMetadata.title}
-            </Title>
+            {showTitle ? (
+              <Title
+                ref={titleRef}
+                order={4}
+                style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                title={isTruncated ? studyConfig?.studyMetadata.title : undefined}
+                className="studyTitle"
+              >
+                {studyConfig?.studyMetadata.title}
+              </Title>
+            ) : null }
           </Flex>
         </Grid.Col>
 
         <Grid.Col span={4}>
           {withProgressBar && (
-            <Progress radius="md" size="lg" value={progressPercent} />
+            <Progress radius="md" size="lg" value={progressPercent} className="progressBar" />
           )}
         </Grid.Col>
 
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
-            {isRecording ? (
-              <Group ml="xl" gap={20} wrap="nowrap">
-                <Text color="red">Recording audio</Text>
-                <RecordingAudioWaveform />
-              </Group>
-            ) : null}
-            {!dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
+            {(isAudioRecording || isScreenRecording) && (
+            <Group ml="xl" gap={20} wrap="nowrap">
+              <Text c="red">
+                Recording
+                {isScreenRecording && ' screen'}
+                {isScreenRecording && isAudioRecording && ' and'}
+                {isAudioRecording && ' audio'}
+              </Text>
+              {isAudioRecording && <RecordingAudioWaveform />}
+            </Group>
+            )}
+            {storageEngineFailedToConnect && <Tooltip multiline withArrow arrowSize={6} w={300} label="Failed to connect to the storage engine. Study data will not be saved. Check your connection or restart the app."><Badge size="lg" color="red">Storage Disconnected</Badge></Tooltip>}
+            {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
@@ -152,10 +196,10 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 <Menu.Item
                   component="a"
                   href={
-                      studyConfig !== null
-                        ? `mailto:${studyConfig.uiConfig.contactEmail}`
-                        : undefined
-                    }
+                        studyConfig !== null
+                          ? `mailto:${studyConfig.uiConfig.contactEmail}`
+                          : undefined
+                      }
                   leftSection={<IconMail size={14} />}
                 >
                   Contact
@@ -163,7 +207,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 {studyNavigatorEnabled && (
                   <Menu.Item
                     leftSection={<IconUserPlus size={14} />}
-                    onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
+                    onClick={() => getNewParticipant(storageEngine, studyHref)}
                   >
                     Next Participant
                   </Menu.Item>

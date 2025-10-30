@@ -1,8 +1,6 @@
-import {
-  Box, Flex, Input, List,
-} from '@mantine/core';
+import { Input, List } from '@mantine/core';
 import { ReactiveResponse } from '../../parser/types';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
+import { InputLabel } from './InputLabel';
 
 export function Reactive({
   response,
@@ -15,18 +13,16 @@ export function Reactive({
   index: number;
   enumerateQuestions: boolean;
 }) {
-  const { prompt, required, secondaryText } = response;
+  const {
+    prompt,
+    required,
+    secondaryText,
+    infoText,
+  } = response;
 
   return (
     <Input.Wrapper
-      label={(
-        <Flex direction="row" wrap="nowrap" gap={4}>
-          {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
-          <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
-            <ReactMarkdownWrapper text={prompt} required={required} />
-          </Box>
-        </Flex>
-      )}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       size="md"
     >

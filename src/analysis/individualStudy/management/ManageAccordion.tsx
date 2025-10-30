@@ -1,11 +1,10 @@
 import { Accordion, Container, Title } from '@mantine/core';
 import { DataManagementAccordionItem } from './DataManagementAccordionItem';
 import { RevisitModesAccordionItem } from './RevisitModesAccordionItem';
-import { useStorageEngine } from '../../../storage/storageEngineHooks';
+import { StageManagementAccordionItem } from './StageManagementAccordionItem';
+import { ParticipantData } from '../../../storage/types';
 
-export function ManageAccordion({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
-  const { storageEngine } = useStorageEngine();
-
+export function ManageAccordion({ studyId, refresh }: { studyId: string, refresh: () => Promise<Record<number, ParticipantData>> }) {
   return (
     <Container>
       <Accordion
@@ -16,10 +15,14 @@ export function ManageAccordion({ studyId, refresh }: { studyId: string, refresh
           <Accordion.Control><Title order={5}>ReVISit Modes</Title></Accordion.Control>
           <Accordion.Panel><RevisitModesAccordionItem studyId={studyId} /></Accordion.Panel>
         </Accordion.Item>
+        <Accordion.Item key="stageManagement" value="Stage Management">
+          <Accordion.Control><Title order={5}>Stage Management</Title></Accordion.Control>
+          <Accordion.Panel><StageManagementAccordionItem studyId={studyId} /></Accordion.Panel>
+        </Accordion.Item>
         <Accordion.Item key="dataManagement" value="Data Management">
-          <Accordion.Control disabled={storageEngine?.getEngine() === 'localStorage'}><Title order={5}>Data Management</Title></Accordion.Control>
+          <Accordion.Control><Title order={5}>Data Management</Title></Accordion.Control>
           <Accordion.Panel>
-            {storageEngine?.getEngine() !== 'localStorage' && <DataManagementAccordionItem studyId={studyId} refresh={refresh} />}
+            <DataManagementAccordionItem studyId={studyId} refresh={refresh} />
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>

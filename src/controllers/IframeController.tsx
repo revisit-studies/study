@@ -1,5 +1,5 @@
 import {
-  useCallback, useEffect, useMemo, useRef, useState,
+  useCallback, useEffect, useMemo, useRef,
 } from 'react';
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
@@ -9,11 +9,6 @@ import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 
 const PREFIX = '@REVISIT_COMMS';
 
-const defaultStyle = {
-  width: '100%',
-  border: 0,
-};
-
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const {
     setReactiveAnswers, updateResponseBlockValidation,
@@ -21,7 +16,6 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
-  const [height, setHeight] = useState(800);
 
   const ref = useRef<HTMLIFrameElement>(null);
 
@@ -71,12 +65,6 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             }
             break;
           case `${PREFIX}/READY`:
-            if (ref.current) {
-              const iFrame = document.getElementById(data.iframeId) as HTMLIFrameElement;
-              if (iFrame && iFrame.contentWindow) {
-                ref.current.style.height = `${iFrame.contentWindow.document.body.scrollHeight.toString()}px`;
-              }
-            }
             break;
           case `${PREFIX}/ANSWERS`:
             storeDispatch(setReactiveAnswers(data.message));
@@ -110,14 +98,12 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   return (
     <iframe
       ref={ref}
-      id={iframeId}
+      style={{ width: '100%', flexGrow: 1, border: 0 }}
       src={
         currentConfig.path.startsWith('http')
           ? currentConfig.path
           : `${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`
       }
-      style={{ ...defaultStyle, height }}
-      onLoad={() => setHeight((ref.current?.contentWindow?.document.body.scrollHeight || 750) + 20)}
     />
   );
 }

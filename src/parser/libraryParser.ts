@@ -7,7 +7,7 @@ import {
 import { isDynamicBlock, isInheritedComponent } from './utils';
 import { PREFIX } from '../utils/Prefix';
 
-const ajv = new Ajv();
+const ajv = new Ajv({ allowUnionTypes: true });
 ajv.addSchema(librarySchema);
 const libraryValidate = ajv.getSchema<LibraryConfig>('#/definitions/LibraryConfig')!;
 
@@ -98,7 +98,7 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
 }
 
 // This verifies that the library config has a valid schema and returns the parsed data
-export function parseLibraryConfig(fileData: string, libraryName: string): ParsedConfig<LibraryConfig> {
+function parseLibraryConfig(fileData: string, libraryName: string): ParsedConfig<LibraryConfig> {
   let validatedData = false;
   let data: LibraryConfig | undefined;
 

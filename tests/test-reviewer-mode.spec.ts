@@ -1,9 +1,16 @@
 import { test, expect } from '@playwright/test';
 
-test('test', async ({ page }) => {
+test('test', async ({ browser }) => {
+  const page = await browser.newPage();
+  await page.setViewportSize({
+    width: 1200,
+    height: 800,
+  });
+
   await page.goto('/');
 
   await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'HTML as a Stimulus' })
+    .nth(0)
     .getByText('Go to Study')
     .click();
   await page.getByRole('tab', { name: 'All Trials View' }).click();

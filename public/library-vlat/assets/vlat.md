@@ -1,6 +1,8 @@
 
 # vlat
 
+
+
 This is an example study of the library `vlat`.
 
 Visualization Literacy Assessment Test (VLAT) is developed to measure users' ability to read, understand, and use data visualizations to solve problems. The VLAT consists of 12 data visualizations and 53 multiple-choice questions. This library contains 53 components, each corresponding to a question of the VLAT. It also includes a sequence of all 53 components (the full VLAT).
@@ -9,7 +11,7 @@ Visualization Literacy Assessment Test (VLAT) is developed to measure users' abi
 
 S. Lee, S.-H. Kim, and B. C. Kwon, "VLAT: Development of a Visualization Literacy Assessment Test," IEEE Transactions on Visualization and Computer Graphics, vol. 23, no. 1, pp. 551-560, Jan. 2017
 
-DOI: [10.1109/TVCG.2016.2598920](https://doi.org/10.1109/TVCG.2016.2598920)
+DOI: [10.1109/TVCG.2016.2598920](https://dx.doi.org/10.1109/TVCG.2016.2598920)
 
 
 
@@ -72,3 +74,5 @@ DOI: [10.1109/TVCG.2016.2598920](https://doi.org/10.1109/TVCG.2016.2598920)
 ## Available Sequences
 
 - full
+
+

@@ -1,8 +1,8 @@
-import { Box, Flex, Textarea } from '@mantine/core';
+import { Textarea } from '@mantine/core';
 import { LongTextResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import classes from './css/Input.module.css';
+import { InputLabel } from './InputLabel';
 
 export function TextAreaInput({
   response,
@@ -22,20 +22,14 @@ export function TextAreaInput({
     prompt,
     required,
     secondaryText,
+    infoText,
   } = response;
 
   return (
     <Textarea
       disabled={disabled}
       placeholder={placeholder}
-      label={(
-        <Flex direction="row" wrap="nowrap" gap={4}>
-          {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
-          <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
-            <ReactMarkdownWrapper text={prompt} required={required} />
-          </Box>
-        </Flex>
-      )}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       radius="md"
       size="md"
@@ -43,6 +37,8 @@ export function TextAreaInput({
         // This is necessary so the component doesnt switch from uncontrolled to controlled, which can cause issues.
       value={answer.value || ''}
       error={generateErrorMessage(response, answer)}
+      withErrorStyles={required}
+      errorProps={{ c: required ? 'red' : 'orange' }}
       classNames={{ input: classes.fixDisabled }}
     />
   );

@@ -6,9 +6,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { IconUserPlus, IconAt, IconTrashX } from '@tabler/icons-react';
 import { useAuth } from '../../store/hooks/useAuth';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
-import { StoredUser } from '../../storage/engines/StorageEngine';
-import { signInWithGoogle } from '../../Login';
+import { StoredUser } from '../../storage/engines/types';
+import { signIn } from '../../Login';
+import { isCloudStorageEngine } from '../../storage/engines/utils';
+import { SupabaseStorageEngine } from '../../storage/engines/SupabaseStorageEngine';
 
 export function GlobalSettings() {
   const { user, triggerAuth, logout } = useAuth();
@@ -36,12 +37,12 @@ export function GlobalSettings() {
   useEffect(() => {
     const determineAuthenticationEnabled = async () => {
       setLoading(true);
-      if (storageEngine instanceof FirebaseStorageEngine) {
+      if (storageEngine && isCloudStorageEngine(storageEngine)) {
         const authInfo = await storageEngine?.getUserManagementData('authentication');
         setAuthEnabled(authInfo?.isEnabled || false);
         const adminUsers = await storageEngine?.getUserManagementData('adminUsers');
         if (adminUsers && adminUsers.adminUsersList) {
-          setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email));
+          setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null));
         }
       } else {
         setAuthEnabled(false);
@@ -53,8 +54,22 @@ export function GlobalSettings() {
 
   const handleEnableAuth = async () => {
     setLoading(true);
-    if (storageEngine instanceof FirebaseStorageEngine) {
-      const newUser = await signInWithGoogle(storageEngine, setLoading);
+    if (storageEngine && isCloudStorageEngine(storageEngine)) {
+      // Check if we're in supabase and have a session already
+      if (storageEngine.getEngine() === 'supabase') {
+        const { data } = await (storageEngine as unknown as SupabaseStorageEngine).getSession();
+        if (data.session && data.session.user && data.session.user.email) {
+          setEnableAuthUser({
+            email: data.session.user.email,
+            uid: data.session.user.id,
+          });
+          setModalEnableAuthOpened(true);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const newUser = await signIn(storageEngine, setLoading);
       if (newUser && newUser.email) {
         setEnableAuthUser({
           email: newUser.email,
@@ -70,11 +85,11 @@ export function GlobalSettings() {
 
   const confirmEnableAuth = async (rootUser: StoredUser | null) => {
     setLoading(true);
-    if (storageEngine instanceof FirebaseStorageEngine) {
+    if (storageEngine && isCloudStorageEngine(storageEngine)) {
       if (rootUser) {
         await storageEngine.changeAuth(true);
         await storageEngine.addAdminUser(rootUser);
-        setAuthenticatedUsers([rootUser.email]);
+        setAuthenticatedUsers([rootUser.email!]);
         setAuthEnabled(true);
         triggerAuth();
       }
@@ -85,10 +100,10 @@ export function GlobalSettings() {
 
   const handleAddUser = async () => {
     setLoading(true);
-    if (storageEngine instanceof FirebaseStorageEngine) {
+    if (storageEngine && isCloudStorageEngine(storageEngine)) {
       await storageEngine.addAdminUser({ email: form.values.email, uid: null });
       const adminUsers = await storageEngine.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email) || []);
+      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null) || []);
     }
     setLoading(false);
     setModalAddOpened(false);
@@ -104,16 +119,16 @@ export function GlobalSettings() {
 
   const confirmRemoveUser = async () => {
     setLoading(true);
-    if (storageEngine instanceof FirebaseStorageEngine) {
+    if (storageEngine && isCloudStorageEngine(storageEngine)) {
       await storageEngine.removeAdminUser(userToRemove);
       const adminUsers = await storageEngine.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email) || []);
+      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null) || []);
     }
     setModalRemoveOpened(false);
     setLoading(false);
   };
 
-  const storageEngineIsFirebase = useMemo(() => storageEngine instanceof FirebaseStorageEngine, [storageEngine]);
+  const storageEngineIsCloud = useMemo(() => storageEngine && isCloudStorageEngine(storageEngine), [storageEngine]);
 
   return (
     <>
@@ -127,11 +142,11 @@ export function GlobalSettings() {
                 <Box>
                   <Text>Authentication is currently disabled.</Text>
                 </Box>
-                <Tooltip label="You can only enable auth when using Firebase" disabled={storageEngineIsFirebase}>
+                <Tooltip label="You can only enable auth when using a cloud storage engine (Firebase/Supabase)" disabled={storageEngineIsCloud}>
                   <Button
-                    onClick={(event) => (!storageEngineIsFirebase ? event.preventDefault() : handleEnableAuth())}
+                    onClick={(event) => (!storageEngineIsCloud ? event.preventDefault() : handleEnableAuth())}
                     color="green"
-                    data-disabled={!storageEngineIsFirebase ? true : undefined}
+                    data-disabled={!storageEngineIsCloud ? true : undefined}
                     style={{ '&[dataDisabled]': { pointerEvents: 'all' } }}
                   >
                     Enable Authentication
@@ -176,7 +191,7 @@ export function GlobalSettings() {
         <Box component="form" onSubmit={(form.onSubmit(() => handleAddUser()))}>
           <TextInput
             leftSection={<IconAt />}
-            placeholder="User Gmail Account"
+            placeholder="User Email Address"
             {...form.getInputProps('email')}
           />
           <Flex mt={30} justify="right">

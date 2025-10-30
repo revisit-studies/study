@@ -72,4 +72,6 @@ export interface ParticipantData {
   } | false;
   /** The component blocks that the participant entered. */
   participantTags: string[];
+  /** The stage of the participant in the study. */
+  stage: string;
 }

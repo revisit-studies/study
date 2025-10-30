@@ -19,9 +19,9 @@
         "logoPath": "revisitAssets/revisitLogoSquare.svg",
         "withProgressBar": true,
         "autoDownloadStudy": false,
-        "sidebar": true,
+        "withSidebar": true,
         "nextOnEnter": true,
-        "recordStudyAudio": true
+        "recordAudio": true
     },
     "components": {
         "B0-obscured": {

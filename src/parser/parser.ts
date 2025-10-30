@@ -1,4 +1,5 @@
 import Ajv from 'ajv';
+import { parseDocument } from 'yaml';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
@@ -8,11 +9,11 @@ import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap
 import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
 import { isDynamicBlock, isInheritedComponent } from './utils';
 
-const ajv1 = new Ajv();
+const ajv1 = new Ajv({ allowUnionTypes: true });
 ajv1.addSchema(globalSchema);
 const globalValidate = ajv1.getSchema<GlobalConfig>('#/definitions/GlobalConfig')!;
 
-const ajv2 = new Ajv();
+const ajv2 = new Ajv({ allowUnionTypes: true });
 ajv2.addSchema(configSchema);
 const studyValidate = ajv2.getSchema<StudyConfig>('#/definitions/StudyConfig')!;
 
@@ -187,10 +188,18 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
   let data: StudyConfig | undefined;
 
   try {
+    // Try JSON parse first
     data = JSON.parse(fileData);
     validatedData = studyValidate(data) as boolean;
   } catch {
-    validatedData = false;
+    // Try yaml parse
+    try {
+      data = parseDocument(fileData).toJSON() as StudyConfig;
+      validatedData = studyValidate(data) as boolean;
+    } catch (e) {
+      console.error('Error parsing study config file:', e);
+      validatedData = false;
+    }
   }
 
   let errors: Required<ParsedConfig<StudyConfig>>['errors'] = studyValidate.errors || [];
