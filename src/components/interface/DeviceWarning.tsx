@@ -26,9 +26,9 @@ export function DeviceWarning() {
         <IconAlertTriangle size={64} color="orange" />
         <Title order={3}> Browser or Device Not Supported </Title>
 
-        <Flex my="lg">
+        <Flex my="lg" wrap="wrap" justify="center">
           {!isBrowserAllowed && (
-          <Card shadow="sm" padding="lg" radius="md" mx="md" withBorder maw={400}>
+          <Card shadow="sm" padding="lg" radius="md" mx="md" my="md" withBorder w={400}>
             <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
               <IconBrowser size={48} color="gray" />
             </Card.Section>
@@ -56,7 +56,7 @@ export function DeviceWarning() {
           )}
 
           {!isDeviceAllowed && (
-          <Card shadow="sm" padding="lg" radius="md" mx="md" withBorder maw={400}>
+          <Card shadow="sm" padding="lg" radius="md" mx="md" my="md" withBorder w={400}>
             <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
               <IconDevices size={48} color="gray" />
             </Card.Section>
@@ -83,7 +83,7 @@ export function DeviceWarning() {
           )}
 
           {!isInputAllowed && (
-          <Card shadow="sm" padding="lg" radius="md" mx="md" withBorder maw={400}>
+          <Card shadow="sm" padding="lg" radius="md" mx="md" my="md" withBorder w={400}>
             <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
               <IconHandClick size={48} color="gray" />
             </Card.Section>
