@@ -127,7 +127,7 @@ export function ResponseSwitcher({
   }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
 
   const responseStyle = response.style || {};
-  const responseDividers = useMemo(() => response.withDivider ?? config?.withDivider ?? studyConfig.uiConfig.withDivider, [response, config, studyConfig]);
+  const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
 
   return (
     <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseStyle}>
