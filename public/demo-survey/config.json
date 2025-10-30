@@ -210,8 +210,11 @@
             "Option 2",
             "Option 3",
             "Option 4"
-          ],
-          "withDivider": true
+          ]
+        },
+        {
+          "id": "divider1",
+          "type": "divider"
         },
         {
           "id": "matrixHeaderTitle",
@@ -227,8 +230,11 @@
           "type": "likert",
           "numItems": 9,
           "rightLabel": "Like",
-          "leftLabel": "Dislike",
-          "withDivider": true
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "divider2",
+          "type": "divider"
         },
         {
           "id": "q-multi-satisfaction",
@@ -646,7 +652,11 @@
             "Option 2",
             "Option 3"
           ],
-          "withDivider": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "divider",
+          "type": "divider",
           "location": "sidebar"
         },
         {
