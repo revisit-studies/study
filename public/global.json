@@ -48,7 +48,9 @@
     "test-parser-errors",
     "test-randomization",
     "test-skip-logic",
-    "test-step-logic"
+    "test-step-logic",
+    "Custom-Stimuli"
+
   ],
   "configs": {
     "tutorial": {
@@ -218,6 +220,10 @@
     },
     "example-VLAT-adaptive": {
       "path": "example-VLAT-adaptive/config.json",
+      "test": true
+    },
+    "Custom-Stimuli":{
+      "path": "Custom-Stimuli/config.json",
       "test": true
     }
   }
