@@ -117,7 +117,8 @@ export function useNextStep() {
       );
       // Update database
       if (storageEngine) {
-        storageEngine.saveAnswers({ ...answers });
+        // Force the answers to be up to date before saving
+        storageEngine.saveAnswers({ ...answers, [identifier]: toSave });
       }
       storeDispatch(setReactiveAnswers({}));
       storeDispatch(setMatrixAnswersCheckbox(null));
