@@ -1,0 +1,492 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "MVNV Study Replication",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-26",
+    "description": "A replication of adjacency matrix tasks in a multi-variate network visualization (MVNV) study by Nobre et al., CHI 2020 (doi:10.1145/3313831.3376381). This is meant to demonstrate complex studies, but is not necessarily suitable as a `learn-by` example.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "example-mvnv/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "example-mvnv/assets/introduction.md",
+      "response": []
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "example-mvnv/assets/consent-mvnv.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "signature",
+          "prompt": "Your signature",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Please provide your signature"
+        },
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
+    "training": {
+      "type": "website",
+      "path": "example-mvnv/assets/training/mvnv-training.html",
+      "response": []
+    },
+    "task0": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Node Search on Attr"
+      },
+      "description": "NA most tweets",
+      "instruction": "**Question:** Find the North American with the most Tweets",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    },
+    "task1": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Node Search on Attr. w/ Distractors"
+      },
+      "description": "EU least likes",
+      "instruction": "**Question:** Find the European person or institution with the least likes",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    },
+    "task2": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Node Search on Top. w/ Multiple Attrs"
+      },
+      "description": "Most edges in network, few likes and tweets",
+      "instruction": "**Question:** Which person has many interactions (edges) in this network, several followers, but few tweets and likes in general?",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    },
+    "task3": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Neighbor Search on Attr"
+      },
+      "description": "Lane's EU neighbors",
+      "instruction": "**Question:** Find all of Lane's European Neighbors",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    },
+    "task4": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Neighbor Search on Attr. w/ Distractors"
+      },
+      "description": "giCentre's NA neighbors",
+      "instruction": "**Question:** Find all of giCentre's North American Neighbors",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    },
+    "task5": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Neighbor Search on Edge Attr."
+      },
+      "description": "Jeffrey's most mentioned neighbors",
+      "instruction": "**Question:** Who had the most mention interactions with Jeffrey?",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    },
+    "task6": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Neighbor Overview on Edge Attr. "
+      },
+      "description": "Alex's most mentioned neighbors",
+      "instruction": "**Question:** Does Alex have more mention interactions with North American or European accounts? Who does he have the most mentions interactions with?",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "task6",
+          "type": "radio",
+          "prompt": "Select Answer Below",
+          "options": [
+            "European",
+            "North American"
+          ],
+          "location": "sidebar"
+        },
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    },
+    "task7": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Attr. of Common Neighbors."
+      },
+      "description": "Jeffrey and Robert's common neighbor with most followers",
+      "instruction": "**Question:** Among all people who have interacted with both Jeffrey and Robert, who has the most followers?",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    },
+    "task8": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Edge Attr"
+      },
+      "description": "Evis19 and Jon's most common interaction",
+      "instruction": "**Question:** What is the most common form of interaction between Evis19 and Jon? How often has this interaction happened?",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "task8-1",
+          "prompt": "Select Answer Below",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Mentions",
+            "Retweets"
+          ]
+        },
+        {
+          "id": "task8-2",
+          "prompt": "Enter Answer Below",
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        }
+      ]
+    },
+    "task9": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Node Attr. Comparison."
+      },
+      "description": "Noeska's neighbor more friends than followers",
+      "instruction": "**Question:** Select all of Noeska’s neighbors that are people and have more friends than followers",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    },
+    "task10": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 25,
+        "taskName": "Node Attr. Comparison (Small)."
+      },
+      "description": "Thomas's neighbor more friends than followers (small)",
+      "instruction": "**Question:** Select the people who have interacted with Thomas and have more friends than followers",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    },
+    "task11": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": " Cluster and Attr. Estimation."
+      },
+      "description": "Thomas's neighbor more friends than followers (large)",
+      "instruction": "**Question:** Select the people who have interacted with Thomas and have more friends than followers",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        },
+        {
+          "id": "task11-2",
+          "prompt": "Enter Answer Below",
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        }
+      ]
+    },
+    "task12": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Attr. along Shortest Path."
+      },
+      "description": "Lane and Rob's shortest path institution + continent",
+      "instruction": "**Question:** What is the institution on a shortest path between Lane and Rob. What is its continent of origin?",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        },
+        {
+          "id": "task12-1",
+          "prompt": "Select Answer Below",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "NA",
+            "SA",
+            "EU",
+            "AS"
+          ]
+        }
+      ]
+    },
+    "task13": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 25,
+        "taskName": "Attr. along Shortest Path (Small)."
+      },
+      "description": "Jason and Jon's shortest path institution + continent",
+      "instruction": "**Question:** What is the institution on a shortest path between Jason and Jon. What is its continent of origin?",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        },
+        {
+          "id": "task13-1",
+          "prompt": "Select Answer Below",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "NA",
+            "SA",
+            "EU",
+            "AS"
+          ]
+        }
+      ]
+    },
+    "task14": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Attr. on Multiple Paths"
+      },
+      "description": "North Americans two interactions away from Sereno",
+      "instruction": "**Question:** Of the North Americans who are two interactions away from Sereno, who has been on twitter the longest?",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "iframe-task",
+          "prompt": "Selected name(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    },
+    "task15": {
+      "meta": {
+        "chart": "adj-matrix",
+        "AttrNo": 75,
+        "taskName": "Free Explore"
+      },
+      "description": "Free Explore",
+      "instruction": "**Question:** Please explore the network freely and report on your findings. Is there anything surprising or particularly interesting in the network?",
+      "type": "website",
+      "path": "example-mvnv/assets/index.html",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "task15",
+          "prompt": "Enter Findings Below",
+          "location": "sidebar",
+          "type": "longText"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "consent",
+      "training",
+      {
+        "order": "latinSquare",
+        "components": [
+          {
+            "order": "latinSquare",
+            "components": [
+              "task0",
+              "task1"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "components": [
+              "task2",
+              "task3"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "components": [
+              "task4",
+              "task5"
+            ]
+          }
+        ]
+      },
+      {
+        "order": "fixed",
+        "components": [
+          "task6",
+          {
+            "order": "latinSquare",
+            "components": [
+              "task7",
+              "task8"
+            ]
+          },
+          "task9",
+          "task10"
+        ]
+      },
+      {
+        "order": "latinSquare",
+        "components": [
+          "task11",
+          "task12",
+          "task13",
+          "task14",
+          "task15"
+        ]
+      }
+    ]
+  }
+}

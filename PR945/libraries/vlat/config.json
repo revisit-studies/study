@@ -1,0 +1,1813 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json",
+  "description": "Visualization Literacy Assessment Test (VLAT) is developed to measure users' ability to read, understand, and use data visualizations to solve problems. The VLAT consists of 12 data visualizations and 53 multiple-choice questions. This library contains 53 components, each corresponding to a question of the VLAT. It also includes a sequence of all 53 components (the full VLAT).",
+  "reference": "S. Lee, S.-H. Kim, and B. C. Kwon, \"VLAT: Development of a Visualization Literacy Assessment Test,\" IEEE Transactions on Visualization and Computer Graphics, vol. 23, no. 1, pp. 551-560, Jan. 2017",
+  "doi": "10.1109/TVCG.2016.2598920",
+  "baseComponents": {
+    "line": {
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT1.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000
+    },
+    "bar": {
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT2.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000
+    },
+    "stackbar": {
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT3.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000
+    },
+    "stackbar100": {
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT4.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000
+    },
+    "pie": {
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT5.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000
+    },
+    "histogram": {
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT6.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000
+    },
+    "scatterplot": {
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT7.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000
+    },
+    "area": {
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT8.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000
+    },
+    "stackarea": {
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT9.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000
+    },
+    "bubble": {
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT10.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000
+    },
+    "map": {
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT11.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000
+    },
+    "treemap": {
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT12.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "nextButtonDisableTime": 25000
+    }
+  },
+  "components": {
+    "line-value": {
+      "baseComponent": "line",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "line",
+        "originID": 1,
+        "task": "Retrieve Value",
+        "CVR": 1,
+        "P": 0.95,
+        "D": 0.07
+      },
+      "instruction": "What was the price of a barrel of oil in February 2015?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-line-value",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "57.36",
+            "47.82",
+            "50.24",
+            "39.72",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "line-extremum": {
+      "baseComponent": "line",
+      "meta": {
+        "trueAnswer": 3,
+        "chartType": "line",
+        "originID": 2,
+        "task": "Find Extremum",
+        "CVR": 1,
+        "P": 0.97,
+        "D": 0.06
+      },
+      "instruction": "In which month was the price of a barrel of oil the lowest in 2015?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-line-extremum",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "March",
+            "May",
+            "July",
+            "December",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "line-range": {
+      "baseComponent": "line",
+      "meta": {
+        "trueAnswer": 3,
+        "chartType": "line",
+        "originID": 3,
+        "task": "Determine Range",
+        "CVR": 1,
+        "P": 0.56,
+        "D": 0.66
+      },
+      "instruction": "What was the price range of a barrel of oil in 2015?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-line-range",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "$35 - $65",
+            "$48.36 - $60.95",
+            "$37.04 - $48.36",
+            "$37.04 - $60.95",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "line-trends": {
+      "baseComponent": "line",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "line",
+        "originID": 4,
+        "task": "Find Correlations/Trends",
+        "CVR": 1,
+        "P": 0.98,
+        "D": 0.03
+      },
+      "instruction": "Over the course of the second half of 2015, the price of a barrel of oil was",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-line-trends",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "Rising",
+            "Falling",
+            "Staying",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "line-comparisons": {
+      "baseComponent": "line",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "line",
+        "originID": 5,
+        "task": "Make Comparisons",
+        "CVR": 0.2,
+        "P": 0.77,
+        "D": 0.44
+      },
+      "instruction": "About how much did the price of a barrel of oil fall from April to September in 2015?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-line-comparisons",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "$4",
+            "$15",
+            "$17",
+            "$45",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "bar-value": {
+      "baseComponent": "bar",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "bar",
+        "originID": 6,
+        "task": "Retrieve Value",
+        "CVR": 1,
+        "P": 0.88,
+        "D": 0.21
+      },
+      "instruction": "What is the average internet speed in Japan?",
+      "instructionLocation": "sidebar",
+      "nextButtonDisableTime": 5000,
+      "response": [
+        {
+          "id": "res-bar-value",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "10 Mbps",
+            "14 Mbps",
+            "15 Mbps",
+            "16 Mbps",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "bar-extremum": {
+      "baseComponent": "bar",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "bar",
+        "originID": 7,
+        "task": "Find Extremum",
+        "CVR": 1,
+        "P": 0.98,
+        "D": 0.05
+      },
+      "instruction": "In which country is the average internet speed the fastest in Asia?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-bar-extremum",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "China",
+            "Hong Kong",
+            "South Korea",
+            "Vietnam",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "bar-range": {
+      "baseComponent": "bar",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "bar",
+        "originID": 8,
+        "task": "Determine Range",
+        "CVR": 0.6,
+        "P": 0.54,
+        "D": 0.61
+      },
+      "instruction": "What is the range of the average internet speed in Asia?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-bar-range",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "0 - 22 Mbps",
+            "2 - 20.5 Mbps",
+            "3 - 20 Mbps",
+            "3.4 - 7.8 Mbps",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "bar-comparisons": {
+      "baseComponent": "bar",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "bar",
+        "originID": 9,
+        "task": "Make Comparisons",
+        "CVR": 0.2,
+        "P": 0.4,
+        "D": 0.23
+      },
+      "instruction": "How many countries in Asia have an average internet speed that is slower than that of Thailand?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-bar-comparisons",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "5 Countries",
+            "6 Countries",
+            "7 Countries",
+            "8 Countries",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackbar-value-absolute": {
+      "baseComponent": "stackbar",
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "stackbar",
+        "originID": 10,
+        "task": "Retrieve Value (Absolute Value)",
+        "CVR": 0.2,
+        "P": 0.38,
+        "D": 0.66
+      },
+      "instruction": "What is the cost of peanuts in Las Vegas?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackbar-value-absolute",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "$12",
+            " $16.7",
+            "$23.4",
+            "$35.4",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackbar-value-relative": {
+      "baseComponent": "stackbar",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "stackbar",
+        "originID": 11,
+        "task": "Retrieve Value (Relative Value)",
+        "CVR": 0.2,
+        "P": 0.36,
+        "D": 0.48
+      },
+      "instruction": "About what is the ratio of the cost of a sandwich to the total cost of room service in Seattle?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackbar-value-relative",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "1 to 10",
+            "2 to 10",
+            "4 to 10",
+            "6 to 10",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackbar-extremum": {
+      "baseComponent": "stackbar",
+      "meta": {
+        "trueAnswer": 3,
+        "chartType": "stackbar",
+        "originID": 12,
+        "task": "Find Extremum",
+        "CVR": 0.2,
+        "P": 0.69,
+        "D": 0.45
+      },
+      "instruction": "In which city is the cost of soda the highest?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackbar-extremum",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "New York City",
+            "Las Vegas",
+            "Atlanta",
+            "Washington D.C.",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackbar-comparisons-absolute": {
+      "baseComponent": "stackbar",
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "stackbar",
+        "originID": 14,
+        "task": "Make Comparisons (Absolute Value)",
+        "CVR": 0.2,
+        "P": 0.59,
+        "D": 0.52
+      },
+      "instruction": "The cost of vodka in Atlanta is higher than that of Honolulu.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackbar-comparisons-absolute",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackbar-comparisons-relative": {
+      "baseComponent": "stackbar",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "stackbar",
+        "originID": 15,
+        "task": "Make Comparisons (Relative Value)",
+        "CVR": 0.2,
+        "P": 0.47,
+        "D": 0.32
+      },
+      "instruction": "The ratio of the cost of Soda to the cost of Water in Orlando is higher than in that of Washington D.C.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackbar-comparisons-relative",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackbar100-value-relative": {
+      "baseComponent": "stackbar100",
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "100% stackbar",
+        "originID": 16,
+        "task": "Retrieve Value (Relative Value)",
+        "CVR": 1,
+        "P": 0.49,
+        "D": 0.57
+      },
+      "instruction": "What is the approval rating of Republicans among the people who have the education level of Postgraduate Study?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackbar100-value-relative",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "38%",
+            "47%",
+            "53%",
+            "62%",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackbar100-extremum": {
+      "baseComponent": "stackbar100",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "100% stackbar",
+        "originID": 17,
+        "task": "Find Extremum (Relative Value)",
+        "CVR": 0.6,
+        "P": 0.9,
+        "D": 0.21
+      },
+      "instruction": "What is the education level of people in which the Democrats have the lowest approval rating?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackbar100-extremum",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "High School Graduate or Less",
+            "Some College Degree",
+            "College Graduate",
+            "Postgraduate study",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackbar100-comparisons-relative": {
+      "baseComponent": "stackbar100",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "100% stackbar",
+        "originID": 18,
+        "task": "Make Comparisons (Relative Value)",
+        "CVR": 1,
+        "P": 0.54,
+        "D": 0.54
+      },
+      "instruction": "The approval rating of Republicans for the people who have the education level of Some College Degree is lower than that for the people who have the education level of Postgraduate Study.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackbar100-comparisons-relative",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "pie-value-relative": {
+      "baseComponent": "pie",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "pie",
+        "originID": 19,
+        "task": "Retrieve Value (Relative Value)",
+        "CVR": 0.6,
+        "P": 0.72,
+        "D": 0.34
+      },
+      "instruction": "About what is the global smartphone market share of Samsung?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-pie-value-relative",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "15%",
+            "25%",
+            "33%",
+            "50%",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "pie-extremum": {
+      "baseComponent": "pie",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "pie",
+        "originID": 20,
+        "task": "Find Extremum (Relative Value)",
+        "CVR": 0.6,
+        "P": 0.98,
+        "D": 0.03
+      },
+      "instruction": "In which company is the global smartphone market share the smallest?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-pie-extremum",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "Apple",
+            "Xiaomi",
+            "Lenovo",
+            "Others",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "pie-comparisons-relative": {
+      "baseComponent": "pie",
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "pie",
+        "originID": 21,
+        "task": "Make Comparisons (Relative Value)",
+        "CVR": 0.6,
+        "P": 1,
+        "D": 0
+      },
+      "instruction": "The global smartphone market share of Apple is larger than that of Huawei.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-pie-comparisons-relative",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "histogram-value-derived": {
+      "baseComponent": "histogram",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "histogram",
+        "originID": 22,
+        "task": "Retrieve Value (Derived Value)",
+        "CVR": 1,
+        "P": 0.84,
+        "D": 0.26
+      },
+      "instruction": "How many people have rated the taxi between 4.0 and 4.2?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-histogram-value-derived",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "145",
+            "153",
+            "200",
+            "240",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "histogram-extremum-derived": {
+      "baseComponent": "histogram",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "histogram",
+        "originID": 23,
+        "task": "Find Extremum (Derived Value)",
+        "CVR": 1,
+        "P": 0.94,
+        "D": 0.06
+      },
+      "instruction": "What is the rating that the people have rated the taxi the most?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-histogram-extremum-derived",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "4.2-4.4",
+            "4.4-4.6",
+            "4.6-4.8",
+            "4.8-5.0",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "histogram-comparisons-derived": {
+      "baseComponent": "histogram",
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "histogram",
+        "originID": 25,
+        "task": "Make Comparisons (Derived Value)",
+        "CVR": 1,
+        "P": 0.86,
+        "D": 0.18
+      },
+      "instruction": "More people have rated the taxi between 4.6 and 4.8 than between 4.2 and 4.4.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-histogram-comparisons-derived",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "scatterplot-value": {
+      "baseComponent": "scatterplot",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "scatterplot",
+        "originID": 27,
+        "task": "Retrieve Value",
+        "CVR": 1,
+        "P": 0.85,
+        "D": 0.27
+      },
+      "instruction": "What is the weight for the person who is 165.1 cm tall?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-scatterplot-value",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "53.9kg",
+            "67.7kg",
+            "70.5kg",
+            "82.7kg",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "scatterplot-extremum": {
+      "baseComponent": "scatterplot",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "scatterplot",
+        "originID": 28,
+        "task": "Find Extremum",
+        "CVR": 1,
+        "P": 0.76,
+        "D": 0.39
+      },
+      "instruction": "What is the height for the tallest person among the 85 males?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-scatterplot-extremum",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "175.3cm",
+            "192cm",
+            "197.1cm",
+            "200cm",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "scatterplot-range": {
+      "baseComponent": "scatterplot",
+      "meta": {
+        "trueAnswer": 3,
+        "chartType": "scatterplot",
+        "originID": 29,
+        "task": "Determine Range",
+        "CVR": 0.6,
+        "P": 0.53,
+        "D": 0.49
+      },
+      "instruction": "What is the range in weight for the 85 males?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-scatterplot-range",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "40 - 130kg",
+            "62.3 - 90.9kg",
+            "53.9 - 102.3kg",
+            "53.9 - 123.6kg",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "scatterplot-anomalies": {
+      "baseComponent": "scatterplot",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "scatterplot",
+        "originID": 31,
+        "task": "Find Anomalies",
+        "CVR": 0.6,
+        "P": 0.42,
+        "D": 0.29
+      },
+      "instruction": "What is the height for a person who lies outside the others the most?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-scatterplot-anomalies",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "167.4cm",
+            "175.3cm",
+            "193cm",
+            "197.1cm",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "scatterplot-clusters": {
+      "baseComponent": "scatterplot",
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "scatterplot",
+        "originID": 32,
+        "task": "Find Clusters",
+        "CVR": 0.2,
+        "P": 0.9,
+        "D": 0.23
+      },
+      "instruction": "A group of males are gathered around the height of 176 cm and the weight of 70 kg.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-scatterplot-clusters",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "scatterplot-correlations": {
+      "baseComponent": "scatterplot",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "scatterplot",
+        "originID": 33,
+        "task": "Find Correlations/Trends",
+        "CVR": 1,
+        "P": 0.52,
+        "D": 0.66
+      },
+      "instruction": "There is a negative linear relationship between the height and the weight of the 85 males.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-scatterplot-correlations",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "scatterplot-comparisons": {
+      "baseComponent": "scatterplot",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "scatterplot",
+        "originID": 34,
+        "task": "Make Comparisons",
+        "CVR": 0.6,
+        "P": 0.79,
+        "D": 0.2
+      },
+      "instruction": "The weights for males with the height of 188 cm are all the same.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-scatterplot-comparisons",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "area-value": {
+      "baseComponent": "area",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "area",
+        "originID": 35,
+        "task": "Retrieve Value",
+        "CVR": 1,
+        "P": 0.75,
+        "D": 0.34
+      },
+      "instruction": "What was the average price of a pound of coffee beans in September 2013?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-area-value",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "$4.9",
+            "$5.0",
+            "$5.1",
+            "$5.2",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "area-extremum": {
+      "baseComponent": "area",
+      "meta": {
+        "trueAnswer": 3,
+        "chartType": "area",
+        "originID": 36,
+        "task": "Find Extremum",
+        "CVR": 1,
+        "P": 0.44,
+        "D": 0.33
+      },
+      "instruction": "When was the average price of a pound of coffee beans at minimum?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-area-extremum",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "April 2013",
+            "September 2013",
+            "June 2014",
+            "December 2014",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "area-range": {
+      "baseComponent": "area",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "area",
+        "originID": 37,
+        "task": "Determine Range",
+        "CVR": 0.6,
+        "P": 0.38,
+        "D": 0.31
+      },
+      "instruction": "What was the range of the average price of a pound of coffee beans between January 2013 and December 2014?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-area-range",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "$4.4 - $6.2",
+            "$4.6 - $5.9",
+            "$4.6 - $6.0",
+            "$4.6 - $6.1",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "area-trends": {
+      "baseComponent": "area",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "area",
+        "originID": 38,
+        "task": "Find Correlations/Trends",
+        "CVR": 1,
+        "P": 0.94,
+        "D": 0.14
+      },
+      "instruction": "Over the course of 2013, the average price of a pound of coffee beans was",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-area-trends",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "Rising",
+            "Falling",
+            "Staying",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackarea-value-absolute": {
+      "baseComponent": "stackarea",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "stackarea",
+        "originID": 40,
+        "task": "Retrieve Value (Absolute Value)",
+        "CVR": 0.2,
+        "P": 0.15,
+        "D": 0.29
+      },
+      "instruction": "What was the number of girls named 'Amelia' in 2010 in the UK?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackarea-value-absolute",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "1500",
+            "3800",
+            "4200",
+            "8000",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackarea-value-relative": {
+      "baseComponent": "stackarea",
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "stackarea",
+        "originID": 41,
+        "task": "Retrieve Value (Relative Value)",
+        "CVR": 0.6,
+        "P": 0.25,
+        "D": 0.29
+      },
+      "instruction": "About what was the ratio of the number of girls named 'Olivia' to those named 'Isla' in 2014 in the UK?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackarea-value-relative",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "1 to 1",
+            "1 to 2",
+            "1 to 3",
+            "1 to 4",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackarea-extremum": {
+      "baseComponent": "stackarea",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "stackarea",
+        "originID": 42,
+        "task": "Find Extremum",
+        "CVR": 0.6,
+        "P": 0.97,
+        "D": 0.04
+      },
+      "instruction": "Over the course of years between 2009 and 2014, when was the number of girls named 'Amelia' at the maximum?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackarea-extremum",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "2009",
+            "2011",
+            "2012",
+            "2014",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackarea-trends": {
+      "baseComponent": "stackarea",
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "stackarea",
+        "originID": 44,
+        "task": "Find Correlations/Trends",
+        "CVR": 1,
+        "P": 0.96,
+        "D": 0.09
+      },
+      "instruction": "The number of girls named 'Isla' was __________ from 2009 to 2012.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackarea-trends",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "Rising",
+            "Falling",
+            "Staying",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackarea-comparisons": {
+      "baseComponent": "stackarea",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "stackarea",
+        "originID": 45,
+        "task": "Make Comparisons (Absolute Value)",
+        "CVR": 0.6,
+        "P": 0.2,
+        "D": 0.17
+      },
+      "instruction": "In the UK, the number of girls named 'Amelia' in 2014 was more than it was in 2013.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackarea-comparisons",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "stackarea-comparisons-relative": {
+      "baseComponent": "stackarea",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "stackarea",
+        "originID": 46,
+        "task": "Make Comparisons (Relative Value)",
+        "CVR": 0.2,
+        "P": 0.24,
+        "D": 0.2
+      },
+      "instruction": "Over the course of years between 2009 and 2014, the number of girls named 'Isla' was always more than 'Olivia'.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-stackarea-comparisons-relative",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "bubble-value": {
+      "baseComponent": "bubble",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "bubble",
+        "originID": 47,
+        "task": "Retrieve Value",
+        "CVR": 1,
+        "P": 0.41,
+        "D": 0.46
+      },
+      "instruction": "What is the total length of the metro system in Beijing?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/vlat/assets/VLAT10.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-bubble-value",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "330km",
+            "400km",
+            "530km",
+            "560km",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "bubble-extremum": {
+      "baseComponent": "bubble",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "bubble",
+        "originID": 48,
+        "task": "Find Extremum",
+        "CVR": 1,
+        "P": 0.69,
+        "D": 0.41
+      },
+      "instruction": "Which city's metro system has the largest number of stations?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-bubble-extremum",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "Seoul",
+            "Beijing",
+            "New York City",
+            "Shanghai",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "bubble-range": {
+      "baseComponent": "bubble",
+      "meta": {
+        "trueAnswer": 3,
+        "chartType": "bubble",
+        "originID": 49,
+        "task": "Determine Range",
+        "CVR": 0.6,
+        "P": 0.29,
+        "D": 0.46
+      },
+      "instruction": "What is the range of the total length of the metro systems?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-bubble-range",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "150 - 600 km",
+            "240 - 380 km",
+            "240 - 560 km",
+            "180 - 560 km",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "bubble-anomalies": {
+      "baseComponent": "bubble",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "bubble",
+        "originID": 51,
+        "task": "Find Anomalies",
+        "CVR": 0.2,
+        "P": 0.53,
+        "D": 0.32
+      },
+      "instruction": "Which city's metro system does lie outside the relationship between the total system length and the number of stations most?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-bubble-anomalies",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "Tokyo",
+            "New York City",
+            "Beijing",
+            "London",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "bubble-clusters": {
+      "baseComponent": "bubble",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "bubble",
+        "originID": 52,
+        "task": "Find Clusters",
+        "CVR": 0.2,
+        "P": 0.59,
+        "D": 0.5
+      },
+      "instruction": "A group of the metro systems of the world has approximately 300 stations and around a 200 km system length.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-bubble-clusters",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "bubble-trends": {
+      "baseComponent": "bubble",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "bubble",
+        "originID": 53,
+        "task": "Find Correlations/Trends",
+        "CVR": 0.2,
+        "P": 0.26,
+        "D": 0.09
+      },
+      "instruction": "In general, the ridership of the metro system increases as the number of stations increases.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-bubble-trends",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "bubble-comparisons": {
+      "baseComponent": "bubble",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "bubble",
+        "originID": 54,
+        "task": "Make Comparisons",
+        "CVR": 1,
+        "P": 0.8,
+        "D": 0.33
+      },
+      "instruction": "The metro system in Shanghai has more ridership than the metro system in Beijing.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-bubble-comparisons",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "map-value-approximate": {
+      "baseComponent": "map",
+      "meta": {
+        "trueAnswer": 2,
+        "chartType": "map",
+        "originID": 55,
+        "task": "Retrieve Value (Approximate Value)",
+        "CVR": 0.6,
+        "P": 0.24,
+        "D": 0.01
+      },
+      "instruction": "What was the unemployment rate for Indiana (IN) in 2015?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-map-value-approximate",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "1.1 - 2.3%",
+            "2.3 - 3.4%",
+            "3.4 - 4.6%",
+            "4.6 - 5.7%",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "map-extremum": {
+      "baseComponent": "map",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "map",
+        "originID": 56,
+        "task": "Find Extremum (Approximate Value)",
+        "CVR": 0.6,
+        "P": 0.97,
+        "D": 0.06
+      },
+      "instruction": "In which state was the unemployment rate the highest in 2015?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-map-extremum",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "Alaska (AK)",
+            "New Mexico (NM)",
+            "Florida (FL)",
+            "New York (NY)",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "map-comparisons": {
+      "baseComponent": "map",
+      "meta": {
+        "trueAnswer": 0,
+        "chartType": "map",
+        "originID": 57,
+        "task": "Make Comparisons (Approximate Value)",
+        "CVR": 0.6,
+        "P": 0.92,
+        "D": 0.15
+      },
+      "instruction": "In 2015, the unemployment rate for Washington (WA) was higher than that of Wisconsin (WI).",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-map-comparisons",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "treemap-extremum-relative": {
+      "baseComponent": "treemap",
+      "meta": {
+        "trueAnswer": 3,
+        "chartType": "treemap",
+        "originID": 59,
+        "task": "Find Extremum (Relative Value)",
+        "CVR": 0.6,
+        "P": 0.68,
+        "D": 0.37
+      },
+      "instruction": "For which website was the number of unique visitors the largest in 2010?",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-treemap-extremum-relative",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "Facebook",
+            "Amazon",
+            "Bing",
+            "Google",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "treemap-comparisons-relative": {
+      "baseComponent": "treemap",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "treemap",
+        "originID": 60,
+        "task": "Make Comparisons (Relative Value)",
+        "CVR": 0.2,
+        "P": 0.42,
+        "D": 0.38
+      },
+      "instruction": "The number of unique visitors for Amazon was more than that of Yahoo in 2010.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-treemap-comparisons-relative",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    },
+    "treemap-hierarchical": {
+      "baseComponent": "treemap",
+      "meta": {
+        "trueAnswer": 1,
+        "chartType": "treemap",
+        "originID": 61,
+        "task": "Identify the Hierarchical Structure",
+        "CVR": 1,
+        "P": 0.92,
+        "D": 0.13
+      },
+      "instruction": "Samsung is nested in the Financial category.",
+      "instructionLocation": "sidebar",
+      "response": [
+        {
+          "id": "res-treemap-hierarchical",
+          "type": "radio",
+          "prompt": "Your answer (do not skip more than 3 times)",
+          "required": true,
+          "location": "sidebar",
+          "options": [
+            "True",
+            "False",
+            "Skip"
+          ]
+        }
+      ]
+    }
+  },
+  "sequences": {
+    "full": {
+      "id": "vlat",
+      "order": "latinSquare",
+      "components": [
+        {
+          "id": "vlat-line",
+          "order": "latinSquare",
+          "components": [
+            "line-value",
+            "line-extremum",
+            "line-range",
+            "line-trends",
+            "line-comparisons"
+          ]
+        },
+        {
+          "id": "vlat-bar",
+          "order": "latinSquare",
+          "components": [
+            "bar-value",
+            "bar-extremum",
+            "bar-range",
+            "bar-comparisons"
+          ]
+        },
+        {
+          "id": "vlat-stackbar",
+          "order": "latinSquare",
+          "components": [
+            "stackbar-value-absolute",
+            "stackbar-value-relative",
+            "stackbar-extremum",
+            "stackbar-comparisons-absolute",
+            "stackbar-comparisons-relative"
+          ]
+        },
+        {
+          "id": "vlat-stackbar100",
+          "order": "latinSquare",
+          "components": [
+            "stackbar100-value-relative",
+            "stackbar100-extremum",
+            "stackbar100-comparisons-relative"
+          ]
+        },
+        {
+          "id": "vlat-pie",
+          "order": "latinSquare",
+          "components": [
+            "pie-value-relative",
+            "pie-extremum",
+            "pie-comparisons-relative"
+          ]
+        },
+        {
+          "id": "vlat-histogram",
+          "order": "latinSquare",
+          "components": [
+            "histogram-value-derived",
+            "histogram-extremum-derived",
+            "histogram-comparisons-derived"
+          ]
+        },
+        {
+          "id": "vlat-scatterplot",
+          "order": "latinSquare",
+          "components": [
+            "scatterplot-value",
+            "scatterplot-extremum",
+            "scatterplot-range",
+            "scatterplot-anomalies",
+            "scatterplot-clusters",
+            "scatterplot-correlations",
+            "scatterplot-comparisons"
+          ]
+        },
+        {
+          "id": "vlat-area",
+          "order": "latinSquare",
+          "components": [
+            "area-value",
+            "area-extremum",
+            "area-range",
+            "area-trends"
+          ]
+        },
+        {
+          "id": "vlat-stackarea",
+          "order": "latinSquare",
+          "components": [
+            "stackarea-value-absolute",
+            "stackarea-value-relative",
+            "stackarea-extremum",
+            "stackarea-trends",
+            "stackarea-comparisons",
+            "stackarea-comparisons-relative"
+          ]
+        },
+        {
+          "id": "vlat-bubble",
+          "order": "latinSquare",
+          "components": [
+            "bubble-value",
+            "bubble-extremum",
+            "bubble-range",
+            "bubble-anomalies",
+            "bubble-clusters",
+            "bubble-trends",
+            "bubble-comparisons"
+          ]
+        },
+        {
+          "id": "vlat-map",
+          "order": "latinSquare",
+          "components": [
+            "map-value-approximate",
+            "map-extremum",
+            "map-comparisons"
+          ]
+        },
+        {
+          "id": "vlat-treemap",
+          "order": "latinSquare",
+          "components": [
+            "treemap-extremum-relative",
+            "treemap-comparisons-relative",
+            "treemap-hierarchical"
+          ]
+        }
+      ]
+    }
+  }
+}
