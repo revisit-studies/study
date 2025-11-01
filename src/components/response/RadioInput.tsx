@@ -34,6 +34,7 @@ export function RadioInput({
     leftLabel,
     rightLabel,
     secondaryText,
+    infoText,
     horizontal,
     withOther,
     options,
@@ -51,12 +52,12 @@ export function RadioInput({
   return (
     <Radio.Group
       name={`radioInput${response.id}`}
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       key={response.id}
       {...answer}
-      // This overrides the answers error. Which..is bad?
       error={error}
+      errorProps={{ c: required ? 'red' : 'orange' }}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Group gap="lg" align="flex-end" mt={horizontal ? 0 : 'sm'}>

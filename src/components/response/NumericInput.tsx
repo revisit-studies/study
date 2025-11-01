@@ -20,24 +20,23 @@ export function NumericInput({
   const {
     prompt,
     required,
-    min,
-    max,
     placeholder,
     secondaryText,
+    infoText,
   } = response;
 
   return (
     <NumberInput
       disabled={disabled}
       placeholder={placeholder}
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       radius="md"
       size="md"
-      min={min}
-      max={max}
       {...answer}
       error={generateErrorMessage(response, answer)}
+      withErrorStyles={required}
+      errorProps={{ c: required ? 'red' : 'orange' }}
       classNames={{ input: classes.fixDisabled }}
     />
   );

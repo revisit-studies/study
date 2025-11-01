@@ -3,7 +3,7 @@ import {
   Text, Flex, Group, Space, Tooltip, Badge, RingProgress, Stack,
 } from '@mantine/core';
 import {
-  JSX, useCallback, useMemo, useState,
+  JSX, useCallback, useEffect, useMemo, useState,
 } from 'react';
 import { useParams } from 'react-router';
 import {
@@ -19,10 +19,9 @@ import {
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { participantName } from '../../../utils/participantName';
 import { AllTasksTimeline } from '../replay/AllTasksTimeline';
-import { humanReadableDuration } from '../../../utils/humanReadableDuration';
+import { youtubeReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
-import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 
 function formatDate(date: Date): string | JSX.Element {
@@ -38,24 +37,31 @@ export function TableView({
   studyConfig,
   refresh,
   width,
+  stageColors,
+  selectedParticipants,
+  onSelectionChange,
 }: {
   visibleParticipants: ParticipantData[];
   studyConfig: StudyConfig;
   refresh: () => Promise<Record<number, ParticipantData>>;
   width: number;
+  stageColors: Record<string, string>;
+  selectedParticipants: ParticipantData[];
+  onSelectionChange: (participants: ParticipantData[]) => void;
 }) {
   const { studyId } = useParams();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
 
-  const selectedParticipants = useMemo(() => Object.keys(checked).filter((v) => checked[v])
-    .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
-    .filter((p) => p !== undefined) as ParticipantData[], [checked, visibleParticipants]);
+  useEffect(() => {
+    const newSelectedParticipants = Object.keys(checked).filter((v) => checked[v])
+      .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
+      .filter((p) => p !== undefined) as ParticipantData[];
+    onSelectionChange(newSelectedParticipants);
+  }, [checked, visibleParticipants, onSelectionChange]);
 
   const handleRefresh = useCallback(async () => {
     await refresh();
   }, [refresh]);
-
-  const selectedData = useMemo(() => (selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants), [selectedParticipants, visibleParticipants]);
 
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => [
     {
@@ -94,6 +100,35 @@ export function TableView({
       },
     },
     { accessorKey: 'participantIndex', header: '#', size: 50 },
+    {
+      accessorKey: 'stage',
+      header: 'Stage',
+      size: 120,
+      Cell: ({ cell }: { cell: MrtCell<ParticipantData, string> }) => {
+        const stageName = cell.getValue();
+        if (!stageName || stageName === '') {
+          return (
+            <Badge
+              color="gray"
+              variant="light"
+              size="md"
+            >
+              N/A
+            </Badge>
+          );
+        }
+        const stageColor = stageColors[stageName] || '#F05A30';
+        return (
+          <Badge
+            color={stageColor}
+            variant="filled"
+            size="md"
+          >
+            {stageName}
+          </Badge>
+        );
+      },
+    },
     { accessorKey: 'participantId', header: 'ID' },
     ...(studyConfig.uiConfig.participantNameField ? [{ accessorFn: (row: ParticipantData) => participantName(row, studyConfig), header: 'Name' }] : []),
     {
@@ -108,7 +143,7 @@ export function TableView({
             leftSection={<IconHourglassEmpty width={18} height={18} style={{ paddingTop: 1 }} />}
             pb={1}
           >
-            {`${humanReadableDuration(+cell.getValue()) || 'N/A'}`}
+            {`${youtubeReadableDuration(+cell.getValue()) || 'N/A'}`}
           </Badge>
         ) : 'Incomplete'
       ),
@@ -155,7 +190,7 @@ export function TableView({
       Cell: ({ cell }: {cell: MrtCell<ParticipantData, ParticipantData['metadata']>}) => <MetaCell metaData={cell.getValue()} />,
     },
 
-  ], [studyConfig]);
+  ], [studyConfig, stageColors]);
 
   const table = useMantineReactTable({
     columns,
@@ -174,6 +209,11 @@ export function TableView({
     layoutMode: 'grid',
     renderDetailPanel: ({ row }) => {
       const r = row.original;
+
+      if (!r.participantId) {
+        return null;
+      }
+
       return (
         <AllTasksTimeline maxLength={undefined} studyConfig={studyConfig} studyId={studyId || ''} participantData={r} width={width - 60} />
       );
@@ -186,15 +226,8 @@ export function TableView({
     enableDensityToggle: false,
     positionToolbarAlertBanner: 'none',
     renderTopToolbarCustomActions: () => (
-      <Flex justify="space-between" mb={8} p={8}>
-        <Group>
-          <DownloadButtons
-            visibleParticipants={selectedData}
-            studyId={studyId || ''}
-            hasAudio={studyConfig?.uiConfig?.recordAudio}
-          />
-          <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
-        </Group>
+      <Flex mb={8} p={8}>
+        <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
       </Flex>
     ),
   });
@@ -204,7 +237,6 @@ export function TableView({
       <MantineReactTable
         table={table}
       />
-
     ) : (
       <>
         <Space h="xl" />

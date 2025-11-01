@@ -5,7 +5,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import {
-  IconAdjustmentsHorizontal, IconBubbleText, IconChartGridDots, IconChevronDown, IconCodePlus, IconCopyCheck, IconDots, IconGridDots, IconHtml, IconLetterCase, IconNumber123, IconRadio, IconSelect, IconSquares,
+  IconAdjustmentsHorizontal, IconBubbleText, IconChartGridDots, IconChevronDown, IconCodePlus, IconCopyCheck, IconDots, IconGridDots, IconHtml, IconLetterCase, IconDragDrop, IconNumber123, IconRadio, IconSelect, IconSquares,
 } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
@@ -190,7 +190,7 @@ export function ResponseVisualization({
     }
 
     // Categorical visualization
-    if (response.type === 'radio' || response.type === 'dropdown' || response.type === 'checkbox' || response.type === 'buttons') {
+    if (response.type === 'radio' || response.type === 'dropdown' || response.type === 'checkbox' || response.type === 'buttons' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
       const spec = {
         ...baseSpec,
         data: { values: questionData },
@@ -220,6 +220,7 @@ export function ResponseVisualization({
           {response.type === 'slider' && <IconAdjustmentsHorizontal size={20} />}
           {response.type === 'radio' && <IconRadio size={20} />}
           {response.type === 'checkbox' && <IconSquares size={20} />}
+          {(response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') && <IconDragDrop size={20} />}
           {response.type === 'matrix-radio' && <IconGridDots size={20} />}
           {response.type === 'matrix-checkbox' && <IconChartGridDots size={20} />}
           {response.type === 'buttons' && <IconCopyCheck size={20} />}
@@ -245,7 +246,7 @@ export function ResponseVisualization({
 
         <SimpleGrid cols={2} h={360}>
           <ScrollArea mih={200}>
-            {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'reactive' && response.type !== 'textOnly') ? (
+            {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'reactive' && response.type !== 'textOnly' && response.type !== 'ranking-sublist' && response.type !== 'ranking-categorical' && response.type !== 'ranking-pairwise') ? (
               <VegaLite
                 spec={vegaLiteSpec as VisualizationSpec}
                 actions={false}
@@ -262,7 +263,7 @@ export function ResponseVisualization({
                 ) : (
                   <>
                     <Text fw={700}>Response Values: </Text>
-                    {(response.type === 'textOnly') ? (
+                    {(response.type === 'textOnly' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') ? (
                       <Text>N/A</Text>
                     ) : (
                       questionData.map((d, idx) => (

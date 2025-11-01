@@ -10,6 +10,7 @@ import checkboxClasses from './css/Checkbox.module.css';
 import radioClasses from './css/Radio.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
+import { generateErrorMessage } from './utils';
 
 function CheckboxComponent({
   _choices,
@@ -68,7 +69,6 @@ function RadioGroupComponent({
   answer: { value: Record<string, string> },
   onChange: (val: string, questionKey: string) => void,
   disabled: boolean
-
 }) {
   return (
     <Radio.Group
@@ -123,6 +123,7 @@ export function MatrixInput({
     prompt,
     secondaryText,
     required,
+    infoText,
   } = response;
 
   const _choiceStringToColumns: Record<string, string[]> = {
@@ -161,11 +162,13 @@ export function MatrixInput({
     storeDispatch(setMatrixAnswersCheckbox(payload));
   };
 
+  const error = generateErrorMessage(response, answer);
+
   const _n = _choices.length;
   const _m = orderedQuestions.length;
   return (
     <>
-      {prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
+      {prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
       <Box
         style={{
@@ -287,6 +290,11 @@ export function MatrixInput({
           ))}
         </div>
       </Box>
+      {error && (
+        <Text c={required ? 'red' : 'orange'} size="sm" mt="xs">
+          {error}
+        </Text>
+      )}
     </>
   );
 }

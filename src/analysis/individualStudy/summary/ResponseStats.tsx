@@ -79,7 +79,7 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
       style: { overflow: 'hidden' },
     },
     mantineTableContainerProps: {
-      style: { overflow: 'hidden' },
+      style: { overflow: 'auto' },
     },
   });
 

@@ -197,6 +197,11 @@ export class LocalStorageEngine extends StorageEngine {
     this.studyDatabase.setItem(key, modes);
   }
 
+  protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
+    const key = `${this.collectionPrefix}${studyId}/modes`;
+    await this.studyDatabase.setItem(key, modesDocument);
+  }
+
   protected async _getAudioUrl(task: string, participantId?: string) {
     await this.verifyStudyDatabase();
     if (this.studyId === undefined) {

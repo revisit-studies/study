@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "SUS: System Usability Scale",
     "version": "1.0.0",
@@ -18,7 +18,7 @@
     "contactEmail": "",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
-    "withSidebar": true
+    "withSidebar": false
   },
   "importedLibraries": [
     "sus"

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "HTML as a Stimulus with Screen Recording",
     "version": "pilot",
@@ -29,6 +29,22 @@
       "path": "demo-screen-recording/assets/introduction.md",
       "response": []
     },
+    "external_website": {
+      "type": "website",
+      "path": "https://www.revisit.dev",
+      "response": [],
+      "previousButton": true,
+      "recordAudio": true,
+      "recordScreen": false
+    },
+    "external_website2": {
+      "type": "website",
+      "path": "https://www.revisit.dev",
+      "response": [],
+      "previousButton": true,
+      "recordAudio": true,
+      "recordScreen": true
+    },
     "barChart": {
       "type": "website",
       "nextButtonLocation": "sidebar",
@@ -49,19 +65,6 @@
           "max": 7
         }
       ]
-    },
-    "external_website": {
-      "type": "website",
-      "path": "https://www.revisit.dev",
-      "response": [],
-      "previousButton": true,
-      "recordScreen": true
-    },
-    "external_website2": {
-      "type": "website",
-      "path": "https://www.revisit.dev",
-      "response": [],
-      "previousButton": true
     }
   },
   "sequence": {

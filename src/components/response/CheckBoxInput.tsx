@@ -32,6 +32,7 @@ export function CheckBoxInput({
     horizontal,
     withOther,
     options,
+    infoText,
   } = response;
 
   const storedAnswer = useStoredAnswer();
@@ -45,10 +46,11 @@ export function CheckBoxInput({
 
   return (
     <Checkbox.Group
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       {...answer}
       error={error}
+      errorProps={{ c: required ? 'red' : 'orange' }}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Box mt="xs">

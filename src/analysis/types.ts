@@ -5,7 +5,7 @@ export interface ParticipantCounts{
   rejected: number;
 }
 
-export interface ComponentData {
+interface ComponentData {
   component: string;
   participants: number;
   avgTime: string;

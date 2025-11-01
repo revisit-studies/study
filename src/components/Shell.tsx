@@ -80,71 +80,103 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
       if (!storageEngine || !activeConfig || !studyId) return;
 
+      try {
       // Make sure that we have a study database and that the study database has a sequence array
-      await storageEngine.initializeStudyDb(studyId);
-      await storageEngine.saveConfig(activeConfig);
+        await storageEngine.initializeStudyDb(studyId);
+        await storageEngine.saveConfig(activeConfig);
 
-      const sequenceArray = await storageEngine.getSequenceArray();
-      if (!sequenceArray) {
-        await storageEngine.setSequenceArray(
-          await generateSequenceArray(activeConfig),
-        );
-      }
+        const sequenceArray = await storageEngine.getSequenceArray();
+        if (!sequenceArray) {
+          await storageEngine.setSequenceArray(
+            await generateSequenceArray(activeConfig),
+          );
+        }
 
-      // Get or generate participant session
-      const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
-        ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
+        // Get or generate participant session
+        const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
+          ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
           || undefined
-        : undefined;
-      const searchParamsObject = Object.fromEntries(searchParams.entries());
+          : undefined;
+        const searchParamsObject = Object.fromEntries(searchParams.entries());
 
-      const ipRes = await fetch('https://api.ipify.org?format=json').catch(
-        (_) => '',
-      );
-      const ip: { ip: string } = ipRes instanceof Response ? await ipRes.json() : { ip: '' };
+        const ipRes = await fetch('https://api.ipify.org?format=json').catch(
+          (_) => '',
+        );
+        const ip: { ip: string } = ipRes instanceof Response ? await ipRes.json() : { ip: '' };
 
-      const metadata: ParticipantMetadata = {
-        language: navigator.language,
-        userAgent: navigator.userAgent,
-        resolution: {
-          width: window.screen.width,
-          height: window.screen.height,
-          availHeight: window.screen.availHeight,
-          availWidth: window.screen.availWidth,
-          colorDepth: window.screen.colorDepth,
-          orientation: window.screen.orientation.type,
-          pixelDepth: window.screen.pixelDepth,
-        },
-        ip: ip.ip,
-      };
+        const metadata: ParticipantMetadata = {
+          language: navigator.language,
+          userAgent: navigator.userAgent,
+          resolution: {
+            width: window.screen.width,
+            height: window.screen.height,
+            availHeight: window.screen.availHeight,
+            availWidth: window.screen.availWidth,
+            colorDepth: window.screen.colorDepth,
+            orientation: window.screen.orientation.type,
+            pixelDepth: window.screen.pixelDepth,
+          },
+          ip: ip.ip,
+        };
 
-      const participantSession = await storageEngine.initializeParticipantSession(
-        searchParamsObject,
-        activeConfig,
-        metadata,
-        participantId || urlParticipantId,
-      );
+        const participantSession = await storageEngine.initializeParticipantSession(
+          searchParamsObject,
+          activeConfig,
+          metadata,
+          participantId || urlParticipantId,
+        );
 
-      const modes = await storageEngine.getModes(studyId);
-      const activeHash = await hash(JSON.stringify(activeConfig));
+        const modes = await storageEngine.getModes(studyId);
+        const activeHash = await hash(JSON.stringify(activeConfig));
 
-      let participantConfig = activeConfig;
+        let participantConfig = activeConfig;
 
-      if (participantSession.participantConfigHash !== activeHash) {
-        participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], studyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
+        if (participantSession.participantConfigHash !== activeHash) {
+          participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], studyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
+        }
+
+        // Initialize the redux stores
+        const newStore = await studyStoreCreator(
+          studyId,
+          participantConfig,
+          participantSession.sequence,
+          metadata,
+          participantSession.answers,
+          modes,
+          participantSession.participantId,
+          participantSession.completed,
+          false,
+        );
+        setStore(newStore);
+      } catch (error) {
+        console.error('Error initializing user store routing:', error);
+        // Fallback: initialize the store with empty data
+        const emptyStore = await studyStoreCreator(
+          studyId,
+          activeConfig,
+          generateSequenceArray(activeConfig)[0],
+          {
+            language: '',
+            userAgent: '',
+            resolution: {
+              width: 0,
+              height: 0,
+              availHeight: 0,
+              availWidth: 0,
+              colorDepth: 0,
+              orientation: '',
+              pixelDepth: 0,
+            },
+            ip: '',
+          },
+          {},
+          { studyNavigatorEnabled: true, analyticsInterfacePubliclyAccessible: true, dataCollectionEnabled: false },
+          '',
+          false,
+          true,
+        );
+        setStore(emptyStore);
       }
-
-      // Initialize the redux stores
-      const newStore = await studyStoreCreator(
-        studyId,
-        participantConfig,
-        participantSession.sequence,
-        metadata,
-        participantSession.answers,
-        modes,
-        participantSession.participantId,
-      );
-      setStore(newStore);
 
       // Initialize the routing
       setRoutes([

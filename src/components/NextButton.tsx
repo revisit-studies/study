@@ -12,7 +12,7 @@ import { PreviousButton } from './PreviousButton';
 type Props = {
   label?: string;
   disabled?: boolean;
-  configInUse?: IndividualComponent;
+  config?: IndividualComponent;
   location?: ResponseBlockLocation;
   checkAnswer: JSX.Element | null;
 };
@@ -20,7 +20,7 @@ type Props = {
 export function NextButton({
   label = 'Next',
   disabled = false,
-  configInUse,
+  config,
   location,
   checkAnswer,
 }: Props) {
@@ -28,8 +28,8 @@ export function NextButton({
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
 
-  const nextButtonDisableTime = useMemo(() => configInUse?.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime, [configInUse, studyConfig]);
-  const nextButtonEnableTime = useMemo(() => configInUse?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0, [configInUse, studyConfig]);
+  const nextButtonDisableTime = useMemo(() => config?.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime, [config, studyConfig]);
+  const nextButtonEnableTime = useMemo(() => config?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0, [config, studyConfig]);
 
   const [timer, setTimer] = useState<number | undefined>(undefined);
   // Start a timer on first render, update timer every 100ms
@@ -43,6 +43,7 @@ export function NextButton({
       clearInterval(interval);
     };
   }, []);
+
   useEffect(() => {
     if (timer && nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
       navigate('./../__timedOut');
@@ -58,7 +59,7 @@ export function NextButton({
     [nextButtonDisableTime, nextButtonEnableTime, timer],
   );
 
-  const nextOnEnter = useMemo(() => configInUse?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter, [configInUse, studyConfig]);
+  const nextOnEnter = useMemo(() => config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter, [config, studyConfig]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -77,12 +78,12 @@ export function NextButton({
   }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, nextOnEnter]);
 
   const nextButtonDisabled = useMemo(() => disabled || isNextDisabled || !buttonTimerSatisfied, [disabled, isNextDisabled, buttonTimerSatisfied]);
-  const previousButtonText = useMemo(() => configInUse?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous', [configInUse, studyConfig]);
+  const previousButtonText = useMemo(() => config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous', [config, studyConfig]);
 
   return (
     <>
       <Group justify="right" gap="xs" mt="sm">
-        {configInUse?.previousButton && (
+        {config?.previousButton && (
           <PreviousButton
             label={previousButtonText}
             px={location === 'sidebar' && checkAnswer ? 8 : undefined}

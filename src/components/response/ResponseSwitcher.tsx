@@ -11,6 +11,7 @@ import { Reactive } from './ReactiveInput';
 import { LikertInput } from './LikertInput';
 import { NumericInput } from './NumericInput';
 import { RadioInput } from './RadioInput';
+import { RankingInput } from './RankingInput';
 import { SliderInput } from './SliderInput';
 import { StringInput } from './StringInput';
 import { TextAreaInput } from './TextAreaInput';
@@ -30,7 +31,7 @@ export function ResponseSwitcher({
   form,
   storedAnswer,
   index,
-  configInUse,
+  config,
   dontKnowCheckbox,
   otherInput,
   disabled,
@@ -39,31 +40,40 @@ export function ResponseSwitcher({
   form: GetInputPropsReturnType;
   storedAnswer?: StoredAnswer['answer'];
   index: number;
-  configInUse: IndividualComponent;
+  config: IndividualComponent;
   dontKnowCheckbox?: GetInputPropsReturnType;
   otherInput?: GetInputPropsReturnType;
   disabled?: boolean;
 }) {
+  const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
+
+  const sequence = useStoreSelector((state) => state.sequence);
+  const flatSequence = useMemo(() => getSequenceFlatMap(sequence), [sequence]);
+  const currentStep = useCurrentStep();
+  const nextComponent = useMemo(() => (typeof currentStep === 'number' ? flatSequence[currentStep + 1] : undefined), [currentStep, flatSequence]);
+  const nextConfig = useMemo(() => (nextComponent ? studyConfig.components[nextComponent] : undefined), [nextComponent, studyConfig]);
+
+  const completed = useStoreSelector((state) => state.completed);
+
   // Don't update if we're in analysis mode
-  const ans = (isAnalysis ? { value: storedAnswer![response.id] } : form) || { value: undefined };
+  const ans = useMemo(() => (isAnalysis || (Object.keys(storedAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed ? { value: storedAnswer![response.id] } : form) || { value: undefined }, [isAnalysis, storedAnswer, response.id, form, nextConfig?.previousButton, completed]);
   const dontKnowValue = (Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined };
   const otherValue = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
-  const inputDisabled = Object.keys(storedAnswer || {}).length > 0 || disabled;
+  const inputDisabled = Object.keys(storedAnswer || {}).length > 0 || disabled || completed;
 
   const [searchParams] = useSearchParams();
 
-  const studyConfig = useStudyConfig();
-
-  const enumerateQuestions = useMemo(() => configInUse?.enumerateQuestions ?? studyConfig.uiConfig.enumerateQuestions ?? false, [configInUse, studyConfig]);
-
-  const sequence = useStoreSelector((state) => state.sequence);
-  const flatSequence = getSequenceFlatMap(sequence);
-  const currentStep = useCurrentStep();
+  const enumerateQuestions = useMemo(() => config?.enumerateQuestions ?? studyConfig.uiConfig.enumerateQuestions ?? false, [config, studyConfig]);
 
   useFetchStylesheet(response.stylesheetPath);
 
   const isDisabled = useMemo(() => {
+    // Always disable if participant is completed
+    if (completed) {
+      return true;
+    }
+
     // Do not disable if we're at the last element before a dynamic block
     if (typeof currentStep === 'number') {
       const currentComponent = flatSequence[currentStep];
@@ -83,8 +93,6 @@ export function ResponseSwitcher({
 
     // Do not disable if the next page has previousButton enabled
     if (typeof currentStep === 'number' && currentStep + 1 < flatSequence.length) {
-      const nextComponent = flatSequence[currentStep + 1];
-      const nextConfig = studyConfig.components[nextComponent];
       if (nextConfig?.previousButton) {
         return false;
       }
@@ -94,8 +102,8 @@ export function ResponseSwitcher({
       const responseParam = searchParams.get(response.paramCapture);
       return inputDisabled || !!responseParam;
     }
-    return disabled;
-  }, [disabled, response.paramCapture, searchParams, currentStep, flatSequence, studyConfig.components, sequence, inputDisabled]);
+    return inputDisabled || disabled;
+  }, [completed, currentStep, flatSequence, response.paramCapture, inputDisabled, disabled, sequence.components, nextConfig?.previousButton, searchParams]);
 
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {
@@ -119,7 +127,7 @@ export function ResponseSwitcher({
   }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
 
   const responseStyle = response.style || {};
-  const responseDividers = useMemo(() => response.withDivider ?? configInUse?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, configInUse, studyConfig]);
+  const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
 
   return (
     <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseStyle}>
@@ -195,6 +203,15 @@ export function ResponseSwitcher({
         index={index}
         enumerateQuestions={enumerateQuestions}
         otherValue={otherValue}
+      />
+      )}
+      {(response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') && (
+      <RankingInput
+        response={response}
+        disabled={isDisabled || dontKnowCheckbox?.checked}
+        answer={ans as { value: Record<string, string> }}
+        index={index}
+        enumerateQuestions={enumerateQuestions}
       />
       )}
       {response.type === 'reactive' && (
