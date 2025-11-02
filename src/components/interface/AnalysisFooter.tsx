@@ -44,8 +44,10 @@ export function AnalysisFooter({ setHasAudio }: {setHasAudio: (b: boolean) => vo
     storeDispatch(setAnalysisIsPlaying(isPlaying));
   }, [storeDispatch, setAnalysisIsPlaying]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const saveProvenance = useCallback((prov: any) => storeDispatch(saveAnalysisState(prov)), [storeDispatch, saveAnalysisState]);
+
   return (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <ThinkAloudFooter storageEngine={storageEngine} setHasAudio={setHasAudio} studyId={studyId || ''} currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={(prov: any) => storeDispatch(saveAnalysisState(prov))} onProvenanceTimelineChange={handleProvenanceTimelineChange} onAnalysisIsPlayingChange={handleAnalysisIsPlayingChange} forceMute={currentComponentHasScreenRecording} />
+    <ThinkAloudFooter storageEngine={storageEngine} setHasAudio={setHasAudio} studyId={studyId || ''} currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={saveProvenance} onProvenanceTimelineChange={handleProvenanceTimelineChange} onAnalysisIsPlayingChange={handleAnalysisIsPlayingChange} forceMute={currentComponentHasScreenRecording} />
   );
 }
