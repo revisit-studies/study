@@ -26,8 +26,6 @@ Validates individual study configuration files against the Revisit schema requir
 
 **Output**: Validation results with component counts and any schema violations
 
-## Resources
-
 ### `revisit://version`
 Returns the current version of the Revisit framework (2.0.0).
 

@@ -2,10 +2,10 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {StdioServerTransport} from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import path from 'path';
-import { 
-  loadSchemas, 
-  validateGlobalConfig, 
-  validateStudyConfig 
+import {
+  loadSchemas,
+  validateGlobalConfig,
+  validateStudyConfig
 } from './utils';
 
 
@@ -25,9 +25,9 @@ server.registerTool("getversion",
   },
   async () => {
     return {
-      content: [{ 
-        type: "text", 
-        text: "Revisit Framework Version: 2.0.0"
+      content: [{
+        type: "text",
+        text: "Revisit Framework Version: 2.3.1"
       }]
     };
   }
@@ -43,8 +43,8 @@ server.registerTool("getcitation",
   },
   async () => {
     return {
-      content: [{ 
-        type: "text", 
+      content: [{
+        type: "text",
         text: `@INPROCEEDINGS{revisit,
   author={Ding, Yiren and Wilburn, Jack and Shrestha, Hilson and Ndlovu, Akim and Gadhave, Kiran and Nobre, Carolina and Lex, Alexander and Harrison, Lane},
   booktitle={2023 IEEE Visualization and Visual Analytics (VIS)},
@@ -68,8 +68,8 @@ server.registerTool("getconfigschema",
   },
   async () => {
     return {
-      content: [{ 
-        type: "text", 
+      content: [{
+        type: "text",
         text: "src/parser/StudyConfigSchema.json"
       }]
     };
@@ -84,8 +84,8 @@ server.registerTool("gettypes",
   },
   async () => {
     return {
-      content: [{ 
-        type: "text", 
+      content: [{
+        type: "text",
         text: "src/parser/types.ts"
       }]
     };
@@ -113,7 +113,7 @@ server.registerTool("getstudytemplatemetadata",
       },
       {
         "path": "public/demo-dynamic",
-        "stimuli": ["react-component"], 
+        "stimuli": ["react-component"],
         "sequence": ["dynamic"],
         "basecomponent": false,
         "response": ["buttons"],
@@ -122,7 +122,7 @@ server.registerTool("getstudytemplatemetadata",
       {
         "path": "public/demo-html",
         "stimuli": ["website"],
-        "sequence": ["fixed"], 
+        "sequence": ["fixed"],
         "basecomponent": false,
         "response": ["numerical"],
         "features": []
@@ -458,18 +458,18 @@ server.registerTool("getstudytemplatemetadata",
         "features": []
       }
     ];
-    
+
     // Add information about new response types and features
     const responseTypesInfo = {
       "newResponseTypes": [
         "textOnly - Display-only text responses for instructions",
-        "matrix-radio - Matrix-style radio button responses with rows/columns", 
+        "matrix-radio - Matrix-style radio button responses with rows/columns",
         "matrix-checkbox - Matrix-style checkbox responses with rows/columns",
         "buttons - Button-based responses with keyboard navigation"
       ],
       "enhancedFeatures": [
         "skip-logic - Advanced skip conditions for complex study flows",
-        "interruptions - Deterministic and random breaks/attention checks", 
+        "interruptions - Deterministic and random breaks/attention checks",
         "dynamic-blocks - Function-based sequence generation",
         "library-system - Import and reuse components from external libraries",
         "styling - CSS styling and external stylesheet support",
@@ -483,7 +483,7 @@ server.registerTool("getstudytemplatemetadata",
       ],
       "responseProperties": [
         "withDivider - Add trailing dividers to responses",
-        "withDontKnow - Add 'I don't know' option to responses", 
+        "withDontKnow - Add 'I don't know' option to responses",
         "stylesheetPath - External stylesheet support",
         "style - Inline CSS styling",
         "horizontal - Horizontal layout for radio/checkbox",
@@ -491,10 +491,10 @@ server.registerTool("getstudytemplatemetadata",
         "restartEnumeration - Restart question numbering"
       ]
     };
-    
+
     return {
-      content: [{ 
-        type: "text", 
+      content: [{
+        type: "text",
         text: JSON.stringify({
           templates: templateData,
           newFeatures: responseTypesInfo
@@ -585,8 +585,8 @@ ${description}
 - Use 'validateglobalconfig' tool to validate global config.`;
 
     return {
-      content: [{ 
-        type: "text", 
+      content: [{
+        type: "text",
         text: enhancedPrompt
       }]
     };
@@ -606,42 +606,42 @@ server.registerTool("validateglobalconfig",
       const fs = await import('fs/promises');
       const filePath = path.join(__dirname, '..', '..', 'public', 'global.json');
 
-      
+
       let fileContent: string;
       try {
         fileContent = await fs.readFile(filePath, 'utf-8');
       } catch (readError) {
         return {
-          content: [{ 
-            type: "text", 
+          content: [{
+            type: "text",
             text: `❌ Failed to read global config file '${filePath}': ${readError instanceof Error ? readError.message : 'Unknown error'}`
           }]
         };
       }
-      
+
       let data: any;
       try {
         data = JSON.parse(fileContent);
       } catch (parseError) {
         return {
-          content: [{ 
-            type: "text", 
+          content: [{
+            type: "text",
             text: `❌ Failed to parse JSON from global config file '${filePath}': ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
           }]
         };
       }
-      
+
       // Validate global config structure
       const validationResult = validateGlobalConfig(data);
-      
+
       if (validationResult.isValid) {
         // Additional checks specific to global config
         const configCount = Object.keys(data.configs || {}).length;
         const listCount = (data.configsList || []).length;
-        
+
         return {
-          content: [{ 
-            type: "text", 
+          content: [{
+            type: "text",
             text: `✅ Global config file '${filePath}' is valid!\n\n📊 Summary:\n• Total configs defined: ${configCount}\n• Configs in list: ${listCount}\n• All configs properly referenced: ✅`
           }]
         };
@@ -652,19 +652,19 @@ server.registerTool("validateglobalconfig",
           }
           return `• ${error.message || error}`;
         });
-        
+
         return {
-          content: [{ 
-            type: "text", 
+          content: [{
+            type: "text",
             text: `❌ Global config file '${filePath}' validation failed:\n\n${errorMessages.join('\n')}`
           }]
         };
       }
-      
+
     } catch (error) {
       return {
-        content: [{ 
-          type: "text", 
+        content: [{
+          type: "text",
           text: `❌ Global config validation error: ${error instanceof Error ? error.message : 'Unknown error'}`
         }]
       };
@@ -683,46 +683,46 @@ server.registerTool("validatestudyconfig",
   async ({ filePath }) => {
     try {
       const fs = await import('fs/promises');
-      
+
       // Resolve relative path from MCP project root
       const resolvedPath = path.isAbsolute(filePath) ? filePath : path.join(__dirname, '..', '..', filePath);
-      
+
       let fileContent: string;
       try {
         fileContent = await fs.readFile(resolvedPath, 'utf-8');
       } catch (readError) {
         return {
-          content: [{ 
-            type: "text", 
+          content: [{
+            type: "text",
             text: `❌ Failed to read study config file '${resolvedPath}': ${readError instanceof Error ? readError.message : 'Unknown error'}`
           }]
         };
       }
-      
+
       let data: any;
       try {
         data = JSON.parse(fileContent);
       } catch (parseError) {
         return {
-          content: [{ 
-            type: "text", 
+          content: [{
+            type: "text",
             text: `❌ Failed to parse JSON from study config file '${filePath}': ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
           }]
         };
       }
-      
+
       // Validate study config structure
       const validationResult = validateStudyConfig(data);
-      
+
       if (validationResult.isValid) {
         // Additional checks specific to study config
         const componentCount = Object.keys(data.components || {}).length;
         const baseComponentCount = Object.keys(data.baseComponents || {}).length;
         const importedLibrariesCount = (data.importedLibraries || []).length;
-        
+
         return {
-          content: [{ 
-            type: "text", 
+          content: [{
+            type: "text",
             text: `✅ Study config file '${resolvedPath}' is valid!\n\n📊 Summary:\n• Components defined: ${componentCount}\n• Base components: ${baseComponentCount}\n• Imported libraries: ${importedLibrariesCount}\n• All required fields present: ✅`
           }]
         };
@@ -733,19 +733,19 @@ server.registerTool("validatestudyconfig",
           }
           return `• ${error.message || error}`;
         });
-        
+
         return {
-          content: [{ 
-            type: "text", 
+          content: [{
+            type: "text",
             text: `❌ Study config file '${resolvedPath}' validation failed:\n\nThere was an issue loading the study config. Please check the following issues:\n\n${errorMessages.join('\n')}`
           }]
         };
       }
-      
+
     } catch (error) {
       return {
-        content: [{ 
-          type: "text", 
+        content: [{
+          type: "text",
           text: `❌ Study config validation error: ${error instanceof Error ? error.message : 'Unknown error'}`
         }]
       };
@@ -760,7 +760,7 @@ server.registerTool("validatestudyconfig",
 (async () => {
   // Load schemas before starting the server
   await loadSchemas();
-  
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
 })();
