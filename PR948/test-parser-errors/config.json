@@ -1,0 +1,105 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Test for parser errors",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "This is a test for parser errors.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 200
+  },
+  "importedLibraries": ["test", "test-missing"],
+  "baseComponents": {
+    "testBaseComponent": {
+      "type": "markdown",
+      "path": "test-parser-errors/assets/md1.md",
+      "response": []
+    }
+  },
+  "components": {
+    "md1": {
+      "type": "markdown",
+      "path": "test-parser-errors/assets/md1.md",
+      "response": []
+    },
+    "md2": {
+      "type": "markdown",
+      "path": "test-parser-errors/assets/md1.md",
+      "response": []
+    },
+    "missingBaseComponent": {
+      "baseComponent": "missingBaseComponent"
+    },
+    "workingBaseComponentFromLibrary": {
+      "baseComponent": "$test.co.test-md"
+    },
+    "missingComponentFromLibrary": {
+      "baseComponent": "$test.co.test-missing"
+    },
+    "testComponent": {
+      "type": "markdown",
+      "path": "test-parser-errors/assets/md1.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "md1",
+      "missingComponent",
+      "testBaseComponent",
+      {
+        "order": "fixed",
+        "components": [
+          "nestedMissingComponent"
+        ],
+        "skip": [
+          {
+            "check": "block",
+            "condition": "numCorrect",
+            "value": 1,
+            "to": "md1"
+          }
+        ]
+      },
+      {
+        "order": "fixed",
+        "components": [
+          "md2"
+        ],
+        "skip": [
+          {
+            "check": "block",
+            "condition": "numCorrect",
+            "value": 1,
+            "to": "md2"
+          }
+        ]
+      },
+      "md2",
+      "$test.sequences.small",
+      "$test.se.long",
+      "$test.components.test-md",
+      "$test.co.test-react",
+      "$test.components.test-missing",
+      "missingBaseComponent",
+      "workingBaseComponentFromLibrary",
+      "missingComponentFromLibrary"
+    ]
+  }
+}

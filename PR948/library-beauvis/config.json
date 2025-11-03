@@ -1,0 +1,42 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Beauvis: Assessing Aesthetics of Visualizations",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-01-20",
+    "description": "Example study using the beauvis library.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": false
+  },
+  "importedLibraries": [
+    "beauvis"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-beauvis/assets/beauvis.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$beauvis.co.5items",
+      "$beauvis.co.4items",
+      "$beauvis.co.3items"
+    ]
+  }
+}

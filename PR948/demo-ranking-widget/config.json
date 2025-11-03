@@ -1,0 +1,141 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Ranking Widget Demo",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-09-25",
+    "description": "A demo of ranking widget, based on the study design by Kuhlman et al., 2019 (doi:10.1145/3290605.3300742).",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-ranking-widget/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "nextOnEnter": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-ranking-widget/assets/introduction.md",
+      "response": []
+    },
+    "sublist-ranking": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "university-preference-sublist",
+          "prompt": "Rank the following options.",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "ranking-sublist",
+          "options": [
+            "Ball State University",
+            "University of Rochester",
+            "George Mason University",
+            "University of California - Berkeley",
+            "Washington State University"
+          ]
+        }
+      ]
+    },
+    "sublist-ranking-top-3": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "university-preference-sublist-top-3",
+          "prompt": "Rank the following options, selecting the top 3 options.",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "ranking-sublist",
+          "options": [
+            "Ball State University",
+            "University of Rochester",
+            "George Mason University",
+            "University of California - Berkeley",
+            "Washington State University"
+          ],
+          "numItems": 3
+        }
+      ]
+    },
+    "categorical-binning": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "university-preference-categorical",
+          "prompt": "Rank the following options.",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "ranking-categorical",
+          "options": [
+            "Ball State University",
+            "University of Rochester",
+            "George Mason University",
+            "University of California - Berkeley",
+            "Washington State University"
+          ]
+        }
+      ]
+    },
+    "categorical-binning-top-2": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "university-preference-categorical-top-2",
+          "prompt": "Rank the following options. Select the top 2 options.",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "ranking-categorical",
+          "options": [
+            "Ball State University",
+            "University of Rochester",
+            "George Mason University",
+            "University of California - Berkeley",
+            "Washington State University"
+          ],
+          "numItems": 2
+        }
+      ]
+    },
+    "pairwise-comparison": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "university-preference-pairwise",
+          "prompt": "Rank the following options by pairing them up.",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "ranking-pairwise",
+          "options": [
+            "Ball State University",
+            "University of Rochester",
+            "George Mason University",
+            "University of California - Berkeley",
+            "Washington State University"
+          ]
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "sublist-ranking",
+      "sublist-ranking-top-3",
+      "categorical-binning",
+      "categorical-binning-top-2",
+      "pairwise-comparison"
+    ]
+  }
+}
