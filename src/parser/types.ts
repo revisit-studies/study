@@ -268,6 +268,8 @@ export interface BaseResponse {
   stylesheetPath?: string;
   /**  You can set styles here, using React CSSProperties, for example: `{"width": 100}` or `{"width": "50%"}` */
   style?: Styles;
+  /** Include a microphone to capture audio for a specific response */
+  withMicrophone?: boolean;
 }
 
 /**

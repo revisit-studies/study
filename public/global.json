@@ -49,7 +49,8 @@
     "test-randomization",
     "test-skip-logic",
     "test-step-logic",
-    "Custom-Stimuli"
+    "Custom-Stimuli",
+    "Microphone-Test"
 
   ],
   "configs": {
@@ -224,6 +225,10 @@
     },
     "Custom-Stimuli":{
       "path": "Custom-Stimuli/config.json",
+      "test": true
+    },
+    "Microphone-Test":{
+      "path": "Microphone-Test/config.json",
       "test": true
     }
   }
