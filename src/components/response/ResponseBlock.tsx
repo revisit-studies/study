@@ -62,6 +62,7 @@ export function ResponseBlock({
   const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
   const storedAnswerData = useStoredAnswer();
   const formOrders: Record<string, string[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
+  const [isRecording, setIsRecording] = useState(false);
 
   const navigate = useNavigate();
 
@@ -363,6 +364,20 @@ export function ResponseBlock({
                       config={config}
                       disabled={disabledAttempts}
                     />
+                    {response.withMicrophone && !isRecording && (
+                      <img
+                        src="/src/components/response/mic_images/mic_icon.png"
+                        style={{ maxWidth: '45px' }}
+                        onClick={() => setIsRecording(true)}
+                      />
+                    )}
+                    {response.withMicrophone && isRecording && (
+                      <img
+                        src="/src/components/response/mic_images/stop_icon.png"
+                        style={{ maxWidth: '45px' }}
+                        onClick={() => setIsRecording(false)}
+                      />
+                    )}
                     <FeedbackAlert
                       response={response}
                       correctAnswer={correctAnswer}

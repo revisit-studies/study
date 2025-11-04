@@ -234,6 +234,10 @@
           "withTimeline": {
             "description": "Whether to show the video timeline. Defaults to false.",
             "type": "boolean"
+          },
+          "withMicrophone": {
+            "description": "Whether to include a mic to capture audio response for the question",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -323,6 +327,10 @@
         },
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -433,6 +441,10 @@
         },
         "withOther": {
           "description": "Whether to render the checkboxes with an \"other\" option.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -657,6 +669,10 @@
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -838,6 +854,10 @@
         },
         "withSidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -1154,6 +1174,10 @@
         "withTimeline": {
           "description": "Whether to show the video timeline. Defaults to false.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1324,6 +1348,10 @@
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1399,6 +1427,10 @@
         },
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -1551,6 +1583,10 @@
         "withSidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1667,6 +1703,10 @@
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1770,6 +1810,10 @@
         },
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -2026,6 +2070,10 @@
         "withOther": {
           "description": "Whether to render the radios with an \"other\" option.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2147,6 +2195,10 @@
         },
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -2305,6 +2357,10 @@
         "withSidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. If present, will override the sidebar setting in the uiConfig.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2375,6 +2431,10 @@
         },
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -2533,6 +2593,10 @@
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2658,6 +2722,10 @@
         },
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -2904,6 +2972,10 @@
         },
         "withDontKnow": {
           "not": {}
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [

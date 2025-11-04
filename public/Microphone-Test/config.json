@@ -1,0 +1,87 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Mic Test",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "A demo of image stimuli, based on the study design by Padilla et al., Frontiers in Psychology, 2021 (doi:10.3389/fpsyg.2020.579267). Data is collected via form fields.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-image/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "nextOnEnter": true
+  },
+  "components": {
+    "externalImage": {
+      "type": "image",
+      "path": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Shaki_waterfall.jpg",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "externalImage-response",
+          "prompt": "What is this a picture of?",
+          "location": "sidebar",
+          "type": "shortText",
+          "required": false,
+          "withMicrophone": true
+        },
+        {
+            "id": "externalImage-radio",
+            "prompt": "likertTest",
+            "location": "sidebar",
+            "type": "likert",
+            "numItems": 5,
+            "withMicrophone": true
+        }
+      ]
+    },
+    "Image2": {
+      "type": "image",
+      "path": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Shaki_waterfall.jpg",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "image2-response",
+          "prompt": "What is this a picture of?",
+          "location": "sidebar",
+          "type": "shortText",
+          "required": false,
+          "withMicrophone": false
+        },
+        {
+            "id": "image2-radio",
+            "prompt": "likertTest",
+            "location": "sidebar",
+            "type": "likert",
+            "numItems": 5,
+            "withMicrophone": false
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "externalImage",
+      "Image2"
+    ]
+  }
+}

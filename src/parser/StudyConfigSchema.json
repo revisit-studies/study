@@ -234,6 +234,10 @@
           "withTimeline": {
             "description": "Whether to show the video timeline. Defaults to false.",
             "type": "boolean"
+          },
+          "withMicrophone": {
+            "description": "Whether to include a mic to capture audio response for the question",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -323,6 +327,10 @@
         },
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -433,6 +441,10 @@
         },
         "withOther": {
           "description": "Whether to render the checkboxes with an \"other\" option.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -656,6 +668,10 @@
         },
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -1254,6 +1270,10 @@
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1329,6 +1349,10 @@
         },
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -1597,6 +1621,10 @@
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1700,6 +1728,10 @@
         },
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -1956,6 +1988,10 @@
         "withOther": {
           "description": "Whether to render the radios with an \"other\" option.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2077,6 +2113,10 @@
         },
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
           "type": "boolean"
         }
       },
@@ -2306,6 +2346,10 @@
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2463,6 +2507,10 @@
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2589,7 +2637,12 @@
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
+        
       },
       "required": [
         "id",
@@ -2941,6 +2994,10 @@
         },
         "withDontKnow": {
           "not": {}
+        },
+        "withMicrophone": {
+          "description": "Whether to include a mic to capture audio response for the question",
+          "type": "boolean"
         }
       },
       "required": [
