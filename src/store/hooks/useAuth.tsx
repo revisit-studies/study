@@ -138,11 +138,12 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     // Determine authentication listener based on storageEngine and authEnabled variable
     const determineAuthentication = async () => {
       if (storageEngine && isCloudStorageEngine(storageEngine)) {
-        const authInfo = await storageEngine?.getUserManagementData('authentication');
+        const authInfo = await storageEngine.getUserManagementData('authentication');
         if (authInfo?.isEnabled) {
-          storageEngine?.unsubscribe(handleAuthStateChanged);
+          storageEngine.unsubscribe(handleAuthStateChanged);
+        } else {
+          setUser(nonAuthUser);
         }
-        setUser(nonAuthUser);
       } else if (storageEngine) {
         setUser(nonAuthUser);
       }

@@ -727,6 +727,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
   unsubscribe(callback: (cloudUser: StoredUser | null) => Promise<void>) {
     let lastUid: string | null = null;
+    let count = 0;
 
     const { data: listener } = this.supabase.auth.onAuthStateChange(async (_event, session) => {
       const user = session?.user
@@ -736,8 +737,15 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         } as StoredUser)
         : null;
 
-      // Only invoke callback if the user actually changed
       const uid = user?.uid ?? null;
+      // If first time and no user, just call back with null
+      if (user === null && count === 0) {
+        count += 1;
+        callback(null);
+        return;
+      }
+
+      // Only invoke callback if the user actually changed
       if (uid === lastUid) return;
       lastUid = uid;
 
