@@ -62,7 +62,6 @@ export function ResponseBlock({
   const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
   const storedAnswerData = useStoredAnswer();
   const formOrders: Record<string, string[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
-  const [isRecording, setIsRecording] = useState(false);
 
   const navigate = useNavigate();
 
@@ -139,6 +138,8 @@ export function ResponseBlock({
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
   const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
   const identifier = useCurrentIdentifier();
+
+  const [recordingStates, setRecordingStates] = useState<Record<string, boolean>>({});
 
   const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
   useEffect(() => {
@@ -364,18 +365,18 @@ export function ResponseBlock({
                       config={config}
                       disabled={disabledAttempts}
                     />
-                    {response.withMicrophone && !isRecording && (
+                    {response.withMicrophone && (
                       <img
-                        src="/src/components/response/mic_images/mic_icon.png"
-                        style={{ maxWidth: '45px' }}
-                        onClick={() => setIsRecording(true)}
-                      />
-                    )}
-                    {response.withMicrophone && isRecording && (
-                      <img
-                        src="/src/components/response/mic_images/stop_icon.png"
-                        style={{ maxWidth: '45px' }}
-                        onClick={() => setIsRecording(false)}
+                        src={
+                          recordingStates[response.id]
+                            ? '/src/components/response/mic_images/stop_icon.png'
+                            : '/src/components/response/mic_images/mic_icon.png'
+                        }
+                        style={{ maxWidth: '45px', cursor: 'pointer' }}
+                        onClick={() => setRecordingStates((prev) => ({
+                          ...prev,
+                          [response.id]: !prev[response.id],
+                        }))}
                       />
                     )}
                     <FeedbackAlert
