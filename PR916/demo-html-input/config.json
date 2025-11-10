@@ -1,0 +1,89 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Passing Data from reVISit to HTML and back",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "A demo of how to pass visualization data from reVISit to HTML and send user answers from HTML back to the reVISit.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-html-input/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "autoDownloadTime": 5000,
+    "withSidebar": false
+  },
+  "baseComponents": {
+    "bar-chart": {
+      "type": "website",
+      "response": [
+        {
+          "id": "barChart",
+          "prompt": "Your selected answer:",
+          "location": "belowStimulus",
+          "type": "reactive"
+        }
+      ],
+      "path": "demo-html-input/assets/bar-chart-interaction.html",
+      "instructionLocation": "aboveStimulus"
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-html-input/assets/introduction.md",
+      "response": []
+    },
+    "bar-chart-1": {
+      "baseComponent": "bar-chart",
+      "description": "A trial for the user to click the larges bar",
+      "instruction": "Click on the largest bar",
+      "parameters": {
+        "barData": [
+          0.32,
+          0.01,
+          1.2,
+          1.3,
+          0.82,
+          0.4,
+          0.3
+        ]
+      }
+    },
+    "bar-chart-2": {
+      "baseComponent": "bar-chart",
+      "description": "A trial for the user to click the smallest bar",
+      "instruction": "Click on the smallest bar",
+      "parameters": {
+        "barData": [
+          1.2,
+          1.2,
+          1.2,
+          1.3,
+          0.82,
+          0.4,
+          -0.3,
+          0.3
+        ]
+      }
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "bar-chart-1",
+      "bar-chart-2"
+    ]
+  }
+}

@@ -1,0 +1,794 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json",
+  "description": "The NASA-TLX is a widely used subjective workload assessment tool. It consists of six subscales: Mental Demand, Physical Demand, Temporal Demand, Performance, Effort, and Frustration. The NASA-TLX is designed to assess the perceived workload of a task and is commonly used in human factors and ergonomics research. We provide a component of the NASA-TLX itself, and a sequence that includes a source of load evaluation. The source of load evaluation is based on the pairwise weighting procedure described in the NASA-TLX manual.",
+  "reference": "Hart, Sandra G., and Lowell E. Staveland. \"Development of NASA-TLX (Task Load Index): Results of empirical and theoretical research.\" Advances in psychology. Vol. 52. North-Holland, 1988. 139-183.",
+  "doi": "10.1016/S0166-4115(08)62386-9",
+  "additionalDescription": "### Source of Workload Evaluation (Pairwise Weighting Procedure)\n\nReference: [NASA TLX manual](https://ntrs.nasa.gov/api/citations/20000021488/downloads/20000021488.pdf) (Section 2.2)\n\nThis step of the NASA-TLX assesses the relative importance of different factors that contribute to a person's experience of workload during a task. Rather than assuming all workload components are equally important, this procedure captures individual differences in how workload is perceived.\n\nParticipants are presented with 15 pairwise comparisons between the six NASA-TLX subscales:\n\n- Mental Demand\n- Physical Demand\n- Temporal Demand\n- Performance\n- Effort\n- Frustration\n\nFor each pair, participants are asked to select the factor that contributed more to their workload experience in the given task.\n\n#### How It Works\nEach chosen subscale earns one point (a \"tally mark\").\n\nAfter 15 comparisons, each subscale has a weight from 0 to 5.\n\nThese weights reflect the participant's personal weighting of each workload dimension.\n\n#### How to Use the Result\nAfter task performance, participants also rate the magnitude (0–100) of each of the six subscales.\n\nFor each subscale:\nAdjusted Score = Raw Rating × Weight\n\nThe overall workload score is calculated by summing all adjusted scores and dividing by 15:\nOverall Workload = Σ(Adjusted Scores) ÷ 15\n\nThis weighted workload score accounts for both perceived intensity and individual prioritization, improving sensitivity and personalization in workload analysis.",
+  "components": {
+    "source-of-load":{
+      "type": "questionnaire",
+      "description": "Source of load evaluation, a pairwise weighting procedure to assess the relative importance of different factors that contribute to a person's experience of workload during a task. It should be presented before the NASA-TLX.",
+      "responseOrder": "random",
+      "response": [
+        {
+          "id": "mental-demand-physical-demand",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Mental demand",
+            "Physical demand"
+          ]
+        },
+        {
+          "id": "mental-demand-temporal-demand",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Mental demand",
+            "Temporal demand"
+          ]
+        },
+        {
+          "id": "mental-demand-performance",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Mental demand",
+            "Performance"
+          ]
+        },
+        {
+          "id": "mental-demand-effort",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Mental demand",
+            "Effort"
+          ]
+        },
+        {
+          "id": "mental-demand-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Mental demand",
+            "Frustration"
+          ]
+        },
+        {
+          "id": "physical-demand-temporal-demand",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Physical demand",
+            "Temporal demand"
+          ]
+        },
+        {
+          "id": "physical-demand-performance",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Physical demand",
+            "Performance"
+          ]
+        },
+        {
+          "id": "physical-demand-effort",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Physical demand",
+            "Effort"
+          ]
+        },
+        {
+          "id": "physical-demand-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Physical demand",
+            "Frustration"
+          ]
+        },
+        {
+          "id": "temporal-demand-performance",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Temporal demand",
+            "Performance"
+          ]
+        },
+        {
+          "id": "temporal-demand-effort",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus", 
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Temporal demand",
+            "Effort"
+          ]
+        },
+        {
+          "id": "temporal-demand-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Temporal demand",
+            "Frustration"
+          ]
+        },
+        {
+          "id": "performance-effort",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Performance",
+            "Effort"
+          ]
+        },
+        {
+          "id": "performance-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio", 
+          "optionOrder": "random",
+          "options": [
+            "Performance",
+            "Frustration"
+          ]
+        },
+        {
+          "id": "effort-frustration",
+          "prompt": "Which of the following contributed more to your feeling of workload in the task you just performed?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "optionOrder": "random",
+          "options": [
+            "Effort",
+            "Frustration"
+          ]
+        }
+      ]
+    },
+    "nasa-tlx": {
+      "description": "The NASA-TLX questionnaire.",
+      "type": "markdown",
+      "path": "libraries/nasa-tlx/assets/tlx.md",
+      "response": [
+        {
+          "id": "mental-demand",
+          "type": "slider",
+          "tlxStyle": true,
+          "withBar": false,
+          "prompt": "Mental Demand",
+          "secondaryText": "How much mental and perceptual effort did you spend?",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ],
+          "step": 1,
+          "startingValue": 50,
+          "required": true
+        },
+        {
+          "id": "physical-demand",
+          "type": "slider",
+          "tlxStyle": true,
+          "withBar": false,
+          "prompt": "Physical Demand",
+          "secondaryText": "How much physical effort did you spend?",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ],
+          "step": 1,
+          "startingValue": 50,
+          "required": true
+        },
+        {
+          "id": "temporal-demand",
+          "type": "slider",
+          "tlxStyle": true,
+          "withBar": false,
+          "prompt": "Temporal Demand",
+          "secondaryText": "How much time pressure did you feel in order to complete this?",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ],
+          "step": 1,
+          "startingValue": 50,
+          "required": true
+        },
+        {
+          "id": "performance",
+          "type": "slider",
+          "tlxStyle": true,
+          "withBar": false,
+          "prompt": "Performance",
+          "secondaryText": "How successful do you think you were in accomplishing what you were asked to do? (notice the direction of this scale)",
+          "options": [
+            {
+              "label": "Good",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "Poor",
+              "value": 100
+            }
+          ],
+          "step": 1,
+          "startingValue": 50,
+          "required": true
+        },
+        {
+          "id": "effort",
+          "type": "slider",
+          "tlxStyle": true,
+          "withBar": false,
+          "prompt": "Effort",
+          "secondaryText": "How hard did you have to work to accomplish your level of performance?",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ],
+          "step": 1,
+          "startingValue": 50,
+          "required": true
+        },
+        {
+          "id": "frustration",
+          "type": "slider",
+          "tlxStyle": true,
+          "withBar": false,
+          "prompt": "Frustration",
+          "secondaryText": "How irritated, stressed, discouraged, and annoyed were you?",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ],
+          "step": 1,
+          "startingValue": 50,
+          "required": true
+        }
+      ]
+    }
+  },
+  "sequences": {
+    "nasa-tlx-with-source-of-load-evaluation": {
+      "order": "fixed",
+      "components": [
+        "source-of-load",
+        "nasa-tlx"
+      ]
+    }
+  }
+}

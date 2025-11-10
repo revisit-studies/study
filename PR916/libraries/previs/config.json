@@ -1,0 +1,171 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json",
+  "description": "PREVis allows you to quickly and reliably measure how readable people find a data visualization. There are 4 individual scales in PREVis, each measuring a particular dimension of perceived readability. This library includes four components, one for each individual scale, as well as a sequence containing all four scales (the full PREVis). \n\nWhen using this library, please replace the `vis-example.png` file with your own visualization.",
+  "reference": "A.-F. Cabouat, T. He, P. Isenberg, and T. Isenberg, “PREVis: Perceived Readability Evaluation for Visualizations,” IEEE Transactions on Visualization and Computer Graphics, vol. 31, no. 1, pp. 1083–1093, Jan. 2025",
+  "doi":"10.1109/tvcg.2024.3456318",
+  "externalLink": "https://aviz.fr/PREVis/",
+  "components": {
+    "Understand": {
+      "type": "image",
+      "path": "libraries/previs/assets/vis-example.png",
+      "style": {
+        "width": "800px"
+      },
+      "responseOrder": "random",
+      "response": [
+        {
+          "id": "obvious",
+          "prompt": "It is **obvious** for me how to read this visualization",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly agree",
+          "leftLabel": "Strongly disagree"
+        },
+        {
+          "id": "represent",
+          "prompt": "I can easily understand **how the data is represented** in this visualization",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly agree",
+          "leftLabel": "Strongly disagree"
+        },
+        {
+          "id": "understand",
+          "prompt": "I can **easily understand** this visualization",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly agree",
+          "leftLabel": "Strongly disagree"
+        }
+      ]
+    },
+    "Layout": {
+      "type": "image",
+      "path": "libraries/previs/assets/vis-example.png",
+      "responseOrder": "random",
+      "style": {
+        "width": "800px"
+      },
+      "response": [
+        {
+          "id": "messy",
+          "prompt": "I don't find this visualization **messy**",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly agree",
+          "leftLabel": "Strongly disagree"
+        },
+        {
+          "id": "crowd",
+          "prompt": "I don't find this visualization **crowded**",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly agree",
+          "leftLabel": "Strongly disagree"
+        },
+        {
+          "id": "distract",
+          "prompt": "I don't find **distracting parts** in this visualization",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly agree",
+          "leftLabel": "Strongly disagree"
+        }
+      ]
+    },
+    "ReadingData": {
+      "type": "image",
+      "path": "libraries/previs/assets/vis-example.png",
+      "responseOrder": "random",
+      "style": {
+        "width": "800px"
+      },
+      "response": [
+        {
+          "id": "find",
+          "prompt": "I can easily **find specific** elements in this visualization",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly agree",
+          "leftLabel": "Strongly disagree"
+        },
+        {
+          "id": "identify",
+          "prompt": "I can easily **identify relevant information** in this visualization",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly agree",
+          "leftLabel": "Strongly disagree"
+        },
+        {
+          "id": "information",
+          "prompt": "I can easily **retrieve information** from this visualization",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly agree",
+          "leftLabel": "Strongly disagree"
+        }
+      ]
+    },
+    "ReadingFeatures": {
+      "type": "image",
+      "path": "libraries/previs/assets/vis-example.png",
+      "responseOrder": "random",
+      "style": {
+        "width": "800px"
+      },
+      "response": [
+        {
+          "id": "visible",
+          "prompt": "I find data features (for example, a minimum, or an outlier, or a trend) **visible** in this visualization",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly agree",
+          "leftLabel": "Strongly disagree"
+        },
+        {
+          "id": "see",
+          "prompt": "I can **clearly see** data features (for example, a minimum, or an outlier, or a trend) in this visualization",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly agree",
+          "leftLabel": "Strongly disagree"
+        }
+      ]
+    }
+  },
+  "sequences": {
+    "4dimensions": {
+      "id": "previs-4dimensions",
+      "order": "latinSquare",
+      "components": [
+        "Understand",
+        "Layout",
+        "ReadingData",
+        "ReadingFeatures"
+      ]
+    }
+  }
+}

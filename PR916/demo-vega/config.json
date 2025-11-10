@@ -1,0 +1,297 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Vega Stimuli Demo",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-01-19",
+    "description": "A demo of vega stimuli",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-vega/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-vega/assets/introduction.md",
+      "response": []
+    },
+    "vegademo1": {
+      "meta": {
+        "metadata": 1
+      },
+      "description": "A demonstration of including a Vega visualization in the config.",
+      "instruction": "Click on the bar with the highest value.",
+      "type": "vega",
+      "withActions": false,
+      "config": {
+        "$schema": "https://vega.github.io/schema/vega/v5.json",
+        "width": 400,
+        "height": 200,
+        "padding": {
+          "left": 5,
+          "right": 5,
+          "top": 5,
+          "bottom": 5
+        },
+        "data": [
+          {
+            "name": "table",
+            "values": [
+              {
+                "category": "A",
+                "amount": 28
+              },
+              {
+                "category": "B",
+                "amount": 55
+              },
+              {
+                "category": "C",
+                "amount": 43
+              },
+              {
+                "category": "D",
+                "amount": 91
+              },
+              {
+                "category": "E",
+                "amount": 81
+              },
+              {
+                "category": "F",
+                "amount": 53
+              },
+              {
+                "category": "G",
+                "amount": 19
+              },
+              {
+                "category": "H",
+                "amount": 87
+              }
+            ]
+          }
+        ],
+        "config": {
+          "signals": [
+            {
+              "name": "tooltip",
+              "value": {},
+              "on": [
+                {
+                  "events": "rect:mouseover",
+                  "update": "datum"
+                },
+                {
+                  "events": "rect:mouseout",
+                  "update": "{}"
+                }
+              ]
+            },
+            {
+              "name": "revisitAnswer",
+              "value": {},
+              "on": [
+                {
+                  "events": "rect:click",
+                  "update": "{responseId: 'vegaDemoResponse1', response: datum.category}"
+                }
+              ]
+            }
+          ]
+        },
+        "scales": [
+          {
+            "name": "xscale",
+            "type": "band",
+            "domain": {
+              "data": "table",
+              "field": "category"
+            },
+            "range": "width"
+          },
+          {
+            "name": "yscale",
+            "domain": {
+              "data": "table",
+              "field": "amount"
+            },
+            "nice": true,
+            "range": "height"
+          }
+        ],
+        "axes": [
+          {
+            "orient": "bottom",
+            "scale": "xscale"
+          },
+          {
+            "orient": "left",
+            "scale": "yscale"
+          }
+        ],
+        "marks": [
+          {
+            "type": "rect",
+            "from": {
+              "data": "table"
+            },
+            "encode": {
+              "enter": {
+                "x": {
+                  "scale": "xscale",
+                  "field": "category",
+                  "offset": 1
+                },
+                "width": {
+                  "scale": "xscale",
+                  "band": 1,
+                  "offset": -1
+                },
+                "y": {
+                  "scale": "yscale",
+                  "field": "amount"
+                },
+                "y2": {
+                  "scale": "yscale",
+                  "value": 0
+                }
+              },
+              "update": {
+                "fill": [
+                  {
+                    "test": "datum.category === tooltip.category",
+                    "value": "red"
+                  },
+                  {
+                    "value": "steelblue"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "type": "text",
+            "encode": {
+              "enter": {
+                "align": {
+                  "value": "center"
+                },
+                "baseline": {
+                  "value": "bottom"
+                },
+                "fill": {
+                  "value": "#333"
+                }
+              },
+              "update": {
+                "x": {
+                  "scale": "xscale",
+                  "signal": "tooltip.category",
+                  "band": 0.5
+                },
+                "y": {
+                  "scale": "yscale",
+                  "signal": "tooltip.amount",
+                  "offset": -2
+                },
+                "text": {
+                  "signal": "tooltip.category"
+                },
+                "fillOpacity": [
+                  {
+                    "test": "datum.category === tooltip.category",
+                    "value": 0
+                  },
+                  {
+                    "value": 1
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "vegaDemoResponse1",
+          "prompt": "You selected:",
+          "location": "sidebar",
+          "type": "reactive"
+        },
+        {
+          "id": "vegaDemoConfidence1",
+          "prompt": "How confident are you with your answer?",
+          "location": "sidebar",
+          "type": "slider",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ]
+        }
+      ]
+    },
+    "vegademo2": {
+      "meta": {
+        "metadata": 1
+      },
+      "description": "A demonstration of including a Vega visualization in an external file.",
+      "instruction": "Select the movie with highest World Wide Gross.",
+      "type": "vega",
+      "path": "demo-vega/specs/vegademo2.specs.json",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "vegaDemoResponse1",
+          "prompt": "You selected:",
+          "location": "sidebar",
+          "type": "reactive"
+        },
+        {
+          "id": "vegaDemoConfidence1",
+          "prompt": "How confident are you with your answer?",
+          "location": "sidebar",
+          "type": "slider",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "vegademo1",
+      "vegademo2"
+    ]
+  }
+}
