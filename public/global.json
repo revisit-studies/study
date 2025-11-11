@@ -42,6 +42,7 @@
     "library-sus",
     "library-virtual-chinrest",
     "library-vlat",
+    "library-ospan-memory-test",
     "test-audio",
     "test-library",
     "test-likert-matrix",
@@ -183,6 +184,10 @@
     },
     "library-vlat": {
       "path": "library-vlat/config.json",
+      "test": true
+    },
+    "library-ospan-memory-test": {
+      "path": "library-ospan-memory-test/config.json",
       "test": true
     },
     "test-audio": {
