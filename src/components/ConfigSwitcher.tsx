@@ -19,13 +19,22 @@ import { REVISIT_MODE } from '../storage/engines/types';
 import { useAuth } from '../store/hooks/useAuth';
 import { isCloudStorageEngine } from '../storage/engines/utils';
 
-function StudyCard({ configName, config, url }: { configName: string; config: ParsedConfig<StudyConfig>; url: string }) {
+function StudyCard({
+  configName,
+  config,
+  url,
+  modes,
+}: {
+  configName: string;
+  config: ParsedConfig<StudyConfig>;
+  url: string;
+  modes: Record<REVISIT_MODE, boolean> | null;
+}) {
   const { storageEngine } = useStorageEngine();
 
   const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
   useEffect(() => {
     if (!storageEngine) return;
-
     storageEngine.getParticipantsStatusCounts(configName).then((status) => {
       setStudyStatusAndTiming(status);
     });
@@ -47,15 +56,6 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
       }),
     };
   }, [studyStatusAndTiming]);
-
-  const [modes, setModes] = useState<Record<REVISIT_MODE, boolean> | null>(null);
-  useEffect(() => {
-    if (!storageEngine) return;
-
-    storageEngine.getModes(configName).then((m) => {
-      setModes(m);
-    });
-  }, [configName, storageEngine]);
 
   const currentMode = useMemo(() => {
     if (!modes) return 'Unknown';
@@ -193,15 +193,22 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
   );
 }
 
-function StudyCards({ configNames, studyConfigs }: { configNames: string[]; studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> }) {
+function StudyCards({
+  configNames,
+  studyConfigs,
+  modesByConfig,
+}: {
+  configNames: string[];
+  studyConfigs: Record<string, ParsedConfig<StudyConfig> | null>;
+  modesByConfig: Record<string, Record<REVISIT_MODE, boolean> | null>;
+}) {
   return configNames.map((configName) => {
     const config = studyConfigs[configName];
     if (!config) {
       return null;
     }
     const url = sanitizeStringForUrl(configName);
-
-    return <StudyCard key={configName} configName={configName} config={config} url={url} />;
+    return <StudyCard key={configName} configName={configName} config={config} url={url} modes={modesByConfig[configName] ?? null} />;
   });
 }
 
@@ -216,20 +223,27 @@ export function ConfigSwitcher({
   const { configsList } = globalConfig;
 
   const [studyVisibility, setStudyVisibility] = useState<Record<string, boolean>>({});
+  const [modesByConfig, setModesByConfig] = useState<Record<string, Record<REVISIT_MODE, boolean> | null>>({});
+
   useEffect(() => {
-    async function getVisibilities() {
+    async function getVisibilitiesAndModes() {
       const visibility: Record<string, boolean> = {};
+      const modesMap: Record<string, Record<REVISIT_MODE, boolean> | null> = {};
       await Promise.all(
         configsList.map(async (configName) => {
           if (storageEngine && isCloudStorageEngine(storageEngine)) {
             const modes = await storageEngine.getModes(configName);
             visibility[configName] = modes.analyticsInterfacePubliclyAccessible;
+            modesMap[configName] = modes;
+          } else {
+            modesMap[configName] = null;
           }
         }),
       );
       setStudyVisibility(visibility);
+      setModesByConfig(modesMap);
     }
-    getVisibilities();
+    getVisibilitiesAndModes();
   }, [configsList, storageEngine]);
 
   const { user } = useAuth();
@@ -271,33 +285,33 @@ export function ConfigSwitcher({
 
           {others.length > 0 && (
             <Tabs.Panel value="Others">
-              <StudyCards configNames={others} studyConfigs={studyConfigs} />
+              <StudyCards configNames={others} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
             </Tabs.Panel>
           )}
 
           <Tabs.Panel value="Demos">
             <Text c="dimmed" mt="sm">These studies show off individual features of the reVISit platform.</Text>
-            <StudyCards configNames={demos} studyConfigs={studyConfigs} />
+            <StudyCards configNames={demos} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
           </Tabs.Panel>
 
           <Tabs.Panel value="Examples">
             <Text c="dimmed" mt="sm">These are full studies that demonstrate the capabilities of the reVISit platform.</Text>
-            <StudyCards configNames={examples} studyConfigs={studyConfigs} />
+            <StudyCards configNames={examples} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
           </Tabs.Panel>
 
           <Tabs.Panel value="Tutorials">
             <Text c="dimmed" mt="sm">These studies are designed to help you learn how to use the reVISit platform.</Text>
-            <StudyCards configNames={tutorials} studyConfigs={studyConfigs} />
+            <StudyCards configNames={tutorials} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
           </Tabs.Panel>
 
           <Tabs.Panel value="Tests">
             <Text c="dimmed" mt="sm">These studies exist for testing purposes.</Text>
-            <StudyCards configNames={tests} studyConfigs={studyConfigs} />
+            <StudyCards configNames={tests} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
           </Tabs.Panel>
 
           <Tabs.Panel value="Libraries">
             <Text c="dimmed" mt="sm">Here you can see an example of every library that we publish.</Text>
-            <StudyCards configNames={libraries} studyConfigs={studyConfigs} />
+            <StudyCards configNames={libraries} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
           </Tabs.Panel>
         </Tabs>
       </Container>
