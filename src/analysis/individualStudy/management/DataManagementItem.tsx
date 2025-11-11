@@ -222,7 +222,6 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
 
         {/* Position relative keeps the loading overlay only on the list */}
         <Box style={{ position: 'relative' }}>
-
           <LoadingOverlay visible={snapshotListLoading} />
           {Object.keys(snapshots).length > 0
             ? (
