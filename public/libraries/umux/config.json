@@ -33,7 +33,7 @@
           "required": true,
           "location": "aboveStimulus",
           "type": "likert",
-          "numItems": 5,
+          "numItems": 7,
           "rightLabel": "Strongly Agree",
           "leftLabel": "Strongly Disagree"
         },
