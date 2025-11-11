@@ -74,7 +74,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
         </Text>
 
         <Flex gap="xs">
-          <Title order={5}>Data Sharing</Title>
+          <Title order={5}>Share Data and Make Analytics Interface Public</Title>
           <Switch
             size="sm"
             checked={dataSharingEnabled}

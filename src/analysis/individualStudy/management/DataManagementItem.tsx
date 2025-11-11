@@ -143,6 +143,10 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
     <>
       <Title order={4} mb="sm">Data Management</Title>
       <LoadingOverlay visible={loading} />
+      <Text mb="xs">
+        Snapshots save your data, but restoring snapshots only works if your reVISit config, your components, and the reVISit version are still compatible with the data you collected.
+        Make sure to also backup your data, for example, to your local computer regularly.
+      </Text>
 
       <Flex justify="space-between" align="center">
         <Box style={{ width: '90%' }}>
@@ -161,7 +165,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
         </Box>
 
         <Tooltip label="Create a snapshot">
-          <Button onClick={openCreateSnapshotModal}>
+          <Button onClick={openCreateSnapshotModal} ml="xs">
             Snapshot
           </Button>
         </Tooltip>
@@ -182,7 +186,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
         </Box>
 
         <Tooltip label="Snapshot and Delete Data">
-          <Button color="red" onClick={() => setModalArchiveOpened(true)}>
+          <Button color="red" onClick={() => setModalArchiveOpened(true)} ml="xs">
             Archive
           </Button>
         </Tooltip>
@@ -203,7 +207,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
         </Box>
 
         <Tooltip label="Delete Data">
-          <Button color="red" onClick={() => setModalDeleteLiveOpened(true)}>
+          <Button color="red" onClick={() => setModalDeleteLiveOpened(true)} ml="xs">
             Delete
           </Button>
         </Tooltip>
@@ -214,10 +218,6 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
       <Flex direction="column">
         <Box style={{ borderBottom: '1px solid #dedede' }} mb="xs" pb="sm">
           <Title order={5}>Snapshots</Title>
-          <Text>
-            Snapshots save your data, but restoring snapshots only works if your reVISit config, your components, and the reVISit version are still compatible with the data you collected.
-            Make sure to also backup your data, for example, to your local computer regularly.
-          </Text>
         </Box>
 
         {/* Position relative keeps the loading overlay only on the list */}
