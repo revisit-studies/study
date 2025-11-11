@@ -1,0 +1,29 @@
+{
+  "factors": {
+    "labelType": {
+      "name": "labelType",
+      "options": ["none", "warning", "counter", "guide", "all"],
+      "order": "random",
+      "numSamples": 5
+    },
+    "visualization": {
+      "name": "visualization",
+      "options": ["cdc", "covidnet", "wapo", "who", "map"],
+      "order": "random",
+      "numSamples": 5
+    }
+  },
+  "sequence": {
+    "components": [
+      "intro",
+      "consent",
+      {
+        "id": "Guardrail Stimulus",
+        "factorsToCombine": ["labelType", "visualization"],
+        "componentTemplate": ["${labelType}-${visualization}"],
+        "combinationMode": "pair"
+      },
+      "post-study"
+    ]
+  }
+}

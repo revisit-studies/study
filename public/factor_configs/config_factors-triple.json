@@ -1,0 +1,48 @@
+{
+  "factors": {
+    "stocks": {
+      "name": "stocks",
+      "options": [
+        "AlphaCorp",
+        "BetaTech",
+        "GammaIndustries",
+        "DeltaEnergy",
+        "EpsilonEnterprises"
+      ],
+      "order": "random",
+      "numSamples": 3
+    },
+    "country": {
+      "name": "country",
+      "options": ["A", "B", "C", "D", "E"],
+      "order": "random",
+      "numSamples": 3
+    },
+    "guardrail": {
+      "name": "guardrail",
+      "options": [
+        "control",
+        "random",
+        "stats",
+        "exemplars",
+        "cluster",
+        "expert"
+      ],
+      "order": "random",
+      "numSamples": 3
+    }
+  },
+  "sequence": {
+    "components": [
+      "intro",
+      "consent",
+      {
+        "id": "Stock-Country-Guardrail Stimulus",
+        "factorsToCombine": ["stocks", "country", "guardrail"],
+        "componentTemplate": ["${stocks}-${country}-${guardrail}"],
+        "combinationMode": "pair"
+      },
+      "post-study"
+    ]
+  }
+}
