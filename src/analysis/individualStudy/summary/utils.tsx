@@ -14,6 +14,26 @@ export function calculateParticipantCounts(visibleParticipants: ParticipantData[
   };
 }
 
+export function calculateComponentParticipantCounts(visibleParticipants: ParticipantData[], componentName: string): ParticipantCounts {
+  const participants = visibleParticipants.filter((p) => {
+    const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
+    return answer && answer.startTime > 0;
+  });
+
+  return {
+    total: participants.length,
+    completed: participants.filter((p) => {
+      const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
+      return answer && answer.endTime !== -1;
+    }).length,
+    inProgress: participants.filter((p) => {
+      const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
+      return answer && answer.endTime === -1;
+    }).length,
+    rejected: participants.filter((p) => p.rejected).length,
+  };
+}
+
 export function calculateDateStats(visibleParticipants: ParticipantData[]): { startDate: Date | null; endDate: Date | null } {
   // Filter out rejected participants
   const validParticipants = visibleParticipants.filter((p) => !p.rejected);
