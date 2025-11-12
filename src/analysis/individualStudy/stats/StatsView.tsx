@@ -10,7 +10,7 @@ import { StudyConfig } from '../../../parser/types';
 import { TrialVisualization } from './TrialVisualization';
 import { ComponentBlockWithOrderPath, StepsPanel } from '../../../components/interface/StepsPanel';
 import { addPathToComponentBlock } from '../../../utils/getSequenceFlatMap';
-import { OverviewStats } from './OverviewStats';
+import { OverviewStats } from '../summary/OverviewStats';
 import {
   calculateParticipantCounts, calculateCorrectnessStats, calculateTimeStats, calculateDateStats, calculateComponentStats,
 } from '../summary/utils';
@@ -88,7 +88,7 @@ export function StatsView(
 
   return (
     <>
-      <OverviewStats overviewData={overviewData} mismatchDetails={null} />
+      <OverviewStats overviewData={overviewData} mismatchDetails={null} showDates={false} />
       <Paper shadow="sm" p="md" mt="md" withBorder>
         {
         (visibleParticipants.length === 0)

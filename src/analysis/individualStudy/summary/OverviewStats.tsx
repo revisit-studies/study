@@ -7,6 +7,7 @@ import { OverviewData } from '../../types';
 export function OverviewStats({
   overviewData,
   mismatchDetails,
+  showDates = true,
 }: {
   overviewData: OverviewData | null;
   mismatchDetails?: {
@@ -14,6 +15,7 @@ export function OverviewStats({
     inProgress: { current: number; calculated: number };
     rejected: { current: number; calculated: number };
   } | null;
+  showDates?: boolean;
 }) {
   const hasMismatch = (type: 'completed' | 'inProgress' | 'rejected') => {
     if (!mismatchDetails) return false;
@@ -68,14 +70,18 @@ export function OverviewStats({
             </Flex>
             <Text size="sm" c="dimmed">Rejected</Text>
           </div>
-          <div>
-            <Text size="xl" fw="bold">{overviewData.startDate?.toLocaleDateString() || 'N/A'}</Text>
-            <Text size="sm" c="dimmed">Start Date</Text>
-          </div>
-          <div>
-            <Text size="xl" fw="bold">{overviewData.endDate?.toLocaleDateString() || 'N/A'}</Text>
-            <Text size="sm" c="dimmed">End Date</Text>
-          </div>
+          {showDates && (
+            <>
+              <div>
+                <Text size="xl" fw="bold">{overviewData.startDate?.toLocaleDateString() || 'N/A'}</Text>
+                <Text size="sm" c="dimmed">Start Date</Text>
+              </div>
+              <div>
+                <Text size="xl" fw="bold">{overviewData.endDate?.toLocaleDateString() || 'N/A'}</Text>
+                <Text size="sm" c="dimmed">End Date</Text>
+              </div>
+            </>
+          )}
           <div>
             <Text size="xl" fw="bold">
               {Number.isFinite(overviewData.avgTime) ? `${(overviewData.avgTime).toFixed(1)} s` : 'N/A'}
