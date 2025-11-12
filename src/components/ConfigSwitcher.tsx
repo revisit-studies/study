@@ -231,9 +231,11 @@ export function ConfigSwitcher({
       const modesMap: Record<string, Record<REVISIT_MODE, boolean> | null> = {};
       await Promise.all(
         configsList.map(async (configName) => {
-          if (storageEngine && isCloudStorageEngine(storageEngine)) {
+          if (storageEngine) {
             const modes = await storageEngine.getModes(configName);
-            visibility[configName] = modes.dataSharingEnabled;
+            if (isCloudStorageEngine(storageEngine)) {
+              visibility[configName] = modes.dataSharingEnabled;
+            }
             modesMap[configName] = modes;
           } else {
             modesMap[configName] = null;
