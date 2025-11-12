@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
     "description": "A library for visual calibration tasks including virtual chinrest (card size) and viewing distance calibration using blindspot tracking.",
     "reference": "Custom calibration library for visual perception studies",
     "doi": "10.1038/s41598-019-57204-1",

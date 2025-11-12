@@ -4,12 +4,14 @@ export function randomizeForm(componentConfig: IndividualComponent) {
   const response = componentConfig.response.map((r) => r.id);
 
   if (componentConfig.responseOrder === 'random') {
-    return {
-      response: [...response]
-        .map((value) => ({ value, sort: Math.random() }))
-        .sort((a, b) => a.sort - b.sort)
-        .map(({ value }) => value),
-    };
+    const fixedIndices = componentConfig.response.flatMap((r, i) => (r.excludeFromRandomization ? [i] : []));
+    const shuffled = componentConfig.response
+      .filter((r) => !r.excludeFromRandomization)
+      .map((r) => r.id)
+      .map((value) => ({ value, sort: Math.random() }))
+      .sort((a, b) => a.sort - b.sort)
+      .map(({ value }) => value);
+    return { response: componentConfig.response.map((r, i) => (fixedIndices.includes(i) ? r.id : shuffled.shift()!)) };
   }
 
   return { response };

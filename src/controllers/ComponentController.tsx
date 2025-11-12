@@ -94,6 +94,7 @@ export function ComponentController() {
       storeDispatch(setAlertModal({
         show: true,
         message: `There was an issue connecting to the ${import.meta.env.VITE_STORAGE_ENGINE} database. This could be caused by a network issue or your adblocker. If you are using an adblocker, please disable it for this website and refresh.`,
+        title: 'Failed to connect to the storage engine',
       }));
     }
   }, [setAlertModal, storageEngine, storeDispatch]);
@@ -233,7 +234,7 @@ export function ComponentController() {
 
   // Automatically forward a user to their last completed trial if they are returning to the study
   useEffect(() => {
-    if (status && status.endTime > 0 && !isAnalysis && !modes.studyNavigatorEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
+    if (status && status.endTime > 0 && !isAnalysis && !modes.developmentModeEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
       let lastAnsweredTrialOrder = '0';
       Object.values(answers).forEach((a) => {
         if (a.endTime > 0) {
@@ -248,7 +249,7 @@ export function ComponentController() {
         navigate(`/${studyId}/${encryptIndex(indexNumber)}${funcIndexNumber !== undefined ? `/${encryptIndex(funcIndexNumber)}` : ''}`);
       }
     }
-  }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.studyNavigatorEnabled, navigate, status, studyId]);
+  }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.

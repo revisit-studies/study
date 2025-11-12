@@ -1,5 +1,6 @@
 import {
   Stack, TextInput, Button, Group, Table, Text, ColorInput, Loader, ActionIcon, Radio,
+  Title,
 } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import {
@@ -8,7 +9,7 @@ import {
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { StageInfo } from '../../../storage/engines/types';
 
-export function StageManagementAccordionItem({ studyId }: { studyId: string }) {
+export function StageManagementItem({ studyId }: { studyId: string }) {
   const { storageEngine } = useStorageEngine();
 
   const [asyncStatus, setAsyncStatus] = useState(false);
@@ -148,9 +149,10 @@ export function StageManagementAccordionItem({ studyId }: { studyId: string }) {
 
   return (
     <Stack>
-      <Group justify="space-between" mb="md">
+      <Group>
+        <Title order={4} mb="sm">Stage Management</Title>
         {!addingNewStage && (
-          <Button size="sm" onClick={handleAddNewStage}>
+          <Button size="sm" onClick={handleAddNewStage} ml="auto">
             Add New Stage
           </Button>
         )}

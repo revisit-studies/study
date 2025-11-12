@@ -245,6 +245,10 @@
       "additionalProperties": false,
       "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys.\n\nExample: ```js {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -338,6 +342,10 @@
       "additionalProperties": false,
       "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```js { \"id\": \"q7\", \"prompt\": \"Checkbox example (not required)\", \"location\": \"aboveStimulus\", \"type\": \"checkbox\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -569,10 +577,75 @@
       ],
       "type": "object"
     },
+    "DividerResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "hidden": {
+          "not": {}
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "not": {}
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "not": {}
+        },
+        "prompt": {
+          "not": {}
+        },
+        "required": {
+          "not": {}
+        },
+        "requiredLabel": {
+          "not": {}
+        },
+        "requiredValue": {
+          "not": {}
+        },
+        "secondaryText": {
+          "not": {}
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "divider",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "not": {}
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "type": "object"
+    },
     "DropdownResponse": {
       "additionalProperties": false,
       "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.\n\nExample: ```js { \"id\": \"q-color\", \"prompt\": \"What is your favorite color?\", \"location\": \"aboveStimulus\", \"type\": \"dropdown\", \"placeholder\": \"Please choose your favorite color\", \"options\": [\"Red\", \"Blue\"] } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -590,11 +663,11 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "maxSelections": {
-          "description": "The maximum number of selections that are required.",
+          "description": "The maximum number of selections that are required. This will make the dropdown a multiselect dropdown.",
           "type": "number"
         },
         "minSelections": {
-          "description": "The minimum number of selections that are required.",
+          "description": "The minimum number of selections that are required. This will make the dropdown a multiselect dropdown.",
           "type": "number"
         },
         "options": {
@@ -1176,6 +1249,10 @@
       "additionalProperties": false,
       "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"numItems\": 5, \"start\": 1, \"spacing\": 1 } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1268,6 +1345,10 @@
       "additionalProperties": false,
       "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```js { \"id\": \"q-name\", \"prompt\": \"What is your first name?\", \"location\": \"aboveStimulus\", \"type\": \"longText\", \"placeholder\": \"Please enter your first name\" } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1521,6 +1602,10 @@
           ],
           "description": "The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from."
         },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1631,6 +1716,10 @@
       "additionalProperties": false,
       "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.\n\nExample: ```js { \"id\": \"q-numerical\", \"prompt\": \"Numerical example\", \"location\": \"aboveStimulus\", \"type\": \"numerical\", \"placeholder\": \"Enter your age, range from 0 - 120\", \"max\": 120, \"min\": 0 } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1860,6 +1949,10 @@
       "additionalProperties": false,
       "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [\"Option 1\", \"Option 2\"] } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1998,6 +2091,10 @@
       "additionalProperties": false,
       "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options.\n\nThere are three types of ranking widgets: Ranking Sublist: The participant is asked to rank a subset of items from a larger list. Ranking Categorical: The participant is asked to rank items within categories: HIGH, MEDIUM, and LOW. Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.\n\n```js { \"id\": \"ranking-sublist\", \"type\": \"ranking-sublist\", \"prompt\": \"Rank your top 2 favorite fruits from the list below\", \"location\": \"belowStimulus\", \"options\": [\"Apple\", \"Banana\", \"Orange\", \"Strawberry\", \"Grapes\"], \"numItems\": 2 }, { \"id\": \"ranking-categorical\", \"type\": \"ranking-categorical\", \"prompt\": \"Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.\", \"location\": \"belowStimulus\", \"options\": [\"Drawing\", \"Singing\", \"Hiking\", \"Dancing\", \"Photography\"] }, { \"id\": \"ranking-pairwise\", \"type\": \"ranking-pairwise\", \"prompt\": \"Which meal would you prefer\", \"location\": \"belowStimulus\", \"options\": [\"Pizza\", \"Sushi\", \"Burger\", \"Pasta\", \"Salad\", \"Tacos\"] } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -2090,7 +2187,7 @@
     },
     "ReactComponent": {
       "additionalProperties": false,
-      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts { parameters: T; setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\nparameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config ```js { type: 'react-component'; path: 'my_study/CoolComponent.tsx'; parameters: {  name: 'Zach';  age: 26; } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) { // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v2.3.1/src/public/demo-click-accuracy-test/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.3.1/src/public/example-brush-interactions/assets)",
+      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts { parameters: T; setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\nparameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config ```js { type: 'react-component'; path: 'my_study/CoolComponent.tsx'; parameters: {  name: 'Zach';  age: 26; } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) { // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v2.3.2/src/public/demo-click-accuracy-test/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.3.2/src/public/example-brush-interactions/assets)",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
@@ -2248,6 +2345,10 @@
       "additionalProperties": false,
       "description": "The ReactiveResponse interface is used to define the properties of a reactive response. ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list.\n\n```js { \"id\": \"reactiveResponse\", \"prompt\": \"Answer clicked in the stimulus\", \"location\": \"aboveStimulus\", \"type\": \"reactive\" } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -2394,6 +2495,9 @@
         },
         {
           "$ref": "#/definitions/TextOnlyResponse"
+        },
+        {
+          "$ref": "#/definitions/DividerResponse"
         }
       ]
     },
@@ -2401,6 +2505,10 @@
       "additionalProperties": false,
       "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.\n\n```js { \"id\": \"q-short-text\", \"prompt\": \"Short text example\", \"location\": \"aboveStimulus\", \"type\": \"shortText\", \"placeholder\": \"Enter your answer here\" } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -2496,6 +2604,10 @@
       "additionalProperties": false,
       "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.\n\nExample: ```js { \"id\": \"q-slider\", \"prompt\": \"How are you feeling?\", \"location\": \"aboveStimulus\", \"type\": \"slider\", \"options\": [  {    \"label\": \"Bad\",    \"value\": 0  },  {    \"label\": \"OK\",    \"value\": 50  },  {    \"label\": \"Good\",    \"value\": 100  } ] } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -2620,7 +2732,7 @@
     },
     "StudyConfig": {
       "additionalProperties": false,
-      "description": "The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.\n\n```js { \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json\", \"studyMetadata\": {  ... }, \"uiConfig\": {  ... }, \"components\": {  ... }, \"sequence\": {  ... } } ```\n\n:::info For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually. ::: <br/>\n\nThe `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.",
+      "description": "The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.\n\n```js { \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json\", \"studyMetadata\": {  ... }, \"uiConfig\": {  ... }, \"components\": {  ... }, \"sequence\": {  ... } } ```\n\n:::info For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually. ::: <br/>\n\nThe `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.",
       "properties": {
         "$schema": {
           "description": "A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information",
@@ -2885,6 +2997,10 @@
       "additionalProperties": false,
       "description": "The TextOnlyResponse interface is used to define the properties of a text only response. TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information. It does not accept any input from the user.\n\nExample: ```js {   \"id\": \"textOnlyResponse\",   \"type\": \"textOnly\",   \"prompt\": \"This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.\",   \"location\": \"belowStimulus\",   \"restartEnumeration\": true } ```\n\nIn this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "not": {}
         },
