@@ -1,0 +1,815 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
+  "description": "This library is the Ishihara color blindness test. Each component contains an image of an Ishihara plate. The meta attribute of each plate describe what normal vision people, red color blind people, green color blind people, and total color blind people see from this plate. The user is asked to identify the number or pattern in the image. The library also contains two sequences: a short test and a full test. The short test contains 4 components and the full test contains all 24 components.",
+  "externalLink": "https://www.colour-blindness.com/colour-blindness-tests/ishihara-colour-test-plates/",
+  "components": {
+    "plate1": {
+      "meta": {
+        "plateNumber": 1,
+        "normal-color-vision-see": 12,
+        "red-color-blindness-see": 12,
+        "green-color-blindness-see": 12,
+        "total-color-blindness-see": 12,
+        "plateType": "demonstration"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara1.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate1-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate1-response",
+          "answer": 12
+        }
+      ]
+    },
+    "plate2": {
+      "meta": {
+        "plateNumber": 2,
+        "normal-color-vision-see": 8,
+        "red-color-blindness-see": 3,
+        "green-color-blindness-see": 3,
+        "total-color-blindness-see": "nothing",
+        "plateType": "transformation"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara2.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate2-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate2-response",
+          "answer": 8
+        }
+      ]
+    },
+    "plate3": {
+      "meta": {
+        "plateNumber": 3,
+        "normal-color-vision-see": 29,
+        "red-color-blindness-see": 70,
+        "green-color-blindness-see": 70,
+        "total-color-blindness-see": "nothing",
+        "plateType": "transformation"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara3.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate3-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate3-response",
+          "answer": 29
+        }
+      ]
+    },
+    "plate4": {
+      "meta": {
+        "plateNumber": 4,
+        "normal-color-vision-see": 5,
+        "red-color-blindness-see": 2,
+        "green-color-blindness-see": 2,
+        "total-color-blindness-see": "nothing",
+        "plateType": "transformation"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara4.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate4-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate4-response",
+          "answer": 5
+        }
+      ]
+    },
+    "plate5": {
+      "meta": {
+        "plateNumber": 5,
+        "normal-color-vision-see": 5,
+        "red-color-blindness-see": 3,
+        "green-color-blindness-see": 3,
+        "total-color-blindness-see": "nothing",
+        "plateType": "transformation"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara5.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate5-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate5-response",
+          "answer": 5
+        }
+      ]
+    },
+    "plate6": {
+      "meta": {
+        "plateNumber": 6,
+        "normal-color-vision-see": 15,
+        "red-color-blindness-see": 17,
+        "green-color-blindness-see": 17,
+        "total-color-blindness-see": "nothing",
+        "plateType": "transformation"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara6.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate6-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate6-response",
+          "answer": 15
+        }
+      ]
+    },
+    "plate7": {
+      "meta": {
+        "plateNumber": 7,
+        "normal-color-vision-see": 74,
+        "red-color-blindness-see": 21,
+        "green-color-blindness-see": 21,
+        "total-color-blindness-see": "nothing",
+        "plateType": "transformation"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara7.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate7-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate7-response",
+          "answer": 74
+        }
+      ]
+    },
+    "plate8": {
+      "meta": {
+        "plateNumber": 8,
+        "normal-color-vision-see": 6,
+        "red-color-blindness-see": "nothing",
+        "green-color-blindness-see": "nothing",
+        "total-color-blindness-see": "nothing",
+        "plateType": "vanishing"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara8.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate8-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate8-response",
+          "answer": 6
+        }
+      ]
+    },
+    "plate9": {
+      "meta": {
+        "plateNumber": 9,
+        "normal-color-vision-see": 45,
+        "red-color-blindness-see": "nothing",
+        "green-color-blindness-see": "nothing",
+        "total-color-blindness-see": "nothing",
+        "plateType": "vanishing"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara9.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate9-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate9-response",
+          "answer": 45
+        }
+      ]
+    },
+    "plate10": {
+      "meta": {
+        "plateNumber": 10,
+        "normal-color-vision-see": 5,
+        "red-color-blindness-see": "nothing",
+        "green-color-blindness-see": "nothing",
+        "total-color-blindness-see": "nothing",
+        "plateType": "vanishing"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara10.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate10-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate10-response",
+          "answer": 5
+        }
+      ]
+    },
+    "plate11": {
+      "meta": {
+        "plateNumber": 11,
+        "normal-color-vision-see": 7,
+        "red-color-blindness-see": "nothing",
+        "green-color-blindness-see": "nothing",
+        "total-color-blindness-see": "nothing",
+        "plateType": "vanishing"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara11.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate11-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate11-response",
+          "answer": 7
+        }
+      ]
+    },
+    "plate12": {
+      "meta": {
+        "plateNumber": 12,
+        "normal-color-vision-see": 16,
+        "red-color-blindness-see": "nothing",
+        "green-color-blindness-see": "nothing",
+        "total-color-blindness-see": "nothing",
+        "plateType": "vanishing"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara12.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate12-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate12-response",
+          "answer": 16
+        }
+      ]
+    },
+    "plate13": {
+      "meta": {
+        "plateNumber": 13,
+        "normal-color-vision-see": 73,
+        "red-color-blindness-see": "nothing",
+        "green-color-blindness-see": "nothing",
+        "total-color-blindness-see": "nothing",
+        "plateType": "vanishing"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara13.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate13-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate13-response",
+          "answer": 73
+        }
+      ]
+    },
+    "plate14": {
+      "meta": {
+        "plateNumber": 14,
+        "normal-color-vision-see": "nothing",
+        "red-color-blindness-see": 5,
+        "green-color-blindness-see": 5,
+        "total-color-blindness-see": "nothing",
+        "plateType": "hidden-digit"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara14.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate14-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": []
+    },
+    "plate15": {
+      "meta": {
+        "plateNumber": 15,
+        "normal-color-vision-see": "nothing",
+        "red-color-blindness-see": 45,
+        "green-color-blindness-see": 45,
+        "total-color-blindness-see": "nothing",
+        "plateType": "hidden-digit"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara15.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate15-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": []
+    },
+    "plate16": {
+      "meta": {
+        "plateNumber": 16,
+        "normal-color-vision-see": 26,
+        "red-color-blindness-see": 6,
+        "green-color-blindness-see": 2,
+        "total-color-blindness-see": "nothing",
+        "plateType": "diagnostic"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara16.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate16-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate16-response",
+          "answer": 26
+        }
+      ]
+    },
+    "plate17": {
+      "meta": {
+        "plateNumber": 17,
+        "normal-color-vision-see": 42,
+        "red-color-blindness-see": 4,
+        "green-color-blindness-see": 2,
+        "total-color-blindness-see": "nothing",
+        "plateType": "diagnostic"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara17.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate17-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate17-response",
+          "answer": 42
+        }
+      ]
+    },
+    "plate18": {
+      "meta": {
+        "plateNumber": 18,
+        "normal-color-vision-see": "a purple line and a red line",
+        "red-color-blindness-see": "a purple line",
+        "green-color-blindness-see": "a red line",
+        "total-color-blindness-see": "nothing",
+        "plateType": "diagnostic"
+      },
+      "instruction": "What pattern do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara18.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate18-response",
+          "prompt": "Enter the pattern you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText"
+        }
+      ],
+      "correctAnswer": []
+    },
+    "plate19": {
+      "meta": {
+        "plateNumber": 19,
+        "normal-color-vision-see": "nothing",
+        "red-color-blindness-see": "wiggly lines",
+        "green-color-blindness-see": "wiggly lines",
+        "total-color-blindness-see": "nothing",
+        "plateType": "hidden-pattern"
+      },
+      "instruction": "What pattern do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara19.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate19-response",
+          "prompt": "Enter the pattern you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText"
+        }
+      ],
+      "correctAnswer": []
+    },
+    "plate20": {
+      "meta": {
+        "plateNumber": 20,
+        "normal-color-vision-see": "a green wiggly line",
+        "red-color-blindness-see": "nothing",
+        "green-color-blindness-see": "nothing",
+        "total-color-blindness-see": "nothing",
+        "plateType": "vanishing"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara20.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate20-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": []
+    },
+    "plate21": {
+      "meta": {
+        "plateNumber": 21,
+        "normal-color-vision-see": "a orange wiggly line",
+        "red-color-blindness-see": "nothing",
+        "green-color-blindness-see": "nothing",
+        "total-color-blindness-see": "nothing",
+        "plateType": "vanishing"
+      },
+      "instruction": "What pattern do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara21.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate21-response",
+          "prompt": "Enter the pattern you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText"
+        }
+      ],
+      "correctAnswer": []
+    },
+    "plate22": {
+      "meta": {
+        "plateNumber": 22,
+        "normal-color-vision-see": "a blue-grenn/yellow-green wiggly line",
+        "red-color-blindness-see": "a blue-green and red wiggle line",
+        "green-color-blindness-see": "a blue-green and red wiggle line",
+        "total-color-blindness-see": "nothing",
+        "plateType": "transformation"
+      },
+      "instruction": "What do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara22.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate22-response",
+          "prompt": "Enter what you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText"
+        }
+      ],
+      "correctAnswer": []
+    },
+    "plate23": {
+      "meta": {
+        "plateNumber": 23,
+        "normal-color-vision-see": "a red-orange wiggly line",
+        "red-color-blindness-see": "a blue-green wiggle line",
+        "green-color-blindness-see": "a blue-green wiggle line",
+        "total-color-blindness-see": "nothing",
+        "plateType": "transformation"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara23.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate23-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical",
+          "withDontKnow": true
+        }
+      ],
+      "correctAnswer": []
+    },
+    "plate24": {
+      "meta": {
+        "plateNumber": 24,
+        "normal-color-vision-see": "a wiggly line",
+        "red-color-blindness-see": "a wiggly line",
+        "green-color-blindness-see": "a wiggly line",
+        "total-color-blindness-see": "a wiggly line",
+        "plateType": "demonstration"
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara24.png",
+      "style": {
+        "width": "300px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate24-response",
+          "prompt": "Enter what you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText"
+        }
+      ],
+      "correctAnswer": []
+    }
+  },
+  "sequences": {
+    "short-test": {
+      "id": "short-test",
+      "order": "random",
+      "components": [
+        "plate2",
+        "plate4",
+        "plate8",
+        "plate9"
+      ]
+    },
+    "full-test": {
+      "id": "full-test",
+      "order": "fixed",
+      "components": [
+        "plate1",
+        "plate2",
+        "plate3",
+        "plate4",
+        "plate5",
+        "plate6",
+        "plate7",
+        "plate8",
+        "plate9",
+        "plate10",
+        "plate11",
+        "plate12",
+        "plate13",
+        "plate14",
+        "plate15",
+        "plate16",
+        "plate17",
+        "plate18",
+        "plate19",
+        "plate20",
+        "plate21",
+        "plate22",
+        "plate23",
+        "plate24"
+      ]
+    }
+  }
+}
