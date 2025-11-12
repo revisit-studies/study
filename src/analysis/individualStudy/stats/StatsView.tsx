@@ -12,7 +12,7 @@ import { ComponentBlockWithOrderPath, StepsPanel } from '../../../components/int
 import { addPathToComponentBlock } from '../../../utils/getSequenceFlatMap';
 import { OverviewStats } from '../summary/OverviewStats';
 import {
-  calculateParticipantCounts, calculateCorrectnessStats, calculateTimeStats, calculateDateStats, calculateComponentStats,
+  calculateParticipantCounts, calculateComponentParticipantCounts, calculateCorrectnessStats, calculateTimeStats, calculateDateStats, calculateComponentStats,
 } from '../summary/utils';
 
 export function StatsView(
@@ -67,7 +67,7 @@ export function StatsView(
 
     if (filteredParticipants.length === 0) return null;
 
-    const participantCounts = calculateParticipantCounts(filteredParticipants);
+    const participantCounts = calculateComponentParticipantCounts(filteredParticipants, trialId);
     const { avgTime, avgCleanTime } = calculateTimeStats(filteredParticipants);
     const { startDate, endDate } = calculateDateStats(filteredParticipants);
     const correctnessStats = calculateCorrectnessStats(filteredParticipants);
