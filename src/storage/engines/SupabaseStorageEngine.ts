@@ -353,8 +353,8 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
     const defaultModes = {
       dataCollectionEnabled: true,
-      studyNavigatorEnabled: true,
-      analyticsInterfacePubliclyAccessible: true,
+      developmentModeEnabled: true,
+      dataSharingEnabled: true,
     };
     await this.supabase
       .from('revisit')

@@ -35,7 +35,7 @@ export type SequenceAssignment = {
   stage: string; // The stage of the participant in the study
 };
 
-export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
+export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
 
 export interface StageInfo {
   stageName: string;

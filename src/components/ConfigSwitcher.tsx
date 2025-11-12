@@ -140,12 +140,12 @@ function StudyCard({
               {studyStatusAndTiming
                 && <ParticipantStatusBadges completed={studyStatusAndTiming.completed} inProgress={studyStatusAndTiming.inProgress} rejected={studyStatusAndTiming.rejected} />}
               <Flex ml="auto" gap="sm" opacity={0.7}>
-                {modes?.studyNavigatorEnabled
-                  ? <Tooltip label="Study navigator enabled" withinPortal><IconSchema size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Study navigator disabled" withinPortal><IconSchemaOff size={16} color="red" /></Tooltip>}
-                {modes?.analyticsInterfacePubliclyAccessible
-                  ? <Tooltip label="Analytics interface publicly accessible" withinPortal><IconGraph size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Analytics interface not publicly accessible" withinPortal><IconGraphOff size={16} color="red" /></Tooltip>}
+                {modes?.developmentModeEnabled
+                  ? <Tooltip label="Development mode enabled" withinPortal><IconSchema size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Development mode disabled" withinPortal><IconSchemaOff size={16} color="red" /></Tooltip>}
+                {modes?.dataSharingEnabled
+                  ? <Tooltip label="Data sharing enabled" withinPortal><IconGraph size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Data sharing disabled" withinPortal><IconGraphOff size={16} color="red" /></Tooltip>}
                 {storageEngine?.getEngine() === 'localStorage'
                   ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
                   : storageEngine?.getEngine() === 'firebase'
@@ -233,7 +233,7 @@ export function ConfigSwitcher({
         configsList.map(async (configName) => {
           if (storageEngine && isCloudStorageEngine(storageEngine)) {
             const modes = await storageEngine.getModes(configName);
-            visibility[configName] = modes.analyticsInterfacePubliclyAccessible;
+            visibility[configName] = modes.dataSharingEnabled;
             modesMap[configName] = modes;
           } else {
             modesMap[configName] = null;

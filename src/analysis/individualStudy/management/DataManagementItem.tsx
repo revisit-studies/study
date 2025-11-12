@@ -17,7 +17,7 @@ type SnapshotAction =
   | { type: 'deleteSnapshot', snapshot: string }
   | { type: 'deleteLive' };
 
-export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<Record<number, ParticipantData>> }) {
+export function DataManagementItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<Record<number, ParticipantData>> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
   const [modalDeleteSnapshotOpened, setModalDeleteSnapshotOpened] = useState<boolean>(false);
   const [modalRenameSnapshotOpened, setModalRenameSnapshotOpened] = useState<boolean>(false);
@@ -141,9 +141,15 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
 
   return (
     <>
+      <Title order={4} mb="sm">Data Management</Title>
       <LoadingOverlay visible={loading} />
+      <Text mb="xs">
+        Snapshots save your data, but restoring snapshots only works if your reVISit config, your components, and the reVISit version are still compatible with the data you collected.
+        Make sure to also backup your data, for example, to your local computer regularly.
+      </Text>
+
       <Flex justify="space-between" align="center">
-        <Box style={{ width: '70%' }}>
+        <Box style={{ width: '90%' }}>
           <Title order={5}>Create a Snapshot</Title>
           <Text>
             This will create a snapshot of the live
@@ -159,16 +165,16 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
         </Box>
 
         <Tooltip label="Create a snapshot">
-          <Button onClick={openCreateSnapshotModal}>
+          <Button onClick={openCreateSnapshotModal} ml="xs">
             Snapshot
           </Button>
         </Tooltip>
       </Flex>
 
-      <Space h="lg" />
+      <Space h="sm" />
 
       <Flex justify="space-between" align="center">
-        <Box style={{ width: '70%' }}>
+        <Box style={{ width: '90%' }}>
           <Title order={5}>Archive Data</Title>
           <Text>
             This will create a snapshot of the live
@@ -180,16 +186,16 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
         </Box>
 
         <Tooltip label="Snapshot and Delete Data">
-          <Button color="red" onClick={() => setModalArchiveOpened(true)}>
+          <Button color="red" onClick={() => setModalArchiveOpened(true)} ml="xs">
             Archive
           </Button>
         </Tooltip>
       </Flex>
 
-      <Space h="lg" />
+      <Space h="sm" />
 
       <Flex justify="space-between" align="center">
-        <Box style={{ width: '70%' }}>
+        <Box style={{ width: '90%' }}>
           <Title order={5}>Delete Data</Title>
           <Text>
             This will delete the live
@@ -201,18 +207,18 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
         </Box>
 
         <Tooltip label="Delete Data">
-          <Button color="red" onClick={() => setModalDeleteLiveOpened(true)}>
+          <Button color="red" onClick={() => setModalDeleteLiveOpened(true)} ml="xs">
             Delete
           </Button>
         </Tooltip>
       </Flex>
 
-      <Space h="xl" />
+      <Space h="sm" />
 
       <Flex direction="column">
-        <Flex style={{ borderBottom: '1px solid #dedede' }} direction="row" justify="space-between" mb="xs" pb="sm">
+        <Box style={{ borderBottom: '1px solid #dedede' }} mb="xs" pb="sm">
           <Title order={5}>Snapshots</Title>
-        </Flex>
+        </Box>
 
         {/* Position relative keeps the loading overlay only on the list */}
         <Box style={{ position: 'relative' }}>

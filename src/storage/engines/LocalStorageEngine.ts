@@ -176,8 +176,8 @@ export class LocalStorageEngine extends StorageEngine {
     // Else, set and return defaults
     const defaults: Record<REVISIT_MODE, boolean> = {
       dataCollectionEnabled: true,
-      studyNavigatorEnabled: true,
-      analyticsInterfacePubliclyAccessible: true,
+      developmentModeEnabled: true,
+      dataSharingEnabled: true,
     };
     this.studyDatabase.setItem(key, defaults);
     return defaults;
