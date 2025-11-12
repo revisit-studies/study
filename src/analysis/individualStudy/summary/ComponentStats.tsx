@@ -84,7 +84,6 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
     enablePagination: true,
     initialState: {
       pagination: { pageSize: 10, pageIndex: 0 },
-      sorting: [{ id: 'component', desc: false }],
     },
     mantineSearchTextInputProps: {
       placeholder: 'Search components...',
