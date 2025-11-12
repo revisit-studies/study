@@ -31,8 +31,8 @@ function safe<T>(p: Promise<T>): Promise<T | null> {
 }
 
 export function AudioProvenanceVis({
-  setTimeString, answers, setTime, taskName, context, saveProvenance, analysisIsPlaying, setAnalysisIsPlaying, speed, jumpedToAudioTime, setHasAudio, setSpeed, isMuted,
-}: { setTimeString: (time: string) => void; answers: Record<string, StoredAnswer>, setTime: (time: number) => void, taskName: string, context: 'audioAnalysis' | 'provenanceVis', saveProvenance: ((state: unknown) => void), analysisIsPlaying: boolean, setAnalysisIsPlaying: (b: boolean) => void, speed: number, jumpedToAudioTime: number, setHasAudio: (b: boolean) => void, setSpeed: (n: number) => void, isMuted: boolean }) {
+  setTimeString, answers, setTime, taskName, context, saveProvenance, analysisIsPlaying, setAnalysisIsPlaying, speed, jumpedToAudioTime, setHasAudio, setSpeed, isMuted, onProvenanceTimelineChange,
+}: { setTimeString: (time: string) => void; answers: Record<string, StoredAnswer>, setTime: (time: number) => void, taskName: string, context: 'audioAnalysis' | 'provenanceVis', saveProvenance: ((state: unknown) => void), analysisIsPlaying: boolean, setAnalysisIsPlaying: (b: boolean) => void, speed: number, jumpedToAudioTime: number, setHasAudio: (b: boolean) => void, setSpeed: (n: number) => void, isMuted: boolean, onProvenanceTimelineChange?: (n: number) => void }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
 
@@ -139,6 +139,7 @@ export function AudioProvenanceVis({
     }
 
     setPlayTime(n);
+    onProvenanceTimelineChange && onProvenanceTimelineChange(n - startTime);
 
     if (wavesurfer.current && percent !== undefined && !Number.isNaN(percent)) {
       setTimeout(() => {
@@ -149,7 +150,7 @@ export function AudioProvenanceVis({
     if (setTime) {
       setTime(n);
     }
-  }, [setAnalysisIsPlaying, setTime, startTime, totalAudioLength]);
+  }, [setAnalysisIsPlaying, setTime, startTime, totalAudioLength, onProvenanceTimelineChange]);
 
   useEffect(() => {
     _setPlayTime(startTime + jumpedToAudioTime * 1000 + 1, undefined);
@@ -428,7 +429,7 @@ export function AudioProvenanceVis({
         {xScale ? (
           <Timer
             duration={totalAudioLength * 1000}
-            initialTime={jumpedToAudioTime ? startTime + jumpedToAudioTime * 1000 + 1 : replayTimestamp ? startTime + replayTimestamp : 0}
+            initialTime={jumpedToAudioTime ? startTime + jumpedToAudioTime * 1000 + 1 : replayTimestamp ? startTime + replayTimestamp : startTime}
             height={(analysisHasAudio ? 50 : 0) + 25}
             isPlaying={analysisIsPlaying}
             speed={speed}

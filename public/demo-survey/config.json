@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Form Elements Demo",
     "version": "pilot",
@@ -210,8 +210,11 @@
             "Option 2",
             "Option 3",
             "Option 4"
-          ],
-          "withDivider": true
+          ]
+        },
+        {
+          "id": "divider1",
+          "type": "divider"
         },
         {
           "id": "matrixHeaderTitle",
@@ -227,8 +230,11 @@
           "type": "likert",
           "numItems": 9,
           "rightLabel": "Like",
-          "leftLabel": "Dislike",
-          "withDivider": true
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "divider2",
+          "type": "divider"
         },
         {
           "id": "q-multi-satisfaction",
@@ -382,7 +388,8 @@
         {
           "id": "textField",
           "type": "textOnly",
-          "prompt": "# Randomizing Questions in a Form\n\n This shows how to randomize the order of questions in the form. Notice how the number before each question is different from the order number specified in the text. Note that currently the title is also randomized; you can avoid that by putting the title in a markdown file and adding the questions as a response."
+          "prompt": "# Randomizing Questions in a Form\n\n This shows how to randomize the order of questions in the form. Notice how the number before each question is different from the order number specified in the text. Note that currently the title is not randomized; you can exclude a form element from being randomized if you need to.",
+          "excludeFromRandomization": true
         },
         {
           "id": "q-dropdown",
@@ -645,7 +652,11 @@
             "Option 2",
             "Option 3"
           ],
-          "withDivider": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "divider",
+          "type": "divider",
           "location": "sidebar"
         },
         {

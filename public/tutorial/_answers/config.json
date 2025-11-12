@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "A tutorial that you will build with us",
     "version": "development",
@@ -58,8 +58,12 @@
           "secondaryText": "1 being the worst health and 5 being the best health",
           "numItems": 5,
           "rightLabel": "Best health",
-          "leftLabel": "Worst health",
-          "withDivider": true
+          "leftLabel": "Worst health"
+        },
+        {
+          "id": "dividerResponse",
+          "type": "divider",
+          "location": "belowStimulus"
         },
         {
           "id": "fruits",

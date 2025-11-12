@@ -254,7 +254,7 @@ export function ResponseSwitcher({
         onChange={(event) => { dontKnowCheckbox?.onChange(event.currentTarget.checked); form.onChange(fieldInitialValue); }}
       />
       )}
-      {responseDividers && <Divider mt="xl" mb="xs" />}
+      {(response.type === 'divider' || responseDividers) && <Divider mt="xl" mb="xs" />}
     </Box>
   );
 }

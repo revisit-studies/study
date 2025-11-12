@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
   "description": "The Graph Literacy Scale is a 13-item instrument that measures people’s ability to understand common graphical formats, with a focus on health-related graphs. This library contains 13 components, each corresponding to a question of the Graph Literacy Scale. It also includes a sequence of all 13 components (the full Graph Literacy Scale).",
   "reference": "Galesic M, Garcia-Retamero R. Graph literacy: a cross-cultural comparison. Med Decis Making. 2011 May-Jun;31(3):444-57.",
   "doi": "10.1177/0272989X10373805",
