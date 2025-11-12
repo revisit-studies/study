@@ -1,0 +1,46 @@
+{
+  "factors": {
+    "stock": {
+      "name": "stock",
+      "options": ["a", "b", "c"],
+      "order": "random",
+      "numSamples": 3
+    },
+    "guardrail": {
+      "name": "guardrail",
+      "options": [
+        "control",
+        "random",
+        "stats",
+        "percentileClosest",
+        "cluster",
+        "metadata"
+      ],
+      "order": "random",
+      "numSamples": 3
+    }
+  },
+  "sequence": {
+    "components": [
+      "introduction",
+      "consent",
+      {
+        "id": "Guardrail Stimulus",
+        "factorsToCombine": ["stock", "guardrail"],
+        "componentTemplate": ["stock-${stock}-${guardrail}"],
+        "combinationMode": "pair"
+      },
+      "attention-check",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+          "stock-guardrail-selection-task-holistic",
+          "stock-guardrail-selection-task-precise"
+        ]
+      },
+      "post-study-quant",
+      "end"
+    ]
+  }
+}

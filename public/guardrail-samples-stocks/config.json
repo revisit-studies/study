@@ -1,0 +1,843 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Evaluating Line Charts with Stock Data",
+    "version": "pilot",
+    "authors": ["VDL"],
+    "date": "2024-01-11",
+    "description": "A study challenging participants to review linecharts with a focus on stock market data.",
+    "organizations": ["University of Utah"]
+  },
+  "uiConfig": {
+    "contactEmail": "abrar.nadib@utah.edu",
+    "logoPath": "assets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "urlParticipantIdParam": "PROLIFIC_PID",
+    "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [https://app.prolific.com/submissions/complete?cc=C18Y4XD3](https://app.prolific.com/submissions/complete?cc=C18Y4XD3)",
+    "enumerateQuestions": true,
+    "stylesheetPath": "stage-1/assets/form.css"
+  },
+  "baseComponents": {
+    "stock": {
+      "instruction": "On Jan 1, 2024, a financial advisor told you that the stock highlighted below is one of the best investments you can make. The visualization depicts how it panned out. Please review the chart and answer the questions below.",
+      "instructionLocation": "aboveStimulus",
+      "type": "react-component",
+      "path": "viz-guardrails/DataExplorer.tsx",
+      "parameters": {
+        "dataset": "sp500_stocks",
+        "start_date": "2024-01-01",
+        "end_date": "2024-12-24",
+        "allow_time_slider": false,
+        "allow_guardrail_selector": false,
+        "allow_selection": false,
+        "allow_help": false,
+        "guardrail": "super_summ",
+        "caption": "",
+        "x_var": "date",
+        "y_var": "value",
+        "cat_var": "name",
+        "group_var": "region"
+      },
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "trust",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "How trustworthy is this chart?",
+          "numItems": 7,
+          "rightLabel": "Completely trustworthy",
+          "leftLabel": "Not at all trustworthy",
+          "required": true
+        },
+        {
+          "id": "accuracy",
+          "type": "slider",
+          "location": "belowStimulus",
+          "prompt": "How well did this stock perform compared to all other stocks in the market? Drag the slider to answer (1 means 'worst' and 100 means 'best ')",
+          "options": [
+            {
+              "value": 1,
+              "label": "1"
+            },
+            {
+              "value": 25,
+              "label": "25"
+            },
+            {
+              "value": 50,
+              "label": "50"
+            },
+            {
+              "value": 75,
+              "label": "75"
+            },
+            {
+              "value": 100,
+              "label": "100"
+            }
+          ],
+          "required": true,
+          "step": 1
+        },
+        {
+          "id": "completeness",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "Do you feel that the visualization provided appropriate context to make an informed decision about your investment?",
+          "numItems": 7,
+          "leftLabel": "Not at all",
+          "rightLabel": "Definitely",
+          "required": true
+        }
+      ]
+    },
+    "stock-guardrail-selection-task": {
+      "type": "react-component",
+      "path": "viz-guardrails/GuardrailPreferenceTask.tsx",
+      "instruction": "Below are four different visualizations (A–D) of stock data for Verizon (VZ). Please review each chart and select the one you think is the most useful comparison for Verizon.",
+      "parameters": {
+        "dataset": "sp500_stocks",
+        "start_date": "2024-01-01",
+        "end_date": "2024-12-24",
+        "x_var": "date",
+        "y_var": "value",
+        "cat_var": "name",
+        "group_var": "sector",
+        "selection": ["VZ"],
+        "range": null,
+        "items": [],
+        "data": [],
+        "metadataFiltered": false,
+        "numRandomSamples": 5,
+        "numQuantiles": 5
+      },
+      "response": [
+        {
+          "id": "explanation",
+          "prompt": "Please briefly explain why you chose that chart. Which aspects influenced your choice?",
+          "secondaryText": "",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Enter your reasoning here"
+        }
+      ]
+    }
+  },
+  "components": {
+    "stock-a-control": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "none",
+        "initial_selection": ["TEL"]
+      }
+    },
+    "stock-a-random": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "super_data",
+        "initial_selection": ["TEL"]
+      }
+    },
+    "stock-a-stats": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "percentiles",
+        "initial_selection": ["TEL"]
+      }
+    },
+    "stock-a-percentileClosest": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "percentileClosest",
+        "initial_selection": ["TEL"]
+      }
+    },
+    "stock-a-cluster": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "cluster",
+        "initial_selection": ["TEL"]
+      }
+    },
+    "stock-a-metadata": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "metadata",
+        "initial_selection": ["TEL"]
+      }
+    },
+    "stock-b-control": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "none",
+        "initial_selection": ["COR"]
+      }
+    },
+    "stock-b-random": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "super_data",
+        "initial_selection": ["COR"]
+      }
+    },
+    "stock-b-stats": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "percentiles",
+        "initial_selection": ["COR"]
+      }
+    },
+    "stock-b-percentileClosest": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "percentileClosest",
+        "initial_selection": ["COR"]
+      }
+    },
+    "stock-b-cluster": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "cluster",
+        "initial_selection": ["COR"]
+      }
+    },
+    "stock-b-metadata": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "metadata",
+        "initial_selection": ["COR"]
+      }
+    },
+    "stock-c-control": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "none",
+        "initial_selection": ["CHD"]
+      }
+    },
+    "stock-c-random": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "super_data",
+        "initial_selection": ["CHD"]
+      }
+    },
+    "stock-c-stats": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "percentiles",
+        "initial_selection": ["CHD"]
+      }
+    },
+    "stock-c-percentileClosest": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "percentileClosest",
+        "initial_selection": ["CHD"]
+      }
+    },
+    "stock-c-cluster": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "cluster",
+        "initial_selection": ["CHD"]
+      }
+    },
+    "stock-c-metadata": {
+      "baseComponent": "stock",
+      "parameters": {
+        "guardrail": "metadata",
+        "initial_selection": ["CHD"]
+      }
+    },
+    "stock-guardrail-selection-task-holistic": {
+      "baseComponent": "stock-guardrail-selection-task"
+    },
+    "stock-guardrail-selection-task-precise": {
+      "baseComponent": "stock-guardrail-selection-task",
+      "parameters": {
+        "precisePrompt": true
+      }
+    },
+    "introduction": {
+      "type": "markdown",
+      "path": "stage-1/introduction.md",
+      "response": [
+        {
+          "id": "prolificId",
+          "prompt": "Please enter your Prolific ID",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Prolific ID",
+          "paramCapture": "PROLIFIC_PID"
+        }
+      ]
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "stage-1/consent_stage1.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "required": true,
+          "requiredValue": "yes",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            {
+              "label": "Decline",
+              "value": "no"
+            },
+            {
+              "label": "Accept",
+              "value": "yes"
+            }
+          ]
+        }
+      ]
+    },
+    "post-study-quant": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "stocks-familiarity",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "How familiar are you with stock market concepts and investing?",
+          "required": true,
+          "leftLabel": "Not at all familiar",
+          "rightLabel": "Extremely familiar",
+          "numItems": 7
+        },
+        {
+          "id": "comfortable-numbers",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "How comfortable are you at interpreting numbers, percentages, and basic statistics?",
+          "required": true,
+          "leftLabel": "Not at all comfortable",
+          "rightLabel": "Extremely comfortable",
+          "numItems": 7
+        },
+        {
+          "id": "confident-visuals",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "How confident are you in your ability to accurately interpret charts, graphs, and other visualizations?",
+          "required": true,
+          "leftLabel": "Not at all confident",
+          "rightLabel": "Extremely confident",
+          "numItems": 7
+        },
+        {
+          "id": "political-ideology",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "In terms of your political views, do you think of yourself as:",
+          "required": true,
+          "leftLabel": "Very Liberal",
+          "rightLabel": "Very Conservative",
+          "numItems": 7
+        }
+      ]
+    },
+    "attention-check": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "attention-bird",
+          "type": "shortText",
+          "location": "belowStimulus",
+          "prompt": "To show you are paying attention, please type the word 'bird' in the box below.",
+          "required": true,
+          "placeholder": "Type 'bird' here"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "consent",
+      {
+        "order": "random",
+        "numSamples": 1,
+        "components": [
+          {
+            "order": "random",
+            "components": ["stock-a-control", "stock-b-random", "stock-c-stats"]
+          },
+          {
+            "order": "random",
+            "components": ["stock-a-control", "stock-b-stats", "stock-c-random"]
+          },
+          {
+            "order": "random",
+            "components": ["stock-a-random", "stock-b-control", "stock-c-stats"]
+          },
+          {
+            "order": "random",
+            "components": ["stock-a-random", "stock-b-stats", "stock-c-control"]
+          },
+          {
+            "order": "random",
+            "components": ["stock-a-stats", "stock-b-control", "stock-c-random"]
+          },
+          {
+            "order": "random",
+            "components": ["stock-a-stats", "stock-b-random", "stock-c-control"]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-random",
+              "stock-c-percentileClosest"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-percentileClosest",
+              "stock-c-random"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-random",
+              "stock-b-control",
+              "stock-c-percentileClosest"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-random",
+              "stock-b-percentileClosest",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-percentileClosest",
+              "stock-b-control",
+              "stock-c-random"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-percentileClosest",
+              "stock-b-random",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-random",
+              "stock-c-cluster"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-cluster",
+              "stock-c-random"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-random",
+              "stock-b-control",
+              "stock-c-cluster"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-random",
+              "stock-b-cluster",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-cluster",
+              "stock-b-control",
+              "stock-c-random"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-cluster",
+              "stock-b-random",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-random",
+              "stock-c-metadata"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-metadata",
+              "stock-c-random"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-random",
+              "stock-b-control",
+              "stock-c-metadata"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-random",
+              "stock-b-metadata",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-metadata",
+              "stock-b-control",
+              "stock-c-random"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-metadata",
+              "stock-b-random",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-stats",
+              "stock-c-percentileClosest"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-percentileClosest",
+              "stock-c-stats"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-stats",
+              "stock-b-control",
+              "stock-c-percentileClosest"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-stats",
+              "stock-b-percentileClosest",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-percentileClosest",
+              "stock-b-control",
+              "stock-c-stats"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-percentileClosest",
+              "stock-b-stats",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-stats",
+              "stock-c-cluster"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-cluster",
+              "stock-c-stats"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-stats",
+              "stock-b-control",
+              "stock-c-cluster"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-stats",
+              "stock-b-cluster",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-cluster",
+              "stock-b-control",
+              "stock-c-stats"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-cluster",
+              "stock-b-stats",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-stats",
+              "stock-c-metadata"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-metadata",
+              "stock-c-stats"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-stats",
+              "stock-b-control",
+              "stock-c-metadata"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-stats",
+              "stock-b-metadata",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-metadata",
+              "stock-b-control",
+              "stock-c-stats"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-metadata",
+              "stock-b-stats",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-percentileClosest",
+              "stock-c-cluster"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-cluster",
+              "stock-c-percentileClosest"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-percentileClosest",
+              "stock-b-control",
+              "stock-c-cluster"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-percentileClosest",
+              "stock-b-cluster",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-cluster",
+              "stock-b-control",
+              "stock-c-percentileClosest"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-cluster",
+              "stock-b-percentileClosest",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-percentileClosest",
+              "stock-c-metadata"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-metadata",
+              "stock-c-percentileClosest"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-percentileClosest",
+              "stock-b-control",
+              "stock-c-metadata"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-percentileClosest",
+              "stock-b-metadata",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-metadata",
+              "stock-b-control",
+              "stock-c-percentileClosest"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-metadata",
+              "stock-b-percentileClosest",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-cluster",
+              "stock-c-metadata"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-control",
+              "stock-b-metadata",
+              "stock-c-cluster"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-cluster",
+              "stock-b-control",
+              "stock-c-metadata"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-cluster",
+              "stock-b-metadata",
+              "stock-c-control"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-metadata",
+              "stock-b-control",
+              "stock-c-cluster"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stock-a-metadata",
+              "stock-b-cluster",
+              "stock-c-control"
+            ]
+          }
+        ]
+      },
+      "attention-check",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+          "stock-guardrail-selection-task-holistic",
+          "stock-guardrail-selection-task-precise"
+        ]
+      },
+      "post-study-quant"
+    ]
+  }
+}

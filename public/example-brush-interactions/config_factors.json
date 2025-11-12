@@ -1,0 +1,33 @@
+{
+  "factors": {
+    "brush": {
+      "name": "brush",
+      "options": ["paintBrush", "rectangleBrush", "axisBrush", "sliderBrush"],
+      "order": "fixed",
+      "numSamples": 4
+    },
+    "question": {
+      "name": "question",
+      "options": ["q1", "q2"],
+      "order": "fixed",
+      "numSamples": 2
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "consent",
+      "tutorial",
+      {
+        "id": "studyContent",
+        "factorsToCombine": ["brush", "question"],
+        "componentTemplate": "${brush}_${question}",
+        "order": "random",
+        "combinationMode": "cross"
+      },
+      "post-study-survey",
+      "survey"
+    ]
+  }
+}

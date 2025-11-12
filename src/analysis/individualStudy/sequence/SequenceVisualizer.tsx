@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
-  Stack, Text, Box, Paper, Title,
+  Stack, Text, Box, Paper, Title, Group,
 } from '@mantine/core';
 import { useState } from 'react';
 import {
@@ -18,6 +18,8 @@ interface Factor {
 }
 
 interface SequenceComponent {
+  numSamples?: number;
+  components?: (string | SequenceComponent)[];
   id?: string;
   factorsToCombine?: string[];
   componentTemplate?: string;
@@ -86,28 +88,77 @@ export function SequenceVisualizer({
     return nums.reduce((acc, val) => acc * val, 1);
   };
 
+  const renderSimpleComponent = (component: string) => (
+    <Paper
+      shadow="sm"
+      p="md"
+      style={{
+        backgroundColor: '#f3f3f3ff',
+        borderRadius: 6,
+        flex: 1,
+      }}
+    >
+      <Text fw={600}>{component}</Text>
+    </Paper>
+  );
+
   const renderComponent = (
     component: string | SequenceComponent,
     index: number,
   ) => {
     if (!component) return null;
 
+    /// Simple component
     if (typeof component === 'string') {
+      return renderSimpleComponent(component);
+    }
+
+    /// Random/complex component
+    if (component.components) {
       return (
         <Paper
-          shadow="sm"
           p="md"
+          shadow="xs"
           style={{
-            backgroundColor: '#f3f3f3ff',
-            borderRadius: 6,
+            border: '2px dashed #c2c2c2ff',
+            borderRadius: 8,
+            backgroundColor: '#f9f9f9',
             flex: 1,
           }}
         >
-          <Text fw={600}>{component}</Text>
+          <Stack>
+            {component.order === 'fixed' ? null : (
+              <Box
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  marginTop: -10,
+                  marginLeft: 5,
+                }}
+              >
+                <IconDice size={20} color="black" style={{ marginTop: 10 }} />
+                <Text
+                  fw={500}
+                  size="md"
+                  color="black"
+                  mt="sm"
+                  style={{ textAlign: 'left' }}
+                >
+                  {component.numSamples !== component.components.length
+                    ? `Randomly draw ${component.numSamples} of ${component.components.length}`
+                    : 'Show all in random order'}
+                </Text>
+              </Box>
+            )}
+
+            {component.components.map((subComp: string | SequenceComponent, idx: number) => renderComponent(subComp, idx))}
+          </Stack>
         </Paper>
       );
     }
 
+    /// Factor component
     if (component.factorsToCombine) {
       const totalTrials = calculateTotalTrials(component);
       return (
@@ -134,7 +185,7 @@ export function SequenceVisualizer({
 
               return (
                 <Stack key={factorName}>
-                  <Paper p={20} style={{ backgroundColor: '#f1f7f1ff' }}>
+                  <Paper p={20} style={{ backgroundColor: '#e7f5ff5c' }}>
                     {renderFactor(factorName)}
 
                     <Box
@@ -150,8 +201,8 @@ export function SequenceVisualizer({
                           px="sm"
                           py={2}
                           style={{
-                            backgroundColor: '#e6f7e6', // very light green
-                            border: '1px solid #c8e6c9',
+                            backgroundColor: '#e7f5ff', // very light green
+                            border: '1px solid #d0ebff',
                             borderRadius: 16,
                             fontSize: 16,
                             fontWeight: 500,
@@ -227,10 +278,9 @@ export function SequenceVisualizer({
   };
 
   return (
-    <Paper p="md" shadow="sm">
-      <Stack>
-        {sequence.components.map((comp, idx) => renderComponent(comp, idx))}
-      </Stack>
-    </Paper>
+    <Stack>
+      <Title order={3}>Study Flow</Title>
+      {sequence.components.map((comp, idx) => renderComponent(comp, idx))}
+    </Stack>
   );
 }

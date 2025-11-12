@@ -24,6 +24,7 @@
     "example-VLAT-adaptive",
     "example-VLAT-full-randomized",
     "example-VLAT-mini-randomized",
+    "guardrail-samples-stocks",
     "library-adaptive-vlat",
     "library-beauvis",
     "library-berlin-num",
@@ -116,6 +117,10 @@
     },
     "example-VLAT-mini-randomized": {
       "path": "example-VLAT-mini-randomized/config.json"
+    },
+    "guardrail-samples-stocks": {
+      "path": "guardrail-samples-stocks/config.json",
+      "test": true
     },
     "library-adaptive-vlat": {
       "path": "library-adaptive-vlat/config.json",

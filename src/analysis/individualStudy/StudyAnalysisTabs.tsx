@@ -24,9 +24,7 @@ import {
   IconDashboard,
   IconCircuitSwitchOpen,
 } from '@tabler/icons-react';
-import {
-  useCallback, useEffect, useMemo, useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useResizeObserver } from '@mantine/hooks';
 import { AppHeader } from '../interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
@@ -74,7 +72,7 @@ function sortByStartTime(a: ParticipantData, b: ParticipantData) {
 async function getParticipantsData(
   studyConfig: StudyConfig | undefined,
   storageEngine: StorageEngine | undefined,
-  studyId: string | undefined,
+  studyId: string | undefined
 ): Promise<Record<number, ParticipantData>> {
   if (studyId && storageEngine) {
     await storageEngine.initializeStudyDb(studyId);
@@ -92,7 +90,7 @@ export function StudyAnalysisTabs({
 }) {
   const { studyId } = useParams();
   const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(
-    undefined,
+    undefined
   );
 
   const [includedParticipants, setIncludedParticipants] = useState<string[]>([
@@ -110,7 +108,8 @@ export function StudyAnalysisTabs({
     ParticipantData[]
   >([]);
 
-  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
+  const { hasAudioRecording, hasScreenRecording } =
+    useStudyRecordings(studyConfig);
 
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
@@ -144,13 +143,14 @@ export function StudyAnalysisTabs({
   }, [expData, selectedStages]);
 
   const selectedParticipantCounts = useMemo(() => {
-    if (selectedParticipants.length === 0) return { completed: 0, inprogress: 0, rejected: 0 };
+    if (selectedParticipants.length === 0)
+      return { completed: 0, inprogress: 0, rejected: 0 };
 
     return {
       completed: selectedParticipants.filter((d) => !d.rejected && d.completed)
         .length,
       inprogress: selectedParticipants.filter(
-        (d) => !d.rejected && !d.completed,
+        (d) => !d.rejected && !d.completed
       ).length,
       rejected: selectedParticipants.filter((d) => d.rejected).length,
     };
@@ -273,13 +273,13 @@ export function StudyAnalysisTabs({
                 value={selectedStages}
                 onChange={(values) => {
                   if (
-                    values.includes('ALL')
-                    && !selectedStages.includes('ALL')
+                    values.includes('ALL') &&
+                    !selectedStages.includes('ALL')
                   ) {
                     setSelectedStages(['ALL']);
                   } else if (
-                    values.includes('ALL')
-                    && selectedStages.includes('ALL')
+                    values.includes('ALL') &&
+                    selectedStages.includes('ALL')
                   ) {
                     setSelectedStages(values.filter((v) => v !== 'ALL'));
                   } else if (values.length === 0) {
@@ -300,8 +300,7 @@ export function StudyAnalysisTabs({
                 mx="sm"
               />
               <Text mt={-2} size="sm">
-                Participants:
-                {' '}
+                Participants:{' '}
               </Text>
               <Checkbox.Group
                 value={includedParticipants}
@@ -352,7 +351,9 @@ export function StudyAnalysisTabs({
               keepMounted={false}
               variant="outline"
               value={analysisTab}
-              onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)}
+              onChange={(value) =>
+                navigate(`/analysis/stats/${studyId}/${value}`)
+              }
             >
               <Tabs.List>
                 <Tabs.Tab
@@ -433,6 +434,8 @@ export function StudyAnalysisTabs({
                   <SequenceView
                     studyConfig={studyConfig}
                     visibleParticipants={visibleParticipants}
+                    studyId={studyId || ''}
+                    storageEngine={storageEngine}
                   />
                 )}
               </Tabs.Panel>
