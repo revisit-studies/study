@@ -166,7 +166,7 @@ export interface StoreState {
   config: StudyConfig;
   showStudyBrowser: boolean;
   showHelpText: boolean;
-  alertModal: { show: boolean, message: string };
+  alertModal: { show: boolean, message: string, title: string };
   trialValidation: TrialValidation;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;

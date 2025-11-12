@@ -14,7 +14,7 @@
     "generate-schemas": "yarn generate-schema:StudyConfig && yarn generate-schema:GlobalConfig && yarn generate-schema:LibraryConfig",
     "test": "playwright test",
     "unittest": "vitest",
-    "preinstall": "node -e 'if(!/yarn\\.js$/.test(process.env.npm_execpath))throw new Error(\"Use yarn\")'",
+    "preinstall": "node -e \"if(!/yarn\\.js$/.test(process.env.npm_execpath))throw new Error('Use yarn')\"",
     "postinstall": "husky"
   },
   "lint-staged": {

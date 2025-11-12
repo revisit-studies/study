@@ -9,25 +9,6 @@ const path = require('path');
 const generateMd = (library, libraryConfig, forDocs) => `
 # ${library}
 
-${forDocs ?
-  `import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
-  
-  <StructuredLinks
-      demoLinks={[
-        {name: "${library} Demo", url: "https://revisit.dev/study/library-${library}"}
-      ]}
-      codeLinks={[
-        {name: "${library} Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-${library}"}
-      ]}
-      ${
-        (libraryConfig.doi || libraryConfig.externalLink)
-        ? `referenceLinks={[
-        ${libraryConfig.doi ? `{name: "DOI", url: "https://dx.doi.org/${libraryConfig.doi}"}` : ''}${libraryConfig.doi && libraryConfig.externalLink ? ',' : ''}
-        ${libraryConfig.externalLink ? `{name: "${library}", url: "${libraryConfig.externalLink}"}` : ''}
-      ]}`
-      : ''}
-  />` :  ''}
-
 ${!forDocs ? `This is an example study of the library \`${library}\`.` : ''}
 
 ${libraryConfig.description}
@@ -51,6 +32,26 @@ ${Object.keys(libraryConfig.sequences).length > 0
     : 'None'}
 
 ${libraryConfig.additionalDescription ? `## Additional Description\n\n${libraryConfig.additionalDescription}` : ''}
+
+${forDocs ?
+  `<!-- Importing Links -->`
+  `import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
+
+  <StructuredLinks
+      demoLinks={[
+        {name: "${library} Demo", url: "https://revisit.dev/study/library-${library}"}
+      ]}
+      codeLinks={[
+        {name: "${library} Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-${library}"}
+      ]}
+      ${
+        (libraryConfig.doi || libraryConfig.externalLink)
+        ? `referenceLinks={[
+        ${libraryConfig.doi ? `{name: "DOI", url: "https://dx.doi.org/${libraryConfig.doi}"}` : ''}${libraryConfig.doi && libraryConfig.externalLink ? ',' : ''}
+        ${libraryConfig.externalLink ? `{name: "${library}", url: "${libraryConfig.externalLink}"}` : ''}
+      ]}`
+      : ''}
+  />` :  ''}
 `;
 
 const librariesPath = path.join(__dirname, './public/libraries');

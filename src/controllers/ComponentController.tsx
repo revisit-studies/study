@@ -94,6 +94,7 @@ export function ComponentController() {
       storeDispatch(setAlertModal({
         show: true,
         message: `There was an issue connecting to the ${import.meta.env.VITE_STORAGE_ENGINE} database. This could be caused by a network issue or your adblocker. If you are using an adblocker, please disable it for this website and refresh.`,
+        title: 'Failed to connect to the storage engine',
       }));
     }
   }, [setAlertModal, storageEngine, storeDispatch]);
