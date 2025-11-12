@@ -1,0 +1,70 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "HTML as a Stimulus",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-html/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 200,
+    "minHeightSize": 800,
+    "minWidthSize": 400
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-html/assets/introduction.md",
+      "response": []
+    },
+    "barChart": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "meta": {
+        "difficulty": "hard"
+      },
+      "description": "Question that asks users to count the number of bars that have a value greater than 1.",
+      "instruction": "How many bars have a value greater than 1?",
+      "path": "demo-html/assets/bar-chart.html",
+      "response": [
+        {
+          "id": "html-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "placeholder": "0-7",
+          "min": 0,
+          "max": 7
+        }
+      ]
+    },
+    "external_website": {
+      "type": "website",
+      "path": "https://www.revisit.dev",
+      "response": [],
+      "previousButton": true
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "barChart",
+      "external_website"
+    ]
+  }
+}
