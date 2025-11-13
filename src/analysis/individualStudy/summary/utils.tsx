@@ -3,6 +3,7 @@ import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 import { ParticipantCounts } from '../../types';
 import { Response } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
+import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 
 export function calculateParticipantCounts(visibleParticipants: ParticipantData[]): ParticipantCounts {
   return {
@@ -14,13 +15,24 @@ export function calculateParticipantCounts(visibleParticipants: ParticipantData[
   };
 }
 
+function getNextComponent(participant: ParticipantData): string | undefined {
+  const flatSequence = getSequenceFlatMap(participant.sequence);
+  return flatSequence.find((comp) => {
+    const compAnswer = Object.values(participant.answers).find((a) => a.componentName === comp);
+    return !compAnswer || compAnswer.endTime === -1;
+  });
+}
+
 export function calculateComponentParticipantCounts(visibleParticipants: ParticipantData[], componentName: string): ParticipantCounts {
   const participants = visibleParticipants.filter((p) => {
     const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
     if (answer && answer.startTime > 0) {
       return true;
     }
-    return !p.completed && !p.rejected;
+    if (p.completed || p.rejected) {
+      return false;
+    }
+    return getNextComponent(p) === componentName;
   });
 
   return {
@@ -33,7 +45,10 @@ export function calculateComponentParticipantCounts(visibleParticipants: Partici
     inProgress: participants.filter((p) => {
       if (p.rejected) return false;
       const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
-      return answer && answer.endTime === -1;
+      if (answer) {
+        return answer.endTime === -1;
+      }
+      return getNextComponent(p) === componentName;
     }).length,
     rejected: participants.filter((p) => p.rejected).length,
   };
@@ -134,27 +149,44 @@ export function calculateComponentStats(visibleParticipants: ParticipantData[]) 
           correctness: 0,
         };
       }
+
+      if (answer.startTime > 0 && !components.has(component)) {
+        components.add(component);
+        stats[component].participantCount += 1;
+      }
+
       if (answer.endTime === -1) {
         return;
       }
       const stat = stats[component];
       const time = (answer.endTime - answer.startTime) / 1000;
       const cleanedDuration = getCleanedDuration(answer as never);
-      const cleanTime = cleanedDuration ? cleanedDuration / 1000 : 0;
+      const cleanTime = cleanedDuration && cleanedDuration > 0 ? cleanedDuration / 1000 : 0;
 
       stat.avgTime += time;
       stat.avgCleanTime += cleanTime;
-
-      if (!components.has(component)) {
-        components.add(component);
-        stat.participantCount += 1;
-      }
 
       if (answer.correctAnswer && answer.correctAnswer.length > 0) {
         const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
         stat.correctness += isCorrect ? 1 : 0;
       }
     });
+
+    if (!participant.completed) {
+      const nextComponent = getNextComponent(participant);
+      if (nextComponent && !components.has(nextComponent)) {
+        if (!stats[nextComponent]) {
+          stats[nextComponent] = {
+            name: nextComponent,
+            avgTime: 0,
+            avgCleanTime: 0,
+            participantCount: 0,
+            correctness: 0,
+          };
+        }
+        stats[nextComponent].participantCount += 1;
+      }
+    }
   });
 
   return Object.values(stats)
