@@ -79,7 +79,7 @@ export function calculateTimeStats(visibleParticipants: ParticipantData[]): { av
   const validParticipants = visibleParticipants.filter((p) => !p.rejected);
   const time = validParticipants.reduce((acc, participant) => {
     const timeStats = Object.values(participant.answers)
-      .filter((answer) => answer.endTime !== -1)
+      .filter((answer) => answer.endTime !== -1 && answer.startTime > 0)
       .map((answer) => ({
         totalTime: (answer.endTime - answer.startTime) / 1000,
         cleanTime: (() => {
