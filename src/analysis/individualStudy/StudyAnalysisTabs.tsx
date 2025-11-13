@@ -8,6 +8,7 @@ import {
   IconChartPie,
   IconTags,
   IconDashboard,
+  IconFileCode,
 } from '@tabler/icons-react';
 import {
   useCallback, useEffect, useMemo, useState,
@@ -31,6 +32,7 @@ import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import 'mantine-react-table/styles.css';
 import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
+import { ConfigView } from './config/ConfigView';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 
@@ -280,6 +282,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {storageEngine?.getEngine() === 'firebase' && (
                   <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />}>Live Monitor</Tabs.Tab>
                 )}
+                <Tabs.Tab value="config" leftSection={<IconFileCode size={16} />}>Config</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
@@ -299,6 +302,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={studyId} includedParticipants={includedParticipants} selectedStages={selectedStages} />}
                 </Tabs.Panel>
               )}
+              <Tabs.Panel style={{ overflow: 'auto' }} value="config" pt="xs">
+                {studyConfig && <ConfigView studyConfig={studyConfig} visibleParticipants={visibleParticipants} studyId={studyId} />}
+              </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
                 {studyId && user.isAdmin ? <ManageView studyId={studyId} refresh={() => execute(studyConfig, storageEngine, studyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
               </Tabs.Panel>
