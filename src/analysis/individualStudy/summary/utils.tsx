@@ -84,20 +84,22 @@ export function calculateTimeStats(visibleParticipants: ParticipantData[]): { av
         totalTime: (answer.endTime - answer.startTime) / 1000,
         cleanTime: (() => {
           const cleanedDuration = getCleanedDuration(answer as never);
-          return cleanedDuration ? cleanedDuration / 1000 : 0;
+          return cleanedDuration && cleanedDuration > 0 ? cleanedDuration / 1000 : 0;
         })(),
       }));
     if (timeStats.length > 0) {
       acc.count += timeStats.length;
       acc.totalTimeSum += timeStats.reduce((sum, t) => sum + t.totalTime, 0);
-      acc.cleanTimeSum += timeStats.reduce((sum, t) => sum + t.cleanTime, 0);
+      const validCleanTimes = timeStats.filter((t) => t.cleanTime > 0);
+      acc.cleanCount += validCleanTimes.length;
+      acc.cleanTimeSum += validCleanTimes.reduce((sum, t) => sum + t.cleanTime, 0);
     }
     return acc;
-  }, { totalTimeSum: 0, cleanTimeSum: 0, count: 0 });
+  }, { totalTimeSum: 0, cleanTimeSum: 0, count: 0, cleanCount: 0 });
 
   return {
     avgTime: time.count > 0 ? time.totalTimeSum / time.count : NaN,
-    avgCleanTime: time.count > 0 ? time.cleanTimeSum / time.count : NaN,
+    avgCleanTime: time.cleanCount > 0 ? time.cleanTimeSum / time.cleanCount : NaN,
   };
 }
 
