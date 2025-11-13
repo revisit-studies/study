@@ -95,7 +95,12 @@ export function calculateTimeStats(visibleParticipants: ParticipantData[]): { av
       acc.cleanTimeSum += validCleanTimes.reduce((sum, t) => sum + t.cleanTime, 0);
     }
     return acc;
-  }, { totalTimeSum: 0, cleanTimeSum: 0, count: 0, cleanCount: 0 });
+  }, {
+    totalTimeSum: 0,
+    cleanTimeSum: 0,
+    count: 0,
+    cleanCount: 0,
+  });
 
   return {
     avgTime: time.count > 0 ? time.totalTimeSum / time.count : NaN,
