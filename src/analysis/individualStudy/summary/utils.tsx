@@ -17,16 +17,21 @@ export function calculateParticipantCounts(visibleParticipants: ParticipantData[
 export function calculateComponentParticipantCounts(visibleParticipants: ParticipantData[], componentName: string): ParticipantCounts {
   const participants = visibleParticipants.filter((p) => {
     const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
-    return answer && answer.startTime > 0;
+    if (answer && answer.startTime > 0) {
+      return true;
+    }
+    return !p.completed && !p.rejected;
   });
 
   return {
     total: participants.length,
     completed: participants.filter((p) => {
+      if (p.rejected) return false;
       const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
       return answer && answer.endTime !== -1;
     }).length,
     inProgress: participants.filter((p) => {
+      if (p.rejected) return false;
       const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
       return answer && answer.endTime === -1;
     }).length,

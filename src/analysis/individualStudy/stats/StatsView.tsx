@@ -67,7 +67,7 @@ export function StatsView(
 
     if (filteredParticipants.length === 0) return null;
 
-    const participantCounts = calculateComponentParticipantCounts(filteredParticipants, trialId);
+    const participantCounts = calculateComponentParticipantCounts(visibleParticipants, trialId);
     const { avgTime, avgCleanTime } = calculateTimeStats(filteredParticipants);
     const { startDate, endDate } = calculateDateStats(filteredParticipants);
     const correctnessStats = calculateCorrectnessStats(filteredParticipants);
