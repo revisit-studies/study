@@ -1,0 +1,693 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Form Elements Demo",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-30",
+    "description": "A demo of form elements in reVISit.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-survey/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "enumerateQuestions": true
+  },
+  "components": {
+    "Introduction": {
+      "type": "markdown",
+      "path": "demo-survey/assets/introduction.md",
+      "response": []
+    },
+    "Form Elements": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "title",
+          "type": "textOnly",
+          "prompt": "# Form Element\n\n This page shows many of the form elements that are supported in reVISit.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "textFieldDemo",
+          "type": "textOnly",
+          "prompt": "## This is a level 2 text header\n\n ### This is a level 3 subheader\n\n You can use text fields with markdown headings to structure your survey. You can make it **bold** or *italic*. You can also add links like [this](https://revisit.dev). Markdown also works in question prompts and secondary text."
+        },
+        {
+          "id": "numericalInputTitle",
+          "type": "textOnly",
+          "prompt": "## Numerical Inputs",
+          "restartEnumeration": true
+        },
+        {
+          "id": "q-numerical",
+          "prompt": "Numerical example",
+          "secondaryText": "A numeric example that is required to complete and has an option to say 'Don't know'.",
+          "infoText": "This numerical input accepts values between 0 and 100.",
+          "type": "numerical",
+          "placeholder": "Enter your age here, range from 0 - 100",
+          "max": 100,
+          "min": 0,
+          "withDontKnow": true
+        },
+        {
+          "id": "q-slider",
+          "prompt": "Slider example",
+          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
+          "infoText": "Use the slider to indicate your rating on a scale from 'Bad' to 'Good'.",
+          "type": "slider",
+          "startingValue": 50,
+          "spacing": 50,
+          "options": [
+            {
+              "label": "Bad",
+              "value": 0
+            },
+            {
+              "label": "Mid",
+              "value": 50
+            },
+            {
+              "label": "Good",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "id": "textInputTitle",
+          "type": "textOnly",
+          "prompt": "## Text Inputs",
+          "restartEnumeration": true
+        },
+        {
+          "id": "q-short-text",
+          "prompt": "Short text example",
+          "secondaryText": "A short text example",
+          "infoText": "Your response can be a few words or a short sentence.",
+          "type": "shortText",
+          "placeholder": "Enter your answer here"
+        },
+        {
+          "id": "q-long-text",
+          "prompt": "Long text example",
+          "secondaryText": "A text box for long text",
+          "infoText": "Your response can be a detailed explanation or multiple sentences.",
+          "type": "longText",
+          "placeholder": "Enter your long comments here"
+        },
+        {
+          "id": "radioInputTitle",
+          "type": "textOnly",
+          "prompt": "## Dropdowns, Radios, Checkboxes and Buttons",
+          "restartEnumeration": true
+        },
+        {
+          "id": "q-dropdown",
+          "prompt": "Dropdown example – which chart do you like best?",
+          "secondaryText": "You can specify secondary text to clarify your question.",
+          "infoText": "Select the chart type you prefer from the dropdown menu.",
+          "type": "dropdown",
+          "placeholder": "Enter your preference",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar"
+          ]
+        },
+        {
+          "id": "q-multiselect-dropdown",
+          "prompt": "Multiselect dropdown example - which chart have you used before?",
+          "secondaryText": "Dropdown for multi-selection",
+          "infoText": "Select the chart types you have used before. You have to select at least 2 options and up to 3 options.",
+          "type": "dropdown",
+          "placeholder": "Enter your responses",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar",
+            "Line",
+            "Scatter",
+            "Histogram"
+          ],
+          "minSelections": 2,
+          "maxSelections": 3
+        },
+        {
+          "id": "q-checkbox",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "infoText": "Select your top 2 choices from the available options.",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "withOther": true
+        },
+        {
+          "id": "q-checkbox-horizontal",
+          "prompt": "Horizontal Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "infoText": "Select your top 2 choices from the available options.",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "horizontal": true,
+          "withOther": true
+        },
+        {
+          "id": "q-radio",
+          "prompt": "Radio button example",
+          "secondaryText": "Radio buttons for single selection",
+          "infoText": "Select the option that best represents your choice.",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "withOther": true
+        },
+        {
+          "id": "q-radio-horizontal",
+          "prompt": "Horizontal Radio button example",
+          "secondaryText": "Radio buttons for single selection",
+          "infoText": "Select the option that best represents your choice.",  
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2 this is long a long option that will wrap"
+          ],
+          "horizontal": true,
+          "withOther": true
+        },
+        {
+          "id": "q-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
+          "infoText": "Choose the option that best represents your answer.",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ]
+        },
+        {
+          "id": "divider1",
+          "type": "divider"
+        },
+        {
+          "id": "matrixHeaderTitle",
+          "type": "textOnly",
+          "prompt": "## Likert Scales and Matrix Form Elements\n\n Matrix form elements allow you to ask a series of related questions that share the same set of answer options. This is useful for Likert scales, satisfaction ratings, and categorization tasks.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "q-likert",
+          "prompt": "Likert scale example",
+          "secondaryText": "A Likert example with 9 items, also showing how to add a divider after the element.",
+          "infoText": "This is a 9-point Likert scale from 'Dislike' to 'Like'. Select the number that best represents your opinion.",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "divider2",
+          "type": "divider"
+        },
+        {
+          "id": "q-multi-satisfaction",
+          "prompt": "Rate your satisfaction from 1 (Highly Unsatisfied) to 5 (Highly Satisfied) for the following items.",
+          "secondaryText": "A simple matrix of Likert responses with predefined options for satisfaction.",
+          "infoText": "This is a matrix radio where you rate each item on a 5 point scale from 'Highly Unsatisfied' to 'Highly Satisfied'.",
+          "type": "matrix-radio",
+          "answerOptions": "satisfaction5",
+          "questionOptions": [
+            "The tool we created",
+            "The technique we developed",
+            "The authors of the tools"
+          ]
+        },
+        {
+          "id": "multi-custom",
+          "prompt": "Which categories do the following items belong to?",
+          "secondaryText": "A matrix of checkboxes with custom options for categorization.",
+          "infoText": "For each animal, select all the categories that apply. You can select multiple checkboxes per row.",
+          "type": "matrix-checkbox",
+          "answerOptions": [
+            "Has Legs",
+            "Has Wings",
+            "Can Swim"
+          ],
+          "questionOptions": [
+            "Dog",
+            "Snake",
+            "Eagle",
+            "Salmon",
+            "Platypus"
+          ]
+        }
+      ]
+    },
+    "Randomizing Options": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "textField",
+          "type": "textOnly",
+          "prompt": "# Randomizing responses within a form element. \n\n This shows how to randomize the order of questions inside a matrix response and how to randomize the order of options for buttons, checkboxes and radio questions.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "q-multi-satisfaction",
+          "prompt": "Matrix Radio example",
+          "secondaryText": "The order of questions is randomized",
+          "type": "matrix-radio",
+          "answerOptions": "satisfaction5",
+          "questionOptions": [
+            "Question 1",
+            "Question 2",
+            "Question 3"
+          ],
+          "questionOrder": "random"
+        },
+        {
+          "id": "multi-custom",
+          "prompt": "Matrix Checkbox example",
+          "secondaryText": "The order of questions is randomized",
+          "type": "matrix-checkbox",
+          "answerOptions": [
+            "Answer 1",
+            "Answer 2",
+            "Answer 3"
+          ],
+          "questionOptions": [
+            "Question 1",
+            "Question 2",
+            "Question 3"
+          ],
+          "questionOrder": "random"
+        },
+        {
+          "id": "q-checkbox",
+          "prompt": "Checkbox example",
+          "secondaryText": "The order of options is randomized",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "optionOrder": "random",
+          "withOther": true
+        },
+        {
+          "id": "q-checkbox-horizontal",
+          "prompt": "Horizontal Checkbox example",
+          "secondaryText": "The order of options is randomized",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "optionOrder": "random",
+          "horizontal": true,
+          "withOther": true
+        },
+        {
+          "id": "q-radio",
+          "prompt": "Radio button example",
+          "secondaryText": "The order of options is randomized",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "optionOrder": "random"
+        },
+        {
+          "id": "q-radio-horizontal",
+          "prompt": "Horizontal Radio button example",
+          "secondaryText": "The order of options is randomized",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "horizontal": true,
+          "optionOrder": "random"
+        },
+        {
+          "id": "q-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "The order of options is randomized",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "optionOrder": "random"
+        }
+      ]
+    },
+    "Randomizing Questions": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "textField",
+          "type": "textOnly",
+          "prompt": "# Randomizing Questions in a Form\n\n This shows how to randomize the order of questions in the form. Notice how the number before each question is different from the order number specified in the text. Note that currently the title is not randomized; you can exclude a form element from being randomized if you need to.",
+          "excludeFromRandomization": true
+        },
+        {
+          "id": "q-dropdown",
+          "prompt": "**Order: 1** Dropdown example",
+          "type": "dropdown",
+          "placeholder": "Select an option",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ]
+        },
+        {
+          "id": "q-likert",
+          "prompt": "**Order: 2:** Likert scale example",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "q-short-text",
+          "prompt": "**Order: 3:** Short text example",
+          "type": "shortText",
+          "placeholder": "Enter your answer here"
+        },
+        {
+          "id": "q-radio",
+          "prompt": "**Order: 4:** Radio button example",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ]
+        },
+        {
+          "id": "q-slider",
+          "prompt": "**Order: 5:** Slider example",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "Bad",
+              "value": 0
+            },
+            {
+              "label": "Mid",
+              "value": 50
+            },
+            {
+              "label": "Good",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "responseOrder": "random"
+    },
+    "Ranking Widgets": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "rankingTitle",
+          "type": "textOnly",
+          "prompt": "# Ranking Widgets\n\n This page shows the three types of ranking widgets available in reVISit: sublist ranking, categorical ranking, and pairwise ranking."
+        },
+        {
+          "id": "ranking-sublist",
+          "type": "ranking-sublist",
+          "prompt": "Rank your top 2 favorite fruits from the list below.",
+          "location": "belowStimulus",
+          "options": [
+            "Apple",
+            "Banana",
+            "Orange",
+            "Strawberry",
+            "Grapes"
+          ],
+          "numItems": 2,
+          "required": false
+        },
+        {
+          "id": "ranking-categorical",
+          "type": "ranking-categorical",
+          "prompt": "Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.",
+          "location": "belowStimulus",
+          "options": [
+            "Drawing",
+            "Singing",
+            "Hiking",
+            "Dancing",
+            "Photography"
+          ],
+          "required": false
+        },
+        {
+          "id": "ranking-pairwise",
+          "type": "ranking-pairwise",
+          "prompt": "Which meal would you prefer?",
+          "location": "belowStimulus",
+          "options": [
+            "Pizza",
+            "Sushi",
+            "Burger",
+            "Pasta",
+            "Salad",
+            "Tacos"
+          ],
+          "required": false
+        }
+      ]
+    },
+     "Sidebar Form Elements": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "title",
+          "type": "textOnly",
+          "prompt": "# Form Elements in Sidebars \n\n This page shows form elements that can be used in the sidebar. \n\n For all elements that have horizontal and vertical variants, you should always use the vertical one in the sidebars. \n\n Matrix form elements are not supported in the sidebar. \n\n Limit Likert scales to 7 or less to fit. \n\n Limit the number of buttons to avoid overflow.",
+          "restartEnumeration": true
+        },
+       {
+          "id": "numericalInputTitle",
+          "type": "textOnly",
+          "prompt": "## Numerical Inputs",
+          "restartEnumeration": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-numerical",
+          "prompt": "Numerical example",
+          "secondaryText": "A numeric example that is required to complete and has an option to say 'Don't know'.",
+          "type": "numerical",
+          "placeholder": "Enter your age here, range from 0 - 100",
+          "max": 100,
+          "min": 0,
+          "withDontKnow": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-slider",
+          "prompt": "Slider example",
+          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
+          "type": "slider",
+          "startingValue": 50,
+          "spacing": 50,
+          "options": [
+            {
+              "label": "Bad",
+              "value": 0
+            },
+            {
+              "label": "Mid",
+              "value": 50
+            },
+            {
+              "label": "Good",
+              "value": 100
+            }
+          ],
+          "location": "sidebar"
+        },
+        {
+          "id": "textInputTitle",
+          "type": "textOnly",
+          "prompt": "## Text Inputs",
+          "restartEnumeration": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-short-text",
+          "prompt": "Short text example",
+          "secondaryText": "A short text example",
+          "type": "shortText",
+          "placeholder": "Enter your answer here",
+          "location": "sidebar"
+        },
+        {
+          "id": "q-long-text",
+          "prompt": "Long text example",
+          "secondaryText": "A text box for long text",
+          "type": "longText",
+          "placeholder": "Enter your long comments here",
+          "location": "sidebar"
+        },
+        {
+          "id": "radioInputTitle",
+          "type": "textOnly",
+          "prompt": "## Dropdowns, Radios, Checkboxes and Buttons",
+          "restartEnumeration": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-dropdown",
+          "prompt": "Dropdown example – which chart do you like best?",
+          "secondaryText": "You can specify secondary text to clarify your question.",
+          "type": "dropdown",
+          "placeholder": "Enter your preference",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar"
+          ],
+          "location": "sidebar"
+        },
+        {
+          "id": "q-multiselect-dropdown",
+          "prompt": "Multiselect dropdown example - which chart have you used before?",
+          "secondaryText": "Dropdown for multi-selection",
+          "infoText": "Select the chart types you have used before. You have to select at least 2 options and up to 3 options.",
+          "type": "dropdown",
+          "placeholder": "Enter your responses",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar",
+            "Line",
+            "Scatter",
+            "Histogram"
+          ],
+          "location": "sidebar",
+          "minSelections": 2,
+          "maxSelections": 3
+        },
+        {
+          "id": "q-checkbox",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "withOther": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-radio",
+          "prompt": "Radio button example",
+          "secondaryText": "Radio buttons for single selection",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "withOther": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "location": "sidebar"
+        },
+        {
+          "id": "divider",
+          "type": "divider",
+          "location": "sidebar"
+        },
+        {
+          "id": "matrixHeaderTitle",
+          "type": "textOnly",
+          "prompt": "## Likert Scales and Matrix Form Elements\n\n Matrix form elements allow you to ask a series of related questions that share the same set of answer options. This is useful for Likert scales, satisfaction ratings, and categorization tasks.",
+          "restartEnumeration": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-likert",
+          "prompt": "Likert scale example",
+          "secondaryText": "A Likert example with 7 items",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike",
+          "location": "sidebar"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "Introduction",
+      "Form Elements",
+      "Randomizing Options",
+      "Randomizing Questions",
+      "Ranking Widgets",
+      "Sidebar Form Elements"
+    ]
+  }
+}

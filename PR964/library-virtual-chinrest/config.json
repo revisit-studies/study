@@ -1,0 +1,40 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+      "title": "Virtual Chinrest Calibration",
+      "version": "1.0.0",
+      "authors": [
+        "Qisheng Li",
+        "Sheng Long"
+      ],
+      "date": "2025-01-20",
+      "description": "Example study using the virtual chinrest calibration library.",
+      "organizations": [
+        ""
+      ]
+    },
+    "uiConfig": {
+      "contactEmail": "",
+      "logoPath": "revisitAssets/revisitLogoSquare.svg",
+      "withProgressBar": true,
+      "withSidebar": true
+    },
+    "importedLibraries": [
+      "virtual-chinrest"
+    ],
+    "components": {
+      "introduction": {
+        "type": "markdown",
+        "path": "library-virtual-chinrest/assets/introduction.md",
+        "response": [],
+        "nextButtonLocation": "belowStimulus"
+      }
+    },
+    "sequence": {
+      "order": "fixed",
+      "components": [
+        "introduction",
+        "$virtual-chinrest.se.full"
+      ]
+    }
+  }

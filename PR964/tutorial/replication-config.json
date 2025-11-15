@@ -1,0 +1,32 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Scatter Plot JND Study",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2025-11-02",
+    "description": "This is a reVISit variation study of JND(Just Noticeable Difference) Scatter Plot experiment.",
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "ScatterJND-study/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "urlParticipantIdParam": "PROLIFIC_PID",
+    "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [https://app.prolific.com/submissions/complete?cc=C1E35XG4](https://app.prolific.com/submissions/complete?cc=C1E35XG4)",
+    "participantNameField": "introduction.prolificId"
+  },
+  "baseComponents": {
+    
+  },
+  "components": {
+   
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": []
+  }
+}
