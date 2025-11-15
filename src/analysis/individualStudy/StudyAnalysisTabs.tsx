@@ -303,7 +303,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 </Tabs.Panel>
               )}
               <Tabs.Panel style={{ overflow: 'auto' }} value="config" pt="xs">
-                {studyConfig && <ConfigView studyConfig={studyConfig} visibleParticipants={visibleParticipants} studyId={studyId} />}
+                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={studyId} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
                 {studyId && user.isAdmin ? <ManageView studyId={studyId} refresh={() => execute(studyConfig, storageEngine, studyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
