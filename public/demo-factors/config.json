@@ -1,0 +1,57 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "HTML as a Stimulus",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2023-04-14",
+    "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-html/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 200,
+    "minHeightSize": 800,
+    "minWidthSize": 400
+  },
+  "components": {
+    "factorComponent": {
+      "type": "react-component",
+      "path": "demo-factors/assets/Factors.tsx",
+      "parameters": { "data": "d1", "visType": "v1" },
+      "response": []
+    }
+  },
+  "factors": {
+    "data": ["d1", "d2", "d3", "d4"],
+    "visType": ["v1", "v2", "v3", "v4"]
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "factorComponent",
+      {
+        "factorsToCross": [
+          {
+            "factor": "data",
+            "numSamples": 4
+          },
+          {
+            "factor": "visType",
+            "numSamples": 4
+          }
+        ],
+        "component": ["factorComponent"],
+        "parameters": {
+          "dataParam": "${data}",
+          "visTypeParam": "${visType}"
+        }
+      }
+    ]
+  }
+}

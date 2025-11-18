@@ -7,7 +7,7 @@ import {
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
-import { isDynamicBlock, isInheritedComponent } from './utils';
+import { isDynamicBlock, isFactorBlock, isInheritedComponent } from './utils';
 
 const ajv1 = new Ajv({ allowUnionTypes: true });
 ajv1.addSchema(globalSchema);
@@ -53,7 +53,7 @@ function verifyStudySkip(
   skipTargets: string[],
   errors: { message: string, instancePath: string, params: { 'action': string } }[] = [],
 ) {
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return;
   }
 

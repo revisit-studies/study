@@ -3,7 +3,7 @@ import latinSquare from '@quentinroy/latin-square';
 import isEqual from 'lodash.isequal';
 import { ComponentBlock, DynamicBlock, StudyConfig } from '../parser/types';
 import { Sequence } from '../store/types';
-import { isDynamicBlock } from '../parser/utils';
+import { isDynamicBlock, isFactorBlock } from '../parser/utils';
 
 function shuffle(array: (string | ComponentBlock | DynamicBlock)[]) {
   let currentIndex = array.length;
@@ -33,6 +33,10 @@ function _componentBlockToSequence(
       components: [],
       skip: [],
     };
+  }
+
+  if (isFactorBlock(order)) {
+    const newComponents = order.factorsToCross;
   }
 
   let computedComponents = order.components;

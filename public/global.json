@@ -3,6 +3,7 @@
   "configsList": [
     "tutorial",
     "demo-html",
+    "demo-factors",
     "demo-html-input",
     "demo-screen-recording",
     "demo-survey",
@@ -59,6 +60,9 @@
     },
     "demo-html": {
       "path": "demo-html/config.json"
+    },
+    "demo-factors": {
+      "path": "demo-factors/config.json"
     },
     "demo-screen-recording": {
       "path": "demo-screen-recording/config.json"

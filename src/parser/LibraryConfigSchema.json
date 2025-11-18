@@ -460,6 +460,9 @@
               },
               {
                 "$ref": "#/definitions/DynamicBlock"
+              },
+              {
+                "$ref": "#/definitions/FactorBlock"
               }
             ]
           },
@@ -590,11 +593,11 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "maxSelections": {
-          "description": "The maximum number of selections that are required.",
+          "description": "The maximum number of selections that are required. This will make the dropdown a multiselect dropdown.",
           "type": "number"
         },
         "minSelections": {
-          "description": "The minimum number of selections that are required.",
+          "description": "The minimum number of selections that are required. This will make the dropdown a multiselect dropdown.",
           "type": "number"
         },
         "options": {
@@ -694,6 +697,46 @@
         "id",
         "order",
         "functionPath"
+      ],
+      "type": "object"
+    },
+    "FactorBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "type": "string"
+        },
+        "factorsToCross": {
+          "items": {
+            "$ref": "#/definitions/FactorObj"
+          },
+          "type": "array"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      },
+      "required": [
+        "factorsToCross",
+        "component",
+        "parameters"
+      ],
+      "type": "object"
+    },
+    "FactorObj": {
+      "additionalProperties": false,
+      "properties": {
+        "factor": {
+          "type": "string"
+        },
+        "numSamples": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "factor",
+        "numSamples"
       ],
       "type": "object"
     },
@@ -1226,9 +1269,11 @@
               },
               {
                 "$ref": "#/definitions/DynamicBlock"
+              },
+              {
+                "$ref": "#/definitions/FactorBlock"
               }
-            ],
-            "description": "The order of the components in the study. This might include some randomness."
+            ]
           },
           "description": "The order of the components in the study. This might include some randomness.",
           "type": "object"

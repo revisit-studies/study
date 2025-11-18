@@ -1495,13 +1495,24 @@ export interface ComponentBlock {
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
   order: 'random' | 'latinSquare' | 'fixed';
   /** The components that are included in the order. */
-  components: (string | ComponentBlock | DynamicBlock)[];
+  components: (string | ComponentBlock | DynamicBlock | FactorBlock)[];
   /** The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time. */
   numSamples?: number;
   /** The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.  */
   interruptions?: InterruptionBlock[];
   /** The skip conditions for the block. */
   skip?: SkipConditions;
+}
+
+export interface FactorBlock {
+  factorsToCross: FactorObj[];
+  component: string;
+  parameters: Record<string, unknown>
+}
+
+export interface FactorObj {
+  factor: string;
+  numSamples?: number;
 }
 
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
@@ -1594,7 +1605,8 @@ export interface StudyConfig {
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
   /** The order of the components in the study. This might include some randomness. */
-  sequence: ComponentBlock | DynamicBlock;
+  factors?: Record<string, string[]>;
+  sequence: ComponentBlock | DynamicBlock | FactorBlock;
 }
 
 /**  LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.
