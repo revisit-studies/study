@@ -499,6 +499,9 @@
               },
               {
                 "$ref": "#/definitions/DynamicBlock"
+              },
+              {
+                "$ref": "#/definitions/FactorBlock"
               }
             ]
           },
@@ -913,6 +916,46 @@
         "id",
         "order",
         "functionPath"
+      ],
+      "type": "object"
+    },
+    "FactorBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "type": "string"
+        },
+        "factorsToCross": {
+          "items": {
+            "$ref": "#/definitions/FactorObj"
+          },
+          "type": "array"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      },
+      "required": [
+        "factorsToCross",
+        "component",
+        "parameters"
+      ],
+      "type": "object"
+    },
+    "FactorObj": {
+      "additionalProperties": false,
+      "properties": {
+        "factor": {
+          "type": "string"
+        },
+        "numSamples": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "factor",
+        "numSamples"
       ],
       "type": "object"
     },
@@ -1518,9 +1561,11 @@
               },
               {
                 "$ref": "#/definitions/DynamicBlock"
+              },
+              {
+                "$ref": "#/definitions/FactorBlock"
               }
-            ],
-            "description": "The order of the components in the study. This might include some randomness."
+            ]
           },
           "description": "The order of the components in the study. This might include some randomness.",
           "type": "object"

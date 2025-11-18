@@ -7,7 +7,7 @@ import {
   StudyConfig,
 } from '../parser/types';
 import { Sequence } from '../store/types';
-import { isDynamicBlock } from '../parser/utils';
+import { isDynamicBlock, isFactorBlock } from '../parser/utils';
 
 function shuffle<T>(array: T[]) {
   let currentIndex = array.length;
@@ -146,6 +146,10 @@ function _componentBlockToSequence(
       interruptions: [],
       conditional: order.conditional,
     };
+  }
+
+  if (isFactorBlock(order)) {
+    const newComponents = order.factorsToCross;
   }
 
   let computedComponents = order.components;

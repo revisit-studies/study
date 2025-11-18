@@ -4,6 +4,7 @@
     "tutorial",
     "tutorial-replication",
     "demo-html",
+    "demo-factors",
     "demo-html-input",
     "demo-form-elements",
     "demo-training",
@@ -67,6 +68,9 @@
     },
     "demo-html": {
       "path": "demo-html/config.json"
+    },
+    "demo-factors": {
+      "path": "demo-factors/config.json"
     },
     "demo-screen-recording": {
       "path": "demo-screen-recording/config.json"

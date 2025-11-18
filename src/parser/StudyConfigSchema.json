@@ -520,6 +520,9 @@
               },
               {
                 "$ref": "#/definitions/DynamicBlock"
+              },
+              {
+                "$ref": "#/definitions/FactorBlock"
               }
             ]
           },
@@ -986,6 +989,46 @@
         "id",
         "order",
         "functionPath"
+      ],
+      "type": "object"
+    },
+    "FactorBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "type": "string"
+        },
+        "factorsToCross": {
+          "items": {
+            "$ref": "#/definitions/FactorObj"
+          },
+          "type": "array"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      },
+      "required": [
+        "factorsToCross",
+        "component",
+        "parameters"
+      ],
+      "type": "object"
+    },
+    "FactorObj": {
+      "additionalProperties": false,
+      "properties": {
+        "factor": {
+          "type": "string"
+        },
+        "numSamples": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "factor",
+        "numSamples"
       ],
       "type": "object"
     },
@@ -3396,6 +3439,16 @@
           "description": "The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents.",
           "type": "object"
         },
+        "factors": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": "The order of the components in the study. This might include some randomness.",
+          "type": "object"
+        },
         "importedLibraries": {
           "description": "A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later.",
           "items": {
@@ -3410,9 +3463,11 @@
             },
             {
               "$ref": "#/definitions/DynamicBlock"
+            },
+            {
+              "$ref": "#/definitions/FactorBlock"
             }
-          ],
-          "description": "The order of the components in the study. This might include some randomness."
+          ]
         },
         "studyMetadata": {
           "$ref": "#/definitions/StudyMetadata",

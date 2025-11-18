@@ -7,7 +7,7 @@ import {
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
-import { isDynamicBlock, isInheritedComponent } from './utils';
+import { isDynamicBlock, isFactorBlock, isInheritedComponent } from './utils';
 import {
   DEFAULT_CONTACT_EMAIL,
   DEFAULT_FIREBASE_WARNING_ACTION,
@@ -28,7 +28,6 @@ const modules = import.meta.glob(
   ],
   { eager: false }, // the parser only checks if the path exists
 );
-
 const ajv1 = new Ajv({ allowUnionTypes: true });
 ajv1.addSchema(globalSchema);
 const globalValidate = ajv1.getSchema<GlobalConfig>('#/definitions/GlobalConfig')!;
@@ -83,7 +82,7 @@ function verifyStudySkip(
     }
   };
 
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return;
   }
 
