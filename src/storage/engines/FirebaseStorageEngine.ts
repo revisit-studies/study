@@ -12,6 +12,7 @@ import {
 } from 'firebase/storage';
 import {
   CollectionReference,
+  deleteField,
   DocumentData,
   Firestore,
   Timestamp,
@@ -371,7 +372,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const revisitModesData = await getDoc(revisitModesDoc);
 
     if (revisitModesData.exists()) {
-      return revisitModesData.data() as Record<REVISIT_MODE, boolean>;
+      const modes = revisitModesData.data() as Record<REVISIT_MODE, boolean>;
+      const cleanedModes = this.cleanupModes(modes as Record<string, boolean>);
+      if (Object.keys(cleanedModes.updates).length > 0) {
+        await updateDoc(revisitModesDoc, cleanedModes.updates);
+      }
+      return cleanedModes.modes;
     }
 
     // Else set to default values
@@ -382,6 +388,25 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     };
     await setDoc(revisitModesDoc, defaultModes);
     return defaultModes;
+  }
+
+  private cleanupModes(modes: Record<string, boolean>): { modes: Record<REVISIT_MODE, boolean>; updates: Record<string, boolean | ReturnType<typeof deleteField>> } {
+    const cleanedModes: Record<string, boolean> = { ...modes };
+    const updates: Record<string, boolean | ReturnType<typeof deleteField>> = {};
+
+    if ('studyNavigatorEnabled' in modes && !('developmentModeEnabled' in modes)) {
+      cleanedModes.developmentModeEnabled = modes.studyNavigatorEnabled;
+      updates.developmentModeEnabled = modes.studyNavigatorEnabled;
+      updates.studyNavigatorEnabled = deleteField();
+    }
+
+    if ('analyticsInterfacePubliclyAccessible' in modes && !('dataSharingEnabled' in modes)) {
+      cleanedModes.dataSharingEnabled = modes.analyticsInterfacePubliclyAccessible;
+      updates.dataSharingEnabled = modes.analyticsInterfacePubliclyAccessible;
+      updates.analyticsInterfacePubliclyAccessible = deleteField();
+    }
+
+    return { modes: cleanedModes, updates };
   }
 
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
