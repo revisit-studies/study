@@ -1,8 +1,10 @@
 /* eslint-disable react/no-unstable-nested-components */
 import {
-  Button, Code, Flex, Space, Text,
+  Button, Code, Flex, Modal, Space, Text,
 } from '@mantine/core';
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useCallback, useEffect, useMemo, useState,
+} from 'react';
 import { useParams } from 'react-router';
 import {
   MantineReactTable, MRT_Cell as MrtCell, MRT_ColumnDef as MrtColumnDef, MRT_RowSelectionState as MrtRowSelectionState, useMantineReactTable,
@@ -11,6 +13,7 @@ import { IconDownload, IconEye } from '@tabler/icons-react';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
+import { downloadConfigFile, downloadConfigFilesZip } from '../../../utils/handleDownloadFiles';
 
 interface ConfigInfo {
   version: string;
@@ -29,7 +32,8 @@ export function ConfigView({
   const { storageEngine } = useStorageEngine();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
   const [configs, setConfigs] = useState<ConfigInfo[]>([]);
-
+  const [viewConfig, setViewConfig] = useState<string | null>(null);
+  const [modalViewConfigOpened, setModalViewConfigOpened] = useState(false);
   useEffect(() => {
     if (!storageEngine || !studyId) {
       setConfigs([]);
@@ -58,11 +62,46 @@ export function ConfigView({
     fetchConfigs();
   }, [visibleParticipants, storageEngine, studyId]);
 
+  const selectedConfigs = useMemo(
+    () => Object.keys(checked).filter((key) => checked[key]),
+    [checked],
+  );
+  const handleDownloadConfig = useCallback(async (hash: string) => {
+    const selectedConfig = configs.find((config) => config.hash === hash);
+    if (!selectedConfig || !studyId) {
+      return;
+    }
+
+    await downloadConfigFile({
+      studyId,
+      hash,
+      config: selectedConfig.config,
+    });
+  }, [configs, studyId]);
+
+  const handleDownloadConfigs = useCallback(async () => {
+    if (!studyId || selectedConfigs.length === 0) {
+      return;
+    }
+
+    await downloadConfigFilesZip({
+      studyId,
+      configs,
+      hashes: selectedConfigs,
+    });
+  }, [configs, selectedConfigs, studyId]);
+
+  const handleViewConfig = useCallback((hash: string) => {
+    const selectedConfig = configs.find((config) => config.hash === hash) || null;
+    setViewConfig(selectedConfig ? JSON.stringify(selectedConfig.config, null, 2) : null);
+  }, [configs]);
+
   const columns = useMemo<MrtColumnDef<ConfigInfo>[]>(() => [
     {
-      accessoryKey: 'configIndex',
+      id: 'configIndex',
       header: '#',
       size: 20,
+      Cell: ({ row }) => row.index + 1,
     },
     {
       accessorKey: 'version',
@@ -91,20 +130,21 @@ export function ConfigView({
       id: 'actions',
       header: 'Actions',
       size: 100,
-      Cell: () => (
+      accessorFn: (row: ConfigInfo) => row.hash,
+      Cell: ({ cell }: { cell: MrtCell<ConfigInfo, string> }) => (
         <Flex gap="sm">
-          <Button size="xs" variant="light">
+          <Button size="xs" variant="light" onClick={() => { setModalViewConfigOpened(true); handleViewConfig(cell.getValue()); }}>
             <IconEye size={14} />
             View
           </Button>
-          <Button size="xs" variant="light">
+          <Button size="xs" variant="light" onClick={() => handleDownloadConfig(cell.getValue())}>
             <IconDownload size={14} />
             Download
           </Button>
         </Flex>
       ),
     },
-  ], []);
+  ], [handleDownloadConfig, handleViewConfig]);
 
   const table = useMantineReactTable({
     columns,
@@ -128,20 +168,43 @@ export function ConfigView({
     },
     enableDensityToggle: false,
     positionToolbarAlertBanner: 'none',
+    renderTopToolbarCustomActions: () => (
+      selectedConfigs.length > 0 ? (
+        <Button onClick={handleDownloadConfigs}>
+          Download Configs (
+          {selectedConfigs.length}
+          )
+        </Button>
+      ) : null
+    ),
   });
 
   return (
-    configs.length > 0 ? (
-      <MantineReactTable
-        table={table}
-      />
-    ) : (
-      <>
-        <Space h="xl" />
-        <Flex justify="center" align="center">
-          <Text>No data available</Text>
-        </Flex>
-      </>
-    )
+    <>
+      {configs.length > 0 ? (
+        <MantineReactTable
+          table={table}
+        />
+      ) : (
+        <>
+          <Space h="xl" />
+          <Flex justify="center" align="center">
+            <Text>No data available</Text>
+          </Flex>
+        </>
+      )}
+      <Modal
+        opened={modalViewConfigOpened}
+        onClose={() => setModalViewConfigOpened(false)}
+        title="Config Preview"
+        size="100%"
+      >
+        {viewConfig ? (
+          <Code block>
+            {viewConfig}
+          </Code>
+        ) : null}
+      </Modal>
+    </>
   );
 }

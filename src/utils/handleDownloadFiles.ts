@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import { StorageEngine } from '../storage/engines/types';
+import { StudyConfig } from '../parser/types';
 
 export async function handleTaskAudio({
   storageEngine,
@@ -214,4 +215,55 @@ export async function downloadParticipantsScreenRecordingZip({
   await Promise.all(screenRecordingPromises);
 
   await downloadZip(zip, `${namePrefix}_screenRecording.zip`);
+}
+
+export async function downloadConfigFile({
+  studyId,
+  hash,
+  config,
+}: {
+  studyId: string;
+  hash: string;
+  config: StudyConfig;
+}) {
+  const json = JSON.stringify(config, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+
+  Object.assign(document.createElement('a'), {
+    href: url,
+    download: `${studyId}_${hash}_config.json`,
+  }).click();
+
+  URL.revokeObjectURL(url);
+}
+
+export async function downloadConfigFilesZip({
+  studyId,
+  configs,
+  hashes,
+}: {
+  studyId: string;
+  configs: Array<{ hash: string; config: StudyConfig }>;
+  hashes: string[];
+}) {
+  if (!hashes.length) {
+    return;
+  }
+
+  const zip = new JSZip();
+
+  hashes.forEach((hash) => {
+    const matchingConfig = configs.find((config) => config.hash === hash);
+    if (!matchingConfig) {
+      return;
+    }
+
+    zip.file(
+      `${studyId}_${hash}_config.json`,
+      JSON.stringify(matchingConfig.config, null, 2),
+    );
+  });
+
+  await downloadZip(zip, `${studyId}_config.zip`);
 }
