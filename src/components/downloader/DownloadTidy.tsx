@@ -37,13 +37,13 @@ const OPTIONAL_COMMON_PROPS = [
   'correctAnswer',
   'duration',
   'cleanedDuration',
+  'transcript',
   'meta',
   'startTime',
   'endTime',
   'responseMin',
   'responseMax',
   'configHash',
-  'transcript',
 ] as const;
 
 const REQUIRED_PROPS = [
@@ -154,6 +154,9 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         if (properties.includes('cleanedDuration')) {
           tidyRow.cleanedDuration = cleanedDuration;
         }
+        if (properties.includes('transcript')) {
+          tidyRow.transcript = transcripts?.[`${participant.participantId}_${trialOrder}`] ?? undefined;
+        }
         if (properties.includes('meta')) {
           tidyRow.meta = JSON.stringify(completeComponent.meta, null, 2);
         }
@@ -162,9 +165,6 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         }
         if (properties.includes('responseMax')) {
           tidyRow.responseMax = response?.type === 'numerical' ? response.max : undefined;
-        }
-        if (properties.includes('transcript')) {
-          tidyRow.transcript = transcripts?.[`${participant.participantId}_${trialOrder}`] ?? undefined;
         }
         return tidyRow;
       }).flat();
@@ -261,6 +261,7 @@ export function DownloadTidy({
     'correctAnswer',
     'duration',
     'cleanedDuration',
+    'transcript',
   ]);
 
   const { storageEngine } = useStorageEngine();
