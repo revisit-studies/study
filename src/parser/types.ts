@@ -356,6 +356,7 @@ export interface LongTextResponse extends BaseResponse {
   "type": "likert",
   "leftLabel": "Not Enjoyable",
   "rightLabel": "Very Enjoyable",
+  "labelLocation": "inline",
   "numItems": 5,
   "start": 1,
   "spacing": 1
@@ -374,6 +375,8 @@ export interface LikertResponse extends BaseResponse {
   leftLabel?: string;
   /** The right label of the likert scale. E.g Strongly Agree */
   rightLabel?: string;
+  /** The location of the labels. Defaults to inline. */
+  labelLocation?: 'above' | 'inline' | 'below';
 }
 
 /**
@@ -522,7 +525,13 @@ export interface SliderResponse extends BaseResponse {
   "prompt": "Radio button example",
   "location": "aboveStimulus",
   "type": "radio",
-  "options": ["Option 1", "Option 2"]
+  "options": ["Option 1", "Option 2, Option 3"],
+  "optionOrder": "random",
+  "leftLabel": "Left",
+  "rightLabel": "Right",
+  "labelLocation": "inline",
+  "horizontal": true,
+  "withOther": true
 }
 ```
  *
@@ -537,6 +546,8 @@ export interface RadioResponse extends BaseResponse {
   leftLabel?: string;
   /** The right label of the radio group. Used in Likert scales for example */
   rightLabel?: string;
+  /** The location of the labels. Defaults to inline. */
+  labelLocation?: 'above' | 'inline' | 'below';
   /** Whether to render the radio buttons horizontally. Defaults to false, so they render horizontally. */
   horizontal?: boolean;
   /** Whether to render the radios with an "other" option. */
