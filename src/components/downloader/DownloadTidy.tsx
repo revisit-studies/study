@@ -42,6 +42,7 @@ const OPTIONAL_COMMON_PROPS = [
   'responseMin',
   'responseMax',
   'configHash',
+  'transcript',
 ] as const;
 
 const REQUIRED_PROPS = [
@@ -140,7 +141,6 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
           const correctAnswer = answerCorrectAnswer || configCorrectAnswer;
           tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
         }
-
         if (properties.includes('startTime')) {
           tidyRow.startTime = new Date(trialAnswer.startTime).toISOString();
         }
@@ -162,7 +162,9 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         if (properties.includes('responseMax')) {
           tidyRow.responseMax = response?.type === 'numerical' ? response.max : undefined;
         }
-
+        if (properties.includes('transcript')) {
+          tidyRow.transcript = undefined;
+        }
         return tidyRow;
       }).flat();
 
@@ -223,12 +225,14 @@ export function DownloadTidy({
   filename,
   data,
   studyId,
+  hasAudio,
 }: {
   opened: boolean;
   close: () => void;
   filename: string;
   data: ParticipantData[];
   studyId: string;
+  hasAudio?: boolean;
 }) {
   const [selectedProperties, setSelectedProperties] = useState<Array<OptionalProperty>>([
     'status',
@@ -244,8 +248,9 @@ export function DownloadTidy({
     'cleanedDuration',
   ]);
 
-  const storageEngine = useStorageEngine();
-  const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine.storageEngine, studyId]);
+  const { storageEngine } = useStorageEngine();
+  const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine, studyId]);
+  const isFirebase = storageEngine?.getEngine() === 'firebase';
 
   const downloadTidy = useCallback(() => {
     if (!tableData) {
@@ -300,7 +305,7 @@ export function DownloadTidy({
           </Flex>
         </Text>
         <Flex wrap="wrap" gap="4px">
-          {OPTIONAL_COMMON_PROPS.map((prop) => {
+          {OPTIONAL_COMMON_PROPS.filter((prop) => prop !== 'transcript' || (hasAudio && isFirebase)).map((prop) => {
             const isSelected = selectedProperties.includes(prop);
 
             const button = (
