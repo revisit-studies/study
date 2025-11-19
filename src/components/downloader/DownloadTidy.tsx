@@ -207,15 +207,17 @@ async function getTableData(selectedProperties: Property[], data: ParticipantDat
 
   const transcripts: Record<string, string | null> = {};
   if (selectedProperties.includes('transcript') && storageEngine.getEngine() === 'firebase') {
-    await Promise.all(data.flatMap((p) => Object.values(p.answers).map(async (answer) => {
-      const key = `${p.participantId}_${answer.trialOrder}`;
+    const allAnswers = data.flatMap((p) => Object.values(p.answers).map((answer) => ({ answer, participantId: p.participantId })));
+    await Promise.all(allAnswers.map(async ({ answer, participantId }) => {
+      const key = `${participantId}_${answer.trialOrder}`;
       try {
-        const t = await (storageEngine as FirebaseStorageEngine).getTranscription(answer.componentName, p.participantId);
-        transcripts[key] = t?.results ? (t.results).toString() : null;
+        const t = await (storageEngine as FirebaseStorageEngine).getTranscription(answer.componentName, participantId);
+        const text = t?.results?.map((r) => r.alternatives?.[0]?.transcript).join(' ');
+        transcripts[key] = text || null;
       } catch {
         transcripts[key] = null;
       }
-    })));
+    }));
   }
 
   const header = combinedProperties;
