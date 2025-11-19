@@ -19,6 +19,7 @@ import { ParticipantData } from '../../storage/types';
 import { Prettify, StudyConfig } from '../../parser/types';
 import { StorageEngine } from '../../storage/engines/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { useAsync } from '../../store/hooks/useAsync';
 import { getCleanedDuration } from '../../utils/getCleanedDuration';
 import { showNotification } from '../../utils/notifications';
@@ -71,7 +72,7 @@ export function download(graph: string, filename: string) {
   downloadAnchorNode.remove();
 }
 
-function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig): [TidyRow[], string[]] {
+function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig, transcripts?: Record<string, string | null>): [TidyRow[], string[]] {
   const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (Object.entries(participant.answers).length)) * 100).toFixed(2);
   const newHeaders = new Set<string>();
 
@@ -163,7 +164,7 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
           tidyRow.responseMax = response?.type === 'numerical' ? response.max : undefined;
         }
         if (properties.includes('transcript')) {
-          tidyRow.transcript = undefined;
+          tidyRow.transcript = transcripts?.[`${participant.participantId}_${trialOrder}`] ?? undefined;
         }
         return tidyRow;
       }).flat();
@@ -204,12 +205,24 @@ async function getTableData(selectedProperties: Property[], data: ParticipantDat
   const allConfigHashes = [...new Set(data.map((part) => part.participantConfigHash))];
   const allConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
 
-  const header = combinedProperties;
-  const allData = await Promise.all(data.map(async (participant) => {
-    const partDataToRows = await participantDataToRows(participant, combinedProperties, allConfigs[participant.participantConfigHash]);
+  const transcripts: Record<string, string | null> = {};
+  if (selectedProperties.includes('transcript') && storageEngine.getEngine() === 'firebase') {
+    await Promise.all(data.flatMap((p) => Object.values(p.answers).map(async (answer) => {
+      const key = `${p.participantId}_${answer.trialOrder}`;
+      try {
+        const t = await (storageEngine as FirebaseStorageEngine).getTranscription(answer.componentName, p.participantId);
+        transcripts[key] = t?.results ? (t.results).toString() : null;
+      } catch {
+        transcripts[key] = null;
+      }
+    })));
+  }
 
+  const header = combinedProperties;
+  const allData = data.map((participant) => {
+    const partDataToRows = participantDataToRows(participant, combinedProperties, allConfigs[participant.participantConfigHash], transcripts);
     return partDataToRows;
-  }));
+  });
 
   const rows = allData.map((partData) => partData[0]);
   const newHeaders = new Set(allData.map((partData) => partData[1]).flat());
