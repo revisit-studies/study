@@ -133,12 +133,20 @@ export function ConfigView({
       accessorFn: (row: ConfigInfo) => row.hash,
       Cell: ({ cell }: { cell: MrtCell<ConfigInfo, string> }) => (
         <Flex gap="sm">
-          <Button size="xs" variant="light" onClick={() => { setModalViewConfigOpened(true); handleViewConfig(cell.getValue()); }}>
-            <IconEye size={14} />
+          <Button
+            size="xs"
+            variant="light"
+            leftSection={<IconEye size={14} />}
+            onClick={() => { setModalViewConfigOpened(true); handleViewConfig(cell.getValue()); }}
+          >
             View
           </Button>
-          <Button size="xs" variant="light" onClick={() => handleDownloadConfig(cell.getValue())}>
-            <IconDownload size={14} />
+          <Button
+            size="xs"
+            variant="light"
+            leftSection={<IconDownload size={14} />}
+            onClick={() => handleDownloadConfig(cell.getValue())}
+          >
             Download
           </Button>
         </Flex>
