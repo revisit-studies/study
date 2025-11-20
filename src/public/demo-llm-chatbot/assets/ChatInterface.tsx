@@ -14,6 +14,7 @@ import {
   Divider,
   rem,
   Box,
+  Card,
 } from '@mantine/core';
 import { ChatMessage, ChatProvenanceState } from './types';
 import { StimulusParams } from '../../../store/types';
@@ -23,22 +24,18 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 export default function ChatInterface(
-  { setAnswer, provenanceState, testSystemPrompt, onClose, trrack, actions, updateProvenanceState, modalOpened }:
+  { setAnswer, provenanceState, testSystemPrompt, trrack, actions, updateProvenanceState }:
   {
     setAnswer: StimulusParams<never>['setAnswer'],
     provenanceState?: ChatProvenanceState,
     testSystemPrompt?: string,
-    onClose?: () => void,
     trrack: Trrack<{
         messages: never[];
-        modalOpened: boolean;
     }, string>,
     actions: {
       updateMessages: ActionCreatorWithPayload<ChatMessage[], string>;
-      modalOpened: ActionCreatorWithPayload<boolean, string>;
     },
-    updateProvenanceState: (messages: unknown[], modalOpened: boolean) => void,
-    modalOpened: boolean,
+    updateProvenanceState: (messages: ChatMessage[]) => void,
   },
 ) {
 
@@ -310,7 +307,7 @@ export default function ChatInterface(
       //     messages: JSON.stringify(fullMessages),
       //   },
       // });
-      updateProvenanceState(fullMessages, modalOpened);
+      updateProvenanceState(fullMessages);
   
     } catch (err) {
       console.error("Error getting LLM response:", err);
@@ -329,7 +326,10 @@ export default function ChatInterface(
   };
 
   return (
-    <Box mah="100%" p="md">
+    <Card shadow="md" radius="lg" p="lg" withBorder>
+      <Text size="lg" fw={600} mb="md">
+        AI Assistant Chat
+      </Text>
       <Divider my="sm" />
       {/* Messages Container */}
       <ScrollArea style={{ flex: 1, minHeight: rem(320), marginBottom: rem(16) }} offsetScrollbars>
@@ -447,6 +447,6 @@ export default function ChatInterface(
       <Text mt="md" size="xs" color="dimmed">
         Press Enter to send, Shift+Enter for new line. All conversations are recorded for research purposes.
       </Text>
-    </Box>
+    </Card>
   );
 }

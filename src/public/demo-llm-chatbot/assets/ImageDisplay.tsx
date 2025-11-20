@@ -1,10 +1,9 @@
-import { Card, Image, Text, Flex, Button } from '@mantine/core';
+import { Card, Image, Text, Flex } from '@mantine/core';
 import { PREFIX } from '../../../utils/Prefix';
 import { useStudyId } from '../../../routes/utils';
 
-export default function ImageDisplay({ chartType, onOpenChat }: {
+export default function ImageDisplay({ chartType }: {
   chartType: 'violin-plot' | 'clustered-heatmap';
-  onOpenChat?: () => void;
 }) {
   const studyId = useStudyId();
 
@@ -19,7 +18,7 @@ export default function ImageDisplay({ chartType, onOpenChat }: {
           Clustered Heatmap
         </Text>
         <Text size="sm" c="dimmed">
-          You can ask the AI assistant any questions about the chart.
+          You can ask the AI assistant any questions about the chart in the chat panel.
         </Text>
         <Image
           src={imagePath}
@@ -32,16 +31,6 @@ export default function ImageDisplay({ chartType, onOpenChat }: {
           }}
           fallbackSrc="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y3ZjdmNyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgZm91bmQ8L3RleHQ+PC9zdmc+"
         />
-          {onOpenChat && (
-            <Button
-              variant="outline"
-              color="blue"
-              onClick={onOpenChat}
-              size="sm"
-            >
-              Press 'T' or click to open AI Chat
-            </Button>
-          )}
       </Flex>
     </Card>
   );
