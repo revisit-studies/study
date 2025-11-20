@@ -373,9 +373,15 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     if (revisitModesData.exists()) {
       const modes = revisitModesData.data() as Record<string, boolean>;
-      const cleanedModes = cleanupModes(modes);
-      await setDoc(revisitModesDoc, cleanedModes);
-      return cleanedModes;
+      const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
+
+      if (needsUpdate) {
+        const cleanedModes = cleanupModes(modes);
+        await setDoc(revisitModesDoc, cleanedModes);
+        return cleanedModes;
+      }
+
+      return modes;
     }
 
     // Else set to default values

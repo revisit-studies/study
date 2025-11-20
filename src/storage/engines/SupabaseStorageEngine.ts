@@ -347,13 +347,20 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       // get the metadata field from the data object
       const metadata = data[0].data;
       if (metadata) {
-        const cleanedModes = cleanupModes(metadata as Record<string, boolean>);
-        await this.supabase
-          .from('revisit')
-          .update({ data: cleanedModes })
-          .eq('studyId', `${this.collectionPrefix}${studyId}`)
-          .eq('docId', 'metadata');
-        return cleanedModes;
+        const modes = metadata as Record<string, boolean>;
+        const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
+
+        if (needsUpdate) {
+          const cleanedModes = cleanupModes(modes);
+          await this.supabase
+            .from('revisit')
+            .update({ data: cleanedModes })
+            .eq('studyId', `${this.collectionPrefix}${studyId}`)
+            .eq('docId', 'metadata');
+          return cleanedModes;
+        }
+
+        return modes;
       }
     }
 
