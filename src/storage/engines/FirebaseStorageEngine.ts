@@ -40,6 +40,7 @@ import {
   SequenceAssignment,
   SnapshotDocContent,
   StoredUser,
+  cleanupModes,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 
@@ -371,7 +372,16 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const revisitModesData = await getDoc(revisitModesDoc);
 
     if (revisitModesData.exists()) {
-      return revisitModesData.data() as Record<REVISIT_MODE, boolean>;
+      const modes = revisitModesData.data() as Record<string, boolean>;
+      const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
+
+      if (needsUpdate) {
+        const cleanedModes = cleanupModes(modes);
+        await setDoc(revisitModesDoc, cleanedModes);
+        return cleanedModes;
+      }
+
+      return modes;
     }
 
     // Else set to default values
