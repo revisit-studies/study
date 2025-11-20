@@ -128,12 +128,6 @@ export function RadioInput({
         </HorizontalHandler>
         {horizontal && label === 'inline' && rightLabel && <Text>{rightLabel}</Text>}
       </Group>
-      {horizontal && label === 'below' && (leftLabel || rightLabel) && (
-        <Group gap="lg" justify="space-between" mt="sm">
-          {leftLabel && <Text>{leftLabel}</Text>}
-          {rightLabel && <Text>{rightLabel}</Text>}
-        </Group>
-      )}
       {horizontal && withOther && (
         <Input
           mt="sm"
@@ -143,6 +137,12 @@ export function RadioInput({
           w={216}
           classNames={{ input: inputClasses.fixDisabled }}
         />
+      )}
+      {horizontal && label === 'below' && (leftLabel || rightLabel) && (
+        <Group gap="lg" justify="space-between" mt="sm">
+          {leftLabel && <Text>{leftLabel}</Text>}
+          {rightLabel && <Text>{rightLabel}</Text>}
+        </Group>
       )}
     </Radio.Group>
   );
