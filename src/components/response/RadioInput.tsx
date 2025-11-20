@@ -38,6 +38,7 @@ export function RadioInput({
     horizontal,
     withOther,
     options,
+    labelLocation,
   } = response;
 
   const storedAnswer = useStoredAnswer();
@@ -60,8 +61,14 @@ export function RadioInput({
       errorProps={{ c: required ? 'red' : 'orange' }}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
+      {labelLocation === 'above' && (leftLabel || rightLabel) && (
+        <Group gap="lg" justify="space-between" mt={horizontal ? 0 : 'sm'}>
+          {leftLabel && <Text>{leftLabel}</Text>}
+          {rightLabel && <Text>{rightLabel}</Text>}
+        </Group>
+      )}
       <Group gap="lg" align="flex-end" mt={horizontal ? 0 : 'sm'}>
-        {leftLabel ? <Text>{leftLabel}</Text> : null}
+        {labelLocation === 'inline' && leftLabel && <Text>{leftLabel}</Text>}
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
           {orderedOptions.map((radio) => (
             <div
@@ -118,8 +125,14 @@ export function RadioInput({
           </div>
           )}
         </HorizontalHandler>
-        <Text>{rightLabel}</Text>
+        {labelLocation === 'inline' && rightLabel && <Text>{rightLabel}</Text>}
       </Group>
+      {labelLocation === 'below' && (leftLabel || rightLabel) && (
+        <Group gap="lg" justify="space-between" mt="sm">
+          {leftLabel && <Text>{leftLabel}</Text>}
+          {rightLabel && <Text>{rightLabel}</Text>}
+        </Group>
+      )}
       {horizontal && withOther && (
         <Input
           mt="sm"
