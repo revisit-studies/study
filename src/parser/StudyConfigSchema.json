@@ -1983,7 +1983,7 @@
           "type": "string"
         },
         "labelLocation": {
-          "description": "The location of the labels. Defaults to inline.",
+          "description": "The location of the labels. This only works when horizontal is true. Defaults to inline.",
           "enum": [
             "above",
             "inline",

@@ -546,7 +546,7 @@ export interface RadioResponse extends BaseResponse {
   leftLabel?: string;
   /** The right label of the radio group. Used in Likert scales for example */
   rightLabel?: string;
-  /** The location of the labels. Defaults to inline. */
+  /** The location of the labels. This only works when horizontal is true. Defaults to inline. */
   labelLocation?: 'above' | 'inline' | 'below';
   /** Whether to render the radio buttons horizontally. Defaults to false, so they render horizontally. */
   horizontal?: boolean;
