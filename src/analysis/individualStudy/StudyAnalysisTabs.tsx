@@ -71,6 +71,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [availableStages, setAvailableStages] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
   const [stageColors, setStageColors] = useState<Record<string, string>>({});
   const [selectedParticipants, setSelectedParticipants] = useState<ParticipantData[]>([]);
+  const [selectedConfigs, setSelectedConfigs] = useState<string[]>(['ALL']);
+  const [availableConfigs, setAvailableConfigs] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
 
   const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
 
@@ -88,17 +90,22 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     if (!expData) return { completed: 0, inprogress: 0, rejected: 0 };
     const expList = Object.values(expData);
 
+    // Apply config filter before counting
+    const configFiltered = selectedConfigs.includes('ALL') || selectedConfigs.length === 0
+      ? expList
+      : expList.filter((d) => selectedConfigs.includes(d.participantConfigHash || ''));
+
     // Apply stage filter before counting
     const stageFiltered = selectedStages.includes('ALL')
-      ? expList
-      : expList.filter((d) => selectedStages.includes(d.stage || ''));
+      ? configFiltered
+      : configFiltered.filter((d) => selectedStages.includes(d.stage || ''));
 
     return {
       completed: stageFiltered.filter((d) => !d.rejected && d.completed).length,
       inprogress: stageFiltered.filter((d) => !d.rejected && !d.completed).length,
       rejected: stageFiltered.filter((d) => d.rejected).length,
     };
-  }, [expData, selectedStages]);
+  }, [expData, selectedStages, selectedConfigs]);
 
   const selectedParticipantCounts = useMemo(() => {
     if (selectedParticipants.length === 0) return { completed: 0, inprogress: 0, rejected: 0 };
@@ -120,13 +127,18 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
     const statusFiltered = [...comp, ...prog, ...rej];
 
+    // Apply config filter - if "ALL" is selected, show all participants
+    const configFiltered = selectedConfigs.includes('ALL') || selectedConfigs.length === 0
+      ? statusFiltered
+      : statusFiltered.filter((d) => selectedConfigs.includes(d.participantConfigHash || ''));
+
     // Apply stage filter - if "ALL" is selected, show all participants
     const stageFiltered = selectedStages.includes('ALL')
-      ? statusFiltered
-      : statusFiltered.filter((d) => selectedStages.includes(d.stage || ''));
+      ? configFiltered
+      : configFiltered.filter((d) => selectedStages.includes(d.stage || ''));
 
     return stageFiltered.sort(sortByStartTime);
-  }, [expData, includedParticipants, selectedStages]);
+  }, [expData, includedParticipants, selectedStages, selectedConfigs]);
 
   // Load available stages
   const loadStages = useCallback(async () => {
@@ -151,6 +163,60 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       setStageColors({});
     }
   }, [studyId, storageEngine]);
+
+  // Load available configs
+  const loadConfigs = useCallback(async () => {
+    if (!studyId || !storageEngine) {
+      setAvailableConfigs([{ value: 'ALL', label: 'ALL' }]);
+      return;
+    }
+
+    try {
+      const participantData = expData ? Object.values(expData) : [];
+      const configHashesFromParticipants = [...new Set(
+        participantData
+          .map((participant) => participant.participantConfigHash)
+          .filter((hash): hash is string => !!hash),
+      )];
+
+      let allConfigHashes = configHashesFromParticipants;
+
+      if (allConfigHashes.length === 0 && storageEngine.engine === 'localStorage') {
+        try {
+          const keys = await (storageEngine as any).studyDatabase?.keys();
+          if (keys) {
+            const configKeys = keys.filter((key: string) => key.startsWith(`configs/`));
+            allConfigHashes = configKeys.map((key: string) => key.replace('configs/', ''));
+          }
+        } catch (e) {
+          console.error('Failed to list config keys:', e);
+        }
+      }
+
+      if (allConfigHashes.length === 0) {
+        setAvailableConfigs([{ value: 'ALL', label: 'ALL' }]);
+        return;
+      }
+
+      const fetchedConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
+
+      const configOptions = Object.entries(fetchedConfigs)
+        .filter(([, config]) => config && config.studyMetadata)
+        .map(([hash, config]) => ({
+          value: hash,
+          label: `${config.studyMetadata?.version || ''}-${hash.substring(0, 6)}`,
+        }));
+      setAvailableConfigs([{ value: 'ALL', label: 'ALL' }, ...configOptions]);
+    } catch (error) {
+      console.error('Failed to load configs:', error);
+      setAvailableConfigs([{ value: 'ALL', label: 'ALL' }]);
+    }
+  }, [studyId, storageEngine, expData]);
+
+  // Load configs when expData changes
+  useEffect(() => {
+    loadConfigs();
+  }, [loadConfigs]);
 
   // Load stages and clear selection when dependencies change or tab switches
   useEffect(() => {
@@ -231,7 +297,33 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 }}
                 mx="sm"
               />
-              <Text mt={-2} size="sm">Participants: </Text>
+              <Text size="sm" fw={500} mx="sm">Config:</Text>
+              <MultiSelect
+                data={availableConfigs}
+                value={selectedConfigs}
+                onChange={(values) => {
+                  if (values.includes('ALL') && !selectedConfigs.includes('ALL')) {
+                    setSelectedConfigs(['ALL']);
+                  } else if (values.includes('ALL') && selectedConfigs.includes('ALL')) {
+                    setSelectedConfigs(values.filter((v) => v !== 'ALL'));
+                  } else if (values.length === 0) {
+                    setSelectedConfigs(['ALL']);
+                  } else {
+                    setSelectedConfigs(values);
+                  }
+                }}
+                w={250}
+                size="sm"
+                clearable={false}
+                maxValues={5}
+                styles={{
+                  input: {
+                    minHeight: '36px',
+                  },
+                }}
+                mx="sm"
+              />
+              <Text mt={-2} size="sm" ml="sm">Participants: </Text>
               <Checkbox.Group
                 value={includedParticipants}
                 onChange={(e) => setIncludedParticipants(e)}
