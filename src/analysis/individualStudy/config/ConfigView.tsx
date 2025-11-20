@@ -3,7 +3,7 @@ import {
   Button, Code, Flex, Modal, Space, Text,
 } from '@mantine/core';
 import {
-  useCallback, useEffect, useMemo, useState,
+  JSX, useCallback, useEffect, useMemo, useState,
 } from 'react';
 import { useParams } from 'react-router';
 import {
@@ -18,9 +18,18 @@ import { downloadConfigFile, downloadConfigFilesZip } from '../../../utils/handl
 interface ConfigInfo {
   version: string;
   date: string;
+  timeFrame: string;
   hash: string;
   participantCount: number;
   config: StudyConfig;
+}
+
+function formatDate(date: Date): string | JSX.Element {
+  if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
+    return <Text size="sm" c="dimmed">None</Text>;
+  }
+
+  return date.toLocaleDateString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 export function ConfigView({
@@ -48,13 +57,40 @@ export function ConfigView({
 
       const fetchedConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
 
-      const rows = Object.entries(fetchedConfigs).map(([hash, config]) => ({
-        version: config.studyMetadata?.version || '',
-        date: config.studyMetadata?.date || '',
-        hash,
-        participantCount: visibleParticipants.filter((participant) => participant.participantConfigHash === hash).length,
-        config,
-      }));
+      const rows = Object.entries(fetchedConfigs).map(([hash, config]) => {
+        const filteredParticipants = visibleParticipants.filter((participant) => participant.participantConfigHash === hash);
+        const storedAnswers = filteredParticipants.flatMap((p) => Object.values(p.answers));
+
+        const startTime = storedAnswers.map((answer) => answer.startTime).filter((t): t is number => t !== undefined && t > 0);
+        const endTime = storedAnswers.map((answer) => answer.endTime).filter((t): t is number => t !== undefined && t > 0);
+
+        const earliestStartTime = startTime.length > 0 ? Math.min(...startTime.values()) : null;
+        const latestEndTime = endTime.length > 0 ? Math.max(...endTime.values()) : null;
+
+        const formatTimeFrame = (timestamp: number) => {
+          const formatted = formatDate(new Date(timestamp));
+          return typeof formatted === 'string' ? formatted : 'N/A';
+        };
+
+        const getTimeFrame = (): string => {
+          if (earliestStartTime && latestEndTime) {
+            return `${formatTimeFrame(earliestStartTime)} - ${formatTimeFrame(latestEndTime)}`;
+          }
+          if (earliestStartTime) {
+            return formatTimeFrame(earliestStartTime);
+          }
+          return 'N/A';
+        };
+
+        return {
+          version: config.studyMetadata?.version || '',
+          date: config.studyMetadata?.date || '',
+          timeFrame: getTimeFrame(),
+          hash,
+          participantCount: filteredParticipants.length,
+          config,
+        };
+      });
 
       setConfigs(rows);
     };
@@ -100,23 +136,28 @@ export function ConfigView({
     {
       id: 'configIndex',
       header: '#',
-      size: 20,
+      size: 30,
       Cell: ({ row }) => row.index + 1,
     },
     {
       accessorKey: 'version',
       header: 'Version',
-      size: 50,
+      size: 70,
     },
     {
       accessorKey: 'date',
       header: 'Date',
-      maxSize: 100,
+      size: 70,
+    },
+    {
+      accessorKey: 'timeFrame',
+      header: 'Time Frame',
+      size: 150,
     },
     {
       accessorKey: 'hash',
       header: 'Hash',
-      minSize: 250,
+      size: 200,
       Cell: ({ cell }: { cell: MrtCell<ConfigInfo, string> }) => (
         <Code>{cell.getValue()}</Code>
       ),
@@ -124,7 +165,7 @@ export function ConfigView({
     {
       accessorKey: 'participantCount',
       header: 'Participants',
-      size: 100,
+      size: 70,
     },
     {
       id: 'actions',

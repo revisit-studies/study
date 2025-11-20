@@ -166,45 +166,20 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   // Load available configs
   const loadConfigs = useCallback(async () => {
-    if (!studyId || !storageEngine) {
-      setAvailableConfigs([{ value: 'ALL', label: 'ALL' }]);
-      return;
-    }
+    if (!studyId || !storageEngine) return;
 
     try {
       const participantData = expData ? Object.values(expData) : [];
-      const configHashesFromParticipants = [...new Set(
-        participantData
-          .map((participant) => participant.participantConfigHash)
-          .filter((hash): hash is string => !!hash),
+      const participantConfig = [...new Set(
+        participantData.map((participant) => participant.participantConfigHash),
       )];
 
-      let allConfigHashes = configHashesFromParticipants;
-
-      if (allConfigHashes.length === 0 && storageEngine.engine === 'localStorage') {
-        try {
-          const keys = await (storageEngine as any).studyDatabase?.keys();
-          if (keys) {
-            const configKeys = keys.filter((key: string) => key.startsWith(`configs/`));
-            allConfigHashes = configKeys.map((key: string) => key.replace('configs/', ''));
-          }
-        } catch (e) {
-          console.error('Failed to list config keys:', e);
-        }
-      }
-
-      if (allConfigHashes.length === 0) {
-        setAvailableConfigs([{ value: 'ALL', label: 'ALL' }]);
-        return;
-      }
-
-      const fetchedConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
+      const fetchedConfigs = await storageEngine.getAllConfigsFromHash(participantConfig, studyId);
 
       const configOptions = Object.entries(fetchedConfigs)
-        .filter(([, config]) => config && config.studyMetadata)
         .map(([hash, config]) => ({
           value: hash,
-          label: `${config.studyMetadata?.version || ''}-${hash.substring(0, 6)}`,
+          label: `${config.studyMetadata.version}-${hash}`,
         }));
       setAvailableConfigs([{ value: 'ALL', label: 'ALL' }, ...configOptions]);
     } catch (error) {
