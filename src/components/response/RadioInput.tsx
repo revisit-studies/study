@@ -63,7 +63,7 @@ export function RadioInput({
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       {horizontal && label === 'above' && (leftLabel || rightLabel) && (
-        <Group gap="lg" justify="space-between" mt={horizontal ? 0 : 'sm'}>
+        <Group gap="lg" justify="space-between" mt={0}>
           {leftLabel && <Text>{leftLabel}</Text>}
           {rightLabel && <Text>{rightLabel}</Text>}
         </Group>
