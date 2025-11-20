@@ -205,7 +205,7 @@ export function ConfigView({
         opened={modalViewConfigOpened}
         onClose={() => setModalViewConfigOpened(false)}
         title="Config Preview"
-        size="100%"
+        size="70%"
       >
         {viewConfig ? (
           <Code block>
