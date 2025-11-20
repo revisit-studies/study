@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import {
-  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType,
+  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
 } from './types';
 
 export class LocalStorageEngine extends StorageEngine {
@@ -170,7 +170,7 @@ export class LocalStorageEngine extends StorageEngine {
     // Get the modes
     const modes = await this.studyDatabase.getItem(key) as Record<REVISIT_MODE, boolean> | null;
     if (modes) {
-      const cleanedModes = this.cleanupModes(modes as Record<string, boolean>);
+      const cleanedModes = cleanupModes(modes as Record<string, boolean>);
       await this.studyDatabase.setItem(key, cleanedModes);
       return cleanedModes;
     }
@@ -182,22 +182,6 @@ export class LocalStorageEngine extends StorageEngine {
     };
     await this.studyDatabase.setItem(key, defaults);
     return defaults;
-  }
-
-  private cleanupModes(modes: Record<string, boolean>): Record<REVISIT_MODE, boolean> {
-    const cleanedModes: Record<string, boolean> = { ...modes };
-
-    if ('studyNavigatorEnabled' in modes && !('developmentModeEnabled' in modes)) {
-      cleanedModes.developmentModeEnabled = modes.studyNavigatorEnabled;
-      delete cleanedModes.studyNavigatorEnabled;
-    }
-
-    if ('analyticsInterfacePubliclyAccessible' in modes && !('dataSharingEnabled' in modes)) {
-      cleanedModes.dataSharingEnabled = modes.analyticsInterfacePubliclyAccessible;
-      delete cleanedModes.analyticsInterfacePubliclyAccessible;
-    }
-
-    return cleanedModes as Record<REVISIT_MODE, boolean>;
   }
 
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {

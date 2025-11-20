@@ -1,7 +1,7 @@
 import { AuthError, createClient } from '@supabase/supabase-js';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
-  CloudStorageEngine,
+  CloudStorageEngine, cleanupModes,
 } from './types';
 
 export class SupabaseStorageEngine extends CloudStorageEngine {
@@ -347,7 +347,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       // get the metadata field from the data object
       const metadata = data[0].data;
       if (metadata) {
-        const cleanedModes = this.cleanupModes(metadata as Record<string, boolean>);
+        const cleanedModes = cleanupModes(metadata as Record<string, boolean>);
         await this.supabase
           .from('revisit')
           .update({ data: cleanedModes })
@@ -372,22 +372,6 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
     return defaultModes;
-  }
-
-  private cleanupModes(modes: Record<string, boolean>): Record<REVISIT_MODE, boolean> {
-    const cleanedModes: Record<string, boolean> = { ...modes };
-
-    if ('studyNavigatorEnabled' in modes && !('developmentModeEnabled' in modes)) {
-      cleanedModes.developmentModeEnabled = modes.studyNavigatorEnabled;
-      delete cleanedModes.studyNavigatorEnabled;
-    }
-
-    if ('analyticsInterfacePubliclyAccessible' in modes && !('dataSharingEnabled' in modes)) {
-      cleanedModes.dataSharingEnabled = modes.analyticsInterfacePubliclyAccessible;
-      delete cleanedModes.analyticsInterfacePubliclyAccessible;
-    }
-
-    return cleanedModes as Record<REVISIT_MODE, boolean>;
   }
 
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
