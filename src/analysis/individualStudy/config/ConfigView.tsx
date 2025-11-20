@@ -11,6 +11,7 @@ import {
 } from 'mantine-react-table';
 import { IconDownload, IconEye } from '@tabler/icons-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { defaultStyle } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
@@ -252,6 +253,7 @@ export function ConfigView({
         {viewConfig ? (
           <SyntaxHighlighter
             language="json"
+            style={defaultStyle}
           >
             {viewConfig}
           </SyntaxHighlighter>
