@@ -17,7 +17,7 @@ export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer
       }
     }
 
-    return String(responseUserAnswer) === String(responseCorrectAnswer);
+    return String(responseUserAnswer) === String(responseCorrectAnswer) || Number(responseUserAnswer) === Number(responseCorrectAnswer);
   }
 
   // Ignore order for checkbox answers by sorting
