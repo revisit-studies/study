@@ -65,9 +65,6 @@ export function useReplay() {
   // Replay ref points to whichever is active (video preferred)
   const replayRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
 
-  // changes in ref can't be detected. So use a state to see when video, audio refs change;
-  const [replayInit, setReplayInit] = useState(0);
-
   const [seekTime, _setSeekTime] = useState(0);
 
   const playTimeStamp = useRef(Date.now());
@@ -250,7 +247,6 @@ export function useReplay() {
       replayRef.current.addEventListener('seeked', handleSeeked);
     }
     forceEmitTimeUpdate();
-    setReplayInit((x) => x + 1);
   }, [handlePlay, handlePause, handleSeeked, initialTimestamp, forceEmitTimeUpdate]);
 
   // this should be the only way to start video/audio
@@ -344,12 +340,11 @@ export function useReplay() {
       setSpeed,
       isPlaying,
       setIsPlaying,
-      replayInit,
       replayEvent,
       forceEmitTimeUpdate,
       hasEnded,
     }),
-    [replayEvent, seekTime, setSeekTime, duration, speed, isPlaying, setIsPlaying, updateReplayRef, setSpeed, replayInit, forceEmitTimeUpdate, setDuration, hasEnded],
+    [replayEvent, seekTime, setSeekTime, duration, speed, isPlaying, setIsPlaying, updateReplayRef, setSpeed, forceEmitTimeUpdate, setDuration, hasEnded],
   );
 
   return value;
