@@ -121,6 +121,11 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
 
       const timeInSeconds = Math.abs(playTime - startTime) / 1000;
 
+      if (!rawTranscript.results[tempCurrentShownTranscription]) {
+        setCurrentShownTranscription(0);
+        return;
+      }
+
       if (timeInSeconds > (rawTranscript.results[tempCurrentShownTranscription].resultEndTime as number)) {
         while (timeInSeconds > (rawTranscript.results[tempCurrentShownTranscription].resultEndTime as number)) {
           tempCurrentShownTranscription += 1;

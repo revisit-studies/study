@@ -72,13 +72,27 @@ export function useReplay() {
 
   const playTimeStamp = useRef(Date.now());
 
-  const [duration, setDuration] = useState(0);
+  const [duration, _setDuration] = useState(0);
+  const internalDuration = useRef(duration);
 
   const internalSpeed = useRef(1);
   const [speed, _setSpeed] = useState(1);
   const [isPlaying, _setIsPlaying] = useState(false);
 
+  const [hasEnded, setHasEnded] = useState(false);
+
+  const setDuration = useCallback((d: number) => {
+    _setDuration(d);
+    internalDuration.current = d;
+  }, []);
+
   const timerValue = useRef<number>(0);
+
+  useEffect(() => {
+    if (duration > 0 && (timerValue.current >= duration || (replayRef.current && timerValue.current >= replayRef.current.duration))) {
+      setHasEnded(true);
+    }
+  }, [duration, isPlaying]);
 
   const setSpeed = useCallback((newSpeed: number, isRemoteTriggered = false) => {
     setIsMasterPlayer(!isRemoteTriggered);
@@ -178,35 +192,8 @@ export function useReplay() {
     }
     emitterRef.current.emit('timeupdate', time);
     timerValue.current = time;
+    setHasEnded(false);
   }, []);
-
-  useEffect(() => {
-    if (isPlaying) {
-      playTimeStamp.current = Date.now();
-    } else {
-      _setSeekTime((t) => {
-        const diff = ((Date.now() - playTimeStamp.current) * internalSpeed.current) / 1000; // issue
-        const ctime = diff < 0.5 ? t : t + diff;
-        if (replayRef.current) {
-          replayRef.current.currentTime = ctime;
-        }
-        return ctime;
-      });
-    }
-
-    // setup timer to emit events if both video and audio aren't present.
-    if (!audioRef.current && !videoRef.current) {
-      if (isPlaying) {
-        const startTime = Date.now();
-        timer.current = setInterval(() => {
-          timerValue.current += ((Date.now() - startTime) * internalSpeed.current) / 1000;
-          emitterRef.current.emit('timeupdate', timerValue.current);
-        }, 30);
-      } else {
-        timer.current && clearInterval(timer.current);
-      }
-    }
-  }, [isPlaying]);
 
   const handlePause = useCallback(() => {
     _setIsPlaying(false);
@@ -214,6 +201,7 @@ export function useReplay() {
     timer.current && clearInterval(timer.current);
     const t = replayRef.current?.currentTime || 0;
     emitterRef.current.emit('pause', t);
+    timerValue.current = t;
 
     if (videoRef.current === replayRef.current) {
       if (audioRef.current) {
@@ -268,13 +256,49 @@ export function useReplay() {
   // this should be the only way to start video/audio
   const setIsPlaying = useCallback((playing: boolean, isRemoteTriggered = false) => {
     setIsMasterPlayer(!isRemoteTriggered);
+    if (hasEnded) {
+      setHasEnded(false);
+      setSeekTime(0);
+    }
     _setIsPlaying(playing);
     if (playing) {
       replayRef.current?.play();
     } else {
       replayRef.current?.pause();
     }
-  }, []);
+  }, [hasEnded, setSeekTime]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      playTimeStamp.current = Date.now();
+    } else {
+      _setSeekTime((t) => {
+        const diff = ((Date.now() - playTimeStamp.current) * internalSpeed.current) / 1000; // issue
+        const ctime = diff < 0.5 ? t : t + diff;
+        if (replayRef.current) {
+          replayRef.current.currentTime = ctime;
+        }
+        return ctime;
+      });
+    }
+
+    // setup timer to emit events if both video and audio aren't present.
+    if (!audioRef.current && !videoRef.current) {
+      if (isPlaying) {
+        const startTime = Date.now();
+        const timerStartValue = timerValue.current;
+        timer.current = setInterval(() => {
+          timerValue.current = timerStartValue + ((Date.now() - startTime) * internalSpeed.current) / 1000;
+          emitterRef.current.emit('timeupdate', timerValue.current);
+          if (timerValue.current >= internalDuration.current) {
+            setIsPlaying(false);
+          }
+        }, 30);
+      } else {
+        timer.current && clearInterval(timer.current);
+      }
+    }
+  }, [isPlaying, setIsPlaying]);
 
   useEffect(() => {
     const replayStorageListener = (e: StorageEvent) => {
@@ -323,8 +347,9 @@ export function useReplay() {
       replayInit,
       replayEvent,
       forceEmitTimeUpdate,
+      hasEnded,
     }),
-    [replayEvent, seekTime, setSeekTime, duration, speed, isPlaying, setIsPlaying, updateReplayRef, setSpeed, replayInit, forceEmitTimeUpdate],
+    [replayEvent, seekTime, setSeekTime, duration, speed, isPlaying, setIsPlaying, updateReplayRef, setSpeed, replayInit, forceEmitTimeUpdate, setDuration, hasEnded],
   );
 
   return value;

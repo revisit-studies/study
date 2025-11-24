@@ -29,10 +29,11 @@ export function Timer({
       debounceUpdateTimer(t * 1000, undefined);
     };
     replayEvent.on('timeupdate', onTimeUpdate);
+    forceEmitTimeUpdate();
     return () => {
       replayEvent.off('timeupdate', onTimeUpdate);
     };
-  }, [replayEvent, xScale, debounceUpdateTimer]);
+  }, [replayEvent, xScale, debounceUpdateTimer, forceEmitTimeUpdate]);
 
   useEffect(() => {
     forceEmitTimeUpdate();
