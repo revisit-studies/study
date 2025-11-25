@@ -102,7 +102,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       status: true,
       provenanceGraph: trrack.graph.backend,
       answers: {
-        [responseId]: JSON.stringify(response),
+        [responseId]: response,
       },
     });
   });
