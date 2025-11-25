@@ -27,6 +27,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const storeDispatch = useStoreDispatch();
   const [vegaConfig, setVegaConfig] = useState<VisualizationSpec | null>(null);
   const [loading, setLoading] = useState(true);
+  const [answered, setAnswered] = useState(false);
 
   const identifier = useCurrentIdentifier();
 
@@ -79,6 +80,12 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       key,
       value,
     }));
+
+    setAnswer({
+      status: answered,
+      provenanceGraph: trrack.graph.backend,
+      answers: {},
+    });
   });
 
   const handleRevisitAnswer = useEvent((key: string, value: Parameters<ValueOf<Listeners>>[1]) => {
@@ -88,6 +95,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       value: structuredClone(value),
     }));
 
+    setAnswered(true);
     setAnswer({
       status: true,
       provenanceGraph: trrack.graph.backend,
