@@ -88,7 +88,7 @@ export function StatsView(
 
   return (
     <>
-      <OverviewStats overviewData={overviewData} mismatchDetails={null} showDates={false} />
+      {trialId && trialId !== 'end' && <OverviewStats overviewData={overviewData} mismatchDetails={null} showDates={false} />}
       <Paper shadow="sm" p="md" mt="md" withBorder>
         {
         (visibleParticipants.length === 0)
