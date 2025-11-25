@@ -162,6 +162,62 @@ describe.each([
     expect(updatedModes.developmentModeEnabled).toBe(true);
   });
 
+  // cleanupModes test
+  test('cleanupModes updates old modes to new modes', async () => {
+    const oldModes = {
+      studyNavigatorEnabled: true,
+      analyticsInterfacePubliclyAccessible: true,
+      dataCollectionEnabled: true,
+    };
+    const cleanedModes = {
+      developmentModeEnabled: true,
+      dataSharingEnabled: true,
+      dataCollectionEnabled: true,
+    };
+    const sanitizedModes = cleanupModes(oldModes);
+
+    expect(sanitizedModes).toBeDefined();
+    expect(sanitizedModes).toEqual(sanitizedModes);
+
+    expect(sanitizedModes).not.toEqual(oldModes);
+
+    // pass in already cleaned modes
+    const alreadySanitizedModes = cleanupModes(cleanedModes);
+    expect(alreadySanitizedModes).toBeDefined();
+    expect(alreadySanitizedModes).toEqual(cleanedModes);
+    expect(alreadySanitizedModes).toEqual(sanitizedModes);
+    expect(alreadySanitizedModes).not.toEqual(oldModes);
+
+    // pass in empty object
+    const emptySanitizedModes = cleanupModes({});
+
+    expect(emptySanitizedModes).toBeDefined();
+    expect(emptySanitizedModes).toEqual({});
+
+    // pass in an object with more fields
+    const extraModes = {
+      testField1: true,
+      testField2: false,
+    };
+
+    const extraSanitizedModes = cleanupModes({ ...extraModes, ...oldModes });
+
+    expect(extraSanitizedModes).toBeDefined();
+    expect(extraSanitizedModes).not.toEqual(oldModes);
+    expect(extraSanitizedModes).not.toEqual(cleanedModes);
+    expect(extraSanitizedModes).toEqual({ ...extraModes, ...sanitizedModes });
+
+    // pass in an object with old modes and cleaned modes
+    const mixedModes = {
+      ...oldModes,
+      ...cleanedModes,
+    };
+
+    const mixedSanitizedModes = cleanupModes(mixedModes);
+    expect(mixedSanitizedModes).toBeDefined();
+    expect(mixedSanitizedModes).toEqual(mixedModes);
+  });
+
   // cannot test _getAudioUrl in local storage environment
 
   /* Snapshots ----------------------------------------------------------- */
@@ -331,62 +387,4 @@ describe.each([
     expect(snapshotData3).toBeDefined();
     expect(snapshotData3[directoryName]).not.toBeDefined();
   });
-});
-
-test('test cleanupModes', async () => {
-  const oldModes = {
-    studyNavigatorEnabled: true,
-    analyticsInterfacePubliclyAccessible: true,
-    dataCollectionEnabled: true,
-  };
-  const cleanedModes = {
-    developmentModeEnabled: true,
-    dataSharingEnabled: true,
-    dataCollectionEnabled: true,
-  };
-  const sanitizedModes = cleanupModes(oldModes);
-
-  expect(sanitizedModes).toBeDefined();
-  expect(sanitizedModes).toEqual(sanitizedModes);
-
-  expect(sanitizedModes).not.toEqual(oldModes);
-
-  // what if we pass in already cleaned modes
-  const alreadySanitizedModes = cleanupModes(cleanedModes);
-  expect(alreadySanitizedModes).toBeDefined();
-  expect(alreadySanitizedModes).toEqual(cleanedModes);
-  expect(alreadySanitizedModes).toEqual(sanitizedModes);
-  expect(alreadySanitizedModes).not.toEqual(oldModes);
-
-  // what if we pass in empty object
-  const emptySanitizedModes = cleanupModes({});
-
-  expect(emptySanitizedModes).toBeDefined();
-  expect(emptySanitizedModes).toEqual({});
-
-  // what if we pass in an object with more fields?
-  // it should maintain those fields while cleaning up the known fields
-  const extraModes = {
-    testField1: true,
-    testField2: false,
-  };
-
-  const extraSanitizedModes = cleanupModes({ ...extraModes, ...oldModes });
-
-  expect(extraSanitizedModes).toBeDefined();
-
-  expect(extraSanitizedModes).not.toEqual(oldModes);
-  expect(extraSanitizedModes).not.toEqual(cleanedModes);
-
-  expect(extraSanitizedModes).toEqual({ ...extraModes, ...sanitizedModes });
-
-  // what if we pass in an object with old modes AND cleaned modes?
-  const mixedModes = {
-    ...oldModes,
-    ...cleanedModes,
-  };
-
-  const mixedSanitizedModes = cleanupModes(mixedModes);
-  expect(mixedSanitizedModes).toBeDefined();
-  expect(mixedSanitizedModes).toEqual(mixedModes);
 });
