@@ -72,7 +72,9 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       }),
     );
 
-    storeDispatch(setReactiveAnswers(answers));
+    if (Object.keys(answers).length > 0) {
+      storeDispatch(setReactiveAnswers(answers));
+    }
   }, [storeDispatch, updateResponseBlockValidation, identifier, setReactiveAnswers]);
 
   const handleSignalEvt = useEvent((key: string, value: unknown) => {
