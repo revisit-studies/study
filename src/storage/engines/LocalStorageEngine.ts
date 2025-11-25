@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import {
-  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType,
+  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
 } from './types';
 
 export class LocalStorageEngine extends StorageEngine {
@@ -170,16 +170,17 @@ export class LocalStorageEngine extends StorageEngine {
     // Get the modes
     const modes = await this.studyDatabase.getItem(key) as Record<REVISIT_MODE, boolean> | null;
     if (modes) {
-      return modes;
+      const cleanedModes = cleanupModes(modes as Record<string, boolean>);
+      await this.studyDatabase.setItem(key, cleanedModes);
+      return cleanedModes;
     }
 
-    // Else, set and return defaults
     const defaults: Record<REVISIT_MODE, boolean> = {
       dataCollectionEnabled: true,
-      studyNavigatorEnabled: true,
-      analyticsInterfacePubliclyAccessible: true,
+      developmentModeEnabled: true,
+      dataSharingEnabled: true,
     };
-    this.studyDatabase.setItem(key, defaults);
+    await this.studyDatabase.setItem(key, defaults);
     return defaults;
   }
 
