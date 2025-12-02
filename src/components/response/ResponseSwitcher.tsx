@@ -7,7 +7,7 @@ import {
 } from '../../parser/types';
 import { CheckBoxInput } from './CheckBoxInput';
 import { DropdownInput } from './DropdownInput';
-import { Reactive } from './ReactiveInput';
+import { ReactiveInput } from './ReactiveInput';
 import { LikertInput } from './LikertInput';
 import { NumericInput } from './NumericInput';
 import { RadioInput } from './RadioInput';
@@ -215,7 +215,7 @@ export function ResponseSwitcher({
       />
       )}
       {response.type === 'reactive' && (
-      <Reactive
+      <ReactiveInput
         response={response}
         answer={ans as { value: string[] }}
         index={index}
