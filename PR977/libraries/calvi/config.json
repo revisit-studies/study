@@ -1,0 +1,2276 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
+  "description": "The Critical Thinking Assessment for Literacy in Visualizations (CALVI) library is a collection of visualizations and questions designed to assess the ability to interpret data visualizations. The library includes a variety of visualizations, such as line graphs, bar charts, and pie charts, along with corresponding questions that test the user's understanding of the data presented. The questions are designed to be challenging and require critical thinking skills to answer correctly.",
+  "doi": "10.1145/3544548.3581406",
+  "reference": "Lily W. Ge, Yuan Cui, and Matthew Kay. 2023. CALVI: Critical Thinking Assessment for Literacy in Visualizations. In Proceedings of the 2023 CHI Conference on Human Factors in Computing Systems (CHI '23). Association for Computing Machinery, New York, NY, USA, Article 815, 1–18.",
+  "components": {
+    "N1": {
+      "description": "Audio test",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N1.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the number of visitors at theater A as a proportion of that at theater B in 2001?",
+          "options": [
+            {
+              "label": "40%",
+              "value": "40"
+            },
+            {
+              "label": "50%",
+              "value": "50"
+            },
+            {
+              "label": "60%",
+              "value": "60"
+            },
+            {
+              "label": "70%",
+              "value": "70"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "50"
+        }
+      ]
+    },
+    "N2": {
+      "description": "Traffic Accidents Trend",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N2.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which statement about the daily number of traffic accidents from Jan 01 to Jan 15 in state Z is true?",
+          "options": [
+            {
+              "label": "It was higher on Jan 08 than Jan 07.",
+              "value": "A"
+            },
+            {
+              "label": "It increased from Jan 11 to Jan 15.",
+              "value": "B"
+            },
+            {
+              "label": "All of the days had more than 25 accidents.",
+              "value": "C"
+            },
+            {
+              "label": "It decreased from Jan 03 to Jan 07.",
+              "value": "D"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "B"
+        }
+      ]
+    },
+    "N3": {
+      "description": "Customers at Three Bike Shops",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N3.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following statements is true about the customers at the three bike shops in city Z?",
+          "options": [
+            {
+              "label": "On Jul 02, shop B had more customers than A and C combined.",
+              "value": "b_more_than_a_c"
+            },
+            {
+              "label": "The number of customers at shop C decreased from Jul 01 to Jul 03.",
+              "value": "c_decreased"
+            },
+            {
+              "label": "The number of customers at shop A increased from Jul 01 to Jul 03.",
+              "value": "a_increased"
+            },
+            {
+              "label": "None of the above.",
+              "value": "none"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "b_more_than_a_c"
+        }
+      ]
+    },
+
+    "N4": {
+      "description": "Advertising Expense Breakdown",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N4.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following is true about the advertising expense breakdown of company Z in countries A, B, and C?",
+          "options": [
+            {
+              "label": "Advertising expense for TV & radio was higher than that from social media in country A.",
+              "value": "tv_radio_vs_social"
+            },
+            {
+              "label": "In country C, company Z had less advertising expense for direct mail than the other two methods.",
+              "value": "less_direct_mail"
+            },
+            {
+              "label": "Company Z had the highest total advertising expense in country B.",
+              "value": "highest_in_B"
+            },
+            {
+              "label": "None of the above.",
+              "value": "none"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "less_direct_mail"
+        }
+      ]
+    },
+    "N5": {
+      "description": "Perfume Brand Market Share",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N5.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following is true about the four brands of perfume in city Z?",
+          "options": [
+            {
+              "label": "The market share of brand D is on an increasing trend from 2011 to 2015.",
+              "value": "d_increasing"
+            },
+            {
+              "label": "The market share of brand A is higher in 2011 than in 2012.",
+              "value": "a_higher_2011"
+            },
+            {
+              "label": "In 2013, brand B had the largest market share among all four brands.",
+              "value": "b_largest_2013"
+            },
+            {
+              "label": "None of the above.",
+              "value": "none"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "b_largest_2013"
+        }
+      ]
+    },
+    "N6": {
+      "description": "Monthly Number of New Clients",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N6.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following about the monthly number of new clients is true?",
+          "options": [
+            {
+              "label": "It decreased from Mar to Jun for company A.",
+              "value": "a_mar_jun_decrease"
+            },
+            {
+              "label": "It is higher in Feb for company B than company A.",
+              "value": "b_feb_higher"
+            },
+            {
+              "label": "It increased from Sep to Dec for company B.",
+              "value": "b_sep_dec_increase"
+            },
+            {
+              "label": "None of the above.",
+              "value": "none"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "b_sep_dec_increase"
+        }
+      ]
+    },
+    "N7": {
+      "description": "Restaurant Openings in 2000",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N7.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the trend of the monthly number of new restaurant openings in county Y in 2000?",
+          "options": [
+            {
+              "label": "Increasing, then decreasing",
+              "value": "inc_then_dec"
+            },
+            {
+              "label": "Decreasing, then increasing",
+              "value": "dec_then_inc"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "inc_then_dec"
+        }
+      ]
+    },
+    "N8": {
+      "description": "Beers Consumed in 2005",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N8.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Is the total number of beers consumed by person Z in the first half of 2005 higher than that in the second half?",
+          "options": [
+            {
+              "label": "Yes",
+              "value": "yes"
+            },
+            {
+              "label": "No",
+              "value": "no"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "yes"
+        }
+      ]
+    },
+    "N9": {
+      "description": "Store C\u2019s Sales vs Store B",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N9.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Approximately, what is store C\u2019s total sales as a proportion of store B\u2019s total sales in 1995?",
+          "options": [
+            {
+              "label": "40%",
+              "value": "40"
+            },
+            {
+              "label": "60%",
+              "value": "60"
+            },
+            {
+              "label": "80%",
+              "value": "80"
+            },
+            {
+              "label": "100%",
+              "value": "100"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "100"
+        }
+      ]
+    },
+    "N10": {
+      "description": "SAT Score vs. Income",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N10.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Is there a positive relationship between SAT score and annual family income for students in city Z?",
+          "options": [
+            {
+              "label": "Yes",
+              "value": "yes"
+            },
+            {
+              "label": "No",
+              "value": "no"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "yes"
+        }
+      ]
+    },
+    "N11": {
+      "description": "Sleep vs. Time Outdoors",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N11.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following is true about the residents in towns X and Y?",
+          "options": [
+            {
+              "label": "There is a negative relationship between sleep quality score and average weekly hours spent outdoors for town X.",
+              "value": "x_negative"
+            },
+            {
+              "label": "There is a positive relationship between sleep quality score and average weekly hours spent outdoors for town Y.",
+              "value": "y_positive"
+            },
+            {
+              "label": "Most residents in town X spend more than 6 hours outdoors every week.",
+              "value": "x_more_than_6"
+            },
+            {
+              "label": "None of the above.",
+              "value": "none"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "y_positive"
+        }
+      ]
+    },
+    "N12": {
+      "description": "Grocery Store Market Share",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N12.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following is true about the market share of grocery stores in town Z?",
+          "options": [
+            {
+              "label": "Store A has less than half of the total market share.",
+              "value": "a_less_than_half"
+            },
+            {
+              "label": "Store C has a higher market share than store B.",
+              "value": "c_more_than_b"
+            },
+            {
+              "label": "Store B has the second highest market share.",
+              "value": "b_second"
+            },
+            {
+              "label": "None of the above.",
+              "value": "none"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "b_second"
+        }
+      ]
+    },
+    "N13": {
+      "description": "Education Level of Residents",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N13.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following is true about the education level of residents in city Z?",
+          "options": [
+            {
+              "label": "More than 60% of residents have a Bachelor\u2019s degree or above.",
+              "value": "more_than_60"
+            },
+            {
+              "label": "The majority of residents have a graduate degree.",
+              "value": "grad_majority"
+            },
+            {
+              "label": "There are fewer residents whose education level is Associate degree than those with a high school degree.",
+              "value": "assoc_vs_high"
+            },
+            {
+              "label": "None of the above.",
+              "value": "none"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "more_than_60"
+        }
+      ]
+    },
+    "N14": {
+      "description": "Lego ownership by state",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N14.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following states has the highest number of Lego owners?",
+          "options": [
+            { "label": "AZ", "value": "AZ" },
+            { "label": "NV", "value": "NV" },
+            { "label": "TN", "value": "TN" },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "X"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "AZ" }]
+    },
+    "N15": {
+      "description": "Restaurant R popularity worldwide",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/normal/N15.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following is true about Restaurant R?",
+          "options": [
+            {
+              "label": "It is more popular in region E than in D.",
+              "value": "A"
+            },
+            {
+              "label": "It is less popular in region A than in C.",
+              "value": "B"
+            },
+            {
+              "label": "It is more popular in region B than in C.",
+              "value": "C"
+            },
+            {
+              "label": "It is less popular in region C than in D.",
+              "value": "D"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "B" }]
+    },
+    "T1": {
+      "description": "Sunny Days in Summer vs Winter",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T1.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Do U.S. states have a more similar number of sunny days in the summer or in the winter?",
+          "options": [
+            {
+              "label": "Summer",
+              "value": "summer"
+            },
+            {
+              "label": "Winter",
+              "value": "winter"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "inadequate"
+        }
+      ]
+    },
+    "T2": {
+      "description": "Windy Days in Summer vs Winter",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T2.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Do U.S. states have a more similar number of windy days in the summer or in the winter?",
+          "options": [
+            {
+              "label": "Summer",
+              "value": "summer"
+            },
+            {
+              "label": "Winter",
+              "value": "winter"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "inadequate"
+        }
+      ]
+    },
+    "T3": {
+      "description": "Concert Ticket Sales",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T3.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the number of concert tickets sold on Aug 10 as a proportion of that on Aug 11?",
+          "options": [
+            {
+              "label": "20%",
+              "value": "20"
+            },
+            {
+              "label": "40%",
+              "value": "40"
+            },
+            {
+              "label": "60%",
+              "value": "60"
+            },
+            {
+              "label": "80%",
+              "value": "80"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "80"
+        }
+      ]
+    },
+    "T4": {
+      "description": "Water Bottle Price Comparison",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T4.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the price of water bottle from store A as a proportion of that from store B?",
+          "options": [
+            {
+              "label": "17%",
+              "value": "17"
+            },
+            {
+              "label": "25%",
+              "value": "25"
+            },
+            {
+              "label": "50%",
+              "value": "50"
+            },
+            {
+              "label": "90%",
+              "value": "90"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "90"
+        }
+      ]
+    },
+    "T5": {
+      "description": "Visitors at Train Stations",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T5.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "On May 06 in city Z, what is the number of visitors at train station B as a proportion of that at train station C?",
+          "options": [
+            {
+              "label": "25%",
+              "value": "25"
+            },
+            {
+              "label": "33%",
+              "value": "33"
+            },
+            {
+              "label": "75%",
+              "value": "75"
+            },
+            {
+              "label": "100%",
+              "value": "100"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "33"
+        }
+      ]
+    },
+    "T6": {
+      "description": "Bacteria Trend 1970\u20132020",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T6.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the trend for the percentage of bacteria Z from 1970 to 2020?",
+          "options": [
+            {
+              "label": "Generally increasing",
+              "value": "increasing"
+            },
+            {
+              "label": "Generally decreasing",
+              "value": "decreasing"
+            },
+            {
+              "label": "Generally constant",
+              "value": "constant"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "inadequate"
+        }
+      ]
+    },
+    "T8": {
+      "description": "Visitors at Amusement Parks",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T8.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the total number of visitors at amusement park B as a proportion of that at amusement park C from May to December?",
+          "options": [
+            {
+              "label": "33%",
+              "value": "33"
+            },
+            {
+              "label": "67%",
+              "value": "67"
+            },
+            {
+              "label": "100%",
+              "value": "100"
+            },
+            {
+              "label": "200%",
+              "value": "200"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "33"
+        }
+      ]
+    },
+    "T9": {
+      "description": "Brand C Sales vs B",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T9.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Approximately, what is brand C's total sales as a proportion of brand B's total sales from Jan 01 to Mar 15?",
+          "options": [
+            {
+              "label": "20%",
+              "value": "20"
+            },
+            {
+              "label": "50%",
+              "value": "50"
+            },
+            {
+              "label": "60%",
+              "value": "60"
+            },
+            {
+              "label": "90%",
+              "value": "90"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "60"
+        }
+      ]
+    },
+    "T10": {
+      "description": "Species Prevalence by State",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T10.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Predatory species Z is more prevalent in NC than in AZ.",
+          "options": [
+            {
+              "label": "True",
+              "value": "true"
+            },
+            {
+              "label": "False",
+              "value": "false"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "false"
+        }
+      ]
+    },
+    "T11": {
+      "description": "Risk of Bacteria Z in WY vs ND",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T11.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "WY has a higher risk of bacteria Z infection than ND.",
+          "options": [
+            {
+              "label": "True",
+              "value": "true"
+            },
+            {
+              "label": "False",
+              "value": "false"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "true"
+        }
+      ]
+    },
+    "T12": {
+      "description": "Tree Planting Trend 1960\u20131980",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T12.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "The annual number of trees planted in town Z has been increasing from 1960 to 1980.",
+          "options": [
+            {
+              "label": "True",
+              "value": "true"
+            },
+            {
+              "label": "False",
+              "value": "false"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "false"
+        }
+      ]
+    },
+    "T13": {
+      "description": "Bookstore Trend 2000\u20132020",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T13.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the trend of the number of bookstores in city Z from 2000 to 2020?",
+          "options": [
+            {
+              "label": "Increasing",
+              "value": "increasing"
+            },
+            {
+              "label": "Decreasing",
+              "value": "decreasing"
+            },
+            {
+              "label": "Constant",
+              "value": "constant"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "increasing"
+        }
+      ]
+    },
+    "T14": {
+      "description": "Movie Release Trend",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T14.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following is true about the annual number of new movies released in city X?",
+          "options": [
+            {
+              "label": "There were more new movies released in 1992 than in 1994.",
+              "value": "1992_1994"
+            },
+            {
+              "label": "2000 had the most number of new movies released.",
+              "value": "2000_most"
+            },
+            {
+              "label": "There were more new movies released in 1996 than in 1995.",
+              "value": "1996_1995"
+            },
+            {
+              "label": "None of the above.",
+              "value": "none"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "1992_1994"
+        }
+      ]
+    },
+    "T15": {
+      "description": "Sales Trend for Item X (Apr to Jul)",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T15.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the trend of the total sales for item X from Apr to Jul?",
+          "options": [
+            {
+              "label": "Decreasing, then increasing",
+              "value": "dec_inc"
+            },
+            {
+              "label": "Increasing, then decreasing",
+              "value": "inc_dec"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "inc_dec"
+        }
+      ]
+    },
+    "T16": {
+      "description": "Apple Harvest Trend",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T16.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the trend of the total number of apples harvested in farm X from Jan 11 to Jan 14?",
+          "options": [
+            {
+              "label": "Increasing, then decreasing",
+              "value": "inc_dec"
+            },
+            {
+              "label": "Decreasing, then increasing",
+              "value": "dec_inc"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "dec_inc"
+        }
+      ]
+    },
+    "T17": {
+      "description": "Sunlight vs Growth for Plant P",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T17.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the trend of the growth for plant species P as the number of hours of sunlight exposure per month increases?",
+          "options": [
+            {
+              "label": "Generally increases",
+              "value": "increases"
+            },
+            {
+              "label": "Generally decreases",
+              "value": "decreases"
+            },
+            {
+              "label": "Generally constant",
+              "value": "constant"
+            },
+            {
+              "label": "Cannot be inferred / Inadequate Information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "decreases"
+        }
+      ]
+    },
+    "T18": {
+      "description": "Vacation Days vs Satisfaction",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T18.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following is true about company Z?",
+          "options": [
+            {
+              "label": "More employees have vacation days at D than those at A.",
+              "value": "vac_D_gt_A"
+            },
+            {
+              "label": "More employees have a satisfaction rating at B than those who have a rating at C.",
+              "value": "sat_B_gt_C"
+            },
+            {
+              "label": "Employee satisfaction rating decreases as the annual number of vacation days increases.",
+              "value": "rating_dec"
+            },
+            {
+              "label": "None of the above.",
+              "value": "none"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "vac_D_gt_A"
+        }
+      ]
+    },
+    "T19": {
+      "description": "Weight vs Survival Rate for Z",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T19.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the trend of the survival rate as weight increases for species Z?",
+          "options": [
+            {
+              "label": "Generally increases",
+              "value": "increases"
+            },
+            {
+              "label": "Generally decreases",
+              "value": "decreases"
+            },
+            {
+              "label": "Generally constant",
+              "value": "constant"
+            },
+            {
+              "label": "Cannot be inferred / Inadequate Information",
+              "value": "inadequate"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "increases"
+        }
+      ]
+    },
+    "T20": {
+      "description": "Prevalence of Plant Y Globally",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T20.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following is true about the prevalence of the plant species Y?",
+          "options": [
+            {
+              "label": "It is more prevalent in region D than in E.",
+              "value": "D_gt_E"
+            },
+            {
+              "label": "It is less prevalent in region B than in C.",
+              "value": "B_lt_C"
+            },
+            {
+              "label": "It is more prevalent in region C than in A.",
+              "value": "C_gt_A"
+            },
+            {
+              "label": "It is less prevalent in region C than in D.",
+              "value": "C_lt_D"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "C_lt_D"
+        }
+      ]
+    },
+
+    "T21": {
+      "description": "Bar chart of rainfall over 14 days",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T21.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q21",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which statement about rainfall (mm) is true for the past 14 days?",
+          "options": [
+            {
+              "label": "The amount of rainfall peaked at the end of the past 14 days.",
+              "value": "end_peak"
+            },
+            {
+              "label": "There was more rainfall at the beginning than at the end of the past 14 days.",
+              "value": "beginning_more"
+            },
+            {
+              "label": "None of the days had lower than 40mm of rainfall.",
+              "value": "none_below_40"
+            },
+            {
+              "label": "The amount of rainfall peaked at the beginning of the past 14 days.",
+              "value": "beginning_peak"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q21",
+          "answer": "beginning_more"
+        }
+      ]
+    },
+    "T22": {
+      "description": "Line chart of airport visitors from 2000 to 2005",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T22.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q22",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "True or False: The number of visitors at airport X is decreasing from 2000 to 2005.",
+          "options": [
+            {
+              "label": "True",
+              "value": "true"
+            },
+            {
+              "label": "False",
+              "value": "false"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "cannot_infer"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q22",
+          "answer": "false"
+        }
+      ]
+    },
+    "T23": {
+      "description": "Area chart of monthly shirt sales in 2021",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T23.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q23",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Is the total number of shirts sold by company Z in the first half of 2021 higher than that in the second half?",
+          "options": [
+            {
+              "label": "Yes",
+              "value": "yes"
+            },
+            {
+              "label": "No",
+              "value": "no"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "cannot_infer"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q23",
+          "answer": "no"
+        }
+      ]
+    },
+    "T25": {
+      "description": "Market share of shampoo brands",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T25.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following is true about the three brands of shampoo in city Y from 2001 to 2005?",
+          "options": [
+            {
+              "label": "The market share of brand C is on an increasing trend from 2001 to 2005.",
+              "value": "increasing_trend"
+            },
+            {
+              "label": "The market share of brand C is higher in 2001 than in 2002.",
+              "value": "higher_2001"
+            },
+            {
+              "label": "Brand B had the largest market share in 2001 compared to its market share in the other years.",
+              "value": "b_largest"
+            },
+            {
+              "label": "None of the above.",
+              "value": "none"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "higher_2001"
+        }
+      ]
+    },
+    "T26": {
+      "description": "Votes for candidates",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T26.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Approximately, what is the number of votes for candidate A as a proportion of those for candidate B?",
+          "options": [
+            {
+              "label": "50%",
+              "value": "50"
+            },
+            {
+              "label": "60%",
+              "value": "60"
+            },
+            {
+              "label": "70%",
+              "value": "70"
+            },
+            {
+              "label": "80%",
+              "value": "80"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "80"
+        }
+      ]
+    },
+    "T27": {
+      "description": "GDP growth trend",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T27.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "True or False: GDP per capita for country Z grew faster from 2000 to 2003 than from 2005 to 2008.",
+          "options": [
+            {
+              "label": "True",
+              "value": "true"
+            },
+            {
+              "label": "False",
+              "value": "false"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "cannot"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "true"
+        }
+      ]
+    },
+    "T28": {
+      "description": "Cell phone brand market share",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T28.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Does cell phone brand A have more than half of the total market share?",
+          "options": [
+            {
+              "label": "Yes",
+              "value": "yes"
+            },
+            {
+              "label": "No",
+              "value": "no"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "cannot"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "cannot"
+        }
+      ]
+    },
+    "T29": {
+      "description": "Household car ownership",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T29.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Are there more households with exactly 1 car than households with exactly 2 cars?",
+          "options": [
+            {
+              "label": "Yes",
+              "value": "yes"
+            },
+            {
+              "label": "No",
+              "value": "no"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "cannot"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "cannot"
+        }
+      ]
+    },
+    "T30": {
+      "description": "Precipitation comparison",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T30.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Was the average amount of precipitation over 15 years in region D higher than that in region C?",
+          "options": [
+            {
+              "label": "Yes",
+              "value": "yes"
+            },
+            {
+              "label": "No",
+              "value": "no"
+            },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "cannot"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "cannot"
+        }
+      ]
+    },
+    "T34": {
+      "description": "Board game sales trend analysis",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T34.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Company A sells a board game. Assuming today is Jun 01, 2022, which of the following statements is true?",
+          "options": [
+            { "label": "2004 has more copies sold than 2003.", "value": "A" },
+            {
+              "label": "Copies sold per year fell sharply in 2022.",
+              "value": "B"
+            },
+            {
+              "label": "Copies sold per year has been strictly increasing since 2003.",
+              "value": "C"
+            },
+            { "label": "None of the above.", "value": "D" }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+    },
+    "T35": {
+      "description": "Vegetable planting trends by three farms",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T35.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Assuming today is Feb 20, 2022, which of the following is true about the vegetables planted by the three farms?",
+          "options": [
+            {
+              "label": "All three farms planted more vegetables in 2022 than they did in the previous years.",
+              "value": "A"
+            },
+            {
+              "label": "All three farms planted fewer vegetables in 2022 than they did in the previous years.",
+              "value": "B"
+            },
+            {
+              "label": "All three farms planted about the same amount of vegetables in 2022 as they did in the previous years.",
+              "value": "C"
+            },
+            { "label": "None of the above.", "value": "D" }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+    },
+    "T36": {
+      "description": "Car counts in parking lots",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T36.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Assuming today is Apr 10, 2022, did the total number of cars parked in the three parking lots fall sharply in 2022?",
+          "options": [
+            { "label": "Yes", "value": "A" },
+            { "label": "No", "value": "B" },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "C"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "C" }]
+    },
+    "T37": {
+      "description": "Hiring trend in company Z",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T37.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Assuming today is May 01, 2022, which of the following statements is true?",
+          "options": [
+            {
+              "label": "Company Z had more new employees in 2018 than in 2020.",
+              "value": "A"
+            },
+            {
+              "label": "The number of new employees per year fell sharply in 2022.",
+              "value": "B"
+            },
+            {
+              "label": "The total number of employees in company Z decreased in 2022.",
+              "value": "C"
+            },
+            { "label": "None of the above.", "value": "D" }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+    },
+    "T38": {
+      "description": "Work hours and happiness correlation",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T38.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "True or False: Within each town, is there a negative relationship between average daily working hours and happiness score?",
+          "options": [
+            { "label": "True", "value": "A" },
+            { "label": "False", "value": "B" },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "C"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "B" }]
+    },
+    "T39": {
+      "description": "Work hours and salary correlation",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T39.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Within each city, is there a positive relationship between salary and average daily working hours?",
+          "options": [
+            { "label": "Yes", "value": "A" },
+            { "label": "No", "value": "B" },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "C"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "C" }]
+    },
+    "T40": {
+      "description": "Weight analysis of species C",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T40.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Does any members of species C weigh more than 5 lbs?",
+          "options": [
+            { "label": "Yes", "value": "A" },
+            { "label": "No", "value": "B" },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "C"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "C" }]
+    },
+    "T42": {
+      "description": "Infection rates per 1,000",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T42.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which region had the highest number of confirmed cases per 1,000 people?",
+          "options": [
+            { "label": "A", "value": "A" },
+            { "label": "B", "value": "B" },
+            { "label": "C", "value": "C" },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "D"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+    },
+    "T43": {
+      "description": "Sales trend for gift shop A",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T43.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the trend of sales in gift shop A from Jan to Dec?",
+          "options": [
+            { "label": "Generally increasing", "value": "A" },
+            { "label": "Generally decreasing", "value": "B" },
+            { "label": "Generally constant", "value": "C" },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "D"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+    },
+    "T44": {
+      "description": "Book price trend in City Z",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T44.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "What is the trend of the average price of books from 1960 to 2020 in city Z?",
+          "options": [
+            { "label": "Generally increasing", "value": "A" },
+            { "label": "Generally decreasing", "value": "B" },
+            { "label": "Generally constant", "value": "C" },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "D"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+    },
+    "T45": {
+      "description": "Ice cream brand voting across states",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T45.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following is true?",
+          "options": [
+            {
+              "label": "A will be the most popular brand of ice cream.",
+              "value": "A"
+            },
+            {
+              "label": "B will be the least popular brand of ice cream.",
+              "value": "B"
+            },
+            {
+              "label": "C will be the most popular brand of ice cream.",
+              "value": "C"
+            },
+            { "label": "Too early to say.", "value": "D" }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+    },
+    "T46": {
+      "description": "Water sales vs temperature",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T46.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "True or False: If the temperature gets higher than 100°F, then the bottles of water sold must be greater than 750.",
+          "options": [
+            { "label": "True", "value": "A" },
+            { "label": "False", "value": "B" },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "C"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "B" }]
+    },
+    "T47": {
+      "description": "Reading preferences by time of day",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T47.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "True or False: More than half of the people in county Z prefer reading at night.",
+          "options": [
+            { "label": "True", "value": "A" },
+            { "label": "False", "value": "B" },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "C"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "B" }]
+    },
+    "T48": {
+      "description": "Voting on hiking trails",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T48.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "Which of the following is true?",
+          "options": [
+            {
+              "label": "Hiking trail A will be voted as the favorite trail.",
+              "value": "A"
+            },
+            {
+              "label": "Hiking trail B will be voted as the favorite trail.",
+              "value": "B"
+            },
+            {
+              "label": "Hiking trail C will be voted as the favorite trail.",
+              "value": "C"
+            },
+            { "label": "Too early to say.", "value": "D" }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+    },
+    "T49": {
+      "description": "Average mall customers in Town X",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T49.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "In town X, what is the approximate average number of customers at mall A from Jan to Mar?",
+          "options": [
+            { "label": "200", "value": "A" },
+            { "label": "300", "value": "B" },
+            { "label": "400", "value": "C" },
+            { "label": "500", "value": "D" }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "C" }]
+    },
+    "T50": {
+      "description": "Average new buildings in City Z",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T50.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "In city Z, what is the approximate average number of new buildings built from 1950 to 1952?",
+          "options": [
+            { "label": "20", "value": "A" },
+            { "label": "30", "value": "B" },
+            { "label": "40", "value": "C" },
+            { "label": "50", "value": "D" }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "C" }]
+    },
+    "T52": {
+      "description": "Monthly sales trend for store B",
+      "type": "image",
+      "path": "libraries/calvi/assets/questions/trick/T52.jpg",
+      "nextButtonLocation": "sidebar",
+      "nextButtonText": "Continue",
+      "response": [
+        {
+          "id": "q1",
+          "type": "radio",
+          "required": true,
+          "location": "sidebar",
+          "prompt": "True or False: Monthly sales for store B is increasing from Jan to Dec.",
+          "options": [
+            { "label": "True", "value": "A" },
+            { "label": "False", "value": "B" },
+            {
+              "label": "Cannot be inferred / inadequate information",
+              "value": "C"
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [{ "id": "q1", "answer": "B" }]
+    }
+  },
+
+  "sequences": {
+    "full": {
+      "id": "calviAllQuestions",
+      "order": "fixed",
+      "components": [
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N5",
+        "N6",
+        "N7",
+        "N8",
+        "N9",
+        "N10",
+        "N11",
+        "N12",
+        "N13",
+        "N14",
+        "N15",
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6",
+        "T8",
+        "T9",
+        "T10",
+        "T11",
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T19",
+        "T20",
+        "T21",
+        "T22",
+        "T23",
+        "T25",
+        "T26",
+        "T27",
+        "T28",
+        "T29",
+        "T30",
+        "T34",
+        "T35",
+        "T36",
+        "T37",
+        "T38",
+        "T39",
+        "T40",
+        "T42",
+        "T43",
+        "T44",
+        "T45",
+        "T46",
+        "T47",
+        "T48",
+        "T49",
+        "T50",
+        "T52"
+      ]
+    },
+    "specificBank": {
+      "id": "calviSetTrick",
+      "order": "random",
+      "components": [
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N5",
+        "N6",
+        "N7",
+        "N8",
+        "N9",
+        "N10",
+        "N11",
+        "N12",
+        "N13",
+        "N14",
+        "N15",
+        "T3",
+        "T10",
+        "T14",
+        "T20",
+        "T25",
+        "T26",
+        "T30",
+        "T35",
+        "T37",
+        "T40",
+        "T42",
+        "T43",
+        "T47",
+        "T48",
+        "T49"
+      ]
+    },
+    "fullBank": {
+      "id": "calviRandomTrick",
+      "order": "fixed",
+      "components": [
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N5",
+        "N6",
+        "N7",
+        "N8",
+        "N9",
+        "N10",
+        "N11",
+        "N12",
+        "N13",
+        "N14",
+        "N15",
+        {
+          "order": "random",
+          "numSamples": 15,
+          "components": [
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "T5",
+            "T6",
+            "T8",
+            "T9",
+            "T10",
+            "T11",
+            "T12",
+            "T13",
+            "T14",
+            "T15",
+            "T16",
+            "T17",
+            "T18",
+            "T19",
+            "T20",
+            "T21",
+            "T22",
+            "T23",
+            "T25",
+            "T26",
+            "T27",
+            "T28",
+            "T29",
+            "T30",
+            "T34",
+            "T35",
+            "T36",
+            "T37",
+            "T38",
+            "T39",
+            "T40",
+            "T42",
+            "T43",
+            "T44",
+            "T45",
+            "T46",
+            "T47",
+            "T48",
+            "T49",
+            "T50",
+            "T52"
+          ]
+        }
+      ]
+    }
+  }
+}

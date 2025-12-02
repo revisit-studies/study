@@ -1,0 +1,98 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Scatter Plot JND Study",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2025-11-02",
+    "description": "This is a reVISit variation study of JND(Just Noticeable Difference) Scatter Plot experiment.",
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "ScatterJND-study/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "urlParticipantIdParam": "PROLIFIC_PID",
+    "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [https://app.prolific.com/submissions/complete?cc=C1E35XG4](https://app.prolific.com/submissions/complete?cc=C1E35XG4)",
+    "participantNameField": "introduction.prolificId"
+  },
+  "baseComponents": {
+    "scatterBase": {
+    "type": "react-component",
+    "path": "tutorial/assets/replication/ScatterWrapper.tsx",
+    "response": [
+      {
+        "id": "buttonsResponse",
+        "type": "buttons",
+        "prompt": "Choose the plot with the higher correlation:",
+        "required": true,
+        "location": "belowStimulus",
+        "options": [
+          { "label": "Left Plot", "value": "left" },
+          { "label": "Right Plot", "value": "right" }
+        ]
+      }
+    ]
+  }
+  },
+  "components": {
+    "practice T1 A:0.3 B:0.7": {
+      "baseComponent": "scatterBase",
+      "parameters": { "r1": 0.3, "r2": 0.7 },
+      "correctAnswer": [
+        {
+          "id": "buttonsResponse",
+          "answer": "right"
+        }
+      ],
+      "provideFeedback": true
+    },
+    "practice T2 A:0.9 B:0.6": {
+      "baseComponent": "scatterBase",
+      "parameters": { "r1": 0.9, "r2": 0.6 },
+      "correctAnswer": [
+        {
+          "id": "buttonsResponse",
+          "answer": "left"
+        }
+      ],
+      "provideFeedback": true
+    },
+    "practice T3 A:0.6 B:0.3": {
+      "baseComponent": "scatterBase",
+      "parameters": { "r1": 0.6, "r2": 0.3 },
+      "correctAnswer": [
+        {
+          "id": "buttonsResponse",
+          "answer": "left"
+        }
+      ],
+      "provideFeedback": true
+    },
+    "trial": {
+      "baseComponent": "scatterBase"
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      {
+        "order": "fixed",
+        "components": [
+          "practice T1 A:0.3 B:0.7",
+          "practice T2 A:0.9 B:0.6",
+          "practice T3 A:0.6 B:0.3",
+          {
+            "order": "dynamic",
+            "id": "steppedSequence",
+            "functionPath": "tutorial/assets/replication/JNDDynamic.tsx",
+            "parameters": {}
+          }
+        ]
+      }
+    ]
+  }
+}
