@@ -1,0 +1,472 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "A tutorial that you will build with us",
+    "version": "development",
+    "authors": [
+      "The reVISit Team",
+      "The reVISit Community",
+      "You :)"
+    ],
+    "date": "2025-02-05",
+    "description": "This tutorial will teach you how to create a reVISit study and use all of the features that reVISit has to offer.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto",
+      "You :)"
+    ]
+  },
+  "importedLibraries": [
+    "mic-check"
+  ],
+  "uiConfig": {
+    "recordAudio": true,
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "tutorial/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true
+  },
+  "components": {
+    "welcome": {
+      "type": "markdown",
+      "recordAudio": false,
+      "path": "tutorial/assets/welcome.md",
+      "response": []
+    },
+    "consent": {
+      "type": "markdown",
+      "recordAudio": false,
+      "path": "tutorial/assets/consent.md",
+      "nextButtonText": "I agree",
+      "response": []
+    },
+    "demographics": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "age",
+          "type": "numerical",
+          "prompt": "What is your age?"
+        },
+        {
+          "id": "health",
+          "type": "likert",
+          "prompt": "How would you rate your overall health?",
+          "secondaryText": "1 being the worst health and 5 being the best health",
+          "numItems": 5,
+          "rightLabel": "Best health",
+          "leftLabel": "Worst health"
+        },
+        {
+          "id": "dividerResponse",
+          "type": "divider",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "fruits",
+          "type": "matrix-checkbox",
+          "prompt": "Which of these fruits do you like at each time of day?",
+          "answerOptions": [
+            "Breakfast",
+            "Lunch",
+            "Dinner"
+          ],
+          "questionOptions": [
+            "Banana",
+            "Apple",
+            "Orange",
+            "Grapes",
+            "Strawberry"
+          ]
+        },
+        {
+          "id": "q-short-text",
+          "type": "shortText",
+          "prompt": "What is your favorite sports team?",
+          "placeholder": "Enter your team here"
+        },
+        {
+          "id": "operating-systems",
+          "type": "checkbox",
+          "prompt": "Which of these operating systems do you use?",
+          "minSelections": 1,
+          "maxSelections": 2,
+          "options": [
+            "Windows",
+            "macOS",
+            "Linux"
+          ],
+          "withOther": true
+        },
+        {
+          "id": "q-slider",
+          "type": "slider",
+          "prompt": "How would you rate this tutorial so far?",
+          "secondaryText": "Your answer is not legally binding.",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "Bad",
+              "value": 0
+            },
+            {
+              "label": "Alright",
+              "value": 50
+            },
+            {
+              "label": "Good",
+              "value": 100
+            }
+          ]
+        }
+      ]
+    },
+    "trainingWithFeedback": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "training",
+          "type": "radio",
+          "prompt": "Yes is the correct answer, click it",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "training",
+          "answer": "Yes"
+        }
+      ],
+      "provideFeedback": true,
+      "trainingAttempts": 2,
+      "allowFailedTraining": false,
+      "nextButtonDisableTime": 5000
+    },
+    "coinImage": {
+      "type": "image",
+      "path": "tutorial/assets/coins.png",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "cost-effective",
+          "type": "radio",
+          "prompt": "Which coin is most effective to produce?",
+          "location": "sidebar",
+          "options": [
+            "Penny",
+            "Nickel",
+            "Dime",
+            "Quarter",
+            "Half Dollar"
+          ]
+        },
+        {
+          "id": "cost-ineffective",
+          "type": "dropdown",
+          "prompt": "Which coin is least cost effective to produce?",
+          "location": "sidebar",
+          "options": [
+            "Penny",
+            "Nickel",
+            "Dime",
+            "Quarter",
+            "Half Dollar"
+          ]
+        }
+      ]
+    },
+    "vegaPath": {
+      "type": "vega",
+      "path": "tutorial/assets/simpleChart.json",
+      "response": [
+        {
+          "id": "simple-vega",
+          "type": "radio",
+          "prompt": "What is the value of bar A?",
+          "options": [
+            "10",
+            "28",
+            "50"
+          ]
+        }
+      ]
+    },
+    "vegaConfig": {
+      "type": "vega",
+      "config": {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "description": "A simple bar chart with embedded data.",
+        "data": {
+          "values": [
+            {
+              "category": "A",
+              "value": 28
+            },
+            {
+              "category": "B",
+              "value": 55
+            },
+            {
+              "category": "C",
+              "value": 43
+            }
+          ]
+        },
+        "mark": "bar",
+        "encoding": {
+          "x": {
+            "field": "category",
+            "type": "nominal",
+            "axis": {
+              "labelAngle": 0
+            }
+          },
+          "y": {
+            "field": "value",
+            "type": "quantitative"
+          }
+        }
+      },
+      "response": [
+        {
+          "id": "dynamic-vega",
+          "type": "radio",
+          "prompt": "What is the value of bar A?",
+          "options": [
+            "10",
+            "28",
+            "50"
+          ]
+        }
+      ]
+    },
+    "reactiveVega": {
+      "type": "vega",
+      "path": "tutorial/assets/reactive.json",
+      "response": [
+        {
+          "id": "reactiveResponse",
+          "type": "reactive",
+          "prompt": "What is the value of bar A? Click it to show here"
+        }
+      ]
+    },
+    "website": {
+      "type": "website",
+      "path": "https://revisit.dev",
+      "response": []
+    },
+    "reactiveWebsite": {
+      "type": "website",
+      "path": "tutorial/assets/bar-chart-interaction.html",
+      "instructionLocation": "aboveStimulus",
+      "description": "A trial for the user to click the larges bar",
+      "instruction": "Click on the largest bar",
+      "response": [
+        {
+          "id": "barChart",
+          "prompt": "Your selected answer:",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "parameters": {
+        "barData": [
+          0.32,
+          0.01,
+          1.2,
+          1.3,
+          0.82,
+          0.4,
+          0.3
+        ]
+      }
+    },
+    "reactExampleCars": {
+      "type": "react-component",
+      "path": "tutorial/assets/ReactExample.tsx",
+      "instruction": "How many cars from Japan have a Miles Per Gallon value greater than 35?",
+      "response": [
+        {
+          "id": "response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "max": 100,
+          "min": 0
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "response",
+          "answer": 17
+        }
+      ],
+      "parameters": {
+        "dataset": "cars",
+        "x": "Miles per Gallon",
+        "y": "Weight (lbs)",
+        "category": "Origin",
+        "ids": "id",
+        "brushType": "Rectangular Selection"
+      }
+    },
+    "reactExamplePenguins": {
+      "type": "react-component",
+      "instruction": "Consider only cars that have a miles per gallon value greater than 30 AND weigh more than 2000 pounds. Which country or region produces the most and the least of these cars?",
+      "path": "tutorial/assets/ReactExample.tsx",
+      "response": [
+        {
+          "id": "response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "max": 100,
+          "min": 0
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "response",
+          "answer": 15
+        }
+      ],
+      "parameters": {
+        "dataset": "penguin",
+        "x": "Body Mass (g)",
+        "y": "Flipper Length (mm)",
+        "category": "Species",
+        "ids": "id",
+        "brushType": "Slider Selection"
+      }
+    },
+    "example1": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-example-1",
+          "type": "shortText",
+          "prompt": "Example question"
+        }
+      ]
+    },
+    "example2": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-example-2",
+          "type": "dropdown",
+          "prompt": "Example question",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ]
+        }
+      ]
+    },
+    "attentionCheck": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-example-2",
+          "type": "dropdown",
+          "prompt": "Attention check question",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ]
+        }
+      ]
+    },
+    "exampleWithAnswer": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-example-1",
+          "type": "numerical",
+          "prompt": "What is 2 + 2?"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "welcome",
+      "consent",
+      "$mic-check.co.audioTest",
+      "demographics",
+      "trainingWithFeedback",
+      "coinImage",
+      "vegaPath",
+      "vegaConfig",
+      "reactiveVega",
+      "website",
+      "reactiveWebsite",
+      "reactExampleCars",
+      "reactExamplePenguins",
+      {
+        "id": "attentionDeterministic",
+        "order": "fixed",
+        "components": [
+          "example1",
+          "example2",
+          "example1",
+          "example2"
+        ],
+        "interruptions": [
+          {
+            "firstLocation": 0,
+            "spacing": 2,
+            "components": [
+              "attentionCheck"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "attentionRandom",
+        "order": "fixed",
+        "components": [
+          "example1",
+          "example2",
+          "example1",
+          "example2"
+        ],
+        "interruptions": [
+          {
+            "spacing": "random",
+            "numInterruptions": 3,
+            "components": [
+              "attentionCheck"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "skipResponse",
+        "order": "fixed",
+        "components": [
+          "exampleWithAnswer",
+          "example1"
+        ],
+        "skip": [
+          {
+            "name": "exampleWithAnswer",
+            "check": "response",
+            "responseId": "q-example-1",
+            "value": 4,
+            "comparison": "notEqual",
+            "to": "end"
+          }
+        ]
+      }
+    ]
+  }
+}
