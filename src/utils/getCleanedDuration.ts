@@ -19,6 +19,8 @@ export function getCleanedDuration(answer: { startTime: number; endTime: number;
     }
     i += 1;
   }
-  const cleanedDuration = duration ? duration - timeNavigatedAway : undefined;
+
+  // If the duration is negative, return 0
+  const cleanedDuration = duration ? Math.max(0, duration - timeNavigatedAway) : undefined;
   return cleanedDuration;
 }
