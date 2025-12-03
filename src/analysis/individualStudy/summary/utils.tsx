@@ -3,7 +3,6 @@ import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 import { ParticipantCounts } from '../../types';
 import { Response } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
-import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 
 export function calculateParticipantCounts(visibleParticipants: ParticipantData[]): ParticipantCounts {
   return {
@@ -15,24 +14,13 @@ export function calculateParticipantCounts(visibleParticipants: ParticipantData[
   };
 }
 
-function getNextComponent(participant: ParticipantData): string | undefined {
-  const flatSequence = getSequenceFlatMap(participant.sequence);
-  return flatSequence.find((comp) => {
-    const compAnswer = Object.values(participant.answers).find((a) => a.componentName === comp);
-    return !compAnswer || compAnswer.endTime === -1;
-  });
-}
-
 export function calculateComponentParticipantCounts(visibleParticipants: ParticipantData[], componentName: string): ParticipantCounts {
   const participants = visibleParticipants.filter((p) => {
     const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
     if (answer && answer.startTime > 0) {
       return true;
     }
-    if (p.completed || p.rejected) {
-      return false;
-    }
-    return getNextComponent(p) === componentName;
+    return !(p.completed || p.rejected);
   });
 
   return {
@@ -45,10 +33,7 @@ export function calculateComponentParticipantCounts(visibleParticipants: Partici
     inProgress: participants.filter((p) => {
       if (p.rejected) return false;
       const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
-      if (answer) {
-        return answer.endTime === -1;
-      }
-      return getNextComponent(p) === componentName;
+      return answer ? answer.endTime === -1 : false;
     }).length,
     rejected: participants.filter((p) => p.rejected).length,
   };
@@ -200,36 +185,9 @@ export function calculateComponentStats(visibleParticipants: ParticipantData[]) 
       }
     });
 
-    if (!participant.completed) {
-      const nextComponent = getNextComponent(participant);
-      if (nextComponent && !components.has(nextComponent)) {
-        if (!stats[nextComponent]) {
-          stats[nextComponent] = {
-            name: nextComponent,
-            avgTime: 0,
-            avgCleanTime: 0,
-            participantCount: 0,
-            correctness: 0,
-          };
-        }
-        stats[nextComponent].participantCount += 1;
-      }
-    }
+    return stats;
   });
-
-  return Object.values(stats)
-    .map((stat) => {
-      const questions = Object.values(validParticipants).flatMap((participant) => Object.keys(participant.answers).filter((key) => key.startsWith(stat.name) && participant.answers[key]?.correctAnswer?.length > 0));
-      const totalAttempts = Object.values(validParticipants).reduce((count, participant) => count + Object.keys(participant.answers).filter((key) => key.startsWith(stat.name) && participant.answers[key].endTime !== -1).length, 0);
-      const hasCorrectAnswers = questions.length > 0;
-
-      return {
-        ...stat,
-        avgTime: totalAttempts ? stat.avgTime / totalAttempts : 0,
-        avgCleanTime: totalAttempts ? stat.avgCleanTime / totalAttempts : 0,
-        correctness: hasCorrectAnswers ? (stat.correctness / questions.length) * 100 : NaN,
-      };
-    });
+  return Object.values(stats);
 }
 
 export function calculateResponseStats(visibleParticipants: ParticipantData[]) {
