@@ -169,28 +169,41 @@ describe.each([
       analyticsInterfacePubliclyAccessible: true,
       dataCollectionEnabled: true,
     };
+
     const cleanedModes = {
       developmentModeEnabled: true,
       dataSharingEnabled: true,
       dataCollectionEnabled: true,
     };
+
     const sanitizedModes = cleanupModes(oldModes);
-
     expect(sanitizedModes).toBeDefined();
-    expect(sanitizedModes).toEqual(sanitizedModes);
-
+    expect(sanitizedModes).toEqual(cleanedModes);
     expect(sanitizedModes).not.toEqual(oldModes);
+
+    const oldModesFalse = {
+      studyNavigatorEnabled: false,
+      analyticsInterfacePubliclyAccessible: false,
+      dataCollectionEnabled: true,
+    };
+    const cleanedModesFalse = {
+      developmentModeEnabled: false,
+      dataSharingEnabled: false,
+      dataCollectionEnabled: true,
+    };
+
+    const sanitizedModesFalse = cleanupModes(oldModesFalse);
+    expect(sanitizedModesFalse).toBeDefined();
+    expect(sanitizedModesFalse).toEqual(cleanedModesFalse);
+    expect(sanitizedModesFalse).not.toEqual(oldModesFalse);
 
     // pass in already cleaned modes
     const alreadySanitizedModes = cleanupModes(cleanedModes);
     expect(alreadySanitizedModes).toBeDefined();
     expect(alreadySanitizedModes).toEqual(cleanedModes);
-    expect(alreadySanitizedModes).toEqual(sanitizedModes);
-    expect(alreadySanitizedModes).not.toEqual(oldModes);
 
     // pass in empty object
     const emptySanitizedModes = cleanupModes({});
-
     expect(emptySanitizedModes).toBeDefined();
     expect(emptySanitizedModes).toEqual({});
 
