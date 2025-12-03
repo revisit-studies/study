@@ -7,7 +7,6 @@ import { OverviewData } from '../../types';
 export function OverviewStats({
   overviewData,
   mismatchDetails,
-  showDates = true,
 }: {
   overviewData: OverviewData | null;
   mismatchDetails?: {
@@ -15,7 +14,6 @@ export function OverviewStats({
     inProgress: { current: number; calculated: number };
     rejected: { current: number; calculated: number };
   } | null;
-  showDates?: boolean;
 }) {
   const hasMismatch = (type: 'completed' | 'inProgress' | 'rejected') => {
     if (!mismatchDetails) return false;
@@ -36,7 +34,6 @@ export function OverviewStats({
           </div>
           <div>
             <Flex align="center" gap="xs">
-
               {hasMismatch('completed') && mismatchDetails && (
                 <Tooltip label={`Calculated: ${mismatchDetails.completed.calculated}, Current: ${mismatchDetails.completed.current}`}>
                   <IconAlertTriangle size={16} color="orange" />
@@ -48,7 +45,6 @@ export function OverviewStats({
           </div>
           <div>
             <Flex align="center" gap="xs">
-
               {hasMismatch('inProgress') && mismatchDetails && (
                 <Tooltip label={`Calculated: ${mismatchDetails.inProgress.calculated}, Current: ${mismatchDetails.inProgress.current}`}>
                   <IconAlertTriangle size={16} color="orange" />
@@ -60,7 +56,6 @@ export function OverviewStats({
           </div>
           <div>
             <Flex align="center" gap="xs">
-
               {hasMismatch('rejected') && mismatchDetails && (
                 <Tooltip label={`Calculated: ${mismatchDetails.rejected.calculated}, Current: ${mismatchDetails.rejected.current}`}>
                   <IconAlertTriangle size={16} color="orange" />
@@ -70,18 +65,14 @@ export function OverviewStats({
             </Flex>
             <Text size="sm" c="dimmed">Rejected</Text>
           </div>
-          {showDates && (
-            <>
-              <div>
-                <Text size="xl" fw="bold">{overviewData.startDate?.toLocaleDateString() || 'N/A'}</Text>
-                <Text size="sm" c="dimmed">Start Date</Text>
-              </div>
-              <div>
-                <Text size="xl" fw="bold">{overviewData.endDate?.toLocaleDateString() || 'N/A'}</Text>
-                <Text size="sm" c="dimmed">End Date</Text>
-              </div>
-            </>
-          )}
+          <div>
+            <Text size="xl" fw="bold">{overviewData.startDate?.toLocaleDateString() || 'N/A'}</Text>
+            <Text size="sm" c="dimmed">Start Date</Text>
+          </div>
+          <div>
+            <Text size="xl" fw="bold">{overviewData.endDate?.toLocaleDateString() || 'N/A'}</Text>
+            <Text size="sm" c="dimmed">End Date</Text>
+          </div>
           <div>
             <Text size="xl" fw="bold">
               {Number.isFinite(overviewData.avgTime) ? `${(overviewData.avgTime).toFixed(1)} s` : 'N/A'}

@@ -74,6 +74,27 @@ export function calculateDateStats(visibleParticipants: ParticipantData[]): { st
   };
 }
 
+export function calculateComponentDateStats(visibleParticipants: ParticipantData[], componentName: string): { startDate: Date | null; endDate: Date | null } {
+  // Filter out rejected participants
+  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
+  const dates = validParticipants.map((participant) => {
+    const answers = Object.values(participant.answers)
+      .filter((data) => data.componentName === componentName && data.startTime)
+      .sort((a, b) => a.startTime - b.startTime);
+    return {
+      startTime: answers.length > 0 ? answers[0].startTime : undefined,
+      endTime: answers.length > 0 ? answers[answers.length - 1].endTime : undefined,
+    };
+  });
+
+  const startTimes = dates.map((d) => d.startTime).filter((t): t is number => t != null);
+  const endTimes = dates.map((d) => d.endTime).filter((t): t is number => t != null);
+  return {
+    startDate: startTimes.length > 0 ? new Date(Math.min(...startTimes)) : null,
+    endDate: endTimes.length > 0 ? new Date(Math.max(...endTimes)) : null,
+  };
+}
+
 export function calculateTimeStats(visibleParticipants: ParticipantData[]): { avgTime: number; avgCleanTime: number } {
   // Filter out rejected participants
   const validParticipants = visibleParticipants.filter((p) => !p.rejected);
