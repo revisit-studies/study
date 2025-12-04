@@ -55,7 +55,7 @@
     },
     "survey": {
       "type": "markdown",
-      "path": "VLAT-mini-randomized/survey.md",
+      "path": "example-VLAT-mini-randomized/assets/survey.md",
       "response": [
         {
           "id": "q1",
