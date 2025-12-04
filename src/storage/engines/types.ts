@@ -37,6 +37,22 @@ export type SequenceAssignment = {
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
 
+export function cleanupModes(modes: Record<string, boolean>): Record<REVISIT_MODE, boolean> {
+  const cleanedModes: Record<string, boolean> = { ...modes };
+
+  if ('studyNavigatorEnabled' in modes && !('developmentModeEnabled' in modes)) {
+    cleanedModes.developmentModeEnabled = modes.studyNavigatorEnabled;
+    delete cleanedModes.studyNavigatorEnabled;
+  }
+
+  if ('analyticsInterfacePubliclyAccessible' in modes && !('dataSharingEnabled' in modes)) {
+    cleanedModes.dataSharingEnabled = modes.analyticsInterfacePubliclyAccessible;
+    delete cleanedModes.analyticsInterfacePubliclyAccessible;
+  }
+
+  return cleanedModes as Record<REVISIT_MODE, boolean>;
+}
+
 export interface StageInfo {
   stageName: string;
   color: string;
