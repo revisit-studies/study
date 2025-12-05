@@ -4,7 +4,31 @@ import { ParticipantCounts } from '../../types';
 import { Response } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 
-export function calculateParticipantCounts(visibleParticipants: ParticipantData[]): ParticipantCounts {
+export function calculateParticipantCounts(visibleParticipants: ParticipantData[], componentName?: string): ParticipantCounts {
+  if (componentName) {
+    const participants = visibleParticipants.filter((p) => {
+      const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
+      if (answer && answer.startTime > 0) {
+        return true;
+      }
+      return !(p.completed || p.rejected);
+    });
+
+    return {
+      total: participants.length,
+      completed: participants.filter((p) => {
+        if (p.rejected) return false;
+        const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
+        return answer && answer.endTime !== -1;
+      }).length,
+      inProgress: participants.filter((p) => {
+        if (p.rejected) return false;
+        const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
+        return answer ? answer.endTime === -1 : false;
+      }).length,
+      rejected: participants.filter((p) => p.rejected).length,
+    };
+  }
   return {
     total: visibleParticipants.length,
     // Include !p.rejected to exclude participants rejected manually after completing the study
@@ -14,32 +38,27 @@ export function calculateParticipantCounts(visibleParticipants: ParticipantData[
   };
 }
 
-export function calculateComponentParticipantCounts(visibleParticipants: ParticipantData[], componentName: string): ParticipantCounts {
-  const participants = visibleParticipants.filter((p) => {
-    const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
-    if (answer && answer.startTime > 0) {
-      return true;
-    }
-    return !(p.completed || p.rejected);
-  });
+export function calculateDateStats(visibleParticipants: ParticipantData[], componentName?: string): { startDate: Date | null; endDate: Date | null } {
+  if (componentName) {
+    // Filter out rejected participants
+    const validParticipants = visibleParticipants.filter((p) => !p.rejected);
+    const dates = validParticipants.map((participant) => {
+      const answers = Object.values(participant.answers)
+        .filter((data) => data.componentName === componentName && data.startTime)
+        .sort((a, b) => a.startTime - b.startTime);
+      return {
+        startTime: answers.length > 0 ? answers[0].startTime : undefined,
+        endTime: answers.length > 0 ? answers[answers.length - 1].endTime : undefined,
+      };
+    });
 
-  return {
-    total: participants.length,
-    completed: participants.filter((p) => {
-      if (p.rejected) return false;
-      const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
-      return answer && answer.endTime !== -1;
-    }).length,
-    inProgress: participants.filter((p) => {
-      if (p.rejected) return false;
-      const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
-      return answer ? answer.endTime === -1 : false;
-    }).length,
-    rejected: participants.filter((p) => p.rejected).length,
-  };
-}
-
-export function calculateDateStats(visibleParticipants: ParticipantData[]): { startDate: Date | null; endDate: Date | null } {
+    const startTimes = dates.map((d) => d.startTime).filter((t): t is number => t != null);
+    const endTimes = dates.map((d) => d.endTime).filter((t): t is number => t != null);
+    return {
+      startDate: startTimes.length > 0 ? new Date(Math.min(...startTimes)) : null,
+      endDate: endTimes.length > 0 ? new Date(Math.max(...endTimes)) : null,
+    };
+  }
   // Filter out rejected participants
   const validParticipants = visibleParticipants.filter((p) => !p.rejected);
   const dates = validParticipants.map((participant) => {
@@ -51,27 +70,6 @@ export function calculateDateStats(visibleParticipants: ParticipantData[]): { st
       endTime: answers.length > 0 ? answers[answers.length - 1].endTime : undefined,
     };
   });
-  const startTimes = dates.map((d) => d.startTime).filter((t): t is number => t != null);
-  const endTimes = dates.map((d) => d.endTime).filter((t): t is number => t != null);
-  return {
-    startDate: startTimes.length > 0 ? new Date(Math.min(...startTimes)) : null,
-    endDate: endTimes.length > 0 ? new Date(Math.max(...endTimes)) : null,
-  };
-}
-
-export function calculateComponentDateStats(visibleParticipants: ParticipantData[], componentName: string): { startDate: Date | null; endDate: Date | null } {
-  // Filter out rejected participants
-  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
-  const dates = validParticipants.map((participant) => {
-    const answers = Object.values(participant.answers)
-      .filter((data) => data.componentName === componentName && data.startTime)
-      .sort((a, b) => a.startTime - b.startTime);
-    return {
-      startTime: answers.length > 0 ? answers[0].startTime : undefined,
-      endTime: answers.length > 0 ? answers[answers.length - 1].endTime : undefined,
-    };
-  });
-
   const startTimes = dates.map((d) => d.startTime).filter((t): t is number => t != null);
   const endTimes = dates.map((d) => d.endTime).filter((t): t is number => t != null);
   return {

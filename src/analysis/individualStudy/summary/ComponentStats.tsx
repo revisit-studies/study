@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
-import {
-  Text, Paper, Title,
-} from '@mantine/core';
+import { Text, Paper, Title } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
 // eslint-disable-next-line camelcase
 import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from 'mantine-react-table';
