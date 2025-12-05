@@ -64,33 +64,95 @@ export interface StudyMetadata {
  */
 export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
 export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
+
+/**
+ * UserBrowser is used to define a mininum browser requirement for the study to run.
+ */
 export type UserBrowser = {
+  /** Name of the browser. e.g. chrome, firefox, safari. */
   name: string;
+  /** Minimum version of the browser to support. */
   minVersion?: number;
 };
+
+/** Rules specifying which browsers and their minimum versions the study supports. */
 export type BrowserRules = {
+  /** List of browser types and their minimum version to support. */
   allowed: UserBrowser[];
   /** Optional message to be displayed when browser criterias are not met. */
   blockedMessage?: string;
 };
-export type UserDevice = 'desktop' | 'tablet' | 'mobile'
+
+export type UserDevice = 'desktop' | 'tablet' | 'mobile';
+
+/** Rules specifying which device types the study supports. */
 export type DeviceRules = {
+  /** List of device types to support. */
   allowed: UserDevice[];
   /** Optional message to be displayed when device criterias are not met. */
   blockedMessage?: string;
 }
+
 export type UserInput = 'mouse' | 'touch'
+
+/** Rules specifying which input methods the study supports. */
 export type InputRules = {
+  /** List of inputs to support. */
   allowed: UserInput[];
   /** Optional message to be displayed when input criterias are not met. */
   blockedMessage?: string;
 }
+
+/** Rules specifying which minimum screen dimensions for the study. */
 export type DisplayRules = {
+  /** The minimum screen width size for the study */
   minHeight: number;
+  /** The minimum screen height size for the study */
   minWidth: number;
 };
 
-export type StudyRules = {
+/**
+ * The StudyRules is used to define a study's constraints to determine whether a participant can take the study.
+ * If the criteria are not met, a warning message will be displayed.
+ * Below is an example of a StudyRules entry in your study configuration file:
+
+```js
+{
+  "studyRules": {
+    "display": {
+      "minHeight": 400,
+      "minWidth": 800
+    },
+    "browsers": {
+      "allowed": [
+        {
+          "name": "chrome",
+          "minVersion": 100
+        },
+        {
+          "name": "firefox",
+          "minVersion": 100
+        },
+        {
+          "name": "safari",
+          "minVersion": 10
+        }
+      ],
+      "blockedMessage": "This study can only run in chrome, firefox, or safari. (<-- if blockedMesage is not set, a default message is displayed)"
+    },
+    "devices": {
+      "allowed": ["tablet", "desktop", "mobile"],
+      "blockedMessage": "... (<-- if blockedMesage is not set, a default message is displayed)"
+    },
+    "inputs": {
+      "allowed": ["touch", "mouse"],
+      "blockedMessage": "... (<-- if blockedMesage is not set, a default message is displayed)"
+    }
+  }
+}
+```
+ */
+export interface StudyRules {
   /** Display size constraints */
   display?: DisplayRules;
   /** Browser constraints */

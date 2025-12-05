@@ -243,8 +243,10 @@
     },
     "BrowserRules": {
       "additionalProperties": false,
+      "description": "Rules specifying which browsers and their minimum versions the study supports.",
       "properties": {
         "allowed": {
+          "description": "List of browser types and their minimum version to support.",
           "items": {
             "$ref": "#/definitions/UserBrowser"
           },
@@ -598,8 +600,10 @@
     },
     "DeviceRules": {
       "additionalProperties": false,
+      "description": "Rules specifying which device types the study supports.",
       "properties": {
         "allowed": {
+          "description": "List of device types to support.",
           "items": {
             "$ref": "#/definitions/UserDevice"
           },
@@ -617,11 +621,14 @@
     },
     "DisplayRules": {
       "additionalProperties": false,
+      "description": "Rules specifying which minimum screen dimensions for the study.",
       "properties": {
         "minHeight": {
+          "description": "The minimum screen width size for the study",
           "type": "number"
         },
         "minWidth": {
+          "description": "The minimum screen height size for the study",
           "type": "number"
         }
       },
@@ -1294,8 +1301,10 @@
     },
     "InputRules": {
       "additionalProperties": false,
+      "description": "Rules specifying which input methods the study supports.",
       "properties": {
         "allowed": {
+          "description": "List of inputs to support.",
           "items": {
             "$ref": "#/definitions/UserInput"
           },
@@ -2938,6 +2947,7 @@
     },
     "StudyRules": {
       "additionalProperties": false,
+      "description": "The StudyRules is used to define a study's constraints to determine whether a participant can take the study. If the criteria are not met, a warning message will be displayed. Below is an example of a StudyRules entry in your study configuration file:\n\n```js { \"studyRules\": {  \"display\": {    \"minHeight\": 400,    \"minWidth\": 800  },  \"browsers\": {    \"allowed\": [      {        \"name\": \"chrome\",        \"minVersion\": 100      },      {        \"name\": \"firefox\",        \"minVersion\": 100      },      {        \"name\": \"safari\",        \"minVersion\": 10      }    ],    \"blockedMessage\": \"This study can only run in chrome, firefox, or safari. (<-- if blockedMesage is not set, a default message is displayed)\"  },  \"devices\": {    \"allowed\": [\"tablet\", \"desktop\", \"mobile\"],    \"blockedMessage\": \"... (<-- if blockedMesage is not set, a default message is displayed)\"  },  \"inputs\": {    \"allowed\": [\"touch\", \"mouse\"],    \"blockedMessage\": \"... (<-- if blockedMesage is not set, a default message is displayed)\"  } } } ```",
       "properties": {
         "browsers": {
           "$ref": "#/definitions/BrowserRules",
@@ -3330,11 +3340,14 @@
     },
     "UserBrowser": {
       "additionalProperties": false,
+      "description": "UserBrowser is used to define a mininum browser requirement for the study to run.",
       "properties": {
         "minVersion": {
+          "description": "Minimum version of the browser to support.",
           "type": "number"
         },
         "name": {
+          "description": "Name of the browser. e.g. chrome, firefox, safari.",
           "type": "string"
         }
       },
