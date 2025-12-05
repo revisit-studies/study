@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Graph Literacy Scale",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-09-17",
+    "description": "Example study using the graph-literacy-scale library.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": true
+  },
+  "importedLibraries": [
+    "graph-literacy-scale"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-graph-literacy-scale/assets/graph-literacy-scale.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$graph-literacy-scale.se.full"
+    ]
+  }
+}
