@@ -15,10 +15,14 @@
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "withSidebar": true,
-    "windowEventDebounceTime": 200,
-    "minHeightSize": 800,
-    "minWidthSize": 400,
-    "browserRules": {
+    "windowEventDebounceTime": 200
+  },
+  "studyRules": {
+    "display": {
+      "minHeight": 400,
+      "minWidth": 800
+    },
+    "browsers": {
       "allowed": [
         {
           "name": "chrome",
@@ -32,12 +36,13 @@
           "name": "safari",
           "minVersion": 10
         }
-      ]
+      ],
+      "blockedMessage": "test browsers"
     },
-    "deviceRules": {
-      "allowed": ["tablet", "desktop"]
+    "devices": {
+      "allowed": ["tablet", "desktop", "mobile"]
     },
-    "inputRules": {
+    "inputs": {
       "allowed": ["touch", "mouse"]
     }
   },

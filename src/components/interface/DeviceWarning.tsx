@@ -12,9 +12,9 @@ import { useDeviceRules } from '../../store/hooks/useDeviceRules';
 export function DeviceWarning() {
   const studyConfig = useStudyConfig();
 
-  const { browserRules, deviceRules, inputRules } = studyConfig.uiConfig;
+  const { browsers, devices, inputs } = studyConfig.studyRules ?? {};
 
-  const { isBrowserAllowed, isDeviceAllowed, isInputAllowed } = useDeviceRules(studyConfig.uiConfig);
+  const { isBrowserAllowed, isDeviceAllowed, isInputAllowed } = useDeviceRules(studyConfig.studyRules);
 
   if (isBrowserAllowed && isDeviceAllowed && isInputAllowed) {
     return null;
@@ -32,10 +32,10 @@ export function DeviceWarning() {
             <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
               <IconBrowser size={48} color="gray" />
             </Card.Section>
-            {browserRules?.blockedMessage
+            {browsers?.blockedMessage
               ? (
                 <Text size="md">
-                  {browserRules.blockedMessage}
+                  {browsers.blockedMessage}
                 </Text>
               ) : (
                 <>
@@ -43,7 +43,7 @@ export function DeviceWarning() {
                     This study only works in the following browser(s):
                   </Text>
                   <List ml="md">
-                    {browserRules?.allowed.map((browser, idx) => (
+                    {browsers?.allowed.map((browser, idx) => (
                       <List.Item key={idx}>
                         {browser.name}
                         {browser.minVersion && ` v${browser.minVersion} or later`}
@@ -60,10 +60,10 @@ export function DeviceWarning() {
             <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
               <IconDevices size={48} color="gray" />
             </Card.Section>
-            {deviceRules?.blockedMessage
+            {devices?.blockedMessage
               ? (
                 <Text size="md">
-                  {deviceRules.blockedMessage}
+                  {devices.blockedMessage}
                 </Text>
               ) : (
                 <>
@@ -71,7 +71,7 @@ export function DeviceWarning() {
                     This study only works in the following device(s):
                   </Text>
                   <List ml="md">
-                    {deviceRules?.allowed.map((device, idx) => (
+                    {devices?.allowed.map((device, idx) => (
                       <List.Item key={idx}>
                         {device}
                       </List.Item>
@@ -87,10 +87,10 @@ export function DeviceWarning() {
             <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
               <IconHandClick size={48} color="gray" />
             </Card.Section>
-            {inputRules?.blockedMessage
+            {inputs?.blockedMessage
               ? (
                 <Text size="md">
-                  {inputRules.blockedMessage}
+                  {inputs.blockedMessage}
                 </Text>
               ) : (
                 <>
@@ -98,7 +98,7 @@ export function DeviceWarning() {
                     This study only works on devices that support following input type(s):
                   </Text>
                   <List ml="md">
-                    {inputRules?.allowed.map((input, idx) => (
+                    {inputs?.allowed.map((input, idx) => (
                       <List.Item key={idx}>
                         {input}
                       </List.Item>

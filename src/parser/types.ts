@@ -70,17 +70,35 @@ export type UserBrowser = {
 };
 export type BrowserRules = {
   allowed: UserBrowser[];
+  /** Optional message to be displayed when browser criterias are not met. */
   blockedMessage?: string;
 };
 export type UserDevice = 'desktop' | 'tablet' | 'mobile'
 export type DeviceRules = {
-  allowed: UserDevice[],
+  allowed: UserDevice[];
+  /** Optional message to be displayed when device criterias are not met. */
   blockedMessage?: string;
 }
 export type UserInput = 'mouse' | 'touch'
 export type InputRules = {
-  allowed: UserInput[],
+  allowed: UserInput[];
+  /** Optional message to be displayed when input criterias are not met. */
   blockedMessage?: string;
+}
+export type DisplayRules = {
+  minHeight: number;
+  minWidth: number;
+};
+
+export type StudyRules = {
+  /** Display size constraints */
+  display?: DisplayRules;
+  /** Browser constraints */
+  browsers?: BrowserRules;
+  /** Browser constraints */
+  devices?: DeviceRules;
+  /** Input constraints */
+  inputs?: InputRules;
 }
 
 export type Styles = {
@@ -222,18 +240,8 @@ export interface UIConfig {
   urlParticipantIdParam?: string;
   /** The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId' */
   participantNameField?: string;
-  /** The minimum screen width size for the study */
-  minWidthSize?: number;
-  /** The minimum screen height size for the study */
-  minHeightSize?: number;
   /** The path to the external stylesheet file. */
   stylesheetPath?: string;
-  /** Browsers supported by the study */
-  browserRules?: BrowserRules
-  /** Devices suported by the study */
-  deviceRules?: DeviceRules
-  /** Input types suported by the study */
-  inputRules?: InputRules
 }
 
 /**
@@ -1653,6 +1661,8 @@ export interface StudyConfig {
   studyMetadata: StudyMetadata;
   /** The UI configuration for the study. This is used to configure the UI of the app. */
   uiConfig: UIConfig;
+  /** The study rules for the study. This is used to configure study constraints such as browsers, device sizes, etc. */
+  studyRules?: StudyRules;
   /** A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later. */
   importedLibraries?: string[];
   /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */

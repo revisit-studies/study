@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  BrowserRules, UIConfig,
+  BrowserRules, StudyRules,
 } from '../../parser/types';
 
 function detectBrowser() {
@@ -58,7 +58,7 @@ export function useAllowedBrowsers(browserRules: BrowserRules | undefined) {
   return isAllowed;
 }
 
-export function useDeviceRules(uiConfig?: UIConfig) {
+export function useDeviceRules(studyRules?: StudyRules) {
   const [isBrowserAllowed, setIsBrowserAllowed] = useState(true);
   const [isDeviceAllowed, setIsDeviceAllowed] = useState(true);
   const [isInputAllowed, setIsInputAllowed] = useState(true);
@@ -67,13 +67,13 @@ export function useDeviceRules(uiConfig?: UIConfig) {
     const browser = detectBrowser();
     const device = detectDeviceType();
     const inputs = detectInputTypes();
-    if (!uiConfig) {
+    if (!studyRules) {
       return;
     }
 
     // Browser check
-    if (uiConfig.browserRules?.allowed?.length) {
-      const ok = uiConfig.browserRules.allowed.some(
+    if (studyRules.browsers?.allowed?.length) {
+      const ok = studyRules.browsers.allowed.some(
         (b) => b.name === browser.name
           && browser.version >= (b.minVersion ?? 0),
       );
@@ -83,20 +83,20 @@ export function useDeviceRules(uiConfig?: UIConfig) {
     }
 
     // Device check
-    if (uiConfig.deviceRules?.allowed?.length) {
-      if (!uiConfig.deviceRules.allowed.includes(device)) {
+    if (studyRules.devices?.allowed?.length) {
+      if (!studyRules.devices.allowed.includes(device)) {
         setIsDeviceAllowed(false);
       }
     }
 
     // Input type check
-    if (uiConfig.inputRules?.allowed?.length) {
-      const hasAllowedInput = inputs.some((i) => uiConfig.inputRules!.allowed.includes(i));
+    if (studyRules.inputs?.allowed?.length) {
+      const hasAllowedInput = inputs.some((i) => studyRules.inputs!.allowed.includes(i));
       if (!hasAllowedInput) {
         setIsInputAllowed(false);
       }
     }
-  }, [uiConfig]);
+  }, [studyRules]);
 
   return {
     isBrowserAllowed,
