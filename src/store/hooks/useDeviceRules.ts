@@ -51,21 +51,6 @@ function detectInputTypes() {
   return types;
 }
 
-export function useAllowedBrowsers(browserRules: BrowserRules | undefined) {
-  const [isAllowed, setIsAllowed] = useState(true);
-
-  useEffect(() => {
-    const browser = detectBrowser();
-
-    setIsAllowed(browserRules?.allowed.some(
-      (b) => b.name === browser.name
-        && browser.version >= (b.minVersion ?? 0),
-    ) || false);
-  }, [browserRules]);
-
-  return isAllowed;
-}
-
 export function useDeviceRules(studyRules?: StudyRules) {
   const [isBrowserAllowed, setIsBrowserAllowed] = useState(true);
   const [isDeviceAllowed, setIsDeviceAllowed] = useState(true);
