@@ -37,7 +37,7 @@
           "minVersion": 10
         }
       ],
-      "blockedMessage": "test browsers"
+      "blockedMessage": "You must be on a relatively modern browser, Chrome > 100, Firefox > 100, Safari > 10."
     },
     "devices": {
       "allowed": ["tablet", "desktop", "mobile"]
