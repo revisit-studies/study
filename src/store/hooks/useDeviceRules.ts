@@ -28,8 +28,16 @@ function detectBrowser() {
 function detectDeviceType() {
   const ua = navigator.userAgent.toLowerCase();
 
+  // Detect iPadOS 13+ (spoofs desktop Safari)
+  const isModernIpad =
+    navigator.platform === 'MacIntel' &&
+    navigator.maxTouchPoints > 1;
+
   const isMobile = /iphone|ipod|android.*mobile|windows phone|blackberry|opera mini/.test(ua);
-  const isTablet = /ipad|android(?!.*mobile)|tablet/.test(ua);
+  const isTablet =
+    /ipad|tablet/.test(ua) ||
+    (/android/.test(ua) && !/mobile/.test(ua)) ||
+    isModernIpad;
 
   if (isMobile) return 'mobile';
   if (isTablet) return 'tablet';
