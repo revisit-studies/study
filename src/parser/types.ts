@@ -112,7 +112,7 @@ export type DisplayRules = {
 };
 
 /**
- * The StudyRules is used to define a study's constraints to determine whether a participant can take the study.
+ * The StudyRules are used to define a study's constraints to determine whether a participant can take the study.
  * If the criteria are not met, a warning message will be displayed.
  * Below is an example of a StudyRules entry in your study configuration file:
 
