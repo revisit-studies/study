@@ -1,6 +1,6 @@
 import { ParticipantData } from '../../../storage/types';
 import { getCleanedDuration } from '../../../utils/getCleanedDuration';
-import { ParticipantCounts } from '../../types';
+import { OverviewData, ParticipantCounts } from '../../types';
 import { Response } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 
@@ -250,4 +250,15 @@ export function getResponseOptions(response: Response): string {
     return `${response.leftLabel ? ` ${response.leftLabel} ~ ${response.rightLabel}` : ''} (${response.numItems} items)`;
   }
   return 'N/A';
+}
+
+export function getOverviewStats(visibleParticipants: ParticipantData[]): OverviewData {
+  return {
+    participantCounts: calculateParticipantCounts(visibleParticipants),
+    startDate: calculateDateStats(visibleParticipants).startDate,
+    endDate: calculateDateStats(visibleParticipants).endDate,
+    avgTime: calculateTimeStats(visibleParticipants).avgTime,
+    avgCleanTime: calculateTimeStats(visibleParticipants).avgCleanTime,
+    correctness: calculateCorrectnessStats(visibleParticipants),
+  };
 }
