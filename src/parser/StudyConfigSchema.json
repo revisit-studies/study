@@ -712,13 +712,31 @@
           },
           "type": "array"
         },
+        "id": {
+          "type": "string"
+        },
+        "order": {
+          "enum": [
+            "random",
+            "latinSquare",
+            "fixed"
+          ],
+          "type": "string"
+        },
         "parameters": {
           "additionalProperties": {},
           "type": "object"
+        },
+        "type": {
+          "const": "factors",
+          "type": "string"
         }
       },
       "required": [
+        "type",
         "factorsToCross",
+        "id",
+        "order",
         "component",
         "parameters"
       ],
@@ -735,8 +753,7 @@
         }
       },
       "required": [
-        "factor",
-        "numSamples"
+        "factor"
       ],
       "type": "object"
     },

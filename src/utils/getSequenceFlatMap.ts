@@ -1,6 +1,6 @@
 import type { ComponentBlockWithOrderPath } from '../components/interface/StepsPanel';
-import { DynamicBlock, StudyConfig } from '../parser/types';
-import { isDynamicBlock } from '../parser/utils';
+import { DynamicBlock, FactorBlock, StudyConfig } from '../parser/types';
+import { isDynamicBlock, isFactorBlock } from '../parser/utils';
 import { Sequence } from '../store/types';
 
 export function getSequenceFlatMap<T extends Sequence | StudyConfig['sequence']>(sequence: T): string[] {
@@ -9,6 +9,10 @@ export function getSequenceFlatMap<T extends Sequence | StudyConfig['sequence']>
 
 function findAllFuncBlocks(sequence: StudyConfig['sequence']): DynamicBlock[] {
   return isDynamicBlock(sequence) ? [sequence] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
+}
+
+export function findAllFactorBlocks(sequence: StudyConfig['sequence']): FactorBlock[] {
+  return isFactorBlock(sequence) ? [sequence] : isDynamicBlock(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFactorBlocks(component)));
 }
 
 export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): (DynamicBlock | undefined) {

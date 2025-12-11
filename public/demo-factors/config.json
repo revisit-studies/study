@@ -19,23 +19,27 @@
     "minHeightSize": 800,
     "minWidthSize": 400
   },
-  "components": {
+  "baseComponents": {
     "factorComponent": {
       "type": "react-component",
       "path": "demo-factors/assets/Factors.tsx",
-      "parameters": { "data": "d1", "visType": "v1" },
+      "parameters": { "data": "d1", "visType": "v1", "task": "t1" },
       "response": []
     }
   },
+  "components": {},
   "factors": {
     "data": ["d1", "d2", "d3", "d4"],
-    "visType": ["v1", "v2", "v3", "v4"]
+    "visType": ["v1", "v2", "v3", "v4"],
+    "task": ["t1", "t2", "t3", "t4"]
   },
   "sequence": {
     "order": "fixed",
     "components": [
-      "factorComponent",
       {
+        "type": "factors",
+        "order": "fixed",
+        "id": "crossBlock",
         "factorsToCross": [
           {
             "factor": "data",
@@ -44,12 +48,17 @@
           {
             "factor": "visType",
             "numSamples": 4
+          },
+          {
+            "factor": "task",
+            "numSamples": 4
           }
         ],
-        "component": ["factorComponent"],
+        "component": "factorComponent",
         "parameters": {
-          "dataParam": "${data}",
-          "visTypeParam": "${visType}"
+          "Text": "This is for data named ${data}",
+          "visTypeParam": "${visType}",
+          "taskParam": "${task}"
         }
       }
     ]

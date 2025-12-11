@@ -4,15 +4,17 @@ import librarySchema from './LibraryConfigSchema.json';
 import {
   IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
 } from './types';
-import { isDynamicBlock, isInheritedComponent } from './utils';
+import { isDynamicBlock, isFactorBlock, isInheritedComponent } from './utils';
 import { PREFIX } from '../utils/Prefix';
+import { findAllFactorBlocks } from '../utils/getSequenceFlatMap';
+import { combineFactors } from '../utils/handleRandomSequences';
 
 const ajv = new Ajv({ allowUnionTypes: true });
 ajv.addSchema(librarySchema);
 const libraryValidate = ajv.getSchema<LibraryConfig>('#/definitions/LibraryConfig')!;
 
 function namespaceLibrarySequenceComponents(sequence: StudyConfig['sequence'], libraryName: string): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return sequence;
   }
   return {
@@ -26,9 +28,99 @@ function namespaceLibrarySequenceComponents(sequence: StudyConfig['sequence'], l
   };
 }
 
+// 1. Replace ${var} in a single string
+export function fillTemplate(str: string, vars: Record<string, unknown>): string {
+  return str.replace(/\$\{(\w+)\}/g, (_, key) => (vars[key] !== undefined && vars[key] !== null
+    ? String(vars[key])
+    : ''));
+}
+
+// 2. Recursively replace in any TS value
+export function deepFillTemplate<T>(value: T, vars: Record<string, string>): T {
+  // Strings: apply template replacement
+  if (typeof value === 'string') {
+    return fillTemplate(value, vars) as unknown as T;
+  }
+
+  // Arrays: map over items
+  if (Array.isArray(value)) {
+    return value.map((item) => deepFillTemplate(item, vars)) as unknown as T;
+  }
+
+  // Objects: recurse over properties
+  if (value && typeof value === 'object') {
+    const result: unknown = Array.isArray(value) ? [] : {};
+
+    for (const [key, val] of Object.entries(value)) {
+      result[key] = deepFillTemplate(val as unknown, vars);
+    }
+
+    return result as T;
+  }
+
+  // Anything else (number, boolean, null, undefined, etc) → return as-is
+  return value;
+}
+
+export function createFactorComponents(config: StudyConfig): Record<string, IndividualComponent> {
+  const factorBlocks = findAllFactorBlocks(config.sequence);
+
+  if (!config.factors || !config.baseComponents) {
+    return {};
+  }
+
+  const newComponents: Record<string, IndividualComponent> = {};
+
+  factorBlocks.forEach((block) => {
+    const baseComponent = config.baseComponents![block.component];
+
+    const factors = block.factorsToCross.map((c) => config.factors![c.factor]);
+    const depthToFactorsMap: Record<number, string> = {};
+    block.factorsToCross.forEach((f, i) => { depthToFactorsMap[i] = f.factor; });
+
+    const allCombs = combineFactors(0, factors, '', depthToFactorsMap, {});
+
+    allCombs.forEach((c) => {
+      newComponents[c[0]] = { ...baseComponent, parameters: deepFillTemplate(block.parameters, c[1]) };
+    });
+  });
+
+  return newComponents;
+}
+
+export function expandFactorSequences(sequence: StudyConfig['sequence'], importedLibrariesData: Record<string, LibraryConfig>, factors: Record<string, string[]>): StudyConfig['sequence'] {
+  if (isDynamicBlock(sequence)) {
+    return sequence;
+  }
+
+  if (isFactorBlock(sequence)) {
+    const depthMap = {};
+    const newComponents = sequence.factorsToCross.map((c) => factors[c.factor]);
+    const componentsToCross = combineFactors(0, newComponents, '', depthMap, {});
+
+    return {
+      id: sequence.id,
+      order: sequence.order,
+      components: componentsToCross.map((c) => c[0]),
+      skip: [],
+    };
+  }
+
+  return {
+    ...sequence,
+    components: (sequence.components || []).map((component) => {
+      if (typeof component === 'object') {
+        return expandFactorSequences(component, importedLibrariesData, factors);
+      }
+
+      return component;
+    }),
+  };
+}
+
 // Recursively iterate through sequences (sequence.components) and replace any library sequence references with the actual library sequence
 export function expandLibrarySequences(sequence: StudyConfig['sequence'], importedLibrariesData: Record<string, LibraryConfig>, errors: ParserErrorWarning[] = []): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return sequence;
   }
   return {

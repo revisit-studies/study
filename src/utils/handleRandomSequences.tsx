@@ -1,11 +1,13 @@
 // eslint-disable-next-line import/no-unresolved
 import latinSquare from '@quentinroy/latin-square';
 import isEqual from 'lodash.isequal';
-import { ComponentBlock, DynamicBlock, StudyConfig } from '../parser/types';
+import {
+  ComponentBlock, DynamicBlock, FactorBlock, StudyConfig,
+} from '../parser/types';
 import { Sequence } from '../store/types';
 import { isDynamicBlock, isFactorBlock } from '../parser/utils';
 
-function shuffle(array: (string | ComponentBlock | DynamicBlock)[]) {
+function shuffle(array: (string | ComponentBlock | DynamicBlock | FactorBlock)[]) {
   let currentIndex = array.length;
 
   // While there remain elements to shuffle...
@@ -20,10 +22,23 @@ function shuffle(array: (string | ComponentBlock | DynamicBlock)[]) {
   }
 }
 
+export function combineFactors(depth: number, factors: string[][], currentComponent: string, depthToFactorMap: Record<number, string>, currentParams: Record<string, string>): [string, Record<string, string>][] {
+  const newComponents: [string, Record<string, string>][] = factors[depth].map((f) => [`${currentComponent}_${f}`, { ...currentParams, [depthToFactorMap[depth]]: f }]);
+
+  if (factors.length - 1 > depth) {
+    const nextComponents = newComponents.map((c) => combineFactors(depth + 1, factors, c[0], depthToFactorMap, c[1])).flat();
+
+    return nextComponents;
+  }
+
+  return newComponents;
+}
+
 function _componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
   path: string,
+  factors: Record<string, string[]>,
 ): Sequence {
   if (isDynamicBlock(order)) {
     return {
@@ -36,7 +51,17 @@ function _componentBlockToSequence(
   }
 
   if (isFactorBlock(order)) {
-    const newComponents = order.factorsToCross;
+    const depthMap = {};
+    const newComponents = order.factorsToCross.map((c) => factors[c.factor]);
+    const componentsToCross = combineFactors(0, newComponents, '', depthMap, {});
+
+    return {
+      id: order.id,
+      orderPath: path,
+      order: order.order,
+      components: componentsToCross.map((c) => c[0]),
+      skip: [],
+    };
   }
 
   let computedComponents = order.components;
@@ -63,7 +88,7 @@ function _componentBlockToSequence(
     const curr = computedComponents[i];
     if (typeof curr !== 'string' && !Array.isArray(curr)) {
       const index = order.components.findIndex((c) => isEqual(c, curr));
-      computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${index}`) as unknown as ComponentBlock;
+      computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${index}`, factors) as unknown as ComponentBlock;
     }
   }
 
@@ -121,10 +146,11 @@ function _componentBlockToSequence(
 function componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
+  factors: Record<string, string[]>,
 ): Sequence {
   const orderCopy = structuredClone(order);
 
-  return _componentBlockToSequence(orderCopy, latinSquareObject, 'root');
+  return _componentBlockToSequence(orderCopy, latinSquareObject, 'root', factors);
 }
 
 function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], path: string, index: number) {
@@ -133,7 +159,7 @@ function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], pa
     paths.push(newPath);
   }
 
-  if (isDynamicBlock(order)) {
+  if (isDynamicBlock(order) || isFactorBlock(order)) {
     return;
   }
 
@@ -183,7 +209,7 @@ export function generateSequenceArray(config: StudyConfig): Sequence[] {
   const sequenceArray: Sequence[] = [];
   Array.from({ length: numSequences }).forEach(() => {
     // Generate a sequence
-    const sequence = componentBlockToSequence(config.sequence, latinSquareObject);
+    const sequence = componentBlockToSequence(config.sequence, latinSquareObject, config.factors || {});
     sequence.components.push('end');
 
     // Add the sequence to the array

@@ -6,7 +6,9 @@ import {
   GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig,
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
-import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
+import {
+  createFactorComponents, expandFactorSequences, expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage,
+} from './libraryParser';
 import { isDynamicBlock, isFactorBlock, isInheritedComponent } from './utils';
 
 const ajv1 = new Ajv({ allowUnionTypes: true });
@@ -218,6 +220,10 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
 
     // Expand the imported sequences to use the correct component names
     data.sequence = expandLibrarySequences(data.sequence, importedLibrariesData, errors);
+    data.components = { ...data.components, ...createFactorComponents(data) };
+    if (data.factors) {
+      data.sequence = expandFactorSequences(data.sequence, importedLibrariesData, data.factors);
+    }
 
     const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data, importedLibrariesData);
     errors = [...errors, ...parserErrors];
