@@ -7,8 +7,8 @@ export interface ParticipantCounts{
 
 export interface OverviewData {
   participantCounts: ParticipantCounts;
-  startDate: Date | null;
-  endDate: Date | null;
+  startDate: Date;
+  endDate: Date;
   avgTime: number;
   avgCleanTime: number;
   correctness: number;

@@ -3,17 +3,15 @@ import { Text, Paper, Title } from '@mantine/core';
 // eslint-disable-next-line camelcase
 import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from 'mantine-react-table';
 import { ParticipantData } from '../../../storage/types';
-import { StudyConfig } from '../../../parser/types';
-import { getResponseStats } from './utils';
+import { getResponseStats, convertNumberToString } from './utils';
 import { ResponseData } from '../../types';
 
-const extractNumericValue = (value: string, unit: string): number => {
-  if (value === 'N/A') return -1;
-  return parseFloat(value.replace(unit, '')) || 0;
-};
-
-export function ResponseStats({ visibleParticipants, studyConfig }: { visibleParticipants: ParticipantData[]; studyConfig: StudyConfig }) {
-  const tableData: ResponseData[] = useMemo(() => getResponseStats(visibleParticipants, studyConfig), [visibleParticipants, studyConfig]);
+export function ResponseStats({
+  visibleParticipants,
+}: {
+  visibleParticipants: ParticipantData[];
+}) {
+  const responseData: ResponseData[] = useMemo(() => getResponseStats(visibleParticipants), [visibleParticipants]);
 
   // eslint-disable-next-line camelcase
   const columns = useMemo<MRT_ColumnDef<ResponseData>[]>(() => [
@@ -37,31 +35,32 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
       accessorKey: 'correctness',
       header: 'Correctness',
       sortingFn: (rowA, rowB) => {
-        const a = extractNumericValue(rowA.original.correctness.toString(), '%');
-        const b = extractNumericValue(rowB.original.correctness.toString(), '%');
+        const a = rowA.original.correctness;
+        const b = rowB.original.correctness;
         return a - b;
+      },
+      Cell: ({ cell }) => {
+        const value = cell.getValue<number>();
+        return convertNumberToString(value, 'correctness');
       },
     },
   ], []);
 
   const table = useMantineReactTable({
     columns,
-    data: tableData,
+    data: responseData,
     initialState: {
-      sorting: [{ id: 'component', desc: false }],
+      sorting: [{ id: 'component.index', desc: false }],
     },
     mantinePaperProps: {
       style: { overflow: 'hidden' },
-    },
-    mantineTableContainerProps: {
-      style: { overflow: 'auto' },
     },
   });
 
   return (
     <Paper shadow="sm" p="md" withBorder>
       <Title order={4} mb="md">Response Statistics</Title>
-      {(visibleParticipants.length === 0 || tableData.length === 0)
+      {(visibleParticipants.length === 0 || responseData.length === 0)
         ? <Text ta="center" mb="md">No data available</Text>
         : <MantineReactTable table={table} />}
     </Paper>

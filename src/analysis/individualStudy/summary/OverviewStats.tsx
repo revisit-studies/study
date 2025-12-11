@@ -2,7 +2,7 @@ import {
   Flex, Paper, Text, Title,
 } from '@mantine/core';
 import { useMemo } from 'react';
-import { getOverviewStats } from './utils';
+import { getOverviewStats, convertNumberToString } from './utils';
 import { ParticipantData } from '../../../storage/types';
 
 export function OverviewStats({
@@ -21,47 +21,35 @@ export function OverviewStats({
           <Text size="sm" c="dimmed">Total Participants</Text>
         </Flex>
         <Flex direction="column">
-          <Flex align="center" gap="xs">
-            <Text size="xl" fw="bold" c="green">{overviewData.participantCounts.completed}</Text>
-          </Flex>
+          <Text size="xl" fw="bold" c="green">{overviewData.participantCounts.completed}</Text>
           <Text size="sm" c="dimmed">Completed</Text>
         </Flex>
         <Flex direction="column">
-          <Flex align="center" gap="xs">
-            <Text size="xl" fw="bold" c="yellow">{overviewData.participantCounts.inProgress}</Text>
-          </Flex>
+          <Text size="xl" fw="bold" c="yellow">{overviewData.participantCounts.inProgress}</Text>
           <Text size="sm" c="dimmed">In Progress</Text>
         </Flex>
         <Flex direction="column">
-          <Flex align="center" gap="xs">
-            <Text size="xl" fw="bold" c="red">{overviewData.participantCounts.rejected}</Text>
-          </Flex>
+          <Text size="xl" fw="bold" c="red">{overviewData.participantCounts.rejected}</Text>
           <Text size="sm" c="dimmed">Rejected</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold">{overviewData.startDate?.toLocaleDateString() || 'N/A'}</Text>
+          <Text size="xl" fw="bold">{convertNumberToString(overviewData.startDate.getTime(), 'date')}</Text>
           <Text size="sm" c="dimmed">Start Date</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold">{overviewData.endDate?.toLocaleDateString() || 'N/A'}</Text>
+          <Text size="xl" fw="bold">{convertNumberToString(overviewData.endDate.getTime(), 'date')}</Text>
           <Text size="sm" c="dimmed">End Date</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold">
-            {Number.isFinite(overviewData.avgTime) ? `${(overviewData.avgTime).toFixed(1)} s` : 'N/A'}
-          </Text>
+          <Text size="xl" fw="bold">{convertNumberToString(overviewData.avgTime, 'time')}</Text>
           <Text size="sm" c="dimmed">Average Time</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold">
-            {Number.isFinite(overviewData.avgCleanTime) ? `${(overviewData.avgCleanTime).toFixed(1)} s` : 'N/A'}
-          </Text>
+          <Text size="xl" fw="bold">{convertNumberToString(overviewData.avgCleanTime, 'time')}</Text>
           <Text size="sm" c="dimmed">Average Clean Time</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold">
-            {Number.isFinite(overviewData.correctness) ? `${overviewData.correctness.toFixed(1)}%` : 'N/A'}
-          </Text>
+          <Text size="xl" fw="bold">{convertNumberToString(overviewData.correctness, 'correctness')}</Text>
           <Text size="sm" c="dimmed">Correctness</Text>
         </Flex>
       </Flex>

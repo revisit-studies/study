@@ -1,14 +1,17 @@
 import { useMemo } from 'react';
 import { Text, Paper, Title } from '@mantine/core';
-import { IconSearch } from '@tabler/icons-react';
 // eslint-disable-next-line camelcase
 import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from 'mantine-react-table';
 import { ParticipantData } from '../../../storage/types';
-import { getComponentStats } from './utils';
+import { getComponentStats, convertNumberToString } from './utils';
 import { ComponentData } from '../../types';
 
-export function ComponentStats({ visibleParticipants }: { visibleParticipants: ParticipantData[] }) {
-  const tableData: ComponentData[] = useMemo(() => getComponentStats(visibleParticipants), [visibleParticipants]);
+export function ComponentStats({
+  visibleParticipants,
+}: {
+  visibleParticipants: ParticipantData[];
+}) {
+  const componentData: ComponentData[] = useMemo(() => getComponentStats(visibleParticipants), [visibleParticipants]);
 
   // eslint-disable-next-line camelcase
   const columns = useMemo<MRT_ColumnDef<ComponentData>[]>(
@@ -31,7 +34,7 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
         },
         Cell: ({ cell }) => {
           const value = cell.getValue<number>();
-          return Number.isFinite(value) ? `${value.toFixed(1)}s` : 'N/A';
+          return convertNumberToString(value, 'time');
         },
       },
       {
@@ -44,7 +47,7 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
         },
         Cell: ({ cell }) => {
           const value = cell.getValue<number>();
-          return Number.isFinite(value) ? `${value.toFixed(1)}s` : 'N/A';
+          return convertNumberToString(value, 'time');
         },
       },
       {
@@ -57,7 +60,7 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
         },
         Cell: ({ cell }) => {
           const value = cell.getValue<number>();
-          return !Number.isNaN(value) ? `${value.toFixed(1)}%` : 'N/A';
+          return convertNumberToString(value, 'correctness');
         },
       },
     ],
@@ -66,30 +69,19 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
 
   const table = useMantineReactTable({
     columns,
-    data: tableData,
-    enableGlobalFilter: true,
-    enableColumnFilters: false,
-    enableSorting: true,
-    enablePagination: true,
+    data: componentData,
     initialState: {
-      pagination: { pageSize: 10, pageIndex: 0 },
-    },
-    mantineSearchTextInputProps: {
-      placeholder: 'Search components...',
-      leftSection: <IconSearch size={16} />,
+      sorting: [{ id: 'component.index', desc: false }],
     },
     mantinePaperProps: {
       style: { overflow: 'hidden' },
-    },
-    mantineTableContainerProps: {
-      style: { overflow: 'auto' },
     },
   });
 
   return (
     <Paper shadow="sm" p="md" withBorder>
       <Title order={4} mb="md">Component Statistics</Title>
-      {(visibleParticipants.length === 0 || tableData.length === 0)
+      {(visibleParticipants.length === 0 || componentData.length === 0)
         ? <Text ta="center" mb="md">No data available</Text>
         : <MantineReactTable table={table} />}
     </Paper>
