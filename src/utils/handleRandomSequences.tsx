@@ -3,6 +3,7 @@ import isEqual from 'lodash.isequal';
 import {
   ComponentBlock,
   DynamicBlock,
+  FactorBlock,
   RandomInterruption,
   StudyConfig,
 } from '../parser/types';
@@ -24,10 +25,11 @@ function shuffle<T>(array: T[]) {
   }
 }
 
-type UniqueComponentEntry = { component: ComponentBlock | DynamicBlock; indices: number[] };
+type SequenceBlock = ComponentBlock | DynamicBlock | FactorBlock;
+type UniqueComponentEntry = { component: SequenceBlock; indices: number[] };
 
 function findMatchingUnique(
-  component: ComponentBlock | DynamicBlock,
+  component: SequenceBlock,
   uniqueComponents: UniqueComponentEntry[],
 ): UniqueComponentEntry | null {
   for (const unique of uniqueComponents) {
@@ -39,7 +41,7 @@ function findMatchingUnique(
 }
 
 function findUniqueComponents(
-  components: (string | ComponentBlock | DynamicBlock)[],
+  components: (string | SequenceBlock)[],
   includeDynamicBlocks = true,
 ): UniqueComponentEntry[] {
   const uniqueComponents: UniqueComponentEntry[] = [];
@@ -119,12 +121,24 @@ function insertRandomInterruptions(
     }
   });
 
-  const newComponents: (string | ComponentBlock | DynamicBlock)[] = [];
+  const newComponents: (string | SequenceBlock)[] = [];
   for (let i = 0; i < components.length; i += 1) {
     interruptionsByLocation.get(i)?.forEach((interruptionComponents) => {
       newComponents.push(...interruptionComponents);
     });
     newComponents.push(components[i]);
+  }
+
+  return newComponents;
+}
+
+export function combineFactors(depth: number, factors: string[][], currentComponent: string, depthToFactorMap: Record<number, string>, currentParams: Record<string, string>): [string, Record<string, string>][] {
+  const newComponents: [string, Record<string, string>][] = factors[depth].map((f) => [`${currentComponent}_${f}`, { ...currentParams, [depthToFactorMap[depth]]: f }]);
+
+  if (factors.length - 1 > depth) {
+    const nextComponents = newComponents.map((c) => combineFactors(depth + 1, factors, c[0], depthToFactorMap, c[1])).flat();
+
+    return nextComponents;
   }
 
   return newComponents;
@@ -149,7 +163,17 @@ function _componentBlockToSequence(
   }
 
   if (isFactorBlock(order)) {
-    const newComponents = order.factorsToCross;
+    const depthMap = {};
+    const newComponents = order.factorsToCross.map((c) => (config.factors || {})[c.factor]);
+    const componentsToCross = combineFactors(0, newComponents, '', depthMap, {});
+
+    return {
+      id: order.id,
+      orderPath: path,
+      order: order.order,
+      components: componentsToCross.map((c) => c[0]),
+      skip: [],
+    };
   }
 
   let computedComponents = order.components;
@@ -186,7 +210,7 @@ function _componentBlockToSequence(
   const uniqueComponents = findUniqueComponents(order.components);
 
   // Track how many times we've seen each unique component
-  const seenCounts = new Map<ComponentBlock | DynamicBlock, number>();
+  const seenCounts = new Map<SequenceBlock, number>();
 
   for (let i = 0; i < computedComponents.length; i += 1) {
     const curr = computedComponents[i];
@@ -265,7 +289,7 @@ function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], pa
     paths.push(newPath);
   }
 
-  if (isDynamicBlock(order)) {
+  if (isDynamicBlock(order) || isFactorBlock(order)) {
     return;
   }
 
@@ -294,7 +318,7 @@ function _countPathUsage(
   pathCounts: Record<string, number>,
   path: string,
 ): void {
-  if (isDynamicBlock(order)) {
+  if (isDynamicBlock(order) || isFactorBlock(order)) {
     return;
   }
 

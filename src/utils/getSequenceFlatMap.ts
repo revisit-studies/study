@@ -1,13 +1,17 @@
-import { DynamicBlock, StudyConfig } from '../parser/types';
-import { isDynamicBlock } from '../parser/utils';
+import { DynamicBlock, FactorBlock, StudyConfig } from '../parser/types';
+import { isDynamicBlock, isFactorBlock } from '../parser/utils';
 import { Sequence } from '../store/types';
 
 export function getSequenceFlatMap<T extends Sequence | StudyConfig['sequence']>(sequence: T): string[] {
-  return isDynamicBlock(sequence) ? [sequence.id] : sequence.components.flatMap((component) => (typeof component === 'string' ? component : getSequenceFlatMap(component)));
+  return isDynamicBlock(sequence) || isFactorBlock(sequence) ? [sequence.id] : sequence.components.flatMap((component) => (typeof component === 'string' ? component : getSequenceFlatMap(component)));
 }
 
 function findAllFuncBlocks(sequence: StudyConfig['sequence']): DynamicBlock[] {
-  return isDynamicBlock(sequence) ? [sequence] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
+  return isDynamicBlock(sequence) ? [sequence] : isFactorBlock(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
+}
+
+export function findAllFactorBlocks(sequence: StudyConfig['sequence']): FactorBlock[] {
+  return isFactorBlock(sequence) ? [sequence] : isDynamicBlock(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFactorBlocks(component)));
 }
 
 export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): (DynamicBlock | undefined) {
@@ -16,12 +20,12 @@ export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): 
 }
 
 export function getSequenceFlatMapWithInterruptions(sequence: StudyConfig['sequence']): string[] {
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return [];
   }
 
   return [
-    ...sequence.components.flatMap((component) => (typeof component === 'string' ? component : (isDynamicBlock(component) ? [] : getSequenceFlatMapWithInterruptions(component)))),
+    ...sequence.components.flatMap((component) => (typeof component === 'string' ? component : (isDynamicBlock(component) || isFactorBlock(component) ? [] : getSequenceFlatMapWithInterruptions(component)))),
     ...sequence.interruptions?.flatMap((interruption) => interruption.components) || [],
   ];
 }
@@ -102,6 +106,11 @@ export function addPathToComponentBlock(order: StudyConfig['sequence'] | Sequenc
   if (isDynamicBlock(order)) {
     return {
       ...order, orderPath, components: [], skip: [], interruptions: [],
+    };
+  }
+  if (isFactorBlock(order)) {
+    return {
+      id: order.id, orderPath, order: order.order, components: [], skip: [], interruptions: [],
     };
   }
   return {

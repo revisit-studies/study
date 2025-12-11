@@ -1791,7 +1791,10 @@ export interface ComponentBlock {
 }
 
 export interface FactorBlock {
+  type: 'factors',
   factorsToCross: FactorObj[];
+  id: string;
+  order: 'random' | 'latinSquare' | 'fixed';
   component: string;
   parameters: Record<string, unknown>
 }

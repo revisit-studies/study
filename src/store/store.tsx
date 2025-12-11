@@ -55,6 +55,7 @@ export async function studyStoreCreator(
   initialAlertModal?: AlertModalState,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
+  console.log(flatSequence, config, flatSequence);
 
   const emptyAnswers: ParticipantData['answers'] = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
     .map((id, idx) => {
