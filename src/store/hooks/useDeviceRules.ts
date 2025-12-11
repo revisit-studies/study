@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  BrowserRules, StudyRules,
-} from '../../parser/types';
+import { StudyRules } from '../../parser/types';
 
 function detectBrowser() {
   const ua = navigator.userAgent.toLowerCase();
@@ -29,15 +27,13 @@ function detectDeviceType() {
   const ua = navigator.userAgent.toLowerCase();
 
   // Detect iPadOS 13+ (spoofs desktop Safari)
-  const isModernIpad =
-    navigator.platform === 'MacIntel' &&
-    navigator.maxTouchPoints > 1;
+  const isModernIpad = navigator.platform === 'MacIntel'
+    && navigator.maxTouchPoints > 1;
 
   const isMobile = /iphone|ipod|android.*mobile|windows phone|blackberry|opera mini/.test(ua);
-  const isTablet =
-    /ipad|tablet/.test(ua) ||
-    (/android/.test(ua) && !/mobile/.test(ua)) ||
-    isModernIpad;
+  const isTablet = /ipad|tablet/.test(ua)
+    || (/android/.test(ua) && !/mobile/.test(ua))
+    || isModernIpad;
 
   if (isMobile) return 'mobile';
   if (isTablet) return 'tablet';
