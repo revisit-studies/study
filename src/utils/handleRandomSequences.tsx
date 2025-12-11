@@ -32,6 +32,7 @@ function _componentBlockToSequence(
       order: order.order,
       components: [],
       skip: [],
+      interruptions: [],
     };
   }
 
@@ -110,7 +111,8 @@ function _componentBlockToSequence(
     orderPath: path,
     order: order.order,
     components: computedComponents.flat() as Sequence['components'],
-    skip: order.skip,
+    skip: order.skip || [],
+    interruptions: order.interruptions || [],
   };
 }
 

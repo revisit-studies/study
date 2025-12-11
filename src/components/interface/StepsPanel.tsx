@@ -1,101 +1,30 @@
 import {
-  Badge, Box, NavLink, HoverCard, Text, Tooltip, Code, Flex, Button,
+  useCallback, useEffect, useMemo, useState,
+} from 'react';
+import {
+  Badge,
+  Box,
+  Code,
+  Flex,
+  HoverCard,
+  NavLink,
+  Text,
+  Tooltip,
+  Button,
 } from '@mantine/core';
-import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
-  IconArrowsShuffle, IconBrain, IconCheck, IconPackageImport, IconX, IconDice3, IconDice5, IconInfoCircle,
+  IconArrowsShuffle, IconBrain, IconCheck, IconChevronUp, IconDice3, IconDice5, IconInfoCircle,
+  IconPackageImport,
+  IconX,
 } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
-import {
-  ComponentBlock, DynamicBlock, ParticipantData, StudyConfig, Response,
-} from '../../parser/types';
+import { useNavigate } from 'react-router';
+import { ParticipantData, Response, StudyConfig } from '../../parser/types';
 import { Sequence, StoredAnswer } from '../../store/types';
-import { useCurrentStep, useStudyId } from '../../routes/utils';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
-import { useFlatSequence, useStoreSelector } from '../../store/store';
-import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
+import { useStudyId } from '../../routes/utils';
+import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { isDynamicBlock } from '../../parser/utils';
 import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
-
-export type ComponentBlockWithOrderPath =
-  Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] }
-  | (DynamicBlock & { orderPath: string; interruptions?: { components: string[] }[]; components: (ComponentBlockWithOrderPath | string)[]; });
-
-function findTaskIndexInSequence(sequence: Sequence, step: string, startIndex: number, requestedPath: string): number {
-  let index = 0;
-
-  // Loop through the sequence components and find the index of the task if it's in this block
-  for (let i = 0; i < sequence.components.length; i += 1) {
-    const component = sequence.components[i];
-    if (typeof component === 'string') {
-      if (requestedPath === sequence.orderPath && component === step && i >= startIndex) {
-        break;
-      }
-      index += 1;
-    } else {
-      if (component.order === 'dynamic') {
-        index += 1;
-      } else {
-        // See if the task is in the nested sequence
-        index += findTaskIndexInSequence(component, step, startIndex, requestedPath);
-      }
-
-      // If the task is in the nested sequence, break the loop. We need includes, because we need to break the loop if the task is in the nested sequence
-      if (requestedPath.includes(component.orderPath)) {
-        break;
-      }
-    }
-  }
-
-  return index;
-}
-
-function countInterruptionsRecursively(configSequence: ComponentBlockWithOrderPath, participantSequence: Sequence) {
-  let count = 0;
-
-  // Loop through the participant sequence and count the interruptions that are defined in the configSequence
-  participantSequence.components.forEach((component) => {
-    if (typeof component === 'string' && configSequence.interruptions?.flatMap((i) => i.components).includes(component)) {
-      count += 1;
-    } else if (typeof component !== 'string') {
-      // If the component is a sequence, find the corresponding sequence in the configSequence and count the interruptions
-      const configSubSequence = configSequence.components.find((c) => typeof c !== 'string' && c.orderPath === component.orderPath) as ComponentBlockWithOrderPath;
-      count += countInterruptionsRecursively(configSubSequence, component);
-    }
-  });
-
-  return count;
-}
-
-function reorderComponents(configSequence: ComponentBlockWithOrderPath['components'], participantSequence: Sequence['components']) {
-  const newComponents: (string | ComponentBlockWithOrderPath)[] = [];
-
-  // Iterate through the sequence components and reorder the orderComponents
-  participantSequence.forEach((sequenceComponent) => {
-    // Find the index of the sequenceComponent in the configSequence
-    const configSequenceIndex = configSequence.findIndex((c) => {
-      if (typeof c === 'string') {
-        return c === sequenceComponent;
-      }
-      return typeof sequenceComponent !== 'string' && c.orderPath === sequenceComponent.orderPath;
-    });
-
-    if (configSequenceIndex !== -1) {
-      newComponents.push(configSequence[configSequenceIndex]);
-      configSequence.splice(configSequenceIndex, 1);
-    }
-
-    if (configSequenceIndex === -1 && typeof sequenceComponent === 'string') {
-      newComponents.push(sequenceComponent);
-    }
-  });
-
-  if (configSequence) {
-    newComponents.push(...configSequence);
-  }
-
-  return newComponents;
-}
 
 function hasRandomization(responses: Response[]) {
   return responses.some((response) => {
@@ -109,143 +38,379 @@ function hasRandomization(responses: Response[]) {
   });
 }
 
-function StepItem({
-  step,
-  disabled,
-  fullSequence,
-  startIndex,
-  interruption,
-  participantView,
+function findMatchingComponentInFullOrder(
+  sequence: Sequence,
+  fullOrder: Sequence,
+): Sequence | null {
+  let studySequence: Sequence | null = null;
+
+  const findMatchingSequence = (node: string | Sequence) => {
+    if (typeof node === 'string') {
+      return;
+    }
+    if (node.id === sequence.id) {
+      studySequence = node;
+      return;
+    }
+    node.components.forEach((child) => {
+      if (studySequence === null) {
+        findMatchingSequence(child);
+      }
+    });
+  };
+
+  findMatchingSequence(fullOrder);
+  return studySequence;
+}
+
+function countComponentsInSequence(sequence: Sequence, participantAnswers: ParticipantData['answers']) {
+  let count = 0;
+
+  // TODO: Handle dynamic blocks properly
+  if (isDynamicBlock(sequence)) {
+    return Object.entries(participantAnswers).filter(([key, _]) => key.startsWith(`${sequence.id}_`)).length;
+  }
+
+  sequence.components.forEach((component) => {
+    if (typeof component === 'string') {
+      count += 1;
+    } else {
+      count += countComponentsInSequence(component, participantAnswers);
+    }
+  });
+
+  return count;
+}
+
+type StepItem = {
+  label: string;
+  indentLevel: number;
+
+  // Component Attributes
+  href?: string;
+  isInterruption?: boolean;
+  isLibraryImport?: boolean;
+  component?: StudyConfig['components'][string];
+  componentAnswer?: StoredAnswer;
+
+  // Block Attributes
+  order?: Sequence['order'];
+  numInterruptions?: number;
+  numComponentsInSequence?: number;
+  numComponentsInStudySequence?: number;
+};
+
+export function StepsPanel({
+  participantSequence,
+  participantAnswers,
   studyConfig,
-  subSequence,
-  analysisNavigation,
-  parentBlock,
-  parentActive,
-  answers,
 }: {
-  step: string;
-  disabled: boolean;
-  fullSequence: Sequence;
-  startIndex: number;
-  interruption: boolean;
-  participantView: boolean;
+  participantSequence?: Sequence;
+  participantAnswers: ParticipantData['answers'];
   studyConfig: StudyConfig;
-  subSequence?: Sequence;
-  analysisNavigation?: boolean;
-  parentBlock: Sequence;
-  parentActive: boolean;
-  answers: ParticipantData['answers'];
 }) {
+  const INITIAL_CLAMP = 6;
+  // Per-row clamp state, keyed by idx
+  const [correctAnswerClampMap, setCorrectAnswerClampMap] = useState<Record<string, number | undefined>>({});
+  const [responseClampMap, setResponseClampMap] = useState<Record<string, number | undefined>>({});
+  const [fullFlatTree, setFullFlatTree] = useState<StepItem[]>([]);
+  const [renderedFlatTree, setRenderedFlatTree] = useState<StepItem[]>([]);
+
   const studyId = useStudyId();
   const navigate = useNavigate();
-  const currentStep = useCurrentStep();
 
-  const task = studyConfig.components[step] && studyComponentToIndividualComponent(studyConfig.components[step], studyConfig);
+  const fullOrder = useMemo(() => {
+    let r = structuredClone(studyConfig.sequence) as Sequence;
+    r = addPathToComponentBlock(r, 'root') as Sequence;
+    r.components.push('end');
+    return r;
+  }, [studyConfig.sequence]);
 
-  const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
+  useEffect(() => {
+    let newFlatTree: StepItem[] = [];
+    if (participantSequence === undefined) {
+      // Browse Components
+      newFlatTree = Object.keys(studyConfig.components).map((key) => {
+        const coOrComponents = key.includes('.co.')
+          ? '.co.'
+          : (key.includes('.components.') ? '.components.' : false);
 
-  const { trialId, funcIndex, analysisTab } = useParams();
-  const [searchParams] = useSearchParams();
-  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const flatSequence = analysisTab ? [] : useFlatSequence();
+        return {
+          label: coOrComponents ? key.split(coOrComponents).at(-1)! : key,
+          indentLevel: 0,
+          href: `/${studyId}/reviewer-${key}`,
+          isLibraryImport: coOrComponents !== false,
+        };
+      });
+    } else {
+      // Participant view
 
-  const analysisActive = trialId === step;
-  const dynamicActive = parentActive && parentBlock && funcIndex ? startIndex === decryptIndex(funcIndex) : false;
-  const studyActive = participantView ? (currentStep === stepIndex || dynamicActive) : currentStep === `reviewer-${step}`;
-  const active = analysisNavigation ? analysisActive : studyActive;
+      // Indices to keep track of component positions, used for navigation hrefs
+      let idx = 0;
+      let dynamicIdx = 0;
 
-  const analysisNavigateTo = trialId ? `./../${step}` : `./${step}`;
-  const dynamicNavigateTo = parentBlock.order === 'dynamic' ? `/${studyId}/${encryptIndex(flatSequence.indexOf(parentBlock.id!))}/${encryptIndex(startIndex)}` : '';
-  const studyNavigateTo = participantView ? (parentBlock.order === 'dynamic' ? dynamicNavigateTo : `/${studyId}/${encryptIndex(stepIndex)}`) : `/${studyId}/reviewer-${step}`;
-  const navigateTo = analysisNavigation ? () => navigate(analysisNavigateTo) : () => navigate(`${studyNavigateTo}${participantId ? `?participantId=${participantId}` : ''}`);
+      const traverse = (node: string | Sequence, indentLevel: number, parentNode: Sequence, dynamic = false) => {
+        if (typeof node === 'string') {
+          // Check to see if the component is from imported library
+          const coOrComponents = node.includes('.co.')
+            ? '.co.'
+            : (node.includes('.components.') ? '.components.' : false);
 
-  const coOrComponents = step.includes('.co.')
-    ? '.co.'
-    : (step.includes('.components.') ? '.components.' : false);
-  const cleanedStep = step.includes('$') && coOrComponents && step.includes(coOrComponents) ? step.split(coOrComponents).at(-1) : step;
+          // Generate component identifier for participantAnswers lookup
+          const componentIdentifier = dynamic ? `${parentNode.id}_${idx}_${node}_${dynamicIdx}` : `${node}_${idx}`;
 
-  const matchingAnswer = parentBlock.order === 'dynamic' ? Object.entries(answers).find(([key, _]) => key === `${parentBlock.id}_${flatSequence.indexOf(parentBlock.id!)}_${cleanedStep}_${startIndex}`) : Object.entries(answers).find(([key, _]) => key === `${cleanedStep}_${stepIndex}` || key === `${step}_${stepIndex}`);
-  const taskAnswer: StoredAnswer | null = matchingAnswer ? matchingAnswer[1] : null;
+          newFlatTree.push({
+            label: coOrComponents ? node.split(coOrComponents).at(-1)! : node,
+            indentLevel,
+            isLibraryImport: coOrComponents !== false,
 
-  const correctAnswer = taskAnswer && taskAnswer.correctAnswer.length > 0 && Object.keys(taskAnswer.answer).length > 0 && taskAnswer.correctAnswer;
-  const correct = correctAnswer && taskAnswer && componentAnswersAreCorrect(taskAnswer.answer, correctAnswer);
+            // Component Attributes
+            href: dynamic ? `/${studyId}/${encryptIndex(idx)}/${encryptIndex(dynamicIdx)}` : `/${studyId}/${encryptIndex(idx)}`,
+            isInterruption: (parentNode.interruptions || []).flatMap((intr) => intr.components).includes(node),
+            component: studyConfig.components[node],
+            componentAnswer: participantAnswers[componentIdentifier],
+          });
 
-  const correctIncorrectIcon = taskAnswer && correctAnswer ? (
-    correct
-      ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
-      : <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="red" />
-  ) : null;
+          if (dynamic) {
+            dynamicIdx += 1;
+          } else {
+            idx += 1;
+          }
 
-  const INITIAL_CLAMP = 6;
-  const responseJSONText = task && JSON.stringify(task.response, null, 2);
-  const [responseClamp, setResponseClamp] = useState<number | undefined>(INITIAL_CLAMP);
+          // Return, this is the recursive base case
+          return;
+        }
 
-  const correctAnswerJSONText = taskAnswer && taskAnswer.correctAnswer.length > 0
-    ? JSON.stringify(taskAnswer.correctAnswer, null, 2)
-    : task && task.correctAnswer
-      ? JSON.stringify(task.correctAnswer, null, 2)
+        const blockInterruptions = (node.interruptions || []).flatMap((intr) => intr.components);
+        const matchingStudySequence = findMatchingComponentInFullOrder(node, fullOrder);
+
+        // Push the block itself
+        newFlatTree.push({
+          label: node.id ?? node.order,
+          indentLevel,
+
+          // Block Attributes
+          order: node.order,
+          numInterruptions: node.components.filter((comp) => typeof comp === 'string' && blockInterruptions.includes(comp)).length,
+          numComponentsInSequence: countComponentsInSequence(node, participantAnswers),
+          numComponentsInStudySequence: countComponentsInSequence(matchingStudySequence || node, participantAnswers)!,
+        });
+
+        // Reset dynamicIdx when entering a new dynamic block
+        if (node.order === 'dynamic') {
+          dynamicIdx = 0;
+        }
+
+        // Loop through components, including any dynamic components added via participantAnswers
+        const dynamicComponents = Object.entries(participantAnswers).filter(([key, _]) => key.startsWith(`${node.id}_${idx}`)).map(([_, value]) => value.componentName);
+        const blockComponents = [...node.components, ...dynamicComponents];
+        if (blockComponents.length > 0) {
+          blockComponents.forEach((child) => {
+            traverse(child, indentLevel + 1, node, node.order === 'dynamic');
+          });
+        }
+      };
+
+      traverse(participantSequence, 0, participantSequence);
+    }
+
+    // Map over tree and set correctAnswerClampMap and responseClampMap
+    const clampMap = Object.fromEntries(newFlatTree.map((item) => {
+      if (item.component) {
+        return [item.href!, INITIAL_CLAMP];
+      }
+      return null;
+    }).filter((item): item is [string, number] => item !== null));
+    setCorrectAnswerClampMap(structuredClone(clampMap));
+    setResponseClampMap(structuredClone(clampMap));
+
+    // Set full and rendered flat tree
+    setFullFlatTree(newFlatTree);
+    setRenderedFlatTree(newFlatTree);
+  }, [fullOrder, participantAnswers, participantSequence, studyConfig.components, studyId]);
+
+  const collapseBlock = useCallback((startIndex: number, startItem: StepItem) => {
+    const startIndentLevel = startItem.indentLevel;
+
+    // Find the index of the next block at the same or less indent level so we can remove the sub-items
+    let endIndex = renderedFlatTree.findIndex((item, idx) => idx > startIndex && item.indentLevel <= startIndentLevel);
+
+    // If no next block, collapse to the end of the list
+    if (endIndex === -1) {
+      endIndex = renderedFlatTree.length;
+    }
+
+    // Create new array without the items between startIndex and endIndex
+    const newFlatTree = [
+      ...renderedFlatTree.slice(0, startIndex + 1),
+      ...renderedFlatTree.slice(endIndex),
+    ];
+    setRenderedFlatTree(newFlatTree);
+  }, [renderedFlatTree]);
+
+  const expandBlock = useCallback((startIndex: number, startItem: StepItem) => {
+    const startIndentLevel = startItem.indentLevel;
+
+    const fullFlatStartIndex = fullFlatTree.findIndex((item) => item === startItem);
+
+    // Find all items in fullFlatTree that are children of the block being expanded
+    const itemsToInsert: StepItem[] = [];
+    for (let i = fullFlatStartIndex + 1; i < fullFlatTree.length; i += 1) {
+      const item = fullFlatTree[i];
+      if (item.indentLevel <= startIndentLevel) {
+        break;
+      }
+      itemsToInsert.push(item);
+    }
+
+    // Create new array with the items inserted after startIndex
+    const newFlatTree = [
+      ...renderedFlatTree.slice(0, startIndex + 1),
+      ...itemsToInsert,
+      ...renderedFlatTree.slice(startIndex + 1),
+    ];
+    setRenderedFlatTree(newFlatTree);
+  }, [fullFlatTree, renderedFlatTree]);
+
+  return renderedFlatTree.length > 0 && renderedFlatTree.map(({
+    label,
+    indentLevel,
+    isLibraryImport,
+
+    // Component Attributes
+    href,
+    isInterruption,
+    component,
+    componentAnswer,
+
+    // Block Attributes
+    order,
+    numInterruptions,
+    numComponentsInSequence,
+    numComponentsInStudySequence,
+  }, idx) => {
+    const isComponent = order === undefined;
+
+    // Determine correct answer from componentAnswer or component
+    const correctAnswer = componentAnswer?.correctAnswer?.length
+      ? componentAnswer.correctAnswer
+      : component?.correctAnswer;
+
+    // Check if the answer is correct
+    const correct = correctAnswer
+      && componentAnswer
+      && Object.keys(componentAnswer.answer).length > 0
+      && componentAnswersAreCorrect(componentAnswer.answer, correctAnswer);
+
+    // Icon for correct/incorrect answer
+    const correctIncorrectIcon = correctAnswer && componentAnswer && componentAnswer?.endTime > -1
+      ? (correct
+        ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
+        : <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="red" />
+      )
+      : null;
+
+    // JSON text for correct answer
+    const correctAnswerJSONText = correctAnswer
+      ? JSON.stringify(correctAnswer, null, 2)
       : undefined;
-  const [correctAnswerClamp, setCorrectAnswerClamp] = useState<number | undefined>(INITIAL_CLAMP);
 
-  return (
-    <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0} closeDelay={0}>
-      <NavLink
-        active={active}
-        style={{
-          lineHeight: '32px',
-          height: '32px',
-        }}
-        label={(
-          <Flex align="center">
-            {interruption && (
-            <Tooltip label="Interruption" position="right" withArrow>
-              <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="orange" />
-            </Tooltip>
-            )}
-            {step !== cleanedStep && (
-            <Tooltip label="Package import" position="right" withArrow>
-              <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
-            </Tooltip>
-            )}
-            {task?.responseOrder === 'random' && (
-            <Tooltip label="Random responses" position="right" withArrow>
-              <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
-            </Tooltip>
-            )}
-            {(task?.response && hasRandomization(task.response)) && (
-            <Tooltip label="Random options" position="right" withArrow>
-              <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
-            </Tooltip>
-            )}
-            {correctIncorrectIcon}
-            <Text
-              size="sm"
-              span={active}
-              fw={active ? '700' : undefined}
-              display="inline"
-              title={cleanedStep}
-              style={{
-                textWrap: 'nowrap',
-                flexGrow: 1,
-                width: 0,
-                textOverflow: 'ellipsis',
-                overflow: 'hidden',
-              }}
-            >
-              {cleanedStep}
-            </Text>
-            {cleanedStep !== 'end' && (
+    const responseJSONText = component && JSON.stringify(component.response, null, 2);
+
+    const parameters = componentAnswer && 'parameters' in componentAnswer
+      ? componentAnswer.parameters
+      : component && 'parameters' in component
+        ? component.parameters
+        : undefined;
+
+    const blockIsCollapsed = !isComponent && (
+      renderedFlatTree[idx + 1]?.indentLevel === undefined
+      || renderedFlatTree[idx + 1]?.indentLevel <= indentLevel
+    );
+
+    return (
+      <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0} closeDelay={0} key={`${indentLevel}-${idx}`}>
+        <NavLink
+          h={32}
+          pl={indentLevel * 24 + 12}
+          onClick={() => {
+            if (isComponent && href) {
+              navigate(href);
+            } else if (blockIsCollapsed) {
+              expandBlock(idx, renderedFlatTree[idx]);
+            } else {
+              collapseBlock(idx, renderedFlatTree[idx]);
+            }
+          }}
+          active={window.location.pathname === href}
+          rightSection={
+            isComponent
+              ? undefined
+              : <IconChevronUp size={16} stroke={1.5} style={{ cursor: 'pointer', transform: blockIsCollapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+          }
+          label={(
+            <Flex align="center">
+              {isInterruption && (
+              <Tooltip label="Interruption" position="right" withArrow>
+                <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="orange" />
+              </Tooltip>
+              )}
+              {isLibraryImport && (
+              <Tooltip label="Package import" position="right" withArrow>
+                <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
+              </Tooltip>
+              )}
+              {component?.responseOrder === 'random' && (
+              <Tooltip label="Random responses" position="right" withArrow>
+                <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
+              </Tooltip>
+              )}
+              {(component?.response && hasRandomization(component.response)) && (
+              <Tooltip label="Random options" position="right" withArrow>
+                <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
+              </Tooltip>
+              )}
+              {correctIncorrectIcon}
+              <Text
+                size="sm"
+                title={label}
+                fw={!isComponent ? 700 : undefined}
+                style={{
+                  textWrap: 'nowrap',
+                  flexGrow: 1,
+                  width: 0,
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden',
+                }}
+              >
+                {label}
+              </Text>
+              {isComponent && label !== 'end' && (
               <HoverCard.Target>
                 <IconInfoCircle size={16} style={{ marginLeft: '5px', verticalAlign: 'middle' }} opacity={0.5} />
               </HoverCard.Target>
-            )}
-          </Flex>
+              )}
+              {order === 'random' || order === 'latinSquare' ? (
+                <Tooltip label={order} position="right" withArrow>
+                  <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
+                </Tooltip>
+              ) : null}
+              {!isComponent && (
+                <Badge ml={5} variant="light">
+                  {numComponentsInSequence}
+                  /
+                  {numComponentsInStudySequence}
+                </Badge>
+              )}
+              {numInterruptions !== undefined && numInterruptions > 0 && (
+              <Badge ml={5} color="orange" variant="light">
+                {numInterruptions}
+              </Badge>
+              )}
+            </Flex>
           )}
-        onClick={navigateTo}
-        disabled={disabled && parentBlock.order !== 'dynamic'}
-      />
-      {task && (
+        />
+        {isComponent && (
         <HoverCard.Dropdown>
           <Box mah={700} maw={500} style={{ overflow: 'auto' }}>
             <Box>
@@ -254,236 +419,107 @@ function StepItem({
               </Text>
               {' '}
               <Text fw={400} component="span">
-                {cleanedStep}
+                {label}
               </Text>
             </Box>
-            {task.description && (
+            {component && component.description && (
             <Box>
               <Text fw={900} display="inline-block" mr={2}>
                 Description:
               </Text>
               {' '}
               <Text fw={400} component="span">
-                {task.description}
+                {component.description}
               </Text>
             </Box>
             )}
-            {('parameters' in task || taskAnswer) && (
-              <Box>
-                <Text fw={900} display="inline-block" mr={2}>
-                  Parameters:
-                </Text>
-                {' '}
-                <Code block>{taskAnswer && JSON.stringify(Object.keys(taskAnswer).length > 0 ? taskAnswer.parameters : ('parameters' in task ? task.parameters : {}), null, 2)}</Code>
-              </Box>
+            {parameters && (
+            <Box>
+              <Text fw={900} display="inline-block" mr={2}>
+                Parameters:
+              </Text>
+              {' '}
+              <Code block>{JSON.stringify(parameters, null, 2)}</Code>
+            </Box>
             )}
-            {taskAnswer && Object.keys(taskAnswer.answer).length > 0 && (
-              <Box>
-                <Text fw={900} display="inline-block" mr={2}>
-                  {correctIncorrectIcon}
-                  Participant Answer:
-                </Text>
-                {' '}
-                <Code block>{JSON.stringify(taskAnswer.answer, null, 2)}</Code>
-              </Box>
+            {componentAnswer && Object.keys(componentAnswer.answer).length > 0 && (
+            <Box>
+              <Text fw={900} display="inline-block" mr={2}>
+                {correctIncorrectIcon}
+                Participant Answer:
+              </Text>
+              {' '}
+              <Code block>{JSON.stringify(componentAnswer.answer, null, 2)}</Code>
+            </Box>
             )}
             {correctAnswerJSONText && (
-              <Box>
-                <Text fw={900} display="inline-block" mr={2}>
-                  Correct Answer:
-                </Text>
-                {' '}
-                <Code block>
-                  <Text size="xs" lineClamp={correctAnswerClamp}>{correctAnswerJSONText}</Text>
-                  {correctAnswerJSONText.split('\n').length > INITIAL_CLAMP && (
-                    <Flex justify="flex-end">
-                      {(correctAnswerClamp === undefined || correctAnswerJSONText.split('\n').length > correctAnswerClamp) && (
-                      <Button variant="light" size="xs" onClick={() => { setCorrectAnswerClamp((prev) => (prev === INITIAL_CLAMP ? undefined : INITIAL_CLAMP)); }}>
-                        {correctAnswerClamp !== undefined ? 'Show more' : 'Show less'}
-                      </Button>
-                      )}
-                    </Flex>
+            <Box>
+              <Text fw={900} display="inline-block" mr={2}>
+                Correct Answer:
+              </Text>
+              {' '}
+              <Code block>
+                <Text size="xs" lineClamp={correctAnswerClampMap[href!]}>{correctAnswerJSONText}</Text>
+                {correctAnswerJSONText.split('\n').length > INITIAL_CLAMP && (
+                <Flex justify="flex-end">
+                  {(correctAnswerClampMap[href!] === undefined || correctAnswerJSONText.split('\n').length > (correctAnswerClampMap[href!] || -1)) && (
+                    <Button
+                      variant="light"
+                      size="xs"
+                      onClick={() => {
+                        setCorrectAnswerClampMap((prev) => ({
+                          ...prev,
+                          [href!]: prev[href!] === INITIAL_CLAMP ? undefined : INITIAL_CLAMP,
+                        }));
+                      }}
+                    >
+                      {correctAnswerClampMap[href!] !== undefined ? 'Show more' : 'Show less'}
+                    </Button>
                   )}
-                </Code>
-              </Box>
+                </Flex>
+                )}
+              </Code>
+            </Box>
             )}
+            {component && responseJSONText && (
             <Box>
               <Text fw={900} display="inline-block" mr={2}>
                 Response:
               </Text>
               {' '}
               <Code block>
-                <Text size="xs" lineClamp={responseClamp}>{responseJSONText}</Text>
+                <Text size="xs" lineClamp={responseClampMap[href!]}>{JSON.stringify(component.response, null, 2)}</Text>
                 {responseJSONText.split('\n').length > INITIAL_CLAMP && (
-                  <Flex justify="flex-end">
-                    {(responseClamp === undefined || responseJSONText.split('\n').length > responseClamp) && (
-                    <Button variant="light" size="xs" onClick={() => { setResponseClamp((prev) => (prev === INITIAL_CLAMP ? undefined : INITIAL_CLAMP)); }}>
-                      {responseClamp !== undefined ? 'Show more' : 'Show less'}
+                <Flex justify="flex-end">
+                  {(responseClampMap[href!] === undefined || responseJSONText.split('\n').length > (responseClampMap[href!] || -1)) && (
+                    <Button
+                      variant="light"
+                      size="xs"
+                      onClick={() => {
+                        setResponseClampMap((prev) => ({
+                          ...prev,
+                          [href!]: prev[href!] === INITIAL_CLAMP ? undefined : INITIAL_CLAMP,
+                        }));
+                      }}
+                    >
+                      {responseClampMap[href!] !== undefined ? 'Show more' : 'Show less'}
                     </Button>
-                    )}
-                  </Flex>
+                  )}
+                </Flex>
                 )}
               </Code>
             </Box>
-            {task.meta && (
+            )}
+            {component && component.meta && (
             <Box>
               <Text fw="900" component="span">Task Meta: </Text>
-              <Code block>{JSON.stringify(task.meta, null, 2)}</Code>
+              <Code block>{JSON.stringify(component.meta, null, 2)}</Code>
             </Box>
             )}
           </Box>
         </HoverCard.Dropdown>
-      )}
-    </HoverCard>
-  );
-}
-
-export function StepsPanel({
-  configSequence,
-  fullSequence,
-  participantSequence,
-  participantView,
-  studyConfig,
-  analysisNavigation,
-}: {
-  configSequence: ComponentBlockWithOrderPath;
-  fullSequence: Sequence;
-  participantSequence?: Sequence;
-  participantView: boolean;
-  studyConfig: StudyConfig;
-  analysisNavigation?: boolean;
-}) {
-  // If the participantSequence is provided, reorder the components
-  let components = structuredClone(configSequence.components);
-  if (participantSequence && participantView) {
-    const reorderedComponents = reorderComponents(structuredClone(configSequence.components), structuredClone(participantSequence.components));
-    components = reorderedComponents;
-  }
-
-  // Hacky. This call is not conditional, it either always happens or never happens. Not ideal.
-  const { analysisTab } = useParams();
-  let answers: ParticipantData['answers'] = {};
-  if (!analysisTab) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    answers = useStoreSelector((state) => state.answers);
-  }
-
-  if (!participantView) {
-    // Add interruptions to the sequence
-    components = [
-      ...(configSequence.interruptions?.flatMap((interruption) => interruption.components) || []),
-      ...(components || []),
-    ];
-  }
-
-  // Count tasks - interruptions
-  const sequenceStepsLength = useMemo(() => (participantSequence ? getSequenceFlatMap(participantSequence).length - countInterruptionsRecursively(configSequence, participantSequence) : 0), [configSequence, participantSequence]);
-  const orderSteps = useMemo(() => getSequenceFlatMap(configSequence), [configSequence]);
-
-  const [isPanelOpened, setIsPanelOpened] = useState<boolean>(sequenceStepsLength > 0);
-
-  const [searchParams] = useSearchParams();
-  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
-  const currentStep = useCurrentStep();
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const flatSequence = analysisTab ? [] : useFlatSequence();
-  const dynamicBlockActive = typeof currentStep === 'number' && configSequence.order === 'dynamic' && flatSequence[currentStep] === configSequence.id;
-  const indexofDynamicBlock = (configSequence.id && flatSequence.indexOf(configSequence.id)) || -1;
-
-  const studyId = useStudyId();
-  const navigate = useNavigate();
-  const navigateTo = () => navigate(`/${studyId}/${encryptIndex(indexofDynamicBlock)}/${encryptIndex(0)}${participantId ? `?participantId=${participantId}` : ''}`);
-
-  const toLoopOver = [
-    ...components,
-    ...Object.entries(answers).filter(([key, _]) => key.startsWith(`${configSequence.id}_${indexofDynamicBlock}_`)).map(([_, value]) => value.componentName),
-  ];
-
-  return (
-    <NavLink
-      key={configSequence.id}
-      active={dynamicBlockActive}
-      label={(
-        <Flex align="center" style={{ opacity: sequenceStepsLength > 0 ? 1 : 0.5 }}>
-          <Text
-            size="sm"
-            display="inline"
-            fw={dynamicBlockActive ? 900 : 700}
-            title={configSequence.id ? configSequence.id : configSequence.order}
-            style={{
-              textWrap: 'nowrap',
-              flexGrow: 1,
-              width: 0,
-              textOverflow: 'ellipsis',
-              overflow: 'hidden',
-            }}
-          >
-            {configSequence.id ? configSequence.id : configSequence.order}
-          </Text>
-          {configSequence.order === 'random' || configSequence.order === 'latinSquare' ? (
-            <Tooltip label={configSequence.order} position="right" withArrow>
-              <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
-            </Tooltip>
-          ) : null}
-          {participantView && (
-            <Badge ml={5} variant="light">
-              {configSequence.order === 'dynamic' ? `${Object.keys(answers).filter((keys) => keys.startsWith(`${configSequence.id}_`)).length} / ?` : `${sequenceStepsLength}/${orderSteps.length}`}
-            </Badge>
-          )}
-          {participantView && configSequence.interruptions && (
-            <Badge ml={5} color="orange" variant="light">
-              {participantSequence?.components.filter((s) => typeof s === 'string' && configSequence.interruptions?.flatMap((i) => i.components).includes(s)).length || 0}
-            </Badge>
-          )}
-        </Flex>
-      )}
-      opened={isPanelOpened}
-      onClick={() => (configSequence.order === 'dynamic' && !analysisNavigation && participantView ? navigateTo() : setIsPanelOpened(!isPanelOpened))}
-      childrenOffset={32}
-      style={{
-        lineHeight: '32px',
-        height: '32px',
-      }}
-    >
-      {isPanelOpened ? (
-        <Box style={{ borderLeft: '1px solid #e9ecef' }}>
-          {toLoopOver.map((step, idx) => {
-            if (typeof step === 'string') {
-              return (
-                <StepItem
-                  key={idx}
-                  step={step}
-                  disabled={participantView && participantSequence?.components[idx] !== step}
-                  fullSequence={fullSequence}
-                  startIndex={idx}
-                  interruption={(configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false}
-                  participantView={participantView}
-                  studyConfig={studyConfig}
-                  subSequence={participantSequence}
-                  analysisNavigation={analysisNavigation}
-                  parentBlock={configSequence}
-                  parentActive={dynamicBlockActive}
-                  answers={answers}
-                />
-              );
-            }
-
-            const newSequence = participantSequence?.components.find((s) => typeof s !== 'string' && s.orderPath === step.orderPath) as Sequence | undefined;
-
-            return (
-              <StepsPanel
-                key={idx}
-                configSequence={step}
-                participantSequence={newSequence}
-                fullSequence={fullSequence}
-                participantView={participantView}
-                studyConfig={studyConfig}
-                analysisNavigation={analysisNavigation}
-              />
-            );
-          })}
-        </Box>
-      ) : null }
-    </NavLink>
-  );
+        )}
+      </HoverCard>
+    );
+  });
 }

@@ -15,7 +15,7 @@ import {
   IconBrandFirebase, IconBrandSupabase, IconDatabase, IconGraph, IconGraphOff, IconInfoCircle, IconSettingsShare, IconUserPlus,
 } from '@tabler/icons-react';
 import { useHref } from 'react-router';
-import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
+import { StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import {
   useStoreActions, useStoreDispatch, useStoreSelector,
@@ -23,7 +23,6 @@ import {
 import { useStudyId } from '../../routes/utils';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 function InfoHover({ text }: { text: string }) {
@@ -36,6 +35,7 @@ function InfoHover({ text }: { text: string }) {
 
 export function AppAside() {
   const sequence = useStoreSelector((state) => state.sequence);
+  const answers = useStoreSelector((state) => state.answers);
   const { toggleStudyBrowser } = useStoreActions();
 
   const studyConfig = useStudyConfig();
@@ -47,13 +47,6 @@ export function AppAside() {
   const { storageEngine } = useStorageEngine();
 
   const isAnalysis = useIsAnalysis();
-
-  const fullOrder = useMemo(() => {
-    let r = structuredClone(studyConfig.sequence) as ComponentBlockWithOrderPath;
-    r = addPathToComponentBlock(r, 'root') as ComponentBlockWithOrderPath;
-    r.components.push('end');
-    return r;
-  }, [studyConfig.sequence]);
 
   const [activeTab, setActiveTab] = useState<string | null>('participant');
 
@@ -152,18 +145,18 @@ export function AppAside() {
                 Participant View
                 <InfoHover text="The Participants View shows items just as a participants would see them, considering randomization, omissions, etc. You can navigate between multiple participants using the next participant button." />
               </Tabs.Tab>
-              <Tabs.Tab value="allTrials" disabled={isAnalysis}>
-                All Trials View
-                <InfoHover text="The All Trials View shows all items in the order defined in the config." />
+              <Tabs.Tab value="allTrials" disabled={isAnalysis} p="xs">
+                Browse Components
+                <InfoHover text="Browse Components allows you to view all the components that are defined in your study." />
               </Tabs.Tab>
             </Tabs.List>
           </Box>
 
           <Tabs.Panel value="participant">
-            <StepsPanel configSequence={fullOrder} participantSequence={sequence} fullSequence={sequence} participantView studyConfig={studyConfig} />
+            <StepsPanel participantSequence={sequence} participantAnswers={answers} studyConfig={studyConfig} />
           </Tabs.Panel>
           <Tabs.Panel value="allTrials">
-            <StepsPanel configSequence={fullOrder} participantSequence={sequence} fullSequence={sequence} participantView={false} studyConfig={studyConfig} />
+            <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />
           </Tabs.Panel>
         </Tabs>
       </AppShell.Section>
