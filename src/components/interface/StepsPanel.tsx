@@ -1,6 +1,7 @@
 import {
-  useCallback, useEffect, useMemo, useState,
+  useCallback, useEffect, useMemo, useState, useRef,
 } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Badge,
   Box,
@@ -272,254 +273,269 @@ export function StepsPanel({
     setRenderedFlatTree(newFlatTree);
   }, [fullFlatTree, renderedFlatTree]);
 
-  return renderedFlatTree.length > 0 && renderedFlatTree.map(({
-    label,
-    indentLevel,
-    isLibraryImport,
-
-    // Component Attributes
-    href,
-    isInterruption,
-    component,
-    componentAnswer,
-
-    // Block Attributes
-    order,
-    numInterruptions,
-    numComponentsInSequence,
-    numComponentsInStudySequence,
-  }, idx) => {
-    const isComponent = order === undefined;
-
-    // Determine correct answer from componentAnswer or component
-    const correctAnswer = componentAnswer?.correctAnswer?.length
-      ? componentAnswer.correctAnswer
-      : component?.correctAnswer;
-
-    // Check if the answer is correct
-    const correct = correctAnswer
-      && componentAnswer
-      && Object.keys(componentAnswer.answer).length > 0
-      && componentAnswersAreCorrect(componentAnswer.answer, correctAnswer);
-
-    // Icon for correct/incorrect answer
-    const correctIncorrectIcon = correctAnswer && componentAnswer && componentAnswer?.endTime > -1
-      ? (correct
-        ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
-        : <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="red" />
-      )
-      : null;
-
-    // JSON text for correct answer
-    const correctAnswerJSONText = correctAnswer
-      ? JSON.stringify(correctAnswer, null, 2)
-      : undefined;
-
-    const responseJSONText = component && JSON.stringify(component.response, null, 2);
-
-    const parameters = componentAnswer && 'parameters' in componentAnswer
-      ? componentAnswer.parameters
-      : component && 'parameters' in component
-        ? component.parameters
-        : undefined;
-
-    const blockIsCollapsed = !isComponent && (
-      renderedFlatTree[idx + 1]?.indentLevel === undefined
-      || renderedFlatTree[idx + 1]?.indentLevel <= indentLevel
-    );
-
-    return (
-      <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0} closeDelay={0} key={`${indentLevel}-${idx}`}>
-        <NavLink
-          h={32}
-          pl={indentLevel * 24 + 12}
-          onClick={() => {
-            if (isComponent && href) {
-              navigate(href);
-            } else if (blockIsCollapsed) {
-              expandBlock(idx, renderedFlatTree[idx]);
-            } else {
-              collapseBlock(idx, renderedFlatTree[idx]);
-            }
-          }}
-          active={window.location.pathname === href}
-          rightSection={
-            isComponent
-              ? undefined
-              : <IconChevronUp size={16} stroke={1.5} style={{ cursor: 'pointer', transform: blockIsCollapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-          }
-          label={(
-            <Flex align="center">
-              {isInterruption && (
-              <Tooltip label="Interruption" position="right" withArrow>
-                <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="orange" />
-              </Tooltip>
-              )}
-              {isLibraryImport && (
-              <Tooltip label="Package import" position="right" withArrow>
-                <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
-              </Tooltip>
-              )}
-              {component?.responseOrder === 'random' && (
-              <Tooltip label="Random responses" position="right" withArrow>
-                <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
-              </Tooltip>
-              )}
-              {(component?.response && hasRandomization(component.response)) && (
-              <Tooltip label="Random options" position="right" withArrow>
-                <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
-              </Tooltip>
-              )}
-              {correctIncorrectIcon}
-              <Text
-                size="sm"
-                title={label}
-                fw={!isComponent ? 700 : undefined}
-                style={{
-                  textWrap: 'nowrap',
-                  flexGrow: 1,
-                  width: 0,
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                }}
-              >
-                {label}
-              </Text>
-              {isComponent && label !== 'end' && (
-              <HoverCard.Target>
-                <IconInfoCircle size={16} style={{ marginLeft: '5px', verticalAlign: 'middle' }} opacity={0.5} />
-              </HoverCard.Target>
-              )}
-              {order === 'random' || order === 'latinSquare' ? (
-                <Tooltip label={order} position="right" withArrow>
-                  <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
-                </Tooltip>
-              ) : null}
-              {!isComponent && (
-                <Badge ml={5} variant="light">
-                  {numComponentsInSequence}
-                  /
-                  {numComponentsInStudySequence}
-                </Badge>
-              )}
-              {numInterruptions !== undefined && numInterruptions > 0 && (
-              <Badge ml={5} color="orange" variant="light">
-                {numInterruptions}
-              </Badge>
-              )}
-            </Flex>
-          )}
-        />
-        {isComponent && (
-        <HoverCard.Dropdown>
-          <Box mah={700} maw={500} style={{ overflow: 'auto' }}>
-            <Box>
-              <Text fw={900} display="inline-block" mr={2}>
-                Name:
-              </Text>
-              {' '}
-              <Text fw={400} component="span">
-                {label}
-              </Text>
-            </Box>
-            {component && component.description && (
-            <Box>
-              <Text fw={900} display="inline-block" mr={2}>
-                Description:
-              </Text>
-              {' '}
-              <Text fw={400} component="span">
-                {component.description}
-              </Text>
-            </Box>
-            )}
-            {parameters && (
-            <Box>
-              <Text fw={900} display="inline-block" mr={2}>
-                Parameters:
-              </Text>
-              {' '}
-              <Code block>{JSON.stringify(parameters, null, 2)}</Code>
-            </Box>
-            )}
-            {componentAnswer && Object.keys(componentAnswer.answer).length > 0 && (
-            <Box>
-              <Text fw={900} display="inline-block" mr={2}>
-                {correctIncorrectIcon}
-                Participant Answer:
-              </Text>
-              {' '}
-              <Code block>{JSON.stringify(componentAnswer.answer, null, 2)}</Code>
-            </Box>
-            )}
-            {correctAnswerJSONText && (
-            <Box>
-              <Text fw={900} display="inline-block" mr={2}>
-                Correct Answer:
-              </Text>
-              {' '}
-              <Code block>
-                <Text size="xs" lineClamp={correctAnswerClampMap[href!]}>{correctAnswerJSONText}</Text>
-                {correctAnswerJSONText.split('\n').length > INITIAL_CLAMP && (
-                <Flex justify="flex-end">
-                  {(correctAnswerClampMap[href!] === undefined || correctAnswerJSONText.split('\n').length > (correctAnswerClampMap[href!] || -1)) && (
-                    <Button
-                      variant="light"
-                      size="xs"
-                      onClick={() => {
-                        setCorrectAnswerClampMap((prev) => ({
-                          ...prev,
-                          [href!]: prev[href!] === INITIAL_CLAMP ? undefined : INITIAL_CLAMP,
-                        }));
-                      }}
-                    >
-                      {correctAnswerClampMap[href!] !== undefined ? 'Show more' : 'Show less'}
-                    </Button>
-                  )}
-                </Flex>
-                )}
-              </Code>
-            </Box>
-            )}
-            {component && responseJSONText && (
-            <Box>
-              <Text fw={900} display="inline-block" mr={2}>
-                Response:
-              </Text>
-              {' '}
-              <Code block>
-                <Text size="xs" lineClamp={responseClampMap[href!]}>{JSON.stringify(component.response, null, 2)}</Text>
-                {responseJSONText.split('\n').length > INITIAL_CLAMP && (
-                <Flex justify="flex-end">
-                  {(responseClampMap[href!] === undefined || responseJSONText.split('\n').length > (responseClampMap[href!] || -1)) && (
-                    <Button
-                      variant="light"
-                      size="xs"
-                      onClick={() => {
-                        setResponseClampMap((prev) => ({
-                          ...prev,
-                          [href!]: prev[href!] === INITIAL_CLAMP ? undefined : INITIAL_CLAMP,
-                        }));
-                      }}
-                    >
-                      {responseClampMap[href!] !== undefined ? 'Show more' : 'Show less'}
-                    </Button>
-                  )}
-                </Flex>
-                )}
-              </Code>
-            </Box>
-            )}
-            {component && component.meta && (
-            <Box>
-              <Text fw="900" component="span">Task Meta: </Text>
-              <Code block>{JSON.stringify(component.meta, null, 2)}</Code>
-            </Box>
-            )}
-          </Box>
-        </HoverCard.Dropdown>
-        )}
-      </HoverCard>
-    );
+  // Virtualizer setup
+  const parentRef = useRef<HTMLDivElement>(null);
+  const rowHeight = 32; // px, fixed height for each row
+  const rowCount = renderedFlatTree.length;
+  const virtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => rowHeight,
+    overscan: 6,
   });
+
+  return (
+    <Box ref={parentRef} style={{ height: 'calc(100vh - 70px - 80px - 36px - 2%', overflow: 'auto' }}>
+      <Box style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const idx = virtualRow.index;
+          const {
+            label,
+            indentLevel,
+            isLibraryImport,
+            href,
+            isInterruption,
+            component,
+            componentAnswer,
+            order,
+            numInterruptions,
+            numComponentsInSequence,
+            numComponentsInStudySequence,
+          } = renderedFlatTree[idx];
+          const isComponent = order === undefined;
+          const correctAnswer = componentAnswer?.correctAnswer?.length
+            ? componentAnswer.correctAnswer
+            : component?.correctAnswer;
+          const correct = correctAnswer
+            && componentAnswer
+            && Object.keys(componentAnswer.answer).length > 0
+            && componentAnswersAreCorrect(componentAnswer.answer, correctAnswer);
+          const correctIncorrectIcon = correctAnswer && componentAnswer && componentAnswer?.endTime > -1
+            ? (correct
+              ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
+              : <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="red" />
+            )
+            : null;
+          const correctAnswerJSONText = correctAnswer
+            ? JSON.stringify(correctAnswer, null, 2)
+            : undefined;
+          const responseJSONText = component && JSON.stringify(component.response, null, 2);
+          const parameters = componentAnswer && 'parameters' in componentAnswer
+            ? componentAnswer.parameters
+            : component && 'parameters' in component
+              ? component.parameters
+              : undefined;
+          const blockIsCollapsed = !isComponent && (
+            renderedFlatTree[idx + 1]?.indentLevel === undefined
+            || renderedFlatTree[idx + 1]?.indentLevel <= indentLevel
+          );
+          return (
+            <Box
+              key={virtualRow.key}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: rowHeight,
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0} closeDelay={0}>
+                <NavLink
+                  h={32}
+                  pl={indentLevel * 24 + 12}
+                  onClick={() => {
+                    if (isComponent && href) {
+                      navigate(href);
+                    } else if (blockIsCollapsed) {
+                      expandBlock(idx, renderedFlatTree[idx]);
+                    } else {
+                      collapseBlock(idx, renderedFlatTree[idx]);
+                    }
+                  }}
+                  active={window.location.pathname === href}
+                  rightSection={
+                    isComponent
+                      ? undefined
+                      : <IconChevronUp size={16} stroke={1.5} style={{ cursor: 'pointer', transform: blockIsCollapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                  }
+                  label={(
+                    <Flex align="center">
+                      {isInterruption && (
+                        <Tooltip label="Interruption" position="right" withArrow>
+                          <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="orange" />
+                        </Tooltip>
+                      )}
+                      {isLibraryImport && (
+                        <Tooltip label="Package import" position="right" withArrow>
+                          <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
+                        </Tooltip>
+                      )}
+                      {component?.responseOrder === 'random' && (
+                        <Tooltip label="Random responses" position="right" withArrow>
+                          <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
+                        </Tooltip>
+                      )}
+                      {(component?.response && hasRandomization(component.response)) && (
+                        <Tooltip label="Random options" position="right" withArrow>
+                          <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
+                        </Tooltip>
+                      )}
+                      {correctIncorrectIcon}
+                      <Text
+                        size="sm"
+                        title={label}
+                        fw={!isComponent ? 700 : undefined}
+                        style={{
+                          textWrap: 'nowrap',
+                          flexGrow: 1,
+                          width: 0,
+                          textOverflow: 'ellipsis',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {label}
+                      </Text>
+                      {isComponent && label !== 'end' && (
+                        <HoverCard.Target>
+                          <IconInfoCircle size={16} style={{ marginLeft: '5px', verticalAlign: 'middle' }} opacity={0.5} />
+                        </HoverCard.Target>
+                      )}
+                      {order === 'random' || order === 'latinSquare' ? (
+                        <Tooltip label={order} position="right" withArrow>
+                          <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
+                        </Tooltip>
+                      ) : null}
+                      {!isComponent && (
+                        <Badge ml={5} variant="light">
+                          {numComponentsInSequence}
+                          /
+                          {numComponentsInStudySequence}
+                        </Badge>
+                      )}
+                      {numInterruptions !== undefined && numInterruptions > 0 && (
+                        <Badge ml={5} color="orange" variant="light">
+                          {numInterruptions}
+                        </Badge>
+                      )}
+                    </Flex>
+                  )}
+                />
+                {isComponent && (
+                  <HoverCard.Dropdown>
+                    <Box mah={700} maw={500} style={{ overflow: 'auto' }}>
+                      <Box>
+                        <Text fw={900} display="inline-block" mr={2}>
+                          Name:
+                        </Text>
+                        {' '}
+                        <Text fw={400} component="span">
+                          {label}
+                        </Text>
+                      </Box>
+                      {component && component.description && (
+                        <Box>
+                          <Text fw={900} display="inline-block" mr={2}>
+                            Description:
+                          </Text>
+                          {' '}
+                          <Text fw={400} component="span">
+                            {component.description}
+                          </Text>
+                        </Box>
+                      )}
+                      {parameters && (
+                        <Box>
+                          <Text fw={900} display="inline-block" mr={2}>
+                            Parameters:
+                          </Text>
+                          {' '}
+                          <Code block>{JSON.stringify(parameters, null, 2)}</Code>
+                        </Box>
+                      )}
+                      {componentAnswer && Object.keys(componentAnswer.answer).length > 0 && (
+                        <Box>
+                          <Text fw={900} display="inline-block" mr={2}>
+                            {correctIncorrectIcon}
+                            Participant Answer:
+                          </Text>
+                          {' '}
+                          <Code block>{JSON.stringify(componentAnswer.answer, null, 2)}</Code>
+                        </Box>
+                      )}
+                      {correctAnswerJSONText && (
+                        <Box>
+                          <Text fw={900} display="inline-block" mr={2}>
+                            Correct Answer:
+                          </Text>
+                          {' '}
+                          <Code block>
+                            <Text size="xs" lineClamp={correctAnswerClampMap[href!]}>{correctAnswerJSONText}</Text>
+                            {correctAnswerJSONText.split('\n').length > INITIAL_CLAMP && (
+                              <Flex justify="flex-end">
+                                {(correctAnswerClampMap[href!] === undefined || correctAnswerJSONText.split('\n').length > (correctAnswerClampMap[href!] || -1)) && (
+                                  <Button
+                                    variant="light"
+                                    size="xs"
+                                    onClick={() => {
+                                      setCorrectAnswerClampMap((prev) => ({
+                                        ...prev,
+                                        [href!]: prev[href!] === INITIAL_CLAMP ? undefined : INITIAL_CLAMP,
+                                      }));
+                                    }}
+                                  >
+                                    {correctAnswerClampMap[href!] !== undefined ? 'Show more' : 'Show less'}
+                                  </Button>
+                                )}
+                              </Flex>
+                            )}
+                          </Code>
+                        </Box>
+                      )}
+                      {component && responseJSONText && (
+                        <Box>
+                          <Text fw={900} display="inline-block" mr={2}>
+                            Response:
+                          </Text>
+                          {' '}
+                          <Code block>
+                            <Text size="xs" lineClamp={responseClampMap[href!]}>{JSON.stringify(component.response, null, 2)}</Text>
+                            {responseJSONText.split('\n').length > INITIAL_CLAMP && (
+                              <Flex justify="flex-end">
+                                {(responseClampMap[href!] === undefined || responseJSONText.split('\n').length > (responseClampMap[href!] || -1)) && (
+                                  <Button
+                                    variant="light"
+                                    size="xs"
+                                    onClick={() => {
+                                      setResponseClampMap((prev) => ({
+                                        ...prev,
+                                        [href!]: prev[href!] === INITIAL_CLAMP ? undefined : INITIAL_CLAMP,
+                                      }));
+                                    }}
+                                  >
+                                    {responseClampMap[href!] !== undefined ? 'Show more' : 'Show less'}
+                                  </Button>
+                                )}
+                              </Flex>
+                            )}
+                          </Code>
+                        </Box>
+                      )}
+                      {component && component.meta && (
+                        <Box>
+                          <Text fw="900" component="span">Task Meta: </Text>
+                          <Code block>{JSON.stringify(component.meta, null, 2)}</Code>
+                        </Box>
+                      )}
+                    </Box>
+                  </HoverCard.Dropdown>
+                )}
+              </HoverCard>
+            </Box>
+          );
+        })}
+      </Box>
+    </Box>
+  );
 }
