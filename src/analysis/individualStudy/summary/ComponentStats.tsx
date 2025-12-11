@@ -4,35 +4,14 @@ import { IconSearch } from '@tabler/icons-react';
 // eslint-disable-next-line camelcase
 import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from 'mantine-react-table';
 import { ParticipantData } from '../../../storage/types';
-import { calculateComponentStats } from './utils';
-
-interface TableRow {
-  component: string;
-  participants: number;
-  avgTime: string;
-  avgCleanTime: string;
-  correctness: string;
-}
-
-const extractNumericValue = (value: string, unit: string): number => {
-  if (value === 'N/A') return -1;
-  return parseFloat(value.replace(unit, '')) || 0;
-};
+import { getComponentStats } from './utils';
+import { ComponentData } from '../../types';
 
 export function ComponentStats({ visibleParticipants }: { visibleParticipants: ParticipantData[] }) {
-  const tableData: TableRow[] = useMemo(() => {
-    const stats = calculateComponentStats(visibleParticipants);
-    return stats.map((stat) => ({
-      component: stat.name,
-      participants: stat.participantCount,
-      avgTime: Number.isFinite(stat.avgTime) ? `${stat.avgTime.toFixed(1)}s` : 'N/A',
-      avgCleanTime: Number.isFinite(stat.avgCleanTime) ? `${stat.avgCleanTime.toFixed(1)}s` : 'N/A',
-      correctness: !Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A',
-    }));
-  }, [visibleParticipants]);
+  const tableData: ComponentData[] = useMemo(() => getComponentStats(visibleParticipants), [visibleParticipants]);
 
   // eslint-disable-next-line camelcase
-  const columns = useMemo<MRT_ColumnDef<TableRow>[]>(
+  const columns = useMemo<MRT_ColumnDef<ComponentData>[]>(
     () => [
       {
         accessorKey: 'component',
@@ -46,27 +25,39 @@ export function ComponentStats({ visibleParticipants }: { visibleParticipants: P
         accessorKey: 'avgTime',
         header: 'Avg Time',
         sortingFn: (rowA, rowB) => {
-          const a = extractNumericValue(rowA.original.avgTime, 's');
-          const b = extractNumericValue(rowB.original.avgTime, 's');
+          const a = rowA.original.avgTime;
+          const b = rowB.original.avgTime;
           return a - b;
+        },
+        Cell: ({ cell }) => {
+          const value = cell.getValue<number>();
+          return Number.isFinite(value) ? `${value.toFixed(1)}s` : 'N/A';
         },
       },
       {
         accessorKey: 'avgCleanTime',
         header: 'Avg Clean Time',
         sortingFn: (rowA, rowB) => {
-          const a = extractNumericValue(rowA.original.avgCleanTime, 's');
-          const b = extractNumericValue(rowB.original.avgCleanTime, 's');
+          const a = rowA.original.avgCleanTime;
+          const b = rowB.original.avgCleanTime;
           return a - b;
+        },
+        Cell: ({ cell }) => {
+          const value = cell.getValue<number>();
+          return Number.isFinite(value) ? `${value.toFixed(1)}s` : 'N/A';
         },
       },
       {
         accessorKey: 'correctness',
         header: 'Correctness',
         sortingFn: (rowA, rowB) => {
-          const a = extractNumericValue(rowA.original.correctness, '%');
-          const b = extractNumericValue(rowB.original.correctness, '%');
+          const a = rowA.original.correctness;
+          const b = rowB.original.correctness;
           return a - b;
+        },
+        Cell: ({ cell }) => {
+          const value = cell.getValue<number>();
+          return !Number.isNaN(value) ? `${value.toFixed(1)}%` : 'N/A';
         },
       },
     ],

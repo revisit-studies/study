@@ -1,9 +1,7 @@
 import {
   Box, Divider, Flex, Paper, Text,
 } from '@mantine/core';
-import {
-  useMemo,
-} from 'react';
+import { useMemo } from 'react';
 import { useParams } from 'react-router';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
@@ -11,9 +9,6 @@ import { TrialVisualization } from './TrialVisualization';
 import { ComponentBlockWithOrderPath, StepsPanel } from '../../../components/interface/StepsPanel';
 import { addPathToComponentBlock } from '../../../utils/getSequenceFlatMap';
 import { OverviewStats } from '../summary/OverviewStats';
-import {
-  calculateParticipantCounts, calculateCorrectnessStats, calculateTimeStats, calculateDateStats, calculateComponentStats,
-} from '../summary/utils';
 
 export function StatsView(
   {
@@ -46,49 +41,9 @@ export function StatsView(
       .filter((p) => Object.keys(p.answers).length > 0);
   }, [visibleParticipants, trialId]);
 
-  const overviewData = useMemo(() => {
-    if (!trialId) {
-      const participantCounts = calculateParticipantCounts(visibleParticipants);
-      const { avgTime, avgCleanTime } = calculateTimeStats(visibleParticipants);
-      const { startDate, endDate } = calculateDateStats(visibleParticipants);
-      const correctnessStats = calculateCorrectnessStats(visibleParticipants);
-      const componentStats = calculateComponentStats(visibleParticipants);
-      const componentData = componentStats.map((stat) => ({
-        component: stat.name,
-        participants: stat.participantCount,
-        avgTime: Number.isFinite(stat.avgTime) ? `${stat.avgTime.toFixed(1)}s` : 'N/A',
-        avgCleanTime: Number.isFinite(stat.avgCleanTime) ? `${stat.avgCleanTime.toFixed(1)}s` : 'N/A',
-        correctness: !Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A',
-      }));
-      return {
-        participantCounts, avgTime, avgCleanTime, startDate, endDate, correctnessStats, componentData, responseData: [],
-      };
-    }
-
-    if (filteredParticipants.length === 0) return null;
-
-    const participantCounts = calculateParticipantCounts(visibleParticipants, trialId);
-    const { avgTime, avgCleanTime } = calculateTimeStats(filteredParticipants);
-    const { startDate, endDate } = calculateDateStats(filteredParticipants, trialId);
-    const correctnessStats = calculateCorrectnessStats(filteredParticipants);
-
-    const componentStats = calculateComponentStats(filteredParticipants);
-    const componentData = componentStats.map((stat) => ({
-      component: stat.name,
-      participants: stat.participantCount,
-      avgTime: Number.isFinite(stat.avgTime) ? `${stat.avgTime.toFixed(1)}s` : 'N/A',
-      avgCleanTime: Number.isFinite(stat.avgCleanTime) ? `${stat.avgCleanTime.toFixed(1)}s` : 'N/A',
-      correctness: !Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A',
-    }));
-
-    return {
-      participantCounts, avgTime, avgCleanTime, startDate, endDate, correctnessStats, componentData, responseData: [],
-    };
-  }, [filteredParticipants, trialId, visibleParticipants]);
-
   return (
     <>
-      {trialId && trialId !== 'end' && <OverviewStats overviewData={overviewData} mismatchDetails={null} />}
+      {trialId && trialId !== 'end' && <OverviewStats visibleParticipants={filteredParticipants} />}
       <Paper shadow="sm" p="md" mt="md" withBorder>
         {
         (visibleParticipants.length === 0)

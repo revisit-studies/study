@@ -1,121 +1,82 @@
 import { ParticipantData } from '../../../storage/types';
 import { getCleanedDuration } from '../../../utils/getCleanedDuration';
-import { OverviewData, ParticipantCounts } from '../../types';
-import { Response } from '../../../parser/types';
+import {
+  ComponentData, OverviewData, ParticipantCounts, ResponseData,
+} from '../../types';
+import { Response, StudyConfig } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
+import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
-export function calculateParticipantCounts(visibleParticipants: ParticipantData[], componentName?: string): ParticipantCounts {
-  if (componentName) {
-    const participants = visibleParticipants.filter((p) => {
-      const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
-      if (answer && answer.startTime > 0) {
-        return true;
-      }
-      return !(p.completed || p.rejected);
-    });
-
-    return {
-      total: participants.length,
-      completed: participants.filter((p) => {
-        if (p.rejected) return false;
-        const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
-        return answer && answer.endTime !== -1;
-      }).length,
-      inProgress: participants.filter((p) => {
-        if (p.rejected) return false;
-        const answer = Object.values(p.answers).find((a) => a.componentName === componentName);
-        return answer ? answer.endTime === -1 : false;
-      }).length,
-      rejected: participants.filter((p) => p.rejected).length,
-    };
+function filterParticipantsByComponent(visibleParticipants: ParticipantData[], componentName?: string): ParticipantData[] {
+  if (!componentName) {
+    return visibleParticipants;
   }
-  return {
-    total: visibleParticipants.length,
-    // Include !p.rejected to exclude participants rejected manually after completing the study
-    completed: visibleParticipants.filter((p) => p.completed && !p.rejected).length,
-    inProgress: visibleParticipants.filter((p) => !p.completed && !p.rejected).length,
-    rejected: visibleParticipants.filter((p) => p.rejected).length,
-  };
+  return visibleParticipants.filter((p) => Object.values(p.answers).some((a) => a.componentName === componentName));
 }
 
-export function calculateDateStats(visibleParticipants: ParticipantData[], componentName?: string): { startDate: Date | null; endDate: Date | null } {
-  if (componentName) {
-    // Filter out rejected participants
-    const validParticipants = visibleParticipants.filter((p) => !p.rejected);
-    const dates = validParticipants.map((participant) => {
-      const answers = Object.values(participant.answers)
-        .filter((data) => data.componentName === componentName && data.startTime)
-        .sort((a, b) => a.startTime - b.startTime);
-      return {
-        startTime: answers.length > 0 ? answers[0].startTime : undefined,
-        endTime: answers.length > 0 ? answers[answers.length - 1].endTime : undefined,
-      };
-    });
+function calculateParticipantCounts(visibleParticipants: ParticipantData[], componentName?: string): ParticipantCounts {
+  // Filter by component if provided
+  const filteredParticipants = filterParticipantsByComponent(visibleParticipants, componentName);
 
-    const startTimes = dates.map((d) => d.startTime).filter((t): t is number => t != null);
-    const endTimes = dates.map((d) => d.endTime).filter((t): t is number => t != null);
-    return {
-      startDate: startTimes.length > 0 ? new Date(Math.min(...startTimes)) : null,
-      endDate: endTimes.length > 0 ? new Date(Math.max(...endTimes)) : null,
-    };
-  }
-  // Filter out rejected participants
-  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
-  const dates = validParticipants.map((participant) => {
-    const answers = Object.values(participant.answers)
-      .filter((data) => data.startTime)
-      .sort((a, b) => a.startTime - b.startTime);
-    return {
-      startTime: answers.length > 0 ? answers[0].startTime : undefined,
-      endTime: answers.length > 0 ? answers[answers.length - 1].endTime : undefined,
-    };
+  const participantCounts: ParticipantCounts = {
+    total: filteredParticipants.length,
+    completed: filteredParticipants.filter((p) => p.completed && !p.rejected).length,
+    inProgress: filteredParticipants.filter((p) => !p.completed && !p.rejected).length,
+    rejected: filteredParticipants.filter((p) => p.rejected).length,
+  };
+
+  return participantCounts;
+}
+
+// Checks if the current participant count is different from the calculated participant count
+export function hasMismatch(current: number, calculated: number): boolean {
+  // TO DO: Implement mismatch calculation
+  return current !== calculated;
+}
+
+function calculateDateStats(visibleParticipants: ParticipantData[], componentName?: string): { startDate: Date | null; endDate: Date | null } {
+  // Filter out rejected participants and filter by component if provided
+  const filteredParticipants = filterParticipantsByComponent(visibleParticipants, componentName).filter((p) => !p.rejected);
+
+  filteredParticipants.forEach((participant) => {
+    // Filter out answers that are not completed or in progress
+    const answers = Object.values(participant.answers).filter((answer) => answer.startTime > 0 && answer.endTime !== -1);
+    if (answers.length === 0) return { startDate: null, endDate: null };
+    return { startDate: new Date(answers[0].startTime), endDate: new Date(answers[answers.length - 1].endTime) };
   });
-  const startTimes = dates.map((d) => d.startTime).filter((t): t is number => t != null);
-  const endTimes = dates.map((d) => d.endTime).filter((t): t is number => t != null);
-  return {
-    startDate: startTimes.length > 0 ? new Date(Math.min(...startTimes)) : null,
-    endDate: endTimes.length > 0 ? new Date(Math.max(...endTimes)) : null,
-  };
+
+  return { startDate: null, endDate: null };
 }
 
-export function calculateTimeStats(visibleParticipants: ParticipantData[]): { avgTime: number; avgCleanTime: number } {
-  // Filter out rejected participants
-  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
-  const time = validParticipants.reduce((acc, participant) => {
-    const timeStats = Object.values(participant.answers)
-      .filter((answer) => answer.endTime !== -1 && answer.startTime > 0)
-      .map((answer) => ({
-        totalTime: (answer.endTime - answer.startTime) / 1000,
-        cleanTime: (() => {
-          const cleanedDuration = getCleanedDuration(answer as never);
-          return cleanedDuration && cleanedDuration > 0 ? cleanedDuration / 1000 : 0;
-        })(),
-      }));
-    if (timeStats.length > 0) {
-      acc.count += timeStats.length;
-      acc.totalTimeSum += timeStats.reduce((sum, t) => sum + t.totalTime, 0);
-      const validCleanTimes = timeStats.filter((t) => t.cleanTime > 0);
-      acc.cleanCount += validCleanTimes.length;
-      acc.cleanTimeSum += validCleanTimes.reduce((sum, t) => sum + t.cleanTime, 0);
-    }
-    return acc;
-  }, {
-    totalTimeSum: 0,
-    cleanTimeSum: 0,
-    count: 0,
-    cleanCount: 0,
+function calculateTimeStats(visibleParticipants: ParticipantData[], componentName?: string): { avgTime: number; avgCleanTime: number } {
+  // Filter out rejected participants and filter by component if provided
+  const filteredParticipants = filterParticipantsByComponent(visibleParticipants, componentName).filter((p) => !p.rejected);
+
+  let totalTimeSum = 0;
+  let cleanTimeSum = 0;
+  let count = 0;
+  let cleanCount = 0;
+
+  filteredParticipants.forEach((participant) => {
+    const answers = Object.values(participant.answers).filter((answer) => answer.startTime > 0 && answer.endTime !== -1);
+    if (answers.length === 0) return;
+    totalTimeSum += answers.reduce((sum, answer) => sum + (answer.endTime - answer.startTime) / 1000, 0);
+    // add an if statement to check if the cleaned duration is not undefined?
+    cleanTimeSum += answers.reduce((sum, answer) => sum + (getCleanedDuration(answer) || 0) / 1000, 0);
+    count += answers.length;
+    cleanCount += answers.filter((answer) => getCleanedDuration(answer)).length;
   });
 
   return {
-    avgTime: time.count > 0 ? time.totalTimeSum / time.count : NaN,
-    avgCleanTime: time.cleanCount > 0 ? time.cleanTimeSum / time.cleanCount : NaN,
+    avgTime: count > 0 ? totalTimeSum / count : NaN,
+    avgCleanTime: cleanCount > 0 ? cleanTimeSum / cleanCount : NaN,
   };
 }
 
-export function calculateCorrectnessStats(visibleParticipants: ParticipantData[]): number {
-  // Filter out rejected participants
-  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
-  const hasCorrectAnswer = validParticipants.some((participant) => Object.values(participant.answers).some((answer) => answer.correctAnswer && answer.correctAnswer.length > 0));
+function calculateCorrectnessStats(visibleParticipants: ParticipantData[], componentName?: string): number {
+  // Filter out rejected participants and filter by component if provided
+  const validParticipants = filterParticipantsByComponent(visibleParticipants, componentName).filter((p) => !p.rejected);
+  const hasCorrectAnswer = validParticipants.some((participant) => Object.values(participant.answers).some((answer) => answer.componentName === componentName && answer.correctAnswer && answer.correctAnswer.length > 0));
 
   let totalQuestions = 0;
   const correctness = validParticipants.reduce((acc, participant) => {
@@ -136,64 +97,12 @@ export function calculateCorrectnessStats(visibleParticipants: ParticipantData[]
   return hasCorrectAnswer ? (correctness.correctSum / totalQuestions) * 100 : NaN;
 }
 
-export function calculateComponentStats(visibleParticipants: ParticipantData[]) {
-  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
-  const stats: Record<string, {
-    name: string;
-    avgTime: number;
-    avgCleanTime: number;
-    participantCount: number;
-    correctness: number;
-  }> = {};
-
-  validParticipants.forEach((participant) => {
-    const components = new Set<string>();
-    Object.entries(participant.answers).forEach(([_, answer]) => {
-      const component = answer.componentName;
-
-      if (!stats[component]) {
-        stats[component] = {
-          name: component,
-          avgTime: 0,
-          avgCleanTime: 0,
-          participantCount: 0,
-          correctness: 0,
-        };
-      }
-
-      if (answer.startTime > 0 && !components.has(component)) {
-        components.add(component);
-        stats[component].participantCount += 1;
-      }
-
-      if (answer.endTime === -1) {
-        return;
-      }
-      const stat = stats[component];
-      const time = (answer.endTime - answer.startTime) / 1000;
-      const cleanedDuration = getCleanedDuration(answer as never);
-      const cleanTime = cleanedDuration && cleanedDuration > 0 ? cleanedDuration / 1000 : 0;
-
-      stat.avgTime += time;
-      stat.avgCleanTime += cleanTime;
-
-      if (answer.correctAnswer && answer.correctAnswer.length > 0) {
-        const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
-        stat.correctness += isCorrect ? 1 : 0;
-      }
-    });
-
-    return stats;
-  });
-  return Object.values(stats);
-}
-
-export function calculateResponseStats(visibleParticipants: ParticipantData[]) {
+function calculateResponseStats(visibleParticipants: ParticipantData[]) {
   const validParticipants = visibleParticipants.filter((p) => !p.rejected);
   const stats: Record<string, { name: string; correctness: number; participantCount: number }> = {};
 
   validParticipants.forEach((participant) => {
-    Object.entries(participant.answers).forEach(([_, answer]) => {
+    Object.entries(participant.answers).forEach(([, answer]) => {
       const component = answer.componentName;
 
       if (!stats[component]) {
@@ -203,10 +112,12 @@ export function calculateResponseStats(visibleParticipants: ParticipantData[]) {
           participantCount: 0,
         };
       }
-      // In progress participants are not included in the stats
+
+      // In‑progress answers are not included in the stats
       if (answer.endTime === -1) {
         return;
       }
+
       const stat = stats[component];
       stat.participantCount += 1;
 
@@ -217,14 +128,20 @@ export function calculateResponseStats(visibleParticipants: ParticipantData[]) {
     });
   });
 
-  return Object.values(stats)
-    .map((stat) => {
-      const hasCorrectAnswers = Object.values(validParticipants).some((participant) => Object.values(participant.answers).some((answer) => answer.componentName === stat.name && answer.correctAnswer && answer.correctAnswer.length > 0));
-      return {
-        ...stat,
-        correctness: hasCorrectAnswers ? (stat.correctness / stat.participantCount) * 100 : NaN,
-      };
-    });
+  return Object.values(stats).map((stat) => {
+    const hasCorrectAnswers = validParticipants.some((participant) => Object.values(participant.answers).some(
+      (answer) => answer.componentName === stat.name
+          && answer.correctAnswer
+          && answer.correctAnswer.length > 0,
+    ));
+
+    return {
+      ...stat,
+      correctness: hasCorrectAnswers
+        ? (stat.correctness / stat.participantCount) * 100
+        : NaN,
+    };
+  });
 }
 
 export function getResponseOptions(response: Response): string {
@@ -261,4 +178,59 @@ export function getOverviewStats(visibleParticipants: ParticipantData[]): Overvi
     avgCleanTime: calculateTimeStats(visibleParticipants).avgCleanTime,
     correctness: calculateCorrectnessStats(visibleParticipants),
   };
+}
+
+export function getComponentStats(visibleParticipants: ParticipantData[]): ComponentData[] {
+  // Exclude rejected participants for component‑level stats
+  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
+
+  // Collect unique component names from all answers
+  const componentNames = new Set<string>();
+  validParticipants.forEach((participant) => {
+    Object.values(participant.answers).forEach((answer) => {
+      if (answer.componentName) {
+        componentNames.add(answer.componentName);
+      }
+    });
+  });
+
+  // For each component, reuse the existing helper functions to compute stats
+  return Array.from(componentNames).map((name) => {
+    const participantCounts = calculateParticipantCounts(validParticipants, name);
+    const timeStats = calculateTimeStats(validParticipants, name);
+    const correctness = calculateCorrectnessStats(validParticipants, name);
+
+    return {
+      component: name,
+      participants: participantCounts.total,
+      avgTime: timeStats.avgTime,
+      avgCleanTime: timeStats.avgCleanTime,
+      correctness,
+    };
+  });
+}
+
+export function getResponseStats(visibleParticipants: ParticipantData[], studyConfig: StudyConfig): ResponseData[] {
+  const stats = calculateResponseStats(visibleParticipants);
+  const data: ResponseData[] = [];
+
+  stats.forEach((stat) => {
+    const component = studyConfig.components[stat.name];
+    if (!component) return;
+
+    const responses = studyComponentToIndividualComponent(component, studyConfig).response;
+    if (responses.length === 0) return;
+
+    responses.forEach((response) => {
+      data.push({
+        component: stat.name,
+        type: response.type,
+        question: response.prompt || '',
+        options: getResponseOptions(response),
+        correctness: Number.isNaN(stat.correctness) ? NaN : stat.correctness,
+      });
+    });
+  });
+
+  return data;
 }

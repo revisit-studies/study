@@ -4,8 +4,7 @@ import { Text, Paper, Title } from '@mantine/core';
 import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from 'mantine-react-table';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
-import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
-import { calculateResponseStats, getResponseOptions } from './utils';
+import { getResponseStats } from './utils';
 import { ResponseData } from '../../types';
 
 const extractNumericValue = (value: string, unit: string): number => {
@@ -14,31 +13,7 @@ const extractNumericValue = (value: string, unit: string): number => {
 };
 
 export function ResponseStats({ visibleParticipants, studyConfig }: { visibleParticipants: ParticipantData[]; studyConfig: StudyConfig }) {
-  const tableData: ResponseData[] = useMemo(() => {
-    const stats = calculateResponseStats(visibleParticipants);
-    const data: ResponseData[] = [];
-
-    stats.forEach((stat) => {
-      const component = studyConfig.components[stat.name];
-      if (!component) return;
-
-      const responses = studyComponentToIndividualComponent(component, studyConfig).response;
-      if (responses.length === 0) return;
-
-      responses.forEach((response) => {
-        const correctnessStr = !Number.isNaN(stat.correctness) ? `${stat.correctness.toFixed(1)}%` : 'N/A';
-        data.push({
-          component: stat.name,
-          type: response.type,
-          question: response.prompt || '',
-          options: getResponseOptions(response),
-          correctness: correctnessStr,
-        });
-      });
-    });
-
-    return data;
-  }, [visibleParticipants, studyConfig]);
+  const tableData: ResponseData[] = useMemo(() => getResponseStats(visibleParticipants, studyConfig), [visibleParticipants, studyConfig]);
 
   // eslint-disable-next-line camelcase
   const columns = useMemo<MRT_ColumnDef<ResponseData>[]>(() => [
@@ -62,8 +37,8 @@ export function ResponseStats({ visibleParticipants, studyConfig }: { visiblePar
       accessorKey: 'correctness',
       header: 'Correctness',
       sortingFn: (rowA, rowB) => {
-        const a = extractNumericValue(rowA.original.correctness, '%');
-        const b = extractNumericValue(rowB.original.correctness, '%');
+        const a = extractNumericValue(rowA.original.correctness.toString(), '%');
+        const b = extractNumericValue(rowB.original.correctness.toString(), '%');
         return a - b;
       },
     },
