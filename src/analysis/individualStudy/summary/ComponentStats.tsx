@@ -27,11 +27,6 @@ export function ComponentStats({
       {
         accessorKey: 'avgTime',
         header: 'Avg Time',
-        sortingFn: (rowA, rowB) => {
-          const a = rowA.original.avgTime;
-          const b = rowB.original.avgTime;
-          return a - b;
-        },
         Cell: ({ cell }) => {
           const value = cell.getValue<number>();
           return convertNumberToString(value, 'time');
@@ -40,11 +35,6 @@ export function ComponentStats({
       {
         accessorKey: 'avgCleanTime',
         header: 'Avg Clean Time',
-        sortingFn: (rowA, rowB) => {
-          const a = rowA.original.avgCleanTime;
-          const b = rowB.original.avgCleanTime;
-          return a - b;
-        },
         Cell: ({ cell }) => {
           const value = cell.getValue<number>();
           return convertNumberToString(value, 'time');
@@ -53,11 +43,6 @@ export function ComponentStats({
       {
         accessorKey: 'correctness',
         header: 'Correctness',
-        sortingFn: (rowA, rowB) => {
-          const a = rowA.original.correctness;
-          const b = rowB.original.correctness;
-          return a - b;
-        },
         Cell: ({ cell }) => {
           const value = cell.getValue<number>();
           return convertNumberToString(value, 'correctness');

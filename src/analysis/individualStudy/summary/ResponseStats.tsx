@@ -40,11 +40,6 @@ export function ResponseStats({
     {
       accessorKey: 'correctness',
       header: 'Correctness',
-      sortingFn: (rowA, rowB) => {
-        const a = rowA.original.correctness;
-        const b = rowB.original.correctness;
-        return a - b;
-      },
       Cell: ({ cell }) => {
         const value = cell.getValue<number>();
         return convertNumberToString(value, 'correctness');
@@ -56,7 +51,7 @@ export function ResponseStats({
     columns,
     data: responseData,
     initialState: {
-      sorting: [{ id: 'component.index', desc: false }],
+      sorting: [{ id: 'component.index', desc: true }],
     },
     mantinePaperProps: {
       style: { overflow: 'hidden' },

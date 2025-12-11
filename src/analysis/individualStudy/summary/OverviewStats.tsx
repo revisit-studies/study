@@ -33,11 +33,11 @@ export function OverviewStats({
           <Text size="sm" c="dimmed">Rejected</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold">{convertNumberToString(overviewData.startDate.getTime(), 'date')}</Text>
+          <Text size="xl" fw="bold">{convertNumberToString(overviewData.startDate, 'date')}</Text>
           <Text size="sm" c="dimmed">Start Date</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold">{convertNumberToString(overviewData.endDate.getTime(), 'date')}</Text>
+          <Text size="xl" fw="bold">{convertNumberToString(overviewData.endDate, 'date')}</Text>
           <Text size="sm" c="dimmed">End Date</Text>
         </Flex>
         <Flex direction="column">
