@@ -3,8 +3,9 @@ import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 import {
   ComponentData, OverviewData, ParticipantCounts, ResponseData,
 } from '../../types';
-import { Response } from '../../../parser/types';
+import { Response, StudyConfig } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
+import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
 export function convertNumberToString(number: number, type: 'date' | 'time' | 'correctness'): string {
   if (type === 'date') {
@@ -110,61 +111,7 @@ function calculateCorrectnessStats(visibleParticipants: ParticipantData[], compo
   return hasCorrectAnswer ? (correctness.correctSum / totalQuestions) * 100 : NaN;
 }
 
-export function getResponseStats(visibleParticipants: ParticipantData[]): ResponseData[] {
-  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
-  const stats: Record<string, { name: string; correctness: number; participantCount: number }> = {};
-
-  validParticipants.forEach((participant) => {
-    Object.values(participant.answers).forEach((answer) => {
-      const component = answer.componentName;
-
-      if (!stats[component]) {
-        stats[component] = {
-          name: component,
-          correctness: 0,
-          participantCount: 0,
-        };
-      }
-
-      // In‑progress answers are not included in the stats
-      if (answer.endTime === -1) {
-        return;
-      }
-
-      const stat = stats[component];
-      stat.participantCount += 1;
-
-      if (answer.correctAnswer && answer.correctAnswer.length > 0) {
-        const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
-        stat.correctness += isCorrect ? 1 : 0;
-      }
-    });
-  });
-
-  return Object.values(stats).map((stat) => {
-    const hasCorrectAnswers = validParticipants.some((participant) => Object.values(participant.answers).some(
-      (answer) => answer.componentName === stat.name
-          && answer.correctAnswer
-          && answer.correctAnswer.length > 0,
-    ));
-
-    const correctness = hasCorrectAnswers
-      ? (stat.correctness / stat.participantCount) * 100
-      : NaN;
-
-    const responseStat: ResponseData = {
-      component: stat.name,
-      type: '',
-      question: '',
-      options: '',
-      correctness,
-    };
-
-    return responseStat;
-  });
-}
-
-export function getResponseOptions(response: Response): string {
+function getResponseOptions(response: Response): string {
   // Slider
   // example: Bad (0), Mid (50), Good (100)
   if (response.type === 'slider') {
@@ -228,4 +175,75 @@ export function getComponentStats(visibleParticipants: ParticipantData[]): Compo
       correctness,
     };
   });
+}
+
+export function getResponseStats(visibleParticipants: ParticipantData[], studyConfig: StudyConfig): ResponseData[] {
+  const validParticipants = visibleParticipants.filter((p) => !p.rejected);
+  const stats: Record<string, { name: string; correctness: number; participantCount: number }> = {};
+
+  validParticipants.forEach((participant) => {
+    Object.values(participant.answers).forEach((answer) => {
+      const component = answer.componentName;
+
+      if (!stats[component]) {
+        stats[component] = {
+          name: component,
+          correctness: 0,
+          participantCount: 0,
+        };
+      }
+
+      // In‑progress answers are not included in the stats
+      if (answer.endTime === -1) {
+        return;
+      }
+
+      const stat = stats[component];
+      stat.participantCount += 1;
+
+      if (answer.correctAnswer && answer.correctAnswer.length > 0) {
+        const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
+        stat.correctness += isCorrect ? 1 : 0;
+      }
+    });
+  });
+
+  const data: ResponseData[] = [];
+
+  Object.values(stats).forEach((stat) => {
+    const hasCorrectAnswers = validParticipants.some((participant) => Object.values(participant.answers).some(
+      (answer) => answer.componentName === stat.name
+          && answer.correctAnswer
+          && answer.correctAnswer.length > 0,
+    ));
+
+    const correctness = hasCorrectAnswers
+      ? (stat.correctness / stat.participantCount) * 100
+      : NaN;
+
+    const componentConfig = studyConfig.components[stat.name];
+    if (!componentConfig) {
+      return;
+    }
+
+    const individual = studyComponentToIndividualComponent(componentConfig, studyConfig);
+    const responses = individual.response ?? [];
+    if (responses.length === 0) {
+      return;
+    }
+
+    responses.forEach((response) => {
+      const responseStat: ResponseData = {
+        component: stat.name,
+        type: response.type,
+        question: response.prompt ?? '',
+        options: getResponseOptions(response),
+        correctness,
+      };
+
+      data.push(responseStat);
+    });
+  });
+
+  return data;
 }

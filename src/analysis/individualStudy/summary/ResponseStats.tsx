@@ -3,15 +3,21 @@ import { Text, Paper, Title } from '@mantine/core';
 // eslint-disable-next-line camelcase
 import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from 'mantine-react-table';
 import { ParticipantData } from '../../../storage/types';
+import { StudyConfig } from '../../../parser/types';
 import { getResponseStats, convertNumberToString } from './utils';
 import { ResponseData } from '../../types';
 
 export function ResponseStats({
   visibleParticipants,
+  studyConfig,
 }: {
   visibleParticipants: ParticipantData[];
+  studyConfig: StudyConfig;
 }) {
-  const responseData: ResponseData[] = useMemo(() => getResponseStats(visibleParticipants), [visibleParticipants]);
+  const responseData: ResponseData[] = useMemo(
+    () => getResponseStats(visibleParticipants, studyConfig),
+    [visibleParticipants, studyConfig],
+  );
 
   // eslint-disable-next-line camelcase
   const columns = useMemo<MRT_ColumnDef<ResponseData>[]>(() => [
