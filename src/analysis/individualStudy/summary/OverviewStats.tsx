@@ -7,10 +7,15 @@ import { ParticipantData } from '../../../storage/types';
 
 export function OverviewStats({
   visibleParticipants,
+  componentName,
 }: {
   visibleParticipants: ParticipantData[];
+  componentName?: string;
 }) {
-  const overviewData = useMemo(() => getOverviewStats(visibleParticipants), [visibleParticipants]);
+  const overviewData = useMemo(
+    () => getOverviewStats(visibleParticipants, componentName),
+    [visibleParticipants, componentName],
+  );
 
   return (
     <Paper shadow="sm" p="md" withBorder>

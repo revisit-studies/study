@@ -9,7 +9,6 @@ import { TrialVisualization } from './TrialVisualization';
 import { ComponentBlockWithOrderPath, StepsPanel } from '../../../components/interface/StepsPanel';
 import { addPathToComponentBlock } from '../../../utils/getSequenceFlatMap';
 import { OverviewStats } from '../summary/OverviewStats';
-import { filterParticipantsByComponent } from '../summary/utils';
 
 export function StatsView(
   {
@@ -29,11 +28,11 @@ export function StatsView(
 
   const { trialId } = useParams();
 
-  const filteredParticipants = useMemo(() => filterParticipantsByComponent(visibleParticipants, trialId), [visibleParticipants, trialId]);
-
   return (
     <>
-      {trialId && trialId !== 'end' && <OverviewStats visibleParticipants={filteredParticipants} />}
+      {trialId && trialId !== 'end' && (
+        <OverviewStats visibleParticipants={visibleParticipants} componentName={trialId} />
+      )}
       <Paper shadow="sm" p="md" mt="md" withBorder>
         {
         (visibleParticipants.length === 0)
