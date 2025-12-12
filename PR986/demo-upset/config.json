@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Upset plots",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-02-20",
+    "description": "A demo of the Upset component using @visdesignlab/upset2-react as a React component.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false
+  },
+  "components": {
+    "upset": {
+      "type": "react-component",
+      "path": "demo-upset/assets/Upset.tsx",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "upset"
+    ]
+  }
+}
