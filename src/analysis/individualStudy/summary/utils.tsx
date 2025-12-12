@@ -40,6 +40,7 @@ function calculateDateStats(visibleParticipants: ParticipantData[], componentNam
   const filteredParticipants = filterParticipants(visibleParticipants, componentName).filter((p) => !p.rejected);
   const answers = filteredParticipants
     .flatMap((participant) => Object.values(participant.answers))
+    .filter((answer) => answer.endTime !== -1)
     .sort((a, b) => a.startTime - b.startTime);
 
   if (!answers.length) {
