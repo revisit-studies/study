@@ -32,12 +32,12 @@ export function NextButton({
   const nextButtonEnableTime = useMemo(() => config?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0, [config, studyConfig]);
 
   const [timer, setTimer] = useState<number | undefined>(undefined);
-  // Start a timer on first render, update timer every 100ms
+  // Use Date.now() to keep time even if tab is hidden
   useEffect(() => {
-    let time = 0;
+    const start = Date.now();
+    setTimer(0);
     const interval = setInterval(() => {
-      time += 100;
-      setTimer(time);
+      setTimer(Date.now() - start);
     }, 100);
     return () => {
       clearInterval(interval);
