@@ -75,7 +75,7 @@ export function SummaryView({ visibleParticipants, studyConfig }: {
 
   return (
     <Stack gap="md">
-      <OverviewStats overviewData={overviewData} mismatchDetails={null} />
+      <OverviewStats overviewData={overviewData} mismatchDetails={null} visibleParticipants={visibleParticipants} />
 
       <Group align="flex-start" gap="md" grow>
         <ComponentStats visibleParticipants={visibleParticipants} />

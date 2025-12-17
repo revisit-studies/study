@@ -19,7 +19,6 @@ export function getCleanedDuration(answer: { startTime: number; endTime: number;
     }
     i += 1;
   }
-
   const cleanedDuration = duration ? duration - timeNavigatedAway : undefined;
 
   // If the cleaned duration is negative, return -1

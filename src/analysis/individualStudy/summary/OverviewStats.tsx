@@ -2,11 +2,15 @@ import {
   Flex, Paper, Text, Title, Tooltip,
 } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
+import { useMemo } from 'react';
+import { ParticipantData } from '../../../storage/types';
 import { OverviewData } from '../../types';
+import { hasNegativeCleanTime } from './utils';
 
 export function OverviewStats({
   overviewData,
   mismatchDetails,
+  visibleParticipants,
 }: {
   overviewData: OverviewData | null;
   mismatchDetails?: {
@@ -14,7 +18,12 @@ export function OverviewStats({
     inProgress: { current: number; calculated: number };
     rejected: { current: number; calculated: number };
   } | null;
+  visibleParticipants: ParticipantData[];
 }) {
+  const { hasExcluded, excludedCount } = useMemo(
+    () => hasNegativeCleanTime(visibleParticipants),
+    [visibleParticipants],
+  );
   const hasMismatch = (type: 'completed' | 'inProgress' | 'rejected') => {
     if (!mismatchDetails) return false;
     const details = mismatchDetails[type];
@@ -58,7 +67,6 @@ export function OverviewStats({
           </div>
           <div>
             <Flex align="center" gap="xs">
-
               {hasMismatch('rejected') && mismatchDetails && (
                 <Tooltip label={`Calculated: ${mismatchDetails.rejected.calculated}, Current: ${mismatchDetails.rejected.current}`}>
                   <IconAlertTriangle size={16} color="orange" />
@@ -83,9 +91,16 @@ export function OverviewStats({
             <Text size="sm" c="dimmed">Average Time</Text>
           </div>
           <div>
-            <Text size="xl" fw="bold">
-              {Number.isFinite(overviewData.avgCleanTime) ? `${(overviewData.avgCleanTime).toFixed(1)} s` : 'N/A'}
-            </Text>
+            <Flex align="center" gap="xs">
+              {hasExcluded && (
+                <Tooltip label={`${excludedCount} data points were excluded from cleaned time.`}>
+                  <IconAlertTriangle size={16} color="orange" />
+                </Tooltip>
+              )}
+              <Text size="xl" fw="bold">
+                {Number.isFinite(overviewData.avgCleanTime) ? `${(overviewData.avgCleanTime).toFixed(1)} s` : 'N/A'}
+              </Text>
+            </Flex>
             <Text size="sm" c="dimmed">Average Clean Time</Text>
           </div>
           <div>
