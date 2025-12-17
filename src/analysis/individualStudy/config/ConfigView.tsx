@@ -1,7 +1,8 @@
 /* eslint-disable react/no-unstable-nested-components */
 import {
-  Button, Code, Flex, Modal, Space, Text,
+  Button, Flex, Modal, Space, Text, Tooltip,
 } from '@mantine/core';
+import { IconInfoCircle, IconDownload, IconEye } from '@tabler/icons-react';
 import {
   JSX, useCallback, useEffect, useMemo, useState,
 } from 'react';
@@ -9,7 +10,7 @@ import { useParams } from 'react-router';
 import {
   MantineReactTable, MRT_Cell as MrtCell, MRT_ColumnDef as MrtColumnDef, MRT_RowSelectionState as MrtRowSelectionState, useMantineReactTable,
 } from 'mantine-react-table';
-import { IconDownload, IconEye } from '@tabler/icons-react';
+
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { defaultStyle } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { ParticipantData } from '../../../storage/types';
@@ -145,6 +146,14 @@ export function ConfigView({
       accessorKey: 'version',
       header: 'Version',
       size: 70,
+      Cell: ({ row }: { row: { original: ConfigInfo } }) => (
+        <Flex align="center" gap="xs">
+          <Text>{row.original.version}</Text>
+          <Tooltip label={row.original.hash}>
+            <IconInfoCircle size={16} />
+          </Tooltip>
+        </Flex>
+      ),
     },
     {
       accessorKey: 'date',
@@ -155,14 +164,6 @@ export function ConfigView({
       accessorKey: 'timeFrame',
       header: 'Time Frame',
       size: 150,
-    },
-    {
-      accessorKey: 'hash',
-      header: 'Hash',
-      size: 200,
-      Cell: ({ cell }: { cell: MrtCell<ConfigInfo, string> }) => (
-        <Code>{cell.getValue()}</Code>
-      ),
     },
     {
       accessorKey: 'participantCount',
