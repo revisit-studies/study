@@ -93,7 +93,7 @@ export function OverviewStats({
           <div>
             <Flex align="center" gap="xs">
               {hasExcluded && (
-                <Tooltip label={`${excludedCount} data points were excluded from cleaned time.`}>
+                <Tooltip label={`${excludedCount} data points were excluded from cleaned time`}>
                   <IconAlertTriangle size={16} color="orange" />
                 </Tooltip>
               )}
