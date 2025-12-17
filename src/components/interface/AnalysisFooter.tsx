@@ -1,6 +1,6 @@
-import { useParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useAsync } from '../../store/hooks/useAsync';
 
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -9,9 +9,9 @@ import { ThinkAloudFooter } from '../../analysis/individualStudy/thinkAloud/Thin
 import { useCurrentIdentifier } from '../../routes/utils';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
 
-function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
+async function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
-    return storageEngine.getAllParticipantIds();
+    return (await storageEngine.getAllParticipantIds()).filter((p) => p !== undefined);
   }
   return null;
 }
@@ -26,6 +26,9 @@ export function AnalysisFooter({ setHasAudio }: {setHasAudio: (b: boolean) => vo
   const storeDispatch = useStoreDispatch();
 
   const { studyId } = useParams();
+  const [searchParams] = useSearchParams();
+
+  const currentTrial = useMemo(() => searchParams.get('currentTrial') || identifier, [identifier, searchParams]);
 
   const {
     saveAnalysisState,
@@ -35,6 +38,6 @@ export function AnalysisFooter({ setHasAudio }: {setHasAudio: (b: boolean) => vo
   const saveProvenance = useCallback((prov: any) => storeDispatch(saveAnalysisState(prov)), [storeDispatch, saveAnalysisState]);
 
   return (
-    <ThinkAloudFooter storageEngine={storageEngine} setHasAudio={setHasAudio} studyId={studyId || ''} currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={saveProvenance} />
+    <ThinkAloudFooter storageEngine={storageEngine} setHasAudio={setHasAudio} studyId={studyId || ''} currentTrial={currentTrial} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={saveProvenance} />
   );
 }
