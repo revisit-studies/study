@@ -241,6 +241,27 @@
       "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```js \"baseComponents\": { \"my-image-component\": { \"instructionLocation\": \"sidebar\", \"nextButtonLocation\": \"sidebar\", \"path\": \"<study-name>/assets/my-image.jpg\", \"response\": [   {     \"id\": \"my-image-id\",     \"options\": [\"Europe\", \"Japan\", \"USA\"],     \"prompt\": \"Your Selected Answer:\",     \"type\": \"dropdown\"   } ], \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```js \"components\": { \"q1\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with largest GDP\", \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with lowest GDP\", \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with highest exports of Wheat\", \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
       "type": "object"
     },
+    "BrowserRules": {
+      "additionalProperties": false,
+      "description": "Rules specifying which browsers and their minimum versions the study supports.",
+      "properties": {
+        "allowed": {
+          "description": "List of browser types and their minimum version to support.",
+          "items": {
+            "$ref": "#/definitions/UserBrowser"
+          },
+          "type": "array"
+        },
+        "blockedMessage": {
+          "description": "Optional message to be displayed when browser criterias are not met.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "allowed"
+      ],
+      "type": "object"
+    },
     "ButtonsResponse": {
       "additionalProperties": false,
       "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys.\n\nExample: ```js {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
@@ -577,9 +598,53 @@
       ],
       "type": "object"
     },
+    "DeviceRules": {
+      "additionalProperties": false,
+      "description": "Rules specifying which device types the study supports.",
+      "properties": {
+        "allowed": {
+          "description": "List of device types to support.",
+          "items": {
+            "$ref": "#/definitions/UserDevice"
+          },
+          "type": "array"
+        },
+        "blockedMessage": {
+          "description": "Optional message to be displayed when device criterias are not met.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "allowed"
+      ],
+      "type": "object"
+    },
+    "DisplayRules": {
+      "additionalProperties": false,
+      "description": "Rules specifying which minimum screen dimensions for the study.",
+      "properties": {
+        "minHeight": {
+          "description": "The minimum screen width size for the study",
+          "type": "number"
+        },
+        "minWidth": {
+          "description": "The minimum screen height size for the study",
+          "type": "number"
+        }
+      },
+      "required": [
+        "minHeight",
+        "minWidth"
+      ],
+      "type": "object"
+    },
     "DividerResponse": {
       "additionalProperties": false,
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "not": {}
         },
@@ -1234,6 +1299,27 @@
       ],
       "type": "object"
     },
+    "InputRules": {
+      "additionalProperties": false,
+      "description": "Rules specifying which input methods the study supports.",
+      "properties": {
+        "allowed": {
+          "description": "List of inputs to support.",
+          "items": {
+            "$ref": "#/definitions/UserInput"
+          },
+          "type": "array"
+        },
+        "blockedMessage": {
+          "description": "Optional message to be displayed when input criterias are not met.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "allowed"
+      ],
+      "type": "object"
+    },
     "InterruptionBlock": {
       "anyOf": [
         {
@@ -1247,7 +1333,7 @@
     },
     "LikertResponse": {
       "additionalProperties": false,
-      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"numItems\": 5, \"start\": 1, \"spacing\": 1 } ```",
+      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"labelLocation\": \"inline\", \"numItems\": 5, \"start\": 1, \"spacing\": 1 } ```",
       "properties": {
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
@@ -1263,6 +1349,15 @@
         },
         "infoText": {
           "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "labelLocation": {
+          "description": "The location of the labels. Defaults to inline.",
+          "enum": [
+            "above",
+            "inline",
+            "below"
+          ],
           "type": "string"
         },
         "leftLabel": {
@@ -1947,7 +2042,7 @@
     },
     "RadioResponse": {
       "additionalProperties": false,
-      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [\"Option 1\", \"Option 2\"] } ```",
+      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [\"Option 1\", \"Option 2, Option 3\"], \"optionOrder\": \"random\", \"leftLabel\": \"Left\", \"rightLabel\": \"Right\", \"labelLocation\": \"inline\", \"horizontal\": true, \"withOther\": true } ```",
       "properties": {
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
@@ -1967,6 +2062,15 @@
         },
         "infoText": {
           "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "labelLocation": {
+          "description": "The location of the labels. This only works when horizontal is true. Defaults to inline.",
+          "enum": [
+            "above",
+            "inline",
+            "below"
+          ],
           "type": "string"
         },
         "leftLabel": {
@@ -2778,6 +2882,10 @@
           "$ref": "#/definitions/StudyMetadata",
           "description": "The metadata for the study. This is used to identify the study and version in the data file."
         },
+        "studyRules": {
+          "$ref": "#/definitions/StudyRules",
+          "description": "The study rules for the study. This is used to configure study constraints such as browsers, device sizes, etc."
+        },
         "uiConfig": {
           "$ref": "#/definitions/UIConfig",
           "description": "The UI configuration for the study. This is used to configure the UI of the app."
@@ -2835,6 +2943,29 @@
         "description",
         "organizations"
       ],
+      "type": "object"
+    },
+    "StudyRules": {
+      "additionalProperties": false,
+      "description": "The StudyRules are used to define a study's constraints to determine whether a participant can take the study. If the criteria are not met, a warning message will be displayed. Below is an example of a StudyRules entry in your study configuration file:\n\n```js { \"studyRules\": {  \"display\": {    \"minHeight\": 400,    \"minWidth\": 800  },  \"browsers\": {    \"allowed\": [      {        \"name\": \"chrome\",        \"minVersion\": 100      },      {        \"name\": \"firefox\",        \"minVersion\": 100      },      {        \"name\": \"safari\",        \"minVersion\": 10      }    ],    \"blockedMessage\": \"This study can only run in chrome, firefox, or safari. (<-- if blockedMesage is not set, a default message is displayed)\"  },  \"devices\": {    \"allowed\": [\"tablet\", \"desktop\", \"mobile\"],    \"blockedMessage\": \"... (<-- if blockedMesage is not set, a default message is displayed)\"  },  \"inputs\": {    \"allowed\": [\"touch\", \"mouse\"],    \"blockedMessage\": \"... (<-- if blockedMesage is not set, a default message is displayed)\"  } } } ```",
+      "properties": {
+        "browsers": {
+          "$ref": "#/definitions/BrowserRules",
+          "description": "Browser constraints"
+        },
+        "devices": {
+          "$ref": "#/definitions/DeviceRules",
+          "description": "Browser constraints"
+        },
+        "display": {
+          "$ref": "#/definitions/DisplayRules",
+          "description": "Display size constraints"
+        },
+        "inputs": {
+          "$ref": "#/definitions/InputRules",
+          "description": "Input constraints"
+        }
+      },
       "type": "object"
     },
     "Styles": {
@@ -3102,14 +3233,6 @@
           "description": "The path to the logo image. This is displayed on the landing page and the header.",
           "type": "string"
         },
-        "minHeightSize": {
-          "description": "The minimum screen height size for the study",
-          "type": "number"
-        },
-        "minWidthSize": {
-          "description": "The minimum screen width size for the study",
-          "type": "number"
-        },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled.",
           "type": "number"
@@ -3214,6 +3337,39 @@
         "withSidebar"
       ],
       "type": "object"
+    },
+    "UserBrowser": {
+      "additionalProperties": false,
+      "description": "UserBrowser is used to define a mininum browser requirement for the study to run.",
+      "properties": {
+        "minVersion": {
+          "description": "Minimum version of the browser to support.",
+          "type": "number"
+        },
+        "name": {
+          "description": "Name of the browser. e.g. chrome, firefox, safari.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "UserDevice": {
+      "enum": [
+        "desktop",
+        "tablet",
+        "mobile"
+      ],
+      "type": "string"
+    },
+    "UserInput": {
+      "enum": [
+        "mouse",
+        "touch"
+      ],
+      "type": "string"
     },
     "VegaComponent": {
       "anyOf": [

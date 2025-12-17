@@ -19,6 +19,7 @@ import { TextEditor } from './TextEditor';
 import { ThinkAloudFooter } from './ThinkAloudFooter';
 import { useEvent } from '../../../store/hooks/useEvent';
 import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
+import { ReplayContext, useReplay } from '../../../store/hooks/useReplay';
 
 async function getTranscript(storageEngine: FirebaseStorageEngine, partId: string | undefined, trialName: string | undefined, authEmail: string | null | undefined) {
   if (storageEngine && partId && trialName && authEmail) {
@@ -71,6 +72,8 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
   const { value: participant } = useAsync(getParticipantData, [participantId, storageEngine]);
   const { studyId } = useParams();
 
+  const replay = useReplay();
+
   const [hasAudio, setHasAudio] = useState<boolean>();
 
   const [ref, { width }] = useResizeObserver();
@@ -118,6 +121,11 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
 
       const timeInSeconds = Math.abs(playTime - startTime) / 1000;
 
+      if (!rawTranscript.results[tempCurrentShownTranscription]) {
+        setCurrentShownTranscription(0);
+        return;
+      }
+
       if (timeInSeconds > (rawTranscript.results[tempCurrentShownTranscription].resultEndTime as number)) {
         while (timeInSeconds > (rawTranscript.results[tempCurrentShownTranscription].resultEndTime as number)) {
           tempCurrentShownTranscription += 1;
@@ -154,7 +162,6 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
 
   const changeLine = useCallback((focusedLine: number) => {
     const currentLine = editedTranscript[focusedLine].transcriptMappingStart;
-
     setJumpedToLine(currentLine);
   }, [editedTranscript]);
 
@@ -164,20 +171,23 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
   }, [participantId, currentTrial]);
 
   return (
-    <Group wrap="nowrap" gap={25}>
-      <Stack ref={ref} style={{ width: '100%' }} gap={10}>
+    <ReplayContext.Provider value={replay}>
 
-        {!participantId || !currentTrial ? <Center><Text c="dimmed" size="24">Select a Participant and Trial to Analyze</Text></Center>
-          : !hasAudio || (rawTranscriptStatus === 'success' && rawTranscript === null) ? <Center><Text c="dimmed" size="24">No transcripts found for this task</Text></Center> : (
+      <Group wrap="nowrap" gap={25}>
+        <Stack ref={ref} style={{ width: '100%' }} gap={10}>
 
-            <Stack>
-              <TextEditor onClickLine={changeLine} transcriptList={editedTranscript} setTranscriptList={setEditedTranscript} currentShownTranscription={currentShownTranscription} />
-            </Stack>
-          )}
+          {!participantId || !currentTrial ? <Center><Text c="dimmed" size="24">Select a Participant and Trial to Analyze</Text></Center>
+            : !hasAudio || (rawTranscriptStatus === 'success' && rawTranscript === null) ? <Center><Text c="dimmed" size="24">No transcripts found for this task</Text></Center> : (
 
-        <ThinkAloudFooter setHasAudio={setHasAudio} saveProvenance={() => null} studyId={studyId || ''} jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} storageEngine={storageEngine} />
-      </Stack>
+              <Stack>
+                <TextEditor onClickLine={changeLine} transcriptList={editedTranscript} setTranscriptList={setEditedTranscript} currentShownTranscription={currentShownTranscription} />
+              </Stack>
+            )}
 
-    </Group>
+          <ThinkAloudFooter key={`${participantId}-${currentTrial}`} setHasAudio={setHasAudio} saveProvenance={() => null} studyId={studyId || ''} jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} storageEngine={storageEngine} />
+        </Stack>
+
+      </Group>
+    </ReplayContext.Provider>
   );
 }
