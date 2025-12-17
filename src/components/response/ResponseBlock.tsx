@@ -256,19 +256,10 @@ export function ResponseBlock({
             message = `You didn't answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;
 
             // If the user has failed the training, wait 5 seconds and redirect to a fail page
-            if (!allowFailedTraining && storageEngine) {
-              storageEngine.rejectCurrentParticipant('Failed training')
-                .then(() => {
-                  setTimeout(() => {
-                    navigate('./../__trainingFailed');
-                  }, 5000);
-                })
-                .catch(() => {
-                  console.error('Failed to reject participant who failed training');
-                  setTimeout(() => {
-                    navigate('./../__trainingFailed');
-                  }, 5000);
-                });
+            if (!allowFailedTraining) {
+              setTimeout(() => {
+                navigate('./../__trainingFailed');
+              }, 5000);
             }
           } else if (trainingAttempts - newAttemptsUsed === 1) {
             message = 'Please try again. You have 1 attempt left.';
