@@ -1,0 +1,52 @@
+$schema: "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json"
+studyMetadata:
+  title: "HTML stimulus loaded from YAML config"
+  version: "pilot"
+  authors:
+    - "The reVISit Team"
+  date: "2023-04-14"
+  description: "A copy of the demo-html study, but using a YAML config file instead of JSON."
+  organizations:
+    - "University of Utah"
+    - "WPI"
+    - "University of Toronto"
+uiConfig:
+  contactEmail: "contact@revisit.dev"
+  helpTextPath: "demo-yaml/assets/help.md"
+  logoPath: "revisitAssets/revisitLogoSquare.svg"
+  withProgressBar: true
+  autoDownloadStudy: false
+  withSidebar: true
+  windowEventDebounceTime: 200
+components:
+  introduction:
+    type: "markdown"
+    path: "demo-yaml/assets/introduction.md"
+    response: []
+  barChart:
+    type: "website"
+    nextButtonLocation: "sidebar"
+    meta:
+      difficulty: "hard"
+    description: "Question that asks users to count the number of bars that have a value greater than 1."
+    instruction: "How many bars have a value greater than 1?"
+    path: "demo-yaml/assets/bar-chart.html"
+    response:
+      - id: "html-response"
+        prompt: "Answer:"
+        location: "sidebar"
+        type: "numerical"
+        placeholder: "0-7"
+        min: 0
+        max: 7
+  external_website:
+    type: "website"
+    path: "https://www.revisit.dev"
+    response: []
+    previousButton: true
+sequence:
+  order: "fixed"
+  components:
+    - "introduction"
+    - "barChart"
+    - "external_website"
