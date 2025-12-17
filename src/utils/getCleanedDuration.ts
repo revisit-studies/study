@@ -20,9 +20,8 @@ export function getCleanedDuration(answer: { startTime: number; endTime: number;
     i += 1;
   }
 
-  // If duration is undefined (component not completed), return undefined
-  if (duration === undefined) return undefined;
+  const cleanedDuration = duration ? duration - timeNavigatedAway : undefined;
 
-  const cleanedDuration = duration - timeNavigatedAway;
-  return cleanedDuration;
+  // If the cleaned duration is negative, return -1
+  return cleanedDuration && cleanedDuration >= 0 ? cleanedDuration : -1;
 }
