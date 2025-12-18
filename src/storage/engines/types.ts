@@ -830,6 +830,12 @@ export abstract class StorageEngine {
     if (!this.currentParticipantId || this.participantData === undefined) {
       throw new Error('Participant not initialized');
     }
+
+    // Don't save further answers if participant is rejected
+    if (this.participantData.rejected) {
+      return;
+    }
+
     // Update the local copy of the participant data
     this.participantData = {
       ...this.participantData,

@@ -1,15 +1,18 @@
 import { Text } from '@mantine/core';
+import { useEffect } from 'react';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 
 export function TrainingFailed() {
   const { storageEngine } = useStorageEngine();
 
-  if (storageEngine) {
-    storageEngine.rejectCurrentParticipant('Failed training')
-      .catch(() => {
-        console.error('Failed to reject participant who failed training');
-      });
-  }
+  useEffect(() => {
+    if (storageEngine) {
+      storageEngine.rejectCurrentParticipant('Failed training')
+        .catch(() => {
+          console.error('Failed to reject participant who failed training');
+        });
+    }
+  }, [storageEngine]);
 
   return (
     <Text>
