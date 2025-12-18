@@ -1,0 +1,486 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Interactive Selections in Scatterplots",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-11-03",
+    "description": "A study comparing different selection mechanisms on scatterplots.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "cnobre@cs.toronto.edu",
+    "helpTextPath": "example-brush-interactions/assets/tutorial.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "studyEndMsg": "Thank you for completing the study. You may click this link and return to Prolific: [https://app.prolific.com/submissions/complete?cc=CE96X7ST&PROLIFIC_ID={PARTICIPANT_ID}](https://app.prolific.com/submissions/complete?cc=CE96X7ST&PROLIFIC_ID={PARTICIPANT_ID})",
+    "urlParticipantIdParam": "PROLIFIC_PID",
+    "participantNameField": "introduction.prolificId"
+  },
+  "baseComponents": {
+    "scatterPlot": {
+      "description": "A scatterplot and accompanying bar chart.",
+      "type": "react-component",
+      "path": "example-brush-interactions/assets/BrushPlot.tsx",
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar",
+      "response": []
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "example-brush-interactions/assets/introduction.md",
+      "response": [
+        {
+          "id": "prolificId",
+          "prompt": "Please enter your Prolific ID",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Prolific ID",
+          "paramCapture": "PROLIFIC_PID"
+        }
+      ]
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "example-brush-interactions/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "signature",
+          "prompt": "Your signature",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Please provide your signature"
+        },
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "requiredValue": "Accept",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
+    "tutorial": {
+      "type": "markdown",
+      "path": "example-brush-interactions/assets/tutorial.md",
+      "response": []
+    },
+    "rectangleBrush_q1": {
+      "baseComponent": "scatterPlot",
+      "instruction": "How many cars from Japan have a Miles Per Gallon value greater than 35?",
+      "parameters": {
+        "dataset": "cars",
+        "x": "Miles per Gallon",
+        "y": "Weight (lbs)",
+        "category": "Origin",
+        "ids": "id",
+        "brushType": "Rectangular Selection"
+      },
+      "response": [
+        {
+          "id": "response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "max": 100,
+          "min": 0
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "response",
+          "answer": 17
+        }
+      ]
+    },
+    "rectangleBrush_q2": {
+      "baseComponent": "scatterPlot",
+      "instruction": "Consider only cars that have a miles per gallon value greater than 30 AND weigh more than 2000 pounds. Which country or region produces the most and the least of these cars?",
+      "parameters": {
+        "dataset": "cars",
+        "x": "Miles per Gallon",
+        "y": "Weight (lbs)",
+        "category": "Origin",
+        "ids": "id",
+        "brushType": "Rectangular Selection"
+      },
+      "response": [
+        {
+          "id": "max-response",
+          "prompt": "Most Cars:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "Europe",
+            "Japan",
+            "USA"
+          ]
+        },
+        {
+          "id": "min-response",
+          "prompt": "Least Cars:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "Europe",
+            "Japan",
+            "USA"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "max-response",
+          "answer": "Japan"
+        },
+        {
+          "id": "min-response",
+          "answer": "Europe"
+        }
+      ]
+    },
+    "axisBrush_q1": {
+      "baseComponent": "scatterPlot",
+      "instruction": "How many days from September to the end of the year is it sunny?",
+      "parameters": {
+        "dataType": "date",
+        "dataset": "weather",
+        "x": "Date",
+        "y": "Maximum Temperature",
+        "category": "Weather",
+        "ids": "id",
+        "brushType": "Axis Selection"
+      },
+      "response": [
+        {
+          "id": "response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "max": 100,
+          "min": 0
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "response",
+          "answer": 32
+        }
+      ]
+    },
+    "axisBrush_q2": {
+      "baseComponent": "scatterPlot",
+      "instruction": "Consider only days between June and October with temperatures above 20 degrees. What are the most and least common weather types during those days?",
+      "parameters": {
+        "dataType": "date",
+        "dataset": "weather",
+        "x": "Date",
+        "y": "Maximum Temperature",
+        "category": "Weather",
+        "ids": "id",
+        "brushType": "Axis Selection"
+      },
+      "response": [
+        {
+          "id": "max-response",
+          "prompt": "Most common Weather:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "drizzle",
+            "fog",
+            "rain",
+            "sun"
+          ]
+        },
+        {
+          "id": "min-response",
+          "prompt": "Least common Weather:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "drizzle",
+            "fog",
+            "rain",
+            "sun"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "max-response",
+          "answer": "sun"
+        },
+        {
+          "id": "min-response",
+          "answer": "drizzle"
+        }
+      ]
+    },
+    "sliderBrush_q1": {
+      "baseComponent": "scatterPlot",
+      "instruction": "How many Gentoo penguins weigh less than 4.5k grams (g)?",
+      "parameters": {
+        "dataset": "penguin",
+        "x": "Body Mass (g)",
+        "y": "Flipper Length (mm)",
+        "category": "Species",
+        "ids": "id",
+        "brushType": "Slider Selection"
+      },
+      "response": [
+        {
+          "id": "response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "max": 100,
+          "min": 0
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "response",
+          "answer": 15
+        }
+      ]
+    },
+    "sliderBrush_q2": {
+      "baseComponent": "scatterPlot",
+      "instruction": "Consider only penguins that weigh between 4k and 5k grams (g) and have flipper lengths between 200 and 215mm. What is the most and least common type of penguin in this subset?",
+      "parameters": {
+        "dataset": "penguin",
+        "x": "Body Mass (g)",
+        "y": "Flipper Length (mm)",
+        "category": "Species",
+        "ids": "id",
+        "brushType": "Slider Selection"
+      },
+      "response": [
+        {
+          "id": "max-response",
+          "prompt": "Most common Penguin:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "Adelie",
+            "Chinstrap",
+            "Gentoo"
+          ]
+        },
+        {
+          "id": "min-response",
+          "prompt": "Least common Penguin:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "Adelie",
+            "Chinstrap",
+            "Gentoo"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "max-response",
+          "answer": "Gentoo"
+        },
+        {
+          "id": "min-response",
+          "answer": "Adelie"
+        }
+      ]
+    },
+    "paintBrush_q1": {
+      "baseComponent": "scatterPlot",
+      "instruction": "How many Adventure Movies have a production budget value greater than 100 million?",
+      "parameters": {
+        "dataset": "movies",
+        "x": "Production Budget",
+        "y": "Gross Income",
+        "category": "Genre",
+        "ids": "id",
+        "brushType": "Paintbrush Selection"
+      },
+      "response": [
+        {
+          "id": "response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "max": 100,
+          "min": 0
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "response",
+          "answer": 28
+        }
+      ]
+    },
+    "paintBrush_q2": {
+      "baseComponent": "scatterPlot",
+      "instruction": "Consider only movies that had a production budget greater than 100 million and made less than 150  Million in Gross income. Which genres had the most and the least movies in this group of movies? ",
+      "parameters": {
+        "dataset": "movies",
+        "x": "Production Budget",
+        "y": "Gross Income",
+        "category": "Genre",
+        "ids": "id",
+        "brushType": "Paintbrush Selection"
+      },
+      "response": [
+        {
+          "id": "max-response",
+          "prompt": "Most common Genre:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "Action",
+            "Adventure",
+            "Comedy",
+            "Drama"
+          ]
+        },
+        {
+          "id": "min-response",
+          "prompt": "Least common Genre:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "Action",
+            "Adventure",
+            "Comedy",
+            "Drama"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "max-response",
+          "answer": "Action"
+        },
+        {
+          "id": "min-response",
+          "answer": "Comedy"
+        }
+      ]
+    },
+    "post-study-survey": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q1",
+          "prompt": "How useful did you find the rectangular selection method? ",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "q2",
+          "prompt": "How useful did you find the axis-aligned selection? ",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "q3",
+          "prompt": "How useful did you find the paint-brush selection?",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "q4",
+          "prompt": "How useful did you find the slider selection?",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "q5",
+          "prompt": "Please provide any comments about the different methods",
+          "required": false,
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your comments here"
+        }
+      ]
+    },
+    "survey": {
+      "type": "markdown",
+      "path": "example-VLAT-mini-randomized/assets/survey.md",
+      "response": [
+        {
+          "id": "surveyExperience",
+          "prompt": "Did you experience any problems with our tool?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Enter your answer here."
+        },
+        {
+          "id": "surveyRenderIssues",
+          "prompt": "Did anything not render or display properly?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Enter your answer here"
+        },
+        {
+          "id": "surveyOtherIssues",
+          "prompt": "Any other issues or anything you would like to tell us?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Enter your answer here"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "consent",
+      "tutorial",
+      {
+        "id": "studyContent",
+        "order": "random",
+        "components": [
+          "paintBrush_q1",
+          "paintBrush_q2",
+          "rectangleBrush_q1",
+          "rectangleBrush_q2",
+          "axisBrush_q1",
+          "axisBrush_q2",
+          "sliderBrush_q1",
+          "sliderBrush_q2"
+        ]
+      },
+      "post-study-survey",
+      "survey"
+    ]
+  }
+}

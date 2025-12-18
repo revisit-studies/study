@@ -1,0 +1,77 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Dynamic React Stimuli and Provenance Tracking",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-06-15",
+    "description": "A demo of using dynamic React stimuli and using provenance tracking with the trrack library for data collection.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-click-accuracy-test/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true
+  },
+  "baseComponents": {
+    "trial": {
+      "description": "try to click on the center of the moving dot",
+      "instruction": "Click on the moving dot",
+      "type": "react-component",
+      "path": "demo-click-accuracy-test/assets/ClickAccuracyTest.tsx",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "accuracy",
+          "prompt": "Your click distance to circle center",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-click-accuracy-test/assets/introduction.md",
+      "response": []
+    },
+    "trial1": {
+      "baseComponent": "trial",
+      "meta": {
+        "nr-dots": 1
+      },
+      "parameters": {
+        "speed": 100,
+        "taskid": "accuracy"
+      }
+    },
+    "trial2": {
+      "baseComponent": "trial",
+      "meta": {
+        "nr-dots": 1
+      },
+      "parameters": {
+        "speed": 200,
+        "taskid": "accuracy"
+      }
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "trial1",
+      "trial2"
+    ]
+  }
+}

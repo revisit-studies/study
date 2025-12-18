@@ -1,0 +1,93 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Visualization understanding questionnaire",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-06-14",
+    "description": "A replication of the mini VLAT questionnaire by Pandey et al, CGF 2023 (doi:10.1111:cgf.14809), using image stimuli. Demonstrates randomization of questions.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "example-VLAT-mini-randomized/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "studyEndMsg": "Thank you for completing the study. You may click this link and return to Prolific: [https://app.prolific.com/submissions/complete?cc=CE96X7ST&PROLIFIC_ID={PARTICIPANT_ID}](https://app.prolific.com/submissions/complete?cc=CE96X7ST&PROLIFIC_ID={PARTICIPANT_ID})",
+    "urlParticipantIdParam": "PROLIFIC_ID"
+  },
+  "importedLibraries": ["mini-vlat"],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "example-VLAT-mini-randomized/assets/introduction.md",
+      "response": [
+        {
+          "id": "prolificId",
+          "prompt": "Please enter your Prolific ID",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Prolific ID",
+          "paramCapture": "PROLIFIC_ID"
+        }
+      ]
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "example-VLAT-mini-randomized/assets/consent.md",
+      "response": [
+        {
+          "id": "userInitials",
+          "prompt": "Please type your initials below. These are not used in our analyses, but required for the consent process.",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Your Initials"
+        }
+      ]
+    },
+    "survey": {
+      "type": "markdown",
+      "path": "example-VLAT-mini-randomized/assets/survey.md",
+      "response": [
+        {
+          "id": "surveyExperience",
+          "prompt": "Did you experience any problems with our tool?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Enter your answer here."
+        },
+        {
+          "id": "surveyRenderIssues",
+          "prompt": "Did anything not render or display properly?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Enter your answer here"
+        },
+        {
+          "id": "surveyOtherIssues",
+          "prompt": "Any other issues or anything you would like to tell us?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Enter your answer here"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "consent",
+      "$mini-vlat.se.full",
+      "survey"
+    ]
+  }
+}
