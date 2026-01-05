@@ -134,6 +134,21 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
           params: { action: 'add the base component to the baseComponents object' },
         });
       }
+
+      // Verify sidebar is enabled if component uses sidebar locations
+      if (!studyConfig.uiConfig.withSidebar && !isInheritedComponent(component)) {
+        const isUsingSidebar = ('instructionLocation' in component && component.instructionLocation === 'sidebar')
+          || ('nextButtonLocation' in component && component.nextButtonLocation === 'sidebar')
+          || ('response' in component && component.response?.some((r) => 'location' in r && r.location === 'sidebar'));
+
+        if (isUsingSidebar) {
+          errors.push({
+            message: `Component \`${componentName}\` uses sidebar locations but sidebar is disabled in uiConfig`,
+            instancePath: '/uiConfig',
+            params: { action: 'set withSidebar to true in uiConfig or move location to belowStimulus or aboveStimulus' },
+          });
+        }
+      }
     });
 
   const usedComponents = getSequenceFlatMapWithInterruptions(studyConfig.sequence);
