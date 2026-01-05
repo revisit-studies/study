@@ -1,39 +1,22 @@
 /* eslint-disable react/no-unstable-nested-components */
 import {
-  Button, Flex, Modal, Space, Text, Tooltip,
+  Button, Flex, Space, Text, Tooltip, Group, Modal, ScrollArea, Code,
 } from '@mantine/core';
-import { IconInfoCircle, IconDownload, IconEye } from '@tabler/icons-react';
 import {
-  JSX, useCallback, useEffect, useMemo, useState,
+  useCallback, useEffect, useMemo, useState,
 } from 'react';
 import { useParams } from 'react-router';
 import {
   MantineReactTable, MRT_Cell as MrtCell, MRT_ColumnDef as MrtColumnDef, MRT_RowSelectionState as MrtRowSelectionState, useMantineReactTable,
 } from 'mantine-react-table';
+import {
+  IconInfoCircle, IconDownload, IconEye, IconArrowsLeftRight,
+} from '@tabler/icons-react';
 
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { defaultStyle } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { ParticipantData } from '../../../storage/types';
-import { StudyConfig } from '../../../parser/types';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { downloadConfigFile, downloadConfigFilesZip } from '../../../utils/handleDownloadFiles';
-
-interface ConfigInfo {
-  version: string;
-  date: string;
-  timeFrame: string;
-  hash: string;
-  participantCount: number;
-  config: StudyConfig;
-}
-
-function formatDate(date: Date): string | JSX.Element {
-  if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
-    return <Text size="sm" c="dimmed">None</Text>;
-  }
-
-  return date.toLocaleDateString([], { hour: '2-digit', minute: '2-digit' });
-}
+import { ConfigInfo, buildConfigRows, generateDiffView } from './utils';
 
 export function ConfigView({
   visibleParticipants,
@@ -41,11 +24,13 @@ export function ConfigView({
   visibleParticipants: ParticipantData[];
 }) {
   const { studyId } = useParams();
-  const { storageEngine } = useStorageEngine();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
+  const { storageEngine } = useStorageEngine();
   const [configs, setConfigs] = useState<ConfigInfo[]>([]);
   const [viewConfig, setViewConfig] = useState<string | null>(null);
   const [modalViewConfigOpened, setModalViewConfigOpened] = useState(false);
+  const [modalCompareConfigOpened, setModalCompareConfigOpened] = useState(false);
+
   useEffect(() => {
     if (!storageEngine || !studyId) {
       setConfigs([]);
@@ -53,58 +38,25 @@ export function ConfigView({
     }
 
     const fetchConfigs = async () => {
-      const allConfigHashes = [...new Set(
-        visibleParticipants
-          .map((participant) => participant.participantConfigHash),
-      )];
-
-      const fetchedConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
-
-      const rows = Object.entries(fetchedConfigs).map(([hash, config]) => {
-        const filteredParticipants = visibleParticipants.filter((participant) => participant.participantConfigHash === hash);
-        const storedAnswers = filteredParticipants.flatMap((p) => Object.values(p.answers));
-
-        const startTime = storedAnswers.map((answer) => answer.startTime).filter((t): t is number => t !== undefined && t > 0);
-        const endTime = storedAnswers.map((answer) => answer.endTime).filter((t): t is number => t !== undefined && t > 0);
-
-        const earliestStartTime = startTime.length > 0 ? Math.min(...startTime.values()) : null;
-        const latestEndTime = endTime.length > 0 ? Math.max(...endTime.values()) : null;
-
-        const formatTimeFrame = (timestamp: number) => {
-          const formatted = formatDate(new Date(timestamp));
-          return typeof formatted === 'string' ? formatted : 'N/A';
-        };
-
-        const getTimeFrame = (): string => {
-          if (earliestStartTime && latestEndTime) {
-            return `${formatTimeFrame(earliestStartTime)} - ${formatTimeFrame(latestEndTime)}`;
-          }
-          if (earliestStartTime) {
-            return formatTimeFrame(earliestStartTime);
-          }
-          return 'N/A';
-        };
-
-        return {
-          version: config.studyMetadata?.version || '',
-          date: config.studyMetadata?.date || '',
-          timeFrame: getTimeFrame(),
-          hash,
-          participantCount: filteredParticipants.length,
-          config,
-        };
-      });
-
-      setConfigs(rows);
+      try {
+        const allConfigHashes = [...new Set(visibleParticipants.map((participant) => participant.participantConfigHash))];
+        const fetchedConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
+        const rows = buildConfigRows(fetchedConfigs, visibleParticipants);
+        setConfigs(rows);
+      } catch (error) {
+        console.error('Error fetching configs:', error);
+        setConfigs([]);
+      }
     };
 
     fetchConfigs();
   }, [visibleParticipants, storageEngine, studyId]);
 
-  const selectedConfigs = useMemo(
-    () => Object.keys(checked).filter((key) => checked[key]),
-    [checked],
-  );
+  const handleViewConfig = useCallback((hash: string) => {
+    const selectedConfig = configs.find((config) => config.hash === hash) || null;
+    setViewConfig(selectedConfig ? JSON.stringify(selectedConfig.config, null, 2) : null);
+  }, [configs]);
+
   const handleDownloadConfig = useCallback(async (hash: string) => {
     const selectedConfig = configs.find((config) => config.hash === hash);
     if (!selectedConfig || !studyId) {
@@ -119,21 +71,21 @@ export function ConfigView({
   }, [configs, studyId]);
 
   const handleDownloadConfigs = useCallback(async () => {
-    if (!studyId || selectedConfigs.length === 0) {
+    const selectedConfigHashes = Object.keys(checked).filter((key) => checked[key]);
+    if (!studyId || selectedConfigHashes.length === 0) {
       return;
     }
 
     await downloadConfigFilesZip({
       studyId,
       configs,
-      hashes: selectedConfigs,
+      hashes: selectedConfigHashes,
     });
-  }, [configs, selectedConfigs, studyId]);
+  }, [configs, checked, studyId]);
 
-  const handleViewConfig = useCallback((hash: string) => {
-    const selectedConfig = configs.find((config) => config.hash === hash) || null;
-    setViewConfig(selectedConfig ? JSON.stringify(selectedConfig.config, null, 2) : null);
-  }, [configs]);
+  const handleCompareConfigs = useCallback(() => {
+    setModalCompareConfigOpened(true);
+  }, []);
 
   const columns = useMemo<MrtColumnDef<ConfigInfo>[]>(() => [
     {
@@ -147,8 +99,19 @@ export function ConfigView({
       header: 'Version',
       size: 70,
       Cell: ({ row }: { row: { original: ConfigInfo } }) => (
+        <Text>{row.original.version}</Text>
+      ),
+    },
+    {
+      accessorKey: 'hash',
+      header: 'Hash',
+      size: 70,
+      Cell: ({ row }: { row: { original: ConfigInfo } }) => (
         <Flex align="center" gap="xs">
-          <Text>{row.original.version}</Text>
+          <Text>
+            {row.original.hash.slice(0, 6)}
+            ...
+          </Text>
           <Tooltip label={row.original.hash}>
             <IconInfoCircle size={16} />
           </Tooltip>
@@ -220,46 +183,73 @@ export function ConfigView({
     },
     enableDensityToggle: false,
     positionToolbarAlertBanner: 'none',
-    renderTopToolbarCustomActions: () => (
-      selectedConfigs.length > 0 ? (
-        <Button onClick={handleDownloadConfigs}>
-          Download Configs (
-          {selectedConfigs.length}
-          )
-        </Button>
-      ) : null
-    ),
+    renderTopToolbarCustomActions: () => {
+      const selectedConfigHashes = Object.keys(checked).filter((key) => checked[key]);
+      return (
+        <Flex>
+          {selectedConfigHashes.length > 0 && (
+            <Group>
+              <Button onClick={handleDownloadConfigs}>
+                Download Configs (
+                {selectedConfigHashes.length}
+                )
+              </Button>
+              {selectedConfigHashes.length === 2 && (
+                <Button
+                  onClick={handleCompareConfigs}
+                  leftSection={<IconArrowsLeftRight size={16} />}
+                  variant="light"
+                >
+                  Compare
+                </Button>
+              )}
+            </Group>
+          )}
+        </Flex>
+      );
+    },
   });
 
   return (
-    <>
-      {configs.length > 0 ? (
+    configs.length > 0 ? (
+      <>
         <MantineReactTable
           table={table}
         />
-      ) : (
-        <>
-          <Space h="xl" />
-          <Flex justify="center" align="center">
-            <Text>No data available</Text>
-          </Flex>
-        </>
-      )}
-      <Modal
-        opened={modalViewConfigOpened}
-        onClose={() => setModalViewConfigOpened(false)}
-        title="Config Preview"
-        size="70%"
-      >
-        {viewConfig ? (
-          <SyntaxHighlighter
-            language="json"
-            style={defaultStyle}
-          >
-            {viewConfig}
-          </SyntaxHighlighter>
-        ) : null}
-      </Modal>
-    </>
+        <Modal
+          opened={modalViewConfigOpened}
+          onClose={() => setModalViewConfigOpened(false)}
+          title="Config"
+          size="70%"
+        >
+          {viewConfig ? (
+            <Code block>
+              {viewConfig}
+            </Code>
+          ) : null}
+        </Modal>
+        <Modal
+          opened={modalCompareConfigOpened}
+          onClose={() => setModalCompareConfigOpened(false)}
+          title="Compare Configs"
+          size="95%"
+        >
+          <ScrollArea h={600}>
+            {generateDiffView(
+              Object.keys(checked).filter((key) => checked[key])
+                .map((hash) => configs.find((c) => c.hash === hash))
+                .filter((c): c is ConfigInfo => c !== undefined),
+            )}
+          </ScrollArea>
+        </Modal>
+      </>
+    ) : (
+      <>
+        <Space h="xl" />
+        <Flex justify="center" align="center">
+          <Text>No data available</Text>
+        </Flex>
+      </>
+    )
   );
 }

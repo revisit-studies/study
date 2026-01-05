@@ -247,22 +247,15 @@ export async function downloadConfigFilesZip({
   configs: Array<{ hash: string; config: StudyConfig }>;
   hashes: string[];
 }) {
-  if (!hashes.length) {
-    return;
-  }
-
   const zip = new JSZip();
 
   hashes.forEach((hash) => {
-    const matchingConfig = configs.find((config) => config.hash === hash);
-    if (!matchingConfig) {
+    const configFile = configs.find((config) => config.hash === hash);
+    if (!configFile) {
       return;
     }
 
-    zip.file(
-      `${studyId}_${hash}_config.json`,
-      JSON.stringify(matchingConfig.config, null, 2),
-    );
+    zip.file(`${studyId}_${hash}_config.json`, JSON.stringify(configFile.config, null, 2));
   });
 
   await downloadZip(zip, `${studyId}_config.zip`);

@@ -51,7 +51,7 @@ function sortByStartTime(a: ParticipantData, b: ParticipantData) {
   return bStartTimes[0] - aStartTimes[0];
 }
 
-async function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined) : Promise<Record<number, ParticipantData>> {
+async function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined): Promise<Record<number, ParticipantData>> {
   if (studyId && storageEngine) {
     await storageEngine.initializeStudyDb(studyId);
   }
@@ -128,7 +128,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const statusFiltered = [...comp, ...prog, ...rej];
 
     // Apply config filter - if "ALL" is selected, show all participants
-    const configFiltered = selectedConfigs.includes('ALL') || selectedConfigs.length === 0
+    const configFiltered = selectedConfigs.includes('ALL')
       ? statusFiltered
       : statusFiltered.filter((d) => selectedConfigs.includes(d.participantConfigHash || ''));
 
@@ -188,9 +188,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     }
   }, [studyId, storageEngine, expData]);
 
-  // Load configs when expData changes
+  // Load configs and clear selection when dependencies change or tab switches
   useEffect(() => {
     loadConfigs();
+    setSelectedParticipants([]);
   }, [loadConfigs]);
 
   // Load stages and clear selection when dependencies change or tab switches
@@ -227,11 +228,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   return (
     <>
       <AppHeader studyIds={globalConfig.configsList} />
-
       <AppShell.Main style={{ height: '100dvh' }}>
-
         <Stack ref={ref} style={{ height: '100%', maxHeight: '100dvh', overflow: 'hidden' }} justify="space-between">
-
           <Flex direction="row" align="center" justify="space-between">
             <Flex direction="row" align="center" gap="md">
               <Title order={5} mr="sm">{studyId}</Title>
@@ -376,7 +374,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {studyId && user.isAdmin ? <ManageView studyId={studyId} refresh={() => execute(studyConfig, storageEngine, studyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
               </Tabs.Panel>
             </Tabs>
-          ) : null }
+          ) : null}
         </Stack>
       </AppShell.Main>
     </>
