@@ -1,0 +1,66 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Using library imports",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "This is a test for library imports.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": false,
+    "withSidebar": true
+  },
+  "importedLibraries": [
+    "test",
+    "mini-vlat"
+  ],
+  "components": {
+    "my-test": {
+      "baseComponent": "$test.components.test-md",
+      "response": [
+        {
+          "id": "test-response",
+          "type": "shortText",
+          "prompt": "What did you think of the test?"
+        }
+      ]
+    },
+    "my-test2": {
+      "baseComponent": "$test.co.test-md",
+      "response": [
+        {
+          "id": "test-response",
+          "type": "shortText",
+          "prompt": "What did you think of the test?"
+        }
+      ]
+    },
+    "mini-vlat-treemap-modified": {
+      "baseComponent": "$mini-vlat.co.treemap",
+      "instruction": "new instruction."
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "$test.sequences.small",
+      "$test.se.long",
+      "$test.components.test-md",
+      "$test.co.test-react",
+      "my-test",
+      "my-test2",
+      "$test.components.test-inherited",
+      "mini-vlat-treemap-modified"
+    ]
+  }
+}
