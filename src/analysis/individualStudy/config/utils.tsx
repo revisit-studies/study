@@ -86,7 +86,6 @@ export function generateDiffView(configs: ConfigInfo[]): JSX.Element | null {
             participants)
           </Text>
         </Group>
-        <Text size="sm" c="dimmed">→</Text>
         <Group gap="sm">
           <Badge variant="light" color="green">{config2.version}</Badge>
           <Text size="sm" c="dimmed">
