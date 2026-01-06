@@ -22,7 +22,6 @@ import { generateInitFields, useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
 import { FormElementProvenance, StoredAnswer, ValidationStatus } from '../../store/types';
-import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
@@ -50,7 +49,6 @@ export function ResponseBlock({
   status,
   style,
 }: Props) {
-  const { storageEngine } = useStorageEngine();
   const storeDispatch = useStoreDispatch();
   const {
     updateResponseBlockValidation, saveIncorrectAnswer,
