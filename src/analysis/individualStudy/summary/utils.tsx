@@ -49,7 +49,7 @@ export function calculateTimeStats(visibleParticipants: ParticipantData[]): { av
         }
         return {
           totalTime: (answer.endTime - answer.startTime) / 1000,
-          cleanTime: cleanedDuration && cleanedDuration >= 0 ? cleanedDuration / 1000 : 0,
+          cleanTime: cleanedDuration >= 0 ? cleanedDuration / 1000 : 0,
         };
       });
     if (timeStats.length > 0) {
@@ -124,7 +124,7 @@ export function calculateComponentStats(visibleParticipants: ParticipantData[]) 
       const stat = stats[component];
       const time = (answer.endTime - answer.startTime) / 1000;
       const cleanedDuration = getCleanedDuration(answer as never);
-      const cleanTime = cleanedDuration ? cleanedDuration / 1000 : 0;
+      const cleanTime = cleanedDuration >= 0 ? cleanedDuration / 1000 : 0;
 
       stat.avgTime += time;
       stat.avgCleanTime += cleanTime;
