@@ -34,10 +34,10 @@ export function calculateDateStats(visibleParticipants: ParticipantData[]): { st
   };
 }
 
-export function calculateTimeStats(visibleParticipants: ParticipantData[]): { avgTime: number; avgCleanTime: number; excludedParticipantCount: number } {
+export function calculateTimeStats(visibleParticipants: ParticipantData[]): { avgTime: number; avgCleanTime: number; participantsWithInvalidCleanTimeCount: number } {
   // Filter out rejected participants
   const validParticipants = visibleParticipants.filter((p) => !p.rejected);
-  let excludedParticipantCount = 0;
+  let participantsWithInvalidCleanTimeCount = 0;
   const time = validParticipants.reduce((acc, participant) => {
     let hasExcludedParticipant = false;
     const timeStats = Object.values(participant.answers)
@@ -57,7 +57,7 @@ export function calculateTimeStats(visibleParticipants: ParticipantData[]): { av
       acc.totalTimeSum += timeStats.reduce((sum, t) => sum + t.totalTime, 0);
       acc.cleanTimeSum += timeStats.reduce((sum, t) => sum + t.cleanTime, 0);
       if (hasExcludedParticipant) {
-        excludedParticipantCount += 1;
+        participantsWithInvalidCleanTimeCount += 1;
       }
     }
     return acc;
@@ -66,7 +66,7 @@ export function calculateTimeStats(visibleParticipants: ParticipantData[]): { av
   return {
     avgTime: time.count > 0 ? time.totalTimeSum / time.count : NaN,
     avgCleanTime: time.count > 0 ? time.cleanTimeSum / time.count : NaN,
-    excludedParticipantCount,
+    participantsWithInvalidCleanTimeCount,
   };
 }
 
@@ -227,13 +227,9 @@ export function getResponseOptions(response: Response): string {
 }
 
 export function hasNegativeCleanTime(visibleParticipants: ParticipantData[]): { hasExcluded: boolean; excludedCount: number } {
-  const excludedCount = visibleParticipants.filter((participant) => {
-    const cleanedDuration = getCleanedDuration(participant);
-    return typeof cleanedDuration === 'number' && cleanedDuration < 0;
-  }).length;
-
+  const { participantsWithInvalidCleanTimeCount } = calculateTimeStats(visibleParticipants);
   return {
-    hasExcluded: excludedCount > 0,
-    excludedCount,
+    hasExcluded: participantsWithInvalidCleanTimeCount > 0,
+    excludedCount: participantsWithInvalidCleanTimeCount,
   };
 }
