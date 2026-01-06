@@ -15,6 +15,8 @@ export function OverviewStats({
     rejected: { current: number; calculated: number };
   } | null;
 }) {
+  const hasExcluded = overviewData && overviewData.participantsWithInvalidCleanTimeCount > 0;
+
   const hasMismatch = (type: 'completed' | 'inProgress' | 'rejected') => {
     if (!mismatchDetails) return false;
     const details = mismatchDetails[type];
@@ -58,7 +60,6 @@ export function OverviewStats({
           </div>
           <div>
             <Flex align="center" gap="xs">
-
               {hasMismatch('rejected') && mismatchDetails && (
                 <Tooltip label={`Calculated: ${mismatchDetails.rejected.calculated}, Current: ${mismatchDetails.rejected.current}`}>
                   <IconAlertTriangle size={16} color="orange" />
@@ -83,9 +84,16 @@ export function OverviewStats({
             <Text size="sm" c="dimmed">Average Time</Text>
           </div>
           <div>
-            <Text size="xl" fw="bold">
-              {Number.isFinite(overviewData.avgCleanTime) ? `${(overviewData.avgCleanTime).toFixed(1)} s` : 'N/A'}
-            </Text>
+            <Flex align="center" gap="xs">
+              {hasExcluded && (
+                <Tooltip label={`${overviewData.participantsWithInvalidCleanTimeCount} participants with invalid timing data were excluded from the average clean time calculation`}>
+                  <IconAlertTriangle size={16} color="orange" />
+                </Tooltip>
+              )}
+              <Text size="xl" fw="bold">
+                {Number.isFinite(overviewData.avgCleanTime) ? `${(overviewData.avgCleanTime).toFixed(1)} s` : 'N/A'}
+              </Text>
+            </Flex>
             <Text size="sm" c="dimmed">Average Clean Time</Text>
           </div>
           <div>

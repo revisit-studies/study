@@ -34,23 +34,31 @@ export function calculateDateStats(visibleParticipants: ParticipantData[]): { st
   };
 }
 
-export function calculateTimeStats(visibleParticipants: ParticipantData[]): { avgTime: number; avgCleanTime: number } {
+export function calculateTimeStats(visibleParticipants: ParticipantData[]): { avgTime: number; avgCleanTime: number; participantsWithInvalidCleanTimeCount: number } {
   // Filter out rejected participants
   const validParticipants = visibleParticipants.filter((p) => !p.rejected);
+  let participantsWithInvalidCleanTimeCount = 0;
   const time = validParticipants.reduce((acc, participant) => {
+    let hasInvalidCleanTime = false;
     const timeStats = Object.values(participant.answers)
       .filter((answer) => answer.endTime !== -1)
-      .map((answer) => ({
-        totalTime: (answer.endTime - answer.startTime) / 1000,
-        cleanTime: (() => {
-          const cleanedDuration = getCleanedDuration(answer as never);
-          return cleanedDuration ? cleanedDuration / 1000 : 0;
-        })(),
-      }));
+      .map((answer) => {
+        const cleanedDuration = getCleanedDuration(answer as never);
+        if (cleanedDuration === -1) {
+          hasInvalidCleanTime = true;
+        }
+        return {
+          totalTime: (answer.endTime - answer.startTime) / 1000,
+          cleanTime: cleanedDuration >= 0 ? cleanedDuration / 1000 : 0,
+        };
+      });
     if (timeStats.length > 0) {
       acc.count += timeStats.length;
       acc.totalTimeSum += timeStats.reduce((sum, t) => sum + t.totalTime, 0);
       acc.cleanTimeSum += timeStats.reduce((sum, t) => sum + t.cleanTime, 0);
+      if (hasInvalidCleanTime) {
+        participantsWithInvalidCleanTimeCount += 1;
+      }
     }
     return acc;
   }, { totalTimeSum: 0, cleanTimeSum: 0, count: 0 });
@@ -58,6 +66,7 @@ export function calculateTimeStats(visibleParticipants: ParticipantData[]): { av
   return {
     avgTime: time.count > 0 ? time.totalTimeSum / time.count : NaN,
     avgCleanTime: time.count > 0 ? time.cleanTimeSum / time.count : NaN,
+    participantsWithInvalidCleanTimeCount,
   };
 }
 
@@ -115,7 +124,7 @@ export function calculateComponentStats(visibleParticipants: ParticipantData[]) 
       const stat = stats[component];
       const time = (answer.endTime - answer.startTime) / 1000;
       const cleanedDuration = getCleanedDuration(answer as never);
-      const cleanTime = cleanedDuration ? cleanedDuration / 1000 : 0;
+      const cleanTime = cleanedDuration >= 0 ? cleanedDuration / 1000 : 0;
 
       stat.avgTime += time;
       stat.avgCleanTime += cleanTime;
