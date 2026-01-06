@@ -39,13 +39,13 @@ export function calculateTimeStats(visibleParticipants: ParticipantData[]): { av
   const validParticipants = visibleParticipants.filter((p) => !p.rejected);
   let participantsWithInvalidCleanTimeCount = 0;
   const time = validParticipants.reduce((acc, participant) => {
-    let hasExcludedParticipant = false;
+    let hasInvalidCleanTime = false;
     const timeStats = Object.values(participant.answers)
       .filter((answer) => answer.endTime !== -1)
       .map((answer) => {
         const cleanedDuration = getCleanedDuration(answer as never);
         if (cleanedDuration === -1) {
-          hasExcludedParticipant = true;
+          hasInvalidCleanTime = true;
         }
         return {
           totalTime: (answer.endTime - answer.startTime) / 1000,
@@ -56,7 +56,7 @@ export function calculateTimeStats(visibleParticipants: ParticipantData[]): { av
       acc.count += timeStats.length;
       acc.totalTimeSum += timeStats.reduce((sum, t) => sum + t.totalTime, 0);
       acc.cleanTimeSum += timeStats.reduce((sum, t) => sum + t.cleanTime, 0);
-      if (hasExcludedParticipant) {
+      if (hasInvalidCleanTime) {
         participantsWithInvalidCleanTimeCount += 1;
       }
     }
