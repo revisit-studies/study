@@ -290,7 +290,7 @@ export function ResponseBlock({
         ),
       );
     }
-  }, [attemptsUsed, allResponsesWithDefaults, config, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, navigate, identifier, storeDispatch, alertConfig, saveIncorrectAnswer, trialValidation]);
+  }, [attemptsUsed, allResponsesWithDefaults, config, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, navigate, identifier, storeDispatch, alertConfig, saveIncorrectAnswer, trialValidation]);
 
   const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 
