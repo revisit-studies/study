@@ -90,8 +90,8 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
         const words = textNode.value.split(' ');
         const lastWord = words.pop();
         const newTextValue = words.join(' ');
-        // If newTextValue exists or if we had multiple words (need space), add space before last word
-        const needsSpace = newTextValue.length > 0 || words.length > 0;
+        // If newTextValue exists (i.e. we had multiple words), add space before last word
+        const needsSpace = newTextValue.length > 0;
         const newTextNode: Element = {
           type: 'element',
           tagName: 'span',
