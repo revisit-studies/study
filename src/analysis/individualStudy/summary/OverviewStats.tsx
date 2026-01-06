@@ -20,6 +20,12 @@ export function OverviewStats({
     );
   }
 
+  const hasMismatch = (type: 'completed' | 'inProgress' | 'rejected') => {
+    if (!overviewData.mismatchInfo) return false;
+    const details = overviewData.mismatchInfo[type];
+    return details.stored !== details.calculated;
+  };
+
   return (
     <Paper shadow="sm" p="md" withBorder>
       <Title order={4} mb="md">Overview Statistics</Title>
@@ -29,15 +35,45 @@ export function OverviewStats({
           <Text size="sm" c="dimmed">Total Participants</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold" c="green">{overviewData.participantCounts.completed}</Text>
+          <Flex align="center" gap="xs">
+            {hasMismatch('completed') && overviewData.mismatchInfo && (
+              <Tooltip label={`Calculated: ${overviewData.mismatchInfo.completed.calculated}, Current: ${overviewData.mismatchInfo.completed.stored}`}>
+                <IconAlertTriangle size={16} color="orange" />
+              </Tooltip>
+            )}
+            <Text size="xl" fw="bold" c="green">
+              {overviewData.participantCounts.completed}
+              {hasMismatch('completed') && overviewData.mismatchInfo && ` (current: ${overviewData.mismatchInfo.completed.stored})`}
+            </Text>
+          </Flex>
           <Text size="sm" c="dimmed">Completed</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold" c="yellow">{overviewData.participantCounts.inProgress}</Text>
+          <Flex align="center" gap="xs">
+            {hasMismatch('inProgress') && overviewData.mismatchInfo && (
+              <Tooltip label={`Calculated: ${overviewData.mismatchInfo.inProgress.calculated}, Current: ${overviewData.mismatchInfo.inProgress.stored}`}>
+                <IconAlertTriangle size={16} color="orange" />
+              </Tooltip>
+            )}
+            <Text size="xl" fw="bold" c="yellow">
+              {overviewData.participantCounts.inProgress}
+              {hasMismatch('inProgress') && overviewData.mismatchInfo && ` (current: ${overviewData.mismatchInfo.inProgress.stored})`}
+            </Text>
+          </Flex>
           <Text size="sm" c="dimmed">In Progress</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold" c="red">{overviewData.participantCounts.rejected}</Text>
+          <Flex align="center" gap="xs">
+            {hasMismatch('rejected') && overviewData.mismatchInfo && (
+              <Tooltip label={`Calculated: ${overviewData.mismatchInfo.rejected.calculated}, Current: ${overviewData.mismatchInfo.rejected.stored}`}>
+                <IconAlertTriangle size={16} color="orange" />
+              </Tooltip>
+            )}
+            <Text size="xl" fw="bold" c="red">
+              {overviewData.participantCounts.rejected}
+              {hasMismatch('rejected') && overviewData.mismatchInfo && ` (current: ${overviewData.mismatchInfo.rejected.stored})`}
+            </Text>
+          </Flex>
           <Text size="sm" c="dimmed">Rejected</Text>
         </Flex>
         <Flex direction="column">

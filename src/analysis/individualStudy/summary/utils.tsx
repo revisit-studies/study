@@ -1,7 +1,7 @@
 import { ParticipantData } from '../../../storage/types';
 import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 import {
-  ComponentData, OverviewData, ParticipantCounts, ResponseData,
+  ComponentData, OverviewData, ParticipantCounts, ParticipantMismatchCounts, ResponseData,
 } from '../../types';
 import { Response, StudyConfig } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
@@ -29,10 +29,15 @@ function calculateParticipantCounts(visibleParticipants: ParticipantData[], comp
   return participantCounts;
 }
 
-// Checks if the current participant count is different from the calculated participant count
-export function hasMismatch(current: number, calculated: number): boolean {
-  // TO DO: Implement mismatch calculation
-  return current !== calculated;
+export function hasMismatches(
+  storedCounts: { completed: number; inProgress: number; rejected: number },
+  calculatedCounts: ParticipantCounts,
+): { completed: boolean; inProgress: boolean; rejected: boolean } {
+  return {
+    completed: storedCounts.completed !== calculatedCounts.completed,
+    inProgress: storedCounts.inProgress !== calculatedCounts.inProgress,
+    rejected: storedCounts.rejected !== calculatedCounts.rejected,
+  };
 }
 
 function calculateDateStats(visibleParticipants: ParticipantData[], componentName?: string): { startDate: Date | null; endDate: Date | null } {
@@ -157,18 +162,36 @@ export function convertNumberToString(number: number | Date | null, type: 'date'
   return 'N/A';
 }
 
-export function getOverviewStats(visibleParticipants: ParticipantData[], componentName?: string): OverviewData {
+export function getOverviewStats(
+  visibleParticipants: ParticipantData[],
+  componentName?: string,
+  storedCounts?: { completed: number; inProgress: number; rejected: number },
+): OverviewData {
   const timeStats = calculateTimeStats(visibleParticipants, componentName);
   const dateStats = calculateDateStats(visibleParticipants, componentName);
+  const calculatedCounts = calculateParticipantCounts(visibleParticipants, componentName);
+
+  let mismatchInfo: ParticipantMismatchCounts | undefined;
+  if (storedCounts) {
+    const mismatches = hasMismatches(storedCounts, calculatedCounts);
+    if (mismatches.completed || mismatches.inProgress || mismatches.rejected) {
+      mismatchInfo = {
+        completed: { stored: storedCounts.completed, calculated: calculatedCounts.completed },
+        inProgress: { stored: storedCounts.inProgress, calculated: calculatedCounts.inProgress },
+        rejected: { stored: storedCounts.rejected, calculated: calculatedCounts.rejected },
+      };
+    }
+  }
 
   return {
-    participantCounts: calculateParticipantCounts(visibleParticipants, componentName),
+    participantCounts: calculatedCounts,
     startDate: dateStats.startDate,
     endDate: dateStats.endDate,
     avgTime: timeStats.avgTime,
     avgCleanTime: timeStats.avgCleanTime,
     participantsWithInvalidCleanTimeCount: timeStats.participantsWithInvalidCleanTimeCount,
     correctness: calculateCorrectnessStats(visibleParticipants, componentName),
+    mismatchInfo,
   };
 }
 
