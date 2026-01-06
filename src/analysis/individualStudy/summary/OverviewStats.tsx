@@ -2,15 +2,11 @@ import {
   Flex, Paper, Text, Title, Tooltip,
 } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
-import { useMemo } from 'react';
-import { ParticipantData } from '../../../storage/types';
 import { OverviewData } from '../../types';
-import { hasNegativeCleanTime } from './utils';
 
 export function OverviewStats({
   overviewData,
   mismatchDetails,
-  visibleParticipants,
 }: {
   overviewData: OverviewData | null;
   mismatchDetails?: {
@@ -18,12 +14,9 @@ export function OverviewStats({
     inProgress: { current: number; calculated: number };
     rejected: { current: number; calculated: number };
   } | null;
-  visibleParticipants: ParticipantData[];
 }) {
-  const { hasExcluded, excludedCount } = useMemo(
-    () => hasNegativeCleanTime(visibleParticipants),
-    [visibleParticipants],
-  );
+  const hasExcluded = overviewData && overviewData.participantsWithInvalidCleanTimeCount > 0;
+
   const hasMismatch = (type: 'completed' | 'inProgress' | 'rejected') => {
     if (!mismatchDetails) return false;
     const details = mismatchDetails[type];
@@ -93,7 +86,7 @@ export function OverviewStats({
           <div>
             <Flex align="center" gap="xs">
               {hasExcluded && (
-                <Tooltip label={`${excludedCount} participants with invalid timing data were excluded from the average clean time calculation`}>
+                <Tooltip label={`${overviewData.participantsWithInvalidCleanTimeCount} participants with invalid timing data were excluded from the average clean time calculation`}>
                   <IconAlertTriangle size={16} color="orange" />
                 </Tooltip>
               )}

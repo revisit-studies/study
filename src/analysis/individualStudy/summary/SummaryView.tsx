@@ -20,7 +20,7 @@ export function SummaryView({ visibleParticipants, studyConfig }: {
     if (visibleParticipants.length === 0) return null;
 
     const participantCounts = calculateParticipantCounts(visibleParticipants);
-    const { avgTime, avgCleanTime } = calculateTimeStats(visibleParticipants);
+    const { avgTime, avgCleanTime, participantsWithInvalidCleanTimeCount } = calculateTimeStats(visibleParticipants);
     const { startDate, endDate } = calculateDateStats(visibleParticipants);
     const correctnessStats = calculateCorrectnessStats(visibleParticipants);
 
@@ -65,6 +65,7 @@ export function SummaryView({ visibleParticipants, studyConfig }: {
       participantCounts,
       avgTime,
       avgCleanTime,
+      participantsWithInvalidCleanTimeCount,
       startDate,
       endDate,
       correctnessStats,
@@ -75,7 +76,7 @@ export function SummaryView({ visibleParticipants, studyConfig }: {
 
   return (
     <Stack gap="md">
-      <OverviewStats overviewData={overviewData} mismatchDetails={null} visibleParticipants={visibleParticipants} />
+      <OverviewStats overviewData={overviewData} mismatchDetails={null} />
 
       <Group align="flex-start" gap="md" grow>
         <ComponentStats visibleParticipants={visibleParticipants} />

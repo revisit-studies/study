@@ -225,11 +225,3 @@ export function getResponseOptions(response: Response): string {
   }
   return 'N/A';
 }
-
-export function hasNegativeCleanTime(visibleParticipants: ParticipantData[]): { hasExcluded: boolean; excludedCount: number } {
-  const { participantsWithInvalidCleanTimeCount } = calculateTimeStats(visibleParticipants);
-  return {
-    hasExcluded: participantsWithInvalidCleanTimeCount > 0,
-    excludedCount: participantsWithInvalidCleanTimeCount,
-  };
-}
