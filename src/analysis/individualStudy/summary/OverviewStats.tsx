@@ -1,21 +1,24 @@
 import {
-  Flex, Paper, Text, Title,
+  Flex, Paper, Text, Title, Tooltip,
 } from '@mantine/core';
-import { useMemo } from 'react';
-import { getOverviewStats, convertNumberToString } from './utils';
-import { ParticipantData } from '../../../storage/types';
+import { IconAlertTriangle } from '@tabler/icons-react';
+import { convertNumberToString } from './utils';
+import { OverviewData } from '../../types';
 
 export function OverviewStats({
-  visibleParticipants,
-  componentName,
+  overviewData,
 }: {
-  visibleParticipants: ParticipantData[];
-  componentName?: string;
+  overviewData: OverviewData;
 }) {
-  const overviewData = useMemo(
-    () => getOverviewStats(visibleParticipants, componentName),
-    [visibleParticipants, componentName],
-  );
+  const hasExcluded = overviewData && overviewData.participantsWithInvalidCleanTimeCount > 0;
+
+  if (!overviewData) {
+    return (
+      <Paper shadow="sm" p="md" withBorder>
+        <Text ta="center" mb="md">No data available</Text>
+      </Paper>
+    );
+  }
 
   return (
     <Paper shadow="sm" p="md" withBorder>
@@ -50,7 +53,16 @@ export function OverviewStats({
           <Text size="sm" c="dimmed">Average Time</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold">{convertNumberToString(overviewData.avgCleanTime, 'time')}</Text>
+          <Flex align="center" gap="xs">
+            {hasExcluded && (
+              <Tooltip label={`${overviewData.participantsWithInvalidCleanTimeCount} participants with invalid timing data were excluded from the average clean time calculation`}>
+                <IconAlertTriangle size={16} color="orange" />
+              </Tooltip>
+            )}
+            <Text size="xl" fw="bold">
+              {Number.isFinite(overviewData.avgCleanTime) ? `${(overviewData.avgCleanTime).toFixed(1)} s` : 'N/A'}
+            </Text>
+          </Flex>
           <Text size="sm" c="dimmed">Average Clean Time</Text>
         </Flex>
         <Flex direction="column">

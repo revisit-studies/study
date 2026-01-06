@@ -53,37 +53,40 @@ function calculateDateStats(visibleParticipants: ParticipantData[], componentNam
   };
 }
 
-function calculateTimeStats(visibleParticipants: ParticipantData[], componentName?: string): { avgTime: number; avgCleanTime: number } {
+function calculateTimeStats(visibleParticipants: ParticipantData[], componentName?: string): { avgTime: number; avgCleanTime: number; participantsWithInvalidCleanTimeCount: number } {
   // Filter out rejected participants and filter by component if provided
   const filteredParticipants = filterParticipants(visibleParticipants, componentName).filter((p) => !p.rejected);
-  const answers = filteredParticipants
-    .flatMap((participant) => Object.values(participant.answers))
-    .filter((answer) => answer.startTime > 0 && answer.endTime !== -1);
 
-  if (!answers.length) {
-    return { avgTime: NaN, avgCleanTime: NaN };
-  }
-
-  let totalTimeSum = 0;
-  let cleanTimeSum = 0;
-  let count = 0;
-  let cleanCount = 0;
-
-  answers.forEach((answer) => {
-    const durationSeconds = (answer.endTime - answer.startTime) / 1000;
-    totalTimeSum += durationSeconds;
-    count += 1;
-
-    const cleaned = getCleanedDuration(answer);
-    if (cleaned !== undefined) {
-      cleanTimeSum += cleaned / 1000;
-      cleanCount += 1;
+  let participantsWithInvalidCleanTimeCount = 0;
+  const time = filteredParticipants.reduce((acc, participant) => {
+    let hasInvalidCleanTime = false;
+    const timeStats = Object.values(participant.answers)
+      .filter((answer) => (!componentName || answer.componentName === componentName) && answer.endTime !== -1)
+      .map((answer) => {
+        const cleanedDuration = getCleanedDuration(answer as never);
+        if (cleanedDuration === -1) {
+          hasInvalidCleanTime = true;
+        }
+        return {
+          totalTime: (answer.endTime - answer.startTime) / 1000,
+          cleanTime: cleanedDuration >= 0 ? cleanedDuration / 1000 : 0,
+        };
+      });
+    if (timeStats.length > 0) {
+      acc.count += timeStats.length;
+      acc.totalTimeSum += timeStats.reduce((sum, t) => sum + t.totalTime, 0);
+      acc.cleanTimeSum += timeStats.reduce((sum, t) => sum + t.cleanTime, 0);
+      if (hasInvalidCleanTime) {
+        participantsWithInvalidCleanTimeCount += 1;
+      }
     }
-  });
+    return acc;
+  }, { count: 0, totalTimeSum: 0, cleanTimeSum: 0 });
 
   return {
-    avgTime: count > 0 ? totalTimeSum / count : NaN,
-    avgCleanTime: cleanCount > 0 ? cleanTimeSum / cleanCount : NaN,
+    avgTime: time.count > 0 ? time.totalTimeSum / time.count : NaN,
+    avgCleanTime: time.count > 0 ? time.cleanTimeSum / time.count : NaN,
+    participantsWithInvalidCleanTimeCount,
   };
 }
 
@@ -155,12 +158,16 @@ export function convertNumberToString(number: number | Date | null, type: 'date'
 }
 
 export function getOverviewStats(visibleParticipants: ParticipantData[], componentName?: string): OverviewData {
+  const timeStats = calculateTimeStats(visibleParticipants, componentName);
+  const dateStats = calculateDateStats(visibleParticipants, componentName);
+
   return {
     participantCounts: calculateParticipantCounts(visibleParticipants, componentName),
-    startDate: calculateDateStats(visibleParticipants, componentName).startDate,
-    endDate: calculateDateStats(visibleParticipants, componentName).endDate,
-    avgTime: calculateTimeStats(visibleParticipants, componentName).avgTime,
-    avgCleanTime: calculateTimeStats(visibleParticipants, componentName).avgCleanTime,
+    startDate: dateStats.startDate,
+    endDate: dateStats.endDate,
+    avgTime: timeStats.avgTime,
+    avgCleanTime: timeStats.avgCleanTime,
+    participantsWithInvalidCleanTimeCount: timeStats.participantsWithInvalidCleanTimeCount,
     correctness: calculateCorrectnessStats(visibleParticipants, componentName),
   };
 }

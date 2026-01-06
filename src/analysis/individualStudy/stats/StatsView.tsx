@@ -9,6 +9,7 @@ import { TrialVisualization } from './TrialVisualization';
 import { ComponentBlockWithOrderPath, StepsPanel } from '../../../components/interface/StepsPanel';
 import { addPathToComponentBlock } from '../../../utils/getSequenceFlatMap';
 import { OverviewStats } from '../summary/OverviewStats';
+import { getOverviewStats } from '../summary/utils';
 
 export function StatsView(
   {
@@ -28,10 +29,15 @@ export function StatsView(
 
   const { trialId } = useParams();
 
+  const overviewData = useMemo(
+    () => (trialId && trialId !== 'end' ? getOverviewStats(visibleParticipants, trialId) : null),
+    [visibleParticipants, trialId],
+  );
+
   return (
     <>
-      {trialId && trialId !== 'end' && (
-        <OverviewStats visibleParticipants={visibleParticipants} componentName={trialId} />
+      {overviewData && (
+        <OverviewStats overviewData={overviewData} />
       )}
       <Paper shadow="sm" p="md" mt="md" withBorder>
         {

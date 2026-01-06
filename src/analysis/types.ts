@@ -1,4 +1,4 @@
-export interface ParticipantCounts{
+export interface ParticipantCounts {
   total: number;
   completed: number;
   inProgress: number;
@@ -7,10 +7,11 @@ export interface ParticipantCounts{
 
 export interface OverviewData {
   participantCounts: ParticipantCounts;
-  startDate: Date | null;
-  endDate: Date | null;
   avgTime: number;
   avgCleanTime: number;
+  participantsWithInvalidCleanTimeCount: number;
+  startDate: Date | null;
+  endDate: Date | null;
   correctness: number;
 }
 
