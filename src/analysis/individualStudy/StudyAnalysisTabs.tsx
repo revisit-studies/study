@@ -177,9 +177,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       const fetchedConfigs = await storageEngine.getAllConfigsFromHash(participantConfig, studyId);
 
       const configOptions = Object.entries(fetchedConfigs)
-        .map(([hash, config], index) => ({
+        .map(([hash, config]) => ({
           value: hash,
-          label: `${index + 1} - ${config.studyMetadata.version}`,
+          label: `${config.studyMetadata.version} - ${hash.slice(0, 6)}`,
         }));
       setAvailableConfigs([{ value: 'ALL', label: 'ALL' }, ...configOptions]);
     } catch (error) {
