@@ -95,16 +95,17 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
       }
 
       // Verify sidebar is enabled if component uses sidebar locations
-      if (!studyConfig.uiConfig.withSidebar) {
+      if (!(component.withSidebar ?? studyConfig.uiConfig.withSidebar)) {
         const isUsingSidebar = ('instructionLocation' in component && component.instructionLocation === 'sidebar')
           || ('nextButtonLocation' in component && component.nextButtonLocation === 'sidebar')
           || ('response' in component && component.response?.some((r) => 'location' in r && r.location === 'sidebar'));
 
         if (isUsingSidebar) {
+          const instancePath = component.withSidebar === false ? `/baseComponents/${componentName}` : '/uiConfig';
           errors.push({
-            message: `Component \`${componentName}\` uses sidebar locations but sidebar is disabled in uiConfig`,
-            instancePath: '/uiConfig',
-            params: { action: 'set withSidebar to true in uiConfig or move location to belowStimulus or aboveStimulus' },
+            message: `Library \`${library}\` component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
+            instancePath,
+            params: { action: 'set withSidebar to true in uiConfig or in the component, or move location to belowStimulus or aboveStimulus' },
           });
         }
       }
