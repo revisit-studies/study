@@ -227,9 +227,13 @@ export function getResponseOptions(response: Response): string {
 }
 
 export function hasNegativeCleanTime(visibleParticipants: ParticipantData[]): { hasExcluded: boolean; excludedCount: number } {
-  const { excludedParticipantCount } = calculateTimeStats(visibleParticipants);
+  const excludedCount = visibleParticipants.filter((participant) => {
+    const cleanedDuration = getCleanedDuration(participant);
+    return typeof cleanedDuration === 'number' && cleanedDuration < 0;
+  }).length;
+
   return {
-    hasExcluded: excludedParticipantCount > 0,
-    excludedCount: excludedParticipantCount,
+    hasExcluded: excludedCount > 0,
+    excludedCount,
   };
 }
