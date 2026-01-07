@@ -24,12 +24,18 @@ interface ClickAccuracyTest {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ClickAccuracyTest({ parameters, setAnswer }: StimulusParams<any>) {
+function ClickAccuracyTest({ parameters, setAnswer, provenanceState }: StimulusParams<any, {distance: number, speed: number, clickX: number, clickY: number}>) {
   const [ref, dms] = useChartDimensions(chartSettings);
   const [x, setX] = useState(100);
   const [y, setY] = useState(100);
   const [speed, setSpeed] = useState(parameters.speed);
   const { taskid } = parameters;
+
+  useEffect(() => {
+    if (provenanceState?.speed !== undefined) {
+      setSpeed(provenanceState.speed);
+    }
+  }, [provenanceState?.speed]);
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -41,20 +47,37 @@ function ClickAccuracyTest({ parameters, setAnswer }: StimulusParams<any>) {
       return state;
     });
 
+    const speedAction = reg.register('speed', (state, _speed: number) => {
+      state.speed = _speed;
+      return state;
+    });
+
     const trrackInst = initializeTrrack({
       registry: reg,
       initialState: {
-        distance: 0, speed: 10, clickX: 0, clickY: 0,
+        distance: 0, speed: parameters.speed, clickX: 0, clickY: 0,
       },
     });
 
     return {
       actions: {
         clickAction,
+        speedAction,
       },
       trrack: trrackInst,
     };
-  }, []);
+  }, [parameters.speed]);
+
+  const handleSpeedChange = useCallback((_speed: number) => {
+    setSpeed(_speed);
+    trrack.apply('Speed', actions.speedAction(_speed));
+
+    setAnswer({
+      status: true,
+      provenanceGraph: trrack.graph.backend,
+      answers: {},
+    });
+  }, [actions, setAnswer, trrack]);
 
   const clickCallback = useCallback((e: React.MouseEvent) => {
     const circle = d3.select('#movingCircle');
@@ -110,11 +133,9 @@ function ClickAccuracyTest({ parameters, setAnswer }: StimulusParams<any>) {
       </div>
       <Box>
         Adjust speed (px/s):
-        <Slider w={800} min={10} max={1000} value={speed} onChange={setSpeed} />
-
+        <Slider w={800} min={10} max={1000} value={speed} onChange={handleSpeedChange} />
       </Box>
     </>
-
   );
 }
 
