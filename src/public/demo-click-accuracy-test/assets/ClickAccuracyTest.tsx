@@ -24,7 +24,7 @@ interface ClickAccuracyTest {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ClickAccuracyTest({ parameters, setAnswer, provenanceState }: StimulusParams<any, {distance: number, speed: number, clickX: number, clickY: number}>) {
+function ClickAccuracyTest({ parameters, setAnswer, provenanceState }: StimulusParams<any, { distance: number, speed: number, clickX: number, clickY: number }>) {
   const [ref, dms] = useChartDimensions(chartSettings);
   const [x, setX] = useState(100);
   const [y, setY] = useState(100);
