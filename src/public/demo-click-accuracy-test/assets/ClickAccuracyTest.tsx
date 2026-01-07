@@ -84,8 +84,9 @@ function ClickAccuracyTest({ parameters, setAnswer, provenanceState }: StimulusP
     const svg = d3.select('#clickAccuracySvg');
     const pointer = d3.pointer(e, svg.node());
 
-    const circelPos = [+circle.attr('cx'), +circle.attr('cy')];
-    const distance = `${Math.round(Math.sqrt((pointer[0] - circelPos[0]) ** 2 + (pointer[1] - circelPos[1]) ** 2))}px`;
+    const circlePos = [+circle.attr('cx') + dms.marginLeft / 2, +circle.attr('cy') + dms.marginTop / 2];
+
+    const distance = `${Math.round(Math.sqrt((pointer[0] - circlePos[0]) ** 2 + (pointer[1] - circlePos[1]) ** 2))}px`;
 
     trrack.apply('Clicked', actions.clickAction({ distance: +distance, clickX: pointer[0], clickY: pointer[1] }));
 
@@ -96,7 +97,7 @@ function ClickAccuracyTest({ parameters, setAnswer, provenanceState }: StimulusP
         [taskid]: distance,
       },
     });
-  }, [actions, setAnswer, taskid, trrack]);
+  }, [actions, setAnswer, taskid, trrack, dms]);
 
   useEffect(() => {
     const nxtX = Math.random() * 800;
@@ -127,7 +128,6 @@ function ClickAccuracyTest({ parameters, setAnswer, provenanceState }: StimulusP
           >
             <rect width="800" height="600" stroke="black" strokeWidth="5" fill="none" />
             <circle id="movingCircle" cx="100" cy="100" r="10" />
-
           </g>
         </svg>
       </div>
