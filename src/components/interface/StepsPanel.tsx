@@ -49,7 +49,9 @@ function findMatchingComponentInFullOrder(
     if (typeof node === 'string') {
       return;
     }
-    if (node.id === sequence.id) {
+
+    // Match by orderPath if available
+    if (node.orderPath && sequence.orderPath && node.orderPath === sequence.orderPath) {
       studySequence = node;
       return;
     }
@@ -98,6 +100,7 @@ type StepItem = {
 
   // Block Attributes
   order?: Sequence['order'];
+  orderPath?: string; // Order path for blocks
   numInterruptions?: number;
   numComponentsInSequence?: number;
   numComponentsInStudySequence?: number;
@@ -130,6 +133,33 @@ function findExcludedBlocks(
   });
 
   return excludedBlocks;
+}
+
+/**
+ * Find components (strings) in sequenceBlock that are missing from participantNode
+ */
+function findExcludedComponents(
+  sequenceBlock: Sequence,
+  participantNode: Sequence,
+): string[] {
+  const excludedComponents: string[] = [];
+
+  // Get all component names from participant sequence
+  const participantComponents = new Set<string>();
+  participantNode.components.forEach((comp) => {
+    if (typeof comp === 'string') {
+      participantComponents.add(comp);
+    }
+  });
+
+  // Find components in study sequence that aren't in participant sequence
+  sequenceBlock.components.forEach((comp) => {
+    if (typeof comp === 'string' && !participantComponents.has(comp)) {
+      excludedComponents.push(comp);
+    }
+  });
+
+  return excludedComponents;
 }
 
 export function StepsPanel({
@@ -236,8 +266,8 @@ export function StepsPanel({
         }
 
         const blockInterruptions = (node.interruptions || []).flatMap((intr) => intr.components);
-        const matchingStudySequence = findMatchingComponentInFullOrder(node, fullOrder);
         const blockPath = `${parentPath}.${node.id ?? node.order}`;
+        const matchingStudySequence = findMatchingComponentInFullOrder(node, fullOrder);
 
         // Push the block itself
         newFlatTree.push({
@@ -247,6 +277,7 @@ export function StepsPanel({
 
           // Block Attributes
           order: node.order,
+          orderPath: node.orderPath,
           numInterruptions: node.components.filter((comp) => typeof comp === 'string' && blockInterruptions.includes(comp)).length,
           numComponentsInSequence: countComponentsInSequence(node, participantAnswers),
           numComponentsInStudySequence: countComponentsInSequence(matchingStudySequence || node, participantAnswers),
@@ -266,9 +297,29 @@ export function StepsPanel({
           });
         }
 
-        // After processing all children, check for excluded blocks from the study sequence
+        // After processing all children, check for excluded blocks and components from the study sequence
         const matchingStudyBlock = findMatchingComponentInFullOrder(node, fullOrder);
         if (matchingStudyBlock) {
+          // First, add excluded components (strings)
+          const excludedComponents = findExcludedComponents(matchingStudyBlock, node);
+          excludedComponents.forEach((excludedComponent) => {
+            const coOrComponents = excludedComponent.includes('.co.')
+              ? '.co.'
+              : (excludedComponent.includes('.components.') ? '.components.' : false);
+            const excludedComponentPath = `${blockPath}.${excludedComponent}_excluded`;
+
+            newFlatTree.push({
+              label: coOrComponents ? excludedComponent.split(coOrComponents).at(-1)! : excludedComponent,
+              indentLevel: indentLevel + 1,
+              path: excludedComponentPath,
+              isLibraryImport: coOrComponents !== false,
+              component: studyConfig.components[excludedComponent],
+              componentName: excludedComponent,
+              isExcluded: true,
+            });
+          });
+
+          // Then, add excluded blocks
           const excludedBlocks = findExcludedBlocks(matchingStudyBlock, node);
           excludedBlocks.forEach((excludedBlock) => {
             const excludedBlockPath = `${blockPath}.${excludedBlock.id ?? excludedBlock.order}_excluded`;
@@ -281,6 +332,7 @@ export function StepsPanel({
 
               // Block Attributes
               order: excludedBlock.order,
+              orderPath: excludedBlock.orderPath,
               numInterruptions: 0,
               numComponentsInSequence: 0,
               numComponentsInStudySequence: countComponentsInSequence(excludedBlock, participantAnswers),
@@ -313,6 +365,7 @@ export function StepsPanel({
                     indentLevel: excludedIndentLevel,
                     path: childBlockPath,
                     order: child.order,
+                    orderPath: child.orderPath,
                     numInterruptions: 0,
                     numComponentsInSequence: 0,
                     numComponentsInStudySequence: countComponentsInSequence(child, participantAnswers),
@@ -454,6 +507,7 @@ export function StepsPanel({
             componentAnswer,
             componentName,
             order,
+            orderPath,
             numInterruptions,
             numComponentsInSequence,
             numComponentsInStudySequence,
@@ -550,7 +604,7 @@ export function StepsPanel({
                       {correctIncorrectIcon}
                       <Text
                         size="sm"
-                        title={label}
+                        title={orderPath ?? label}
                         fw={!isComponent ? 700 : undefined}
                         style={{
                           textWrap: 'nowrap',
@@ -574,7 +628,7 @@ export function StepsPanel({
                       ) : null}
                       {!isComponent && !isExcluded && (
                         <Badge ml={5} variant="light">
-                          {numComponentsInSequence}
+                          {(numComponentsInSequence || 0) - (numInterruptions || 0)}
                           /
                           {numComponentsInStudySequence}
                         </Badge>
