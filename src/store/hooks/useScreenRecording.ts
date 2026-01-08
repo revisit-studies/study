@@ -85,6 +85,13 @@ export function useScreenRecording() {
       currentMediaRecorder.current.stop();
       currentMediaRecorder.current = null;
     }
+
+    if (audioMediaRecorder.current) {
+      audioMediaRecorder.current.stream.getTracks().forEach((track) => { track.stop(); audioMediaRecorder.current?.stream.removeTrack(track); });
+      audioMediaRecorder.current.stream.getAudioTracks().forEach((track) => { track.stop(); audioMediaRecorder.current?.stream.removeTrack(track); });
+      audioMediaRecorder.current.stop();
+      audioMediaRecorder.current = null;
+    }
   }, []);
 
   // Start screen recording
@@ -175,6 +182,7 @@ export function useScreenRecording() {
     setIsScreenRecording(false);
     setScreenWithAudioRecording(false);
     currentMediaRecorder.current?.stop();
+    audioMediaRecorder.current?.stop();
   }, []);
 
   useEffect(() => {

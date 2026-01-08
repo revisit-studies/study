@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
+import { checkSavedAnswers } from './checkSavedAnswers';
 
 test('test', async ({ page }) => {
   await page.goto('/example-VLAT-full-randomized?PROLIFIC_ID=test');
@@ -31,4 +32,9 @@ test('test', async ({ page }) => {
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   await page.getByText('Please wait while your answers are uploaded.').click();
+
+  const uploaded = await page.getByText('Thank you for completing the study.');
+  await expect(uploaded).toBeVisible();
+
+  await checkSavedAnswers(page, 'example-VLAT-full-randomized');
 });
