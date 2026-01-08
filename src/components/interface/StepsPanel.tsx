@@ -178,7 +178,7 @@ export function StepsPanel({
   const ROW_HEIGHT = 32; // px, fixed height for each row
   const INDENT_SIZE = 24; // px, indentation per level
   const BASE_PADDING = 12; // px, base left padding
-  const VIRTUALIZER_OVERSCAN = 6; // number of items to render outside viewport
+  const VIRTUALIZER_OVERSCAN = 10; // number of items to render outside viewport
 
   // Per-row clamp state, keyed by idx
   const [correctAnswerClampMap, setCorrectAnswerClampMap] = useState<Record<string, number | undefined>>({});
