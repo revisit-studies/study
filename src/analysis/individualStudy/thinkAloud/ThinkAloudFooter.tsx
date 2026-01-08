@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Alert,
   AppShell,
   Button,
   Group, Popover, SegmentedControl, Select, Stack, Text,
@@ -155,7 +156,7 @@ export function ThinkAloudFooter({
       setSearchParams({ participantId, currentTrial: Object.entries(participant.answers).find(([_, ans]) => +ans.trialOrder.split('_')[0] === 0)?.[0] || '' });
     }
 
-    return participant ? participant.answers[currentTrial].componentName : '';
+    return participant?.answers[currentTrial]?.componentName ?? '';
   }, [currentTrial, participant, participantId, setSearchParams]);
 
   const xScale = useMemo(() => {
@@ -272,6 +273,14 @@ export function ThinkAloudFooter({
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
+      {currentTrial && participant && currentTrialClean === '' && (
+      <div style={{
+        position: 'absolute', top: -5, left: 5, transform: 'translateY(-100%)',
+      }}
+      >
+        <Alert variant="filled" color="red" title="Participant hasn&apos;t completed any tasks." icon={<IconInfoCircle />} />
+      </div>
+      )}
       <Stack style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '100%' }} gap={5} justify="center">
 
         <AudioProvenanceVis setHasAudio={setHasAudio} saveProvenance={saveProvenance} setTime={onTimeUpdate} setTimeString={(_t) => setTimeString(_t)} answers={participant ? participant.answers : {}} taskName={currentTrial} context={isReplay ? 'provenanceVis' : 'audioAnalysis'} />
