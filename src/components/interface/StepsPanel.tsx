@@ -166,10 +166,12 @@ export function StepsPanel({
   participantSequence,
   participantAnswers,
   studyConfig,
+  isAnalysis,
 }: {
   participantSequence?: Sequence;
   participantAnswers: ParticipantData['answers'];
   studyConfig: StudyConfig;
+  isAnalysis?: boolean;
 }) {
   // Constants
   const INITIAL_CLAMP = 6;
@@ -592,7 +594,11 @@ export function StepsPanel({
                   pl={indentLevel * INDENT_SIZE + BASE_PADDING}
                   onClick={() => {
                     if (isComponent && href && !isExcluded) {
-                      navigate(href);
+                      if (isAnalysis) {
+                        navigate(`/analysis/stats/${studyId}/stats/${encodeURIComponent(String(componentName))}`);
+                      } else {
+                        navigate(href);
+                      }
                     } else if (!isComponent) {
                       // Both included and excluded blocks can be collapsed/expanded
                       if (blockIsCollapsed) {

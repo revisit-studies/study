@@ -31,7 +31,7 @@ export function StatsView(
             <Flex direction="row">
               {/* Trial selection sidebar */}
               <Box w={340}>
-                <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />
+                <StepsPanel participantAnswers={{}} studyConfig={studyConfig} isAnalysis />
               </Box>
 
               <Divider orientation="vertical" mx="md" />
