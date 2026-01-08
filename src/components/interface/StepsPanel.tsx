@@ -102,7 +102,35 @@ type StepItem = {
   numComponentsInSequence?: number;
   numComponentsInStudySequence?: number;
   childrenRange?: { start: number; end: number }; // Pre-computed indices of children in fullFlatTree
+  isExcluded?: boolean; // Block was excluded from participant sequence
 };
+
+/**
+ * Find blocks in sequenceBlock that are missing from participantNode by comparing orderPath
+ */
+function findExcludedBlocks(
+  sequenceBlock: Sequence,
+  participantNode: Sequence,
+): Sequence[] {
+  const excludedBlocks: Sequence[] = [];
+
+  // Get all block orderPaths from participant sequence
+  const participantBlockOrderPaths = new Set<string>();
+  participantNode.components.forEach((comp) => {
+    if (typeof comp !== 'string' && comp.orderPath) {
+      participantBlockOrderPaths.add(comp.orderPath);
+    }
+  });
+
+  // Find blocks in study sequence that aren't in participant sequence based on orderPath
+  sequenceBlock.components.forEach((comp) => {
+    if (typeof comp !== 'string' && comp.orderPath && !participantBlockOrderPaths.has(comp.orderPath)) {
+      excludedBlocks.push(comp);
+    }
+  });
+
+  return excludedBlocks;
+}
 
 export function StepsPanel({
   participantSequence,
@@ -237,6 +265,68 @@ export function StepsPanel({
             traverse(child, indentLevel + 1, node, blockPath, node.order === 'dynamic');
           });
         }
+
+        // After processing all children, check for excluded blocks from the study sequence
+        const matchingStudyBlock = findMatchingComponentInFullOrder(node, fullOrder);
+        if (matchingStudyBlock) {
+          const excludedBlocks = findExcludedBlocks(matchingStudyBlock, node);
+          excludedBlocks.forEach((excludedBlock) => {
+            const excludedBlockPath = `${blockPath}.${excludedBlock.id ?? excludedBlock.order}_excluded`;
+
+            // Add the excluded block
+            newFlatTree.push({
+              label: excludedBlock.id ?? excludedBlock.order,
+              indentLevel: indentLevel + 1,
+              path: excludedBlockPath,
+
+              // Block Attributes
+              order: excludedBlock.order,
+              numInterruptions: 0,
+              numComponentsInSequence: 0,
+              numComponentsInStudySequence: countComponentsInSequence(excludedBlock, participantAnswers),
+              isExcluded: true,
+            });
+
+            // Recursively add excluded block's children as excluded
+            const traverseExcluded = (excludedNode: Sequence, excludedIndentLevel: number, excludedParentPath: string) => {
+              excludedNode.components.forEach((child) => {
+                if (typeof child === 'string') {
+                  const coOrComponents = child.includes('.co.')
+                    ? '.co.'
+                    : (child.includes('.components.') ? '.components.' : false);
+                  const childPath = `${excludedParentPath}.${child}_excluded`;
+
+                  newFlatTree.push({
+                    label: coOrComponents ? child.split(coOrComponents).at(-1)! : child,
+                    indentLevel: excludedIndentLevel,
+                    path: childPath,
+                    isLibraryImport: coOrComponents !== false,
+                    component: studyConfig.components[child],
+                    componentName: child,
+                    isExcluded: true,
+                  });
+                } else {
+                  const childBlockPath = `${excludedParentPath}.${child.id ?? child.order}_excluded`;
+
+                  newFlatTree.push({
+                    label: child.id ?? child.order,
+                    indentLevel: excludedIndentLevel,
+                    path: childBlockPath,
+                    order: child.order,
+                    numInterruptions: 0,
+                    numComponentsInSequence: 0,
+                    numComponentsInStudySequence: countComponentsInSequence(child, participantAnswers),
+                    isExcluded: true,
+                  });
+
+                  traverseExcluded(child, excludedIndentLevel + 1, childBlockPath);
+                }
+              });
+            };
+
+            traverseExcluded(excludedBlock, indentLevel + 2, excludedBlockPath);
+          });
+        }
       };
 
       traverse(participantSequence, 0, participantSequence, 'root');
@@ -272,8 +362,16 @@ export function StepsPanel({
 
   const collapseBlock = useCallback((startIndex: number, startItem: StepItem) => {
     setRenderedFlatTree((prevRenderedFlatTree) => {
-      // Use pre-computed childrenRange for O(1) operation
-      const numChildren = (startItem.childrenRange?.end ?? startIndex + 1) - (startItem.childrenRange?.start ?? startIndex + 1);
+      // Dynamically calculate children based on indent level in renderedFlatTree
+      const startIndentLevel = startItem.indentLevel;
+      let endIndex = startIndex + 1;
+
+      // Find all children (items with greater indent level)
+      while (endIndex < prevRenderedFlatTree.length && prevRenderedFlatTree[endIndex].indentLevel > startIndentLevel) {
+        endIndex += 1;
+      }
+
+      const numChildren = endIndex - (startIndex + 1);
 
       // Remove all children
       return [
@@ -285,9 +383,42 @@ export function StepsPanel({
 
   const expandBlock = useCallback((startIndex: number, startItem: StepItem) => {
     setRenderedFlatTree((prevRenderedFlatTree) => {
-      // Use pre-computed childrenRange for O(1) lookup
+      // Find the items to insert from fullFlatTree based on the block's childrenRange
       const { start, end } = startItem.childrenRange ?? { start: 0, end: 0 };
-      const itemsToInsert = fullFlatTree.slice(start, end);
+
+      // Only insert direct children (depth = startItem.indentLevel + 1)
+      // We need to filter out children of collapsed blocks within the range
+      const itemsToInsert: StepItem[] = [];
+      const startIndentLevel = startItem.indentLevel;
+
+      for (let i = start; i < end; i += 1) {
+        const item = fullFlatTree[i];
+
+        // Only add items that are direct children
+        if (item.indentLevel === startIndentLevel + 1) {
+          itemsToInsert.push(item);
+        } else if (item.indentLevel > startIndentLevel + 1) {
+          // This is a nested child - check if its parent block is in itemsToInsert
+          // Find the most recent block at the parent level
+          let shouldInclude = false;
+          for (let j = itemsToInsert.length - 1; j >= 0; j -= 1) {
+            const potentialParent = itemsToInsert[j];
+            if (potentialParent.indentLevel < item.indentLevel
+                && potentialParent.indentLevel === item.indentLevel - 1
+                && potentialParent.order !== undefined) {
+              // This item's parent is in the list, so include it
+              shouldInclude = true;
+              break;
+            }
+            if (potentialParent.indentLevel < item.indentLevel - 1) {
+              break;
+            }
+          }
+          if (shouldInclude) {
+            itemsToInsert.push(item);
+          }
+        }
+      }
 
       // Create new array with the items inserted after startIndex
       return [
@@ -326,6 +457,7 @@ export function StepsPanel({
             numInterruptions,
             numComponentsInSequence,
             numComponentsInStudySequence,
+            isExcluded,
           } = renderedFlatTree[idx];
           const isComponent = order === undefined;
           const correctAnswer = componentAnswer?.correctAnswer?.length
@@ -356,7 +488,7 @@ export function StepsPanel({
           );
           return (
             <Box
-              key={`${renderedFlatTree[idx].path}-${idx}`}
+              key={virtualRow.key}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -371,15 +503,23 @@ export function StepsPanel({
                   h={ROW_HEIGHT}
                   pl={indentLevel * INDENT_SIZE + BASE_PADDING}
                   onClick={() => {
-                    if (isComponent && href) {
+                    if (isComponent && href && !isExcluded) {
                       navigate(href);
-                    } else if (blockIsCollapsed) {
-                      expandBlock(idx, renderedFlatTree[idx]);
-                    } else {
-                      collapseBlock(idx, renderedFlatTree[idx]);
+                    } else if (!isComponent) {
+                      // Both included and excluded blocks can be collapsed/expanded
+                      if (blockIsCollapsed) {
+                        expandBlock(idx, renderedFlatTree[idx]);
+                      } else {
+                        collapseBlock(idx, renderedFlatTree[idx]);
+                      }
                     }
                   }}
-                  active={window.location.pathname === href}
+                  active={!isExcluded && window.location.pathname === href}
+                  disabled={isExcluded && isComponent}
+                  style={{
+                    opacity: isExcluded ? 0.5 : 1,
+                    cursor: isExcluded && isComponent ? 'not-allowed' : 'pointer',
+                  }}
                   rightSection={
                     isComponent
                       ? undefined
@@ -432,11 +572,16 @@ export function StepsPanel({
                           <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
                         </Tooltip>
                       ) : null}
-                      {!isComponent && (
+                      {!isComponent && !isExcluded && (
                         <Badge ml={5} variant="light">
                           {numComponentsInSequence}
                           /
                           {numComponentsInStudySequence}
+                        </Badge>
+                      )}
+                      {!isComponent && isExcluded && (
+                        <Badge ml={5} color="gray" variant="light">
+                          Excluded
                         </Badge>
                       )}
                       {numInterruptions !== undefined && numInterruptions > 0 && (
