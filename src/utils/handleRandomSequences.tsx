@@ -20,10 +20,32 @@ function shuffle(array: (string | ComponentBlock | DynamicBlock)[]) {
   }
 }
 
+function generateLatinSquare(config: StudyConfig, path: string) {
+  const pathArr = path.split('-');
+
+  let locationInSequence: Partial<ComponentBlock> | Partial<DynamicBlock> | string = {};
+  pathArr.forEach((p) => {
+    if (p === 'root') {
+      locationInSequence = config.sequence;
+    } else {
+      if (isDynamicBlock(locationInSequence as StudyConfig['sequence'])) {
+        return;
+      }
+      locationInSequence = (locationInSequence as ComponentBlock).components[+p];
+    }
+  });
+
+  const options = (locationInSequence as ComponentBlock).components.map((c: unknown, i: number) => (typeof c === 'string' ? c : `_componentBlock${i}`));
+  shuffle(options);
+  const newSquare: string[][] = latinSquare<string>(options, true);
+  return newSquare;
+}
+
 function _componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
   path: string,
+  config: StudyConfig,
 ): Sequence {
   if (isDynamicBlock(order)) {
     return {
@@ -45,7 +67,16 @@ function _componentBlockToSequence(
 
     computedComponents = randomArr;
   } else if (order.order === 'latinSquare' && latinSquareObject) {
-    computedComponents = latinSquareObject[path].pop()!.map((o) => {
+    const latinSquareRow = latinSquareObject[path]?.pop();
+
+    if (!latinSquareRow) {
+      throw new Error(
+        `Latin square exhausted for path: ${path}. `
+        + 'This should not happen as we pre-generate enough rows. Please report this issue.',
+      );
+    }
+
+    computedComponents = latinSquareRow.map((o) => {
       if (o.startsWith('_componentBlock')) {
         return order.components[+o.slice('_componentBlock'.length)];
       }
@@ -56,11 +87,27 @@ function _componentBlockToSequence(
 
   computedComponents = computedComponents.slice(0, order.numSamples);
 
+  // Track how many times we've seen each component to handle duplicates correctly
+  const seenIndices = new Map<number, number>();
+
   for (let i = 0; i < computedComponents.length; i += 1) {
     const curr = computedComponents[i];
     if (typeof curr !== 'string' && !Array.isArray(curr)) {
-      const index = order.components.findIndex((c) => isEqual(c, curr));
-      computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${index}`) as unknown as ComponentBlock;
+      // Find all matching indices in the original array
+      const matchingIndices: number[] = [];
+      for (let j = 0; j < order.components.length; j += 1) {
+        if (isEqual(order.components[j], curr)) {
+          matchingIndices.push(j);
+        }
+      }
+
+      // Determine which occurrence this is
+      const firstMatchIndex = matchingIndices[0];
+      const occurrenceCount = seenIndices.get(firstMatchIndex) || 0;
+      const actualIndex = matchingIndices[occurrenceCount] ?? firstMatchIndex;
+      seenIndices.set(firstMatchIndex, occurrenceCount + 1);
+
+      computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${actualIndex}`, config) as unknown as ComponentBlock;
     }
   }
 
@@ -119,10 +166,11 @@ function _componentBlockToSequence(
 function componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
+  config: StudyConfig,
 ): Sequence {
   const orderCopy = structuredClone(order);
 
-  return _componentBlockToSequence(orderCopy, latinSquareObject, 'root');
+  return _componentBlockToSequence(orderCopy, latinSquareObject, 'root', config);
 }
 
 function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], path: string, index: number) {
@@ -149,31 +197,81 @@ function createRandomOrders(order: StudyConfig['sequence']) {
   return paths;
 }
 
-function generateLatinSquare(config: StudyConfig, path: string) {
-  const pathArr = path.split('-');
+/**
+ * Count how many times each latin square path will be accessed during a single sequence generation.
+ * This is needed to pre-generate enough latin square rows to avoid refilling mid-sequence.
+ *
+ * This mirrors the logic in _componentBlockToSequence to ensure accurate counting.
+ */
+function _countPathUsage(
+  order: StudyConfig['sequence'],
+  pathCounts: Record<string, number>,
+  path: string,
+): void {
+  if (isDynamicBlock(order)) {
+    return;
+  }
 
-  let locationInSequence: Partial<ComponentBlock> | Partial<DynamicBlock> | string = {};
-  pathArr.forEach((p) => {
-    if (p === 'root') {
-      locationInSequence = config.sequence;
-    } else {
-      if (isDynamicBlock(locationInSequence as StudyConfig['sequence'])) {
-        return;
+  if (order.order === 'latinSquare') {
+    pathCounts[path] = (pathCounts[path] || 0) + 1;
+  }
+
+  // Get the components that will actually be processed
+  let computedComponents = order.components;
+
+  // Apply numSamples if present
+  if (order.numSamples !== undefined) {
+    computedComponents = computedComponents.slice(0, order.numSamples);
+  }
+
+  // Count recursively for nested blocks
+  // Track how many times we've seen each component to handle duplicates correctly (same as _componentBlockToSequence)
+  const seenIndices = new Map<number, number>();
+
+  for (let i = 0; i < computedComponents.length; i += 1) {
+    const curr = computedComponents[i];
+    if (typeof curr !== 'string' && !Array.isArray(curr) && !isDynamicBlock(curr)) {
+      // Find all matching indices in the original array
+      const matchingIndices: number[] = [];
+      for (let j = 0; j < order.components.length; j += 1) {
+        if (JSON.stringify(order.components[j]) === JSON.stringify(curr)) {
+          matchingIndices.push(j);
+        }
       }
-      locationInSequence = (locationInSequence as ComponentBlock).components[+p];
-    }
-  });
 
-  const options = (locationInSequence as ComponentBlock).components.map((c: unknown, i: number) => (typeof c === 'string' ? c : `_componentBlock${i}`));
-  shuffle(options);
-  const newSquare: string[][] = latinSquare<string>(options, true);
-  return newSquare;
+      // Determine which occurrence this is
+      const firstMatchIndex = matchingIndices[0];
+      const occurrenceCount = seenIndices.get(firstMatchIndex) || 0;
+      const actualIndex = matchingIndices[occurrenceCount] ?? firstMatchIndex;
+      seenIndices.set(firstMatchIndex, occurrenceCount + 1);
+
+      _countPathUsage(curr, pathCounts, `${path}-${actualIndex}`);
+    }
+  }
+}
+
+function countPathUsage(order: StudyConfig['sequence']): Record<string, number> {
+  const pathCounts: Record<string, number> = {};
+  _countPathUsage(order, pathCounts, 'root');
+  return pathCounts;
 }
 
 export function generateSequenceArray(config: StudyConfig): Sequence[] {
   const paths = createRandomOrders(config.sequence);
+  const pathUsageCounts = countPathUsage(config.sequence);
+
+  // Pre-generate enough latin square rows for each path based on usage count
+  // We generate enough rows to cover the maximum usage in a single sequence
   const latinSquareObject: Record<string, string[][]> = paths
-    .map((p) => ({ [p]: generateLatinSquare(config, p) }))
+    .map((p) => {
+      const usageCount = pathUsageCounts[p] || 1;
+      // Generate multiple latin squares if needed and concatenate them
+      const rows: string[][] = [];
+      for (let i = 0; i < usageCount; i += 1) {
+        rows.push(...generateLatinSquare(config, p));
+      }
+      return { [p]: rows };
+    })
     .reduce((acc, curr) => ({ ...acc, ...curr }), {});
 
   const numSequences = config.uiConfig.numSequences || 1000;
@@ -181,16 +279,21 @@ export function generateSequenceArray(config: StudyConfig): Sequence[] {
   const sequenceArray: Sequence[] = [];
   Array.from({ length: numSequences }).forEach(() => {
     // Generate a sequence
-    const sequence = componentBlockToSequence(config.sequence, latinSquareObject);
+    const sequence = componentBlockToSequence(config.sequence, latinSquareObject, config);
     sequence.components.push('end');
 
     // Add the sequence to the array
     sequenceArray.push(sequence);
 
-    // Refill the latin square if it is empty
+    // Refill latin square arrays that are empty
     Object.entries(latinSquareObject).forEach(([key, value]) => {
       if (value.length === 0) {
-        latinSquareObject[key] = generateLatinSquare(config, key);
+        const usageCount = pathUsageCounts[key] || 1;
+        const rows: string[][] = [];
+        for (let i = 0; i < usageCount; i += 1) {
+          rows.push(...generateLatinSquare(config, key));
+        }
+        latinSquareObject[key] = rows;
       }
     });
   });
