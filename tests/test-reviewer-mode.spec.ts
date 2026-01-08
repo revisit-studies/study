@@ -23,7 +23,8 @@ test('test', async ({ browser }) => {
   const introText = await page.getByText('Welcome to our study. This is');
   await expect(introText).toBeVisible();
 
-  await page.getByLabel('Browse Components').locator('a').filter({ hasText: 'end' }).click();
+  await page.getByRole('tab', { name: 'Participant View' }).click();
+  await page.getByLabel('Participant View').locator('a').filter({ hasText: 'end' }).click();
   const endText = await page.getByText('Please wait');
   await expect(endText).toBeVisible();
 });
