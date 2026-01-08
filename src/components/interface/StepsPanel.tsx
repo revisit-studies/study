@@ -86,6 +86,7 @@ function countComponentsInSequence(sequence: Sequence, participantAnswers: Parti
 type StepItem = {
   label: string;
   indentLevel: number;
+  path: string; // Unique path from root for stable keying
 
   // Component Attributes
   href?: string;
@@ -93,12 +94,14 @@ type StepItem = {
   isLibraryImport?: boolean;
   component?: StudyConfig['components'][string];
   componentAnswer?: StoredAnswer;
+  componentName?: string; // Full component name (e.g., package.co.ComponentName)
 
   // Block Attributes
   order?: Sequence['order'];
   numInterruptions?: number;
   numComponentsInSequence?: number;
   numComponentsInStudySequence?: number;
+  childrenRange?: { start: number; end: number }; // Pre-computed indices of children in fullFlatTree
 };
 
 export function StepsPanel({
@@ -110,7 +113,13 @@ export function StepsPanel({
   participantAnswers: ParticipantData['answers'];
   studyConfig: StudyConfig;
 }) {
+  // Constants
   const INITIAL_CLAMP = 6;
+  const ROW_HEIGHT = 32; // px, fixed height for each row
+  const INDENT_SIZE = 24; // px, indentation per level
+  const BASE_PADDING = 12; // px, base left padding
+  const VIRTUALIZER_OVERSCAN = 6; // number of items to render outside viewport
+
   // Per-row clamp state, keyed by idx
   const [correctAnswerClampMap, setCorrectAnswerClampMap] = useState<Record<string, number | undefined>>({});
   const [responseClampMap, setResponseClampMap] = useState<Record<string, number | undefined>>({});
@@ -127,6 +136,17 @@ export function StepsPanel({
     return r;
   }, [studyConfig.sequence]);
 
+  // Memoize hasRandomization checks for all components
+  const componentHasRandomization = useMemo(() => {
+    const map = new Map<string, boolean>();
+    Object.entries(studyConfig.components).forEach(([key, component]) => {
+      if (component.response) {
+        map.set(key, hasRandomization(component.response));
+      }
+    });
+    return map;
+  }, [studyConfig.components]);
+
   useEffect(() => {
     let newFlatTree: StepItem[] = [];
     if (participantSequence === undefined) {
@@ -139,8 +159,10 @@ export function StepsPanel({
         return {
           label: coOrComponents ? key.split(coOrComponents).at(-1)! : key,
           indentLevel: 0,
+          path: `browse.${key}`,
           href: `/${studyId}/reviewer-${key}`,
           isLibraryImport: coOrComponents !== false,
+          componentName: key,
         };
       });
     } else {
@@ -150,7 +172,7 @@ export function StepsPanel({
       let idx = 0;
       let dynamicIdx = 0;
 
-      const traverse = (node: string | Sequence, indentLevel: number, parentNode: Sequence, dynamic = false) => {
+      const traverse = (node: string | Sequence, indentLevel: number, parentNode: Sequence, parentPath: string, dynamic = false) => {
         if (typeof node === 'string') {
           // Check to see if the component is from imported library
           const coOrComponents = node.includes('.co.')
@@ -159,10 +181,12 @@ export function StepsPanel({
 
           // Generate component identifier for participantAnswers lookup
           const componentIdentifier = dynamic ? `${parentNode.id}_${idx}_${node}_${dynamicIdx}` : `${node}_${idx}`;
+          const componentPath = `${parentPath}.${node}_${dynamic ? dynamicIdx : idx}`;
 
           newFlatTree.push({
             label: coOrComponents ? node.split(coOrComponents).at(-1)! : node,
             indentLevel,
+            path: componentPath,
             isLibraryImport: coOrComponents !== false,
 
             // Component Attributes
@@ -170,6 +194,7 @@ export function StepsPanel({
             isInterruption: (parentNode.interruptions || []).flatMap((intr) => intr.components).includes(node),
             component: studyConfig.components[node],
             componentAnswer: participantAnswers[componentIdentifier],
+            componentName: node,
           });
 
           if (dynamic) {
@@ -184,17 +209,19 @@ export function StepsPanel({
 
         const blockInterruptions = (node.interruptions || []).flatMap((intr) => intr.components);
         const matchingStudySequence = findMatchingComponentInFullOrder(node, fullOrder);
+        const blockPath = `${parentPath}.${node.id ?? node.order}`;
 
         // Push the block itself
         newFlatTree.push({
           label: node.id ?? node.order,
           indentLevel,
+          path: blockPath,
 
           // Block Attributes
           order: node.order,
           numInterruptions: node.components.filter((comp) => typeof comp === 'string' && blockInterruptions.includes(comp)).length,
           numComponentsInSequence: countComponentsInSequence(node, participantAnswers),
-          numComponentsInStudySequence: countComponentsInSequence(matchingStudySequence || node, participantAnswers)!,
+          numComponentsInStudySequence: countComponentsInSequence(matchingStudySequence || node, participantAnswers),
         });
 
         // Reset dynamicIdx when entering a new dynamic block
@@ -207,12 +234,25 @@ export function StepsPanel({
         const blockComponents = [...node.components, ...dynamicComponents];
         if (blockComponents.length > 0) {
           blockComponents.forEach((child) => {
-            traverse(child, indentLevel + 1, node, node.order === 'dynamic');
+            traverse(child, indentLevel + 1, node, blockPath, node.order === 'dynamic');
           });
         }
       };
 
-      traverse(participantSequence, 0, participantSequence);
+      traverse(participantSequence, 0, participantSequence, 'root');
+    }
+
+    // Pre-compute children ranges for blocks for O(1) collapse/expand
+    for (let i = 0; i < newFlatTree.length; i += 1) {
+      const item = newFlatTree[i];
+      if (item.order !== undefined) { // It's a block
+        const startIndentLevel = item.indentLevel;
+        let endIndex = i + 1;
+        while (endIndex < newFlatTree.length && newFlatTree[endIndex].indentLevel > startIndentLevel) {
+          endIndex += 1;
+        }
+        item.childrenRange = { start: i + 1, end: endIndex };
+      }
     }
 
     // Map over tree and set correctAnswerClampMap and responseClampMap
@@ -231,61 +271,45 @@ export function StepsPanel({
   }, [fullOrder, participantAnswers, participantSequence, studyConfig.components, studyId]);
 
   const collapseBlock = useCallback((startIndex: number, startItem: StepItem) => {
-    const startIndentLevel = startItem.indentLevel;
+    setRenderedFlatTree((prevRenderedFlatTree) => {
+      // Use pre-computed childrenRange for O(1) operation
+      const numChildren = (startItem.childrenRange?.end ?? startIndex + 1) - (startItem.childrenRange?.start ?? startIndex + 1);
 
-    // Find the index of the next block at the same or less indent level so we can remove the sub-items
-    let endIndex = renderedFlatTree.findIndex((item, idx) => idx > startIndex && item.indentLevel <= startIndentLevel);
-
-    // If no next block, collapse to the end of the list
-    if (endIndex === -1) {
-      endIndex = renderedFlatTree.length;
-    }
-
-    // Create new array without the items between startIndex and endIndex
-    const newFlatTree = [
-      ...renderedFlatTree.slice(0, startIndex + 1),
-      ...renderedFlatTree.slice(endIndex),
-    ];
-    setRenderedFlatTree(newFlatTree);
-  }, [renderedFlatTree]);
+      // Remove all children
+      return [
+        ...prevRenderedFlatTree.slice(0, startIndex + 1),
+        ...prevRenderedFlatTree.slice(startIndex + 1 + numChildren),
+      ];
+    });
+  }, []);
 
   const expandBlock = useCallback((startIndex: number, startItem: StepItem) => {
-    const startIndentLevel = startItem.indentLevel;
+    setRenderedFlatTree((prevRenderedFlatTree) => {
+      // Use pre-computed childrenRange for O(1) lookup
+      const { start, end } = startItem.childrenRange ?? { start: 0, end: 0 };
+      const itemsToInsert = fullFlatTree.slice(start, end);
 
-    const fullFlatStartIndex = fullFlatTree.findIndex((item) => item === startItem);
-
-    // Find all items in fullFlatTree that are children of the block being expanded
-    const itemsToInsert: StepItem[] = [];
-    for (let i = fullFlatStartIndex + 1; i < fullFlatTree.length; i += 1) {
-      const item = fullFlatTree[i];
-      if (item.indentLevel <= startIndentLevel) {
-        break;
-      }
-      itemsToInsert.push(item);
-    }
-
-    // Create new array with the items inserted after startIndex
-    const newFlatTree = [
-      ...renderedFlatTree.slice(0, startIndex + 1),
-      ...itemsToInsert,
-      ...renderedFlatTree.slice(startIndex + 1),
-    ];
-    setRenderedFlatTree(newFlatTree);
-  }, [fullFlatTree, renderedFlatTree]);
+      // Create new array with the items inserted after startIndex
+      return [
+        ...prevRenderedFlatTree.slice(0, startIndex + 1),
+        ...itemsToInsert,
+        ...prevRenderedFlatTree.slice(startIndex + 1),
+      ];
+    });
+  }, [fullFlatTree]);
 
   // Virtualizer setup
   const parentRef = useRef<HTMLDivElement>(null);
-  const rowHeight = 32; // px, fixed height for each row
   const rowCount = renderedFlatTree.length;
   const virtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => rowHeight,
-    overscan: 6,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: VIRTUALIZER_OVERSCAN,
   });
 
   return (
-    <Box ref={parentRef} style={{ height: 'calc(100vh - 70px - 80px - 36px - 2%', overflow: 'auto' }}>
+    <Box ref={parentRef} style={{ height: '100%', overflow: 'auto' }}>
       <Box style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const idx = virtualRow.index;
@@ -297,6 +321,7 @@ export function StepsPanel({
             isInterruption,
             component,
             componentAnswer,
+            componentName,
             order,
             numInterruptions,
             numComponentsInSequence,
@@ -331,20 +356,20 @@ export function StepsPanel({
           );
           return (
             <Box
-              key={virtualRow.key}
+              key={`${renderedFlatTree[idx].path}-${idx}`}
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 width: '100%',
-                height: rowHeight,
+                height: ROW_HEIGHT,
                 transform: `translateY(${virtualRow.start}px)`,
               }}
             >
               <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0} closeDelay={0}>
                 <NavLink
-                  h={32}
-                  pl={indentLevel * 24 + 12}
+                  h={ROW_HEIGHT}
+                  pl={indentLevel * INDENT_SIZE + BASE_PADDING}
                   onClick={() => {
                     if (isComponent && href) {
                       navigate(href);
@@ -377,7 +402,7 @@ export function StepsPanel({
                           <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
                         </Tooltip>
                       )}
-                      {(component?.response && hasRandomization(component.response)) && (
+                      {(componentName && componentHasRandomization.get(componentName)) && (
                         <Tooltip label="Random options" position="right" withArrow>
                           <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
                         </Tooltip>
