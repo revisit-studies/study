@@ -226,6 +226,10 @@ export function StepsPanel({
     } else {
       // Participant view
 
+      // Pre-compute expensive lookups to avoid O(n²) complexity
+      const matchingStudySequenceCache = new Map<string, Sequence | null>();
+      const componentCountCache = new Map<Sequence, number>();
+
       // Indices to keep track of component positions, used for navigation hrefs
       let idx = 0;
       let dynamicIdx = 0;
@@ -267,7 +271,29 @@ export function StepsPanel({
 
         const blockInterruptions = (node.interruptions || []).flatMap((intr) => intr.components);
         const blockPath = `${parentPath}.${node.id ?? node.order}`;
-        const matchingStudySequence = findMatchingComponentInFullOrder(node, fullOrder);
+
+        // Use cache for expensive lookups
+        const cacheKey = node.orderPath || blockPath;
+        let matchingStudySequence = matchingStudySequenceCache.get(cacheKey);
+        if (matchingStudySequence === undefined) {
+          matchingStudySequence = findMatchingComponentInFullOrder(node, fullOrder);
+          matchingStudySequenceCache.set(cacheKey, matchingStudySequence);
+        }
+
+        // Cache component counts
+        let numComponentsInSequence = componentCountCache.get(node);
+        if (numComponentsInSequence === undefined) {
+          numComponentsInSequence = countComponentsInSequence(node, participantAnswers);
+          componentCountCache.set(node, numComponentsInSequence);
+        }
+
+        let numComponentsInStudySequence = componentCountCache.get(matchingStudySequence || node);
+        if (numComponentsInStudySequence === undefined) {
+          numComponentsInStudySequence = countComponentsInSequence(matchingStudySequence || node, participantAnswers);
+          if (matchingStudySequence) {
+            componentCountCache.set(matchingStudySequence, numComponentsInStudySequence);
+          }
+        }
 
         // Push the block itself
         newFlatTree.push({
@@ -279,8 +305,8 @@ export function StepsPanel({
           order: node.order,
           orderPath: node.orderPath,
           numInterruptions: node.components.filter((comp) => typeof comp === 'string' && blockInterruptions.includes(comp)).length,
-          numComponentsInSequence: countComponentsInSequence(node, participantAnswers),
-          numComponentsInStudySequence: countComponentsInSequence(matchingStudySequence || node, participantAnswers),
+          numComponentsInSequence,
+          numComponentsInStudySequence,
         });
 
         // Reset dynamicIdx when entering a new dynamic block
@@ -298,10 +324,10 @@ export function StepsPanel({
         }
 
         // After processing all children, check for excluded blocks and components from the study sequence
-        const matchingStudyBlock = findMatchingComponentInFullOrder(node, fullOrder);
-        if (matchingStudyBlock) {
+        // Reuse the cached matchingStudySequence from above
+        if (matchingStudySequence) {
           // First, add excluded components (strings)
-          const excludedComponents = findExcludedComponents(matchingStudyBlock, node);
+          const excludedComponents = findExcludedComponents(matchingStudySequence, node);
           excludedComponents.forEach((excludedComponent) => {
             const coOrComponents = excludedComponent.includes('.co.')
               ? '.co.'
@@ -320,7 +346,7 @@ export function StepsPanel({
           });
 
           // Then, add excluded blocks
-          const excludedBlocks = findExcludedBlocks(matchingStudyBlock, node);
+          const excludedBlocks = findExcludedBlocks(matchingStudySequence, node);
           excludedBlocks.forEach((excludedBlock) => {
             const excludedBlockPath = `${blockPath}.${excludedBlock.id ?? excludedBlock.order}_excluded`;
 
@@ -485,6 +511,7 @@ export function StepsPanel({
   // Virtualizer setup
   const parentRef = useRef<HTMLDivElement>(null);
   const rowCount = renderedFlatTree.length;
+
   const virtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => parentRef.current,
@@ -493,8 +520,15 @@ export function StepsPanel({
   });
 
   return (
-    <Box ref={parentRef} style={{ height: '100%', overflow: 'auto' }}>
-      <Box style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+    <Box
+      ref={parentRef}
+      style={{
+        height: '100%',
+        overflow: 'auto',
+        position: 'relative',
+      }}
+    >
+      <Box style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}>
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const idx = virtualRow.index;
           const {
@@ -568,7 +602,7 @@ export function StepsPanel({
                       }
                     }
                   }}
-                  active={!isExcluded && window.location.pathname === href}
+                  active={!isExcluded && href === window.location.pathname}
                   disabled={isExcluded && isComponent}
                   style={{
                     opacity: isExcluded ? 0.5 : 1,

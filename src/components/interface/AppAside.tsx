@@ -3,7 +3,6 @@ import {
   Button,
   CloseButton,
   Flex,
-  ScrollArea,
   Tabs,
   Text,
   AppShell,
@@ -128,16 +127,23 @@ export function AppAside() {
 
       <AppShell.Section
         grow
-        component={ScrollArea}
         p="xs"
         pt={4}
+        style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
       >
-        <Tabs value={activeTab} onChange={setActiveTab}>
+        <Tabs
+          value={activeTab}
+          onChange={setActiveTab}
+          style={{
+            display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden',
+          }}
+        >
           <Box style={{
             position: 'sticky',
             top: 0,
             backgroundColor: 'white',
             zIndex: 1,
+            flexShrink: 0,
           }}
           >
             <Tabs.List grow>
@@ -152,10 +158,10 @@ export function AppAside() {
             </Tabs.List>
           </Box>
 
-          <Tabs.Panel value="participant">
+          <Tabs.Panel value="participant" style={{ flex: 1, overflow: 'hidden' }}>
             <StepsPanel participantSequence={sequence} participantAnswers={answers} studyConfig={studyConfig} />
           </Tabs.Panel>
-          <Tabs.Panel value="allTrials">
+          <Tabs.Panel value="allTrials" style={{ flex: 1, overflow: 'hidden' }}>
             <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />
           </Tabs.Panel>
         </Tabs>
