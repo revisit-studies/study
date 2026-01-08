@@ -87,27 +87,54 @@ function _componentBlockToSequence(
 
   computedComponents = computedComponents.slice(0, order.numSamples);
 
-  // Track how many times we've seen each component to handle duplicates correctly
-  const seenIndices = new Map<number, number>();
+  // Pre-build a list of unique components with their indices to avoid O(n²) isEqual comparisons
+  // Since structuredClone breaks reference equality, we need to use value equality
+  const uniqueComponents: Array<{ component: ComponentBlock | DynamicBlock; indices: number[] }> = [];
+
+  for (let j = 0; j < order.components.length; j += 1) {
+    const comp = order.components[j];
+    if (typeof comp !== 'string' && !Array.isArray(comp)) {
+      // Find if we've already seen this component (by value)
+      let found = false;
+      for (const unique of uniqueComponents) {
+        if (isEqual(unique.component, comp)) {
+          unique.indices.push(j);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        uniqueComponents.push({ component: comp, indices: [j] });
+      }
+    }
+  }
+
+  // Track how many times we've seen each unique component
+  const seenCounts = new Map<ComponentBlock | DynamicBlock, number>();
 
   for (let i = 0; i < computedComponents.length; i += 1) {
     const curr = computedComponents[i];
     if (typeof curr !== 'string' && !Array.isArray(curr)) {
-      // Find all matching indices in the original array
-      const matchingIndices: number[] = [];
-      for (let j = 0; j < order.components.length; j += 1) {
-        if (isEqual(order.components[j], curr)) {
-          matchingIndices.push(j);
+      // Find the matching unique component
+      let matchedUnique = null;
+      for (const unique of uniqueComponents) {
+        if (isEqual(unique.component, curr)) {
+          matchedUnique = unique;
+          break;
         }
       }
 
-      // Determine which occurrence this is
-      const firstMatchIndex = matchingIndices[0];
-      const occurrenceCount = seenIndices.get(firstMatchIndex) || 0;
-      const actualIndex = matchingIndices[occurrenceCount] ?? firstMatchIndex;
-      seenIndices.set(firstMatchIndex, occurrenceCount + 1);
+      if (matchedUnique) {
+        const seenCount = seenCounts.get(matchedUnique.component) || 0;
+        const actualIndex = matchedUnique.indices[seenCount] ?? matchedUnique.indices[0];
+        seenCounts.set(matchedUnique.component, seenCount + 1);
 
-      computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${actualIndex}`, config) as unknown as ComponentBlock;
+        computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${actualIndex}`, config) as unknown as ComponentBlock;
+      } else {
+        // Fallback: shouldn't happen, but handle it
+        const index = order.components.findIndex((c) => isEqual(c, curr));
+        computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${index}`, config) as unknown as ComponentBlock;
+      }
     }
   }
 
@@ -225,27 +252,52 @@ function _countPathUsage(
   }
 
   // Count recursively for nested blocks
-  // Track how many times we've seen each component to handle duplicates correctly (same as _componentBlockToSequence)
-  const seenIndices = new Map<number, number>();
+  // Pre-build a list of unique components with their indices (same approach as _componentBlockToSequence)
+  const uniqueComponents: Array<{ component: ComponentBlock | DynamicBlock; indices: number[] }> = [];
+
+  for (let j = 0; j < order.components.length; j += 1) {
+    const comp = order.components[j];
+    if (typeof comp !== 'string' && !Array.isArray(comp) && !isDynamicBlock(comp)) {
+      // Find if we've already seen this component (by value)
+      let found = false;
+      for (const unique of uniqueComponents) {
+        if (isEqual(unique.component, comp)) {
+          unique.indices.push(j);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        uniqueComponents.push({ component: comp, indices: [j] });
+      }
+    }
+  }
+
+  // Track how many times we've seen each unique component
+  const seenCounts = new Map<ComponentBlock | DynamicBlock, number>();
 
   for (let i = 0; i < computedComponents.length; i += 1) {
     const curr = computedComponents[i];
     if (typeof curr !== 'string' && !Array.isArray(curr) && !isDynamicBlock(curr)) {
-      // Find all matching indices in the original array
-      const matchingIndices: number[] = [];
-      for (let j = 0; j < order.components.length; j += 1) {
-        if (JSON.stringify(order.components[j]) === JSON.stringify(curr)) {
-          matchingIndices.push(j);
+      // Find the matching unique component
+      let matchedUnique = null;
+      for (const unique of uniqueComponents) {
+        if (isEqual(unique.component, curr)) {
+          matchedUnique = unique;
+          break;
         }
       }
 
-      // Determine which occurrence this is
-      const firstMatchIndex = matchingIndices[0];
-      const occurrenceCount = seenIndices.get(firstMatchIndex) || 0;
-      const actualIndex = matchingIndices[occurrenceCount] ?? firstMatchIndex;
-      seenIndices.set(firstMatchIndex, occurrenceCount + 1);
+      if (matchedUnique) {
+        const seenCount = seenCounts.get(matchedUnique.component) || 0;
+        const actualIndex = matchedUnique.indices[seenCount] ?? matchedUnique.indices[0];
+        seenCounts.set(matchedUnique.component, seenCount + 1);
 
-      _countPathUsage(curr, pathCounts, `${path}-${actualIndex}`);
+        _countPathUsage(curr, pathCounts, `${path}-${actualIndex}`);
+      } else {
+        // Fallback: shouldn't happen, but handle it
+        _countPathUsage(curr, pathCounts, `${path}-0`);
+      }
     }
   }
 }
