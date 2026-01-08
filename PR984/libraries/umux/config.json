@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
+  "description": "The evaluation you're about to complete is the Usability Metric for User Experience (UMUX). The UMUX is a short, standardized usability questionnaire developed as a concise and conceptually similar alternative to the System Usability Scale (SUS). It includes four statements designed to assess how effective, efficient, and satisfying you find the system to use.",
+  "reference": "Finstad, Kraig. \"The usability metric for user experience.\" Interacting with computers 22.5 (2010): 323-327.",
+  "doi": "10.1016/j.intcom.2010.04.004", 
+  "components": {
+    "umux": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "effectiveness",
+          "prompt": "This system's capabilities meet my **requirements**",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly Agree",
+          "leftLabel": "Strongly Disagree"
+        },
+        {
+          "id": "satisfaction",
+          "prompt": "Using this system is a **frustrating** experience",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly Agree",
+          "leftLabel": "Strongly Disagree"
+        },
+        {
+          "id": "easy-to-use",
+          "prompt": "This system is **easy to use**",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly Agree",
+          "leftLabel": "Strongly Disagree"
+        },
+        {
+          "id": "time-consuming",
+          "prompt": "I have to spend too much time learning how to use this system",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly Agree",
+          "leftLabel": "Strongly Disagree"
+        }
+      ]
+    }
+  },
+  "sequences": {}
+}
