@@ -21,7 +21,7 @@ export function formatDate(date: Date): string | JSX.Element {
 
 export function buildConfigRows(
   fetchedConfigs: Record<string, StudyConfig>,
-  visibleParticipants: { participantConfigHash: string; answers: Record<string, { startTime: number; endTime: number }> }[],
+  visibleParticipants: { participantConfigHash: string; answers: Record<string, { startTime: number; endTime: number }>; rejected: { reason: string; timestamp: number } | false; createdTime?: number }[],
 ): ConfigInfo[] {
   return Object.entries(fetchedConfigs).map(([hash, config]) => {
     const filteredParticipants = visibleParticipants.filter((participant) => participant.participantConfigHash === hash);
@@ -29,9 +29,11 @@ export function buildConfigRows(
 
     const startTime = storedAnswers.map((answer: { startTime: number; endTime: number }) => answer.startTime).filter((t): t is number => t !== undefined && t > 0);
     const endTime = storedAnswers.map((answer: { startTime: number; endTime: number }) => answer.endTime).filter((t): t is number => t !== undefined && t > 0);
+    const createdTimestamps = filteredParticipants.map((p) => p.createdTime).filter((t): t is number => t !== undefined && t > 0);
 
     const earliestStartTime = startTime.length > 0 ? Math.min(...startTime.values()) : null;
     const latestEndTime = endTime.length > 0 ? Math.max(...endTime.values()) : null;
+    const earliestCreatedTime = createdTimestamps.length > 0 ? Math.min(...createdTimestamps) : null;
 
     const formatTimeFrame = (timestamp: number) => {
       const formatted = formatDate(new Date(timestamp));
@@ -39,13 +41,11 @@ export function buildConfigRows(
     };
 
     const getTimeFrame = (): string => {
-      if (earliestStartTime && latestEndTime) {
-        return `${formatTimeFrame(earliestStartTime)} - ${formatTimeFrame(latestEndTime)}`;
-      }
-      if (earliestStartTime) {
-        return formatTimeFrame(earliestStartTime);
-      }
-      return 'N/A';
+      const startTimeToUse = earliestStartTime || earliestCreatedTime;
+      if (!startTimeToUse) return 'N/A';
+
+      const endTimeStr = latestEndTime ? formatTimeFrame(latestEndTime) : 'N/A';
+      return `${formatTimeFrame(startTimeToUse)} - ${endTimeStr}`;
     };
 
     return {
