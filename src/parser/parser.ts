@@ -142,7 +142,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         || ('response' in component && component.response?.some((r) => 'location' in r && r.location === 'sidebar'));
 
       if (sidebarDisabled && isUsingSidebar) {
-        const instancePath = component.withSidebar === false ? `/components/${componentName}` : '/uiConfig';
+        const instancePath = component.withSidebar === false ? `/components/${componentName}` : '/uiConfig/';
         errors.push({
           message: `Component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
           instancePath,
