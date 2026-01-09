@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unstable-nested-components */
 import {
-  Button, Flex, Space, Text, Tooltip, Group, Modal, ScrollArea, Code,
+  Button, Flex, Space, Text, Tooltip, Group, Modal, ScrollArea, Code, ActionIcon,
 } from '@mantine/core';
 import {
   useCallback, useEffect, useMemo, useState,
@@ -10,7 +10,7 @@ import {
   MantineReactTable, MRT_Cell as MrtCell, MRT_ColumnDef as MrtColumnDef, MRT_RowSelectionState as MrtRowSelectionState, useMantineReactTable,
 } from 'mantine-react-table';
 import {
-  IconInfoCircle, IconDownload, IconEye, IconArrowsLeftRight,
+  IconInfoCircle, IconDownload, IconEye, IconArrowsLeftRight, IconCopy,
 } from '@tabler/icons-react';
 
 import { ParticipantData } from '../../../storage/types';
@@ -88,6 +88,14 @@ export function ConfigView({
     setModalCompareConfigOpened(true);
   }, []);
 
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const handleCopyHash = useCallback((hash: string) => {
+    navigator.clipboard.writeText(hash);
+    setCopied(hash);
+    setTimeout(() => setCopied(null), 2000);
+  }, []);
+
   const columns = useMemo<MrtColumnDef<ConfigInfo>[]>(() => [
     {
       id: 'configIndex',
@@ -114,7 +122,16 @@ export function ConfigView({
             ...
           </Text>
           <Tooltip label={row.original.hash}>
-            <IconInfoCircle size={16} />
+            <IconInfoCircle size={16} color="gray" />
+          </Tooltip>
+          <Tooltip label={copied === row.original.hash ? 'Copied' : 'Copy hash'}>
+            <ActionIcon
+              variant="subtle"
+              onClick={() => handleCopyHash(row.original.hash)}
+              color="gray"
+            >
+              <IconCopy size={16} />
+            </ActionIcon>
           </Tooltip>
         </Flex>
       ),
@@ -160,7 +177,7 @@ export function ConfigView({
         </Flex>
       ),
     },
-  ], [handleDownloadConfig, handleViewConfig]);
+  ], [handleDownloadConfig, handleViewConfig, copied]);
 
   const table = useMantineReactTable({
     columns,
@@ -240,7 +257,7 @@ export function ConfigView({
               Object.keys(checked).filter((key) => checked[key])
                 .map((hash) => configs.find((c) => c.hash === hash))
                 .filter((c): c is ConfigInfo => c !== undefined)
-              }
+            }
             />
           </ScrollArea>
         </Modal>
