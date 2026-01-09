@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unstable-nested-components */
 import {
-  Button, Flex, Space, Text, Tooltip, Group, Modal, ScrollArea, Code, ActionIcon,
+  Button, Flex, Space, Text, Tooltip, Group, Modal, ScrollArea, Code, ActionIcon, Loader, Stack,
 } from '@mantine/core';
 import {
   useCallback, useEffect, useMemo, useState,
@@ -31,10 +31,12 @@ export function ConfigView({
   const [viewConfig, setViewConfig] = useState<string | null>(null);
   const [modalViewConfigOpened, setModalViewConfigOpened] = useState(false);
   const [modalCompareConfigOpened, setModalCompareConfigOpened] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!storageEngine || !studyId) {
       setConfigs([]);
+      setLoading(false);
       return;
     }
 
@@ -48,6 +50,7 @@ export function ConfigView({
         console.error('Error fetching configs:', error);
         setConfigs([]);
       }
+      setLoading(false);
     };
 
     fetchConfigs();
@@ -177,7 +180,7 @@ export function ConfigView({
         </Flex>
       ),
     },
-  ], [handleDownloadConfig, handleViewConfig, copied]);
+  ], [handleDownloadConfig, handleViewConfig, handleCopyHash, copied]);
 
   const table = useMantineReactTable({
     columns,
@@ -228,7 +231,12 @@ export function ConfigView({
     },
   });
 
-  return (
+  return loading ? (
+    <Stack align="center" p="md">
+      <Loader size="sm" />
+      <Text size="sm" c="dimmed">Loading config data...</Text>
+    </Stack>
+  ) : (
     configs.length > 0 ? (
       <>
         <MantineReactTable
