@@ -16,7 +16,8 @@ import {
 import { ParticipantData } from '../../../storage/types';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { downloadConfigFile, downloadConfigFilesZip } from '../../../utils/handleDownloadFiles';
-import { ConfigInfo, buildConfigRows, generateDiffView } from './utils';
+import { ConfigInfo, buildConfigRows } from './utils';
+import { ConfigDiffModal } from './ConfigDiffModal';
 
 export function ConfigView({
   visibleParticipants,
@@ -235,11 +236,12 @@ export function ConfigView({
           size="95%"
         >
           <ScrollArea h={600}>
-            {generateDiffView(
+            <ConfigDiffModal configs={
               Object.keys(checked).filter((key) => checked[key])
                 .map((hash) => configs.find((c) => c.hash === hash))
-                .filter((c): c is ConfigInfo => c !== undefined),
-            )}
+                .filter((c): c is ConfigInfo => c !== undefined)
+              }
+            />
           </ScrollArea>
         </Modal>
       </>
