@@ -230,9 +230,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       <AppHeader studyIds={globalConfig.configsList} />
       <AppShell.Main style={{ height: '100dvh' }}>
         <Stack ref={ref} style={{ height: '100%', maxHeight: '100dvh', overflow: 'hidden' }} justify="space-between">
-          <Flex direction="row" align="center" justify="space-between">
+          <Flex direction="row" align="center" justify="space-between" p="sm" gap="md">
             <Flex direction="row" align="center" gap="md">
-              <Title order={5} mr="sm">{studyId}</Title>
+              <Title order={5}>{studyId}</Title>
               {studyConfig && (
                 <DownloadButtons
                   visibleParticipants={selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants}
@@ -243,88 +243,94 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 />
               )}
             </Flex>
-            <Flex direction="row" align="center">
-              <Text size="sm" fw={500}>Stage:</Text>
-              <MultiSelect
-                data={availableStages}
-                value={selectedStages}
-                onChange={(values) => {
-                  if (values.includes('ALL') && !selectedStages.includes('ALL')) {
-                    setSelectedStages(['ALL']);
-                  } else if (values.includes('ALL') && selectedStages.includes('ALL')) {
-                    setSelectedStages(values.filter((v) => v !== 'ALL'));
-                  } else if (values.length === 0) {
-                    setSelectedStages(['ALL']);
-                  } else {
-                    setSelectedStages(values);
-                  }
-                }}
-                w={250}
-                size="sm"
-                clearable={false}
-                maxValues={5}
-                styles={{
-                  input: {
-                    minHeight: '36px',
-                  },
-                }}
-                mx="sm"
-              />
-              <Text size="sm" fw={500} mx="sm">Config:</Text>
-              <MultiSelect
-                data={availableConfigs}
-                value={selectedConfigs}
-                onChange={(values) => {
-                  if (values.includes('ALL') && !selectedConfigs.includes('ALL')) {
-                    setSelectedConfigs(['ALL']);
-                  } else if (values.includes('ALL') && selectedConfigs.includes('ALL')) {
-                    setSelectedConfigs(values.filter((v) => v !== 'ALL'));
-                  } else if (values.length === 0) {
-                    setSelectedConfigs(['ALL']);
-                  } else {
-                    setSelectedConfigs(values);
-                  }
-                }}
-                w={250}
-                size="sm"
-                clearable={false}
-                maxValues={5}
-                styles={{
-                  input: {
-                    minHeight: '36px',
-                  },
-                }}
-                mx="sm"
-              />
-              <Text mt={-2} size="sm" ml="sm">Participants: </Text>
-              <Checkbox.Group
-                value={includedParticipants}
-                onChange={(e) => setIncludedParticipants(e)}
-                mb="xs"
-                mt={8}
-                ml="xs"
-              >
-                <Group>
-                  <Checkbox
-                    value="completed"
-                    label={selectedParticipants.length > 0
-                      ? `Completed (${selectedParticipantCounts.completed} of ${participantCounts.completed})`
-                      : `Completed (${participantCounts.completed})`}
-                  />
-                  <Checkbox
-                    value="inprogress"
-                    label={selectedParticipants.length > 0
-                      ? `In Progress (${selectedParticipantCounts.inprogress} of ${participantCounts.inprogress})`
-                      : `In Progress (${participantCounts.inprogress})`}
-                  />
-                  <Checkbox
-                    value="rejected"
-                    label={selectedParticipants.length > 0
-                      ? `Rejected (${selectedParticipantCounts.rejected} of ${participantCounts.rejected})`
-                      : `Rejected (${participantCounts.rejected})`}
-                  />
-                </Group>
-              </Checkbox.Group>
+            <Flex direction="row" align="center" gap="md">
+              <Flex direction="row" align="center" gap="xs">
+                <Text size="sm" fw={500}>Stage:</Text>
+                <MultiSelect
+                  data={availableStages}
+                  value={selectedStages}
+                  onChange={(values) => {
+                    if (values.includes('ALL') && !selectedStages.includes('ALL')) {
+                      setSelectedStages(['ALL']);
+                    } else if (values.includes('ALL') && selectedStages.includes('ALL')) {
+                      setSelectedStages(values.filter((v) => v !== 'ALL'));
+                    } else if (values.length === 0) {
+                      setSelectedStages(['ALL']);
+                    } else {
+                      setSelectedStages(values);
+                    }
+                  }}
+                  w={180}
+                  size="sm"
+                  clearable={false}
+                  maxValues={5}
+                  styles={{
+                    input: {
+                      minHeight: '36px',
+                    },
+                  }}
+                />
+              </Flex>
+
+              <Flex direction="row" align="center" gap="xs">
+                <Text size="sm" fw={500}>Config:</Text>
+                <MultiSelect
+                  data={availableConfigs}
+                  value={selectedConfigs}
+                  onChange={(values) => {
+                    if (values.includes('ALL') && !selectedConfigs.includes('ALL')) {
+                      setSelectedConfigs(['ALL']);
+                    } else if (values.includes('ALL') && selectedConfigs.includes('ALL')) {
+                      setSelectedConfigs(values.filter((v) => v !== 'ALL'));
+                    } else if (values.length === 0) {
+                      setSelectedConfigs(['ALL']);
+                    } else {
+                      setSelectedConfigs(values);
+                    }
+                  }}
+                  w={180}
+                  size="sm"
+                  clearable={false}
+                  maxValues={5}
+                  styles={{
+                    input: {
+                      minHeight: '36px',
+                    },
+                  }}
+                />
+              </Flex>
+
+              <Flex direction="row" align="center" gap="xs">
+                <Text size="sm" fw={500}>Participants:</Text>
+                <Checkbox.Group
+                  value={includedParticipants}
+                  onChange={(e) => setIncludedParticipants(e)}
+                >
+                  <Group gap="xs">
+                    <Checkbox
+                      value="completed"
+                      label={selectedParticipants.length > 0
+                        ? `Completed (${selectedParticipantCounts.completed} of ${participantCounts.completed})`
+                        : `Completed (${participantCounts.completed})`}
+                      size="sm"
+                    />
+                    <Checkbox
+                      value="inprogress"
+                      label={selectedParticipants.length > 0
+                        ? `In Progress (${selectedParticipantCounts.inprogress} of ${participantCounts.inprogress})`
+                        : `In Progress (${participantCounts.inprogress})`}
+                      size="sm"
+                    />
+                    <Checkbox
+                      value="rejected"
+                      label={selectedParticipants.length > 0
+                        ? `Rejected (${selectedParticipantCounts.rejected} of ${participantCounts.rejected})`
+                        : `Rejected (${participantCounts.rejected})`}
+                      size="sm"
+                    />
+                  </Group>
+                </Checkbox.Group>
+              </Flex>
             </Flex>
           </Flex>
           <LoadingOverlay visible={status === 'pending'} />
