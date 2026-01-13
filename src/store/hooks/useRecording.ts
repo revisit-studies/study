@@ -2,15 +2,18 @@ import {
   createContext, useCallback, useContext, useEffect, useRef, useState,
 } from 'react';
 import { useStudyConfig } from './useStudyConfig';
-import { useCurrentComponent } from '../../routes/utils';
+import { useCurrentComponent, useCurrentIdentifier } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useRecordingConfig } from './useRecordingConfig';
+import { useStoredAnswer } from './useStoredAnswer';
+import { useIsAnalysis } from './useIsAnalysis';
 
 /**
  * Captures and records the screen and audio.
- * This hook is only used when at least one of the stimuli requires screen recording.
+ * When screen recording is enabled in atleast a stimulus, screen capture should be called before recording is initiated.
+ * When just audio recording is enabled throughout the study, recording is initiated on each screen separately.
  */
-export function useScreenRecording() {
+export function useRecording() {
   const studyConfig = useStudyConfig();
 
   const { recordScreenFPS, recordAudio } = studyConfig.uiConfig;
@@ -32,6 +35,11 @@ export function useScreenRecording() {
   const audioMediaStream = useRef<MediaStream | null>(null);
   const audioMediaRecorder = useRef<MediaRecorder | null>(null); // recorder for audio. Necessary to save audio file to get transcription.
   const screenMediaStream = useRef<MediaStream>(null);
+
+  const currentTrialName = useRef<string | null>(null);
+  const identifier = useCurrentIdentifier();
+  const status = useStoredAnswer();
+  const isAnalysis = useIsAnalysis();
 
   const { storageEngine } = useStorageEngine();
 
@@ -177,7 +185,7 @@ export function useScreenRecording() {
     audioRecorder?.start(1000);
   }, [currentComponentHasAudioRecording, currentComponentHasScreenRecording, storageEngine]);
 
-  // Start screen recording. This does not stop screen capture.
+  // Stop screen recording. This does not stop screen capture.
   const stopScreenRecording = useCallback(() => {
     setIsScreenRecording(false);
     setScreenWithAudioRecording(false);
@@ -185,11 +193,98 @@ export function useScreenRecording() {
     audioMediaRecorder.current?.stop();
   }, []);
 
+  const stopAudioRecording = useCallback(() => {
+    setIsScreenRecording(false);
+    setScreenWithAudioRecording(false);
+    setIsAudioRecording(false);
+
+    currentMediaRecorder.current?.stop();
+    if (audioMediaRecorder.current) {
+      audioMediaRecorder.current.stream.getTracks().forEach((track) => { track.stop(); audioMediaRecorder.current?.stream.removeTrack(track); });
+      audioMediaRecorder.current.stream.getAudioTracks().forEach((track) => { track.stop(); audioMediaRecorder.current?.stream.removeTrack(track); });
+      audioMediaRecorder.current.stop();
+      audioMediaRecorder.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     if (currentComponent !== '$screen-recording.co.screenRecordingPermission' && currentComponent !== 'end' && screenCaptureStarted && !isScreenCapturing) {
       setIsRejected(true);
     }
   }, [currentComponent, isScreenCapturing, screenCaptureStarted]);
+
+  const startAudioRecording = useCallback((trialName: string) => {
+    navigator.mediaDevices.getUserMedia({
+      audio: true,
+    }).then((s) => {
+      const recorder = new MediaRecorder(s);
+      audioMediaRecorder.current = recorder;
+
+      let chunks : Blob[] = [];
+
+      recorder.addEventListener('start', () => {
+        chunks = [];
+      });
+
+      recorder.addEventListener('dataavailable', (event: BlobEvent) => {
+        if (event.data && event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      });
+
+      recorder.addEventListener('stop', () => {
+        const { mimeType } = recorder;
+        const blob = new Blob(chunks, { type: mimeType });
+        storageEngine?.saveAudioRecording(blob, trialName);
+      });
+
+      recorder.start();
+    });
+
+    setIsAudioRecording(true);
+  }, [storageEngine]);
+
+  // For study with just audio recording
+  useEffect(() => {
+    if (!studyConfig || studyHasScreenRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+      return;
+    }
+
+    if (audioMediaRecorder.current) {
+      stopAudioRecording();
+      currentTrialName.current = null;
+    }
+
+    if (currentComponent !== 'end' && currentTrialName.current !== identifier && (currentComponentHasAudioRecording)) {
+      currentTrialName.current = identifier;
+      startAudioRecording(identifier);
+    }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentComponent, identifier, currentComponentHasAudioRecording]);
+
+  // For study with screen recording
+  useEffect(() => {
+    if (!studyConfig || !(studyHasScreenRecording) || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+      return;
+    }
+
+    if (currentMediaRecorder.current) {
+      stopScreenRecording();
+      currentTrialName.current = null;
+    }
+
+    if (currentComponent !== 'end' && isMediaCapturing && currentTrialName.current !== identifier && (currentComponentHasAudioRecording || currentComponentHasScreenRecording)) {
+      currentTrialName.current = identifier;
+      startScreenRecording(identifier);
+    }
+
+    if (currentComponent === 'end') {
+      stopScreenCapture();
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, isMediaCapturing]);
 
   // Start screen capture. This does not begin recording.
   const startScreenCapture = useCallback(() => {
@@ -270,14 +365,14 @@ export function useScreenRecording() {
   };
 }
 
-type ScreenRecordingContextType = ReturnType<typeof useScreenRecording>;
+type RecordingContextType = ReturnType<typeof useRecording>;
 
-export const ScreenRecordingContext = createContext<ScreenRecordingContextType | undefined>(undefined);
+export const RecordingContext = createContext<RecordingContextType | undefined>(undefined);
 
-export function useScreenRecordingContext() {
-  const context = useContext(ScreenRecordingContext);
+export function useRecordingContext() {
+  const context = useContext(RecordingContext);
   if (!context) {
-    throw new Error('useScreenRecordingContext must be used within a ScreenRecordingProvider');
+    throw new Error('useRecordingContext must be used within a RecordingProvider');
   }
   return context;
 }
