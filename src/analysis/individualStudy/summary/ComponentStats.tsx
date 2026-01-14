@@ -1,17 +1,20 @@
 import { useMemo } from 'react';
-import { Text, Paper, Title } from '@mantine/core';
+import { Paper, Title } from '@mantine/core';
 // eslint-disable-next-line camelcase
 import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from 'mantine-react-table';
 import { ParticipantData } from '../../../storage/types';
+import { StudyConfig } from '../../../parser/types';
 import { getComponentStats, convertNumberToString } from './utils';
 import { ComponentData } from '../../types';
 
 export function ComponentStats({
   visibleParticipants,
+  studyConfig,
 }: {
   visibleParticipants: ParticipantData[];
+  studyConfig: StudyConfig;
 }) {
-  const componentData: ComponentData[] = useMemo(() => getComponentStats(visibleParticipants), [visibleParticipants]);
+  const componentData: ComponentData[] = useMemo(() => getComponentStats(visibleParticipants, studyConfig), [visibleParticipants, studyConfig]);
 
   // eslint-disable-next-line camelcase
   const columns = useMemo<MRT_ColumnDef<ComponentData>[]>(
@@ -66,9 +69,7 @@ export function ComponentStats({
   return (
     <Paper shadow="sm" p="md" withBorder>
       <Title order={4} mb="md">Component Statistics</Title>
-      {(visibleParticipants.length === 0 || componentData.length === 0)
-        ? <Text ta="center" mb="md">No data available</Text>
-        : <MantineReactTable table={table} />}
+      <MantineReactTable table={table} />
     </Paper>
   );
 }

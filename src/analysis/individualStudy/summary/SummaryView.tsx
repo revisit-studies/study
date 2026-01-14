@@ -20,7 +20,7 @@ export function SummaryView({
     <Stack gap="md">
       <OverviewStats overviewData={overviewData} />
       <Group align="flex-start" gap="md" grow>
-        <ComponentStats visibleParticipants={visibleParticipants} />
+        <ComponentStats visibleParticipants={visibleParticipants} studyConfig={studyConfig} />
         <ResponseStats visibleParticipants={visibleParticipants} studyConfig={studyConfig} />
       </Group>
     </Stack>

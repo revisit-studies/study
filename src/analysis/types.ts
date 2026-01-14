@@ -5,12 +5,6 @@ export interface ParticipantCounts {
   rejected: number;
 }
 
-export interface ParticipantMismatchCounts{
-  completed: { stored: number; calculated: number };
-  inProgress: { stored: number; calculated: number };
-  rejected: { stored: number; calculated: number };
-}
-
 export interface OverviewData {
   participantCounts: ParticipantCounts;
   avgTime: number;
@@ -19,7 +13,6 @@ export interface OverviewData {
   startDate: Date | null;
   endDate: Date | null;
   correctness: number;
-  mismatchInfo?: ParticipantMismatchCounts;
 }
 
 export interface ComponentData {

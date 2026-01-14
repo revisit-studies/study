@@ -2,28 +2,56 @@ import {
   Flex, Paper, Text, Title, Tooltip,
 } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
+import { useMemo } from 'react';
+import { useParams } from 'react-router';
 import { convertNumberToString } from './utils';
 import { OverviewData } from '../../types';
+import { useStorageEngine } from '../../../storage/storageEngineHooks';
+import { useAsync } from '../../../store/hooks/useAsync';
+import { StorageEngine } from '../../../storage/engines/types';
+
+async function getStoredParticipantCounts(storageEngine: StorageEngine, studyId: string | undefined) {
+  if (!storageEngine || !studyId) return null;
+  return storageEngine.getParticipantsStatusCounts(studyId);
+}
 
 export function OverviewStats({
   overviewData,
 }: {
   overviewData: OverviewData;
 }) {
+  // Check if there are participants with invalid clean time (e.g. due to a window events bug)
   const hasExcluded = overviewData && overviewData.participantsWithInvalidCleanTimeCount > 0;
 
-  if (!overviewData) {
-    return (
-      <Paper shadow="sm" p="md" withBorder>
-        <Text ta="center" mb="md">No data available</Text>
-      </Paper>
-    );
-  }
+  const { studyId } = useParams();
+  const { storageEngine } = useStorageEngine();
 
+  // Get the stored participant counts from the storage engine
+  const { value: storedCounts } = useAsync(getStoredParticipantCounts, storageEngine && studyId ? [storageEngine, studyId] : null);
+
+  const mismatchDetails = useMemo(() => {
+    if (!storedCounts) return null;
+    return {
+      completed: {
+        current: storedCounts.completed,
+        calculated: overviewData.participantCounts.completed,
+      },
+      inProgress: {
+        current: storedCounts.inProgress,
+        calculated: overviewData.participantCounts.inProgress,
+      },
+      rejected: {
+        current: storedCounts.rejected,
+        calculated: overviewData.participantCounts.rejected,
+      },
+    };
+  }, [overviewData, storedCounts]);
+
+  // Check if the stored participant counts match the calculated participant counts
   const hasMismatch = (type: 'completed' | 'inProgress' | 'rejected') => {
-    if (!overviewData.mismatchInfo) return false;
-    const details = overviewData.mismatchInfo[type];
-    return details.stored !== details.calculated;
+    if (!mismatchDetails) return false;
+    const details = mismatchDetails[type];
+    return details.current !== details.calculated;
   };
 
   return (
@@ -36,43 +64,34 @@ export function OverviewStats({
         </Flex>
         <Flex direction="column">
           <Flex align="center" gap="xs">
-            {hasMismatch('completed') && overviewData.mismatchInfo && (
-              <Tooltip label={`Calculated: ${overviewData.mismatchInfo.completed.calculated}, Current: ${overviewData.mismatchInfo.completed.stored}`}>
+            {hasMismatch('completed') && mismatchDetails && (
+              <Tooltip label={`Calculated: ${mismatchDetails.completed.calculated}, Stored: ${mismatchDetails.completed.current}`}>
                 <IconAlertTriangle size={16} color="orange" />
               </Tooltip>
             )}
-            <Text size="xl" fw="bold" c="green">
-              {overviewData.participantCounts.completed}
-              {hasMismatch('completed') && overviewData.mismatchInfo && ` (current: ${overviewData.mismatchInfo.completed.stored})`}
-            </Text>
+            <Text size="xl" fw="bold" c="green">{overviewData.participantCounts.completed}</Text>
           </Flex>
           <Text size="sm" c="dimmed">Completed</Text>
         </Flex>
         <Flex direction="column">
           <Flex align="center" gap="xs">
-            {hasMismatch('inProgress') && overviewData.mismatchInfo && (
-              <Tooltip label={`Calculated: ${overviewData.mismatchInfo.inProgress.calculated}, Current: ${overviewData.mismatchInfo.inProgress.stored}`}>
+            {hasMismatch('inProgress') && mismatchDetails && (
+              <Tooltip label={`Calculated: ${mismatchDetails.inProgress.calculated}, Stored: ${mismatchDetails.inProgress.current}`}>
                 <IconAlertTriangle size={16} color="orange" />
               </Tooltip>
             )}
-            <Text size="xl" fw="bold" c="yellow">
-              {overviewData.participantCounts.inProgress}
-              {hasMismatch('inProgress') && overviewData.mismatchInfo && ` (current: ${overviewData.mismatchInfo.inProgress.stored})`}
-            </Text>
+            <Text size="xl" fw="bold" c="yellow">{overviewData.participantCounts.inProgress}</Text>
           </Flex>
           <Text size="sm" c="dimmed">In Progress</Text>
         </Flex>
         <Flex direction="column">
           <Flex align="center" gap="xs">
-            {hasMismatch('rejected') && overviewData.mismatchInfo && (
-              <Tooltip label={`Calculated: ${overviewData.mismatchInfo.rejected.calculated}, Current: ${overviewData.mismatchInfo.rejected.stored}`}>
+            {hasMismatch('rejected') && mismatchDetails && (
+              <Tooltip label={`Calculated: ${mismatchDetails.rejected.calculated}, Stored: ${mismatchDetails.rejected.current}`}>
                 <IconAlertTriangle size={16} color="orange" />
               </Tooltip>
             )}
-            <Text size="xl" fw="bold" c="red">
-              {overviewData.participantCounts.rejected}
-              {hasMismatch('rejected') && overviewData.mismatchInfo && ` (current: ${overviewData.mismatchInfo.rejected.stored})`}
-            </Text>
+            <Text size="xl" fw="bold" c="red">{overviewData.participantCounts.rejected}</Text>
           </Flex>
           <Text size="sm" c="dimmed">Rejected</Text>
         </Flex>
@@ -95,9 +114,7 @@ export function OverviewStats({
                 <IconAlertTriangle size={16} color="orange" />
               </Tooltip>
             )}
-            <Text size="xl" fw="bold">
-              {Number.isFinite(overviewData.avgCleanTime) ? `${(overviewData.avgCleanTime).toFixed(1)} s` : 'N/A'}
-            </Text>
+            <Text size="xl" fw="bold">{convertNumberToString(overviewData.avgCleanTime, 'time')}</Text>
           </Flex>
           <Text size="sm" c="dimmed">Average Clean Time</Text>
         </Flex>
