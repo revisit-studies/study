@@ -297,9 +297,16 @@ export function StepsPanel({
           }
         }
 
+        // Determine label for block - extract sequence name for library sequences
+        const blockId = node.id ?? node.order;
+        const seOrSequences = typeof blockId === 'string' && (blockId.includes('.se.')
+          ? '.se.'
+          : (blockId.includes('.sequences.') ? '.sequences.' : false));
+        const blockLabel = seOrSequences ? blockId.split(seOrSequences).at(-1)! : blockId;
+
         // Push the block itself
         newFlatTree.push({
-          label: node.id ?? node.order,
+          label: blockLabel,
           indentLevel,
           path: blockPath,
 
@@ -352,9 +359,16 @@ export function StepsPanel({
           excludedBlocks.forEach((excludedBlock) => {
             const excludedBlockPath = `${blockPath}.${excludedBlock.id ?? excludedBlock.order}_excluded`;
 
+            // Determine label for excluded block - extract sequence name for library sequences
+            const excludedBlockId = excludedBlock.id ?? excludedBlock.order;
+            const excludedSeOrSequences = typeof excludedBlockId === 'string' && (excludedBlockId.includes('.se.')
+              ? '.se.'
+              : (excludedBlockId.includes('.sequences.') ? '.sequences.' : false));
+            const excludedBlockLabel = excludedSeOrSequences ? excludedBlockId.split(excludedSeOrSequences).at(-1)! : excludedBlockId;
+
             // Add the excluded block
             newFlatTree.push({
-              label: excludedBlock.id ?? excludedBlock.order,
+              label: excludedBlockLabel,
               indentLevel: indentLevel + 1,
               path: excludedBlockPath,
 
@@ -388,8 +402,15 @@ export function StepsPanel({
                 } else {
                   const childBlockPath = `${excludedParentPath}.${child.id ?? child.order}_excluded`;
 
+                  // Determine label for nested excluded block - extract sequence name for library sequences
+                  const childBlockId = child.id ?? child.order;
+                  const childSeOrSequences = typeof childBlockId === 'string' && (childBlockId.includes('.se.')
+                    ? '.se.'
+                    : (childBlockId.includes('.sequences.') ? '.sequences.' : false));
+                  const childBlockLabel = childSeOrSequences ? childBlockId.split(childSeOrSequences).at(-1)! : childBlockId;
+
                   newFlatTree.push({
-                    label: child.id ?? child.order,
+                    label: childBlockLabel,
                     indentLevel: excludedIndentLevel,
                     path: childBlockPath,
                     order: child.order,
