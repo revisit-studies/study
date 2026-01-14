@@ -69,7 +69,7 @@ function findMatchingComponentInFullOrder(
 function countComponentsInSequence(sequence: Sequence, participantAnswers: ParticipantData['answers']) {
   let count = 0;
 
-  // TODO: Handle dynamic blocks properly
+  // Dynamic blocks generate components at runtime, so we count from participant answers
   if (isDynamicBlock(sequence)) {
     return Object.entries(participantAnswers).filter(([key, _]) => key.startsWith(`${sequence.id}_`)).length;
   }
