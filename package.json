@@ -45,7 +45,6 @@
     "@types/crypto-js": "^4.2.2",
     "@types/hjson": "^2.4.6",
     "@types/node": "^24.5.2",
-    "@types/react-syntax-highlighter": "^15.5.13",
     "@visdesignlab/upset2-react": "^1.0.2",
     "ajv": "^8.17.1",
     "arquero": "^5.4.0",
