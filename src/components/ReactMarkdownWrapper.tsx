@@ -46,13 +46,27 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
 
     let ln: Element | null = null;
     let lp: Element | Root | null = null;
-    // Recursively find the last node
-    visit(tree, (node, _, parent) => {
-      if (isElement(node)) {
-        ln = node;
-        lp = parent!;
+    let lastTextNode: HastText | null = null;
+
+    visit(tree, (node) => {
+      if (isHastText(node) && node.value.trim().length > 0) {
+        lastTextNode = node;
       }
     });
+
+    if (lastTextNode) {
+      // Recursively find the last node
+      visit(tree, (node, _, parent) => {
+        if (!isElement(node)) return;
+        if (!node.children) return;
+
+        const containsLastText = node.children.some((child) => child === lastTextNode);
+        if (containsLastText) {
+          ln = node;
+          lp = parent!;
+        }
+      });
+    }
 
     const lastNode = ln as Element | null;
     const lastParent = lp as Element | null;
@@ -76,6 +90,8 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
         const words = textNode.value.split(' ');
         const lastWord = words.pop();
         const newTextValue = words.join(' ');
+        // If newTextValue exists (i.e. we had multiple words), add space before last word
+        const needsSpace = newTextValue.length > 0;
         const newTextNode: Element = {
           type: 'element',
           tagName: 'span',
@@ -83,7 +99,7 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
           children: [
             {
               type: 'text',
-              value: newTextValue ? `${newTextValue} ` : '',
+              value: needsSpace ? `${newTextValue} ` : '',
             },
             {
               type: 'element',
