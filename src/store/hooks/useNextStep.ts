@@ -132,7 +132,7 @@ export function useNextStep() {
     const blocksForStep = findBlockForStep(sequence, currentStep);
 
     // If the current component is in a block that has a skip block (or is nested in a block that has a skip block), we need to check if the skip block should be triggered
-    const hasSkipBlock = blocksForStep !== null && (blocksForStep.some((block) => Object.hasOwn(block.currentBlock, 'skip') && block.currentBlock.skip !== undefined));
+    const hasSkipBlock = blocksForStep !== null && (blocksForStep.some((block) => block.currentBlock.skip && block.currentBlock.skip.length > 0));
 
     // Get the answers with the new answer added, since above is dispatching and async, but we need it synchronously
     const answersWithNewAnswer = {
