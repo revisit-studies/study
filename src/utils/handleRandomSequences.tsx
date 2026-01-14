@@ -20,6 +20,40 @@ function shuffle(array: (string | ComponentBlock | DynamicBlock)[]) {
   }
 }
 
+type UniqueComponentEntry = { component: ComponentBlock | DynamicBlock; indices: number[] };
+
+function findMatchingUnique(
+  component: ComponentBlock | DynamicBlock,
+  uniqueComponents: UniqueComponentEntry[],
+): UniqueComponentEntry | null {
+  for (const unique of uniqueComponents) {
+    if (isEqual(unique.component, component)) {
+      return unique;
+    }
+  }
+  return null;
+}
+
+function findUniqueComponents(
+  components: (string | ComponentBlock | DynamicBlock)[],
+  includeDynamicBlocks = true,
+): UniqueComponentEntry[] {
+  const uniqueComponents: UniqueComponentEntry[] = [];
+
+  for (let j = 0; j < components.length; j += 1) {
+    const comp = components[j];
+    if (typeof comp !== 'string' && !Array.isArray(comp) && (includeDynamicBlocks || !isDynamicBlock(comp))) {
+      const existing = findMatchingUnique(comp, uniqueComponents);
+      if (existing) {
+        existing.indices.push(j);
+      } else {
+        uniqueComponents.push({ component: comp, indices: [j] });
+      }
+    }
+  }
+  return uniqueComponents;
+}
+
 function generateLatinSquare(config: StudyConfig, path: string) {
   const pathArr = path.split('-');
 
@@ -39,6 +73,14 @@ function generateLatinSquare(config: StudyConfig, path: string) {
   shuffle(options);
   const newSquare: string[][] = latinSquare<string>(options, true);
   return newSquare;
+}
+
+function generateLatinSquareRows(config: StudyConfig, path: string, count: number): string[][] {
+  const rows: string[][] = [];
+  for (let i = 0; i < count; i += 1) {
+    rows.push(...generateLatinSquare(config, path));
+  }
+  return rows;
 }
 
 function _componentBlockToSequence(
@@ -89,25 +131,7 @@ function _componentBlockToSequence(
 
   // Pre-build a list of unique components with their indices to avoid O(n²) isEqual comparisons
   // Since structuredClone breaks reference equality, we need to use value equality
-  const uniqueComponents: Array<{ component: ComponentBlock | DynamicBlock; indices: number[] }> = [];
-
-  for (let j = 0; j < order.components.length; j += 1) {
-    const comp = order.components[j];
-    if (typeof comp !== 'string' && !Array.isArray(comp)) {
-      // Find if we've already seen this component (by value)
-      let found = false;
-      for (const unique of uniqueComponents) {
-        if (isEqual(unique.component, comp)) {
-          unique.indices.push(j);
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        uniqueComponents.push({ component: comp, indices: [j] });
-      }
-    }
-  }
+  const uniqueComponents = findUniqueComponents(order.components);
 
   // Track how many times we've seen each unique component
   const seenCounts = new Map<ComponentBlock | DynamicBlock, number>();
@@ -115,14 +139,7 @@ function _componentBlockToSequence(
   for (let i = 0; i < computedComponents.length; i += 1) {
     const curr = computedComponents[i];
     if (typeof curr !== 'string' && !Array.isArray(curr)) {
-      // Find the matching unique component
-      let matchedUnique = null;
-      for (const unique of uniqueComponents) {
-        if (isEqual(unique.component, curr)) {
-          matchedUnique = unique;
-          break;
-        }
-      }
+      const matchedUnique = findMatchingUnique(curr, uniqueComponents);
 
       if (matchedUnique) {
         const seenCount = seenCounts.get(matchedUnique.component) || 0;
@@ -252,25 +269,7 @@ function _countPathUsage(
 
   // Count recursively for nested blocks
   // Pre-build a list of unique components with their indices (same approach as _componentBlockToSequence)
-  const uniqueComponents: Array<{ component: ComponentBlock | DynamicBlock; indices: number[] }> = [];
-
-  for (let j = 0; j < order.components.length; j += 1) {
-    const comp = order.components[j];
-    if (typeof comp !== 'string' && !Array.isArray(comp) && !isDynamicBlock(comp)) {
-      // Find if we've already seen this component (by value)
-      let found = false;
-      for (const unique of uniqueComponents) {
-        if (isEqual(unique.component, comp)) {
-          unique.indices.push(j);
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        uniqueComponents.push({ component: comp, indices: [j] });
-      }
-    }
-  }
+  const uniqueComponents = findUniqueComponents(order.components, false);
 
   // Track how many times we've seen each unique component
   const seenCounts = new Map<ComponentBlock | DynamicBlock, number>();
@@ -278,14 +277,7 @@ function _countPathUsage(
   for (let i = 0; i < computedComponents.length; i += 1) {
     const curr = computedComponents[i];
     if (typeof curr !== 'string' && !Array.isArray(curr) && !isDynamicBlock(curr)) {
-      // Find the matching unique component
-      let matchedUnique = null;
-      for (const unique of uniqueComponents) {
-        if (isEqual(unique.component, curr)) {
-          matchedUnique = unique;
-          break;
-        }
-      }
+      const matchedUnique = findMatchingUnique(curr, uniqueComponents);
 
       if (matchedUnique) {
         const seenCount = seenCounts.get(matchedUnique.component) || 0;
@@ -316,12 +308,7 @@ export function generateSequenceArray(config: StudyConfig): Sequence[] {
   const latinSquareObject: Record<string, string[][]> = paths
     .map((p) => {
       const usageCount = pathUsageCounts[p] || 1;
-      // Generate multiple latin squares if needed and concatenate them
-      const rows: string[][] = [];
-      for (let i = 0; i < usageCount; i += 1) {
-        rows.push(...generateLatinSquare(config, p));
-      }
-      return { [p]: rows };
+      return { [p]: generateLatinSquareRows(config, p, usageCount) };
     })
     .reduce((acc, curr) => ({ ...acc, ...curr }), {});
 
@@ -340,11 +327,7 @@ export function generateSequenceArray(config: StudyConfig): Sequence[] {
     Object.entries(latinSquareObject).forEach(([key, value]) => {
       if (value.length === 0) {
         const usageCount = pathUsageCounts[key] || 1;
-        const rows: string[][] = [];
-        for (let i = 0; i < usageCount; i += 1) {
-          rows.push(...generateLatinSquare(config, key));
-        }
-        latinSquareObject[key] = rows;
+        latinSquareObject[key] = generateLatinSquareRows(config, key, usageCount);
       }
     });
   });
