@@ -494,17 +494,16 @@ export function StepsPanel({
       if (startItem.type === 'block' && startItem.childrenRange && fullFlatTree.length > 0) {
         const { start, end } = startItem.childrenRange;
 
-        // Instead of allocating a Set of all child paths, consult the pre-built
-        // `fullIndexByPathRef` map to determine whether a rendered item falls
-        // within the block's children range.
+        // Build a Set of child paths from the full tree range and remove any
+        // contiguous rendered items whose path is in that set. This is simpler
+        // and robust when a block only contains other blocks (no components).
+        const childPathSet = new Set(fullFlatTree.slice(start, end).map((it) => it.path));
+
         let endIndex = startIndex + 1;
-        while (endIndex < prevRenderedFlatTree.length) {
-          const fullIdx = fullIndexByPathRef.current.get(prevRenderedFlatTree[endIndex].path);
-          if (fullIdx === undefined || fullIdx < start || fullIdx >= end) break;
+        while (endIndex < prevRenderedFlatTree.length && childPathSet.has(prevRenderedFlatTree[endIndex].path)) {
           endIndex += 1;
         }
 
-        // Remove all matched children
         return [
           ...prevRenderedFlatTree.slice(0, startIndex + 1),
           ...prevRenderedFlatTree.slice(endIndex),
