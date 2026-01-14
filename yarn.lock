@@ -6845,10 +6845,10 @@ react-responsive@^9.0.2:
     prop-types "^15.6.1"
     shallow-equal "^1.2.1"
 
-react-router@^7.9.1:
-  version "7.9.5"
-  resolved "https://registry.yarnpkg.com/react-router/-/react-router-7.9.5.tgz#68722186b4c9f42be36e658d9fe5d62ac1e0808b"
-  integrity sha512-JmxqrnBZ6E9hWmf02jzNn9Jm3UqyeimyiwzD69NjxGySG6lIz/1LVPsoTCwN7NBX2XjCEa1LIX5EMz1j2b6u6A==
+react-router@^7.12.0:
+  version "7.12.0"
+  resolved "https://registry.yarnpkg.com/react-router/-/react-router-7.12.0.tgz#459a86862abbedd02e76e686751fe71f9fd73a4f"
+  integrity sha512-kTPDYPFzDVGIIGNLS5VJykK0HfHLY5MF3b+xj0/tTyNYL1gF1qs7u67Z9jEhQk2sQ98SUaHxlG31g1JtF7IfVw==
   dependencies:
     cookie "^1.0.1"
     set-cookie-parser "^2.6.0"
@@ -6913,7 +6913,7 @@ react-transition-group@4.4.5, react-transition-group@^4.4.5:
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
 
-react-vega@^7.0.0:
+react-vega@^7.6.0:
   version "7.7.1"
   resolved "https://registry.yarnpkg.com/react-vega/-/react-vega-7.7.1.tgz#80f2a41a50c0b225f65503444040f77e29dda70b"
   integrity sha512-Dj7n1LkfJEkY/FdwQfOZqIQ+wGUcJNwlTuWhYcuQtbBpTgvtI4wwqOvJ0QWBE19nXMU7t9HmP8sqQO5v6soOlg==
@@ -8269,6 +8269,14 @@ vega-expression@^5.2.0, vega-expression@~5.2.0:
     "@types/estree" "^1.0.0"
     vega-util "^1.17.3"
 
+vega-expression@^5.2.1:
+  version "5.2.1"
+  resolved "https://registry.yarnpkg.com/vega-expression/-/vega-expression-5.2.1.tgz#04de5967b8f0dd0d599e5c64cc90d11d1e1d6c14"
+  integrity sha512-9KKbI2q9qTI55NSjD/dVWg3aeCtw+gwyWCiLMM47ha6iXrAN9pQ+EKRJfxOHuoDfCTlJJTaUfnnXgbqm0HEszg==
+  dependencies:
+    "@types/estree" "^1.0.0"
+    vega-util "^1.17.4"
+
 vega-expression@~5.1.1:
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/vega-expression/-/vega-expression-5.1.2.tgz#1ed0677787b8e5f4047c9b847ecc20da0a2a8d05"
@@ -8438,13 +8446,13 @@ vega-schema-url-parser@^1.1.0:
   integrity sha512-Tc85J2ofMZZOsxiqDM9sbvfsa+Vdo3GwNLjEEsPOsCDeYqsUHKAlc1IpbbhPLZ6jusyM9Lk0e1izF64GGklFDg==
 
 vega-selections@^5.6.0:
-  version "5.6.0"
-  resolved "https://registry.yarnpkg.com/vega-selections/-/vega-selections-5.6.0.tgz#9ffa55039f2e7ad71d4926147b8d458375ce611f"
-  integrity sha512-UE2w78rUUbaV3Ph+vQbQDwh8eywIJYRxBiZdxEG/Tr/KtFMLdy2BDgNZuuDO1Nv8jImPJwONmqjNhNDYwM0VJQ==
+  version "5.6.3"
+  resolved "https://registry.yarnpkg.com/vega-selections/-/vega-selections-5.6.3.tgz#408ed78b4f0f4864bb092df67774b326812b5f87"
+  integrity sha512-DXd+XVKcIjBAtSCcgtPx7cXuqG/7L98SWoFh6GKNu26EBUyn3zm0GAlZxNLPoI01Jz9Fb3YpSsewk2aIAbM68g==
   dependencies:
     d3-array "3.2.4"
-    vega-expression "^5.2.0"
-    vega-util "^1.17.3"
+    vega-expression "^5.2.1"
+    vega-util "^1.17.4"
 
 vega-statistics@^1.9.0, vega-statistics@~1.9.0:
   version "1.9.0"
@@ -8499,6 +8507,11 @@ vega-util@^1.13.1, vega-util@^1.17.3, vega-util@~1.17.2:
   version "1.17.3"
   resolved "https://registry.yarnpkg.com/vega-util/-/vega-util-1.17.3.tgz#8f24d867daae69580874dcf75de10c65ac9ede5d"
   integrity sha512-nSNpZLUrRvFo46M5OK4O6x6f08WD1yOcEzHNlqivF+sDLSsVpstaF6fdJYwrbf/debFi2L9Tkp4gZQtssup9iQ==
+
+vega-util@^1.17.4:
+  version "1.17.4"
+  resolved "https://registry.yarnpkg.com/vega-util/-/vega-util-1.17.4.tgz#b35781fe8e8d030e6519746682843d7ef9ff6d27"
+  integrity sha512-+y3ZW7dEqM8Ck+KRsd+jkMfxfE7MrQxUyIpNjkfhIpGEreym+aTn7XUw1DKXqclr8mqTQvbilPo16B3lnBr0wA==
 
 vega-view-transforms@~4.6.1:
   version "4.6.1"

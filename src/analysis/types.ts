@@ -25,6 +25,7 @@ export interface OverviewData {
   participantCounts: ParticipantCounts;
   avgTime: number
   avgCleanTime: number;
+  participantsWithInvalidCleanTimeCount: number;
   startDate: Date | null;
   endDate: Date | null;
   correctnessStats: number;
