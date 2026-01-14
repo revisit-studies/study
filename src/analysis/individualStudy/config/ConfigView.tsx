@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unstable-nested-components */
 import {
-  Button, Flex, Space, Text, Tooltip, Group, Modal, ScrollArea, Code, ActionIcon, Loader, Stack,
+  Button, Flex, Space, Text, Tooltip, Group, Modal, ActionIcon, Loader, Stack, Paper, Box,
 } from '@mantine/core';
 import {
   useCallback, useEffect, useMemo, useState,
@@ -12,7 +12,6 @@ import {
 import {
   IconInfoCircle, IconDownload, IconEye, IconArrowsLeftRight, IconCopy,
 } from '@tabler/icons-react';
-
 import { ParticipantData } from '../../../storage/types';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { downloadConfigFile, downloadConfigFilesZip } from '../../../utils/handleDownloadFiles';
@@ -246,12 +245,30 @@ export function ConfigView({
           opened={modalViewConfigOpened}
           onClose={() => setModalViewConfigOpened(false)}
           title="Config"
-          size="70%"
+          size="95%"
         >
           {viewConfig ? (
-            <Code block>
-              {viewConfig}
-            </Code>
+            <Paper radius="sm" style={{ overflow: 'hidden' }}>
+              <Box style={{ fontFamily: 'monospace', fontSize: '13px' }}>
+                {viewConfig.split('\n').map((line, idx) => (
+                  <Box
+                    key={idx}
+                    style={{
+                      backgroundColor: 'transparent',
+                      padding: '4px 12px',
+                      borderLeft: '3px solid transparent',
+                      whiteSpace: 'pre',
+                      minHeight: '24px',
+                    }}
+                  >
+                    <Text component="span" ff="monospace" size="sm">
+                      {'  '}
+                      {line}
+                    </Text>
+                  </Box>
+                ))}
+              </Box>
+            </Paper>
           ) : null}
         </Modal>
         <Modal
@@ -260,14 +277,12 @@ export function ConfigView({
           title="Compare Configs"
           size="95%"
         >
-          <ScrollArea h={600}>
-            <ConfigDiffModal configs={
-              Object.keys(checked).filter((key) => checked[key])
-                .map((hash) => configs.find((c) => c.hash === hash))
-                .filter((c): c is ConfigInfo => c !== undefined)
-            }
-            />
-          </ScrollArea>
+          <ConfigDiffModal configs={
+            Object.keys(checked).filter((key) => checked[key])
+              .map((hash) => configs.find((c) => c.hash === hash))
+              .filter((c): c is ConfigInfo => c !== undefined)
+          }
+          />
         </Modal>
       </>
     ) : (

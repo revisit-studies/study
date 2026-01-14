@@ -1,5 +1,5 @@
 import {
-  Badge, Flex, Group, Text,
+  Badge, Box, Flex, Group, Paper, Stack, Text,
 } from '@mantine/core';
 import { diffLines, Change } from 'diff';
 import { ConfigInfo } from './utils';
@@ -17,8 +17,8 @@ export function ConfigDiffModal({ configs }: { configs: ConfigInfo[] }) {
   const differences = diffLines(json1, json2);
 
   return (
-    <Flex direction="column">
-      <Flex justify="space-between">
+    <Stack gap="md">
+      <Flex justify="space-between" px="xs">
         <Group gap="sm">
           <Badge variant="light" color="red">{config1.version}</Badge>
           <Text size="sm" c="dimmed">
@@ -38,44 +38,51 @@ export function ConfigDiffModal({ configs }: { configs: ConfigInfo[] }) {
           </Text>
         </Group>
       </Flex>
-      <div style={{ fontFamily: 'monospace', fontSize: '13px' }}>
-        {differences.map((part: Change, idx: number) => {
-          const lines = part.value.split('\n').filter((line, i, arr) => i < arr.length - 1 || line !== '');
+      <Paper radius="sm" style={{ overflow: 'hidden' }}>
+        <Box style={{ fontFamily: 'monospace', fontSize: '13px' }}>
+          {differences.map((part: Change, idx: number) => {
+            const lines = part.value.split('\n').filter((line, i, arr) => i < arr.length - 1 || line !== '');
 
-          return lines.map((line, lineIdx) => {
-            let bgColor = 'transparent';
-            let borderColor = 'transparent';
-            let prefix = ' ';
+            return lines.map((line, lineIdx) => {
+              let bgColor = 'transparent';
+              let borderColor = 'transparent';
+              let textColor = 'inherit';
+              let prefix = '  ';
 
-            if (part.removed) {
-              bgColor = '#f8d7da';
-              borderColor = '#dc3545';
-              prefix = '-';
-            } else if (part.added) {
-              bgColor = '#d4edda';
-              borderColor = '#28a745';
-              prefix = '+';
-            }
+              if (part.removed) {
+                bgColor = '#ffe5e5';
+                borderColor = '#ff6b6b';
+                textColor = '#c92a2a';
+                prefix = '- ';
+              } else if (part.added) {
+                bgColor = '#e6fcf5';
+                borderColor = '#51cf66';
+                textColor = '#2b8a3e';
+                prefix = '+ ';
+              }
 
-            return (
-              <div
-                key={`${idx}-${lineIdx}`}
-                style={{
-                  backgroundColor: bgColor,
-                  padding: '2px 8px',
-                  borderLeft: `4px solid ${borderColor}`,
-                  whiteSpace: 'pre',
-                  minHeight: '18px',
-                }}
-              >
-                {prefix}
-                {' '}
-                {line}
-              </div>
-            );
-          });
-        })}
-      </div>
-    </Flex>
+              return (
+                <Box
+                  key={`${idx}-${lineIdx}`}
+                  style={{
+                    backgroundColor: bgColor,
+                    color: textColor,
+                    padding: '4px 12px',
+                    borderLeft: `3px solid ${borderColor}`,
+                    whiteSpace: 'pre',
+                    fontWeight: part.removed || part.added ? 500 : 400,
+                  }}
+                >
+                  <Text component="span" ff="monospace" size="sm">
+                    {prefix}
+                    {line}
+                  </Text>
+                </Box>
+              );
+            });
+          })}
+        </Box>
+      </Paper>
+    </Stack>
   );
 }
