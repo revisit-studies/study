@@ -536,32 +536,43 @@ export function StepsPanel({
       const itemsToInsert: StepItem[] = [];
       const startIndentLevel = startItem.indentLevel;
 
+      // Build a quick lookup of currently rendered item paths so we can
+      // determine whether a nested item should be inserted based on whether
+      // its immediate parent is visible (rendered) or will be inserted.
+      const renderedPathSet = new Set(prevRenderedFlatTree.map((it) => it.path));
+      const itemsToInsertSet = new Set<string>();
+
       for (let i = start; i < end; i += 1) {
         const item = fullFlatTree[i];
 
-        // Only add items that are direct children
         if (item.indentLevel === startIndentLevel + 1) {
+          // Direct children of the expanded block are always inserted
           itemsToInsert.push(item);
+          itemsToInsertSet.add(item.path);
         } else if (item.indentLevel > startIndentLevel + 1) {
-          // This is a nested child - check if its parent block is in itemsToInsert
-          // Find the most recent block at the parent level
-          let shouldInclude = false;
-          for (let j = itemsToInsert.length - 1; j >= 0; j -= 1) {
-            const potentialParent = itemsToInsert[j];
-            if (potentialParent.indentLevel < item.indentLevel
-                && potentialParent.indentLevel === item.indentLevel - 1
-                && potentialParent.type === 'block'
-                && potentialParent.order !== undefined) {
-              // This item's parent is in the list, so include it
-              shouldInclude = true;
-              break;
+          // For nested descendants, include only if their immediate parent
+          // (in the full tree) is either the block being expanded, is
+          // currently rendered, or is already scheduled to be inserted.
+          const fullIdx = fullIndexByPathRef.current.get(item.path);
+          if (fullIdx !== undefined) {
+            // Walk backwards in fullFlatTree to find the immediate parent
+            let parentIdx = fullIdx - 1;
+            while (parentIdx >= 0 && fullFlatTree[parentIdx].indentLevel >= item.indentLevel) {
+              parentIdx -= 1;
             }
-            if (potentialParent.indentLevel < item.indentLevel - 1) {
-              break;
+            if (parentIdx >= 0) {
+              const parent = fullFlatTree[parentIdx];
+              if (parent) {
+                const parentIsExpandedBlock = parent.path === startItem.path;
+                const parentIsRendered = renderedPathSet.has(parent.path);
+                const parentWillBeInserted = itemsToInsertSet.has(parent.path);
+
+                if (parentIsExpandedBlock || parentIsRendered || parentWillBeInserted) {
+                  itemsToInsert.push(item);
+                  itemsToInsertSet.add(item.path);
+                }
+              }
             }
-          }
-          if (shouldInclude) {
-            itemsToInsert.push(item);
           }
         }
       }
