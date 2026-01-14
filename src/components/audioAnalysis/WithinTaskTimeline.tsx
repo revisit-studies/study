@@ -33,13 +33,13 @@ export function WithinTaskTimeline({
     [startTime, xScale],
   );
 
-  const circles = useMemo(
+  const provenanceComponents = useMemo(
     () => Object.entries(answers)
       .filter((entry) => (trialName ? trialName === entry[0] : true))
       .map((entry) => {
         const [name, answer] = entry;
 
-        const allCircles = Object.keys(answer.provenanceGraph).map(
+        const provenanceGraphComponents = Object.keys(answer.provenanceGraph).map(
           (provenanceArea) => {
             const graph = answer.provenanceGraph[
                   provenanceArea as keyof typeof answer.provenanceGraph
@@ -60,7 +60,7 @@ export function WithinTaskTimeline({
           },
         );
 
-        return allCircles;
+        return provenanceGraphComponents;
       }),
     [currentNode, height, answers, trialName, newXScale],
   );
@@ -68,7 +68,7 @@ export function WithinTaskTimeline({
   return (
     <svg style={{ width, height, marginLeft: margin.left }}>
       <line stroke="black" strokeWidth={1} x1={0} x2={width} y1={height / 2} y2={height / 2} />
-      {circles}
+      {provenanceComponents}
     </svg>
   );
 }
