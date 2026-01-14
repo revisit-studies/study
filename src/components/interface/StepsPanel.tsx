@@ -18,7 +18,7 @@ import {
   IconPackageImport,
   IconX,
 } from '@tabler/icons-react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { ParticipantData, Response, StudyConfig } from '../../parser/types';
 import { Sequence, StoredAnswer } from '../../store/types';
 import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
@@ -195,6 +195,7 @@ export function StepsPanel({
 
   const studyId = useStudyId();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const fullOrder = useMemo(() => {
     let r = structuredClone(studyConfig.sequence) as Sequence;
@@ -478,24 +479,43 @@ export function StepsPanel({
 
   const collapseBlock = useCallback((startIndex: number, startItem: StepItem) => {
     setRenderedFlatTree((prevRenderedFlatTree) => {
-      // Dynamically calculate children based on indent level in renderedFlatTree
+      // Prefer using pre-computed childrenRange (from `fullFlatTree`) for O(1)-ish collapse when available.
+      // Fallback to the previous indent-level scan when childrenRange is missing.
       const startIndentLevel = startItem.indentLevel;
-      let endIndex = startIndex + 1;
 
+      if (startItem.type === 'block' && startItem.childrenRange && fullFlatTree.length > 0) {
+        const { start, end } = startItem.childrenRange;
+
+        // Build a set of paths for the block's children from the full flat tree.
+        const childrenPaths = new Set(fullFlatTree.slice(start, end).map((it) => it.path));
+
+        // Count consecutive items in the rendered tree that belong to this block's children.
+        let endIndex = startIndex + 1;
+        while (endIndex < prevRenderedFlatTree.length && childrenPaths.has(prevRenderedFlatTree[endIndex].path)) {
+          endIndex += 1;
+        }
+
+        // Remove all matched children
+        return [
+          ...prevRenderedFlatTree.slice(0, startIndex + 1),
+          ...prevRenderedFlatTree.slice(endIndex),
+        ];
+      }
+
+      // Fallback: dynamically calculate children based on indent level in renderedFlatTree
+      let endIndex = startIndex + 1;
       // Find all children (items with greater indent level)
       while (endIndex < prevRenderedFlatTree.length && prevRenderedFlatTree[endIndex].indentLevel > startIndentLevel) {
         endIndex += 1;
       }
 
-      const numChildren = endIndex - (startIndex + 1);
-
       // Remove all children
       return [
         ...prevRenderedFlatTree.slice(0, startIndex + 1),
-        ...prevRenderedFlatTree.slice(startIndex + 1 + numChildren),
+        ...prevRenderedFlatTree.slice(endIndex),
       ];
     });
-  }, []);
+  }, [fullFlatTree]);
 
   const expandBlock = useCallback((startIndex: number, startItem: StepItem) => {
     setRenderedFlatTree((prevRenderedFlatTree) => {
@@ -647,7 +667,7 @@ export function StepsPanel({
                       }
                     }
                   }}
-                  active={!isExcluded && href === window.location.pathname}
+                  active={!isExcluded && href === location.pathname}
                   disabled={isExcluded && isComponent}
                   style={{
                     opacity: isExcluded ? 0.5 : 1,
