@@ -192,6 +192,8 @@ export function StepsPanel({
   const [responseClampMap, setResponseClampMap] = useState<Record<string, number | undefined>>({});
   const [fullFlatTree, setFullFlatTree] = useState<StepItem[]>([]);
   const [renderedFlatTree, setRenderedFlatTree] = useState<StepItem[]>([]);
+  // Map from item.path -> index in `fullFlatTree` for O(1) range checks
+  const fullIndexByPathRef = useRef<Map<string, number>>(new Map());
 
   const studyId = useStudyId();
   const navigate = useNavigate();
@@ -462,6 +464,12 @@ export function StepsPanel({
       }
     }
 
+    // Build quick lookup from path -> fullFlatTree index for collapse/expand operations
+    fullIndexByPathRef.current.clear();
+    newFlatTree.forEach((it, i) => {
+      fullIndexByPathRef.current.set(it.path, i);
+    });
+
     // Map over tree and set correctAnswerClampMap and responseClampMap
     const clampMap = Object.fromEntries(newFlatTree.map((item) => {
       if (item.type === 'component' && item.href) {
@@ -486,12 +494,13 @@ export function StepsPanel({
       if (startItem.type === 'block' && startItem.childrenRange && fullFlatTree.length > 0) {
         const { start, end } = startItem.childrenRange;
 
-        // Build a set of paths for the block's children from the full flat tree.
-        const childrenPaths = new Set(fullFlatTree.slice(start, end).map((it) => it.path));
-
-        // Count consecutive items in the rendered tree that belong to this block's children.
+        // Instead of allocating a Set of all child paths, consult the pre-built
+        // `fullIndexByPathRef` map to determine whether a rendered item falls
+        // within the block's children range.
         let endIndex = startIndex + 1;
-        while (endIndex < prevRenderedFlatTree.length && childrenPaths.has(prevRenderedFlatTree[endIndex].path)) {
+        while (endIndex < prevRenderedFlatTree.length) {
+          const fullIdx = fullIndexByPathRef.current.get(prevRenderedFlatTree[endIndex].path);
+          if (fullIdx === undefined || fullIdx < start || fullIdx >= end) break;
           endIndex += 1;
         }
 
