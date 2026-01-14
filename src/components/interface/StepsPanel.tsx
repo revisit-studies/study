@@ -85,21 +85,26 @@ function countComponentsInSequence(sequence: Sequence, participantAnswers: Parti
   return count;
 }
 
-type StepItem = {
+type StepItemBase = {
   label: string;
   indentLevel: number;
   path: string; // Unique path from root for stable keying
+};
 
-  // Component Attributes
+type ComponentStepItem = StepItemBase & {
+  type: 'component';
   href?: string;
   isInterruption?: boolean;
-  isLibraryImport?: boolean;
+  isLibraryImport: boolean;
   component?: StudyConfig['components'][string];
   componentAnswer?: StoredAnswer;
-  componentName?: string; // Full component name (e.g., package.co.ComponentName)
+  componentName: string; // Full component name (e.g., package.co.ComponentName)
+  isExcluded?: boolean; // Component was excluded from participant sequence
+};
 
-  // Block Attributes
-  order?: Sequence['order'];
+type BlockStepItem = StepItemBase & {
+  type: 'block';
+  order: Sequence['order'];
   orderPath?: string; // Order path for blocks
   numInterruptions?: number;
   numComponentsInSequence?: number;
@@ -107,6 +112,8 @@ type StepItem = {
   childrenRange?: { start: number; end: number }; // Pre-computed indices of children in fullFlatTree
   isExcluded?: boolean; // Block was excluded from participant sequence
 };
+
+type StepItem = ComponentStepItem | BlockStepItem;
 
 /**
  * Find blocks in sequenceBlock that are missing from participantNode by comparing orderPath
@@ -217,6 +224,7 @@ export function StepsPanel({
           : (key.includes('.components.') ? '.components.' : false);
 
         return {
+          type: 'component',
           label: coOrComponents ? key.split(coOrComponents).at(-1)! : key,
           indentLevel: 0,
           path: `browse.${key}`,
@@ -248,6 +256,7 @@ export function StepsPanel({
           const componentPath = `${parentPath}.${node}_${dynamic ? dynamicIdx : idx}`;
 
           newFlatTree.push({
+            type: 'component',
             label: coOrComponents ? node.split(coOrComponents).at(-1)! : node,
             indentLevel,
             path: componentPath,
@@ -306,6 +315,7 @@ export function StepsPanel({
 
         // Push the block itself
         newFlatTree.push({
+          type: 'block',
           label: blockLabel,
           indentLevel,
           path: blockPath,
@@ -344,6 +354,7 @@ export function StepsPanel({
             const excludedComponentPath = `${blockPath}.${excludedComponent}_excluded`;
 
             newFlatTree.push({
+              type: 'component',
               label: coOrComponents ? excludedComponent.split(coOrComponents).at(-1)! : excludedComponent,
               indentLevel: indentLevel + 1,
               path: excludedComponentPath,
@@ -368,6 +379,7 @@ export function StepsPanel({
 
             // Add the excluded block
             newFlatTree.push({
+              type: 'block',
               label: excludedBlockLabel,
               indentLevel: indentLevel + 1,
               path: excludedBlockPath,
@@ -391,6 +403,7 @@ export function StepsPanel({
                   const childPath = `${excludedParentPath}.${child}_excluded`;
 
                   newFlatTree.push({
+                    type: 'component',
                     label: coOrComponents ? child.split(coOrComponents).at(-1)! : child,
                     indentLevel: excludedIndentLevel,
                     path: childPath,
@@ -410,6 +423,7 @@ export function StepsPanel({
                   const childBlockLabel = childSeOrSequences ? childBlockId.split(childSeOrSequences).at(-1)! : childBlockId;
 
                   newFlatTree.push({
+                    type: 'block',
                     label: childBlockLabel,
                     indentLevel: excludedIndentLevel,
                     path: childBlockPath,
@@ -437,7 +451,7 @@ export function StepsPanel({
     // Pre-compute children ranges for blocks for O(1) collapse/expand
     for (let i = 0; i < newFlatTree.length; i += 1) {
       const item = newFlatTree[i];
-      if (item.order !== undefined) { // It's a block
+      if (item.type === 'block') { // It's a block
         const startIndentLevel = item.indentLevel;
         let endIndex = i + 1;
         while (endIndex < newFlatTree.length && newFlatTree[endIndex].indentLevel > startIndentLevel) {
@@ -449,8 +463,8 @@ export function StepsPanel({
 
     // Map over tree and set correctAnswerClampMap and responseClampMap
     const clampMap = Object.fromEntries(newFlatTree.map((item) => {
-      if (item.component) {
-        return [item.href!, INITIAL_CLAMP];
+      if (item.type === 'component' && item.href) {
+        return [item.href, INITIAL_CLAMP];
       }
       return null;
     }).filter((item): item is [string, number] => item !== null));
@@ -486,7 +500,7 @@ export function StepsPanel({
   const expandBlock = useCallback((startIndex: number, startItem: StepItem) => {
     setRenderedFlatTree((prevRenderedFlatTree) => {
       // Find the items to insert from fullFlatTree based on the block's childrenRange
-      const { start, end } = startItem.childrenRange ?? { start: 0, end: 0 };
+      const { start, end } = (startItem.type === 'block' ? (startItem.childrenRange ?? { start: 0, end: 0 }) : { start: 0, end: 0 });
 
       // Only insert direct children (depth = startItem.indentLevel + 1)
       // We need to filter out children of collapsed blocks within the range
@@ -507,6 +521,7 @@ export function StepsPanel({
             const potentialParent = itemsToInsert[j];
             if (potentialParent.indentLevel < item.indentLevel
                 && potentialParent.indentLevel === item.indentLevel - 1
+                && potentialParent.type === 'block'
                 && potentialParent.order !== undefined) {
               // This item's parent is in the list, so include it
               shouldInclude = true;
@@ -554,23 +569,26 @@ export function StepsPanel({
       <Box style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}>
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const idx = virtualRow.index;
+          const item = renderedFlatTree[idx];
+          const { label, indentLevel, isExcluded } = item;
+          const comp = item.type === 'component' ? item : undefined;
+          const block = item.type === 'block' ? item : undefined;
+          const isComponent = !!comp;
           const {
-            label,
-            indentLevel,
             isLibraryImport,
             href,
             isInterruption,
             component,
             componentAnswer,
             componentName,
+          } = (comp ?? {}) as Partial<ComponentStepItem>;
+          const {
             order,
             orderPath,
             numInterruptions,
             numComponentsInSequence,
             numComponentsInStudySequence,
-            isExcluded,
-          } = renderedFlatTree[idx];
-          const isComponent = order === undefined;
+          } = (block ?? {}) as Partial<BlockStepItem>;
           const correctAnswer = componentAnswer?.correctAnswer?.length
             ? componentAnswer.correctAnswer
             : component?.correctAnswer;
