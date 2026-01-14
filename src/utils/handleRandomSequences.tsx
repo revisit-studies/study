@@ -131,9 +131,8 @@ function _componentBlockToSequence(
 
         computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${actualIndex}`, config) as unknown as ComponentBlock;
       } else {
-        // Fallback: shouldn't happen, but handle it
-        const index = order.components.findIndex((c) => isEqual(c, curr));
-        computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${index}`, config) as unknown as ComponentBlock;
+        // This should never happen - all component blocks should be in uniqueComponents
+        throw new Error(`Unexpected: component block not found in uniqueComponents map at path ${path}`);
       }
     }
   }
