@@ -31,8 +31,8 @@ export function buildConfigRows(
     const endTime = storedAnswers.map((answer: { startTime: number; endTime: number }) => answer.endTime).filter((t): t is number => t !== undefined && t > 0);
     const createdTimestamps = filteredParticipants.map((p) => p.createdTime).filter((t): t is number => t !== undefined && t > 0);
 
-    const earliestStartTime = startTime.length > 0 ? Math.min(...startTime.values()) : null;
-    const latestEndTime = endTime.length > 0 ? Math.max(...endTime.values()) : null;
+    const earliestStartTime = startTime.length > 0 ? Math.min(...startTime) : null;
+    const latestEndTime = endTime.length > 0 ? Math.max(...endTime) : null;
     const earliestCreatedTime = createdTimestamps.length > 0 ? Math.min(...createdTimestamps) : null;
 
     const formatTimeFrame = (timestamp: number) => {
