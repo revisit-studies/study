@@ -709,7 +709,7 @@ export function StepsPanel({
                           <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
                         </Tooltip>
                       )}
-                      {component?.responseOrder === 'random' && (
+                      {(component?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
                         <Tooltip label="Random responses" position="right" withArrow>
                           <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
                         </Tooltip>
