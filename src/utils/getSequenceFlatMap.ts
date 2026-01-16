@@ -101,10 +101,10 @@ export function addPathToComponentBlock(order: StudyConfig['sequence'] | Sequenc
   }
   if (isDynamicBlock(order)) {
     return {
-      ...order, orderPath, components: [], skip: [],
+      ...order, orderPath, components: [], skip: [], interruptions: [],
     };
   }
   return {
-    ...order, orderPath, order: order.order, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)), skip: order.skip || [],
+    ...order, orderPath, order: order.order, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)), skip: order.skip || [], interruptions: order.interruptions || [],
   };
 }
