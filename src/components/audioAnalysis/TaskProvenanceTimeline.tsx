@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import * as d3 from 'd3';
 import { ParticipantData } from '../../storage/types';
-import { WithinTaskProvenance } from './WithinTaskProvenance';
+import { TaskProvenanceNodes } from './TaskProvenanceNodes';
 
-export function WithinTaskTimeline({
+export function TaskProvenanceTimeline({
   xScale,
   answers,
   width,
@@ -33,7 +33,7 @@ export function WithinTaskTimeline({
     [startTime, xScale],
   );
 
-  const provenanceComponents = useMemo(
+  const provenanceNodes = useMemo(
     () => Object.entries(answers)
       .filter((entry) => (trialName ? trialName === entry[0] : true))
       .map((entry) => {
@@ -46,7 +46,7 @@ export function WithinTaskTimeline({
             ];
             if (graph) {
               return (
-                <WithinTaskProvenance
+                <TaskProvenanceNodes
                   answer={answers[trialName]}
                   key={name + provenanceArea}
                   height={height}
@@ -68,7 +68,7 @@ export function WithinTaskTimeline({
   return (
     <svg style={{ width, height, marginLeft: margin.left }}>
       <line stroke="black" strokeWidth={1} x1={0} x2={width} y1={height / 2} y2={height / 2} />
-      {provenanceComponents}
+      {provenanceNodes}
     </svg>
   );
 }

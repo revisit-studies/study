@@ -11,9 +11,11 @@ const RECT_WIDTH = 3;
 
 const colorPlatte = ['#4269d0', '#ff725c', '#6cc5b0', '#3ca951', '#ff8ab7', '#a463f2', '#97bbf5', '#9c6b4e'];
 
-export function WithinTaskProvenance({
-  xScale, height, currentNode, provenance, answer,
-}: {answer: StoredAnswer, height: number, xScale: d3.ScaleLinear<number, number>, currentNode: string | null, provenance: TrrackedProvenance }) {
+export function TaskProvenanceNodes({
+  answer, height, xScale, currentNode, provenance,
+}: {
+  answer: StoredAnswer, height: number, xScale: d3.ScaleLinear<number, number>, currentNode: string | null, provenance: TrrackedProvenance
+}) {
   const colorMap = useMemo(() => {
     const _colorMap = new Map();
     _colorMap.set('Root', '#efb118');
@@ -34,12 +36,19 @@ export function WithinTaskProvenance({
 
   return (
     <g style={{ cursor: 'pointer' }}>
+      {/* Provenance nodes */}
       {provenance ? Object.entries(provenance.nodes || {}).map((entry) => {
         const [nodeId, node] = entry;
-        return <g key={nodeId}><rect fill={colorMap.get(node.label) || '#9498a0'} opacity={node.id === currentNode ? 1 : 0.7} x={xScale(node.createdOn) - RECT_WIDTH / 2} y={height / 2 - RECT_HEIGHT / 2} width={RECT_WIDTH} height={RECT_HEIGHT} /></g>;
+        return (
+          <g key={nodeId}>
+            <rect fill={colorMap.get(node.label) || '#9498a0'} opacity={node.id === currentNode ? 1 : 0.7} x={xScale(node.createdOn) - RECT_WIDTH / 2} y={height / 2 - RECT_HEIGHT / 2} width={RECT_WIDTH} height={RECT_HEIGHT} />
+          </g>
+        );
       }) : null}
-      {currentNode && provenance && provenance.nodes[currentNode]
-        && <rect fill={colorMap.get(provenance.nodes[currentNode].label) || '#9498a0'} x={xScale(provenance.nodes[currentNode].createdOn) - RECT_WIDTH / 2} y={height / 2 - RECT_HEIGHT / 2} width={RECT_WIDTH} height={RECT_HEIGHT} />}
+      {/* Currently active provenance node */}
+      {currentNode && provenance && provenance.nodes[currentNode] && (
+        <rect fill={colorMap.get(provenance.nodes[currentNode].label) || '#9498a0'} x={xScale(provenance.nodes[currentNode].createdOn) - RECT_WIDTH / 2} y={height / 2 - RECT_HEIGHT / 2} width={RECT_WIDTH} height={RECT_HEIGHT} />
+      )}
       <Affix position={{ bottom: 10, left: 10 }}>
         {/* <Popover width={200} position="bottom" withArrow shadow="md">
           <Popover.Target>
