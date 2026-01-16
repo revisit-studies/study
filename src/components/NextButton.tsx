@@ -48,7 +48,7 @@ export function NextButton({
     if (timer === undefined) {
       return;
     }
-    if (timer > 1000 && nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
+    if (nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
       navigate('./../__timedOut');
     }
   }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
