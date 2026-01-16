@@ -59,7 +59,7 @@ export function ComponentStats({
     columns,
     data: componentData,
     initialState: {
-      sorting: [{ id: 'component', desc: false }],
+      sorting: [{ id: 'component.index', desc: false }],
     },
     mantinePaperProps: {
       style: { overflow: 'hidden' },

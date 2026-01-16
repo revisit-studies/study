@@ -48,7 +48,7 @@ export function ResponseStats({
     columns,
     data: responseData,
     initialState: {
-      sorting: [{ id: 'component', desc: true }],
+      sorting: [{ id: 'component.index', desc: true }],
     },
     mantinePaperProps: {
       style: { overflow: 'hidden' },
