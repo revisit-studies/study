@@ -39,7 +39,9 @@ function createMockParticipant(overrides: Partial<ParticipantData> & { participa
   return {
     participantId,
     participantConfigHash: 'config-hash-1',
-    sequence: { orderPath: '', order: '', components: [] },
+    sequence: {
+      orderPath: '', order: 'fixed', components: [], skip: [], interruptions: [],
+    },
     participantIndex: 0,
     answers: {},
     searchParams: {},
