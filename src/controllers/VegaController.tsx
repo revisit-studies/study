@@ -83,8 +83,9 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       value,
     }));
 
+    // Save provenance state after every event
     setAnswer({
-      status: answered,
+      status: false,
       provenanceGraph: trrack.graph.backend,
       answers: {},
     });
