@@ -38,16 +38,18 @@ function calculateDateStats(visibleParticipants: ParticipantData[], componentNam
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
   const answers = filteredParticipants
     .flatMap((participant) => Object.values(participant.answers))
-    .filter((answer) => answer.endTime !== -1)
-    .sort((a, b) => a.startTime - b.startTime);
+    .filter((answer) => answer.endTime !== -1);
 
   if (!answers.length) {
     return { startDate: null, endDate: null };
   }
 
+  const startTimes = answers.map((answer) => answer.startTime);
+  const endTimes = answers.map((answer) => answer.endTime);
+
   return {
-    startDate: new Date(answers[0].startTime),
-    endDate: new Date(answers[answers.length - 1].endTime),
+    startDate: new Date(Math.min(...startTimes)),
+    endDate: new Date(Math.max(...endTimes)),
   };
 }
 
@@ -126,7 +128,7 @@ function getResponseOptions(response: Response): string {
   // Dropdown, Checkbox, Radio, Button
   // example: Option 1, Option 2, Option 3
   if ('options' in response) {
-    return response.options.join(', ');
+    return response.options.map((option) => (typeof option === 'string' ? option : option.label)).join(', ');
   }
   // Matrix Radio, Matrix Checkbox
   // example: Questions: Question 1, Question 2, Question 3
