@@ -40,7 +40,7 @@ export function ConfigDiffModal({ configs }: { configs: ConfigInfo[] }) {
       </Flex>
       <Paper radius="sm" style={{ overflow: 'hidden' }}>
         <Box style={{ fontFamily: 'monospace', fontSize: '13px' }}>
-          {differences.map((part: Change, idx: number) => {
+          {differences.flatMap((part: Change, idx: number) => {
             const lines = part.value.split('\n').filter((line, i, arr) => i < arr.length - 1 || line !== '');
 
             return lines.map((line, lineIdx) => {
