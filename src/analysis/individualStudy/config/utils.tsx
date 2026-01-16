@@ -49,9 +49,9 @@ export function buildConfigRows(
     };
 
     return {
-      version: config.studyMetadata?.version || 'N/A',
+      version: config.studyMetadata.version,
       hash,
-      date: config.studyMetadata?.date || 'N/A',
+      date: config.studyMetadata.date,
       timeFrame: getTimeFrame(),
       participantCount: filteredParticipants.length,
       config,
