@@ -35,7 +35,7 @@ import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
-import { useScreenRecordingContext } from '../../store/hooks/useScreenRecording';
+import { useRecordingContext } from '../../store/hooks/useRecording';
 
 export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
@@ -83,10 +83,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   const [isTruncated, setIsTruncated] = useState(false);
   const lastProgressRef = useRef<number>(0);
 
-  const isRecording = useStoreSelector((store) => store.isRecording);
-  const { isScreenRecording, isAudioRecording: isScreenWithAudioRecording } = useScreenRecordingContext();
-
-  const isAudioRecording = isRecording || isScreenWithAudioRecording;
+  const { isScreenRecording, isAudioRecording } = useRecordingContext();
 
   const { funcIndex } = useParams();
 

@@ -10,6 +10,7 @@ import { ComponentBlockWithOrderPath, StepsPanel } from '../../../components/int
 import { addPathToComponentBlock } from '../../../utils/getSequenceFlatMap';
 import { OverviewStats } from '../summary/OverviewStats';
 import { getOverviewStats } from '../summary/utils';
+import { StepsPanel } from '../../../components/interface/StepsPanel';
 
 export function StatsView(
   {
@@ -20,13 +21,6 @@ export function StatsView(
     visibleParticipants: ParticipantData[];
   },
 ) {
-  const fullOrder = useMemo(() => {
-    let r = structuredClone(studyConfig.sequence) as ComponentBlockWithOrderPath;
-    r = addPathToComponentBlock(r, 'root') as ComponentBlockWithOrderPath;
-    r.components.push('end');
-    return r;
-  }, [studyConfig.sequence]);
-
   const { trialId } = useParams();
 
   const overviewData = useMemo(
@@ -51,7 +45,7 @@ export function StatsView(
             <Flex direction="row">
               {/* Trial selection sidebar */}
               <Box w={340}>
-                <StepsPanel configSequence={fullOrder} participantSequence={fullOrder} fullSequence={fullOrder} participantView={false} studyConfig={studyConfig} analysisNavigation />
+                <StepsPanel participantAnswers={{}} studyConfig={studyConfig} isAnalysis />
               </Box>
 
               <Divider orientation="vertical" mx="md" />
