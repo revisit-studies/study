@@ -45,15 +45,21 @@ export function NextButton({
   }, []);
 
   useEffect(() => {
-    if (timer && nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
+    if (timer === undefined) {
+      return;
+    }
+    if (nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
       navigate('./../__timedOut');
     }
   }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
 
   const buttonTimerSatisfied = useMemo(
     () => {
-      const nextButtonDisableSatisfied = nextButtonDisableTime && timer ? timer <= nextButtonDisableTime : true;
-      const nextButtonEnableSatisfied = timer ? timer >= nextButtonEnableTime : true;
+      if (timer === undefined) {
+        return true;
+      }
+      const nextButtonDisableSatisfied = nextButtonDisableTime ? timer <= nextButtonDisableTime : true;
+      const nextButtonEnableSatisfied = nextButtonEnableTime ? timer >= nextButtonEnableTime : true;
       return nextButtonDisableSatisfied && nextButtonEnableSatisfied;
     },
     [nextButtonDisableTime, nextButtonEnableTime, timer],
@@ -99,7 +105,7 @@ export function NextButton({
           {label}
         </Button>
       </Group>
-      {timer && (
+      {timer !== undefined && (
         <>
           {nextButtonEnableTime > 0 && timer < nextButtonEnableTime && (
             <Alert mt="md" title="Please wait" color="blue" icon={<IconInfoCircle />}>
@@ -110,7 +116,7 @@ export function NextButton({
               seconds.
             </Alert>
           )}
-          {nextButtonDisableTime && timer && (nextButtonDisableTime - timer) < 10000 && (
+          {nextButtonDisableTime && (nextButtonDisableTime - timer) < 10000 && (
             (nextButtonDisableTime - timer) > 0
               ? (
                 <Alert mt="md" title="Next button disables soon" color="yellow" icon={<IconAlertTriangle />}>

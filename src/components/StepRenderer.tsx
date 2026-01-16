@@ -21,7 +21,7 @@ import { studyComponentToIndividualComponent } from '../utils/handleComponentInh
 import { useCurrentComponent } from '../routes/utils';
 import { ResolutionWarning } from './interface/ResolutionWarning';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
-import { ScreenRecordingContext, useScreenRecording } from '../store/hooks/useScreenRecording';
+import { RecordingContext, useRecording } from '../store/hooks/useRecording';
 import { ScreenRecordingRejection } from './interface/ScreenRecordingRejection';
 import { ReplayContext, useReplay } from '../store/hooks/useReplay';
 import { DeviceWarning } from './interface/DeviceWarning';
@@ -44,7 +44,7 @@ export function StepRenderer() {
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
   const modes = useStoreSelector((state) => state.modes);
 
-  const screenRecording = useScreenRecording();
+  const screenRecording = useRecording();
   const replay = useReplay();
 
   const { isRejected: isScreenRecordingUserRejected } = screenRecording;
@@ -140,7 +140,7 @@ export function StepRenderer() {
 
   return (
     <WindowEventsContext.Provider value={windowEvents}>
-      <ScreenRecordingContext.Provider value={screenRecording}>
+      <RecordingContext.Provider value={screenRecording}>
         <ReplayContext.Provider value={replay}>
           <AppShell
             padding="md"
@@ -180,7 +180,7 @@ export function StepRenderer() {
             )}
           </AppShell>
         </ReplayContext.Provider>
-      </ScreenRecordingContext.Provider>
+      </RecordingContext.Provider>
     </WindowEventsContext.Provider>
   );
 }
