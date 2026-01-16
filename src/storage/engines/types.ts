@@ -584,6 +584,7 @@ export abstract class StorageEngine {
       rejected: false,
       participantTags: [],
       stage: currentStage,
+      createdTime: Date.now(),
     };
 
     if (modes.dataCollectionEnabled) {

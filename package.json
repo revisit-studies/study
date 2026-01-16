@@ -52,6 +52,7 @@
     "crypto-js": "^4.2.0",
     "d3": "^7.9.0",
     "dayjs": "^1.11.18",
+    "diff": "^8.0.2",
     "eslint-config-airbnb": "^19.0.4",
     "firebase": "^11.2.0",
     "hjson": "^3.2.2",

@@ -26,7 +26,7 @@ import { TagSelector } from './tags/TagSelector';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { PREFIX } from '../../../utils/Prefix';
-import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadAudio';
+import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadFiles';
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { StorageEngine } from '../../../storage/engines/types';
 import { useReplayContext } from '../../../store/hooks/useReplay';

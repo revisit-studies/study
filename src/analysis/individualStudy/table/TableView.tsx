@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unstable-nested-components */
 import {
-  Text, Flex, Group, Space, Tooltip, Badge, RingProgress, Stack,
+  Text, Flex, Group, Space, Tooltip, Badge, RingProgress, Stack, ActionIcon,
 } from '@mantine/core';
 import {
   JSX, useCallback, useEffect, useMemo, useState,
@@ -10,7 +10,7 @@ import {
   MantineReactTable, MRT_Cell as MrtCell, MRT_ColumnDef as MrtColumnDef, MRT_RowSelectionState as MrtRowSelectionState, useMantineReactTable,
 } from 'mantine-react-table';
 import {
-  IconCheck, IconHourglassEmpty, IconX,
+  IconCheck, IconHourglassEmpty, IconX, IconCopy,
 } from '@tabler/icons-react';
 
 import {
@@ -63,6 +63,14 @@ export function TableView({
     await refresh();
   }, [refresh]);
 
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const handleCopyParticipantId = (participantId: string) => {
+    navigator.clipboard.writeText(participantId);
+    setCopied(participantId);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => [
     {
       accessorFn: (row: ParticipantData) => {
@@ -72,7 +80,7 @@ export function TableView({
       },
       header: 'Status',
       size: 50,
-      Cell: ({ cell }: { cell: MrtCell<ParticipantData, {percent: number, completed: boolean, rejected: ParticipantData['rejected']}> }) => {
+      Cell: ({ cell }: { cell: MrtCell<ParticipantData, { percent: number, completed: boolean, rejected: ParticipantData['rejected'] }> }) => {
         const cellValue = cell.getValue();
         return (
           cellValue.rejected ? (
@@ -129,12 +137,29 @@ export function TableView({
         );
       },
     },
-    { accessorKey: 'participantId', header: 'ID' },
+    {
+      accessorKey: 'participantId',
+      header: 'ID',
+      Cell: ({ row }: { row: { original: ParticipantData } }) => (
+        <Flex align="center" gap="xs">
+          <Text>{row.original.participantId}</Text>
+          <Tooltip label={copied === row.original.participantId ? 'Copied' : 'Copy ID'}>
+            <ActionIcon
+              variant="subtle"
+              onClick={() => handleCopyParticipantId(row.original.participantId)}
+              color="gray"
+            >
+              <IconCopy size={16} />
+            </ActionIcon>
+          </Tooltip>
+        </Flex>
+      ),
+    },
     ...(studyConfig.uiConfig.participantNameField ? [{ accessorFn: (row: ParticipantData) => participantName(row, studyConfig), header: 'Name' }] : []),
     {
       accessorFn: (row: ParticipantData) => new Date(Math.max(...Object.values<StoredAnswer>(row.answers).filter((data) => data.endTime > 0).map((s) => s.endTime)) - Math.min(...Object.values<StoredAnswer>(row.answers).filter((data) => data.startTime > 0).map((s) => s.startTime))),
       header: 'Duration',
-      Cell: ({ cell }: {cell: MrtCell<ParticipantData, Date>}) => (
+      Cell: ({ cell }: { cell: MrtCell<ParticipantData, Date> }) => (
         !Number.isNaN(cell.getValue()) ? (
           <Badge
             variant="light"
@@ -160,7 +185,7 @@ export function TableView({
     {
       accessorFn: (row: ParticipantData) => Object.values(row.answers).filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0).map((answer) => componentAnswersAreCorrect(answer.answer, answer.correctAnswer)),
       header: 'Correct Answers',
-      Cell: ({ cell }: {cell: MrtCell<ParticipantData, boolean[]>}) => (
+      Cell: ({ cell }: { cell: MrtCell<ParticipantData, boolean[]> }) => (
         <>
           <Badge
             variant="light"
@@ -187,10 +212,10 @@ export function TableView({
     {
       accessorKey: 'metadata',
       header: 'Metadata',
-      Cell: ({ cell }: {cell: MrtCell<ParticipantData, ParticipantData['metadata']>}) => <MetaCell metaData={cell.getValue()} />,
+      Cell: ({ cell }: { cell: MrtCell<ParticipantData, ParticipantData['metadata']> }) => <MetaCell metaData={cell.getValue()} />,
     },
 
-  ], [studyConfig, stageColors]);
+  ], [studyConfig, stageColors, copied]);
 
   const table = useMantineReactTable({
     columns,
