@@ -34,9 +34,14 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
 
     useEffect(() => {
       const { current } = ref as RefObject<APITypes>;
-      if (current.plyr.source === null) return;
+      if (!current || current.plyr.source === null) return undefined;
       current.plyr.on('ended', endedCallback);
-    });
+      return () => {
+        if (current && current.plyr) {
+          current.plyr.off('ended', endedCallback);
+        }
+      };
+    }, [endedCallback, ref]);
 
     return (
       <video
