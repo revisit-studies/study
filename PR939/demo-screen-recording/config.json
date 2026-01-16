@@ -1,0 +1,74 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "HTML as a Stimulus with Screen Recording",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2023-04-14",
+    "description": "A simple demo of using screen recording on stimuli that render an external website, where provenance tracking is difficult to implement.",
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-screen-recording/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 200,
+    "recordAudio": true,
+    "recordScreen": true,
+    "recordScreenFPS": 30
+  },
+  "importedLibraries": [
+    "screen-recording"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-screen-recording/assets/introduction.md",
+      "response": []
+    },
+    "external_website": {
+      "type": "website",
+      "path": "https://www.revisit.dev",
+      "response": [],
+      "previousButton": true,
+      "recordAudio": true,
+      "recordScreen": false
+    },
+    "external_website2": {
+      "type": "website",
+      "path": "https://www.revisit.dev",
+      "response": [],
+      "previousButton": true,
+      "recordAudio": true,
+      "recordScreen": true
+    },
+    "barChart": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "meta": {
+        "difficulty": "hard"
+      },
+      "description": "Question that asks users to count the number of bars that have a value greater than 1.",
+      "instruction": "How many bars have a value greater than 1?",
+      "path": "demo-screen-recording/assets/bar-chart.html",
+      "response": [
+        {
+          "id": "html-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "placeholder": "0-7",
+          "min": 0,
+          "max": 7
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": ["introduction", "$screen-recording.co.screenRecordingPermission", "external_website", "external_website2", "barChart"]
+  }
+}
