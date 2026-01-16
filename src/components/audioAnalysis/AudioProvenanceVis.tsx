@@ -13,7 +13,7 @@ import {
 } from '@trrack/core';
 import WaveSurferType from 'wavesurfer.js';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { WithinTaskTimeline } from './WithinTaskTimeline';
+import { TaskProvenanceTimeline } from './TaskProvenanceTimeline';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { Timer } from './Timer';
 import { youtubeReadableDuration } from '../../utils/humanReadableDuration';
@@ -338,7 +338,7 @@ export function AudioProvenanceVis({
 
         {xScale && taskName && answers[taskName]?.provenanceGraph
           ? (
-            <WithinTaskTimeline
+            <TaskProvenanceTimeline
               xScale={xScale}
               trialName={taskName}
               currentNode={currentGlobalNode?.name || ''}
