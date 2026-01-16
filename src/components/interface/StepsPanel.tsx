@@ -344,7 +344,9 @@ export function StepsPanel({
             traverse(child, indentLevel + 1, node, blockPath, node.order === 'dynamic');
           });
         }
-
+        if (node.order === 'dynamic') {
+          idx += 1;
+        }
         // After processing all children, check for excluded blocks and components from the study sequence
         // Reuse the cached matchingStudySequence from above
         if (matchingStudySequence) {
