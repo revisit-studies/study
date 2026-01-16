@@ -6,11 +6,9 @@ import { useParams } from 'react-router';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { TrialVisualization } from './TrialVisualization';
-import { ComponentBlockWithOrderPath, StepsPanel } from '../../../components/interface/StepsPanel';
-import { addPathToComponentBlock } from '../../../utils/getSequenceFlatMap';
+import { StepsPanel } from '../../../components/interface/StepsPanel';
 import { OverviewStats } from '../summary/OverviewStats';
 import { getOverviewStats } from '../summary/utils';
-import { StepsPanel } from '../../../components/interface/StepsPanel';
 
 export function StatsView(
   {
