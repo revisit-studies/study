@@ -1,0 +1,69 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
+  "description": "The Subjective Mental Effort Questionnaire (SMEQ) is a single-item scale designed to measure perceived mental effort during a task. This library includes a single component, the SMEQ.",
+  "reference": "Zijlstra, F. R. H., and L. Van Doorn. The Construction of a Scale to Measure Perceived Effort. Delft University of Technology, 1985.",
+  "components": {
+    "smeq": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "smeq",
+          "prompt": "Please indicate how much mental effort you felt was required to complete the task you just finished.",
+          "type": "slider",
+          "smeqStyle": true,
+          "options": [
+            {
+              "label": "",
+              "value": 0
+            },
+            {
+              "label": "Not at all hard to do",
+              "value": 2
+            },
+            {
+              "label": "Not very hard to do",
+              "value": 13
+            },
+            {
+              "label": "A bit hard to do",
+              "value": 26
+            },
+            {
+              "label": "Fairly hard to do",
+              "value": 37
+            },
+            {
+              "label": "Rather hard to do",
+              "value": 57
+            },
+            {
+              "label": "Pretty hard to do",
+              "value": 71
+            },
+            {
+              "label": "Very hard to do",
+              "value": 86
+            },
+            {
+              "label": "Very, very hard to do",
+              "value": 102
+            },
+            {
+              "label": "Tremendously hard to do",
+              "value": 114
+            },
+            {
+              "label": "",
+              "value": 150
+            }
+          ],
+          "step": 1,
+          "startingValue": 0,
+          "required": true
+        }
+      ]
+    }
+  },
+  "sequences": {
+  }
+}
