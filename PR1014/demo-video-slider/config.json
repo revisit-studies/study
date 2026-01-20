@@ -1,0 +1,62 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "2 Videos with a Slider to Choose Between Them",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "A simple demo of using video as a stimulus. Data is collected via a slider response field.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-html/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "windowEventDebounceTime": 200
+  },
+  "components": {
+    "video-slider": {
+      "type": "website",
+      "path": "demo-video-slider/assets/video.html",
+      "response": [
+        {
+          "id": "html-response",
+          "prompt": "Answer:",
+          "location": "belowStimulus",
+          "type": "slider",
+          "options": [
+            {
+              "label": "left",
+              "value": 0
+            },
+            {
+              "label": "neither",
+              "value": 50
+            },
+            {
+              "label": "right",
+              "value": 100
+            }
+          ],
+          "snap": true,
+          "startingValue": 50
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "video-slider"
+    ]
+  }
+}
