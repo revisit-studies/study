@@ -50,7 +50,8 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
           const error: ParserErrorWarning = {
             message: `Library ${cleanLibraryName} not found in imported libraries`,
             instancePath: '',
-            params: { action: 'check the library name' },
+            params: { action: 'Check the library name' },
+            category: 'undefined-library',
           };
           errors.push(error);
           return component;
@@ -63,7 +64,8 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
           const error: ParserErrorWarning = {
             message: `Sequence ${sequenceName} not found in library ${libraryName}`,
             instancePath: '',
-            params: { action: 'check the sequence name' },
+            params: { action: 'Check the sequence name' },
+            category: 'sequence-validation',
           };
           errors.push(error);
           return component;
@@ -81,7 +83,7 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
 }
 
 // This function verifies that the library usage in the study config is valid
-export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserErrorWarning[], importedLibrariesData: Record<string, LibraryConfig>) {
+export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserErrorWarning[], warnings: ParserErrorWarning[], importedLibrariesData: Record<string, LibraryConfig>) {
   Object.entries(importedLibrariesData).forEach(([library, libraryData]) => {
     // Verify that the library components are well defined
     Object.entries(libraryData.components).forEach(([componentName, component]) => {
@@ -90,7 +92,8 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
         errors.push({
           message: `Base component \`${component.baseComponent}\` is not defined in baseComponents object in library \`${library}\``,
           instancePath: `/importedLibraries/${library}/components/${componentName}`,
-          params: { action: 'add the base component to the baseComponents object' },
+          params: { action: 'Add the base component to the baseComponents object' },
+          category: 'undefined-base-component',
         });
       }
 
@@ -102,10 +105,11 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
 
       if (sidebarDisabled && isUsingSidebar) {
         const instancePath = component.withSidebar === false ? `/baseComponents/${componentName}` : '/uiConfig/';
-        errors.push({
+        warnings.push({
           message: `Library \`${library}\` component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
           instancePath,
-          params: { action: 'set withSidebar to true in uiConfig or in the component, or move sidebar location to belowStimulus or aboveStimulus' },
+          params: { action: 'Set withSidebar to true in uiConfig or in the component, or move sidebar location to belowStimulus or aboveStimulus' },
+          category: 'disabled-sidebar',
         });
       }
     });
@@ -131,13 +135,15 @@ function parseLibraryConfig(fileData: string, libraryName: string): ParsedConfig
     errors.push({
       message: `Could not find library \`${libraryName}\``,
       instancePath: '/importedLibraries/',
-      params: { action: 'make sure the library is in the correct location' },
+      params: { action: 'Make sure the library is in the correct location' },
+      category: 'undefined-library',
     });
   } else if (!validatedData) {
     errors.push({
       message: 'Library config is not valid',
       instancePath: '',
-      params: { action: 'fix the errors in the library config' },
+      params: { action: 'Fix the errors in the library config' },
+      category: 'invalid-config',
     });
   }
 
@@ -190,7 +196,7 @@ export async function loadLibrariesParseNamespace(importedLibraries: string[], e
           [`$${libraryName}.co.${componentName}`, component],
         ] as [string, IndividualComponent][];
       })
-      // spread double array to single array for Object.fromEntries
+        // spread double array to single array for Object.fromEntries
         .reduce((acc, [key, value]) => {
           acc.push(key, value);
           return acc;

@@ -3,7 +3,7 @@ import { parseDocument } from 'yaml';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
-  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig,
+  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig, ParserErrorWarning,
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
@@ -51,7 +51,7 @@ export function parseGlobalConfig(fileData: string) {
 function verifyStudySkip(
   sequence: StudyConfig['sequence'],
   skipTargets: string[],
-  errors: { message: string, instancePath: string, params: { 'action': string } }[] = [],
+  errors: { message: string, instancePath: string, params: { 'action': string }, category: string }[] = [],
 ) {
   if (isDynamicBlock(sequence)) {
     return;
@@ -63,7 +63,8 @@ function verifyStudySkip(
     errors.push({
       message: 'Sequence has an empty components array',
       instancePath: '/sequence/',
-      params: { action: 'remove empty components block' },
+      params: { action: 'Remove empty components block' },
+      category: 'sequence-validation',
     });
     return;
   }
@@ -121,7 +122,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   const errors: ParsedConfig<StudyConfig>['errors'] = [];
   const warnings: ParsedConfig<StudyConfig>['warnings'] = [];
 
-  verifyLibraryUsage(studyConfig, errors, importedLibrariesData);
+  verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
 
   // Verify components are well defined
   Object.entries(studyConfig.components)
@@ -131,7 +132,8 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         errors.push({
           message: `Base component \`${component.baseComponent}\` is not defined in baseComponents object`,
           instancePath: `/components/${componentName}`,
-          params: { action: 'add the base component to the baseComponents object' },
+          params: { action: 'Add the base component to the baseComponents object' },
+          category: 'undefined-base-component',
         });
       }
 
@@ -143,10 +145,11 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
 
       if (sidebarDisabled && isUsingSidebar) {
         const instancePath = component.withSidebar === false ? `/components/${componentName}` : '/uiConfig/';
-        errors.push({
+        warnings.push({
           message: `Component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
           instancePath,
-          params: { action: 'set withSidebar to true in component or uiConfig, or move location to belowStimulus or aboveStimulus' },
+          params: { action: 'Set withSidebar to true in component or uiConfig, or move location to belowStimulus or aboveStimulus' },
+          category: 'disabled-sidebar',
         });
       }
     });
@@ -162,7 +165,8 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
           ? `Component \`${component}\` is a base component and cannot be used in the sequence`
           : `Component \`${component}\` is not defined in components object`,
         instancePath: '/sequence/',
-        params: { action: 'add the component to the components object' },
+        params: { action: 'Add the component to the components object' },
+        category: studyConfig.baseComponents?.[component] ? 'sequence-validation' : 'undefined-component',
       });
     }
   });
@@ -180,7 +184,8 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
       warnings.push({
         message: `Component \`${componentName}\` is defined in components object but not used deterministically in the sequence`,
         instancePath: '/components/',
-        params: { action: 'remove the component from the components object or add it to the sequence' },
+        params: { action: 'Remove the component from the components object or add it to the sequence' },
+        category: 'unused-component',
       });
     });
 
@@ -191,7 +196,8 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     errors.push({
       message: `Skip target \`${skipTarget}\` does not occur after the skip block it is used in`,
       instancePath: '/sequence/',
-      params: { action: 'add the target to the sequence after the skip block' },
+      params: { action: 'Add the target to the sequence after the skip block' },
+      category: 'skip-validation',
     });
   });
 
@@ -217,8 +223,8 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
     }
   }
 
-  let errors: Required<ParsedConfig<StudyConfig>>['errors'] = studyValidate.errors || [];
-  let warnings: Required<ParsedConfig<StudyConfig>>['warnings'] = [];
+  let errors: ParserErrorWarning[] = [];
+  let warnings: ParserErrorWarning[] = [];
 
   // We can only run our custom validator if the schema validation passes
   if (validatedData && data) {
@@ -238,7 +244,9 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
     errors = [...errors, ...parserErrors];
     warnings = [...warnings, ...parserWarnings];
   } else {
-    errors = [...errors, { message: 'There was an issue validating your config file', instancePath: 'root', params: { action: 'fix the errors in your file or make sure the global config references the right file path' } }];
+    errors = [...errors, {
+      message: 'There was an issue validating your config file', instancePath: 'root', params: { action: 'fix the errors in your file or make sure the global config references the right file path' }, category: 'invalid-config',
+    }];
   }
 
   return { ...data as StudyConfig, errors, warnings };

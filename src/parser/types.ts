@@ -918,7 +918,7 @@ export interface BaseIndividualComponent {
   /** Whether to show the previous button. If present, will override the previous button setting in the uiConfig. */
   previousButton?: boolean;
   /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
-  previousButtonText?:string;
+  previousButtonText?: string;
   /** Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig. */
   provideFeedback?: boolean;
   /** The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig. */
@@ -1775,6 +1775,8 @@ export interface LibraryConfig {
   baseComponents?: BaseComponents;
 }
 
+export type ErrorWarningCategory = 'invalid-config' | 'undefined-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar';
+
 /**
  * @ignore
  * Helper error type to make reading the error messages easier
@@ -1783,6 +1785,7 @@ export type ParserErrorWarning = {
   instancePath: string;
   message?: string;
   params: object;
+  category: ErrorWarningCategory;
 }
 
 /**
