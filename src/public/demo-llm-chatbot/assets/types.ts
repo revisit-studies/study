@@ -7,7 +7,6 @@ export interface ChatMessage {
 
 export interface ChatProvenanceState {
   messages: ChatMessage[];
-  modalOpened: boolean;
 }
 
 type ChartType = 'violin-plot' | 'clustered-heatmap';

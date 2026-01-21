@@ -9,17 +9,20 @@ import { Registry, initializeTrrack } from '@trrack/core';
 
 export default function LLMInterface({ parameters, setAnswer, answers, provenanceState }: StimulusParams<ChatInterfaceParams, ChatProvenanceState>) {
   console.log('LLMInterface answers:', answers.systemPrompt_1.answer["q-systemPrompt"]);
+  const [fullMessages, setFullMessages] = useState<ChatMessage[]>([]);
 
+  const handleMessagesUpdate = useCallback((messages: ChatMessage[]) => {
+    setFullMessages(messages);
+  }, []);
   // Setup provenance tracking (Trrack)
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
 
-    // Register an "updateMessages" action to update chat history state
-    const updateMessages = reg.register('updateMessages', (state, newState: ChatMessage[]) => {
-      // eslint-disable-next-line no-param-reassign
-      state = newState;
-      return state;
-    });
+       // Register an "updateMessages" action to update chat history state
+       const updateMessages = reg.register('brush', (state, newMessages: ChatMessage[]) => {
+        state.messages = newMessages;
+        return state;
+      });
 
     // Initialize Trrack with an empty message list
     const trrackInst = initializeTrrack({
@@ -60,6 +63,7 @@ export default function LLMInterface({ parameters, setAnswer, answers, provenanc
           trrack={trrack}
           actions={actions as any}
           updateProvenanceState={updateProvenanceState}
+          onMessagesUpdate={handleMessagesUpdate}
         />
       </Grid.Col>
     </Grid>

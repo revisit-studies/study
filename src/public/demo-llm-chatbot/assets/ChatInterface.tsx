@@ -24,7 +24,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 export default function ChatInterface(
-  { setAnswer, provenanceState, testSystemPrompt, trrack, actions, updateProvenanceState }:
+  { setAnswer, provenanceState, testSystemPrompt, trrack, actions, updateProvenanceState, onMessagesUpdate }:
   {
     setAnswer: StimulusParams<never>['setAnswer'],
     provenanceState?: ChatProvenanceState,
@@ -36,12 +36,18 @@ export default function ChatInterface(
       updateMessages: ActionCreatorWithPayload<ChatMessage[], string>;
     },
     updateProvenanceState: (messages: ChatMessage[]) => void,
+    onMessagesUpdate?: (messages: ChatMessage[]) => void
   },
 ) {
 
 
   // Define the system prompt
-  const prePrompt = `You are a helpful assistant to help users understand the clustered heatmap.`;
+  const prePrompt = `You are a helpful assistant that explains a clustered heatmap using: a clustered heatmap image and the underlying CSV data. Users may ask any question about the chart.
+Guidelines:
+- Answer clearly and directly; use the CSV for specific evidence (row/column names, values) when helpful.
+- Briefly explain clustering/dendrograms only as needed.
+- If the question is ambiguous, ask one clarifying question.
+- If something cannot be determined from the image/CSV, say so.`;
 
   const initialMessages: ChatMessage[] = useMemo(() => [
     {
@@ -67,6 +73,13 @@ export default function ChatInterface(
     }
   }, [provenanceState, initialMessages]);
 
+  // Update parent component when messages change
+  useEffect(() => {
+    if (onMessagesUpdate) {
+      onMessagesUpdate(messages);
+    }
+  }, [messages, onMessagesUpdate]);
+
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +102,7 @@ export default function ChatInterface(
       body: JSON.stringify({
         model: "gpt-4o-mini",
         input: [{ role: "system", content: [{ type: "input_text", text: summaryPrompt }] }],
-        max_output_tokens: 250,
+        max_output_tokens: 400,
         temperature: 0.3,
       }),
     });
@@ -173,12 +186,23 @@ export default function ChatInterface(
     setInputValue("");
     setIsLoading(true);
     setError(null);
+
+
   
     try {
       // Load CSV data (small enough to inline)
       const csvResponse = await fetch(`/demo-llm-chatbot/assets/data/clustered-heatmap.csv`);
       const csvData = await csvResponse.text();
   
+      // Load image data based on chart type
+      const imageResponse = await fetch(`/demo-llm-chatbot/assets/images/clustered-heatmap.png`);
+      const imageBlob = await imageResponse.blob();
+      const imageBase64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(imageBlob);
+      });
+
       // Build input for Responses API
       const inputPayload = [
         // Context
@@ -194,8 +218,14 @@ export default function ChatInterface(
             },
             {
               type: "input_image",
-              file_id: "file-RndV3st6F83sM7y9SKDDkW"
+              file_id: "file-8ppKBEn7v3HWDqRe1LLKCw"
             },
+            // {
+            //   type: 'image_url',
+            //   image_url: {
+            //     url: imageBase64
+            //   }
+            // }
           ],
         },
       ];
