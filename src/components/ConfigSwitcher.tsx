@@ -1,8 +1,8 @@
 import {
-  Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text, Tooltip,
+  Anchor, AppShell, Button, Card, Collapse, Container, Divider, Flex, Image, Paper, rem, Tabs, Text, Tooltip, UnstyledButton, Group,
 } from '@mantine/core';
 import {
-  IconAlertTriangle, IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
+  IconAlertTriangle, IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff, IconChevronDown, IconChevronRight,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -33,6 +33,10 @@ function StudyCard({
   const { storageEngine } = useStorageEngine();
 
   const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
+
+  const [errorsOpen, setErrorsOpen] = useState(false);
+  const [warningsOpen, setWarningsOpen] = useState(false);
+
   useEffect(() => {
     if (!storageEngine) return;
     storageEngine.getParticipantsStatusCounts(configName).then((status) => {
@@ -75,19 +79,45 @@ function StudyCard({
         ? (
           <>
             <Text fw="bold">{configName}</Text>
-            <Flex align="center" direction="row">
-              <IconAlertTriangle color="red" />
-              <Text fw="bold" ml={8} color="red">Errors</Text>
-            </Flex>
-            <ErrorLoadingConfig issues={config.errors} type="error" />
+            <Paper withBorder p="xs" mt="sm">
+              <UnstyledButton onClick={() => setErrorsOpen((open) => !open)} style={{ width: '100%' }}>
+                <Group justify="space-between">
+                  <Group gap="xs">
+                    <IconAlertTriangle size={16} color="red" />
+                    <Text fw="bold" ml={6} c="red">Errors</Text>
+                  </Group>
+                  {errorsOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+                </Group>
+              </UnstyledButton>
+              <Collapse in={errorsOpen}>
+                <ErrorLoadingConfig issues={config.errors} type="error" />
+              </Collapse>
+              {!errorsOpen && (
+                <Text c="dimmed">
+                  There were some issues while loading the study config. Please check the following issues:
+                </Text>
+              )}
+            </Paper>
             {config.warnings.length > 0 && (
-              <>
-                <Flex align="center" direction="row">
-                  <IconAlertTriangle color="orange" />
-                  <Text fw="bold" ml={8} color="orange">Warnings</Text>
-                </Flex>
-                <ErrorLoadingConfig issues={config.warnings} type="warning" />
-              </>
+              <Paper withBorder p="xs" mt="xs">
+                <UnstyledButton onClick={() => setWarningsOpen((open) => !open)} style={{ width: '100%' }}>
+                  <Group justify="space-between">
+                    <Group gap="xs">
+                      <IconAlertTriangle size={16} color="orange" />
+                      <Text fw="bold" ml={6} c="orange">Warnings</Text>
+                    </Group>
+                    {warningsOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+                  </Group>
+                </UnstyledButton>
+                <Collapse in={warningsOpen}>
+                  <ErrorLoadingConfig issues={config.warnings} type="warning" />
+                </Collapse>
+                {!warningsOpen && (
+                  <Text c="dimmed">
+                    There were some warnings while loading the study config. Please check the following issues:
+                  </Text>
+                )}
+              </Paper>
             )}
           </>
         )
@@ -120,13 +150,25 @@ function StudyCard({
             </Text>
 
             {config.warnings.length > 0 && (
-              <>
-                <Flex align="center" direction="row">
-                  <IconAlertTriangle color="orange" />
-                  <Text fw="bold" ml={8} color="orange">Warnings</Text>
-                </Flex>
-                <ErrorLoadingConfig issues={config.warnings} type="warning" />
-              </>
+              <Paper withBorder p="xs" mt="xs">
+                <UnstyledButton onClick={() => setWarningsOpen((open) => !open)} style={{ width: '100%' }}>
+                  <Group justify="space-between">
+                    <Group gap="xs">
+                      <IconAlertTriangle size={16} color="orange" />
+                      <Text fw="bold" ml={6} c="orange">Warnings</Text>
+                    </Group>
+                    {warningsOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+                  </Group>
+                </UnstyledButton>
+                <Collapse in={warningsOpen}>
+                  <ErrorLoadingConfig issues={config.warnings} type="warning" />
+                </Collapse>
+                {!warningsOpen && (
+                  <Text c="dimmed" mt="xs">
+                    There were some warnings while loading the study config. Please check the following issues:
+                  </Text>
+                )}
+              </Paper>
             )}
 
             <Divider my="md" />
