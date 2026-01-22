@@ -32,11 +32,7 @@
     "chatbot": {
       "type": "react-component",
       "path": "demo-llm-chatbot/assets/LLMInterface.tsx",
-      "response": [],
-      "parameters": {
-        "chartType": "clustered-heatmap",
-        "modality": "tactile"
-      }
+      "response": []
     }
   },
   "sequence": {

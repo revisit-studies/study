@@ -2,13 +2,11 @@ import { Card, Image, Text, Flex } from '@mantine/core';
 import { PREFIX } from '../../../utils/Prefix';
 import { useStudyId } from '../../../routes/utils';
 
-export default function ImageDisplay({ chartType }: {
-  chartType: 'violin-plot' | 'clustered-heatmap';
-}) {
+export default function ImageDisplay() {
   const studyId = useStudyId();
 
   // Determine the image file name based on chart type
-  const imageFileName = `${chartType}.png`;
+  const imageFileName = `clustered-heatmap.png`;
   const imagePath = `${PREFIX}${studyId}/assets/images/${imageFileName}`;
 
   return (
@@ -22,7 +20,7 @@ export default function ImageDisplay({ chartType }: {
         </Text>
         <Image
           src={imagePath}
-          alt={`${chartType.replace('-', ' ')} chart`}
+          alt={`clustered heatmap chart`}
           fit="contain"
           style={{
             maxHeight: '400px',

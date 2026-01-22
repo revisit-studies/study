@@ -51,16 +51,17 @@ We provide a proxy server for the OpenAI API ([https://github.com/visdesignlab/o
 
 Please configure your OpenAI API credentials there and deploy the server following the instructions in the repository.
 
-In `.env`, set `VITE_OPENAI_API_URL` to your deployed proxy URL (for example, `https://your-proxy.example.com`).
+To use our proxy server, you need to  set `VITE_OPENAI_API_URL` in  `.env`.
+For the production version of the study, set `VITE_OPENAI_API_URL="https://github.com/visdesignlab/openai-api-proxy"`. For the local version of the study, set `VITE_OPENAI_API_URL="http://localhost:3000"`.
 
 ### Customization
 
 In `ChatInterface.tsx`, the most relevant customizable parameters are:
 
-* Chart image (PNG file) and dataset (CSV file): Update the CSV fetch and the `file_id` used for the input image.
+* Chart image (PNG file) and dataset (CSV file)
 * `prePrompt`: Customize the system prompt that guides the chatbot’s responses.
 * `model`: Choose any [OpenAI model](https://platform.openai.com/docs/models) (e.g., `gpt-4o`) to suit your research needs.
 * `max_output_tokens`: Set the maximum length for LLM responses.
 * `temperature`: Control the randomness and creativity of the LLM output (lower = more deterministic).
-* Summarization settings: `summaryPrompt`, model, `temperature`, and `max_output_tokens` for the summarization step used in chat context compression.
+* Summarization settings: `summaryPrompt`, `model`, `temperature`, and `max_output_tokens` for the summarization step used in chat context compression.
 * Context window sizes: How many messages to keep in memory before summarizing (e.g., keep last 5, summarize when >5).
