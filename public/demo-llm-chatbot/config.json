@@ -29,18 +29,6 @@
       "path": "demo-llm-chatbot/assets/introduction.md",
       "response": []
     },
-    "systemPrompt": {
-      "type": "questionnaire",
-      "response": [
-      {
-          "id": "q-systemPrompt",
-          "prompt": "System Prompt",
-          "location": "aboveStimulus",
-          "type": "longText",
-          "placeholder": "Please enter the system prompt for the LLM."
-      }
-    ]
-  },
     "chatbot": {
       "type": "react-component",
       "path": "demo-llm-chatbot/assets/LLMInterface.tsx",
@@ -55,7 +43,6 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "systemPrompt",
       "chatbot"
     ]
   }

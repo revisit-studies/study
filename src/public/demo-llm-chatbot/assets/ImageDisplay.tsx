@@ -18,7 +18,7 @@ export default function ImageDisplay({ chartType }: {
           Clustered Heatmap
         </Text>
         <Text size="sm" c="dimmed">
-          You can ask the AI assistant any questions about the chart in the chat panel.
+          You can ask the AI assistant any questions about the chart in the chatbot on the right.
         </Text>
         <Image
           src={imagePath}

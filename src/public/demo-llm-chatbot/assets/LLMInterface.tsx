@@ -1,14 +1,12 @@
 import { Card, Flex, Grid } from '@mantine/core';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import ChatInterface from './ChatInterface';
-import InstructionsDisplay from './InstructionsDisplay';
 import ImageDisplay from './ImageDisplay';
 import { StimulusParams } from '../../../store/types';
 import { ChatInterfaceParams, ChatMessage, ChatProvenanceState } from './types';
 import { Registry, initializeTrrack } from '@trrack/core';
 
 export default function LLMInterface({ parameters, setAnswer, answers, provenanceState }: StimulusParams<ChatInterfaceParams, ChatProvenanceState>) {
-  console.log('LLMInterface answers:', answers.systemPrompt_1.answer["q-systemPrompt"]);
   const [fullMessages, setFullMessages] = useState<ChatMessage[]>([]);
 
   const handleMessagesUpdate = useCallback((messages: ChatMessage[]) => {
@@ -59,7 +57,6 @@ export default function LLMInterface({ parameters, setAnswer, answers, provenanc
         <ChatInterface 
           setAnswer={setAnswer} 
           provenanceState={provenanceState} 
-          testSystemPrompt={answers.systemPrompt_1.answer["q-systemPrompt"] as string}
           trrack={trrack}
           actions={actions as any}
           updateProvenanceState={updateProvenanceState}

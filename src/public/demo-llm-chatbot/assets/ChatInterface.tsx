@@ -24,11 +24,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 export default function ChatInterface(
-  { setAnswer, provenanceState, testSystemPrompt, trrack, actions, updateProvenanceState, onMessagesUpdate }:
+  { setAnswer, provenanceState, trrack, actions, updateProvenanceState, onMessagesUpdate }:
   {
     setAnswer: StimulusParams<never>['setAnswer'],
     provenanceState?: ChatProvenanceState,
-    testSystemPrompt?: string,
     trrack: Trrack<{
         messages: never[];
     }, string>,
@@ -52,11 +51,11 @@ Guidelines:
   const initialMessages: ChatMessage[] = useMemo(() => [
     {
       role: 'system',
-      content: testSystemPrompt || `${prePrompt}`,
+      content: `${prePrompt}`,
       timestamp: new Date().getTime(),
       display: false,
     },
-  ], [prePrompt, testSystemPrompt]);
+  ], [prePrompt]);
 
   // Local React states for chat history
   const [messages, setMessages] = useState<ChatMessage[]>([...initialMessages]);
@@ -193,15 +192,6 @@ Guidelines:
       // Load CSV data (small enough to inline)
       const csvResponse = await fetch(`/demo-llm-chatbot/assets/data/clustered-heatmap.csv`);
       const csvData = await csvResponse.text();
-  
-      // Load image data based on chart type
-      const imageResponse = await fetch(`/demo-llm-chatbot/assets/images/clustered-heatmap.png`);
-      const imageBlob = await imageResponse.blob();
-      const imageBase64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(imageBlob);
-      });
 
       // Build input for Responses API
       const inputPayload = [
@@ -220,12 +210,6 @@ Guidelines:
               type: "input_image",
               file_id: "file-8ppKBEn7v3HWDqRe1LLKCw"
             },
-            // {
-            //   type: 'image_url',
-            //   image_url: {
-            //     url: imageBase64
-            //   }
-            // }
           ],
         },
       ];
@@ -240,7 +224,7 @@ Guidelines:
             stream: true,
             input: inputPayload,
             temperature: 0.7,
-            max_output_tokens: 100,
+            max_output_tokens: 400,
           }),
         }
       );
@@ -329,14 +313,6 @@ Guidelines:
   
       trrack.apply("updateMessages", actions.updateMessages(fullMessages));
   
-      // setAnswer({
-      //   status: true,
-      //   provenanceGraph: trrack.graph.backend,
-      //   answers: {
-      //     // messages: JSON.stringify([...messages, userMessage, assistantMessage]),
-      //     messages: JSON.stringify(fullMessages),
-      //   },
-      // });
       updateProvenanceState(fullMessages);
   
     } catch (err) {
