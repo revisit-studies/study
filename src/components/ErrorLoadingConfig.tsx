@@ -1,4 +1,6 @@
-import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
+import {
+  Badge, Code, Group, List, Stack, Text,
+} from '@mantine/core';
 import { ParsedConfig, StudyConfig, ErrorWarningCategory } from '../parser/types';
 
 export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<StudyConfig>['errors'], type: 'error' | 'warning' }) {
@@ -18,6 +20,21 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
 
   // Format category labels by capitalizing each word and replacing hyphens with spaces
   const formatCategoryLabel = (category: ErrorWarningCategory) => category.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+  // Render inline code wrapped in backticks
+  const renderInlineCode = (text: string) => {
+    // Split the text by backticks
+    const parts = text.split(/`([^`]+)`/g);
+    return parts.map((part, index) => (index % 2 === 1
+      ? (
+        <Code key={`${part}-${index}`}>
+          {' '}
+          {part}
+        </Code>
+      )
+      : <Text key={`${part}-${index}`} component="span">{part}</Text>
+    ));
+  };
 
   const groupCategory = issues.reduce<Record<ErrorWarningCategory, typeof issues>>((acc, error) => {
     const { category } = error;
@@ -48,41 +65,68 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
     ? 'There were some issues while loading the study config. Please check the following issues:'
     : 'There were some warnings while loading the study config. Please check the following warnings:';
 
-  const body = categoryOrder
-    .flatMap((category) => Object.entries(groupIssues)
-      // Only keep entries that match the current category
-      .filter(([groupKey]) => groupKey.startsWith(`${category}:`))
-      .map(([groupKey, pathIssues]) => {
-        const [, path] = groupKey.split(':');
-        const categoryLabel = formatCategoryLabel(category);
-
-        const messages = pathIssues
-          .map((error) => {
-            const message = error.message || 'No message provided';
-            const params = error.params || {};
-            const hasParams = Object.keys(params).length > 0;
-
-            let paramsText = '';
-
-            if (hasParams) {
-              if (Object.keys(params).length === 1 && 'action' in params) {
-                paramsText = `\n      - ${(params as { action: string }).action}`;
-              } else {
-                paramsText = ` - ${JSON.stringify(params)}`;
-              }
-            }
-
-            return `    - ${message}${paramsText}`;
-          })
-          .join('\n');
-
-        return `**${categoryLabel}**\n\n- \`${path}\`\n${messages}`;
-      }))
-    .join('\n\n');
-
-  const text = `${baseHeader}\n\n${body}`;
+  const badgeColor = type === 'error' ? 'red' : 'orange';
 
   return (
-    <ReactMarkdownWrapper text={text} />
+    <Stack gap="xs">
+      <Text c="dimmed">{baseHeader}</Text>
+      {categoryOrder.map((category) => {
+        const entries = Object.entries(groupIssues).filter(([groupKey]) => groupKey.startsWith(`${category}:`));
+        if (!entries.length) return null;
+
+        const categoryCount = entries.reduce((sum, [, pathIssues]) => sum + pathIssues.length, 0);
+
+        return (
+          <Stack key={category} gap="xs">
+            <Group justify="space-between">
+              <Text fw={500}>{formatCategoryLabel(category)}</Text>
+              <Badge size="sm" variant="light" color={badgeColor}>
+                {categoryCount}
+                {' '}
+                {type === 'error'
+                  ? (categoryCount === 1 ? 'Error' : 'Errors')
+                  : (categoryCount === 1 ? 'Warning' : 'Warnings')}
+              </Badge>
+            </Group>
+            <List withPadding spacing="xs">
+              {entries.map(([groupKey, pathIssues]) => {
+                const [, path] = groupKey.split(':');
+                return (
+                  <List.Item key={groupKey}>
+                    <Code style={{ wordBreak: 'break-word' }}>{path}</Code>
+                    <List withPadding spacing="xs">
+                      {pathIssues.map((error, index) => {
+                        const message = error.message || 'No message provided';
+                        const params = error.params || {};
+                        const actionText = 'action' in params ? (params as { action: string }).action : null;
+
+                        return (
+                          <List.Item key={`${groupKey}-${index}`}>
+                            <Text>{renderInlineCode(message)}</Text>
+                            {actionText && (
+                              <List withPadding spacing="xs">
+                                <List.Item>
+                                  <Text>
+                                    Actions:
+                                    {' '}
+                                    {' '}
+                                    {' '}
+                                    {actionText}
+                                  </Text>
+                                </List.Item>
+                              </List>
+                            )}
+                          </List.Item>
+                        );
+                      })}
+                    </List>
+                  </List.Item>
+                );
+              })}
+            </List>
+          </Stack>
+        );
+      })}
+    </Stack>
   );
 }

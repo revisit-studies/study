@@ -245,7 +245,7 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
     warnings = [...warnings, ...parserWarnings];
   } else {
     errors = [...errors, {
-      message: 'There was an issue validating your config file', instancePath: 'root', params: { action: 'fix the errors in your file or make sure the global config references the right file path' }, category: 'invalid-config',
+      message: 'There was an issue validating your config file', instancePath: 'root', params: { action: 'Fix the errors in your file or make sure the global config references the right file path' }, category: 'invalid-config',
     }];
   }
 
