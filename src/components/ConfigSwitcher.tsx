@@ -94,7 +94,15 @@ function StudyCard({
               </Collapse>
               {!errorsOpen && (
                 <Text c="dimmed">
-                  There were some issues while loading the study config. Please check the following issues:
+                  There
+                  {' '}
+                  {config.errors.length === 1 ? 'was' : 'were'}
+                  {' '}
+                  {config.errors.length}
+                  {' '}
+                  {config.errors.length === 1 ? 'error' : 'errors'}
+                  {' '}
+                  while loading the study config. Please check the following issues:
                 </Text>
               )}
             </Paper>
@@ -114,7 +122,15 @@ function StudyCard({
                 </Collapse>
                 {!warningsOpen && (
                   <Text c="dimmed">
-                    There were some warnings while loading the study config. Please check the following issues:
+                    There
+                    {' '}
+                    {config.warnings.length === 1 ? 'was' : 'were'}
+                    {' '}
+                    {config.warnings.length}
+                    {' '}
+                    {config.warnings.length === 1 ? 'warning' : 'warnings'}
+                    {' '}
+                    while loading the study config. Please check the following issues:
                   </Text>
                 )}
               </Paper>
@@ -164,8 +180,16 @@ function StudyCard({
                   <ErrorLoadingConfig issues={config.warnings} type="warning" />
                 </Collapse>
                 {!warningsOpen && (
-                  <Text c="dimmed" mt="xs">
-                    There were some warnings while loading the study config. Please check the following issues:
+                  <Text c="dimmed">
+                    There
+                    {' '}
+                    {config.warnings.length === 1 ? 'was' : 'were'}
+                    {' '}
+                    {config.warnings.length}
+                    {' '}
+                    {config.warnings.length === 1 ? 'warning' : 'warnings'}
+                    {' '}
+                    while loading the study config. Please check the following issues:
                   </Text>
                 )}
               </Paper>
