@@ -1,9 +1,8 @@
 # Introduction
 
-This demo study illustrates how to integrate an **LLM-based chatbot** into the ReVISit platform.
+This demo study illustrates how to integrate an **LLM-based chatbot** into the ReVISit platform. In this demo, participants can ask questions about a visualization through the chatbot. The model returns contextual, streaming responses that evolve over the course of the conversation, while remaining lightweight and efficient.
 
-In this demo study, participants can ask questions about a visualization in an LLM chatbot. The model provides contextual, streaming responses that evolve with the conversation while remaining lightweight and efficient.
-
+Below, we describe the chatbot’s features and explain how to set up and customize it. Researchers can use this demo as a template to build their own chatbots and adapt them to their study needs.
 
 ## Features
 
@@ -21,9 +20,9 @@ This balances memory continuity with low token cost.
 
 ### Streaming Responses
 
-* Responses are streamed token by token for a smooth real-time interaction similar to ChatGPT in the browser.
-* The front-end React component decodes incoming Server-Sent Events (SSE) from the OpenAI API proxy and updates the chat window dynamically.
+In this study, we stream model outputs token by token to create a smooth, real-time interaction similar to ChatGPT in the browser. In the OpenAI Responses API, streaming means the model returns output incrementally (token-by-token or chunk-by-chunk) as it is generated, rather than waiting to send the full response at the end. This reduces perceived latency because users see text immediately, and it enables real-time UI features such as typing indicators, live summaries, and partial results while the remaining output is still being generated.
 
+See OpenAI [Streaming API responses](https://platform.openai.com/docs/guides/streaming-responses?api-mode=chat) for details.
 
 ### File Inputs
 
@@ -40,8 +39,8 @@ The system prompt defines the chatbot’s initial behavior and can be customized
 
 ### Provenance and Chat History
 
-* Provenance of user interaction is tracked by Trrack.
-* The full chat history can be downloaded as JSON in the study results.
+* Provenance of user interaction is tracked by Trrack. Researchers can review all participant interactions in the participant reply interface.
+* The full chat history can be downloaded in the study results.
 
 ## How to use it
 
