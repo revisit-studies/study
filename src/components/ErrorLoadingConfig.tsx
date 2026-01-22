@@ -88,20 +88,20 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
                   : (categoryCount === 1 ? 'Warning' : 'Warnings')}
               </Badge>
             </Group>
-            <List withPadding spacing="xs">
+            <List withPadding spacing="xs" style={{ marginRight: 16 }}>
               {entries.map(([groupKey, pathIssues]) => {
                 const [, path] = groupKey.split(':');
                 return (
-                  <List.Item key={groupKey}>
+                  <List.Item key={groupKey} style={{ marginRight: 16 }}>
                     <Code style={{ wordBreak: 'break-word' }}>{path}</Code>
-                    <List withPadding spacing="xs">
+                    <List withPadding spacing="xs" style={{ marginRight: 16 }}>
                       {pathIssues.map((error, index) => {
                         const message = error.message || 'No message provided';
                         const params = error.params || {};
                         const actionText = 'action' in params ? (params as { action: string }).action : null;
 
                         return (
-                          <List.Item key={`${groupKey}-${index}`}>
+                          <List.Item key={`${groupKey}-${index}`} style={{ marginRight: 16 }}>
                             <Text>{renderInlineCode(message)}</Text>
                             {actionText && (
                               <List withPadding spacing="xs">
