@@ -13,6 +13,7 @@ import { download } from './downloader/DownloadTidy';
 import { useStudyId } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { useStoreDispatch, useStoreActions } from '../store/store';
+import { useEvent } from '../store/hooks/useEvent';
 
 export function StudyEnd() {
   const studyConfig = useStudyConfig();
@@ -24,6 +25,30 @@ export function StudyEnd() {
 
   const [completed, setCompleted] = useState(false);
 
+  const runVerify = useCallback(async () => {
+    if (storageEngine) {
+      const isComplete = await storageEngine.verifyCompletion();
+      if (isComplete) {
+        setCompleted(true);
+        dispatch(setParticipantCompleted(true));
+      }
+    }
+  }, [dispatch, setParticipantCompleted, storageEngine]);
+
+  const verifyLoop = useEvent(async () => {
+    if (completed) {
+      return;
+    }
+    try {
+      await runVerify();
+    } catch (error) {
+      console.error('An error occurred while verifying completion', error);
+    } finally {
+      // Schedule the next execution after the current one is complete
+      setTimeout(verifyLoop, 2000);
+    }
+  });
+
   useEffect(() => {
     // Don't save to the storage engine in analysis
     if (isAnalysis) {
@@ -34,14 +59,11 @@ export function StudyEnd() {
     // Set completed in the store
     dispatch(setParticipantCompleted(true));
 
+    // Start the first execution
+    verifyLoop();
+
     // verify that storageEngine.verifyCompletion() returns true, loop until it does
-    const interval = setInterval(async () => {
-      const isComplete = await storageEngine!.verifyCompletion();
-      if (isComplete) {
-        setCompleted(true);
-        clearInterval(interval);
-      }
-    }, 2000);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
