@@ -11,7 +11,7 @@ import { useStoreActions, useStoreDispatch } from '../../store/store';
 
 async function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
-    return (await storageEngine.getAllParticipantIds()).filter((p) => p !== undefined);
+    return (await storageEngine.getAllParticipantIds());
   }
   return null;
 }
