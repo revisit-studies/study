@@ -1,5 +1,5 @@
 import {
-  Anchor, AppShell, Button, Card, Collapse, Container, Divider, Flex, Image, Paper, rem, Tabs, Text, Tooltip, UnstyledButton, Group,
+  Anchor, AppShell, Badge, Button, Card, Collapse, Container, Divider, Flex, Image, Paper, rem, Tabs, Text, Tooltip, UnstyledButton, Group,
 } from '@mantine/core';
 import {
   IconAlertTriangle, IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff, IconChevronDown, IconChevronRight,
@@ -79,58 +79,61 @@ function StudyCard({
         ? (
           <>
             <Text fw="bold">{configName}</Text>
-            <Paper withBorder p="xs" mt="sm">
+            <Paper withBorder px="md" py="sm" mt="xs">
               <UnstyledButton onClick={() => setErrorsOpen((open) => !open)} style={{ width: '100%' }}>
                 <Group justify="space-between">
                   <Group gap="xs">
                     <IconAlertTriangle size={16} color="red" />
-                    <Text fw="bold" ml={6} c="red">Errors</Text>
+                    <Text size="md" fw="bold" c="red">Errors</Text>
                   </Group>
-                  {errorsOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+                  <Group gap="xs">
+                    {!errorsOpen && (
+                      <Badge color="red" variant="light" size="xs">
+                        {config.errors.length}
+                        {' '}
+                        {(config.errors.length === 1 ? 'Error' : 'Errors')}
+                      </Badge>
+                    )}
+                    {errorsOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+                  </Group>
                 </Group>
               </UnstyledButton>
               <Collapse in={errorsOpen}>
                 <ErrorLoadingConfig issues={config.errors} type="error" />
               </Collapse>
               {!errorsOpen && (
-                <Text c="dimmed">
-                  There
-                  {' '}
-                  {config.errors.length === 1 ? 'was' : 'were'}
-                  {' '}
-                  {config.errors.length}
-                  {' '}
-                  {config.errors.length === 1 ? 'error' : 'errors'}
-                  {' '}
-                  while loading the study config. Please check the following issues:
+                <Text size="sm" c="dimmed">
+                  There were some issues while loading the study config. Please check the following issues:
                 </Text>
               )}
             </Paper>
+
             {config.warnings.length > 0 && (
-              <Paper withBorder p="xs" mt="xs">
+              <Paper withBorder px="md" py="sm" mt="xs">
                 <UnstyledButton onClick={() => setWarningsOpen((open) => !open)} style={{ width: '100%' }}>
                   <Group justify="space-between">
                     <Group gap="xs">
                       <IconAlertTriangle size={16} color="orange" />
-                      <Text fw="bold" ml={6} c="orange">Warnings</Text>
+                      <Text size="md" fw="bold" c="orange">Warnings</Text>
                     </Group>
-                    {warningsOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+                    <Group gap="xs">
+                      {!warningsOpen && (
+                        <Badge color="orange" variant="light" size="xs">
+                          {config.warnings.length}
+                          {' '}
+                          {(config.warnings.length === 1 ? 'Warning' : 'Warnings')}
+                        </Badge>
+                      )}
+                      {warningsOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+                    </Group>
                   </Group>
                 </UnstyledButton>
                 <Collapse in={warningsOpen}>
                   <ErrorLoadingConfig issues={config.warnings} type="warning" />
                 </Collapse>
                 {!warningsOpen && (
-                  <Text c="dimmed">
-                    There
-                    {' '}
-                    {config.warnings.length === 1 ? 'was' : 'were'}
-                    {' '}
-                    {config.warnings.length}
-                    {' '}
-                    {config.warnings.length === 1 ? 'warning' : 'warnings'}
-                    {' '}
-                    while loading the study config. Please check the following issues:
+                  <Text size="sm" c="dimmed">
+                    There were some warnings while loading the study config. Please check the following warnings:
                   </Text>
                 )}
               </Paper>
@@ -166,30 +169,31 @@ function StudyCard({
             </Text>
 
             {config.warnings.length > 0 && (
-              <Paper withBorder p="xs" mt="xs">
+              <Paper withBorder px="md" py="sm" mt="xs">
                 <UnstyledButton onClick={() => setWarningsOpen((open) => !open)} style={{ width: '100%' }}>
                   <Group justify="space-between">
                     <Group gap="xs">
                       <IconAlertTriangle size={16} color="orange" />
-                      <Text fw="bold" ml={6} c="orange">Warnings</Text>
+                      <Text size="md" fw="bold" c="orange">Warnings</Text>
                     </Group>
-                    {warningsOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+                    <Group gap="xs">
+                      {!warningsOpen && (
+                        <Badge color="orange" variant="light" size="xs">
+                          {config.warnings.length}
+                          {' '}
+                          {(config.warnings.length === 1 ? 'Warning' : 'Warnings')}
+                        </Badge>
+                      )}
+                      {warningsOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+                    </Group>
                   </Group>
                 </UnstyledButton>
                 <Collapse in={warningsOpen}>
                   <ErrorLoadingConfig issues={config.warnings} type="warning" />
                 </Collapse>
                 {!warningsOpen && (
-                  <Text c="dimmed">
-                    There
-                    {' '}
-                    {config.warnings.length === 1 ? 'was' : 'were'}
-                    {' '}
-                    {config.warnings.length}
-                    {' '}
-                    {config.warnings.length === 1 ? 'warning' : 'warnings'}
-                    {' '}
-                    while loading the study config. Please check the following issues:
+                  <Text size="sm" c="dimmed">
+                    There were some warnings while loading the study config. Please check the following warnings
                   </Text>
                 )}
               </Paper>
