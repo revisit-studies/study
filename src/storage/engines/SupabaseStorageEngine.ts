@@ -1,7 +1,7 @@
 import { AuthError, createClient } from '@supabase/supabase-js';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
-  CloudStorageEngine,
+  CloudStorageEngine, cleanupModes,
 } from './types';
 
 export class SupabaseStorageEngine extends CloudStorageEngine {
@@ -347,14 +347,27 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       // get the metadata field from the data object
       const metadata = data[0].data;
       if (metadata) {
-        return metadata;
+        const modes = metadata as Record<string, boolean>;
+        const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
+
+        if (needsUpdate) {
+          const cleanedModes = cleanupModes(modes);
+          await this.supabase
+            .from('revisit')
+            .update({ data: cleanedModes })
+            .eq('studyId', `${this.collectionPrefix}${studyId}`)
+            .eq('docId', 'metadata');
+          return cleanedModes;
+        }
+
+        return modes;
       }
     }
 
     const defaultModes = {
       dataCollectionEnabled: true,
-      studyNavigatorEnabled: true,
-      analyticsInterfacePubliclyAccessible: true,
+      developmentModeEnabled: true,
+      dataSharingEnabled: true,
     };
     await this.supabase
       .from('revisit')
@@ -727,6 +740,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
   unsubscribe(callback: (cloudUser: StoredUser | null) => Promise<void>) {
     let lastUid: string | null = null;
+    let count = 0;
 
     const { data: listener } = this.supabase.auth.onAuthStateChange(async (_event, session) => {
       const user = session?.user
@@ -736,8 +750,15 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         } as StoredUser)
         : null;
 
-      // Only invoke callback if the user actually changed
       const uid = user?.uid ?? null;
+      // If first time and no user, just call back with null
+      if (user === null && count === 0) {
+        count += 1;
+        callback(null);
+        return;
+      }
+
+      // Only invoke callback if the user actually changed
       if (uid === lastUid) return;
       lastUid = uid;
 

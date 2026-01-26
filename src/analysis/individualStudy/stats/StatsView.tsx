@@ -1,15 +1,14 @@
 import {
   Box, Divider, Flex, Paper, Text,
 } from '@mantine/core';
-import {
-  useMemo,
-} from 'react';
+import { useMemo } from 'react';
 import { useParams } from 'react-router';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { TrialVisualization } from './TrialVisualization';
-import { ComponentBlockWithOrderPath, StepsPanel } from '../../../components/interface/StepsPanel';
-import { addPathToComponentBlock } from '../../../utils/getSequenceFlatMap';
+import { StepsPanel } from '../../../components/interface/StepsPanel';
+import { OverviewStats } from '../summary/OverviewStats';
+import { getOverviewStats } from '../summary/utils';
 
 export function StatsView(
   {
@@ -20,18 +19,20 @@ export function StatsView(
     visibleParticipants: ParticipantData[];
   },
 ) {
-  const fullOrder = useMemo(() => {
-    let r = structuredClone(studyConfig.sequence) as ComponentBlockWithOrderPath;
-    r = addPathToComponentBlock(r, 'root') as ComponentBlockWithOrderPath;
-    r.components.push('end');
-    return r;
-  }, [studyConfig.sequence]);
-
   const { trialId } = useParams();
 
+  const overviewData = useMemo(
+    () => (trialId && trialId !== 'end' ? getOverviewStats(visibleParticipants, trialId) : null),
+    [visibleParticipants, trialId],
+  );
+
   return (
-    <Paper shadow="sm" p="md" withBorder>
-      {
+    <>
+      {overviewData && (
+        <OverviewStats overviewData={overviewData} />
+      )}
+      <Paper shadow="sm" p="md" mt="md" withBorder>
+        {
         (visibleParticipants.length === 0)
           ? (
             <Flex justify="center" align="center" pt="lg" pb="md">
@@ -42,7 +43,7 @@ export function StatsView(
             <Flex direction="row">
               {/* Trial selection sidebar */}
               <Box w={340}>
-                <StepsPanel configSequence={fullOrder} participantSequence={fullOrder} fullSequence={fullOrder} participantView={false} studyConfig={studyConfig} analysisNavigation />
+                <StepsPanel participantAnswers={{}} studyConfig={studyConfig} isAnalysis />
               </Box>
 
               <Divider orientation="vertical" mx="md" />
@@ -52,6 +53,7 @@ export function StatsView(
             </Flex>
           )
       }
-    </Paper>
+      </Paper>
+    </>
   );
 }

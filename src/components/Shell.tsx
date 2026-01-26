@@ -170,7 +170,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             ip: '',
           },
           {},
-          { studyNavigatorEnabled: true, analyticsInterfacePubliclyAccessible: true, dataCollectionEnabled: false },
+          { developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: false },
           '',
           false,
           true,

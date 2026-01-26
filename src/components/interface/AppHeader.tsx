@@ -35,9 +35,9 @@ import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
-import { useScreenRecordingContext } from '../../store/hooks/useScreenRecording';
+import { useRecordingContext } from '../../store/hooks/useRecording';
 
-export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
+export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
 
   const answers = useStoreSelector((state) => state.answers);
@@ -83,10 +83,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   const [isTruncated, setIsTruncated] = useState(false);
   const lastProgressRef = useRef<number>(0);
 
-  const isRecording = useStoreSelector((store) => store.isRecording);
-  const { isScreenRecording, isAudioRecording: isScreenWithAudioRecording } = useScreenRecordingContext();
-
-  const isAudioRecording = isRecording || isScreenWithAudioRecording;
+  const { isScreenRecording, isAudioRecording } = useRecordingContext();
 
   const { funcIndex } = useParams();
 
@@ -120,6 +117,18 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
       }
     }
   }, [answers, flatSequence, studyConfig, currentStep, storageEngine, dataCollectionEnabled, funcIndex]);
+
+  // Check if we have issues connecting to the database, if so show alert modal
+  const { setAlertModal } = useStoreActions();
+  const [firstMount, setFirstMount] = useState(true);
+  if (storageEngineFailedToConnect && firstMount) {
+    storeDispatch(setAlertModal({
+      show: true,
+      message: `You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you're taking the study you will not be compensated for your efforts. You are welcome to look around. If you are attempting to participate in the study, please email ${studyConfig.uiConfig.contactEmail} for assistance.`,
+      title: 'Failed to connect to the storage engine',
+    }));
+    setFirstMount(false);
+  }
 
   return (
     <AppShell.Header className="header" p="md">
@@ -185,7 +194,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
-                {studyNavigatorEnabled && (
+                {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconSchema size={14} />}
                     onClick={() => storeDispatch(toggleStudyBrowser())}
@@ -204,7 +213,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 >
                   Contact
                 </Menu.Item>
-                {studyNavigatorEnabled && (
+                {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconUserPlus size={14} />}
                     onClick={() => getNewParticipant(storageEngine, studyHref)}
@@ -212,7 +221,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                     Next Participant
                   </Menu.Item>
                 )}
-                {studyNavigatorEnabled && (
+                {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconChartHistogram size={14} />}
                     component="a"

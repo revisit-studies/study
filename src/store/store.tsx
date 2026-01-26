@@ -105,13 +105,12 @@ export async function studyStoreCreator(
 
   const initialState: StoreState = {
     studyId,
-    isRecording: false,
     answers: Object.keys(answers).length > 0 ? answers : emptyAnswers,
     sequence,
     config,
     showStudyBrowser: true,
     showHelpText: false,
-    alertModal: { show: false, message: '' },
+    alertModal: { show: false, message: '', title: '' },
     trialValidation: Object.keys(answers).length > 0 ? allValid : emptyValidation,
     reactiveAnswers: {},
     metadata,
@@ -143,9 +142,6 @@ export async function studyStoreCreator(
     reducers: {
       setConfig(state, { payload }: PayloadAction<StudyConfig>) {
         state.config = payload;
-      },
-      setIsRecording(state, { payload }: PayloadAction<boolean>) {
-        state.isRecording = payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       pushToFuncSequence(state, { payload }: PayloadAction<{ component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined }>) {
@@ -205,7 +201,7 @@ export async function studyStoreCreator(
       toggleShowHelpText: (state) => {
         state.showHelpText = !state.showHelpText;
       },
-      setAlertModal: (state, action: PayloadAction<{ show: boolean; message: string }>) => {
+      setAlertModal: (state, action: PayloadAction<{ show: boolean; message: string; title: string }>) => {
         state.alertModal = action.payload;
       },
       setReactiveAnswers: (state, action: PayloadAction<Record<string, ValueOf<StoredAnswer['answer']>>>) => {

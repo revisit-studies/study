@@ -8,6 +8,7 @@ import {
   IconChartPie,
   IconTags,
   IconDashboard,
+  IconFileCode,
 } from '@tabler/icons-react';
 import {
   useCallback, useEffect, useMemo, useState,
@@ -21,7 +22,7 @@ import { SummaryView } from './summary/SummaryView';
 import { TableView } from './table/TableView';
 import { StatsView } from './stats/StatsView';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { ManageAccordion } from './management/ManageAccordion';
+import { ManageView } from './management/ManageView';
 import { useAuth } from '../../store/hooks/useAuth';
 import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
@@ -31,6 +32,7 @@ import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import 'mantine-react-table/styles.css';
 import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
+import { ConfigView } from './config/ConfigView';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 
@@ -49,7 +51,7 @@ function sortByStartTime(a: ParticipantData, b: ParticipantData) {
   return bStartTimes[0] - aStartTimes[0];
 }
 
-async function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined) : Promise<Record<number, ParticipantData>> {
+async function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined): Promise<Record<number, ParticipantData>> {
   if (studyId && storageEngine) {
     await storageEngine.initializeStudyDb(studyId);
   }
@@ -69,6 +71,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [availableStages, setAvailableStages] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
   const [stageColors, setStageColors] = useState<Record<string, string>>({});
   const [selectedParticipants, setSelectedParticipants] = useState<ParticipantData[]>([]);
+  const [selectedConfigs, setSelectedConfigs] = useState<string[]>(['ALL']);
+  const [availableConfigs, setAvailableConfigs] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
 
   const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
 
@@ -86,17 +90,22 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     if (!expData) return { completed: 0, inprogress: 0, rejected: 0 };
     const expList = Object.values(expData);
 
+    // Apply config filter before counting
+    const configFiltered = selectedConfigs.includes('ALL') || selectedConfigs.length === 0
+      ? expList
+      : expList.filter((d) => selectedConfigs.includes(d.participantConfigHash || ''));
+
     // Apply stage filter before counting
     const stageFiltered = selectedStages.includes('ALL')
-      ? expList
-      : expList.filter((d) => selectedStages.includes(d.stage || ''));
+      ? configFiltered
+      : configFiltered.filter((d) => selectedStages.includes(d.stage || ''));
 
     return {
       completed: stageFiltered.filter((d) => !d.rejected && d.completed).length,
       inprogress: stageFiltered.filter((d) => !d.rejected && !d.completed).length,
       rejected: stageFiltered.filter((d) => d.rejected).length,
     };
-  }, [expData, selectedStages]);
+  }, [expData, selectedStages, selectedConfigs]);
 
   const selectedParticipantCounts = useMemo(() => {
     if (selectedParticipants.length === 0) return { completed: 0, inprogress: 0, rejected: 0 };
@@ -118,13 +127,18 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
     const statusFiltered = [...comp, ...prog, ...rej];
 
+    // Apply config filter - if "ALL" is selected, show all participants
+    const configFiltered = selectedConfigs.includes('ALL')
+      ? statusFiltered
+      : statusFiltered.filter((d) => selectedConfigs.includes(d.participantConfigHash || ''));
+
     // Apply stage filter - if "ALL" is selected, show all participants
     const stageFiltered = selectedStages.includes('ALL')
-      ? statusFiltered
-      : statusFiltered.filter((d) => selectedStages.includes(d.stage || ''));
+      ? configFiltered
+      : configFiltered.filter((d) => selectedStages.includes(d.stage || ''));
 
     return stageFiltered.sort(sortByStartTime);
-  }, [expData, includedParticipants, selectedStages]);
+  }, [expData, includedParticipants, selectedStages, selectedConfigs]);
 
   // Load available stages
   const loadStages = useCallback(async () => {
@@ -149,6 +163,36 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       setStageColors({});
     }
   }, [studyId, storageEngine]);
+
+  // Load available configs
+  const loadConfigs = useCallback(async () => {
+    if (!studyId || !storageEngine) return;
+
+    try {
+      const participantData = expData ? Object.values(expData) : [];
+      const participantConfig = [...new Set(
+        participantData.map((participant) => participant.participantConfigHash),
+      )];
+
+      const fetchedConfigs = await storageEngine.getAllConfigsFromHash(participantConfig, studyId);
+
+      const configOptions = Object.entries(fetchedConfigs)
+        .map(([hash, config]) => ({
+          value: hash,
+          label: `${config.studyMetadata.version} - ${hash.slice(0, 6)}`,
+        }));
+      setAvailableConfigs([{ value: 'ALL', label: 'ALL' }, ...configOptions]);
+    } catch (error) {
+      console.error('Failed to load configs:', error);
+      setAvailableConfigs([{ value: 'ALL', label: 'ALL' }]);
+    }
+  }, [studyId, storageEngine, expData]);
+
+  // Load configs and clear selection when dependencies change or tab switches
+  useEffect(() => {
+    loadConfigs();
+    setSelectedParticipants([]);
+  }, [loadConfigs]);
 
   // Load stages and clear selection when dependencies change or tab switches
   useEffect(() => {
@@ -184,14 +228,11 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   return (
     <>
       <AppHeader studyIds={globalConfig.configsList} />
-
       <AppShell.Main style={{ height: '100dvh' }}>
-
         <Stack ref={ref} style={{ height: '100%', maxHeight: '100dvh', overflow: 'hidden' }} justify="space-between">
-
-          <Flex direction="row" align="center" justify="space-between">
+          <Flex direction="row" align="center" justify="space-between" p="sm" gap="md">
             <Flex direction="row" align="center" gap="md">
-              <Title order={5} mr="sm">{studyId}</Title>
+              <Title order={5}>{studyId}</Title>
               {studyConfig && (
                 <DownloadButtons
                   visibleParticipants={selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants}
@@ -202,62 +243,94 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 />
               )}
             </Flex>
-            <Flex direction="row" align="center">
-              <Text size="sm" fw={500}>Stage:</Text>
-              <MultiSelect
-                data={availableStages}
-                value={selectedStages}
-                onChange={(values) => {
-                  if (values.includes('ALL') && !selectedStages.includes('ALL')) {
-                    setSelectedStages(['ALL']);
-                  } else if (values.includes('ALL') && selectedStages.includes('ALL')) {
-                    setSelectedStages(values.filter((v) => v !== 'ALL'));
-                  } else if (values.length === 0) {
-                    setSelectedStages(['ALL']);
-                  } else {
-                    setSelectedStages(values);
-                  }
-                }}
-                w={250}
-                size="sm"
-                clearable={false}
-                maxValues={5}
-                styles={{
-                  input: {
-                    minHeight: '36px',
-                  },
-                }}
-                mx="sm"
-              />
-              <Text mt={-2} size="sm">Participants: </Text>
-              <Checkbox.Group
-                value={includedParticipants}
-                onChange={(e) => setIncludedParticipants(e)}
-                mb="xs"
-                mt={8}
-                ml="xs"
-              >
-                <Group>
-                  <Checkbox
-                    value="completed"
-                    label={selectedParticipants.length > 0
-                      ? `Completed (${selectedParticipantCounts.completed} of ${participantCounts.completed})`
-                      : `Completed (${participantCounts.completed})`}
-                  />
-                  <Checkbox
-                    value="inprogress"
-                    label={selectedParticipants.length > 0
-                      ? `In Progress (${selectedParticipantCounts.inprogress} of ${participantCounts.inprogress})`
-                      : `In Progress (${participantCounts.inprogress})`}
-                  />
-                  <Checkbox
-                    value="rejected"
-                    label={selectedParticipants.length > 0
-                      ? `Rejected (${selectedParticipantCounts.rejected} of ${participantCounts.rejected})`
-                      : `Rejected (${participantCounts.rejected})`}
-                  />
-                </Group>
-              </Checkbox.Group>
+            <Flex direction="row" align="center" gap="md">
+              <Flex direction="row" align="center" gap="xs">
+                <Text size="sm" fw={500}>Stage:</Text>
+                <MultiSelect
+                  data={availableStages}
+                  value={selectedStages}
+                  onChange={(values) => {
+                    if (values.includes('ALL') && !selectedStages.includes('ALL')) {
+                      setSelectedStages(['ALL']);
+                    } else if (values.includes('ALL') && selectedStages.includes('ALL')) {
+                      setSelectedStages(values.filter((v) => v !== 'ALL'));
+                    } else if (values.length === 0) {
+                      setSelectedStages(['ALL']);
+                    } else {
+                      setSelectedStages(values);
+                    }
+                  }}
+                  w={180}
+                  size="sm"
+                  clearable={false}
+                  maxValues={5}
+                  styles={{
+                    input: {
+                      minHeight: '36px',
+                    },
+                  }}
+                />
+              </Flex>
+
+              <Flex direction="row" align="center" gap="xs">
+                <Text size="sm" fw={500}>Config:</Text>
+                <MultiSelect
+                  data={availableConfigs}
+                  value={selectedConfigs}
+                  onChange={(values) => {
+                    if (values.includes('ALL') && !selectedConfigs.includes('ALL')) {
+                      setSelectedConfigs(['ALL']);
+                    } else if (values.includes('ALL') && selectedConfigs.includes('ALL')) {
+                      setSelectedConfigs(values.filter((v) => v !== 'ALL'));
+                    } else if (values.length === 0) {
+                      setSelectedConfigs(['ALL']);
+                    } else {
+                      setSelectedConfigs(values);
+                    }
+                  }}
+                  w={180}
+                  size="sm"
+                  clearable={false}
+                  maxValues={5}
+                  styles={{
+                    input: {
+                      minHeight: '36px',
+                    },
+                  }}
+                />
+              </Flex>
+
+              <Flex direction="row" align="center" gap="xs">
+                <Text size="sm" fw={500}>Participants:</Text>
+                <Checkbox.Group
+                  value={includedParticipants}
+                  onChange={(e) => setIncludedParticipants(e)}
+                >
+                  <Group gap="xs">
+                    <Checkbox
+                      value="completed"
+                      label={selectedParticipants.length > 0
+                        ? `Completed (${selectedParticipantCounts.completed} of ${participantCounts.completed})`
+                        : `Completed (${participantCounts.completed})`}
+                      size="sm"
+                    />
+                    <Checkbox
+                      value="inprogress"
+                      label={selectedParticipants.length > 0
+                        ? `In Progress (${selectedParticipantCounts.inprogress} of ${participantCounts.inprogress})`
+                        : `In Progress (${participantCounts.inprogress})`}
+                      size="sm"
+                    />
+                    <Checkbox
+                      value="rejected"
+                      label={selectedParticipants.length > 0
+                        ? `Rejected (${selectedParticipantCounts.rejected} of ${participantCounts.rejected})`
+                        : `Rejected (${participantCounts.rejected})`}
+                      size="sm"
+                    />
+                  </Group>
+                </Checkbox.Group>
+              </Flex>
             </Flex>
           </Flex>
           <LoadingOverlay visible={status === 'pending'} />
@@ -280,6 +353,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {storageEngine?.getEngine() === 'firebase' && (
                   <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />}>Live Monitor</Tabs.Tab>
                 )}
+                <Tabs.Tab value="config" leftSection={<IconFileCode size={16} />}>Config</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
@@ -299,11 +373,14 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={studyId} includedParticipants={includedParticipants} selectedStages={selectedStages} />}
                 </Tabs.Panel>
               )}
-              <Tabs.Panel value="manage" pt="xs">
-                {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={() => execute(studyConfig, storageEngine, studyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
+              <Tabs.Panel style={{ overflow: 'auto' }} value="config" pt="xs">
+                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} />}
+              </Tabs.Panel>
+              <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
+                {studyId && user.isAdmin ? <ManageView studyId={studyId} refresh={() => execute(studyConfig, storageEngine, studyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
               </Tabs.Panel>
             </Tabs>
-          ) : null }
+          ) : null}
         </Stack>
       </AppShell.Main>
     </>

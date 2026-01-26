@@ -237,7 +237,7 @@ export function ResponseVisualization({
       <Collapse in={opened} mah={400}>
         <Box
           style={{
-            top: 0, position: 'sticky', backgroundColor: 'white', zIndex: 2,
+            position: 'sticky', backgroundColor: 'white', zIndex: 2,
           }}
           py="md"
         >

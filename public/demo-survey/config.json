@@ -1,12 +1,12 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Form Elements Demo",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-30",
+    "date": "2025-11-19",
     "description": "A demo of form elements in reVISit.",
     "organizations": [
       "University of Utah",
@@ -190,7 +190,7 @@
           "id": "q-radio-horizontal",
           "prompt": "Horizontal Radio button example",
           "secondaryText": "Radio buttons for single selection",
-          "infoText": "Select the option that best represents your choice.",  
+          "infoText": "Select the option that best represents your choice.",
           "type": "radio",
           "options": [
             "Option 1",
@@ -210,8 +210,11 @@
             "Option 2",
             "Option 3",
             "Option 4"
-          ],
-          "withDivider": true
+          ]
+        },
+        {
+          "id": "divider1",
+          "type": "divider"
         },
         {
           "id": "matrixHeaderTitle",
@@ -227,8 +230,11 @@
           "type": "likert",
           "numItems": 9,
           "rightLabel": "Like",
-          "leftLabel": "Dislike",
-          "withDivider": true
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "divider2",
+          "type": "divider"
         },
         {
           "id": "q-multi-satisfaction",
@@ -382,11 +388,12 @@
         {
           "id": "textField",
           "type": "textOnly",
-          "prompt": "# Randomizing Questions in a Form\n\n This shows how to randomize the order of questions in the form. Notice how the number before each question is different from the order number specified in the text. Note that currently the title is also randomized; you can avoid that by putting the title in a markdown file and adding the questions as a response."
+          "prompt": "# Randomizing Questions in a Form\n\n This shows how to randomize the order of questions in the form. Notice how the number before each question is different from the order number specified in the text. Note that currently the title is not randomized; you can exclude a form element from being randomized if you need to.",
+          "excludeFromRandomization": true
         },
         {
           "id": "q-dropdown",
-          "prompt": "**Order: 1** Dropdown example",
+          "prompt": "**Order 1:** Dropdown example",
           "type": "dropdown",
           "placeholder": "Select an option",
           "options": [
@@ -396,7 +403,7 @@
         },
         {
           "id": "q-likert",
-          "prompt": "**Order: 2:** Likert scale example",
+          "prompt": "**Order 2:** Likert scale example",
           "type": "likert",
           "numItems": 9,
           "rightLabel": "Like",
@@ -404,13 +411,13 @@
         },
         {
           "id": "q-short-text",
-          "prompt": "**Order: 3:** Short text example",
+          "prompt": "**Order 3:** Short text example",
           "type": "shortText",
           "placeholder": "Enter your answer here"
         },
         {
           "id": "q-radio",
-          "prompt": "**Order: 4:** Radio button example",
+          "prompt": "**Order 4:** Radio button example",
           "type": "radio",
           "options": [
             "Option 1",
@@ -419,7 +426,7 @@
         },
         {
           "id": "q-slider",
-          "prompt": "**Order: 5:** Slider example",
+          "prompt": "**Order 5:** Slider example",
           "type": "slider",
           "startingValue": 50,
           "options": [
@@ -645,7 +652,11 @@
             "Option 2",
             "Option 3"
           ],
-          "withDivider": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "divider",
+          "type": "divider",
           "location": "sidebar"
         },
         {
@@ -663,6 +674,7 @@
           "numItems": 7,
           "rightLabel": "Like",
           "leftLabel": "Dislike",
+          "labelLocation": "above",
           "location": "sidebar"
         }
       ]

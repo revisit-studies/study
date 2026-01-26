@@ -111,7 +111,7 @@ function verifyStudySkip(
   });
 
   // If this block has a skip, add the skip.to component to the skipTargets array
-  if (sequence.skip) {
+  if (sequence.skip && sequence.skip.length > 0) {
     skipTargets.push(...sequence.skip.map((skip) => skip.to).filter((target) => target !== 'end'));
   }
 }
