@@ -50,7 +50,7 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
           const error: ParserErrorWarning = {
             message: `Library ${cleanLibraryName} not found in imported libraries`,
             instancePath: '',
-            params: { action: 'Check the library name' },
+            params: { action: 'Check the library name and make sure the library is imported correctly' },
             category: 'undefined-library',
           };
           errors.push(error);
@@ -108,7 +108,7 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
         warnings.push({
           message: `Library \`${library}\` component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
           instancePath,
-          params: { action: 'Set withSidebar to true in uiConfig or in the component, or move sidebar location to belowStimulus or aboveStimulus' },
+          params: { action: 'Enable the sidebar or move the sidebar location to belowStimulus or aboveStimulus' },
           category: 'disabled-sidebar',
         });
       }
@@ -143,7 +143,7 @@ function parseLibraryConfig(fileData: string, libraryName: string): ParsedConfig
       message: 'Library config is not valid',
       instancePath: '',
       params: { action: 'Fix the errors in the library config' },
-      category: 'invalid-config',
+      category: 'invalid-library-config',
     });
   }
 

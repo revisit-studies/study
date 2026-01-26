@@ -7,7 +7,6 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
   const categoryOrder: ErrorWarningCategory[] = [
     // error
     'invalid-config',
-    'undefined-config',
     'undefined-library',
     'undefined-base-component',
     'undefined-component',
@@ -35,6 +34,10 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
       : <Text key={`${part}-${index}`} component="span">{part}</Text>
     ));
   };
+
+  const getActionText = (params: unknown) => (
+    params && typeof params === 'object' && 'action' in params ? (params as { action: string }).action : null
+  );
 
   const groupCategory = issues.reduce<Record<ErrorWarningCategory, typeof issues>>((acc, error) => {
     const { category } = error;
@@ -75,6 +78,9 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
         if (!entries.length) return null;
 
         const categoryCount = entries.reduce((sum, [, pathIssues]) => sum + pathIssues.length, 0);
+        const categoryActions = entries.flatMap(([, pathIssues]) => pathIssues.map((error) => getActionText(error.params)));
+        const uniqueActions = new Set(categoryActions.filter(Boolean) as string[]);
+        const sharedAction = categoryActions.length > 0 && uniqueActions.size === 1 && !categoryActions.includes(null) ? Array.from(uniqueActions)[0] : null;
 
         return (
           <Stack key={category} gap="xs" px="xs" py="4">
@@ -88,13 +94,15 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
                   : (categoryCount === 1 ? 'Warning' : 'Warnings')}
               </Badge>
             </Group>
+            {sharedAction && (
+              <Text size="sm" c="dimmed">{sharedAction}</Text>
+            )}
             <List size="xs" spacing="xs">
               {entries.flatMap(([groupKey, pathIssues]) => {
                 const [, path] = groupKey.split(':');
                 return pathIssues.map((error, index) => {
                   const message = error.message || 'No message provided';
-                  const params = error.params || {};
-                  const actionText = 'action' in params ? (params as { action: string }).action : null;
+                  const actionText = getActionText(error.params);
 
                   return (
                     <List.Item key={`${groupKey}-${index}`}>
@@ -107,7 +115,7 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
                           <Badge size="xs" variant="light" color="gray" style={{ minWidth: 50 }}>Issue</Badge>
                           <Text size="sm">{renderInlineCode(message)}</Text>
                         </Group>
-                        {actionText && (
+                        {actionText && !sharedAction && (
                           <Group gap="xs" align="flex-start" wrap="wrap">
                             <Badge size="xs" variant="light" color="gray" style={{ minWidth: 50 }}>Action</Badge>
                             <Text size="sm">{actionText}</Text>

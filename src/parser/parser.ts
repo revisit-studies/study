@@ -63,7 +63,7 @@ function verifyStudySkip(
     errors.push({
       message: 'Sequence has an empty components array',
       instancePath: '/sequence/',
-      params: { action: 'Remove empty components block' },
+      params: { action: 'Remove empty components block or add components to the sequence' },
       category: 'sequence-validation',
     });
     return;
@@ -148,7 +148,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         warnings.push({
           message: `Component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
           instancePath,
-          params: { action: 'Set withSidebar to true in component or uiConfig, or move location to belowStimulus or aboveStimulus' },
+          params: { action: 'Enable the sidebar or move sidebar location to belowStimulus or aboveStimulus' },
           category: 'disabled-sidebar',
         });
       }
@@ -160,14 +160,21 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   usedComponents.forEach((component) => {
     // Verify component is defined in components object
     if (!studyConfig.components[component]) {
-      errors.push({
-        message: studyConfig.baseComponents?.[component]
-          ? `Component \`${component}\` is a base component and cannot be used in the sequence`
-          : `Component \`${component}\` is not defined in components object`,
-        instancePath: '/sequence/',
-        params: { action: 'Add the component to the components object' },
-        category: studyConfig.baseComponents?.[component] ? 'sequence-validation' : 'undefined-component',
-      });
+      if (studyConfig.baseComponents?.[component]) {
+        errors.push({
+          message: `Component \`${component}\` is a base component and cannot be used in the sequence`,
+          instancePath: '/sequence/',
+          params: { action: 'Remove the component from the sequence or add a new component that extends the base component' },
+          category: 'sequence-validation',
+        });
+      } else {
+        errors.push({
+          message: `Component \`${component}\` is not defined in components object`,
+          instancePath: '/components/',
+          params: { action: 'Add the component to the components object' },
+          category: 'undefined-component',
+        });
+      }
     }
   });
 
@@ -245,7 +252,10 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
     warnings = [...warnings, ...parserWarnings];
   } else {
     errors = [...errors, {
-      message: 'There was an issue validating your config file', instancePath: 'root', params: { action: 'Fix the errors in your file or make sure the global config references the right file path' }, category: 'invalid-config',
+      message: 'There was an issue validating your config file',
+      instancePath: 'root',
+      params: { action: 'Fix the errors in your file or make sure the global config references the right file path' },
+      category: 'invalid-config',
     }];
   }
 
