@@ -26,19 +26,19 @@ Validates individual study configuration files against the Revisit schema requir
 
 **Output**: Validation results with component counts and any schema violations
 
-### `revisit://version`
-Returns the current version of the Revisit framework (2.0.0).
+### `getversion`
+Returns the current version of the Revisit framework.
 
-### `revisit://citation`
+### `getcitation`
 Provides the BibTeX citation for the Revisit paper from IEEE VIS 2023.
 
-### `revisit://configschema`
-Points to the location of the Revisit configuration file schema definition.
+### `getconfigschema`
+Returns the absolute path to the Revisit configuration file schema definition.
 
-### `revisit://types`
-Points to the TypeScript type definitions for Revisit configuration files.
+### `gettypes`
+Returns the absolute path to the TypeScript type definitions for Revisit configuration files.
 
-### `revisit://studytemplatemeta`
+### `getstudytemplatemetadata`
 Returns metadata for all available study templates, including:
 - Path information
 - Stimuli types (React components, websites, images, videos, etc.)
@@ -46,8 +46,8 @@ Returns metadata for all available study templates, including:
 - Base component usage
 - Response types (reactive, buttons, numerical, etc.)
 
-### `revisit://promptenhancer/{name}`
-Generates enhanced prompts for creating empirical studies using the Revisit framework. Includes:
+### `generatestudyprompt`
+Generates an enhanced prompt for creating empirical studies using the Revisit framework. Includes:
 - Task description and requirements
 - Schema validation instructions
 - Folder structure guidelines

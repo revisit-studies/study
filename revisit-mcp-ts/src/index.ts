@@ -2,6 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {StdioServerTransport} from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import path from 'path';
+import fs from 'fs/promises';
+import yaml from 'yaml';
 import {
   loadSchemas,
   validateGlobalConfig,
@@ -13,7 +15,7 @@ import {
 
 const server = new McpServer({
   name: "RevisitMCP",
-  description: "This server provide shemas, templates, examples and funcitons to build empirical study using revisit DSL",
+  description: "This server provides schemas, templates, examples, and functions to build empirical studies using the Revisit DSL",
   version: "1.0.0",
 });
 
@@ -24,10 +26,32 @@ server.registerTool("getversion",
     inputSchema: {}
   },
   async () => {
+    const studyRoot = path.resolve(__dirname, '..', '..');
+    const primaryPath = path.resolve(studyRoot, 'package.json');
+    const fallbackPath = path.resolve(__dirname, '..', '..', 'package.json');
+    let version = 'unknown';
+
+    try {
+      const raw = await fs.readFile(primaryPath, 'utf-8');
+      version = JSON.parse(raw)?.version || version;
+    } catch (primaryError) {
+      try {
+        const raw = await fs.readFile(fallbackPath, 'utf-8');
+        version = JSON.parse(raw)?.version || version;
+      } catch (fallbackError) {
+        return {
+          content: [{
+            type: "text",
+            text: `⚠️ Unable to read Revisit version from package.json.\nPrimary: ${primaryPath}\nFallback: ${fallbackPath}`
+          }]
+        };
+      }
+    }
+
     return {
       content: [{
         type: "text",
-        text: "Revisit Framework Version: 2.3.1"
+        text: `Revisit Framework Version: ${version}`
       }]
     };
   }
@@ -67,10 +91,11 @@ server.registerTool("getconfigschema",
     inputSchema: {}
   },
   async () => {
+    const schemaPath = path.resolve(__dirname, '..', '..', 'src', 'parser', 'StudyConfigSchema.json');
     return {
       content: [{
         type: "text",
-        text: "src/parser/StudyConfigSchema.json"
+        text: schemaPath
       }]
     };
   }
@@ -83,10 +108,11 @@ server.registerTool("gettypes",
     inputSchema: {}
   },
   async () => {
+    const typesPath = path.resolve(__dirname, '..', '..', 'src', 'parser', 'types.ts');
     return {
       content: [{
         type: "text",
-        text: "src/parser/types.ts"
+        text: typesPath
       }]
     };
   }
@@ -102,407 +128,312 @@ server.registerTool("getstudytemplatemetadata",
     inputSchema: {}
   },
   async () => {
-    const templateData = [
-      {
-        "path": "public/demo-click-accuracy-test",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": ["reactive"],
-        "features": []
-      },
-      {
-        "path": "public/demo-dynamic",
-        "stimuli": ["react-component"],
-        "sequence": ["dynamic"],
-        "basecomponent": false,
-        "response": ["buttons"],
-        "features": []
-      },
-      {
-        "path": "public/demo-html",
-        "stimuli": ["website"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": ["numerical"],
-        "features": []
-      },
-      {
-        "path": "public/demo-html-input",
-        "stimuli": ["website"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": ["reactive"],
-        "features": []
-      },
-      {
-        "path": "public/demo-html-trrack",
-        "stimuli": ["website"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/demo-image",
-        "stimuli": ["image"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": ["radio", "shortText"],
-        "features": []
-      },
-      {
-        "path": "public/demo-reaction-speed",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": ["reactive"],
-        "features": []
-      },
-      {
-        "path": "public/demo-screen-recording",
-        "stimuli": ["website"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": ["numerical"],
-        "features": ["screen-recording", "audio-recording"]
-      },
-      {
-        "path": "public/demo-style",
-        "stimuli": ["markdown", "react-component", "image", "website", "vega", "video"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": ["textOnly", "shortText", "numerical", "longText", "likert", "matrix-radio", "buttons"],
-        "features": ["styling", "external-stylesheets", "matrix-responses", "text-only-responses", "buttons-responses"]
-      },
-      {
-        "path": "public/demo-survey",
-        "stimuli": ["markdown"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": ["text", "radio", "checkbox"],
-        "features": []
-      },
-      {
-        "path": "public/demo-temperature-study",
-        "stimuli": ["generic-web-component"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/demo-training",
-        "stimuli": ["generic-web-component"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/demo-upset",
-        "stimuli": ["vega"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/demo-vega",
-        "stimuli": ["vega"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/demo-video",
-        "stimuli": ["video"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/demo-video-slider",
-        "stimuli": ["video"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": ["slider"],
-        "features": []
-      },
-      {
-        "path": "public/demo-yaml",
-        "stimuli": ["generic-web-component"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/example-brush-interactions",
-        "stimuli": ["vega"],
-        "sequence": ["fixed", "random"],
-        "basecomponent": true,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/example-cleveland",
-        "stimuli": ["vega"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/example-mvnv",
-        "stimuli": ["html"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/example-VLAT-full_fixed",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": ["reactive"],
-        "features": []
-      },
-      {
-        "path": "public/example-VLAT-full-randomized",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed", "random"],
-        "basecomponent": true,
-        "response": ["reactive"],
-        "features": []
-      },
-      {
-        "path": "public/example-VLAT-mini-randomized",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed", "random"],
-        "basecomponent": true,
-        "response": ["reactive"],
-        "features": []
-      },
-      {
-        "path": "public/html-stimuli/mvnv-study",
-        "stimuli": ["html"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/library-beauvis",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": [],
-        "features": [],
-        "library": "beauvis"
-      },
-      {
-        "path": "public/library-calvi",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": [],
-        "features": [],
-        "library": "calvi"
-      },
-      {
-        "path": "public/library-color-blindness",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": [],
-        "features": [],
-        "library": "color-blindness"
-      },
-      {
-        "path": "public/library-demographics",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": ["text", "radio", "checkbox"],
-        "features": [],
-        "library": "demographics"
-      },
-      {
-        "path": "public/library-mic-check",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": ["audio"],
-        "features": [],
-        "library": "mic-check"
-      },
-      {
-        "path": "public/library-mini-vlat",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": ["reactive"],
-        "features": [],
-        "library": "mini-vlat"
-      },
-      {
-        "path": "public/library-nasa-tlx",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": ["slider"],
-        "features": [],
-        "library": "nasa-tlx"
-      },
-      {
-        "path": "public/library-previs",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": [],
-        "features": [],
-        "library": "previs"
-      },
-      {
-        "path": "public/library-sus",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": ["radio"],
-        "features": [],
-        "library": "sus"
-      },
-      {
-        "path": "public/library-vlat",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": ["reactive"],
-        "features": [],
-        "library": "vlat"
-      },
-      {
-        "path": "public/test-audio",
-        "stimuli": ["vega"],
-        "sequence": ["fixed"],
-        "basecomponent": true,
-        "response": [],
-        "features": ["audio-recording"]
-      },
-      {
-        "path": "public/test-library",
-        "stimuli": ["generic-web-component"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/test-likert-matrix",
-        "stimuli": ["react-component"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": ["likert"],
-        "features": []
-      },
-      {
-        "path": "public/test-parser-errors",
-        "stimuli": ["generic-web-component"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/test-randomization",
-        "stimuli": ["generic-web-component"],
-        "sequence": ["fixed", "latinSquare"],
-        "basecomponent": false,
-        "response": [],
-        "features": ["latin-square", "interruptions"]
-      },
-      {
-        "path": "public/test-skip-logic",
-        "stimuli": ["markdown"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": ["skip-logic", "interruptions"]
-      },
-      {
-        "path": "public/test-step-logic",
-        "stimuli": ["generic-web-component"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/test-uncert",
-        "stimuli": ["generic-web-component"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      },
-      {
-        "path": "public/tutorial",
-        "stimuli": ["markdown"],
-        "sequence": ["fixed"],
-        "basecomponent": false,
-        "response": [],
-        "features": []
-      }
-    ];
+    const {
+      templates,
+      responseTypes,
+      features,
+      responseProperties
+    } = await buildStudyTemplateMetadata();
 
-    // Add information about new response types and features
     const responseTypesInfo = {
-      "newResponseTypes": [
-        "textOnly - Display-only text responses for instructions",
-        "matrix-radio - Matrix-style radio button responses with rows/columns",
-        "matrix-checkbox - Matrix-style checkbox responses with rows/columns",
-        "buttons - Button-based responses with keyboard navigation"
-      ],
-      "enhancedFeatures": [
-        "skip-logic - Advanced skip conditions for complex study flows",
-        "interruptions - Deterministic and random breaks/attention checks",
-        "dynamic-blocks - Function-based sequence generation",
-        "library-system - Import and reuse components from external libraries",
-        "styling - CSS styling and external stylesheet support",
-        "screen-recording - Audio and screen recording capabilities",
-        "audio-recording - Audio recording functionality",
-        "latin-square - Latin square experimental design for balanced randomization",
-        "matrix-responses - Matrix-style responses with rows and columns",
-        "text-only-responses - Display-only text responses for instructions",
-        "buttons-responses - Button-based responses with keyboard navigation",
-        "enhanced-ui - New UI options like screen size requirements"
-      ],
-      "responseProperties": [
-        "withDivider - Add trailing dividers to responses",
-        "withDontKnow - Add 'I don't know' option to responses",
-        "stylesheetPath - External stylesheet support",
-        "style - Inline CSS styling",
-        "horizontal - Horizontal layout for radio/checkbox",
-        "withOther - 'Other' option for radio/checkbox",
-        "restartEnumeration - Restart question numbering"
-      ]
+      newResponseTypes: responseTypes,
+      enhancedFeatures: features,
+      responseProperties
     };
 
     return {
       content: [{
         type: "text",
         text: JSON.stringify({
-          templates: templateData,
+          templates,
           newFeatures: responseTypesInfo
         }, null, 2)
       }]
     };
   }
 );
+
+type TemplateMetadata = {
+  path: string;
+  stimuli: string[];
+  sequence: string[];
+  basecomponent: boolean;
+  response: string[];
+  features: string[];
+  library?: string;
+};
+
+const RESPONSE_PROPERTY_KEYS = [
+  'withDivider',
+  'withDontKnow',
+  'stylesheetPath',
+  'style',
+  'horizontal',
+  'withOther',
+  'restartEnumeration'
+];
+
+async function buildStudyTemplateMetadata(): Promise<{
+  templates: TemplateMetadata[];
+  responseTypes: string[];
+  features: string[];
+  responseProperties: string[];
+}> {
+  const studyRoot = path.resolve(__dirname, '..', '..');
+  const publicDir = path.resolve(studyRoot, 'public');
+  const templates: TemplateMetadata[] = [];
+
+  const responseTypes = new Set<string>();
+  const featureFlags = new Set<string>();
+  const responseProperties = new Set<string>();
+
+  const candidateDirs: string[] = [];
+  const entries = await fs.readdir(publicDir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    const entryPath = path.join(publicDir, entry.name);
+    if (entry.name === 'libraries') {
+      const libraryEntries = await fs.readdir(entryPath, { withFileTypes: true });
+      for (const libraryEntry of libraryEntries) {
+        if (libraryEntry.isDirectory()) {
+          candidateDirs.push(path.join(entryPath, libraryEntry.name));
+        }
+      }
+      continue;
+    }
+
+    candidateDirs.push(entryPath);
+  }
+
+  for (const directory of candidateDirs) {
+    const configPath = await findConfigFile(directory);
+    if (!configPath) {
+      continue;
+    }
+
+    const config = await parseConfig(configPath);
+    if (!config || typeof config !== 'object') {
+      continue;
+    }
+
+    const relativePath = path.relative(studyRoot, directory);
+    const templatePath = relativePath.startsWith('public')
+      ? relativePath
+      : path.join('public', relativePath);
+
+    const metadata = extractTemplateMetadata(config, templatePath, responseTypes, featureFlags, responseProperties);
+    templates.push(metadata);
+  }
+
+  templates.sort((a, b) => a.path.localeCompare(b.path));
+
+  return {
+    templates,
+    responseTypes: Array.from(responseTypes).sort(),
+    features: Array.from(featureFlags).sort(),
+    responseProperties: Array.from(responseProperties).sort()
+  };
+}
+
+async function findConfigFile(directory: string): Promise<string | null> {
+  const configCandidates = ['config.json', 'config.yaml', 'config.yml'];
+  for (const fileName of configCandidates) {
+    const filePath = path.join(directory, fileName);
+    try {
+      await fs.access(filePath);
+      return filePath;
+    } catch (error) {
+      continue;
+    }
+  }
+
+  return null;
+}
+
+async function parseConfig(filePath: string): Promise<any | null> {
+  try {
+    const raw = await fs.readFile(filePath, 'utf-8');
+    if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) {
+      return yaml.parse(raw);
+    }
+
+    return JSON.parse(raw);
+  } catch (error) {
+    return null;
+  }
+}
+
+function extractTemplateMetadata(
+  config: any,
+  templatePath: string,
+  responseTypes: Set<string>,
+  featureFlags: Set<string>,
+  responseProperties: Set<string>
+): TemplateMetadata {
+  const stimuli = new Set<string>();
+  const responses = new Set<string>();
+  const features = new Set<string>();
+
+  const components = config.components && typeof config.components === 'object' ? config.components : {};
+  Object.values(components).forEach((component: any) => {
+    if (!component || typeof component !== 'object') {
+      return;
+    }
+
+    if (component.type && component.type !== 'questionnaire') {
+      stimuli.add(component.type);
+    }
+
+    if (Array.isArray(component.response)) {
+      component.response.forEach((response: any) => {
+        if (!response || typeof response !== 'object') {
+          return;
+        }
+
+        if (response.type) {
+          responses.add(response.type);
+          responseTypes.add(response.type);
+        }
+
+        RESPONSE_PROPERTY_KEYS.forEach((key) => {
+          if (key in response) {
+            responseProperties.add(key);
+          }
+        });
+      });
+    }
+  });
+
+  const sequenceOrders = new Set<string>();
+  collectSequenceMetadata(config.sequence, sequenceOrders, features);
+
+  if (config.importedLibraries && Array.isArray(config.importedLibraries) && config.importedLibraries.length > 0) {
+    features.add('library-system');
+  }
+
+  if (findBooleanFlag(config, 'recordScreen')) {
+    features.add('screen-recording');
+  }
+
+  if (findBooleanFlag(config, 'recordAudio')) {
+    features.add('audio-recording');
+  }
+
+  if (findKey(config, 'stylesheetPath')) {
+    features.add('external-stylesheets');
+  }
+
+  if (findKey(config, 'style')) {
+    features.add('styling');
+  }
+
+  if (responses.has('matrix-radio') || responses.has('matrix-checkbox')) {
+    features.add('matrix-responses');
+  }
+
+  if (responses.has('textOnly')) {
+    features.add('text-only-responses');
+  }
+
+  if (responses.has('buttons')) {
+    features.add('buttons-responses');
+  }
+
+  if (Array.from(responses).some((type) => type.startsWith('ranking-'))) {
+    features.add('ranking-responses');
+  }
+
+  const basecomponent = Boolean(config.baseComponents && Object.keys(config.baseComponents).length > 0);
+
+  const metadata: TemplateMetadata = {
+    path: templatePath,
+    stimuli: Array.from(stimuli).sort(),
+    sequence: Array.from(sequenceOrders).sort(),
+    basecomponent,
+    response: Array.from(responses).sort(),
+    features: Array.from(features).sort()
+  };
+
+  if (templatePath.includes('public/libraries/')) {
+    metadata.library = templatePath.split('public/libraries/')[1]?.split('/')[0];
+  } else if (templatePath.includes('public/library-')) {
+    metadata.library = templatePath.split('public/library-')[1]?.split('/')[0];
+  }
+
+  features.forEach((feature) => featureFlags.add(feature));
+
+  return metadata;
+}
+
+function collectSequenceMetadata(sequence: any, orders: Set<string>, features: Set<string>): void {
+  if (!sequence || typeof sequence !== 'object') {
+    return;
+  }
+
+  if (sequence.order) {
+    orders.add(sequence.order);
+    if (sequence.order === 'dynamic') {
+      features.add('dynamic-blocks');
+    }
+    if (sequence.order === 'latinSquare') {
+      features.add('latin-square');
+    }
+  }
+
+  if (Array.isArray(sequence.skip) && sequence.skip.length > 0) {
+    features.add('skip-logic');
+  }
+
+  if (Array.isArray(sequence.interruptions) && sequence.interruptions.length > 0) {
+    features.add('interruptions');
+    sequence.interruptions.forEach((interruption: any) => {
+      collectSequenceMetadata(interruption, orders, features);
+    });
+  }
+
+  if (Array.isArray(sequence.components)) {
+    sequence.components.forEach((component: any) => {
+      if (component && typeof component === 'object') {
+        collectSequenceMetadata(component, orders, features);
+      }
+    });
+  }
+}
+
+function findBooleanFlag(value: any, key: string): boolean {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  if (key in value && value[key] === true) {
+    return true;
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) => findBooleanFlag(item, key));
+  }
+
+  return Object.values(value).some((item) => findBooleanFlag(item, key));
+}
+
+function findKey(value: any, key: string): boolean {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  if (key in value) {
+    return true;
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) => findKey(item, key));
+  }
+
+  return Object.values(value).some((item) => findKey(item, key));
+}
 
 
 server.registerTool("generatestudyprompt",
@@ -758,9 +689,15 @@ server.registerTool("validatestudyconfig",
 
 
 (async () => {
-  // Load schemas before starting the server
-  await loadSchemas();
+  try {
+    // Load schemas before starting the server
+    await loadSchemas();
 
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Failed to start Revisit MCP server: ${message}`);
+    process.exit(1);
+  }
 })();

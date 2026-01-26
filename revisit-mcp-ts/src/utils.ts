@@ -8,30 +8,42 @@ let globalValidate: any = null;
 let studyValidate: any = null;
 
 export async function loadSchemas() {
+  const fs = await import('fs/promises');
+
   try {
-    const fs = await import('fs/promises');
-    
     // Load global config schema
     const globalSchemaPath = path.join(__dirname, '..', '..', 'src', 'parser', 'GlobalConfigSchema.json');
     const globalSchemaContent = await fs.readFile(globalSchemaPath, 'utf-8');
     globalConfigSchema = JSON.parse(globalSchemaContent);
-    
+
     // Load study config schema
     const studySchemaPath = path.join(__dirname, '..', '..', 'src', 'parser', 'StudyConfigSchema.json');
     const studySchemaContent = await fs.readFile(studySchemaPath, 'utf-8');
     studyConfigSchema = JSON.parse(studySchemaContent);
-    
+
     // Initialize AJV validators
-    const ajv1 = new Ajv();
-    ajv1.addSchema(globalConfigSchema);
-    globalValidate = ajv1.getSchema('#/definitions/GlobalConfig');
-    
-    const ajv2 = new Ajv();
-    ajv2.addSchema(studyConfigSchema);
-    studyValidate = ajv2.getSchema('#/definitions/StudyConfig');
-    
+    const ajv = new Ajv({
+      allErrors: true,
+      verbose: true,
+      strict: false,
+      allowUnionTypes: true
+    });
+
+    ajv.addSchema(globalConfigSchema);
+    ajv.addSchema(studyConfigSchema);
+
+    globalValidate = ajv.getSchema('#/definitions/GlobalConfig');
+    studyValidate = ajv.getSchema('#/definitions/StudyConfig');
+
+    if (!globalValidate || !studyValidate) {
+      throw new Error('Schema validators could not be initialized');
+    }
   } catch (error) {
-    console.error('Failed to load schemas:', error);
+    globalConfigSchema = null;
+    studyConfigSchema = null;
+    globalValidate = null;
+    studyValidate = null;
+    throw new Error(`Failed to load schemas: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
