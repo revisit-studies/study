@@ -28,6 +28,7 @@ export function useRecording() {
   const [isAudioCapturing, setIsAudioCapturing] = useState(false);
   const [isMediaCapturing, setIsMediaCapturing] = useState(false);
   const [isRejected, setIsRejected] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   // currentMediaStream and recorder can be just screen, just audio, or screen and audio combined.
   const currentMediaStream = useRef<MediaStream>(null);
@@ -52,7 +53,12 @@ export function useRecording() {
     studyHasAudioRecording,
     currentComponentHasAudioRecording,
     currentComponentHasScreenRecording,
+    currentComponentHasClickToRecord,
   } = useRecordingConfig();
+
+  useEffect(() => {
+    setIsMuted(currentComponentHasClickToRecord);
+  }, [currentComponentHasClickToRecord]);
 
   // Screen capture starts once and stops at the end of the study.
   // At the beginning of each stimulus, recording starts by calling `startScreenRecording`.
@@ -121,6 +127,10 @@ export function useRecording() {
 
     const stream = currentMediaStream.current;
 
+    stream.getAudioTracks().forEach((track) => {
+      track.enabled = !isMuted;
+    });
+
     const mediaRecorder = new MediaRecorder(stream);
 
     currentMediaRecorder.current = mediaRecorder;
@@ -183,7 +193,7 @@ export function useRecording() {
 
     mediaRecorder.start(1000); // 1s chunks
     audioRecorder?.start(1000);
-  }, [currentComponentHasAudioRecording, currentComponentHasScreenRecording, storageEngine]);
+  }, [currentComponentHasAudioRecording, currentComponentHasScreenRecording, storageEngine, isMuted]);
 
   // Stop screen recording. This does not stop screen capture.
   const stopScreenRecording = useCallback(() => {
@@ -217,6 +227,13 @@ export function useRecording() {
     navigator.mediaDevices.getUserMedia({
       audio: true,
     }).then((s) => {
+      audioMediaStream.current = s;
+      currentMediaStream.current = s;
+
+      s.getAudioTracks().forEach((track) => {
+        track.enabled = !isMuted;
+      });
+
       const recorder = new MediaRecorder(s);
       audioMediaRecorder.current = recorder;
 
@@ -242,7 +259,7 @@ export function useRecording() {
     });
 
     setIsAudioRecording(true);
-  }, [storageEngine]);
+  }, [storageEngine, isMuted]);
 
   // For study with just audio recording
   useEffect(() => {
@@ -344,9 +361,17 @@ export function useRecording() {
     captureFn();
   }, [pageTitle, recordAudio, recordScreenFPS, stopScreenCapture, studyHasAudioRecording, studyHasScreenRecording]);
 
+  useEffect(() => {
+    audioMediaStream.current?.getAudioTracks().forEach((track) => {
+      track.enabled = !isMuted;
+    });
+  }, [isMuted]);
+
   return {
     recordVideoRef,
     studyHasScreenRecording,
+    isMuted,
+    setIsMuted,
     recordAudio,
     startScreenCapture,
     stopScreenCapture,
@@ -361,6 +386,7 @@ export function useRecording() {
     combinedMediaRecorder: currentMediaRecorder,
     audioMediaStream,
     screenWithAudioRecording,
+    canUnmute: currentComponentHasClickToRecord,
     isRejected,
   };
 }

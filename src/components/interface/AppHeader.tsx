@@ -18,6 +18,8 @@ import {
   IconChartHistogram,
   IconDotsVertical,
   IconMail,
+  IconMicrophone,
+  IconMicrophoneOff,
   IconSchema,
   IconUserPlus,
 } from '@tabler/icons-react';
@@ -83,7 +85,9 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   const [isTruncated, setIsTruncated] = useState(false);
   const lastProgressRef = useRef<number>(0);
 
-  const { isScreenRecording, isAudioRecording } = useRecordingContext();
+  const {
+    isScreenRecording, isAudioRecording, setIsMuted, isMuted, canUnmute,
+  } = useRecordingContext();
 
   const { funcIndex } = useParams();
 
@@ -164,10 +168,17 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
               <Text c="red">
                 Recording
                 {isScreenRecording && ' screen'}
-                {isScreenRecording && isAudioRecording && ' and'}
-                {isAudioRecording && ' audio'}
+                {isScreenRecording && isAudioRecording && !isMuted && ' and'}
+                {isAudioRecording && !isMuted && ' audio'}
               </Text>
-              {isAudioRecording && <RecordingAudioWaveform />}
+              {isAudioRecording && !isMuted && <RecordingAudioWaveform />}
+              {canUnmute && (
+                <Tooltip label="Press and hold to unmute">
+                  <ActionIcon variant="light" size="md" aria-label="Press to unmute" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)}>
+                    {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
+                  </ActionIcon>
+                </Tooltip>
+              )}
             </Group>
             )}
             {storageEngineFailedToConnect && <Tooltip multiline withArrow arrowSize={6} w={300} label="Failed to connect to the storage engine. Study data will not be saved. Check your connection or restart the app."><Badge size="lg" color="red">Storage Disconnected</Badge></Tooltip>}
