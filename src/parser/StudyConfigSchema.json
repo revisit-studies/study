@@ -494,6 +494,10 @@
           },
           "type": "array"
         },
+        "condition": {
+          "description": "The condition for the block. Includes the block only when the active condition matches; blocks without a condition always run and non-matching blocks are ignored.",
+          "type": "string"
+        },
         "id": {
           "description": "The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property.",
           "type": "string"

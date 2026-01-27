@@ -918,7 +918,7 @@ export interface BaseIndividualComponent {
   /** Whether to show the previous button. If present, will override the previous button setting in the uiConfig. */
   previousButton?: boolean;
   /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
-  previousButtonText?:string;
+  previousButtonText?: string;
   /** Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig. */
   provideFeedback?: boolean;
   /** The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig. */
@@ -1638,6 +1638,8 @@ export interface ComponentBlock {
   interruptions?: InterruptionBlock[];
   /** The skip conditions for the block. */
   skip?: SkipConditions;
+  /** The condition for the block. Includes the block only when the active condition matches; blocks without a condition always run and non-matching blocks are ignored. */
+  condition?: string;
 }
 
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
