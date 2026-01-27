@@ -148,7 +148,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         warnings.push({
           message: `Component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
           instancePath,
-          params: { action: 'Enable the sidebar or move sidebar location to belowStimulus or aboveStimulus' },
+          params: { action: 'Enable the sidebar or move the sidebar location to belowStimulus or aboveStimulus' },
           category: 'disabled-sidebar',
         });
       }
@@ -164,7 +164,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         errors.push({
           message: `Component \`${component}\` is a base component and cannot be used in the sequence`,
           instancePath: '/sequence/',
-          params: { action: 'Remove the component from the sequence or add a new component that extends the base component' },
+          params: { action: 'Remove the base component from the sequence' },
           category: 'sequence-validation',
         });
       } else {
