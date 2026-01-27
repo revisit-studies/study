@@ -48,7 +48,7 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
         // Check if the library is in the imported libraries
         if (!importedLibrariesData[cleanLibraryName]) {
           const error: ParserErrorWarning = {
-            message: `Library ${cleanLibraryName} not found in imported libraries`,
+            message: `Library \`${cleanLibraryName}\` not found in imported libraries`,
             instancePath: '',
             params: { action: 'Check the library name and make sure the library is imported correctly' },
             category: 'undefined-library',
@@ -62,7 +62,7 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
         let librarySequence = library.sequences[sequenceName];
         if (!librarySequence) {
           const error: ParserErrorWarning = {
-            message: `Sequence ${sequenceName} not found in library ${libraryName}`,
+            message: `Sequence \`${sequenceName}\` not found in library \`${libraryName}\``,
             instancePath: '',
             params: { action: 'Check the sequence name' },
             category: 'sequence-validation',

@@ -22,7 +22,7 @@ function verifyGlobalConfig(data: GlobalConfig) {
   const errors: { message: string }[] = [];
   const configsListVerified = data.configsList.every((configName) => {
     if (data.configs[configName] === undefined) {
-      errors.push({ message: `Config ${configName} is not defined in configs object, but is present in configsList` });
+      errors.push({ message: `Config \`${configName}\` is not defined in configs object, but is present in configsList` });
       return false;
     }
     return true;
