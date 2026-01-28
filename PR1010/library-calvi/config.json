@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "CALVI: Critical Thinking Assessment for Literacy in Visualizations",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-05-14",
+    "description": "Example study using the calvi library.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": true,
+    "stylesheetPath": "library-calvi/assets/image.css"
+  },
+  "importedLibraries": [
+    "calvi"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-calvi/assets/calvi.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$calvi.se.full",
+      "$calvi.se.specificBank",
+      "$calvi.se.fullBank"
+    ]
+  }
+}
