@@ -2,7 +2,7 @@ import {
   Center, Flex, Loader, Space, Text,
 } from '@mantine/core';
 import {
-  useEffect, useState, useCallback, useMemo,
+  useEffect, useState, useCallback, useMemo, useRef,
 } from 'react';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
@@ -24,18 +24,20 @@ export function StudyEnd() {
   const isAnalysis = useIsAnalysis();
 
   const [completed, setCompleted] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const cancelledRef = useRef(false);
 
   const runVerify = useCallback(async () => {
-    if (storageEngine) {
+    if (storageEngine && !cancelledRef.current) {
       const isComplete = await storageEngine.verifyCompletion();
-      if (isComplete) {
+      if (isComplete && !cancelledRef.current) {
         setCompleted(true);
       }
     }
   }, [storageEngine]);
 
   const verifyLoop = useEvent(async () => {
-    if (completed) {
+    if (completed || cancelledRef.current) {
       return;
     }
     try {
@@ -44,7 +46,10 @@ export function StudyEnd() {
       console.error('An error occurred while verifying completion', error);
     } finally {
       // Schedule the next execution after the current one is complete
-      setTimeout(verifyLoop, 2000);
+      // Only schedule if not completed and not cancelled to avoid unnecessary iterations
+      if (!completed && !cancelledRef.current) {
+        timeoutRef.current = setTimeout(verifyLoop, 2000);
+      }
     }
   });
 
@@ -55,6 +60,9 @@ export function StudyEnd() {
       return;
     }
 
+    // Reset cancelled flag for React 18 StrictMode remounts
+    cancelledRef.current = false;
+
     // Set completed in the store
     dispatch(setParticipantCompleted(true));
 
@@ -63,6 +71,14 @@ export function StudyEnd() {
 
     // verify that storageEngine.verifyCompletion() returns true, loop until it does
 
+    // Cleanup function to prevent memory leaks
+    return () => {
+      cancelledRef.current = true;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
