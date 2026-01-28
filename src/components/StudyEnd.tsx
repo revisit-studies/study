@@ -46,7 +46,8 @@ export function StudyEnd() {
       console.error('An error occurred while verifying completion', error);
     } finally {
       // Schedule the next execution after the current one is complete
-      if (!cancelledRef.current) {
+      // Only schedule if not completed and not cancelled to avoid unnecessary iterations
+      if (!completed && !cancelledRef.current) {
         timeoutRef.current = setTimeout(verifyLoop, 2000);
       }
     }
@@ -58,6 +59,9 @@ export function StudyEnd() {
       setCompleted(true);
       return;
     }
+
+    // Reset cancelled flag for React 18 StrictMode remounts
+    cancelledRef.current = false;
 
     // Set completed in the store
     dispatch(setParticipantCompleted(true));
