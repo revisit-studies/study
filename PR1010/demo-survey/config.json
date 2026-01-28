@@ -6,7 +6,7 @@
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-30",
+    "date": "2025-11-19",
     "description": "A demo of form elements in reVISit.",
     "organizations": [
       "University of Utah",
@@ -190,7 +190,7 @@
           "id": "q-radio-horizontal",
           "prompt": "Horizontal Radio button example",
           "secondaryText": "Radio buttons for single selection",
-          "infoText": "Select the option that best represents your choice.",  
+          "infoText": "Select the option that best represents your choice.",
           "type": "radio",
           "options": [
             "Option 1",
@@ -393,7 +393,7 @@
         },
         {
           "id": "q-dropdown",
-          "prompt": "**Order: 1** Dropdown example",
+          "prompt": "**Order 1:** Dropdown example",
           "type": "dropdown",
           "placeholder": "Select an option",
           "options": [
@@ -403,7 +403,7 @@
         },
         {
           "id": "q-likert",
-          "prompt": "**Order: 2:** Likert scale example",
+          "prompt": "**Order 2:** Likert scale example",
           "type": "likert",
           "numItems": 9,
           "rightLabel": "Like",
@@ -411,13 +411,13 @@
         },
         {
           "id": "q-short-text",
-          "prompt": "**Order: 3:** Short text example",
+          "prompt": "**Order 3:** Short text example",
           "type": "shortText",
           "placeholder": "Enter your answer here"
         },
         {
           "id": "q-radio",
-          "prompt": "**Order: 4:** Radio button example",
+          "prompt": "**Order 4:** Radio button example",
           "type": "radio",
           "options": [
             "Option 1",
@@ -426,7 +426,7 @@
         },
         {
           "id": "q-slider",
-          "prompt": "**Order: 5:** Slider example",
+          "prompt": "**Order 5:** Slider example",
           "type": "slider",
           "startingValue": 50,
           "options": [
@@ -674,6 +674,7 @@
           "numItems": 7,
           "rightLabel": "Like",
           "leftLabel": "Dislike",
+          "labelLocation": "above",
           "location": "sidebar"
         }
       ]
