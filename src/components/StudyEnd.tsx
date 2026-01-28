@@ -30,10 +30,9 @@ export function StudyEnd() {
       const isComplete = await storageEngine.verifyCompletion();
       if (isComplete) {
         setCompleted(true);
-        dispatch(setParticipantCompleted(true));
       }
     }
-  }, [dispatch, setParticipantCompleted, storageEngine]);
+  }, [storageEngine]);
 
   const verifyLoop = useEvent(async () => {
     if (completed) {
