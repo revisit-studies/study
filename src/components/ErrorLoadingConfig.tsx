@@ -65,8 +65,8 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
   }, {});
 
   const baseHeader = type === 'error'
-    ? 'There were some issues while loading the study config. Please check the following issues:'
-    : 'There were some warnings while loading the study config. Please check the following warnings:';
+    ? 'Your study could not be built because of errors in the study config.'
+    : 'There are potential issues in your study config.';
 
   const badgeColor = type === 'error' ? 'red' : 'orange';
 
