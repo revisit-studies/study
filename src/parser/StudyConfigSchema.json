@@ -813,6 +813,10 @@
       "additionalProperties": false,
       "description": "The DynamicBlock interface is used to define a block where displayed components are controlled by a function. This is useful when you want to generate the sequence based on answers to previous questions or other factors.\n\nThe functionPath property is a path to the function that generates the components. This should be a relative path from the src/public folder.\n\nHere's an example of how to use the DynamicBlock:\n\n```js {   \"id\": \"funcBlock\",   \"order\": \"dynamic\",   \"functionPath\": \"<study-name>/assets/function.js\",   \"parameters\": {     \"param1\": \"value1\",     \"param2\": \"value2\"   } } ```",
       "properties": {
+        "condition": {
+          "description": "The condition for the block. Includes the block only when the active condition matches; blocks without a condition always run and non-matching blocks are ignored.",
+          "type": "string"
+        },
         "functionPath": {
           "description": "The path to the function that generates the components. This should be a relative path from the src/public folder.",
           "type": "string"
