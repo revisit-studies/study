@@ -34,7 +34,7 @@ function StudyCard({
 
   const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
 
-  const [errorsOpen, setErrorsOpen] = useState(false);
+  const [errorsOpen, setErrorsOpen] = useState(true);
   const [warningsOpen, setWarningsOpen] = useState(false);
 
   useEffect(() => {
@@ -103,7 +103,7 @@ function StudyCard({
               </Collapse>
               {!errorsOpen && (
                 <Text size="sm" c="dimmed">
-                  There were some issues while loading the study config. Please check the following issues:
+                  Your study could not be built because of errors in the study config.
                 </Text>
               )}
             </Paper>
@@ -133,7 +133,7 @@ function StudyCard({
                 </Collapse>
                 {!warningsOpen && (
                   <Text size="sm" c="dimmed">
-                    There were some warnings while loading the study config. Please check the following warnings:
+                    There are potential issues in your study config.
                   </Text>
                 )}
               </Paper>
@@ -193,7 +193,7 @@ function StudyCard({
                 </Collapse>
                 {!warningsOpen && (
                   <Text size="sm" c="dimmed">
-                    There were some warnings while loading the study config. Please check the following warnings
+                    There are potential issues in your study config.
                   </Text>
                 )}
               </Paper>
