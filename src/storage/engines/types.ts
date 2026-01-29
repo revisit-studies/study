@@ -2,6 +2,7 @@ import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import throttle from 'lodash.throttle';
 import { StudyConfig } from '../../parser/types';
+import { filterSequenceByCondition } from '../../utils/handleSequenceConditions';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
@@ -19,7 +20,7 @@ export interface UserWrapped {
   user: StoredUser | null,
   determiningStatus: boolean,
   isAdmin: boolean,
-  adminVerification:boolean
+  adminVerification: boolean
 }
 
 export type SequenceAssignment = {
@@ -68,20 +69,20 @@ const defaultStageColor = '#F05A30';
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
   T extends 'sequenceArray'
-    ? Sequence[]
-    : T extends 'participantData'
-    ? ParticipantData
-    : T extends 'config'
-    ? StudyConfig
-    : T extends 'transcription.txt'
-    ? TranscribedAudio
-    : T extends 'editedText'
-    ? TaglessEditedText[]
-    : T extends 'participantTags'
-    ? ParticipantTags
-    : T extends 'tags'
-    ? Tag[]
-    : Blob; // Fallback for any random string
+  ? Sequence[]
+  : T extends 'participantData'
+  ? ParticipantData
+  : T extends 'config'
+  ? StudyConfig
+  : T extends 'transcription.txt'
+  ? TranscribedAudio
+  : T extends 'editedText'
+  ? TaglessEditedText[]
+  : T extends 'participantTags'
+  ? ParticipantTags
+  : T extends 'tags'
+  ? Tag[]
+  : Blob; // Fallback for any random string
 
 interface CloudStorageEngineError {
   title: string;
@@ -572,10 +573,12 @@ export abstract class StorageEngine {
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
     const { currentRow, creationIndex } = await this._getSequence();
+    const activeCondition = searchParams.condition || null;
+    const filteredSequence = filterSequenceByCondition(currentRow, activeCondition);
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
-      sequence: currentRow,
+      sequence: filteredSequence,
       participantIndex: creationIndex,
       answers: {},
       searchParams,
@@ -702,8 +705,8 @@ export abstract class StorageEngine {
       // If the user doesn't exist or is already rejected, return
       if (
         !participant
-          || !isParticipantData(participant)
-          || participant.rejected
+        || !isParticipantData(participant)
+        || participant.rejected
       ) {
         return;
       }
@@ -939,7 +942,7 @@ export abstract class StorageEngine {
     return false;
   }
 
-  async getAsset(url:string | null) {
+  async getAsset(url: string | null) {
     if (!url) {
       return null;
     }
@@ -1082,7 +1085,7 @@ export abstract class StorageEngine {
         status: 'FAILED',
         error: {
           message:
-              'There is currently no data in your study. A snapshot could not be created.',
+            'There is currently no data in your study. A snapshot could not be created.',
           title: 'Failed to Create Snapshot.',
         },
       };
@@ -1176,7 +1179,7 @@ export abstract class StorageEngine {
         error: {
           title: 'Failed to delete live data or snapshot',
           message:
-              'There was an unspecified error when trying to remove a snapshot or live data.',
+            'There was an unspecified error when trying to remove a snapshot or live data.',
         },
       };
     }
@@ -1241,7 +1244,7 @@ export abstract class StorageEngine {
         error: {
           title: 'Failed to restore a snapshot fully.',
           message:
-              'There was an unspecified error when trying to restore this snapshot.',
+            'There was an unspecified error when trying to restore this snapshot.',
         },
       };
     }

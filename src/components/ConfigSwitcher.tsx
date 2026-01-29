@@ -1,5 +1,5 @@
 import {
-  Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text, Tooltip,
+  Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Select, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
   IconAlertTriangle, IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
@@ -18,6 +18,7 @@ import { useStorageEngine } from '../storage/storageEngineHooks';
 import { REVISIT_MODE } from '../storage/engines/types';
 import { useAuth } from '../store/hooks/useAuth';
 import { isCloudStorageEngine } from '../storage/engines/utils';
+import { getSequenceConditions } from '../utils/handleSequenceConditions';
 
 function StudyCard({
   configName,
@@ -68,6 +69,13 @@ function StudyCard({
     }
     return 'Data Collection Disabled';
   }, [modes, studyStatusAndTiming]);
+
+  const conditions = useMemo(() => getSequenceConditions(config.sequence), [config.sequence]);
+  const [selectedCondition, setSelectedCondition] = useState<string>('default');
+
+  const conditionOptions = useMemo(() => (
+    ['default', ...conditions].map((condition) => ({ value: condition, label: condition }))
+  ), [conditions]);
 
   return (
     <Card key={configName} shadow="sm" radius="md" my="sm" withBorder>
@@ -170,6 +178,15 @@ function StudyCard({
               )}
 
             <Flex direction="row" align="end" gap="sm" mt="md">
+              {conditions.length > 0 && (
+                <Select
+                  value={selectedCondition}
+                  data={conditionOptions}
+                  onChange={(value) => {
+                    setSelectedCondition(value || 'default');
+                  }}
+                />
+              )}
               <Button
                 leftSection={<IconChartHistogram />}
                 style={{ marginLeft: 'auto' }}
@@ -182,7 +199,7 @@ function StudyCard({
               <Button
                 leftSection={<IconListCheck />}
                 component="a"
-                href={`${PREFIX}${url}`}
+                href={selectedCondition === 'default' ? `${PREFIX}${url}` : `${PREFIX}${url}?condition=${encodeURIComponent(selectedCondition)}`}
               >
                 Go to Study
               </Button>

@@ -105,6 +105,12 @@ export function addPathToComponentBlock(order: StudyConfig['sequence'] | Sequenc
     };
   }
   return {
-    ...order, orderPath, order: order.order, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)), skip: order.skip || [], interruptions: order.interruptions || [],
+    ...order,
+    orderPath,
+    order: order.order,
+    condition: order.condition,
+    components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)),
+    skip: order.skip || [],
+    interruptions: order.interruptions || [],
   };
 }

@@ -32,6 +32,7 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
 import { hash } from '../storage/engines/utils';
+import { filterSequenceByCondition, getSequenceConditions } from '../utils/handleSequenceConditions';
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
@@ -39,12 +40,20 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
   const isValidStudyId = globalConfig.configsList.includes(studyId) || studyId === '__revisit-widget';
 
+  const [routes, setRoutes] = useState<RouteObject[]>([]);
+  const [store, setStore] = useState<Nullable<StudyStore>>(null);
+  const { storageEngine } = useStorageEngine();
+  const [searchParams] = useSearchParams();
+
+  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
+  const activeCondition = useMemo(() => searchParams.get('condition'), [searchParams]);
+
   useEffect(() => {
     if (studyId !== '__revisit-widget') {
       getStudyConfig(studyId, globalConfig).then((config) => {
         setActiveConfig(config);
       });
-      return () => {};
+      return () => { };
     }
     if (globalConfig && studyId) {
       const messageListener = (event: MessageEvent) => {
@@ -52,7 +61,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           parseStudyConfig(event.data.payload).then(async (config) => {
             setActiveConfig(config);
             const sequenceArray = await generateSequenceArray(config);
-            window.parent.postMessage({ type: 'revisitWidget/SEQUENCE_ARRAY', payload: sequenceArray }, '*');
+            const filteredSequenceArray = sequenceArray.map((sequence) => filterSequenceByCondition(sequence, activeCondition));
+            window.parent.postMessage({ type: 'revisitWidget/SEQUENCE_ARRAY', payload: filteredSequenceArray }, '*');
           });
         }
       };
@@ -65,15 +75,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         window.removeEventListener('message', messageListener);
       };
     }
-    return () => {};
-  }, [globalConfig, studyId]);
-
-  const [routes, setRoutes] = useState<RouteObject[]>([]);
-  const [store, setStore] = useState<Nullable<StudyStore>>(null);
-  const { storageEngine } = useStorageEngine();
-  const [searchParams] = useSearchParams();
-
-  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
+    return () => { };
+  }, [globalConfig, studyId, activeCondition]);
 
   useEffect(() => {
     async function initializeUserStoreRouting() {
@@ -81,12 +84,15 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       if (!storageEngine || !activeConfig || !studyId) return;
 
       try {
-      // Make sure that we have a study database and that the study database has a sequence array
+        // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(studyId);
         await storageEngine.saveConfig(activeConfig);
 
         const sequenceArray = await storageEngine.getSequenceArray();
-        if (!sequenceArray) {
+        const configConditions = getSequenceConditions(activeConfig.sequence);
+        const sequenceArrayHasConditions = sequenceArray?.some((sequence) => getSequenceConditions(sequence).length > 0) ?? false;
+
+        if (!sequenceArray || (configConditions.length > 0 && !sequenceArrayHasConditions)) {
           await storageEngine.setSequenceArray(
             await generateSequenceArray(activeConfig),
           );
@@ -136,10 +142,11 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         }
 
         // Initialize the redux stores
+        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, activeCondition);
         const newStore = await studyStoreCreator(
           studyId,
           participantConfig,
-          participantSession.sequence,
+          filteredParticipantSequence,
           metadata,
           participantSession.answers,
           modes,
@@ -154,7 +161,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         const emptyStore = await studyStoreCreator(
           studyId,
           activeConfig,
-          generateSequenceArray(activeConfig)[0],
+          filterSequenceByCondition(generateSequenceArray(activeConfig)[0], activeCondition),
           {
             language: '',
             userAgent: '',
