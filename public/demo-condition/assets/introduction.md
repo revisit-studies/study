@@ -1,3 +1,7 @@
 # Introduction
 
-Welcome to our study. This is an example study to show how to embed html elements into the study page. In this simple example, there is no communication from the stimulus to revisit, and all answers and provenance data is solely recorded by the revisit app.
+Welcome to this condition-based demo. This study shows how conditional blocks can be included or skipped based on the URL query parameter. Blocks without a condition are always included; blocks with a matching condition are included.
+
+Try these URLs:
+- [/demo-condition?condition=color](../demo-condition?condition=color)
+- [/demo-condition?condition=size](../demo-condition?condition=size)
