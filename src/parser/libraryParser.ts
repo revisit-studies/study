@@ -108,7 +108,7 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
         warnings.push({
           message: `Library \`${library}\` component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
           instancePath,
-          params: { action: 'Enable the sidebar or move the sidebar location to belowStimulus or aboveStimulus' },
+          params: { action: 'Enable the sidebar or move the location to belowStimulus or aboveStimulus' },
           category: 'disabled-sidebar',
         });
       }
