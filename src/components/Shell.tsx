@@ -216,7 +216,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       ]);
     }
     initializeUserStoreRouting();
-  }, [storageEngine, activeConfig, studyId, searchParams, participantId]);
+  }, [storageEngine, activeConfig, studyId, searchParams, participantId, activeCondition]);
 
   const routing = useRoutes(routes);
 
