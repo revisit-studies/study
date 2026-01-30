@@ -51,7 +51,7 @@
       "correctAnswer": [
         {
           "id": "color-trial-1-response",
-          "answer": ["A"]
+          "answer": "A"
         }
       ]
     },
@@ -78,7 +78,7 @@
       "correctAnswer": [
         {
           "id": "color-trial-2-response",
-          "answer": ["A"]
+          "answer": "A"
         }
       ]
     },
@@ -94,17 +94,17 @@
           "location": "sidebar",
           "type": "dropdown",
           "options": [
-            "Circle",
             "Square",
-            "Triangle"
+            "Triangle",
+            "Circle"
           ],
           "placeholder": "Select an option"
         }
       ],
-       "correctAnswer": [
+      "correctAnswer": [
         {
           "id": "size-trial-1-response",
-          "answer": ["Square"]
+          "answer": "Square"
         }
       ]
     },
@@ -120,17 +120,17 @@
           "location": "sidebar",
           "type": "dropdown",
           "options": [
-            "Circle",
             "Square",
-            "Triangle"
+            "Triangle",
+            "Circle"
           ],
           "placeholder": "Select an option"
         }
       ],
-       "correctAnswer": [
+      "correctAnswer": [
         {
           "id": "size-trial-2-response",
-          "answer": ["Triangle"]
+          "answer": "Triangle"
         }
       ]
     },
@@ -148,16 +148,15 @@
           "options": [
             "A",
             "B",
-            "C",
-            "D"
+            "C"
           ],
           "placeholder": "Select an option"
         }
       ],
-       "correctAnswer": [
+      "correctAnswer": [
         {
           "id": "shape-trial-1-response",
-          "answer": ["A"]
+          "answer": "B"
         }
       ]
     },
@@ -185,7 +184,7 @@
       "correctAnswer": [
         {
           "id": "shape-trial-2-response",
-          "answer": ["A"]
+          "answer": "A"
         }
       ]
     }
