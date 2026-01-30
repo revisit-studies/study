@@ -132,6 +132,17 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantId || urlParticipantId,
         );
 
+        if (searchParamsObject.condition && participantSession.searchParams?.condition !== searchParamsObject.condition) {
+          const updatedSearchParams = {
+            ...participantSession.searchParams,
+            condition: searchParamsObject.condition,
+          };
+          await storageEngine.updateParticipantSearchParams(updatedSearchParams);
+          participantSession.searchParams = updatedSearchParams;
+        }
+
+        const sessionCondition = participantSession.searchParams?.condition || activeCondition;
+
         const modes = await storageEngine.getModes(studyId);
         const activeHash = await hash(JSON.stringify(activeConfig));
 
@@ -142,7 +153,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         }
 
         // Initialize the redux stores
-        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, activeCondition);
+        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, sessionCondition);
         const newStore = await studyStoreCreator(
           studyId,
           participantConfig,

@@ -694,6 +694,22 @@ export abstract class StorageEngine {
     );
   }
 
+  // Updates the participant's stored search params.
+  async updateParticipantSearchParams(searchParams: Record<string, string>) {
+    await this.verifyStudyDatabase();
+    if (!this.participantData) {
+      throw new Error('Participant data not initialized');
+    }
+
+    this.participantData.searchParams = searchParams;
+
+    await this._pushToStorage(
+      `participants/${this.currentParticipantId}`,
+      'participantData',
+      this.participantData,
+    );
+  }
+
   // Rejects a participant with the given participantId and reason.
   async rejectParticipant(participantId: string, reason: string) {
     const participant = await this._getFromStorage(
