@@ -5,3 +5,4 @@ Welcome to this condition-based demo. This study shows how conditional blocks ca
 Try these URLs:
 - [/demo-condition?condition=color](../demo-condition?condition=color)
 - [/demo-condition?condition=size](../demo-condition?condition=size)
+- [/demo-condition?condition=color,size](../demo-condition?condition=color,size)
