@@ -1,0 +1,140 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Conditional Blocks Demo",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-01-27",
+    "description": "A demo of using conditional blocks in the study sequence.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-condition/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 200
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-condition/assets/introduction.md",
+      "response": []
+    },
+    "color-trial-1": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "description": "A color-focused trial for the color condition.",
+      "instruction": "Which color is the lightest?",
+      "path": "demo-condition/assets/color-trial-1.html",
+      "response": [
+        {
+          "id": "color-trial-1-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "placeholder": "Select an option"
+        }
+      ]
+    },
+    "color-trial-2": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "description": "Another color-focused trial for the color condition.",
+      "instruction": "Which color is the darkest?",
+      "path": "demo-condition/assets/color-trial-2.html",
+      "response": [
+        {
+          "id": "color-trial-2-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "placeholder": "Select an option"
+        }
+      ]
+    },
+    "size-trial-1": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "description": "A size-focused trial for the size condition.",
+      "instruction": "Which shape is the largest?",
+      "path": "demo-condition/assets/size-trial-1.html",
+      "response": [
+        {
+          "id": "size-trial-1-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "circle",
+            "square",
+            "triangle"
+          ],
+          "placeholder": "Select an option"
+        }
+      ]
+    },
+    "size-trial-2": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "description": "Another size-focused trial for the size condition.",
+      "instruction": "Which shape is the smallest?",
+      "path": "demo-condition/assets/size-trial-2.html",
+      "response": [
+        {
+          "id": "size-trial-2-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "circle",
+            "square",
+            "triangle"
+          ],
+          "placeholder": "Select an option"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "condition": "color",
+        "components": [
+          "color-trial-1",
+          "color-trial-2"
+        ],
+        "order": "random"
+      },
+      {
+        "condition": "size",
+        "components": [
+          "size-trial-1",
+          "size-trial-2"
+        ],
+        "order": "random"
+      }
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+This demo shows conditional blocks in the sequence. Use the URL query parameter `?condition=color` or `?condition=size` to choose which trial set is shown. Answer the prompt in the sidebar and click **Next**.
