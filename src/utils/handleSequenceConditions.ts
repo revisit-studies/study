@@ -3,13 +3,25 @@ import { Sequence } from '../store/types';
 
 type SequenceLike = StudyConfig['sequence'] | Sequence;
 
-export function filterSequenceByCondition(sequence: Sequence, condition?: string | null): Sequence {
+export function parseConditionParam(condition?: string | string[] | null): string[] {
   if (!condition) {
+    return [];
+  }
+  if (Array.isArray(condition)) {
+    return condition.map((c) => c.trim()).filter(Boolean);
+  }
+  return condition.split(',').map((c) => c.trim()).filter(Boolean);
+}
+
+export function filterSequenceByCondition(sequence: Sequence, condition?: string | string[] | null): Sequence {
+  const conditions = parseConditionParam(condition);
+
+  if (conditions.length === 0) {
     return sequence;
   }
 
   const filterNode = (node: Sequence): Sequence | null => {
-    if (node.condition && node.condition !== condition) {
+    if (node.condition && !conditions.includes(node.condition)) {
       return null;
     }
 
