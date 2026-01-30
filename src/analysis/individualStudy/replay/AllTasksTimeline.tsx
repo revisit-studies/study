@@ -24,7 +24,7 @@ const sortedTaskNames = (a: [string, StoredAnswer], b: [string, StoredAnswer]) =
 
 export function AllTasksTimeline({
   participantData, width, studyId, studyConfig, maxLength,
-} : {participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined}) {
+}: { participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined }) {
   const percentComplete = useMemo(() => {
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0);
 
@@ -73,7 +73,7 @@ export function AllTasksTimeline({
   }, [participantData.answers, xScale]);
 
   // Creating labels for the tasks
-  const tasks: {line: JSX.Element, label: JSX.Element}[] = useMemo(() => {
+  const tasks: { line: JSX.Element, label: JSX.Element }[] = useMemo(() => {
     let currentHeight = 0;
 
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(sortedTaskNames);
@@ -135,7 +135,7 @@ export function AllTasksTimeline({
             )}
           >
             <g>
-              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} />
+              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} searchParams={participantData.searchParams} />
             </g>
           </Tooltip>),
       };

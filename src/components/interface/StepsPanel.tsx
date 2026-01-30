@@ -677,7 +677,7 @@ export function StepsPanel({
                       if (isAnalysis) {
                         navigate(`/analysis/stats/${studyId}/stats/${encodeURIComponent(String(componentName))}`);
                       } else {
-                        navigate(href);
+                        navigate(`${href}${location.search}`);
                       }
                     } else if (!isComponent) {
                       // Both included and excluded blocks can be collapsed/expanded

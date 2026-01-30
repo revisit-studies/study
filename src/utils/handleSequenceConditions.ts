@@ -1,4 +1,5 @@
 import { StudyConfig } from '../parser/types';
+import { ParticipantData } from '../storage/types';
 import { Sequence } from '../store/types';
 
 type SequenceLike = StudyConfig['sequence'] | Sequence;
@@ -72,4 +73,21 @@ export function getSequenceConditions(sequence: SequenceLike): string[] {
 
   collect(sequence);
   return Array.from(conditions);
+}
+
+export function getConditionParticipantCounts(participants: ParticipantData[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+
+  participants.forEach((participant) => {
+    const conditions = parseConditionParam(participant.searchParams?.condition);
+    if (conditions.length === 0) {
+      counts.default = (counts.default || 0) + 1;
+      return;
+    }
+    conditions.forEach((condition) => {
+      counts[condition] = (counts[condition] || 0) + 1;
+    });
+  });
+
+  return counts;
 }

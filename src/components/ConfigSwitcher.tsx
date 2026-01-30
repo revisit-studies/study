@@ -18,7 +18,7 @@ import { useStorageEngine } from '../storage/storageEngineHooks';
 import { REVISIT_MODE } from '../storage/engines/types';
 import { useAuth } from '../store/hooks/useAuth';
 import { isCloudStorageEngine } from '../storage/engines/utils';
-import { getSequenceConditions } from '../utils/handleSequenceConditions';
+import { getConditionParticipantCounts, getSequenceConditions } from '../utils/handleSequenceConditions';
 
 function StudyCard({
   configName,
@@ -72,10 +72,41 @@ function StudyCard({
 
   const conditions = useMemo(() => getSequenceConditions(config.sequence), [config.sequence]);
   const [selectedCondition, setSelectedCondition] = useState<string>('default');
+  const [conditionParticipantCounts, setConditionParticipantCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadConditionCounts() {
+      if (!storageEngine) return;
+      try {
+        const participants = await storageEngine.getAllParticipantsData(configName);
+        if (!isActive) return;
+
+        setConditionParticipantCounts(getConditionParticipantCounts(participants));
+      } catch (error) {
+        if (isActive) {
+          setConditionParticipantCounts({});
+        }
+        console.error('Failed to load condition counts:', error);
+      }
+    }
+
+    loadConditionCounts();
+
+    return () => {
+      isActive = false;
+    };
+  }, [configName, storageEngine]);
 
   const conditionOptions = useMemo(() => (
-    ['default', ...conditions].map((condition) => ({ value: condition, label: condition }))
-  ), [conditions]);
+    ['default', ...conditions].map((condition) => ({
+      value: condition,
+      label: studyStatusAndTiming
+        ? `${condition} (${conditionParticipantCounts[condition] || 0} participant${(conditionParticipantCounts[condition] || 0) === 1 ? '' : 's'})`
+        : condition,
+    }))
+  ), [conditions, studyStatusAndTiming, conditionParticipantCounts]);
 
   return (
     <Card key={configName} shadow="sm" radius="md" my="sm" withBorder>
