@@ -31,7 +31,6 @@
     "color-trial-1": {
       "type": "website",
       "nextButtonLocation": "sidebar",
-      "description": "A color-focused trial for the color condition.",
       "instruction": "Which color is the lightest?",
       "path": "demo-condition/assets/color-trial-1.html",
       "response": [
@@ -48,12 +47,17 @@
           ],
           "placeholder": "Select an option"
         }
+      ],
+      "correctAnswer": [
+        {
+          "id": "color-trial-1-response",
+          "answer": ["A"]
+        }
       ]
     },
     "color-trial-2": {
       "type": "website",
       "nextButtonLocation": "sidebar",
-      "description": "Another color-focused trial for the color condition.",
       "instruction": "Which color is the darkest?",
       "path": "demo-condition/assets/color-trial-2.html",
       "response": [
@@ -70,12 +74,17 @@
           ],
           "placeholder": "Select an option"
         }
+      ],
+      "correctAnswer": [
+        {
+          "id": "color-trial-2-response",
+          "answer": ["A"]
+        }
       ]
     },
     "size-trial-1": {
       "type": "website",
       "nextButtonLocation": "sidebar",
-      "description": "A size-focused trial for the size condition.",
       "instruction": "Which shape is the largest?",
       "path": "demo-condition/assets/size-trial-1.html",
       "response": [
@@ -85,18 +94,23 @@
           "location": "sidebar",
           "type": "dropdown",
           "options": [
-            "circle",
-            "square",
-            "triangle"
+            "Circle",
+            "Square",
+            "Triangle"
           ],
           "placeholder": "Select an option"
+        }
+      ],
+       "correctAnswer": [
+        {
+          "id": "size-trial-1-response",
+          "answer": ["Square"]
         }
       ]
     },
     "size-trial-2": {
       "type": "website",
       "nextButtonLocation": "sidebar",
-      "description": "Another size-focused trial for the size condition.",
       "instruction": "Which shape is the smallest?",
       "path": "demo-condition/assets/size-trial-2.html",
       "response": [
@@ -106,11 +120,72 @@
           "location": "sidebar",
           "type": "dropdown",
           "options": [
-            "circle",
-            "square",
-            "triangle"
+            "Circle",
+            "Square",
+            "Triangle"
           ],
           "placeholder": "Select an option"
+        }
+      ],
+       "correctAnswer": [
+        {
+          "id": "size-trial-2-response",
+          "answer": ["Triangle"]
+        }
+      ]
+    },
+    "shape-trial-1": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "instruction": "Which option represents a square?",
+      "path": "demo-condition/assets/shape-trial-1.html",
+      "response": [
+        {
+          "id": "shape-trial-1-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "placeholder": "Select an option"
+        }
+      ],
+       "correctAnswer": [
+        {
+          "id": "shape-trial-1-response",
+          "answer": ["A"]
+        }
+      ]
+    },
+    "shape-trial-2": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "instruction": "Which option represents a circle?",
+      "path": "demo-condition/assets/shape-trial-2.html",
+      "response": [
+        {
+          "id": "shape-trial-2-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E"
+          ],
+          "placeholder": "Select an option"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "shape-trial-2-response",
+          "answer": ["A"]
         }
       ]
     }
@@ -134,6 +209,14 @@
           "size-trial-2"
         ],
         "order": "random"
+      },
+      {
+        "condition": "shape",
+        "components": [
+          "shape-trial-1",
+          "shape-trial-2"
+        ],
+        "order": "fixed"
       }
     ]
   }
