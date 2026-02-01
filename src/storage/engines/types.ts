@@ -959,6 +959,18 @@ export abstract class StorageEngine {
     return url;
   }
 
+  /**
+   * Gets a list of "question mic" audio clips for a given trial/question.
+   * Default implementation returns an empty list (only Firebase supports this currently).
+   *
+   * In Firebase this corresponds to subfolders under `audio/` like:
+   * `${participantId}_<trial>_mic-user-study/` containing multiple audio files.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getQuestionMicFiles(task: string, participantId: string): Promise<Array<{ name: string; url: string }>> {
+    return [];
+  }
+
   // Gets the transcript download URL (currently only supported by Firebase)
   async getTranscriptUrl(
     task: string,
