@@ -37,7 +37,7 @@
             "type": "boolean"
           },
           "clickToRecord": {
-            "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false.",
+            "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
             "type": "boolean"
           },
           "config": {
@@ -848,7 +848,7 @@
           "type": "boolean"
         },
         "clickToRecord": {
-          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false.",
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -1103,7 +1103,7 @@
           "type": "string"
         },
         "clickToRecord": {
-          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false.",
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "config": {
@@ -1536,7 +1536,7 @@
           "type": "boolean"
         },
         "clickToRecord": {
-          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false.",
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -1919,7 +1919,7 @@
           "type": "boolean"
         },
         "clickToRecord": {
-          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false.",
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -2318,7 +2318,7 @@
           "type": "boolean"
         },
         "clickToRecord": {
-          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false.",
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3238,7 +3238,7 @@
           "type": "number"
         },
         "clickToRecord": {
-          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false.",
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "contactEmail": {
@@ -3418,7 +3418,7 @@
           "type": "boolean"
         },
         "clickToRecord": {
-          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false.",
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "config": {
@@ -3577,7 +3577,7 @@
           "type": "boolean"
         },
         "clickToRecord": {
-          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false.",
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3736,7 +3736,7 @@
           "type": "boolean"
         },
         "clickToRecord": {
-          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false.",
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3899,7 +3899,7 @@
           "type": "boolean"
         },
         "clickToRecord": {
-          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false.",
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {

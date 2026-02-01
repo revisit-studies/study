@@ -386,7 +386,7 @@ export function useRecording() {
     combinedMediaRecorder: currentMediaRecorder,
     audioMediaStream,
     screenWithAudioRecording,
-    canUnmute: currentComponentHasClickToRecord,
+    clickToRecord: currentComponentHasClickToRecord,
     isRejected,
   };
 }

@@ -280,7 +280,7 @@ export interface UIConfig {
   allowFailedTraining?: boolean;
   /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false. */
   recordAudio?: boolean;
-  /** Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false. */
+  /** Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false. */
   clickToRecord?: boolean;
   /** Whether or not we want to utilize screen recording feature. If true, will record audio on all components unless deactivated on individual components. This must be set to true if you want to record audio on any component in your study. Defaults to false. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before any component that you want to record the screen on to ensure permissions are granted and screen capture has started. */
   recordScreen?: boolean;
@@ -929,7 +929,7 @@ export interface BaseIndividualComponent {
   allowFailedTraining?: boolean;
   /** Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig. */
   recordAudio?: boolean;
-  /** Enables a click-and-hold microphone button instead of continuous recording. When true, audio starts muted by default and a microphone button appears in the header. Defaults to false. */
+  /** Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false. */
   clickToRecord?: boolean;
   /** Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started. */
   recordScreen?: boolean;

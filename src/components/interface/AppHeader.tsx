@@ -86,7 +86,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   const lastProgressRef = useRef<number>(0);
 
   const {
-    isScreenRecording, isAudioRecording, setIsMuted, isMuted, canUnmute,
+    isScreenRecording, isAudioRecording, setIsMuted, isMuted, clickToRecord,
   } = useRecordingContext();
 
   const { funcIndex } = useParams();
@@ -166,15 +166,21 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
             {(isAudioRecording || isScreenRecording) && (
             <Group ml="xl" gap={20} wrap="nowrap">
               <Text c="red">
-                Recording
+                {((isAudioRecording && !isMuted) || (isScreenRecording)) && 'Recording'}
                 {isScreenRecording && ' screen'}
                 {isScreenRecording && isAudioRecording && !isMuted && ' and'}
                 {isAudioRecording && !isMuted && ' audio'}
               </Text>
               {isAudioRecording && !isMuted && <RecordingAudioWaveform />}
-              {canUnmute && (
+              {clickToRecord ? (
                 <Tooltip label="Press and hold to unmute">
-                  <ActionIcon variant="light" size="md" aria-label="Press to unmute" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)}>
+                  <ActionIcon variant="light" size="md" aria-label="Press and hold to unmute" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
+                    {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
+                  </ActionIcon>
+                </Tooltip>
+              ) : (
+                <Tooltip label={`Press to ${isMuted ? 'unmute' : 'mute'}`}>
+                  <ActionIcon variant="light" size="md" aria-label="Press and hold to unmute" onClick={() => setIsMuted(!isMuted)}>
                     {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
                   </ActionIcon>
                 </Tooltip>
