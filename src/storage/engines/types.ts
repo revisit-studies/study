@@ -2,7 +2,8 @@ import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import throttle from 'lodash.throttle';
 import { StudyConfig } from '../../parser/types';
-import { filterSequenceByCondition } from '../../utils/handleSequenceConditions';
+import { filterSequenceByCondition, getSequenceConditions } from '../../utils/handleSequenceConditions';
+import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
@@ -444,7 +445,7 @@ export abstract class StorageEngine {
   // This function is one of the most critical functions in the storage engine.
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
-  protected async _getSequence() {
+  protected async _getSequence(config?: StudyConfig, activeCondition?: string | string[] | null) {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
@@ -502,10 +503,23 @@ export abstract class StorageEngine {
     // Query all the intents to get a sequence and find our position in the queue
     sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
-    // Get the latin square
-    const sequenceArray = await this.getSequenceArray();
-    if (!sequenceArray) {
-      throw new Error('Latin square not initialized');
+    // When conditions are present, generate sequences per-participant to ensure proper balancing
+    // Otherwise use the shared sequence array
+    const configConditions = config ? getSequenceConditions(config.sequence) : [];
+    const hasConditions = configConditions.length > 0;
+
+    let sequenceArray: Sequence[];
+    if (hasConditions && config) {
+      // Generate fresh sequences and filter for this participant's condition
+      const fullSequenceArray = generateSequenceArray(config);
+      sequenceArray = fullSequenceArray.map((seq) => filterSequenceByCondition(seq, activeCondition));
+    } else {
+      // Use shared sequence array
+      const storedSequenceArray = await this.getSequenceArray();
+      if (!storedSequenceArray) {
+        throw new Error('Latin square not initialized');
+      }
+      sequenceArray = storedSequenceArray;
     }
 
     // Get the current row
@@ -572,9 +586,10 @@ export abstract class StorageEngine {
     }
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
-    const { currentRow, creationIndex } = await this._getSequence();
     const activeCondition = searchParams.condition || null;
-    const filteredSequence = filterSequenceByCondition(currentRow, activeCondition);
+    const { currentRow, creationIndex } = await this._getSequence(config, activeCondition);
+    // Sequence is already filtered when conditions are present, no need to filter again
+    const filteredSequence = currentRow;
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
