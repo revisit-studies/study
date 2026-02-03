@@ -39,6 +39,55 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
     params && typeof params === 'object' && 'action' in params ? (params as { action: string }).action : null
   );
 
+  // Try to combine similar messages with a common pattern
+  const combineMessages = (messages: string[]) => {
+    if (messages.length <= 1) return messages;
+
+    const listFormatter = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
+    const groups: Array<{ key: string; prefix?: string; suffix?: string; items: string[]; raw?: boolean }> = [];
+    const groupIndex = new Map<string, number>();
+
+    messages.forEach((msg) => {
+      // Looking for patterns like "Component X is not defined in components object"
+      const match = msg.match(/^(.*?\s+)(.+?)(\s+(?:is|are|not).*)$/);
+      if (match) {
+        const [, prefix, item, suffix] = match;
+        const key = `${prefix}|||${suffix}`;
+        const index = groupIndex.get(key);
+        if (index === undefined) {
+          groupIndex.set(key, groups.length);
+          groups.push({
+            key, prefix, suffix, items: [item],
+          });
+        } else {
+          groups[index].items.push(item);
+        }
+      } else {
+        const key = `raw|||${msg}`;
+        const index = groupIndex.get(key);
+        if (index === undefined) {
+          groupIndex.set(key, groups.length);
+          groups.push({ key, items: [msg], raw: true });
+        }
+      }
+    });
+
+    return groups.map((group) => {
+      if (group.raw) return group.items[0];
+
+      const subject = group.items.length === 1 ? group.items[0] : listFormatter.format(group.items);
+      let suffix = group.suffix ?? '';
+
+      if (group.items.length > 1) {
+        suffix = suffix.replace(/\bis\b/, 'are');
+      } else {
+        suffix = suffix.replace(/\bare\b/, 'is');
+      }
+
+      return `${group.prefix}${subject}${suffix}`;
+    });
+  };
+
   const groupCategory = issues.reduce<Record<ErrorWarningCategory, typeof issues>>((acc, error) => {
     const { category } = error;
 
@@ -83,9 +132,9 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
         const sharedAction = categoryActions.length > 0 && uniqueActions.size === 1 && !categoryActions.includes(null) ? Array.from(uniqueActions)[0] : null;
 
         return (
-          <Stack key={category} gap="xs" px="xs" py="4">
+          <Stack key={category} gap="xs">
             <Group justify="space-between">
-              <Text size="sm" fw={600}>{formatCategoryLabel(category)}</Text>
+              <Text size="sm" fw={700}>{formatCategoryLabel(category)}</Text>
               <Badge size="xs" variant="light" color={badgeColor}>
                 {categoryCount}
                 {' '}
@@ -98,33 +147,40 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
               <Text size="sm" c="dimmed">{sharedAction}</Text>
             )}
             <List size="xs" spacing="xs">
-              {entries.flatMap(([groupKey, pathIssues]) => {
+              {entries.map(([groupKey, pathIssues]) => {
                 const [, path] = groupKey.split(':');
-                return pathIssues.map((error, index) => {
-                  const message = error.message || 'No message provided';
-                  const actionText = getActionText(error.params);
+                const messages = pathIssues.map((error) => error.message || 'No message provided');
+                const combinedMessages = combineMessages(messages);
+                const actionTexts = pathIssues.map((error) => getActionText(error.params)).filter(Boolean);
+                const itemUniqueActions = new Set(actionTexts as string[]);
+                const actionText = itemUniqueActions.size === 1 ? Array.from(itemUniqueActions)[0] : null;
 
-                  return (
-                    <List.Item key={`${groupKey}-${index}`}>
-                      <Stack gap="4">
-                        <Group gap="xs" align="flex-start">
-                          <Badge size="xs" variant="light" color="gray" style={{ minWidth: 50 }}>Path</Badge>
-                          <Code style={{ fontSize: 12, padding: 0 }}>{path}</Code>
-                        </Group>
-                        <Group gap="xs" align="flex-start" wrap="nowrap">
-                          <Badge size="xs" variant="light" color="gray" style={{ minWidth: 50 }}>Issue</Badge>
-                          <Text size="sm">{renderInlineCode(message)}</Text>
-                        </Group>
-                        {actionText && !sharedAction && (
-                          <Group gap="xs" align="flex-start" wrap="wrap">
-                            <Badge size="xs" variant="light" color="gray" style={{ minWidth: 50 }}>Action</Badge>
-                            <Text size="sm">{actionText}</Text>
-                          </Group>
-                        )}
-                      </Stack>
-                    </List.Item>
-                  );
-                });
+                return (
+                  <List.Item key={groupKey}>
+                    <Stack gap="4">
+                      <Text size="sm">
+                        <Text component="span" fw={600}>
+                          {path}
+                          :
+                        </Text>
+                        {' '}
+                        {combinedMessages.map((msg, idx) => (
+                          <Text key={`${groupKey}-msg-${idx}`} component="span">
+                            {renderInlineCode(msg)}
+                            {idx < combinedMessages.length - 1 && (
+                              <Text component="span"> </Text>
+                            )}
+                          </Text>
+                        ))}
+                      </Text>
+                      {actionText && !sharedAction && (
+                        <Text size="sm" c="dimmed" pl="xs">
+                          {actionText}
+                        </Text>
+                      )}
+                    </Stack>
+                  </List.Item>
+                );
               })}
             </List>
           </Stack>
