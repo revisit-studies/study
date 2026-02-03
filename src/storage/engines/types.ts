@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import throttle from 'lodash.throttle';
 import { StudyConfig } from '../../parser/types';
 import { filterSequenceByCondition, getSequenceConditions } from '../../utils/handleSequenceConditions';
-import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';

@@ -1,6 +1,42 @@
 import { describe, it, expect } from 'vitest';
-import { parseConditionParam, filterSequenceByCondition, getSequenceConditions } from './handleSequenceConditions';
+import {
+  parseConditionParam,
+  filterSequenceByCondition,
+  getSequenceConditions,
+  getConditionParticipantCounts,
+} from './handleSequenceConditions';
 import { Sequence } from '../store/types';
+import { ParticipantData } from '../storage/types';
+
+const baseSequence: Sequence = {
+  order: 'fixed',
+  orderPath: 'root',
+  components: [],
+  skip: [],
+};
+
+const baseMetadata = {
+  userAgent: 'test',
+  resolution: { width: 100, height: 100 },
+  language: 'en',
+  ip: null,
+};
+
+function createParticipant(condition?: string): ParticipantData {
+  return {
+    participantId: `participant-${condition ?? 'default'}`,
+    participantConfigHash: 'config-hash',
+    sequence: baseSequence,
+    participantIndex: 0,
+    answers: {},
+    searchParams: condition !== undefined ? { condition } : {},
+    metadata: baseMetadata,
+    completed: false,
+    rejected: false,
+    participantTags: [],
+    stage: 'active',
+  };
+}
 
 describe('parseConditionParam', () => {
   it('should return empty array for undefined', () => {
@@ -210,5 +246,38 @@ describe('getSequenceConditions', () => {
 
     const conditions = getSequenceConditions(sequence);
     expect(conditions).toEqual(['color']);
+  });
+});
+
+describe('getConditionParticipantCounts', () => {
+  it('should count participants with no condition as default', () => {
+    const participants = [createParticipant(), createParticipant('')];
+
+    expect(getConditionParticipantCounts(participants)).toEqual({
+      default: 2,
+    });
+  });
+
+  it('should count participants with single conditions', () => {
+    const participants = [createParticipant('color'), createParticipant('size')];
+
+    expect(getConditionParticipantCounts(participants)).toEqual({
+      color: 1,
+      size: 1,
+    });
+  });
+
+  it('should count participants with multiple comma-separated conditions', () => {
+    const participants = [createParticipant('color,size'), createParticipant('size,shape')];
+
+    expect(getConditionParticipantCounts(participants)).toEqual({
+      color: 1,
+      size: 2,
+      shape: 1,
+    });
+  });
+
+  it('should return empty object for empty participant list', () => {
+    expect(getConditionParticipantCounts([])).toEqual({});
   });
 });

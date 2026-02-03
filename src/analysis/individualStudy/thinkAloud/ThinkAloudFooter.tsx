@@ -96,7 +96,7 @@ export function ThinkAloudFooter({
     }
     const trialIndex = participant ? +(participant.answers[currentTrial]?.trialOrder.split('_')[0] || 0) : 0;
     return `${PREFIX}${studyId}/${encryptIndex(trialIndex)}?${params.toString()}`;
-  }, [participant?.answers, participant?.searchParams, participantId, currentTrial, isReplay, studyId, participant]);
+  }, [participantId, currentTrial, isReplay, studyId, participant]);
 
   useEffect(() => {
     async function fetchAssetsUrl() {

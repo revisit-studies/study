@@ -32,7 +32,11 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
 import { hash } from '../storage/engines/utils';
-import { filterSequenceByCondition, getSequenceConditions } from '../utils/handleSequenceConditions';
+import {
+  filterSequenceByCondition,
+  getSequenceConditions,
+  parseConditionParam,
+} from '../utils/handleSequenceConditions';
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
@@ -169,10 +173,21 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       } catch (error) {
         console.error('Error initializing user store routing:', error);
         // Fallback: initialize the store with empty data
+        const generatedSequences = generateSequenceArray(activeConfig);
+        const requestedConditions = parseConditionParam(activeCondition);
+        const matchingSequence = requestedConditions.length > 0
+          ? generatedSequences.find(
+            (sequence) => requestedConditions.some(
+              (condition) => getSequenceConditions(sequence).includes(condition),
+            ),
+          )
+          : generatedSequences[0];
+        const fallbackSequence = matchingSequence || generatedSequences[0];
+
         const emptyStore = await studyStoreCreator(
           studyId,
           activeConfig,
-          filterSequenceByCondition(generateSequenceArray(activeConfig)[0], activeCondition),
+          filterSequenceByCondition(fallbackSequence, activeCondition),
           {
             language: '',
             userAgent: '',

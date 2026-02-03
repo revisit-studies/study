@@ -11,7 +11,6 @@ export function useNavigateToTrial() {
   ) => {
     const rejoined = trialOrder.split('_').map((index) => encryptIndex(+index)).join('/');
     const params = new URLSearchParams(searchParams);
-    params.set('participantId', participantId);
     const url = `${studyId}/${rejoined}?${params.toString()}`;
     window.open(`${PREFIX}${url}`, '_blank');
   }, []);

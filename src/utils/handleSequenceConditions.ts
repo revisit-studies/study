@@ -40,6 +40,12 @@ export function filterSequenceByCondition(sequence: Sequence, condition?: string
       }
     });
 
+    if (node.condition && !conditions.includes(node.condition)) {
+      return filteredComponents.length > 0
+        ? { ...node, components: filteredComponents }
+        : null;
+    }
+
     return {
       ...node,
       components: filteredComponents,
