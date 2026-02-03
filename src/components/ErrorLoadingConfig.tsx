@@ -1,5 +1,5 @@
 import {
-  Badge, Code, Collapse, Group, List, Paper, Stack, Text, UnstyledButton,
+  Badge, Code, Collapse, Divider, Group, List, Paper, Stack, Text, UnstyledButton,
 } from '@mantine/core';
 import { IconAlertTriangle, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -131,7 +131,7 @@ export function ErrorLoadingConfig({
   const [isOpen, setIsOpen] = useState(type === 'error');
 
   return (
-    <Paper withBorder p="sm" py="xs" mt="xs">
+    <Paper withBorder p="md" mt="xs">
       <UnstyledButton onClick={() => setIsOpen((open) => !open)} style={{ width: '100%' }}>
         <Group justify="space-between">
           <Group gap="xs">
@@ -140,7 +140,7 @@ export function ErrorLoadingConfig({
           </Group>
           <Group gap="xs">
             {!isOpen && (
-              <Badge color={badgeColor} variant="light" size="sm">
+              <Badge size="sm" color={badgeColor} variant="light">
                 {count}
                 {' '}
                 {issueLabel}
@@ -152,8 +152,8 @@ export function ErrorLoadingConfig({
         </Group>
       </UnstyledButton>
       <Collapse in={isOpen}>
-        <Stack gap="xs" mt="xs">
-          {categoryOrder.map((category) => {
+        <Stack gap="xl" mt="xs">
+          {categoryOrder.map((category, index) => {
             const entries = Object.entries(groupIssues).filter(([groupKey]) => groupKey.startsWith(`${category}:`));
             if (!entries.length) return null;
 
@@ -163,10 +163,10 @@ export function ErrorLoadingConfig({
             const sharedAction = categoryActions.length > 0 && uniqueActions.size === 1 && !categoryActions.includes(null) ? Array.from(uniqueActions)[0] : null;
 
             return (
-              <Stack key={category} gap="xs">
+              <Stack key={category} gap={0}>
                 <Group justify="space-between">
                   <Text size="sm" fw={700}>{formatCategoryLabel(category)}</Text>
-                  <Badge size="xs" variant="light" color={badgeColor}>
+                  <Badge size="sm" variant="light" color={badgeColor}>
                     {categoryCount}
                     {' '}
                     {issueLabel}
@@ -174,9 +174,9 @@ export function ErrorLoadingConfig({
                   </Badge>
                 </Group>
                 {sharedAction && (
-                  <Text size="sm" c="dimmed">{sharedAction}</Text>
+                  <Text size="sm" c="dimmed" mt={6}>{sharedAction}</Text>
                 )}
-                <List size="xs" spacing="xs">
+                <List size="xs" spacing="xs" mt={6} listStyleType="none">
                   {entries.map(([groupKey, pathIssues]) => {
                     const [, path] = groupKey.split(':');
                     const messages = pathIssues.map((error) => error.message || 'No message provided');
@@ -187,13 +187,12 @@ export function ErrorLoadingConfig({
 
                     return (
                       <List.Item key={groupKey}>
-                        <Stack gap="4">
+                        <Stack>
                           <Text size="sm">
-                            <Text component="span" fw={600}>
+                            <Code component="span" fw="bold" bg="none">
                               {path}
                               :
-                            </Text>
-                            {' '}
+                            </Code>
                             {combinedMessages.map((msg, idx) => (
                               <Text key={`${groupKey}-msg-${idx}`} component="span">
                                 {renderInlineCode(msg)}
@@ -204,7 +203,7 @@ export function ErrorLoadingConfig({
                             ))}
                           </Text>
                           {actionText && !sharedAction && (
-                            <Text size="sm" c="dimmed" pl="xs">
+                            <Text size="sm" c="dimmed" mt={6}>
                               {actionText}
                             </Text>
                           )}
@@ -213,6 +212,9 @@ export function ErrorLoadingConfig({
                     );
                   })}
                 </List>
+                {index < categoryOrder.length - 1 && (
+                  <Divider mt="sm" />
+                )}
               </Stack>
             );
           })}
