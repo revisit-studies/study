@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8">
+<title>Multivariate Network Visusalization Survey </title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<!-- <link rel="shortcut icon" href="favicon.ico" /> -->
+<link rel="shortcut icon" href="#" />
+
+
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/bulma.css">
+<link rel="stylesheet" href="css/carousel-css.css">
+
+<script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
+<!-- <script src="js/guidedTour.js" type="text/javascript"></script> -->
+
+<script src="js/readFirebase.js" type="text/javascript"></script>
+
+<script src="js/guidedTour.js" type="text/javascript"></script>
+
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.css"> -->
+
+<!-- Adding Provenance and Experimentr Libraries  -->
+<script src="libs/trrack.js"></script>
+<script src="libs/experimentr.js"></script>
+<!--support the framework-->
+<script src="../../revisitUtilities/revisit-communicate.js"></script>
+
+
+
+<!-- <script src="https://d3js.org/d3.v5.min.js" type="text/javascript"></script> -->
+<script src="libs/d3.min.js" type="text/javascript"></script>
+
+
+<!-- Helper scripts to generate graphs and complete task Configurations -->
+<script src="js/generateTwitterGraph.js" type="text/javascript"></script>
+<script src="js/createTaskConfig.js" type="text/javascript"></script>
+
+
+
+<!-- For the guided tour -->
+<script src="libs/shepherd.js"></script>
+
+<body>
+
+        <div id='landingPage' class="card" style=display:none>
+
+                <section class="section">
+                        <div class="container">
+                          <h1 class="title">Multivariate Network Visualization Survey</h1>
+                          <h2 class="subtitle">
+                            A companion website for the paper: <a href="http://sci.utah.edu/~vdl/papers/2020_chi_mvnv_study.pdf">Evaluating Multivariate Network Visualization Techniques
+Using a Validated Design and Crowdsourcing Approach</a> 
+                          </h2>
+
+                         <p> Here you can go through the survey as our crowdsourced participants did, or simply browse through the tasks. Note that survey responses will <strong>not</strong> be recorded.</Note>
+
+                       <br/>
+                       <br/>
+
+                            <p>You can access the full source code for the study at <a href="http://github.com/mvnv-study/survey">http://github.com/mvnv-study/survey</a>.</p>
+
+                            <br/>
+                       
+
+                            <p>You can find the paper and associated information at <a href="https://vdl.sci.utah.edu/publications/2020_chi_mvnv_study/">https://vdl.sci.utah.edu/publications/2020_chi_mvnv_study/</a>.</p>
+                        
+                            <br/>
+
+                        </div>
+
+                        <div class="tile is-vertical">
+                                <div class="tile">
+                                  <div class="tile is-parent ">
+                                   <a href="#"><article id = "fullSurvey_NL" class="tile is-child notification is-primary">
+                                      <p class="title">Click here to take the full    Node-Link survey.</p>
+                                      <p class="subtitle">You will be guided through a training session, trial tasks, and then the actual survey.
+
+                                      <!-- </p> <figure class="image is-4by3">
+                                            <img src="assets/NLSurvey.png">
+                                          </figure> -->
+                                    </article>
+                                </a>
+                                  </div>
+
+<!--                                  <div class="tile is-parent ">-->
+<!--                                        <a href="#"><article id = "fullSurvey_AM" class="tile is-child notification is-info">-->
+<!--                                           <p class="title">Click here to take the full Adjacency Matrix survey.</p>-->
+<!--                                           <p class="subtitle">You will be guided through a training session, trial tasks, and then the actual survey.-->
+
+<!--                                           &lt;!&ndash; </p> <figure class="image is-4by3">-->
+<!--                                                 <img src="assets/AMSurvey.png">-->
+<!--                                               </figure> &ndash;&gt;-->
+<!--                                         </article>-->
+<!--                                     </a>-->
+<!--                                       </div>-->
+
+
+                                </div>
+
+
+                            </div>
+
+
+<!--                            <div class="tile is-vertical">-->
+<!--                                    <div class="tile">-->
+
+<!--                                            <div class="tile is-parent">-->
+<!--                                                    <a href="#"> <article id = "tasksOnly_NL" class="tile is-child notification is-primary">-->
+<!--                                                  <p class="title">Click here to browse the Node-Link study tasks.</p>-->
+<!--                                                  &lt;!&ndash; <br/> &ndash;&gt;-->
+<!--                                                  <p class="subtitle">You will skip the training and trials and can browse through the 16 tasks in the study.-->
+<!--                                                  </p>-->
+<!--                                                  &lt;!&ndash; <figure class="image is-4by3">-->
+<!--                                                    <img src="assets/NLTasks.png">-->
+<!--                                                  </figure> &ndash;&gt;-->
+<!--                                                </article>-->
+<!--                                                </a>-->
+<!--                                              </div>-->
+
+<!--                                      <div class="tile is-parent">-->
+<!--                                            <a href="#"> <article id = "tasksOnly_AM" class="tile is-child notification is-info">-->
+<!--                                          <p class="title">Click here to browse the Adjacency Matrix study tasks.</p>-->
+<!--                                          <p class="subtitle">You will skip the training and trials and can browse through the 16 tasks in the study.-->
+<!--                                          </p>-->
+<!--                                          &lt;!&ndash; <figure class="image is-4by3">-->
+<!--                                                <img src="assets/AMTasks.png">-->
+<!--                                          </figure> &ndash;&gt;-->
+<!--                                        </article>-->
+<!--                                        </a>-->
+<!--                                      </div>-->
+
+<!--                                    </div>-->
+
+
+<!--                                </div>-->
+
+
+                      </section>
+
+
+
+
+
+
+
+        </div>
+
+    <div class="hit" style=display:none>
+        <nav class="navbar trialSection" role="navigation" id="trialBar" aria-label="main navigation">
+            <p class="card-header-title">
+                Get familiar with the visualization with the practice questions below. Your answers for these question
+                are not part of the survey!
+            </p>
+        </nav>
+
+
+        <div class="card horizon-card60">
+            <div class="card-content">
+                <div class="content search-content">
+                    <div>
+                        <span id="searchArea">
+                            <input class="input searchInput" type="text"
+                                   placeholder="Search for node" id="search-input"></input>
+                            <a class="button search"
+                               id="searchButton">Search</a>
+                        <!-- <label class="label">Search for Nodes</label> -->
+
+
+                        <a class="button" id="clear-selection">Clear Highlighted Nodes</a>
+                            <p class='searchMsg errorMsg'></p>
+
+                        </span>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="card horizon-card40">
+<!--            <header class="is-pulled-right card-header">-->
+<!--                <p class="card-header-title">-->
+<!--                                            <span class="helpIcon icon has-text-info">-->
+<!--                                                <i class="fas fa-lg fa-question-circle"></i> &nbsp-->
+<!--                                            </span> <strong>Help</strong>-->
+<!--                </p>-->
+<!--            </header>-->
+            <div class="card-content" id="legendDiv">
+                <div class="content">
+                    <svg id="legend-svg"></svg>
+                </div>
+            </div>
+        </div>
+
+
+
+
+        <div class="columns" id="visContent">
+            <div id="targetSize">
+                <div class="column ">
+                    <div id="vis">
+                        <div class="card" id="visPanel">
+<!--                            <div id="taskArea">-->
+<!--                                <div class="card taskCard">-->
+
+<!--                                    <p class="card-header-title" id="taskDefinition">-->
+<!--                                        <span class="task">Task: </span><span class="taskText"> </span>-->
+<!--                                        <div class="progressBar"><progress class="progress is-small" value="4"-->
+<!--                                                max="8"></progress></div>-->
+
+<!--                                    </p>-->
+
+<!--                                </div>-->
+
+
+
+<!--Origin answer card-->
+<!--                                <div class="card answerHeader">-->
+<!--                                    <p class="card-header-title">-->
+<!--                                        <span class="answer">Answer </span>-->
+<!--                                    </p>-->
+
+<!--                                </div>-->
+<!--                                <div class="card answerCard">-->
+
+<!--                                    <div class="card-content">-->
+<!--                                        <div class="content">-->
+
+<!--                                            <a class="button is-pulled-right submit" id="submitButton"-->
+<!--                                                disabled>Submit</a>-->
+
+<!--                                            <span id="nodeAnswer">-->
+<!--                                                <label><strong>Selected Nodes</strong></label>-->
+<!--                                                <br />-->
+<!--                                                <ul id="selectedNodeList">-->
+<!--                                                    <li> test value</li>-->
+<!--                                                </ul>-->
+<!--                                                <p class='errorMsg' style=display:none></p>-->
+<!--                                                <br />-->
+
+<!--                                            </span>-->
+
+<!--                                            <span id="radioAnswer">-->
+<!--                                                <label><strong>Select Answer Below</strong></label>-->
+<!--                                                <br />-->
+<!--                                                <div class="control">-->
+<!--                                                    &lt;!&ndash; <label class="radio opt1">-->
+<!--                                                        <input type="radio" name="edgeType" value="">-->
+<!--                                                        <span class='radioLabel'></span>-->
+<!--                                                    </label>-->
+<!--                                                    <label class="radio opt2">-->
+<!--                                                        <input type="radio" name="edgeType" value="">-->
+<!--                                                        <span class='radioLabel'></span>-->
+<!--                                                    </label> &ndash;&gt;-->
+<!--                                                </div>-->
+<!--                                                <p class='errorMsg' style=display:none></p>-->
+<!--                                            </span>-->
+
+<!--                                            <span id="valueAnswer">-->
+<!--                                                <label><strong>Enter Answer Below</strong></label>-->
+<!--                                                <br />-->
+<!--                                                <input class="input" type="text" placeholder="answer text"-->
+<!--                                                    id="answerBox">-->
+<!--                                                <br />-->
+<!--                                                <p class='errorMsg' style=display:none></p>-->
+<!--                                            </span>-->
+
+
+<!--                                            <span id="textAnswer">-->
+<!--                                                <label><strong>Enter Findings Below</strong></label>-->
+<!--                                                <br />-->
+<!--                                                <textarea class="textarea" placeholder="Describe your findings."-->
+<!--                                                    rows="10" id="freeFormAnswer"></textarea>-->
+
+<!--                                                <br />-->
+<!--                                                <p class='errorMsg' style=display:none></p>-->
+<!--                                            </span>-->
+
+
+
+
+
+
+<!--                                        </div>-->
+<!--                                    </div>-->
+
+<!--                                </div>-->
+
+<!--                            </div>-->
+
+                            <div class="card" id="feedbackCard">
+                                <div class="card-content">
+                                    <div class="content">
+                                        <span id="trialFeedback">
+                                            <span class='errorMsg'>Try again.</span>
+                                        </span>
+                                    </div>
+                                </div>
+
+
+                            </div>
+
+                            <div class="card taskMenu">
+                                <header class="card-header">
+                                    <p class="card-header-title">
+                                        Task Shortcuts
+                                    </p>
+
+                                </header>
+                                <div class="card-content">
+                                    <div class="content">
+                                        <!-- <article class="message is-link">
+                                                    <div class="message-header">
+                                                      <p>Link</p>
+                                                      <button class="delete" aria-label="delete"></button>
+                                                    </div>
+                                                    <div class="message-body">
+                                                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. <strong>Pellentesque risus mi</strong>, tempus quis placerat ut, porta nec nulla. Vestibulum rhoncus ac ex sit amet fringilla. Nullam gravida purus diam, et dictum <a>felis venenatis</a> efficitur. Aenean ac <em>eleifend lacus</em>, in mollis lectus. Donec sodales, arcu et sollicitudin porttitor, tortor urna tempor ligula, id porttitor mi magna a neque. Donec dui urna, vehicula et sem eget, facilisis sodales sem.
+                                                    </div>
+                                                  </article> -->
+
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                            <div class="modal modalFeedback">
+                                <div class="modal-background"></div>
+                                <div class="modal-card">
+
+
+                                    <header class="modal-card-head">
+                                        <p class="modal-card-title">
+                                            On a scale of 1 (easy) to 7 (hard), how hard was this task?
+                                            <!-- Please rate the task and leave any feedback below: -->
+                                        </p>
+                                    </header>
+                                    <section class="modal-card-body">
+                                        <div class="content">
+
+                                            <!-- <p><strong>  On a scale of 1 (easy) to 7 (hard), how hard was this task?</strong></p> -->
+
+
+                                            <div class="control">
+
+                                                <!-- <strong>easy</strong> -->
+                                                easy
+
+                                                <span id="easyHardRating">
+                                                    <label class="radio">
+                                                        <input type="radio" name="difficulty" value="1">
+                                                        1
+                                                    </label>
+                                                    <label class="radio">
+                                                        <input type="radio" name="difficulty" value="2">
+                                                        2
+                                                    </label>
+                                                    <label class="radio">
+                                                        <input type="radio" name="difficulty" value="3">
+                                                        3
+                                                    </label>
+                                                    <label class="radio">
+                                                        <input type="radio" name="difficulty" value="4">
+                                                        4
+                                                    </label>
+                                                    <label class="radio">
+                                                        <input type="radio" name="difficulty" value="5">
+                                                        5
+                                                    </label>
+                                                    <label class="radio">
+                                                        <input type="radio" name="difficulty" value="6">
+                                                        6
+                                                    </label>
+                                                    <label class="radio">
+                                                        <input type="radio" name="difficulty" value="7">
+                                                        7
+                                                    </label>
+
+                                                </span>
+                                                <!-- <strong>hard</strong> -->
+                                                hard
+
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    <header class="modal-card-head">
+                                        <p class="modal-card-title">
+                                            On a scale of 1 (not confident) to 7 (confident),
+                                            how <br /> confident are you with your answer?
+                                        </p>
+                                    </header>
+                                    <section class="modal-card-body">
+                                        <div class="content">
+
+                                            <!-- <p><strong> On a scale of 1 (not confident) to 7 (confident), how confident are you with your answer?</strong></p> -->
+
+                                            <div class="control">
+
+                                                <!-- <strong>easy</strong> -->
+                                                not confident
+
+                                                <span id="easyHardRating">
+                                                    <label class="radio">
+                                                        <input type="radio" name="confidence" value="1">
+                                                        1
+                                                    </label>
+                                                    <label class="radio">
+                                                        <input type="radio" name="confidence" value="2">
+                                                        2
+                                                    </label>
+                                                    <label class="radio">
+                                                        <input type="radio" name="confidence" value="3">
+                                                        3
+                                                    </label>
+                                                    <label class="radio">
+                                                        <input type="radio" name="confidence" value="4">
+                                                        4
+                                                    </label>
+                                                    <label class="radio">
+                                                        <input type="radio" name="confidence" value="5">
+                                                        5
+                                                    </label>
+                                                    <label class="radio">
+                                                        <input type="radio" name="confidence" value="6">
+                                                        6
+                                                    </label>
+                                                    <label class="radio">
+                                                        <input type="radio" name="confidence" value="7">
+                                                        7
+                                                    </label>
+
+                                                </span>
+                                                <!-- <strong>hard</strong> -->
+                                                confident
+
+                                            </div>
+                                            <br />
+
+                                            <p><strong>Enter any additional feedback in the text area below.</strong>
+                                            </p>
+                                            <textarea class="textarea"
+                                                placeholder="Enter any additional information here"></textarea>
+
+                                            <p class='errorMsg' style=display:none>Please select a rating for both
+                                                difficulty and confidence before proceeding.</p>
+
+
+                                        </div>
+                                    </section>
+                                    <footer class="modal-card-foot">
+                                        <a href="#" id="nextTask" class="button is-pulled-right">Next Task</a>
+                                    </footer>
+                                </div>
+                            </div>
+
+
+                            <!-- Modal that shows a summary on vis interactions available -->
+                            <div class="modal quickStart">
+                                <div class="modal-background"></div>
+                                <div class="modal-card">
+
+                                    <section class="modal-card-body">
+                                        <div class="content">
+
+                                            <img src="" alt="">
+
+                                        </div>
+                                    </section>
+                                    <footer class="modal-card-foot">
+                                        <a href="#" id="closeModal" class="button is-pulled-right">Close</a>
+                                    </footer>
+                                </div>
+                            </div>
+
+
+                        </div>
+
+                        <div class="nodeLink">
+                            <svg id="node-link-svg"></svg>
+                        </div>
+
+                        <div class="adjMatrix vis">
+                            <div class="loading"></div>
+                            <div class="loadingOverlay"></div>
+                            <div id="interactiveFreeFormMain">
+                                <div id="topology" class="topocontainer" height="700" width="700"> </div>
+                                <div id="attributes" class="attrcontainer" height="700" width="650"> </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- <a class="button" id="panelControl">Hide/Show Control Panel</a> -->
+
+                    <div class="development">
+                        <!-- <a href="#" id="next" class="button is-pulled-right">Next Task</a>
+                        <a href="#" id="previous" class="button is-pulled-right">Previous Task</a>
+
+
+                        <a class="button condition is-pulled-right" id="saturatedConfig">10 Attribute Condition</a>
+                        <a class="button condition is-pulled-right" id="nodeLinkConfig">5 Attribute Condition</a>
+                        <a class="button condition is-pulled-right" id="optimalConfig">Optimal Condition</a> -->
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- <div style="display:inline; padding-left: 20px;">
+                                    <span><strong> Click the following button only once you are satisfied with your answer -> </strong></span>
+                                    <span><button id="finished">Submit</button></span>
+                                </div> -->
+            <div class="column is-narrow development" id="panelDiv">
+
+                <aside class="menu">
+
+
+
+
+                    <!-- <p class="menu-label">
+                                                Graph Settings
+                                            </p> -->
+                    <ul class="menu-list">
+
+                        <li id="graphSize">
+                            <label>Graph Size</label>
+
+                            <ul>
+                                <div class="control">
+                                    <!-- <label class="radio">
+                                                                            <input type="radio" name="graphSize" value="small" >
+                                                                            Small [30]
+                                                                        </label> -->
+
+                                    <label class="radio">
+                                        <input type="radio" name="graphSize" value="small">
+                                        Small [50]
+                                    </label>
+
+                                    <label class="radio">
+                                        <input type="radio" name="graphSize" value="large">
+                                        Large [80]
+                                    </label>
+                                </div>
+
+                            </ul>
+                        </li>
+
+                        <li>
+                            <!-- Set config.isDirected to true/false -->
+                            <a>Graph Type</a>
+                            <ul>
+                                <div class="control">
+                                    <label class="radio">
+                                        <input type="radio" name="isDirected" value="true">
+                                        Directed
+                                    </label>
+
+                                    <label class="radio">
+                                        <input type="radio" name="isDirected" value="false">
+                                        Undirected
+                                    </label>
+                                </div>
+
+                            </ul>
+
+
+                        </li>
+
+                        <li>
+                            <!-- Set config.isMultiEdge to true/false -->
+                            <a>Graph Edges</a>
+                            <ul>
+                                <div class="control">
+                                    <label class="radio">
+                                        <input type="radio" name="isMultiEdge" value="true">
+                                        Multiple Types
+                                    </label>
+
+                                    <label class="radio">
+                                        <input type="radio" name="isMultiEdge" value="false">
+                                        Single Type
+                                    </label>
+                                </div>
+
+                            </ul>
+
+
+                        </li>
+
+                        <li id="labelSize">
+                            <label>Node Label Font Size</label>
+                            <ul>
+                                <div class="control is-inline-flex">
+                                    <input class="slider" id="fontSlider" step="1" min="10" max="30" value="14"
+                                        type="range">
+                                    <output id="fontSliderValue">14</output> </div>
+                            </ul>
+                        </li>
+
+
+                        <li id="nodeMarkerSize">
+                            <label>Node Size [width,height]</label>
+                            <ul>
+
+
+                                <div class="control is-inline-flex">
+                                    <input width="50%" id="markerSize" class="input" type="text"
+                                        placeholder="width/height">
+                                </div>
+
+                            </ul>
+                        </li>
+
+                        <li>
+                            <!-- Set config.isDirected to true/false -->
+                            <a>Select Neighbors on Click</a>
+                            <ul>
+                                <div class="control">
+                                    <label class="radio">
+                                        <input type="radio" name="selectNeighbors" value="true">
+                                        True
+                                    </label>
+
+                                    <label class="radio">
+                                        <input type="radio" name="selectNeighbors" value="false">
+                                        False
+                                    </label>
+                                </div>
+
+                            </ul>
+
+
+                        </li>
+
+
+                        <ul class="menu-list">
+
+                            <div style="padding-top: 30px; padding-bottom: 10px">
+
+                                <a class="button" id="stop-simulation">Stop Simulation</a>
+                                <a class="button" id="start-simulation">Restart Simulation</a>
+                                <a class="button" id="release-nodes">Release Pinned Nodes</a>
+                                <a class="button" id="exportGraph">Export Graph to Console</a>
+                            </div>
+
+
+                            <br />
+
+                            <div class="field">
+                                <input class="is-checkradio is-circle" id="renderBarsCheckbox" type="checkbox"
+                                    name="renderBarsCheckbox" checked="checked">
+                                <label for="renderBarsCheckbox">Render Nested Charts</label>
+                            </div>
+
+
+                            <li id="nodeQuantSelect">
+                                <a>Attribute for Nested Quant Attributes (Bars)</a>
+                                <ul>
+                                </ul>
+                            </li>
+
+                            <br />
+
+                            <li id="nodeCatSelect">
+                                <a>Attribute for Nested Cat Attributes</a>
+                                <ul>
+                                </ul>
+                            </li>
+
+
+                            <li id="nodeQuantAttributes">
+                                <a>Node Attribute Inspector</a>
+                                <ul>
+                                    <div class="select ">
+                                        <select>
+                                        </select>
+                                    </div>
+
+                                </ul>
+                            </li>
+
+
+                            <li id="nodeFillSelect">
+                                <a>Attribute for Node Fill</a>
+                                <ul>
+                                    <div class="select">
+                                        <select>
+                                        </select>
+                                    </div>
+
+                                </ul>
+                            </li>
+
+                            <li id="nodeSizeSelect">
+                                <a>Attribute for Node Size</a>
+                                <ul>
+                                    <div class="select">
+                                        <select>
+                                        </select>
+
+                                    </div>
+
+                                    <div class="control is-inline-flex">
+                                        <input width="50%" class="input" type="text" placeholder="[min,max]">
+                                    </div>
+
+                                </ul>
+                            </li>
+
+                            <li id="edgeStrokeSelect">
+                                <a>Attribute for Edge Stroke</a>
+                                <ul>
+                                    <div class="select">
+                                        <select>
+                                        </select>
+                                    </div>
+
+                                </ul>
+                            </li>
+
+                            <li id="edgeWidthSelect">
+                                <a>Attribute for Edge Width</a>
+                                <ul>
+                                    <div class="select ">
+                                        <select>
+                                        </select>
+                                    </div>
+
+                                    <div class="control is-inline-flex">
+                                        <input class="input" id="edgeWidthScale" type="text" placeholder="[min,max]">
+                                    </div>
+
+                                </ul>
+                            </li>
+
+                            <br />
+                            <br />
+
+                            <a class="button is-light" id="exportConfig">Export Task Config</a>
+
+                            <br />
+
+                            <a class="button is-light" id="exportBaseConfig">Export Base Config</a>
+
+
+                </aside>
+            </div>
+
+
+
+        </div>
+    </div>
+
+
+<!--    <div class="modal modalStartStudy">-->
+<!--        <div class="modal-background"></div>-->
+<!--        <div class="modal-card">-->
+
+
+<!--            <header class="modal-card-head">-->
+<!--                <p class="modal-card-title">-->
+<!--                    Ok, let's get started! <span style="font-size:14px"> (just a few quick notes before we jump in)-->
+<!--                        <span>-->
+<!--                </p>-->
+<!--            </header>-->
+<!--            <section class="modal-card-body">-->
+<!--                <div class="content">-->
+
+<!--                    <p>You will be presented with <strong>16 tasks</strong> in <strong>random order of-->
+<!--                            difficulty</strong>. </p>-->
+
+
+<!--                    <p>The study should take approximately 30 minutes to complete.</p>-->
+
+<!--                    <p> Let's get started! </p>-->
+
+
+<!--                </div>-->
+<!--            </section>-->
+
+<!--            <footer class="modal-card-foot">-->
+<!--                <a href="#" id="startSurvey" class="button is-pulled-right">Start Survey</a>-->
+<!--            </footer>-->
+<!--        </div>-->
+<!--    </div>-->
+
+</body>
+
+<script src="js/loadTasks.js" type="text/javascript"></script>
+
+<script>
+    function getUrlVars() {
+        var vars = {};
+        var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&*#]*)/gi, function (m, key, value) {
+            vars[key] = value;
+        });
+        return vars;
+    }
+
+    //set global variables such as vis type, whether to track userInteraction, if develop mode, etc... from url params
+    var {
+        vis,
+        track,
+        mode,
+        shuffleTasks,
+        taskMenu,
+        configPanel,
+        trials,
+        taskNum
+
+    } = getUrlVars();
+
+    taskNum = eval(taskNum)-1;
+    let reload = false;
+
+    if (taskNum !== undefined && vis!==undefined){
+        let visType = vis == 'NL' ? 'nodeLink' : 'adjMatrix';
+        startExperimentr('tasks',visType)
+    } else {
+        d3.select('#landingPage').style('display','block')
+    }
+
+    d3.select('#fullSurvey_AM').on("click",()=>startExperimentr('survey','adjMatrix'))
+    d3.select('#tasksOnly_AM').on("click",()=>startExperimentr('tasks','adjMatrix'))
+    d3.select('#fullSurvey_NL').on("click",()=>startExperimentr('survey','nodeLink'))
+    d3.select('#tasksOnly_NL').on("click",()=>startExperimentr('tasks','nodeLink'))
+
+    async function startExperimentr(runMode,visType) {
+
+        //set global mode variable
+        mode = runMode;
+
+        d3.select('#landingPage').remove();
+
+
+        let sequence;
+        workerID = 'Reviewer';
+
+        vis=visType
+
+        let repeatVisitor;
+
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Get the value of a query parameter
+        const hitID = urlParams.get('trialid');
+
+        // Log the value of the query parameter
+
+        switch(runMode){
+            case 'survey':
+                track = false;
+                shuffleTasks = true;
+                taskMenu = false;
+                configPanel = false;
+                trials = true;
+
+                //check if the user has completed any tasks already;
+                repeatVisitor = getCookie('onPage');
+
+                sequence = [
+                    // 'modules/training.html',
+                    // 'modules/trials.html',
+                    `modules/${hitID}.html`,
+                    // 'modules/submit.html'
+                ];
+
+                break;
+
+            case ('tasks'):
+                track = false;
+                shuffleTasks = false;
+                taskMenu = true;
+                configPanel = false;
+                trials = false;
+
+                sequence = [
+                    'modules/hit.html',
+                ];
+
+                break;
+        }
+
+        //if this is a reload, refresh global workerID variable:
+        if (getCookie('workerID').length > 0) {
+            reload = true;
+            workerID = getCookie('workerID');
+        }
+
+        //remove ui components that are not relevant
+        d3.selectAll('.development').remove();
+
+        if (!taskMenu) {
+            d3.select('.taskMenu').remove();
+        }
+
+        experimentr.sequence(sequence).start();
+    };
+
+    startExperimentr('survey','adjMatrix');
+
+
+</script>
