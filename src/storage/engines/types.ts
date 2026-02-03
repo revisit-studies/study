@@ -503,22 +503,22 @@ export abstract class StorageEngine {
     // Query all the intents to get a sequence and find our position in the queue
     sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
-    // When conditions are present, generate sequences per-participant to ensure proper balancing
-    // Otherwise use the shared sequence array
+    // Determine whether the sequence uses conditions
     const configConditions = config ? getSequenceConditions(config.sequence) : [];
     const hasConditions = configConditions.length > 0;
 
+    // Always start from the shared Latin-square sequence array
+    const storedSequenceArray = await this.getSequenceArray();
+    if (!storedSequenceArray) {
+      throw new Error('Latin square not initialized');
+    }
+
     let sequenceArray: Sequence[];
     if (hasConditions && config) {
-      // Generate fresh sequences and filter for this participant's condition
-      const fullSequenceArray = generateSequenceArray(config);
-      sequenceArray = fullSequenceArray.map((seq) => filterSequenceByCondition(seq, activeCondition));
+      // Filter each row of the stored Latin square by this participant's condition
+      sequenceArray = storedSequenceArray.map((seq) => filterSequenceByCondition(seq, activeCondition));
     } else {
-      // Use shared sequence array
-      const storedSequenceArray = await this.getSequenceArray();
-      if (!storedSequenceArray) {
-        throw new Error('Latin square not initialized');
-      }
+      // No conditions: use stored Latin square as-is
       sequenceArray = storedSequenceArray;
     }
 
