@@ -1,8 +1,8 @@
 import {
-  Anchor, AppShell, Badge, Button, Card, Collapse, Container, Divider, Flex, Image, Paper, rem, Tabs, Text, Tooltip, UnstyledButton, Group,
+  Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
-  IconAlertTriangle, IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff, IconChevronDown, IconChevronRight,
+  IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -33,9 +33,6 @@ function StudyCard({
   const { storageEngine } = useStorageEngine();
 
   const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
-
-  const [errorsOpen, setErrorsOpen] = useState(true);
-  const [warningsOpen, setWarningsOpen] = useState(false);
 
   useEffect(() => {
     if (!storageEngine) return;
@@ -78,65 +75,10 @@ function StudyCard({
       {config.errors.length > 0
         ? (
           <>
-            <Text fw="bold">{configName}</Text>
-            <Paper withBorder px="md" py="sm" mt="xs">
-              <UnstyledButton onClick={() => setErrorsOpen((open) => !open)} style={{ width: '100%' }}>
-                <Group justify="space-between">
-                  <Group gap="xs">
-                    <IconAlertTriangle size={16} color="red" />
-                    <Text size="md" fw="bold" c="red">Errors</Text>
-                  </Group>
-                  <Group gap="xs">
-                    {!errorsOpen && (
-                      <Badge color="red" variant="light" size="xs">
-                        {config.errors.length}
-                        {' '}
-                        {(config.errors.length === 1 ? 'Error' : 'Errors')}
-                      </Badge>
-                    )}
-                    {errorsOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
-                  </Group>
-                </Group>
-              </UnstyledButton>
-              <Collapse in={errorsOpen}>
-                <ErrorLoadingConfig issues={config.errors} type="error" />
-              </Collapse>
-              {!errorsOpen && (
-                <Text size="sm" c="dimmed">
-                  Your study could not be built because of errors in the study config.
-                </Text>
-              )}
-            </Paper>
-
+            <Text size="md" fw="bold">{configName}</Text>
+            <ErrorLoadingConfig issues={config.errors} type="error" />
             {config.warnings.length > 0 && (
-              <Paper withBorder px="md" py="sm" mt="xs">
-                <UnstyledButton onClick={() => setWarningsOpen((open) => !open)} style={{ width: '100%' }}>
-                  <Group justify="space-between">
-                    <Group gap="xs">
-                      <IconAlertTriangle size={16} color="orange" />
-                      <Text size="md" fw="bold" c="orange">Warnings</Text>
-                    </Group>
-                    <Group gap="xs">
-                      {!warningsOpen && (
-                        <Badge color="orange" variant="light" size="xs">
-                          {config.warnings.length}
-                          {' '}
-                          {(config.warnings.length === 1 ? 'Warning' : 'Warnings')}
-                        </Badge>
-                      )}
-                      {warningsOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
-                    </Group>
-                  </Group>
-                </UnstyledButton>
-                <Collapse in={warningsOpen}>
-                  <ErrorLoadingConfig issues={config.warnings} type="warning" />
-                </Collapse>
-                {!warningsOpen && (
-                  <Text size="sm" c="dimmed">
-                    There are potential issues in your study config.
-                  </Text>
-                )}
-              </Paper>
+              <ErrorLoadingConfig issues={config.warnings} type="warning" />
             )}
           </>
         )
@@ -169,34 +111,7 @@ function StudyCard({
             </Text>
 
             {config.warnings.length > 0 && (
-              <Paper withBorder px="md" py="sm" mt="xs">
-                <UnstyledButton onClick={() => setWarningsOpen((open) => !open)} style={{ width: '100%' }}>
-                  <Group justify="space-between">
-                    <Group gap="xs">
-                      <IconAlertTriangle size={16} color="orange" />
-                      <Text size="md" fw="bold" c="orange">Warnings</Text>
-                    </Group>
-                    <Group gap="xs">
-                      {!warningsOpen && (
-                        <Badge color="orange" variant="light" size="xs">
-                          {config.warnings.length}
-                          {' '}
-                          {(config.warnings.length === 1 ? 'Warning' : 'Warnings')}
-                        </Badge>
-                      )}
-                      {warningsOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
-                    </Group>
-                  </Group>
-                </UnstyledButton>
-                <Collapse in={warningsOpen}>
-                  <ErrorLoadingConfig issues={config.warnings} type="warning" />
-                </Collapse>
-                {!warningsOpen && (
-                  <Text size="sm" c="dimmed">
-                    There are potential issues in your study config.
-                  </Text>
-                )}
-              </Paper>
+              <ErrorLoadingConfig issues={config.warnings} type="warning" />
             )}
 
             <Divider my="md" />

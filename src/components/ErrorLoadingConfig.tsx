@@ -1,9 +1,17 @@
 import {
-  Badge, Code, Group, List, Stack, Text,
+  Badge, Code, Collapse, Group, List, Paper, Stack, Text, UnstyledButton,
 } from '@mantine/core';
+import { IconAlertTriangle, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
+import { useState } from 'react';
 import { ParsedConfig, StudyConfig, ErrorWarningCategory } from '../parser/types';
 
-export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<StudyConfig>['errors'], type: 'error' | 'warning' }) {
+export function ErrorLoadingConfig({
+  issues,
+  type,
+}: {
+  issues: ParsedConfig<StudyConfig>['errors'];
+  type: 'error' | 'warning';
+}) {
   const categoryOrder: ErrorWarningCategory[] = [
     // error
     'invalid-config',
@@ -113,79 +121,108 @@ export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<Stud
     return acc;
   }, {});
 
-  const baseHeader = type === 'error'
+  const title = type === 'error' ? 'Errors' : 'Warnings';
+  const headerText = type === 'error'
     ? 'Your study could not be built because of errors in the study config.'
     : 'There are potential issues in your study config.';
-
   const badgeColor = type === 'error' ? 'red' : 'orange';
+  const issueLabel = type === 'error' ? 'Error' : 'Warning';
+  const count = issues.length;
+  const [isOpen, setIsOpen] = useState(type === 'error');
 
   return (
-    <Stack gap="xs">
-      <Text size="sm" c="dimmed">{baseHeader}</Text>
-      {categoryOrder.map((category) => {
-        const entries = Object.entries(groupIssues).filter(([groupKey]) => groupKey.startsWith(`${category}:`));
-        if (!entries.length) return null;
-
-        const categoryCount = entries.reduce((sum, [, pathIssues]) => sum + pathIssues.length, 0);
-        const categoryActions = entries.flatMap(([, pathIssues]) => pathIssues.map((error) => getActionText(error.params)));
-        const uniqueActions = new Set(categoryActions.filter(Boolean) as string[]);
-        const sharedAction = categoryActions.length > 0 && uniqueActions.size === 1 && !categoryActions.includes(null) ? Array.from(uniqueActions)[0] : null;
-
-        return (
-          <Stack key={category} gap="xs">
-            <Group justify="space-between">
-              <Text size="sm" fw={700}>{formatCategoryLabel(category)}</Text>
-              <Badge size="xs" variant="light" color={badgeColor}>
-                {categoryCount}
+    <Paper withBorder p="sm" py="xs" mt="xs">
+      <UnstyledButton onClick={() => setIsOpen((open) => !open)} style={{ width: '100%' }}>
+        <Group justify="space-between">
+          <Group gap="xs">
+            <IconAlertTriangle size={16} color={badgeColor} />
+            <Text size="md" fw="bold" c={badgeColor}>{title}</Text>
+          </Group>
+          <Group gap="xs">
+            {!isOpen && (
+              <Badge color={badgeColor} variant="light" size="sm">
+                {count}
                 {' '}
-                {type === 'error'
-                  ? (categoryCount === 1 ? 'Error' : 'Errors')
-                  : (categoryCount === 1 ? 'Warning' : 'Warnings')}
+                {issueLabel}
+                {count === 1 ? '' : 's'}
               </Badge>
-            </Group>
-            {sharedAction && (
-              <Text size="sm" c="dimmed">{sharedAction}</Text>
             )}
-            <List size="xs" spacing="xs">
-              {entries.map(([groupKey, pathIssues]) => {
-                const [, path] = groupKey.split(':');
-                const messages = pathIssues.map((error) => error.message || 'No message provided');
-                const combinedMessages = combineMessages(messages);
-                const actionTexts = pathIssues.map((error) => getActionText(error.params)).filter(Boolean);
-                const itemUniqueActions = new Set(actionTexts as string[]);
-                const actionText = itemUniqueActions.size === 1 ? Array.from(itemUniqueActions)[0] : null;
+            {isOpen ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
+          </Group>
+        </Group>
+      </UnstyledButton>
+      <Collapse in={isOpen}>
+        <Stack gap="xs" mt="xs">
+          {categoryOrder.map((category) => {
+            const entries = Object.entries(groupIssues).filter(([groupKey]) => groupKey.startsWith(`${category}:`));
+            if (!entries.length) return null;
 
-                return (
-                  <List.Item key={groupKey}>
-                    <Stack gap="4">
-                      <Text size="sm">
-                        <Text component="span" fw={600}>
-                          {path}
-                          :
-                        </Text>
-                        {' '}
-                        {combinedMessages.map((msg, idx) => (
-                          <Text key={`${groupKey}-msg-${idx}`} component="span">
-                            {renderInlineCode(msg)}
-                            {idx < combinedMessages.length - 1 && (
-                              <Text component="span"> </Text>
-                            )}
+            const categoryCount = entries.reduce((sum, [, pathIssues]) => sum + pathIssues.length, 0);
+            const categoryActions = entries.flatMap(([, pathIssues]) => pathIssues.map((error) => getActionText(error.params)));
+            const uniqueActions = new Set(categoryActions.filter(Boolean) as string[]);
+            const sharedAction = categoryActions.length > 0 && uniqueActions.size === 1 && !categoryActions.includes(null) ? Array.from(uniqueActions)[0] : null;
+
+            return (
+              <Stack key={category} gap="xs">
+                <Group justify="space-between">
+                  <Text size="sm" fw={700}>{formatCategoryLabel(category)}</Text>
+                  <Badge size="xs" variant="light" color={badgeColor}>
+                    {categoryCount}
+                    {' '}
+                    {issueLabel}
+                    {categoryCount === 1 ? '' : 's'}
+                  </Badge>
+                </Group>
+                {sharedAction && (
+                  <Text size="sm" c="dimmed">{sharedAction}</Text>
+                )}
+                <List size="xs" spacing="xs">
+                  {entries.map(([groupKey, pathIssues]) => {
+                    const [, path] = groupKey.split(':');
+                    const messages = pathIssues.map((error) => error.message || 'No message provided');
+                    const combinedMessages = combineMessages(messages);
+                    const actionTexts = pathIssues.map((error) => getActionText(error.params)).filter(Boolean);
+                    const itemUniqueActions = new Set(actionTexts as string[]);
+                    const actionText = itemUniqueActions.size === 1 ? Array.from(itemUniqueActions)[0] : null;
+
+                    return (
+                      <List.Item key={groupKey}>
+                        <Stack gap="4">
+                          <Text size="sm">
+                            <Text component="span" fw={600}>
+                              {path}
+                              :
+                            </Text>
+                            {' '}
+                            {combinedMessages.map((msg, idx) => (
+                              <Text key={`${groupKey}-msg-${idx}`} component="span">
+                                {renderInlineCode(msg)}
+                                {idx < combinedMessages.length - 1 && (
+                                  <Text component="span"> </Text>
+                                )}
+                              </Text>
+                            ))}
                           </Text>
-                        ))}
-                      </Text>
-                      {actionText && !sharedAction && (
-                        <Text size="sm" c="dimmed" pl="xs">
-                          {actionText}
-                        </Text>
-                      )}
-                    </Stack>
-                  </List.Item>
-                );
-              })}
-            </List>
-          </Stack>
-        );
-      })}
-    </Stack>
+                          {actionText && !sharedAction && (
+                            <Text size="sm" c="dimmed" pl="xs">
+                              {actionText}
+                            </Text>
+                          )}
+                        </Stack>
+                      </List.Item>
+                    );
+                  })}
+                </List>
+              </Stack>
+            );
+          })}
+        </Stack>
+      </Collapse>
+      {!isOpen && (
+        <Text size="sm" c="dimmed">
+          {headerText}
+        </Text>
+      )}
+    </Paper>
   );
 }
