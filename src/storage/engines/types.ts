@@ -586,9 +586,8 @@ export abstract class StorageEngine {
     }
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
-    const activeCondition = searchParams.condition || null;
-    const { currentRow, creationIndex } = await this._getSequence(config, activeCondition);
-    // Sequence is already filtered when conditions are present, no need to filter again
+    const { currentRow, creationIndex } = await this._getSequence(config, null);
+    // Sequence will be filtered by condition in Shell.tsx; store unfiltered sequence here
     const filteredSequence = currentRow;
     this.participantData = {
       participantId: this.currentParticipantId,
