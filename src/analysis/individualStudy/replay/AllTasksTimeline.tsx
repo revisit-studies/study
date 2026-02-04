@@ -142,7 +142,7 @@ export function AllTasksTimeline({
     });
 
     return allElements;
-  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig?.components, maxHeight, studyId]);
+  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig?.components, maxHeight, studyId, participantData.searchParams?.condition]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {
