@@ -14,65 +14,50 @@ export function parseConditionParam(condition?: string | string[] | null): strin
   return condition.split(',').map((c) => c.trim()).filter(Boolean);
 }
 
-// TODO: travese first
 export function filterSequenceByCondition(sequence: Sequence, condition?: string | string[] | null): Sequence {
   const conditions = parseConditionParam(condition);
 
-  // default condition
   if (conditions.length === 0) {
     return sequence;
   }
 
   const filterNode = (node: Sequence): Sequence | null => {
-    if (node.condition && !conditions.includes(node.condition)) {
+    const isMatchedCondition = !node.condition || conditions.includes(node.condition);
+
+    const filteredComponents: Sequence['components'] = [];
+    for (const component of node.components) {
+      if (typeof component === 'string') {
+        if (isMatchedCondition) {
+          filteredComponents.push(component);
+        }
+      } else {
+        const filteredChild = filterNode(component);
+        if (filteredChild) {
+          filteredComponents.push(filteredChild);
+        }
+      }
+    }
+
+    if (!isMatchedCondition && filteredComponents.length === 0) {
       return null;
     }
 
-    const filteredComponents: Sequence['components'] = [];
-
-    node.components.forEach((component) => {
-      if (typeof component === 'string') {
-        filteredComponents.push(component);
-        return;
-      }
-
-      const filteredChild = filterNode(component);
-      if (filteredChild) {
-        filteredComponents.push(filteredChild);
-      }
-    });
-
-    if (node.condition && !conditions.includes(node.condition)) {
-      return filteredComponents.length > 0
-        ? { ...node, components: filteredComponents }
-        : null;
-    }
-
-    return {
-      ...node,
-      components: filteredComponents,
-    };
+    return { ...node, components: filteredComponents };
   };
 
-  const filtered = filterNode(sequence);
-  if (!filtered) {
-    return { ...sequence, components: [] };
-  }
-
-  return filtered;
+  return filterNode(sequence) ?? { ...sequence, components: [] };
 }
 
-// Get all conditions used in a sequence by traversing sequence in the study config
-// TODO: double check traverse logic
 export function getSequenceConditions(sequence: StudyConfig['sequence'] | Sequence): string[] {
   const conditions = new Set<string>();
 
   const collect = (node: StudyConfig['sequence'] | Sequence) => {
-    if ('condition' in node && node.condition) {
+    if (node.condition) {
       conditions.add(node.condition);
     }
 
-    if ('components' in node && Array.isArray(node.components)) {
+    // Get conditions from the nested sequences
+    if ('components' in node) {
       node.components.forEach((component) => {
         if (typeof component !== 'string') {
           collect(component);
