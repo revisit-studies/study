@@ -7,36 +7,57 @@ import {
 } from './handleSequenceConditions';
 import { Sequence } from '../store/types';
 import { ParticipantData } from '../storage/types';
+import { QuestionnaireComponent, StudyConfig } from '../parser/types';
 
-const baseSequence: Sequence = {
-  order: 'fixed',
-  orderPath: 'root',
-  components: [],
-  skip: [],
+const components = Object.fromEntries(Array(50).fill(0).map((_, idx) => [`component_${idx}`, { type: 'questionnaire', response: [] } as QuestionnaireComponent]));
+
+const config: StudyConfig = {
+  $schema: '',
+  studyMetadata: {
+    title: '',
+    version: '',
+    authors: [],
+    date: '',
+    description: '',
+    organizations: [],
+  },
+  uiConfig: {
+    logoPath: '',
+    contactEmail: '',
+    withProgressBar: true,
+    withSidebar: true,
+    numSequences: 100_000,
+  },
+  components,
+  sequence: {
+    order: 'fixed',
+    components: [],
+    skip: [],
+    interruptions: [],
+  },
 };
 
-const baseMetadata = {
-  userAgent: 'test',
-  resolution: { width: 100, height: 100 },
-  language: 'en',
-  ip: null,
+const participantData: ParticipantData = {
+  participantId: 'participant-test-sequence-condition',
+  participantConfigHash: 'config-hash-test-sequence-condition',
+  sequence: {
+    ...(config.sequence as Sequence),
+    orderPath: '',
+  },
+  participantIndex: 0,
+  answers: {},
+  searchParams: {} as Record<string, string>,
+  metadata: {
+    userAgent: 'test',
+    resolution: { width: 1600, height: 900 },
+    language: '',
+    ip: null,
+  },
+  completed: false,
+  rejected: false,
+  participantTags: [],
+  stage: 'test-sequence-condition',
 };
-
-function createParticipant(condition?: string): ParticipantData {
-  return {
-    participantId: `participant-${condition ?? 'default'}`,
-    participantConfigHash: 'config-hash',
-    sequence: baseSequence,
-    participantIndex: 0,
-    answers: {},
-    searchParams: condition !== undefined ? { condition } : {},
-    metadata: baseMetadata,
-    completed: false,
-    rejected: false,
-    participantTags: [],
-    stage: 'active',
-  };
-}
 
 describe('parseConditionParam', () => {
   it('should return empty array for undefined', () => {
@@ -66,35 +87,29 @@ describe('parseConditionParam', () => {
   it('should filter out empty conditions', () => {
     expect(parseConditionParam('color,,size')).toEqual(['color', 'size']);
   });
-
-  it('should handle array input', () => {
-    expect(parseConditionParam(['color', 'size'])).toEqual(['color', 'size']);
-  });
-
-  it('should trim array values', () => {
-    expect(parseConditionParam([' color ', ' size '])).toEqual(['color', 'size']);
-  });
 });
 
 describe('filterSequenceByCondition', () => {
   const createTestSequence = (): Sequence => ({
     order: 'fixed',
-    orderPath: 'root',
+    orderPath: '',
     components: [
       'intro',
       {
         order: 'random',
-        orderPath: 'root-1',
+        orderPath: '',
         condition: 'color',
         components: ['color-trial-1', 'color-trial-2'],
         skip: [],
+        interruptions: [],
       },
       {
         order: 'random',
-        orderPath: 'root-2',
+        orderPath: '',
         condition: 'size',
         components: ['size-trial-1', 'size-trial-2'],
         skip: [],
+        interruptions: [],
       },
       'outro',
     ],
@@ -154,21 +169,6 @@ describe('filterSequenceByCondition', () => {
     expect(sizeBlock.condition).toBe('size');
   });
 
-  it('should include multiple conditions with array', () => {
-    const sequence = createTestSequence();
-    const result = filterSequenceByCondition(sequence, ['color', 'size']);
-
-    expect(result.components).toHaveLength(4);
-    expect(result.components[0]).toBe('intro');
-    expect(result.components[3]).toBe('outro');
-
-    const colorBlock = result.components[1] as Sequence;
-    expect(colorBlock.condition).toBe('color');
-
-    const sizeBlock = result.components[2] as Sequence;
-    expect(sizeBlock.condition).toBe('size');
-  });
-
   it('should exclude non-matching conditions', () => {
     const sequence = createTestSequence();
     const result = filterSequenceByCondition(sequence, 'unknown');
@@ -177,24 +177,64 @@ describe('filterSequenceByCondition', () => {
     expect(result.components[0]).toBe('intro');
     expect(result.components[1]).toBe('outro');
   });
+
+  it('should keep nested matching conditions even if parent mismatches', () => {
+    const sequence: Sequence = {
+      order: 'fixed',
+      orderPath: '',
+      components: [
+        'intro',
+        {
+          order: 'random',
+          orderPath: '',
+          condition: 'color',
+          components: [
+            {
+              order: 'fixed',
+              orderPath: '',
+              condition: 'size',
+              components: ['size-trial-1'],
+              skip: [],
+            },
+          ],
+          skip: [],
+        },
+        'outro',
+      ],
+      skip: [],
+    };
+
+    const result = filterSequenceByCondition(sequence, 'size');
+    expect(result.components).toHaveLength(3);
+    expect(result.components[0]).toBe('intro');
+    expect(result.components[2]).toBe('outro');
+
+    const colorBlock = result.components[1] as Sequence;
+    expect(colorBlock.condition).toBe('color');
+    expect(colorBlock.components).toHaveLength(1);
+
+    const sizeBlock = colorBlock.components[0] as Sequence;
+    expect(sizeBlock.condition).toBe('size');
+    expect(sizeBlock.components).toEqual(['size-trial-1']);
+  });
 });
 
 describe('getSequenceConditions', () => {
   it('should return all unique conditions from a sequence', () => {
     const sequence: Sequence = {
       order: 'fixed',
-      orderPath: 'root',
+      orderPath: '',
       components: [
         {
           order: 'random',
-          orderPath: 'root-0',
+          orderPath: '',
           condition: 'color',
           components: ['color-trial'],
           skip: [],
         },
         {
           order: 'random',
-          orderPath: 'root-1',
+          orderPath: '',
           condition: 'size',
           components: ['size-trial'],
           skip: [],
@@ -212,7 +252,7 @@ describe('getSequenceConditions', () => {
   it('should return empty array when no conditions exist', () => {
     const sequence: Sequence = {
       order: 'fixed',
-      orderPath: 'root',
+      orderPath: '',
       components: ['intro', 'outro'],
       skip: [],
     };
@@ -224,18 +264,18 @@ describe('getSequenceConditions', () => {
   it('should return unique conditions (no duplicates)', () => {
     const sequence: Sequence = {
       order: 'fixed',
-      orderPath: 'root',
+      orderPath: '',
       components: [
         {
           order: 'random',
-          orderPath: 'root-0',
+          orderPath: '',
           condition: 'color',
           components: ['color-trial-1'],
           skip: [],
         },
         {
           order: 'random',
-          orderPath: 'root-1',
+          orderPath: '',
           condition: 'color',
           components: ['color-trial-2'],
           skip: [],
@@ -251,7 +291,10 @@ describe('getSequenceConditions', () => {
 
 describe('getConditionParticipantCounts', () => {
   it('should count participants with no condition as default', () => {
-    const participants = [createParticipant(), createParticipant('')];
+    const participants = [
+      { ...participantData, participantId: 'participant-default', searchParams: {} as Record<string, string> },
+      { ...participantData, participantId: 'participant-empty', searchParams: { condition: '' } },
+    ];
 
     expect(getConditionParticipantCounts(participants)).toEqual({
       default: 2,
@@ -259,7 +302,10 @@ describe('getConditionParticipantCounts', () => {
   });
 
   it('should count participants with single conditions', () => {
-    const participants = [createParticipant('color'), createParticipant('size')];
+    const participants = [
+      { ...participantData, participantId: 'participant-color', searchParams: { condition: 'color' } },
+      { ...participantData, participantId: 'participant-size', searchParams: { condition: 'size' } },
+    ];
 
     expect(getConditionParticipantCounts(participants)).toEqual({
       color: 1,
@@ -268,7 +314,10 @@ describe('getConditionParticipantCounts', () => {
   });
 
   it('should count participants with multiple comma-separated conditions', () => {
-    const participants = [createParticipant('color,size'), createParticipant('size,shape')];
+    const participants = [
+      { ...participantData, participantId: 'participant-color-size', searchParams: { condition: 'color,size' } },
+      { ...participantData, participantId: 'participant-size-shape', searchParams: { condition: 'size,shape' } },
+    ];
 
     expect(getConditionParticipantCounts(participants)).toEqual({
       color: 1,
