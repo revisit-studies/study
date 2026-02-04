@@ -28,6 +28,7 @@ export function SingleTask({
   trialOrder,
   participantId,
   studyId,
+  condition,
 }: {
   name: string,
   height: number,
@@ -40,7 +41,8 @@ export function SingleTask({
   incomplete: boolean,
   trialOrder: string,
   participantId: string,
-  studyId: string
+  studyId: string,
+  condition?: string
 }) {
   const [isHover, setIsHover] = useState(false);
 
@@ -49,7 +51,7 @@ export function SingleTask({
   const navigateToTrial = useNavigateToTrial();
 
   return (
-    <g onClick={() => navigateToTrial(trialOrder, participantId, studyId)} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)} style={{ cursor: 'pointer' }}>
+    <g onClick={() => navigateToTrial(trialOrder, participantId, studyId, condition)} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)} style={{ cursor: 'pointer' }}>
       <rect
         opacity={1}
         fill={isHover ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}
