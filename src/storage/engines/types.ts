@@ -2,7 +2,6 @@ import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import throttle from 'lodash.throttle';
 import { StudyConfig } from '../../parser/types';
-import { filterSequenceByCondition, getSequenceConditions } from '../../utils/handleSequenceConditions';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
@@ -444,7 +443,7 @@ export abstract class StorageEngine {
   // This function is one of the most critical functions in the storage engine.
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
-  protected async _getSequence(config?: StudyConfig, activeCondition?: string | string[] | null) {
+  protected async _getSequence() {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
@@ -502,23 +501,10 @@ export abstract class StorageEngine {
     // Query all the intents to get a sequence and find our position in the queue
     sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
-    // Determine whether the sequence uses conditions
-    const configConditions = config ? getSequenceConditions(config.sequence) : [];
-    const hasConditions = configConditions.length > 0;
-
-    // Always start from the shared Latin-square sequence array
-    const storedSequenceArray = await this.getSequenceArray();
-    if (!storedSequenceArray) {
+    // Get the latin square
+    const sequenceArray = await this.getSequenceArray();
+    if (!sequenceArray) {
       throw new Error('Latin square not initialized');
-    }
-
-    let sequenceArray: Sequence[];
-    if (hasConditions && config) {
-      // Filter each row of the stored Latin square by this participant's condition
-      sequenceArray = storedSequenceArray.map((seq) => filterSequenceByCondition(seq, activeCondition));
-    } else {
-      // No conditions: use stored Latin square as-is
-      sequenceArray = storedSequenceArray;
     }
 
     // Get the current row
@@ -585,13 +571,11 @@ export abstract class StorageEngine {
     }
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
-    const { currentRow, creationIndex } = await this._getSequence(config, null);
-    // Sequence will be filtered by condition in Shell.tsx; store unfiltered sequence here
-    const filteredSequence = currentRow;
+    const { currentRow, creationIndex } = await this._getSequence();
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
-      sequence: filteredSequence,
+      sequence: currentRow,
       participantIndex: creationIndex,
       answers: {},
       searchParams,
@@ -710,6 +694,7 @@ export abstract class StorageEngine {
   // Updates the participant's stored search params.
   async updateParticipantSearchParams(searchParams: Record<string, string>) {
     await this.verifyStudyDatabase();
+
     if (!this.participantData) {
       throw new Error('Participant data not initialized');
     }

@@ -32,25 +32,13 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
 import { hash } from '../storage/engines/utils';
-import {
-  filterSequenceByCondition,
-  getSequenceConditions,
-  parseConditionParam,
-} from '../utils/handleSequenceConditions';
+import { filterSequenceByCondition, getSequenceConditions } from '../utils/handleSequenceConditions';
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
   const studyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
   const isValidStudyId = globalConfig.configsList.includes(studyId) || studyId === '__revisit-widget';
-
-  const [routes, setRoutes] = useState<RouteObject[]>([]);
-  const [store, setStore] = useState<Nullable<StudyStore>>(null);
-  const { storageEngine } = useStorageEngine();
-  const [searchParams] = useSearchParams();
-
-  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
-  const activeCondition = useMemo(() => searchParams.get('condition'), [searchParams]);
 
   useEffect(() => {
     if (studyId !== '__revisit-widget') {
@@ -65,8 +53,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           parseStudyConfig(event.data.payload).then(async (config) => {
             setActiveConfig(config);
             const sequenceArray = await generateSequenceArray(config);
-            const filteredSequenceArray = sequenceArray.map((sequence) => filterSequenceByCondition(sequence, activeCondition));
-            window.parent.postMessage({ type: 'revisitWidget/SEQUENCE_ARRAY', payload: filteredSequenceArray }, '*');
+            window.parent.postMessage({ type: 'revisitWidget/SEQUENCE_ARRAY', payload: sequenceArray }, '*');
           });
         }
       };
@@ -80,7 +67,15 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       };
     }
     return () => { };
-  }, [globalConfig, studyId, activeCondition]);
+  }, [globalConfig, studyId]);
+
+  const [routes, setRoutes] = useState<RouteObject[]>([]);
+  const [store, setStore] = useState<Nullable<StudyStore>>(null);
+  const { storageEngine } = useStorageEngine();
+  const [searchParams] = useSearchParams();
+
+  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
+  const studyCondition = useMemo(() => searchParams.get('condition'), [searchParams]);
 
   useEffect(() => {
     async function initializeUserStoreRouting() {
@@ -93,10 +88,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         await storageEngine.saveConfig(activeConfig);
 
         const sequenceArray = await storageEngine.getSequenceArray();
-        const configConditions = getSequenceConditions(activeConfig.sequence);
-        const sequenceArrayHasConditions = sequenceArray?.some((sequence) => getSequenceConditions(sequence).length > 0) ?? false;
-
-        if (!sequenceArray || (configConditions.length > 0 && !sequenceArrayHasConditions)) {
+        if (!sequenceArray) {
           await storageEngine.setSequenceArray(
             await generateSequenceArray(activeConfig),
           );
@@ -136,16 +128,13 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantId || urlParticipantId,
         );
 
-        if (searchParamsObject.condition && participantSession.searchParams?.condition !== searchParamsObject.condition) {
+        if (studyCondition) {
           const updatedSearchParams = {
             ...participantSession.searchParams,
-            condition: searchParamsObject.condition,
+            condition: studyCondition,
           };
           await storageEngine.updateParticipantSearchParams(updatedSearchParams);
-          participantSession.searchParams = updatedSearchParams;
         }
-
-        const sessionCondition = participantSession.searchParams?.condition || activeCondition;
 
         const modes = await storageEngine.getModes(studyId);
         const activeHash = await hash(JSON.stringify(activeConfig));
@@ -156,8 +145,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], studyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
         }
 
+        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, studyCondition);
         // Initialize the redux stores
-        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, sessionCondition);
         const newStore = await studyStoreCreator(
           studyId,
           participantConfig,
@@ -174,20 +163,16 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         console.error('Error initializing user store routing:', error);
         // Fallback: initialize the store with empty data
         const generatedSequences = generateSequenceArray(activeConfig);
-        const requestedConditions = parseConditionParam(activeCondition);
-        const matchingSequence = requestedConditions.length > 0
+        const matchingSequence = studyCondition
           ? generatedSequences.find(
-            (sequence) => requestedConditions.some(
-              (condition) => getSequenceConditions(sequence).includes(condition),
-            ),
+            (sequence) => getSequenceConditions(sequence).includes(studyCondition),
           )
           : generatedSequences[0];
-        const fallbackSequence = matchingSequence || generatedSequences[0];
 
         const emptyStore = await studyStoreCreator(
           studyId,
           activeConfig,
-          filterSequenceByCondition(fallbackSequence, activeCondition),
+          matchingSequence || generatedSequences[0],
           {
             language: '',
             userAgent: '',
@@ -242,7 +227,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       ]);
     }
     initializeUserStoreRouting();
-  }, [storageEngine, activeConfig, studyId, searchParams, participantId, activeCondition]);
+  }, [storageEngine, activeConfig, studyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
 

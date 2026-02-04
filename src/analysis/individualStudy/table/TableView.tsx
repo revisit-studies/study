@@ -72,7 +72,7 @@ export function TableView({
   };
 
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => {
-    const hasCondition = visibleParticipants.some((participant) => !!participant.searchParams?.condition);
+    const hasCondition = visibleParticipants.some((participant) => participant.searchParams?.condition);
 
     return [
       {
@@ -82,7 +82,7 @@ export function TableView({
           return { percent: (Object.entries(row.answers).length - incompleteEntries.length) / (getSequenceFlatMap(row.sequence).length - 1), completed: row.completed, rejected: row.rejected };
         },
         header: 'Status',
-        size: 110,
+        size: 100,
         Cell: ({ cell }: { cell: MrtCell<ParticipantData, { percent: number, completed: boolean, rejected: ParticipantData['rejected'] }> }) => {
           const cellValue = cell.getValue();
           return (
@@ -118,15 +118,15 @@ export function TableView({
       {
         accessorKey: 'stage',
         header: 'Stage',
-        size: 120,
+        size: 100,
         Cell: ({ cell }: { cell: MrtCell<ParticipantData, string> }) => {
           const stageName = cell.getValue();
           if (!stageName || stageName === '') {
             return (
               <Badge
                 color="gray"
-                variant="light"
                 size="md"
+                variant="light"
               >
                 N/A
               </Badge>
@@ -136,8 +136,8 @@ export function TableView({
           return (
             <Badge
               color={stageColor}
-              variant="filled"
               size="md"
+              variant="filled"
             >
               {stageName}
             </Badge>
@@ -148,8 +148,8 @@ export function TableView({
         accessorKey: 'participantId',
         header: 'ID',
         Cell: ({ row }: { row: { original: ParticipantData } }) => (
-          <Flex align="center" gap="xs">
-            <Text>{row.original.participantId}</Text>
+          <Flex align="center">
+            <Text size="sm">{row.original.participantId}</Text>
             <Tooltip label={copied === row.original.participantId ? 'Copied' : 'Copy ID'}>
               <ActionIcon
                 variant="subtle"
@@ -162,23 +162,29 @@ export function TableView({
           </Flex>
         ),
       },
-      ...(hasCondition ? [{
-        accessorFn: (row: ParticipantData) => row.searchParams?.condition || 'default',
-        header: 'Condition',
-        size: 130,
-      }] : []),
-      ...(studyConfig.uiConfig.participantNameField ? [{
-        accessorFn: (row: ParticipantData) => participantName(row, studyConfig),
-        header: 'Name',
-      }] : []),
+      ...(studyConfig.uiConfig.participantNameField ? [
+        {
+          accessorFn: (row: ParticipantData) => participantName(row, studyConfig),
+          header: 'Name',
+          size: 100,
+        },
+      ] : []),
+      ...(hasCondition ? [
+        {
+          accessorFn: (row: ParticipantData) => row.searchParams?.condition || 'default',
+          header: 'Condition',
+          size: 130,
+        },
+      ] : []),
       {
         accessorFn: (row: ParticipantData) => new Date(Math.max(...Object.values<StoredAnswer>(row.answers).filter((data) => data.endTime > 0).map((s) => s.endTime)) - Math.min(...Object.values<StoredAnswer>(row.answers).filter((data) => data.startTime > 0).map((s) => s.startTime))),
         header: 'Duration',
+        size: 120,
         Cell: ({ cell }: { cell: MrtCell<ParticipantData, Date> }) => (
           !Number.isNaN(cell.getValue()) ? (
             <Badge
               variant="light"
-              size="lg"
+              size="md"
               color="gray"
               leftSection={<IconHourglassEmpty width={18} height={18} style={{ paddingTop: 1 }} />}
               pb={1}
@@ -191,19 +197,19 @@ export function TableView({
       },
       {
         accessorFn: (row: ParticipantData) => new Date(Math.min(...Object.values<StoredAnswer>(row.answers).filter((data) => data.startTime > 0).map((s) => s.startTime))),
-        Cell: ({ cell }) => (
-          formatDate(cell.getValue() as Date)
-        ),
         header: 'Start Time',
+        size: 150,
+        Cell: ({ cell }: { cell: MrtCell<ParticipantData, Date> }) => (formatDate(cell.getValue() as Date)),
       },
       {
         accessorFn: (row: ParticipantData) => Object.values(row.answers).filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0).map((answer) => componentAnswersAreCorrect(answer.answer, answer.correctAnswer)),
         header: 'Correct Answers',
+        size: 160,
         Cell: ({ cell }: { cell: MrtCell<ParticipantData, boolean[]> }) => (
-          <>
+          <Group gap={4}>
             <Badge
               variant="light"
-              size="lg"
+              size="md"
               color="green"
               leftSection={<IconCheck width={18} height={18} style={{ paddingTop: 1 }} />}
               pb={1}
@@ -212,7 +218,7 @@ export function TableView({
             </Badge>
             <Badge
               variant="light"
-              size="lg"
+              size="md"
               color="red"
               leftSection={<IconX width={18} height={18} style={{ paddingTop: 1 }} />}
               pb={1}
@@ -220,12 +226,13 @@ export function TableView({
 
               {cell.getValue().length - cell.getValue().filter((b) => b).length}
             </Badge>
-          </>
+          </Group>
         ),
       },
       {
         accessorKey: 'metadata',
         header: 'Metadata',
+        size: 200,
         Cell: ({ cell }: { cell: MrtCell<ParticipantData, ParticipantData['metadata']> }) => <MetaCell metaData={cell.getValue()} />,
       },
     ];

@@ -87,17 +87,6 @@ export function ThinkAloudFooter({
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [screenRecordingUrl, setScreenRecordingUrl] = useState<string | null>(null);
 
-  const replayHref = useMemo(() => {
-    const params = new URLSearchParams(participant?.searchParams || {});
-    params.set('participantId', participantId);
-    params.set('currentTrial', currentTrial);
-    if (isReplay) {
-      return `${PREFIX}analysis/stats/${studyId}/tagging?${params.toString()}`;
-    }
-    const trialIndex = participant ? +(participant.answers[currentTrial]?.trialOrder.split('_')[0] || 0) : 0;
-    return `${PREFIX}${studyId}/${encryptIndex(trialIndex)}?${params.toString()}`;
-  }, [participantId, currentTrial, isReplay, studyId, participant]);
-
   useEffect(() => {
     async function fetchAssetsUrl() {
       if (!storageEngine || !participantId || !currentTrial) {
@@ -472,7 +461,7 @@ export function ThinkAloudFooter({
             mt="lg"
             variant="light"
             component="a"
-            href={replayHref}
+            href={isReplay ? `${PREFIX}analysis/stats/${studyId}/tagging?participantId=${participantId}&currentTrial=${currentTrial}` : `${PREFIX}${studyId}/${encryptIndex(participant ? +(participant.answers[currentTrial]?.trialOrder.split('_')[0] || 0) : 0)}?participantId=${participantId}&currentTrial=${currentTrial}`}
             target="_blank"
           >
             {isReplay ? 'Transcript' : 'Replay'}

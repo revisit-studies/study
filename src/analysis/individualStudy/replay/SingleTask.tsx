@@ -16,8 +16,32 @@ const TASK_GAP = 1;
 const HAS_CORRECT_MARGIN = 15;
 
 export function SingleTask({
-  xScale, name, height, labelHeight = 0, isCorrect, hasCorrect, scaleStart, scaleEnd, incomplete, trialOrder, participantId, studyId, searchParams = {},
-}: { name: string, height: number, xScale: d3.ScaleLinear<number, number>, labelHeight?: number, isCorrect: boolean, hasCorrect: boolean, scaleStart: number, scaleEnd: number, incomplete: boolean, trialOrder: string, participantId: string, studyId: string, searchParams?: Record<string, string> }) {
+  xScale,
+  name,
+  height,
+  labelHeight = 0,
+  isCorrect,
+  hasCorrect,
+  scaleStart,
+  scaleEnd,
+  incomplete,
+  trialOrder,
+  participantId,
+  studyId,
+}: {
+  name: string,
+  height: number,
+  xScale: d3.ScaleLinear<number, number>,
+  labelHeight?: number,
+  isCorrect: boolean,
+  hasCorrect: boolean,
+  scaleStart: number,
+  scaleEnd: number,
+  incomplete: boolean,
+  trialOrder: string,
+  participantId: string,
+  studyId: string
+}) {
   const [isHover, setIsHover] = useState(false);
 
   const [ref, { width: labelWidth }] = useResizeObserver();
@@ -25,7 +49,7 @@ export function SingleTask({
   const navigateToTrial = useNavigateToTrial();
 
   return (
-    <g onClick={() => navigateToTrial(trialOrder, participantId, studyId, searchParams)} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)} style={{ cursor: 'pointer' }}>
+    <g onClick={() => navigateToTrial(trialOrder, participantId, studyId)} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)} style={{ cursor: 'pointer' }}>
       <rect
         opacity={1}
         fill={isHover ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}

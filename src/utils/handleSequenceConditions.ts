@@ -2,8 +2,6 @@ import { StudyConfig } from '../parser/types';
 import { ParticipantData } from '../storage/types';
 import { Sequence } from '../store/types';
 
-type SequenceLike = StudyConfig['sequence'] | Sequence;
-
 export function parseConditionParam(condition?: string | string[] | null): string[] {
   if (!condition) {
     return [];
@@ -11,12 +9,16 @@ export function parseConditionParam(condition?: string | string[] | null): strin
   if (Array.isArray(condition)) {
     return condition.map((c) => c.trim()).filter(Boolean);
   }
+  // multiple conditions are separated by commas
+  // e.g. ?condition=condition1,condition2
   return condition.split(',').map((c) => c.trim()).filter(Boolean);
 }
 
+// TODO: travese first
 export function filterSequenceByCondition(sequence: Sequence, condition?: string | string[] | null): Sequence {
   const conditions = parseConditionParam(condition);
 
+  // default condition
   if (conditions.length === 0) {
     return sequence;
   }
@@ -60,10 +62,12 @@ export function filterSequenceByCondition(sequence: Sequence, condition?: string
   return filtered;
 }
 
-export function getSequenceConditions(sequence: SequenceLike): string[] {
+// Get all conditions used in a sequence by traversing sequence in the study config
+// TODO: double check traverse logic
+export function getSequenceConditions(sequence: StudyConfig['sequence'] | Sequence): string[] {
   const conditions = new Set<string>();
 
-  const collect = (node: SequenceLike) => {
+  const collect = (node: StudyConfig['sequence'] | Sequence) => {
     if ('condition' in node && node.condition) {
       conditions.add(node.condition);
     }

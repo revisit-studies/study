@@ -3,15 +3,9 @@ import { encryptIndex } from './encryptDecryptIndex';
 import { PREFIX } from './Prefix';
 
 export function useNavigateToTrial() {
-  return useCallback((
-    trialOrder: string,
-    participantId: string,
-    studyId: string,
-    searchParams: Record<string, string> = {},
-  ) => {
+  return useCallback((trialOrder: string, participantId: string, studyId: string) => {
     const rejoined = trialOrder.split('_').map((index) => encryptIndex(+index)).join('/');
-    const params = new URLSearchParams(searchParams);
-    const url = `${studyId}/${rejoined}?${params.toString()}`;
+    const url = `${studyId}/${rejoined}?participantId=${participantId}`;
     window.open(`${PREFIX}${url}`, '_blank');
   }, []);
 }

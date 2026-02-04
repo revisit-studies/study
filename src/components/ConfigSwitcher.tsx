@@ -74,39 +74,29 @@ function StudyCard({
   const [selectedCondition, setSelectedCondition] = useState<string>('default');
   const [conditionParticipantCounts, setConditionParticipantCounts] = useState<Record<string, number>>({});
 
+  // Load participant counts into dropdown for each condition
   useEffect(() => {
-    let isActive = true;
-
     async function loadConditionCounts() {
       if (!storageEngine) return;
       try {
         const participants = await storageEngine.getAllParticipantsData(configName);
-        if (!isActive) return;
-
         setConditionParticipantCounts(getConditionParticipantCounts(participants));
       } catch (error) {
-        if (isActive) {
-          setConditionParticipantCounts({});
-        }
+        setConditionParticipantCounts({});
         console.error('Failed to load condition counts:', error);
       }
     }
 
     loadConditionCounts();
-
-    return () => {
-      isActive = false;
-    };
   }, [configName, storageEngine]);
 
   const conditionOptions = useMemo(() => (
     ['default', ...conditions].map((condition) => ({
       value: condition,
-      label: studyStatusAndTiming
-        ? `${condition} (${conditionParticipantCounts[condition] || 0} participant${(conditionParticipantCounts[condition] || 0) === 1 ? '' : 's'})`
-        : condition,
+      // e.g. default (10 participants)
+      label: `${condition} (${conditionParticipantCounts[condition] || 0} participant${(conditionParticipantCounts[condition] || 0) === 1 ? '' : 's'})`,
     }))
-  ), [conditions, studyStatusAndTiming, conditionParticipantCounts]);
+  ), [conditions, conditionParticipantCounts]);
 
   return (
     <Card key={configName} shadow="sm" radius="md" my="sm" withBorder>
@@ -230,7 +220,7 @@ function StudyCard({
               <Button
                 leftSection={<IconListCheck />}
                 component="a"
-                href={selectedCondition === 'default' ? `${PREFIX}${url}` : `${PREFIX}${url}?condition=${encodeURIComponent(selectedCondition)}`}
+                href={selectedCondition === 'default' ? `${PREFIX}${url}` : `${PREFIX}${url}?condition=${selectedCondition}`}
               >
                 Go to Study
               </Button>
