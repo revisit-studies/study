@@ -15,6 +15,7 @@ export function ErrorLoadingConfig({
   const categoryOrder: ErrorWarningCategory[] = [
     // error
     'invalid-config',
+    'invalid-library-config',
     'undefined-library',
     'undefined-base-component',
     'undefined-component',
@@ -27,6 +28,10 @@ export function ErrorLoadingConfig({
 
   // Format category labels by capitalizing each word and replacing hyphens with spaces
   const formatCategoryLabel = (category: ErrorWarningCategory) => category.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+  const getActionText = (params: unknown) => (
+    params && typeof params === 'object' && 'action' in params ? (params as { action: string }).action : null
+  );
 
   // Render inline code wrapped in backticks
   const renderInlineCode = (text: string) => {
@@ -43,11 +48,7 @@ export function ErrorLoadingConfig({
     ));
   };
 
-  const getActionText = (params: unknown) => (
-    params && typeof params === 'object' && 'action' in params ? (params as { action: string }).action : null
-  );
-
-  // Try to combine similar messages with a common pattern
+  // Combine similar messages with a common pattern
   const combineMessages = (messages: string[]) => {
     if (messages.length <= 1) return messages;
 
@@ -56,11 +57,32 @@ export function ErrorLoadingConfig({
     const groupIndex = new Map<string, number>();
 
     messages.forEach((msg) => {
-      // Looking for patterns like "Component X is not defined in components object"
-      const match = msg.match(/^(.*?\s+)(.+?)(\s+(?:is|are|not).*)$/);
+      const libraryUsesMatch = msg.match(/^(Component\s+)(`[^`]+`)\s+in\s+library\s+(`[^`]+`)\s+(uses\b.*)$/);
+      if (libraryUsesMatch) {
+        const [, prefix, item, libraryName, usesSuffix] = libraryUsesMatch;
+        const suffix = ` in library ${libraryName} ${usesSuffix}`;
+        const key = `${prefix}|||${suffix}`;
+        const index = groupIndex.get(key);
+        if (index === undefined) {
+          groupIndex.set(key, groups.length);
+          groups.push({
+            key, prefix, suffix, items: [item],
+          });
+        } else {
+          groups[index].items.push(item);
+        }
+        return;
+      }
+
+      const usesMatch = msg.match(/^(.*?\s+)(.+?)(\s+uses\b.*)$/);
+      const isAreMatch = msg.match(/^(.*?\s+)(.+?)(\s+(?:is|are|not).*)$/);
+      const match = usesMatch ?? isAreMatch;
+
       if (match) {
         const [, prefix, item, suffix] = match;
-        const key = `${prefix}|||${suffix}`;
+        const libraryMatch = item.match(/in library `([^`]+)`/);
+        const libraryKey = libraryMatch ? `|||library:${libraryMatch[1]}` : '';
+        const key = `${prefix}|||${suffix}${libraryKey}`;
         const index = groupIndex.get(key);
         if (index === undefined) {
           groupIndex.set(key, groups.length);
@@ -88,6 +110,7 @@ export function ErrorLoadingConfig({
 
       if (group.items.length > 1) {
         suffix = suffix.replace(/\bis\b/, 'are');
+        suffix = suffix.replace(/\buses\b/, 'use');
       } else {
         suffix = suffix.replace(/\bare\b/, 'is');
       }
@@ -96,6 +119,7 @@ export function ErrorLoadingConfig({
     });
   };
 
+  // Group issues by category
   const groupCategory = issues.reduce<Record<ErrorWarningCategory, typeof issues>>((acc, error) => {
     const { category } = error;
 
@@ -107,10 +131,16 @@ export function ErrorLoadingConfig({
     return acc;
   }, {} as Record<ErrorWarningCategory, typeof issues>);
 
+  // Group issues by instancePath
   const groupIssues = Object.entries(groupCategory).reduce<Record<string, typeof issues>>((acc, [category, categoryIssues]) => {
     categoryIssues.forEach((error) => {
       const path = error.instancePath || 'root';
-      const key = `${category}:${path}`;
+      const actionText = getActionText(error.params);
+      const actionKey = actionText ?? 'no-action';
+      const messageKey = error.message || 'no-message';
+      const key = category === 'sequence-validation'
+        ? `${category}:::${path}:::${actionKey}:::${messageKey}`
+        : `${category}:::${path}:::${actionKey}`;
 
       if (!acc[key]) {
         acc[key] = [];
@@ -128,6 +158,7 @@ export function ErrorLoadingConfig({
   const badgeColor = type === 'error' ? 'red' : 'orange';
   const issueLabel = type === 'error' ? 'Error' : 'Warning';
   const count = issues.length;
+  // Open by default if errors, closed by default if warnings
   const [isOpen, setIsOpen] = useState(type === 'error');
 
   return (
@@ -159,7 +190,7 @@ export function ErrorLoadingConfig({
           {categoryOrder
             .map((category) => ({
               category,
-              entries: Object.entries(groupIssues).filter(([groupKey]) => groupKey.startsWith(`${category}:`)),
+              entries: Object.entries(groupIssues).filter(([groupKey]) => groupKey.startsWith(`${category}:::`)),
             }))
             .filter(({ entries }) => entries.length > 0)
             .map(({ category, entries }, index, visibleCategories) => {
@@ -171,7 +202,7 @@ export function ErrorLoadingConfig({
               return (
                 <Stack key={category} gap={0}>
                   <Group justify="space-between">
-                    <Text size="sm" fw={700}>{formatCategoryLabel(category)}</Text>
+                    <Text size="sm" fw="bold">{formatCategoryLabel(category)}</Text>
                     <Badge size="sm" variant="light" color={badgeColor}>
                       {categoryCount}
                       {' '}
@@ -179,12 +210,9 @@ export function ErrorLoadingConfig({
                       {categoryCount === 1 ? '' : 's'}
                     </Badge>
                   </Group>
-                  {sharedAction && (
-                    <Text size="sm" c="dimmed">{sharedAction}</Text>
-                  )}
                   <List size="xs" spacing="xs" mt="xs" listStyleType="none">
                     {entries.map(([groupKey, pathIssues]) => {
-                      const [, path] = groupKey.split(':');
+                      const [, path] = groupKey.split(':::');
                       const messages = pathIssues.map((error) => error.message || 'No message provided');
                       const combinedMessages = combineMessages(messages);
                       const actionTexts = pathIssues.map((error) => getActionText(error.params)).filter(Boolean);
@@ -193,7 +221,17 @@ export function ErrorLoadingConfig({
 
                       return (
                         <List.Item key={groupKey}>
-                          <Stack>
+                          <Stack gap={2}>
+                            {sharedAction && (
+                              <Text size="sm" c="dimmed">
+                                {sharedAction}
+                              </Text>
+                            )}
+                            {actionText && !sharedAction && (
+                              <Text size="sm" c="dimmed">
+                                {actionText}
+                              </Text>
+                            )}
                             <Text size="sm">
                               <Code component="span" fw="bold" bg="none">
                                 {path}
@@ -208,18 +246,13 @@ export function ErrorLoadingConfig({
                                 </Text>
                               ))}
                             </Text>
-                            {actionText && !sharedAction && (
-                              <Text size="sm" c="dimmed">
-                                {actionText}
-                              </Text>
-                            )}
                           </Stack>
                         </List.Item>
                       );
                     })}
                   </List>
                   {index < visibleCategories.length - 1 && (
-                    <Divider mt="xs" />
+                    <Divider mt="md" />
                   )}
                 </Stack>
               );
