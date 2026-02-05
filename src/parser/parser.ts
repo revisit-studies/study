@@ -51,7 +51,8 @@ export function parseGlobalConfig(fileData: string) {
 function verifyStudySkip(
   sequence: StudyConfig['sequence'],
   skipTargets: string[],
-  errors: { message: string, instancePath: string, params: { 'action': string }, category: string }[] = [],
+  errors: ParserErrorWarning[] = [],
+  warnings: ParserErrorWarning[] = [],
 ) {
   if (isDynamicBlock(sequence)) {
     return;
@@ -59,8 +60,8 @@ function verifyStudySkip(
 
   // Base case: empty sequence
   if (sequence.components.length === 0) {
-    // Push an error for an empty components array
-    errors.push({
+    // Push a warning for an empty components array
+    warnings.push({
       message: 'Sequence has an empty components array',
       instancePath: '/sequence/',
       params: { action: 'Remove empty components block or add components to the sequence' },
@@ -107,7 +108,7 @@ function verifyStudySkip(
       }
     } else {
       // Recursive case: component is a block
-      verifyStudySkip(component, skipTargets, errors);
+      verifyStudySkip(component, skipTargets, errors, warnings);
     }
   });
 
@@ -131,7 +132,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
       if (isInheritedComponent(component) && !studyConfig.baseComponents?.[component.baseComponent]) {
         errors.push({
           message: `Base component \`${component.baseComponent}\` is not defined in baseComponents object`,
-          instancePath: `/components/${componentName}`,
+          instancePath: '/baseComponents/',
           params: { action: 'Add the base component to the baseComponents object' },
           category: 'undefined-base-component',
         });
@@ -144,7 +145,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         || ('response' in component && component.response?.some((r) => 'location' in r && r.location === 'sidebar'));
 
       if (sidebarDisabled && isUsingSidebar) {
-        const instancePath = component.withSidebar === false ? `/components/${componentName}` : '/uiConfig/';
+        const instancePath = component.withSidebar === false ? '/components/' : '/uiConfig/';
         warnings.push({
           message: `Component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
           instancePath,
@@ -198,7 +199,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
 
   // Verify skip blocks are well defined
   const missingSkipTargets: string[] = [];
-  verifyStudySkip(studyConfig.sequence, missingSkipTargets);
+  verifyStudySkip(studyConfig.sequence, missingSkipTargets, errors, warnings);
   missingSkipTargets.forEach((skipTarget) => {
     errors.push({
       message: `Skip target \`${skipTarget}\` does not occur after the skip block it is used in`,

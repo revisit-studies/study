@@ -49,7 +49,7 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
         if (!importedLibrariesData[cleanLibraryName]) {
           const error: ParserErrorWarning = {
             message: `Library \`${cleanLibraryName}\` not found in imported libraries`,
-            instancePath: '',
+            instancePath: '/importedLibraries/',
             params: { action: 'Check the library name and make sure the library is imported correctly' },
             category: 'undefined-library',
           };
@@ -62,8 +62,8 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
         let librarySequence = library.sequences[sequenceName];
         if (!librarySequence) {
           const error: ParserErrorWarning = {
-            message: `Sequence \`${sequenceName}\` not found in library \`${libraryName}\``,
-            instancePath: '',
+            message: `Sequence \`${sequenceName}\` not found in library \`${cleanLibraryName}\``,
+            instancePath: `/importedLibraries/${cleanLibraryName}/sequence/`,
             params: { action: 'Check the sequence name' },
             category: 'sequence-validation',
           };
@@ -91,7 +91,7 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
       if (isInheritedComponent(component) && !libraryData.baseComponents?.[component.baseComponent]) {
         errors.push({
           message: `Base component \`${component.baseComponent}\` is not defined in baseComponents object in library \`${library}\``,
-          instancePath: `/importedLibraries/${library}/components/${componentName}`,
+          instancePath: `/importedLibraries/${library}/baseComponents/`,
           params: { action: 'Add the base component to the baseComponents object' },
           category: 'undefined-base-component',
         });
@@ -104,9 +104,9 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
         || ('response' in component && component.response?.some((r) => 'location' in r && r.location === 'sidebar'));
 
       if (sidebarDisabled && isUsingSidebar) {
-        const instancePath = component.withSidebar === false ? `/baseComponents/${componentName}` : '/uiConfig/';
+        const instancePath = component.withSidebar === false ? `/importedLibraries/${library}/components/` : `/importedLibraries/${library}/uiConfig/`;
         warnings.push({
-          message: `Library \`${library}\` component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
+          message: `Component \`${componentName}\` in library ${library} uses sidebar locations but sidebar is disabled`,
           instancePath,
           params: { action: 'Enable the sidebar or move the location to belowStimulus or aboveStimulus' },
           category: 'disabled-sidebar',
@@ -134,14 +134,14 @@ function parseLibraryConfig(fileData: string, libraryName: string): ParsedConfig
   if (!data) {
     errors.push({
       message: `Could not find library \`${libraryName}\``,
-      instancePath: '/importedLibraries/',
+      instancePath: 'root',
       params: { action: 'Make sure the library is in the correct location' },
       category: 'undefined-library',
     });
   } else if (!validatedData) {
     errors.push({
-      message: 'Library config is not valid',
-      instancePath: '',
+      message: `Library \`${libraryName}\` config is not valid`,
+      instancePath: `/importedLibraries/${libraryName}`,
       params: { action: 'Fix the errors in the library config' },
       category: 'invalid-library-config',
     });
