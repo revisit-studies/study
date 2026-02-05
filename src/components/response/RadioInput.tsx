@@ -9,6 +9,7 @@ import classes from './css/Radio.module.css';
 import inputClasses from './css/Input.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
+import { OptionLabel } from './OptionLabel';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
 export function RadioInput({
@@ -86,7 +87,7 @@ export function RadioInput({
               <Radio
                 disabled={disabled}
                 value={radio.value}
-                label={<InputLabel prompt={radio.label} infoText={radio.infoText} />}
+                label={<OptionLabel label={radio.label} infoText={radio.infoText} />}
                 styles={{
                   label: { display: !horizontal ? 'initial' : 'none' },
                 }}

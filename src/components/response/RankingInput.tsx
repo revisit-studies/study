@@ -23,6 +23,7 @@ import {
 } from '@mantine/core';
 import { useMemo, useState, useEffect } from 'react';
 import { InputLabel } from './InputLabel';
+import { OptionLabel } from './OptionLabel';
 import classes from './css/RankingDnd.module.css';
 import { RankingResponse, StringOption } from '../../parser/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
@@ -54,7 +55,7 @@ function SortableItem({ item, index }: { item: Item; index?: number }) {
       p="sm"
     >
       {index !== undefined && <Text c="dimmed" mr="sm">{index}</Text>}
-      <InputLabel prompt={item.label} infoText={item.infoText} />
+      <OptionLabel label={item.label} infoText={item.infoText} />
     </Paper>
   );
 }

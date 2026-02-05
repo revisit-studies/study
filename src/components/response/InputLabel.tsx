@@ -12,7 +12,7 @@ export function InputLabel({
   prompt: string;
   required?: boolean;
   index?: number;
-  enumerateQuestions?: boolean;
+  enumerateQuestions: boolean;
   infoText?: string;
 }) {
   return (
@@ -23,7 +23,7 @@ export function InputLabel({
       </Box>
       {infoText && (
         <Tooltip label={infoText} multiline maw={400} position="bottom">
-          <IconInfoCircle size={16} opacity={0.5} style={{ marginTop: 4 }} />
+          <IconInfoCircle size={16} opacity={0.5} style={{ marginTop: 6 }} />
         </Tooltip>
       )}
     </Flex>

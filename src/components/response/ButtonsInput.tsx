@@ -7,6 +7,7 @@ import { generateErrorMessage } from './utils';
 import classes from './css/ButtonsInput.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
+import { OptionLabel } from './OptionLabel';
 
 export function ButtonsInput({
   response,
@@ -58,8 +59,8 @@ export function ButtonsInput({
               className={classes.root}
               p="xs"
             >
-              <InputLabel
-                prompt={radio.label}
+              <OptionLabel
+                label={radio.label}
                 infoText={radio.infoText}
               />
             </Radio.Card>
