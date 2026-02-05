@@ -1674,14 +1674,7 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/StringOption"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "type": "string"
               },
               "type": "array"
             },
@@ -1735,14 +1728,7 @@
         "questionOptions": {
           "description": "The question options (rows) are the prompts for each response you'd like to record.",
           "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/StringOption"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string"
           },
           "type": "array"
         },
