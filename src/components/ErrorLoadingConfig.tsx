@@ -34,108 +34,79 @@ export function ErrorLoadingConfig({
     params && typeof params === 'object' && 'action' in params ? (params as { action: string }).action : null
   );
 
-  // Combine similar messages with a common pattern
-  const combineMessages = (messages: string[]) => {
+  // Combine messages that have same messages
+  const combineMessages = (messages: string[]): string[] => {
     if (messages.length <= 1) return messages;
 
     const listFormatter = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
-    const groups: Array<{ key: string; prefix?: string; suffix?: string; items: string[]; raw?: boolean }> = [];
-    const groupIndex = new Map<string, number>();
 
-    messages.forEach((msg) => {
-      const libraryUsesMatch = msg.match(/^(Component\s+)(`[^`]+`)\s+in\s+library\s+(`[^`]+`)\s+(uses\b.*)$/);
-      if (libraryUsesMatch) {
-        const [, prefix, item, libraryName, usesSuffix] = libraryUsesMatch;
-        const suffix = ` in library ${libraryName} ${usesSuffix}`;
-        const key = `${prefix}|||${suffix}`;
-        const index = groupIndex.get(key);
-        if (index === undefined) {
-          groupIndex.set(key, groups.length);
-          groups.push({
-            key, prefix, suffix, items: [item],
-          });
-        } else {
-          groups[index].items.push(item);
-        }
-        return;
-      }
+    const parseMessage = (msg: string) => {
+      // Parse message as prefix `item` suffix and extract it into three parts
+      const match = msg.match(/^(.*?)(`[^`]+`)(.*)$/);
+      return match ? { prefix: match[1], item: match[2], suffix: match[3] } : null;
+    };
 
-      const usesMatch = msg.match(/^(.*?\s+)(.+?)(\s+uses\b.*)$/);
-      const isAreMatch = msg.match(/^(.*?\s+)(.+?)(\s+(?:is|are|not).*)$/);
-      const match = usesMatch ?? isAreMatch;
+    const haveSameStructure = (parsedMessages: Array<{ prefix: string; item: string; suffix: string }>) => {
+      const template = parsedMessages[0];
+      return parsedMessages.every((m) => m.prefix === template.prefix && m.suffix === template.suffix);
+    };
 
-      if (match) {
-        const [, prefix, item, suffix] = match;
-        const libraryMatch = item.match(/in library `([^`]+)`/);
-        const libraryKey = libraryMatch ? `|||library:${libraryMatch[1]}` : '';
-        const key = `${prefix}|||${suffix}${libraryKey}`;
-        const index = groupIndex.get(key);
-        if (index === undefined) {
-          groupIndex.set(key, groups.length);
-          groups.push({
-            key, prefix, suffix, items: [item],
-          });
-        } else {
-          groups[index].items.push(item);
-        }
-      } else {
-        const key = `raw|||${msg}`;
-        const index = groupIndex.get(key);
-        if (index === undefined) {
-          groupIndex.set(key, groups.length);
-          groups.push({ key, items: [msg], raw: true });
-        }
-      }
-    });
+    const pluralizeSuffix = (suffix: string, isPlural: boolean) => (isPlural ? suffix.replace(/\bis\b/, 'are').replace(/\buses\b/, 'use') : suffix);
 
-    return groups.map((group) => {
-      if (group.raw) return group.items[0];
+    const parsed = messages.map(parseMessage);
+    const validParsed = parsed.filter((p) => p !== null);
+    if (validParsed.length !== parsed.length || !haveSameStructure(validParsed)) return messages;
 
-      const subject = group.items.length === 1 ? group.items[0] : listFormatter.format(group.items);
-      let suffix = group.suffix ?? '';
+    const template = validParsed[0];
+    const uniqueItems = [...new Set(validParsed.map((m) => m.item))];
+    const combinedItems = listFormatter.format(uniqueItems);
+    const suffix = pluralizeSuffix(template.suffix, uniqueItems.length > 1);
 
-      if (group.items.length > 1) {
-        suffix = suffix.replace(/\bis\b/, 'are');
-        suffix = suffix.replace(/\buses\b/, 'use');
-      } else {
-        suffix = suffix.replace(/\bare\b/, 'is');
-      }
-
-      return `${group.prefix}${subject}${suffix}`;
-    });
+    return [`${template.prefix}${combinedItems}${suffix}`];
   };
 
-  // Group issues by category
-  const groupCategory = issues.reduce<Record<ErrorWarningCategory, typeof issues>>((acc, error) => {
-    const { category } = error;
+  type Issue = ParsedConfig<StudyConfig>['errors'][number];
 
-    if (!acc[category]) {
-      acc[category] = [];
-    }
+  type IssueGroup = {
+    action: string | null;
+    path: string;
+    issues: Issue[];
+  };
 
-    acc[category].push(error);
-    return acc;
-  }, {} as Record<ErrorWarningCategory, typeof issues>);
+  type CategoryGroup = {
+    category: ErrorWarningCategory;
+    entries: IssueGroup[];
+  };
 
-  // Group issues by instancePath
-  const groupIssues = Object.entries(groupCategory).reduce<Record<string, typeof issues>>((acc, [category, categoryIssues]) => {
-    categoryIssues.forEach((error) => {
-      const path = error.instancePath || 'root';
-      const actionText = getActionText(error.params);
-      const actionKey = actionText ?? 'no-action';
-      const messageKey = error.message || 'no-message';
-      const key = category === 'sequence-validation'
-        ? `${category}:::${path}:::${actionKey}:::${messageKey}`
-        : `${category}:::${path}:::${actionKey}`;
+  const groupIssuesByCategory = (): CategoryGroup[] => {
+    // Group by category > action > path
+    const categoryMap = new Map<ErrorWarningCategory, Map<string, IssueGroup>>();
 
-      if (!acc[key]) {
-        acc[key] = [];
+    issues.forEach((issue) => {
+      const { category } = issue;
+      const action = getActionText(issue.params);
+      const path = issue.instancePath || 'root';
+      const entryKey = `${action ?? ''}-${path}`;
+
+      if (!categoryMap.has(category)) {
+        categoryMap.set(category, new Map());
       }
+      const entriesMap = categoryMap.get(category)!;
 
-      acc[key].push(error);
+      if (entriesMap.has(entryKey)) {
+        entriesMap.get(entryKey)!.issues.push(issue);
+      } else {
+        entriesMap.set(entryKey, { action, path, issues: [issue] });
+      }
     });
-    return acc;
-  }, {});
+
+    return categoryOrder
+      .filter((category) => categoryMap.has(category))
+      .map((category) => ({
+        category,
+        entries: Array.from(categoryMap.get(category)!.values()),
+      }));
+  };
 
   const title = type === 'error' ? 'Errors' : 'Warnings';
   const headerText = type === 'error'
@@ -173,73 +144,55 @@ export function ErrorLoadingConfig({
       </Text>
       <Collapse in={isOpen}>
         <Stack gap="md" mt="xs">
-          {categoryOrder
-            .map((category) => ({
-              category,
-              entries: Object.entries(groupIssues).filter(([groupKey]) => groupKey.startsWith(`${category}:::`)),
-            }))
-            .filter(({ entries }) => entries.length > 0)
-            .map(({ category, entries }, index, visibleCategories) => {
-              const categoryCount = entries.reduce((sum, [, pathIssues]) => sum + pathIssues.length, 0);
-              const categoryActions = entries.flatMap(([, pathIssues]) => pathIssues.map((error) => getActionText(error.params)));
-              const uniqueActions = new Set(categoryActions.filter(Boolean) as string[]);
-              const sharedAction = categoryActions.length > 0 && uniqueActions.size === 1 && !categoryActions.includes(null) ? Array.from(uniqueActions)[0] : null;
+          {groupIssuesByCategory().map(({ category, entries }, idx, arr) => {
+            const categoryCount = entries.reduce((sum, e) => sum + e.issues.length, 0);
 
-              return (
-                <Stack key={category} gap={0}>
-                  <Group justify="space-between">
-                    <Text size="sm" fw="bold">{formatCategoryLabel(category)}</Text>
-                    <Badge size="sm" variant="light" color={badgeColor}>
-                      {categoryCount}
-                      {' '}
-                      {issueLabel}
-                      {categoryCount === 1 ? '' : 's'}
-                    </Badge>
-                  </Group>
-                  <List size="xs" spacing="xs" mt="xs" listStyleType="none">
-                    {entries.map(([groupKey, pathIssues]) => {
-                      const [, path] = groupKey.split(':::');
-                      const messages = pathIssues.map((error) => error.message || 'No message provided');
-                      const combinedMessages = combineMessages(messages);
-                      const actionTexts = pathIssues.map((error) => getActionText(error.params)).filter(Boolean);
-                      const itemUniqueActions = new Set(actionTexts as string[]);
-                      const actionText = itemUniqueActions.size === 1 ? Array.from(itemUniqueActions)[0] : null;
+            return (
+              <Stack key={category} gap={0}>
+                <Group justify="space-between">
+                  <Text size="sm" fw="bold">{formatCategoryLabel(category)}</Text>
+                  <Badge size="sm" variant="light" color={badgeColor}>
+                    {categoryCount}
+                    {' '}
+                    {issueLabel}
+                    {categoryCount === 1 ? '' : 's'}
+                  </Badge>
+                </Group>
+                <List size="xs" spacing="xs" mt="xs" listStyleType="none">
+                  {entries.map((item, index) => {
+                    const messages = item.issues.map((issue) => issue.message || 'No message provided');
+                    const combinedMessages = combineMessages(messages);
 
-                      return (
-                        <List.Item key={groupKey}>
-                          <Stack gap={2}>
-                            {sharedAction && (
-                              <Text size="sm" c="dimmed">
-                                {sharedAction}
-                              </Text>
-                            )}
-                            {actionText && !sharedAction && (
-                              <Text size="sm" c="dimmed">
-                                {actionText}
-                              </Text>
-                            )}
-                            <Text size="sm">
-                              <Code component="span" fw="bold" bg="none">
-                                {path}
-                                :
-                              </Code>
-                              {combinedMessages.map((msg, idx) => (
-                                <Text key={`${groupKey}-msg-${idx}`} component="span">
-                                  <ReactMarkdownWrapper text={msg} inline />
-                                </Text>
-                              ))}
+                    return (
+                      <List.Item key={`${item.path}-${item.action}-${index}`}>
+                        <Stack gap={2}>
+                          {item.action && (
+                            <Text size="sm" c="dimmed">
+                              {item.action}
                             </Text>
-                          </Stack>
-                        </List.Item>
-                      );
-                    })}
-                  </List>
-                  {index < visibleCategories.length - 1 && (
-                    <Divider mt="md" />
-                  )}
-                </Stack>
-              );
-            })}
+                          )}
+                          <Text size="sm">
+                            <Code component="span" fw="bold" bg="none">
+                              {item.path}
+                              :
+                            </Code>
+                            {combinedMessages.map((msg, msgIdx) => (
+                              <Text key={`${item.path}-${index}-${msgIdx}-msg`} component="span">
+                                <ReactMarkdownWrapper text={msg} inline />
+                              </Text>
+                            ))}
+                          </Text>
+                        </Stack>
+                      </List.Item>
+                    );
+                  })}
+                </List>
+                {idx < arr.length - 1 && (
+                  <Divider mt="md" />
+                )}
+              </Stack>
+            );
+          })}
         </Stack>
       </Collapse>
     </Paper>
