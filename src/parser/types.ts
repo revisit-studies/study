@@ -313,8 +313,6 @@ export interface UIConfig {
 export interface NumberOption {
   /** The label displayed to participants. */
   label: string;
-  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. */
-  infoText?: string;
   /** The value stored in the participant's data. */
   value: number;
 }
@@ -326,10 +324,10 @@ export interface NumberOption {
 export interface StringOption {
   /** The label displayed to participants. Markdown is supported. */
   label: string;
-  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. */
-  infoText?: string;
   /** The value stored in the participant's data. */
   value: string;
+  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. */
+  infoText?: string;
 }
 
 /**
