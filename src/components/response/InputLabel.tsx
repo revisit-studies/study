@@ -12,7 +12,7 @@ export function InputLabel({
   prompt: string;
   required?: boolean;
   index?: number;
-  enumerateQuestions: boolean;
+  enumerateQuestions?: boolean;
   infoText?: string;
 }) {
   return (
@@ -22,9 +22,9 @@ export function InputLabel({
         <ReactMarkdownWrapper text={prompt} required={required} />
       </Box>
       {infoText && (
-      <Tooltip label={infoText} multiline maw={400} position="bottom">
-        <IconInfoCircle size={16} opacity={0.5} style={{ marginTop: 6 }} />
-      </Tooltip>
+        <Tooltip label={infoText} multiline maw={400} position="bottom">
+          <IconInfoCircle size={16} opacity={0.5} style={{ marginTop: 4 }} />
+        </Tooltip>
       )}
     </Flex>
   );

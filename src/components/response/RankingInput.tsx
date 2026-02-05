@@ -27,7 +27,7 @@ import classes from './css/RankingDnd.module.css';
 import { RankingResponse, StringOption } from '../../parser/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
 
-type Item = { id: string; label: string; symbol: string };
+type Item = { id: string; label: string; symbol: string; infoText?: string };
 
 function SortableItem({ item, index }: { item: Item; index?: number }) {
   const {
@@ -54,7 +54,7 @@ function SortableItem({ item, index }: { item: Item; index?: number }) {
       p="sm"
     >
       {index !== undefined && <Text c="dimmed" mr="sm">{index}</Text>}
-      <Text>{item.label}</Text>
+      <InputLabel prompt={item.label} infoText={item.infoText} />
     </Paper>
   );
 }
@@ -82,6 +82,7 @@ const createItems = (options: (StringOption | string)[]): Item[] => options.map(
   id: typeof option === 'string' ? option : option.value,
   label: typeof option === 'string' ? option : option.label,
   symbol: typeof option === 'string' ? option : option.value,
+  infoText: typeof option === 'string' ? undefined : option.infoText,
 }));
 
 const useRankingLogic = (responseId: string, onChange?: (value: Record<string, string>) => void) => {
@@ -271,7 +272,7 @@ function RankingCategoricalComponent({
       if (!item) return prev;
 
       if (targetCategory !== 'unassigned' && numItems
-          && (prev[targetCategory as keyof typeof prev] as Item[]).length >= numItems) {
+        && (prev[targetCategory as keyof typeof prev] as Item[]).length >= numItems) {
         setError?.(`You can only add up to ${numItems} items.`);
         return prev;
       }

@@ -60,7 +60,7 @@ export function CheckBoxInput({
               key={option.value}
               disabled={disabled}
               value={option.value}
-              label={option.label}
+              label={<InputLabel prompt={option.label} infoText={option.infoText} />}
               classNames={{ input: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
             />
           ))}
