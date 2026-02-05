@@ -1,0 +1,164 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "How To Do Training Demo",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-01-10",
+    "description": "A demo of how to do training.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-training/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true
+  },
+  "components": {
+    "simple-dropbox": {
+      "type": "questionnaire",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "q-mark-type",
+          "type": "dropdown",
+          "prompt": "What is the most efficient visual mark?",
+          "secondaryText": "Hint: it's not round.",
+          "location": "sidebar",
+          "placeholder": "Choose mark",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q-mark-type",
+          "answer": "Bar"
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": true,
+      "trainingAttempts": 4
+    },
+    "slider-range": {
+      "type": "questionnaire",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "slider-question",
+          "prompt": "Pick a value half-way.",
+          "secondaryText": "Try to get the middle value",
+          "location": "sidebar",
+          "type": "slider",
+          "options": [
+            {
+              "label": "0",
+              "value": 0
+            },
+            {
+              "label": "50",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "slider-question",
+          "answer": 25,
+          "acceptableLow": 22,
+          "acceptableHigh": 28
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": false,
+      "trainingAttempts": 4
+    },
+    "multiSelectCheckbox": {
+      "type": "questionnaire",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "quiz",
+          "prompt": "Select A, D, F",
+          "required": true,
+          "location": "sidebar",
+          "type": "checkbox",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "G"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "quiz",
+          "answer": ["A","D","F"]
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": false,
+      "trainingAttempts": 4
+    },
+    "main-page-text-field": {
+      "type": "questionnaire",
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "vowel-question",
+          "prompt": "Respond with a vowel",
+          "secondaryText": "Just one! Right now, only a works.",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Enter a single vowel."
+        },
+        {
+          "id": "consonant-question",
+          "prompt": "Respond with a consonant",
+          "secondaryText": "Just one! Right now, only s works.",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Enter a single consonant."
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "vowel-question",
+          "answer": "a"
+        },
+        {
+          "id": "consonant-question",
+          "answer": "s"
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": false,
+      "trainingAttempts": 4
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "simple-dropbox",
+      "slider-range",
+      "multiSelectCheckbox",
+      "main-page-text-field"
+    ]
+  }
+}
