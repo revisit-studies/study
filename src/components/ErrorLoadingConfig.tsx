@@ -4,6 +4,7 @@ import {
 import { IconAlertTriangle, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { useState } from 'react';
 import { ParsedConfig, StudyConfig, ErrorWarningCategory } from '../parser/types';
+import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
 
 export function ErrorLoadingConfig({
   issues,
@@ -32,21 +33,6 @@ export function ErrorLoadingConfig({
   const getActionText = (params: unknown) => (
     params && typeof params === 'object' && 'action' in params ? (params as { action: string }).action : null
   );
-
-  // Render inline code wrapped in backticks
-  const renderInlineCode = (text: string) => {
-    // Split the text by backticks
-    const parts = text.split(/`([^`]+)`/g);
-    return parts.map((part, index) => (index % 2 === 1
-      ? (
-        <Code key={`${part}-${index}`}>
-          {' '}
-          {part}
-        </Code>
-      )
-      : <Text key={`${part}-${index}`} component="span">{part}</Text>
-    ));
-  };
 
   // Combine similar messages with a common pattern
   const combineMessages = (messages: string[]) => {
@@ -239,10 +225,7 @@ export function ErrorLoadingConfig({
                               </Code>
                               {combinedMessages.map((msg, idx) => (
                                 <Text key={`${groupKey}-msg-${idx}`} component="span">
-                                  {renderInlineCode(msg)}
-                                  {idx < combinedMessages.length - 1 && (
-                                    <Text component="span"> </Text>
-                                  )}
+                                  <ReactMarkdownWrapper text={msg} inline />
                                 </Text>
                               ))}
                             </Text>

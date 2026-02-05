@@ -1,6 +1,6 @@
 import ReactMarkdown, { Components } from 'react-markdown';
 import {
-  Text, Title, Anchor, List, Table, Image,
+  Code, Text, Title, Anchor, List, Table, Image,
 } from '@mantine/core';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
@@ -39,7 +39,13 @@ const markdownComponents: Partial<Components> = {
   }) { return <Image {...props} h={height} w={width} src={src?.startsWith('http') ? src : `${PREFIX}${src}`} />; },
 };
 
-export function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
+const inlineMarkdownComponents: Partial<Components> = {
+  ...markdownComponents,
+  p({ node: _, ...props }) { return <Text {...props} component="span" />; },
+  code({ node: _, ...props }) { return <Code {...props} />; },
+};
+
+export function ReactMarkdownWrapper({ text, required, inline }: { text: string; required?: boolean; inline?: boolean }) {
   const rehypeAsterisk = useCallback(() => (tree: Root) => {
     if (!required) return;
     if (!tree) return;
@@ -124,7 +130,7 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
   }, [required]);
   return text.length > 0 && (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <ReactMarkdown components={markdownComponents} rehypePlugins={[rehypeRaw, rehypeAsterisk] as any} remarkPlugins={[remarkGfm]}>
+    <ReactMarkdown components={inline ? inlineMarkdownComponents : markdownComponents} rehypePlugins={[rehypeRaw, rehypeAsterisk] as any} remarkPlugins={[remarkGfm]}>
       {text}
     </ReactMarkdown>
   );
