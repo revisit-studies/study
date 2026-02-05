@@ -106,7 +106,7 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
       if (sidebarDisabled && isUsingSidebar) {
         const instancePath = component.withSidebar === false ? `/importedLibraries/${library}/components/` : `/importedLibraries/${library}/uiConfig/`;
         warnings.push({
-          message: `Component \`${componentName}\` in library ${library} uses sidebar locations but sidebar is disabled`,
+          message: `Component \`${componentName}\` in library \`${library}\` uses sidebar locations but sidebar is disabled`,
           instancePath,
           params: { action: 'Enable the sidebar or move the location to belowStimulus or aboveStimulus' },
           category: 'disabled-sidebar',
