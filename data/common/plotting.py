@@ -5,20 +5,20 @@ import numpy as np
 
 
 
-def _month_axis(ax, days_per_month=DAYS_PER_MONTH):
+def _month_axis(ax, days_per_month=DAYS_PER_MONTH, offset=0):
     """Add month ticks + boundaries"""
     months = MONTHS
 
     # vertical boundary lines
     for m in range(months + 1):
-        ax.axvline(m*days_per_month, color="gray", alpha=0.35, linewidth=1)
+        ax.axvline(m*days_per_month + offset, color="black", alpha=0.3, linewidth=1, zorder=10)
 
     # ticks centered in each month
-    centers = np.arange(months)*days_per_month + days_per_month/2
+    centers = np.arange(months)*days_per_month + days_per_month/2 + offset
     ax.set_xticks(centers)
     ax.set_xticklabels(MONTH_NAMES)
 
-    ax.set_xlim(0, months*days_per_month)
+    ax.set_xlim(offset, months*days_per_month + offset)
 
 
 def plot_line(series, permuted=False, days_per_month=DAYS_PER_MONTH, title=""):
@@ -27,14 +27,14 @@ def plot_line(series, permuted=False, days_per_month=DAYS_PER_MONTH, title=""):
 
     fig, ax = plt.subplots(figsize=(11,7))
 
-    ax.plot(series, linewidth=1.8)
+    ax.plot(series, linewidth=1.8, zorder=5)
 
     ax.set_ylim(0, 100)
     ax.set_ylabel("Value")
     ax.set_xlabel("Month")
     ax.set_title(title)
 
-    _month_axis(ax, days_per_month)
+    _month_axis(ax, days_per_month, offset=0)
 
     plt.tight_layout()
     plt.show()
@@ -52,10 +52,14 @@ def plot_colorfield(series, permuted=False, height=20, days_per_month=DAYS_PER_M
         aspect='auto',
         cmap='coolwarm',
         vmin=0,
-        vmax=100
+        vmax=100,
+        zorder=1
     )
 
-    _month_axis(ax, days_per_month)
+    # For imshow, pixels are centered at integers (0, 1, 2).
+    # Boundaries between months (e.g. month 0 is 0-29, month 1 is 30-59)
+    # fall at half-integers (-0.5, 29.5, 59.5).
+    _month_axis(ax, days_per_month, offset=-0.5)
 
     ax.set_yticks([])
     ax.set_xlabel("Month")
