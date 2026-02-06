@@ -1,0 +1,141 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Time Series Mean",
+    "version": "pilot",
+    "authors": [
+      "The Averagers"
+    ],
+    "date": "2026-02-06",
+    "description": "Identify the month with the highest mean ",
+    "organizations": [
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "",
+    "helpTextPath": "A3-Study/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "nextOnEnter": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "A3-Study/assets/introduction.md",
+      "response": []
+    },
+    "dotplot-low": {
+      "meta": {
+        "difficulty": 1,
+        "nr-dots": 20,
+        "temp": "low"
+      },
+      "description": "Low temperature variant",
+      "instruction": "Will you issue blankets to the alpacas?",
+      "type": "image",
+      "path": "A3-Study/assets/uncertainty-1.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "demo-image/assets-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        }
+      ],
+      "nextButtonEnableTime": 3000,
+      "nextButtonDisableTime": 15000
+    },
+    "dotplot-medium": {
+      "meta": {
+        "difficulty": 2,
+        "nr-dots": 20,
+        "temp": "mid"
+      },
+      "description": "Medium temperature variant",
+      "instruction": "Will you issue blankets to the alpacas?",
+      "type": "image",
+      "path": "A3-Study/assets/uncertainty-2.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "demo-image/assets-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        }
+      ]
+    },
+    "dotplot-high": {
+      "meta": {
+        "difficulty": 1,
+        "nr-dots": 20,
+        "temp": "hi"
+      },
+      "description": "High temperature variant",
+      "instruction": "Will you issue blankets to the alpacas?",
+      "type": "image",
+      "path": "demo-image/assets/uncertainty-3.png",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "demo-image/assets-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        }
+      ]
+    },
+    "externalImage": {
+      "type": "image",
+      "path": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Shaki_waterfall.jpg",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "externalImage-response",
+          "prompt": "What is this a picture of?",
+          "location": "sidebar",
+          "type": "shortText",
+          "required": false
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "dotplot-low",
+      "dotplot-medium",
+      "dotplot-high",
+      "externalImage"
+    ]
+  }
+}
