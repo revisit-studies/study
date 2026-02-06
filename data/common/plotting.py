@@ -18,7 +18,7 @@ def _month_axis(ax, days_per_month=DAYS_PER_MONTH, offset=0):
     ax.set_xticks(centers)
     ax.set_xticklabels(MONTH_NAMES)
 
-    ax.set_xlim(offset, months*days_per_month + offset)
+    ax.set_xlim(offset, months * days_per_month + offset)
 
 
 def plot_line(series, permuted=False, days_per_month=DAYS_PER_MONTH, title=""):
@@ -45,7 +45,7 @@ def plot_colorfield(series, permuted=False, height=20, days_per_month=DAYS_PER_M
     if permuted:
         mat = permute_colorfield(mat)
 
-    fig, ax = plt.subplots(figsize=(11, 2.8))
+    fig, ax = plt.subplots(figsize=(11, 3))
 
     im = ax.imshow(
         mat,
@@ -56,9 +56,8 @@ def plot_colorfield(series, permuted=False, height=20, days_per_month=DAYS_PER_M
         zorder=1
     )
 
-    # For imshow, pixels are centered at integers (0, 1, 2).
-    # Boundaries between months (e.g. month 0 is 0-29, month 1 is 30-59)
-    # fall at half-integers (-0.5, 29.5, 59.5).
+    # Add month boundaries and labels
+    # AI Usage Note: For the colorfield plot, can you make it so that there are grid lines like in the line plot that correspond to the end of the months, and then make the month name centered on the month range between the lines?
     _month_axis(ax, days_per_month, offset=-0.5)
 
     ax.set_yticks([])
