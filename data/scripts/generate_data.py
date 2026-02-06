@@ -1,7 +1,16 @@
 import numpy as np
 import random
 
-from common.utils import perlin_noise, rescale_to_mean, add_smooth_peak, clip_0_100
+from common.utils import (
+    perlin_noise, 
+    smooth_noise,
+    rescale_to_mean, 
+    add_smooth_peak, 
+    clip_0_100,
+    distribute_monthly_peaks,
+    apply_trend_correction,
+    safe_rescale
+)
 from common.constants import (
     MONTHS,
     DAYS_PER_MONTH,
@@ -14,7 +23,11 @@ from common.constants import (
     DISTRACTER_COUNTS,
     DISTRACTER_GAPS,
     MONTH_NAMES,
-    MIN_MEAN
+    MIN_MEAN,
+    PEAKS_PER_MONTH,
+    PEAK_HEIGHT,
+    PEAK_WIDTH,
+    SPLINE_ITERATIONS
 )
 from itertools import product
 
@@ -91,32 +104,33 @@ def generate_series(
         if month_means[m] == 0:
             month_means[m] = np.random.uniform(MIN_MEAN, uw - d - 1)
 
-    # Generate yearly structured noise and split into months
-    yearly_base = smooth_noise_function(total_days, **noise_params)
+    # 1. Start with a continuous base of structured noise
+    # AI Usage Note: Looking at this code, can you extract any numbers into the constants file and any potential util functions into the utils file?
+    series = smooth_noise_function(total_days, **noise_params)
 
-    months_data = []
-
-    for m in range(months):
-        start = m * days_per_month
-        end = start + days_per_month
-
-        month_signal = yearly_base[start:end].copy()
-
-        # Shift to target mean
-        month_signal = rescale_to_mean(month_signal, month_means[m])
-
-        # Add smooth peaks (repeat twice as in paper)
-        for _ in range(2):
-            month_signal = add_smooth_peak(month_signal)
-
-        # Rescale to target mean again
-        month_signal = rescale_to_mean(month_signal, month_means[m])
-
-        month_signal = clip_0_100(month_signal)
-
-        months_data.append(month_signal)
-
-    series = np.concatenate(months_data)
+    # 2. Add smooth peaks to each month
+    # We add them to the global series to maintain continuity
+    distribute_monthly_peaks(
+        series, 
+        days_per_month, 
+        peaks_per_month=PEAKS_PER_MONTH, 
+        height=PEAK_HEIGHT, 
+        width=PEAK_WIDTH
+    )
+    
+    # 3. Adjust the signal to match the target monthly means efficiently
+    series = apply_trend_correction(
+        series, 
+        month_means, 
+        days_per_month, 
+        iterations=SPLINE_ITERATIONS
+    )
+    
+    # 4. Global Rescaling if out of bounds (0-100)
+    series, new_means = safe_rescale(series, days_per_month)
+    
+    if new_means is not None:
+        month_means = new_means
 
     return series, winning_month, distracter_months, month_means
 
@@ -153,7 +167,7 @@ if __name__ == "__main__":
 
     from common.plotting import plot_line, plot_colorfield
 
-    plot_line(s, permuted=False, title="Original Series")
+    # plot_line(s, permuted=False, title="Original Series")
     # plot_line(s, permuted=True, title="Permuted Series")
-    # plot_colorfield(s, permuted=False, title="Original Colorfield")
+    plot_colorfield(s, permuted=False, title="Original Colorfield")
     # plot_colorfield(s, permuted=True, title="Permuted Colorfield")

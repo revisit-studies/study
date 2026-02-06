@@ -21,3 +21,9 @@ NOISE_MAP = {
     3: dict(scale=2, amp=9, octaves=4)
 }
 NOISE_LEVELS = list(NOISE_MAP.keys())
+
+PEAKS_PER_MONTH = 2
+PEAK_HEIGHT = 15
+PEAK_WIDTH = 5
+
+SPLINE_ITERATIONS = 5
