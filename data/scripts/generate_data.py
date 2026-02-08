@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import json
 
 from common.utils import (
     perlin_noise, 
@@ -153,6 +154,43 @@ def generate_all_series(fixed_noise_level=None):
 
     return all_data
 
+def convertToJSON(series, winning_month, distracter_months, month_means, days_per_month, months, k, d, noise_level, seed, month_names):
+
+    # The formatting of this data is a readable way was complete by ChatGPT
+    data = {
+        "meta": {
+            "months": months,
+            "daysPerMonth": days_per_month,
+            "winningMonth": winning_month,
+            "distracterMonths": distracter_months,
+            "monthMeans": month_means,
+            "k": k,
+            "d": d,
+            "noiseLevel": noise_level,
+            "seed": seed
+        },
+        "months": [],
+        "series": []
+    }
+
+    for m in range(months):
+        data["months"].append({
+            "monthIndex": m,
+            "name": month_names[m] if month_names else str(m),
+            "startDay": m * days_per_month
+        })
+
+    for i, v in enumerate(series):
+        m = i // days_per_month
+        dom = i % days_per_month
+        data["series"].append({
+            "dayIndex": i,
+            "month": m,
+            "dayOfMonth": dom,
+            "value": float(v)
+        })
+
+    return data
 
 if __name__ == "__main__":
     s, win, dist, means = generate_series(
@@ -164,6 +202,11 @@ if __name__ == "__main__":
     )
 
     print("Winning month:", MONTH_NAMES[win])
+
+    data = convertToJSON(s, win, dist, means, DAYS_PER_MONTH, MONTHS, 4, 2, 2, 1, MONTH_NAMES)
+
+    with open("data.json", "w") as f:
+        json.dump(data, f)
 
     from common.plotting import plot_line, plot_colorfield
 
