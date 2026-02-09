@@ -33,10 +33,10 @@
         "nr-dots": 20,
         "temp": "low"
       },
-      "description": "Low temperature variant",
-      "instruction": "Will you issue blankets to the alpacas?",
+      "description": "Plot Line Not Perumuted",
+      "instruction": "Which month has the highest average?",
       "type": "image",
-      "path": "A3-Study/assets/uncertainty-1.png",
+      "path": "A3-Study/assets/plotLineNotPermuted.png",
       "style": {
         "width": "800px"
       },
@@ -46,10 +46,20 @@
           "id": "demo-image/assets-response",
           "prompt": "Answer:",
           "location": "sidebar",
-          "type": "radio",
+          "type": "dropdown",
           "options": [
-            "Yes",
-            "No"
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec"
           ]
         }
       ],
@@ -62,10 +72,10 @@
         "nr-dots": 20,
         "temp": "mid"
       },
-      "description": "Medium temperature variant",
-      "instruction": "Will you issue blankets to the alpacas?",
+      "description": "Plot Line Permuted",
+      "instruction": "Which month has the highest average?",
       "type": "image",
-      "path": "A3-Study/assets/uncertainty-2.png",
+      "path": "A3-Study/assets/plotLinePermuted.png",
       "style": {
         "width": "800px"
       },
@@ -75,10 +85,20 @@
           "id": "demo-image/assets-response",
           "prompt": "Answer:",
           "location": "sidebar",
-          "type": "radio",
+          "type": "dropdown",
           "options": [
-            "Yes",
-            "No"
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec"
           ]
         }
       ]
@@ -89,10 +109,10 @@
         "nr-dots": 20,
         "temp": "hi"
       },
-      "description": "High temperature variant",
-      "instruction": "Will you issue blankets to the alpacas?",
+      "description": "Colorfield Not Permuted",
+      "instruction": "Which month has the highest average?",
       "type": "image",
-      "path": "demo-image/assets/uncertainty-3.png",
+      "path": "A3-Study/assets/colorfieldNotPermuted.png",
       "style": {
         "width": "800px"
       },
@@ -102,28 +122,58 @@
           "id": "demo-image/assets-response",
           "prompt": "Answer:",
           "location": "sidebar",
-          "type": "radio",
+          "type": "dropdown",
           "options": [
-            "Yes",
-            "No"
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec"
           ]
         }
       ]
     },
-    "externalImage": {
+    "colorfield Permuted": {
+      "meta": {
+        "difficulty": 2,
+        "nr-dots": 20,
+        "temp": "mid"
+      },
+      "description": "Colorfield Permuted",
+      "instruction": "Which month has the highest average?",
       "type": "image",
-      "path": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Shaki_waterfall.jpg",
+      "path": "A3-Study/assets/colorfieldPermuted.png",
       "style": {
         "width": "800px"
       },
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "externalImage-response",
-          "prompt": "What is this a picture of?",
+          "id": "demo-image/assets-response",
+          "prompt": "Answer:",
           "location": "sidebar",
-          "type": "shortText",
-          "required": false
+          "type": "dropdown",
+          "options": [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec"
+          ]
         }
       ]
     }
@@ -135,7 +185,7 @@
       "dotplot-low",
       "dotplot-medium",
       "dotplot-high",
-      "externalImage"
+      "colorfield Permuted"
     ]
   }
 }
