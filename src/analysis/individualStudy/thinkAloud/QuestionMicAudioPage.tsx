@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Group,
   LoadingOverlay,
   Select,
@@ -62,6 +63,8 @@ export function QuestionMicAudioPage() {
 
   const [loadingClips, setLoadingClips] = useState(false);
   const [clipsByParticipant, setClipsByParticipant] = useState<ParticipantClips[]>([]);
+  const [summaryByClip, setSummaryByClip] = useState<Record<string, string>>({});
+  const [summaryStatusByClip, setSummaryStatusByClip] = useState<Record<string, { loading: boolean; error?: string }>>({});
 
   const groupedByClipName = useMemo(() => {
     const map = new Map<string, Array<{ participantId: string; url: string }>>();
@@ -80,6 +83,42 @@ export function QuestionMicAudioPage() {
       }))
       .sort((a, b) => a.clipName.localeCompare(b.clipName));
   }, [clipsByParticipant]);
+
+  const summarizeGroup = async (group: { clipName: string; entries: Array<{ participantId: string; url: string }> }) => {
+    setSummaryStatusByClip((prev) => ({
+      ...prev,
+      [group.clipName]: { loading: true },
+    }));
+
+    try {
+      const response = await fetch('/api/mic-group-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: selectedQuestion,
+          clipName: group.clipName,
+          clips: group.entries,
+        }),
+      });
+
+      const raw = await response.text();
+      const payload = raw ? JSON.parse(raw) : {};
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Failed to summarize');
+      }
+
+      setSummaryByClip((prev) => ({ ...prev, [group.clipName]: payload.summary || '' }));
+      setSummaryStatusByClip((prev) => ({ ...prev, [group.clipName]: { loading: false } }));
+    } catch (error) {
+      setSummaryStatusByClip((prev) => ({
+        ...prev,
+        [group.clipName]: {
+          loading: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      }));
+    }
+  };
 
   // Load participants once
   useEffect(() => {
@@ -195,12 +234,22 @@ export function QuestionMicAudioPage() {
             <Box key={group.clipName} p="sm" style={{ background: 'var(--mantine-color-gray-0)', borderRadius: 8 }}>
               <Group justify="space-between" wrap="nowrap">
                 <Text fw={700} ff="monospace">{group.clipName}</Text>
-                <Text size="sm" c="dimmed">
-                  {group.entries.length}
-                  {' '}
-                  participant
-                  {group.entries.length === 1 ? '' : 's'}
-                </Text>
+                <Group gap="sm" wrap="nowrap">
+                  <Text size="sm" c="dimmed">
+                    {group.entries.length}
+                    {' '}
+                    participant
+                    {group.entries.length === 1 ? '' : 's'}
+                  </Text>
+                  <Button
+                    size="xs"
+                    variant="light"
+                    loading={summaryStatusByClip[group.clipName]?.loading}
+                    onClick={() => summarizeGroup(group)}
+                  >
+                    Summarize responses
+                  </Button>
+                </Group>
               </Group>
 
               <Stack gap="xs" mt="xs">
@@ -213,6 +262,21 @@ export function QuestionMicAudioPage() {
                   </Group>
                 ))}
               </Stack>
+
+              {summaryStatusByClip[group.clipName]?.error && (
+                <Text size="sm" c="red" mt="xs">
+                  {summaryStatusByClip[group.clipName]?.error}
+                </Text>
+              )}
+
+              {summaryByClip[group.clipName] && (
+                <Box mt="xs" p="xs" style={{ background: 'var(--mantine-color-white)', borderRadius: 6, border: '1px solid var(--mantine-color-gray-3)' }}>
+                  <Text size="sm" fw={600}>Summary</Text>
+                  <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
+                    {summaryByClip[group.clipName]}
+                  </Text>
+                </Box>
+              )}
             </Box>
           ))}
 
