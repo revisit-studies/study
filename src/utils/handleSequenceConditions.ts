@@ -22,7 +22,7 @@ export function filterSequenceByCondition(sequence: Sequence, condition?: string
   }
 
   const filterNode = (node: Sequence): Sequence | null => {
-    const isMatchedCondition = !node.condition || conditions.includes(node.condition);
+    const isMatchedCondition = !node.conditional || (node.id != null && conditions.includes(node.id));
 
     const filteredComponents: Sequence['components'] = [];
     for (const component of node.components) {
@@ -52,8 +52,8 @@ export function getSequenceConditions(sequence: StudyConfig['sequence'] | Sequen
   const conditions = new Set<string>();
 
   const collect = (node: StudyConfig['sequence'] | Sequence) => {
-    if (node.condition) {
-      conditions.add(node.condition);
+    if (node.conditional && node.id) {
+      conditions.add(node.id);
     }
 
     // Get conditions from the nested sequences

@@ -98,7 +98,8 @@ describe('filterSequenceByCondition', () => {
       {
         order: 'random',
         orderPath: '',
-        condition: 'color',
+        id: 'color',
+        conditional: true,
         components: ['color-trial-1', 'color-trial-2'],
         skip: [],
         interruptions: [],
@@ -106,7 +107,8 @@ describe('filterSequenceByCondition', () => {
       {
         order: 'random',
         orderPath: '',
-        condition: 'size',
+        id: 'size',
+        conditional: true,
         components: ['size-trial-1', 'size-trial-2'],
         skip: [],
         interruptions: [],
@@ -137,7 +139,8 @@ describe('filterSequenceByCondition', () => {
     expect(result.components[2]).toBe('outro');
 
     const colorBlock = result.components[1] as Sequence;
-    expect(colorBlock.condition).toBe('color');
+    expect(colorBlock.id).toBe('color');
+    expect(colorBlock.conditional).toBe(true);
     expect(colorBlock.components).toEqual(['color-trial-1', 'color-trial-2']);
   });
 
@@ -150,7 +153,8 @@ describe('filterSequenceByCondition', () => {
     expect(result.components[2]).toBe('outro');
 
     const sizeBlock = result.components[1] as Sequence;
-    expect(sizeBlock.condition).toBe('size');
+    expect(sizeBlock.id).toBe('size');
+    expect(sizeBlock.conditional).toBe(true);
     expect(sizeBlock.components).toEqual(['size-trial-1', 'size-trial-2']);
   });
 
@@ -163,10 +167,12 @@ describe('filterSequenceByCondition', () => {
     expect(result.components[3]).toBe('outro');
 
     const colorBlock = result.components[1] as Sequence;
-    expect(colorBlock.condition).toBe('color');
+    expect(colorBlock.id).toBe('color');
+    expect(colorBlock.conditional).toBe(true);
 
     const sizeBlock = result.components[2] as Sequence;
-    expect(sizeBlock.condition).toBe('size');
+    expect(sizeBlock.id).toBe('size');
+    expect(sizeBlock.conditional).toBe(true);
   });
 
   it('should exclude non-matching conditions', () => {
@@ -187,12 +193,14 @@ describe('filterSequenceByCondition', () => {
         {
           order: 'random',
           orderPath: '',
-          condition: 'color',
+          id: 'color',
+          conditional: true,
           components: [
             {
               order: 'fixed',
               orderPath: '',
-              condition: 'size',
+              id: 'size',
+              conditional: true,
               components: ['size-trial-1'],
               skip: [],
             },
@@ -210,11 +218,13 @@ describe('filterSequenceByCondition', () => {
     expect(result.components[2]).toBe('outro');
 
     const colorBlock = result.components[1] as Sequence;
-    expect(colorBlock.condition).toBe('color');
+    expect(colorBlock.id).toBe('color');
+    expect(colorBlock.conditional).toBe(true);
     expect(colorBlock.components).toHaveLength(1);
 
     const sizeBlock = colorBlock.components[0] as Sequence;
-    expect(sizeBlock.condition).toBe('size');
+    expect(sizeBlock.id).toBe('size');
+    expect(sizeBlock.conditional).toBe(true);
     expect(sizeBlock.components).toEqual(['size-trial-1']);
   });
 });
@@ -228,14 +238,16 @@ describe('getSequenceConditions', () => {
         {
           order: 'random',
           orderPath: '',
-          condition: 'color',
+          id: 'color',
+          conditional: true,
           components: ['color-trial'],
           skip: [],
         },
         {
           order: 'random',
           orderPath: '',
-          condition: 'size',
+          id: 'size',
+          conditional: true,
           components: ['size-trial'],
           skip: [],
         },
@@ -269,14 +281,16 @@ describe('getSequenceConditions', () => {
         {
           order: 'random',
           orderPath: '',
-          condition: 'color',
+          id: 'color',
+          conditional: true,
           components: ['color-trial-1'],
           skip: [],
         },
         {
           order: 'random',
           orderPath: '',
-          condition: 'color',
+          id: 'color',
+          conditional: true,
           components: ['color-trial-2'],
           skip: [],
         },
