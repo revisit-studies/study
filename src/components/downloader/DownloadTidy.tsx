@@ -25,6 +25,7 @@ import { showNotification } from '../../utils/notifications';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
 const OPTIONAL_COMMON_PROPS = [
+  'condition',
   'status',
   'rejectReason',
   'rejectTime',
@@ -107,6 +108,9 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         });
 
         const response = completeComponent.response.find((resp) => resp.id === key);
+        if (properties.includes('condition')) {
+          tidyRow.condition = participant.searchParams?.condition || 'default';
+        }
         if (properties.includes('status')) {
           tidyRow.status = participant.rejected ? 'rejected' : (participant.completed ? 'completed' : 'in progress');
         }
@@ -202,7 +206,8 @@ async function getTableData(selectedProperties: Property[], data: ParticipantDat
   const allConfigHashes = [...new Set(data.map((part) => part.participantConfigHash))];
   const allConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
 
-  const header = combinedProperties;
+  const hasCondition = data.some((p) => p.searchParams?.condition);
+  const header = combinedProperties.filter((p) => p !== 'condition' || hasCondition);
   const allData = await Promise.all(data.map(async (participant) => {
     const partDataToRows = await participantDataToRows(participant, combinedProperties, allConfigs[participant.participantConfigHash]);
 
@@ -231,6 +236,7 @@ export function DownloadTidy({
   studyId: string;
 }) {
   const [selectedProperties, setSelectedProperties] = useState<Array<OptionalProperty>>([
+    'condition',
     'status',
     'rejectReason',
     'description',
