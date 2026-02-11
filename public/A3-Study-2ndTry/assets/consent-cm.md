@@ -4,22 +4,15 @@ Before we begin, please read the following consent form carefully and thereafter
 
 **Goal:** To evaluate peoples perception of values presented on a chart.
 
-**Procedure:** In this experiment you are asked to judge what percentage the smaller value is compared to the larger value
-using Bar, Stacked Bar and Pie Charts.
+**Procedure:** In this experiment you are asked to judge what month has the highest average
 
-**Duration:** The estimated completion time for the experiment is __ minutes.
+**Duration:** The estimated completion time for the experiment is 20 minutes.
 
 **Privacy:** Your participation is anonymous and your responses cannot be used to identify you.
 
 **Record Keeping:** Records of your participation will be held confidential so far as permitted by law. However, 
 the study investigators and, under certain circumstances, the Institutional Review Board will be able to inspect and 
 have access to this data. Any publication or presentation of the data will not identify you.
-
-**Reward:** $_.__.
-
-For more information about this research or about the rights of research participants, or in case of research-related 
-injury, contact: __. In addition, you may contact the IRB Manager __, Tel. __, Email: __
-and the Human Protection Administrator __, Tel. __, Email: _____@__.edu.
 
 Your participation in this research is voluntary. Your refusal to participate will not result in any penalty to 
 you or any loss of benefits to which you may otherwise be entitled. You may decide to stop participating in the research 

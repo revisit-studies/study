@@ -27,7 +27,7 @@
         "chart": "stacked bar"
       },
       "description": "A non permuted colorfield",
-      "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+      "instruction": "The graph shows a colorfield. Using the scale given, which month do you believe has the highest average value?",
       "type": "react-component",
       "path": "A3-Study-2ndTry/assets/colorfieldNotPermuted.tsx",
       "parameters": {
@@ -63,10 +63,85 @@
           "id": "cm-response",
           "prompt": "Answer:",
           "location": "sidebar",
-          "type": "numerical",
-          "placeholder": "0-100",
-          "max": 100,
-          "min": 0
+          "type": "dropdown",
+          "placeholder": "Please select an option",
+          "options": [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December"
+          ]
+        }
+      ],
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar"
+    },
+    "ColorfieldPermuted": {
+      "meta": {
+        "difficulty": 5,
+        "chart": "stacked bar"
+      },
+      "description": "A permuted colorfield",
+      "instruction": "The graph shows a colorfield. Using the scale given, which month do you believe has the highest average value?",
+      "type": "react-component",
+      "path": "A3-Study-2ndTry/assets/colorfieldPermuted.tsx",
+      "parameters": {
+        "data": [
+          {
+            "name": "A",
+            "value": "30"
+          },
+          {
+            "name": "B",
+            "value": "40"
+          },
+          {
+            "name": "C",
+            "value": "50"
+          },
+          {
+            "name": "D",
+            "value": "40"
+          },
+          {
+            "name": "E",
+            "value": "60"
+          }
+        ],
+        "selectedIndices": [
+          1,
+          4
+        ]
+      },
+      "response": [
+        {
+          "id": "cm-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "placeholder": "Please select an option",
+          "options":[
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December"
+          ]
         }
       ],
       "nextButtonLocation": "sidebar",
@@ -112,6 +187,15 @@
           3
         ]
       }
+    },
+    "ColorfieldPermuted": {
+      "baseComponent": "ColorfieldPermuted",
+      "parameters": {
+        "selectedIndices": [
+          0,
+          3
+        ]
+      }
     }
   },
   "sequence": {
@@ -119,7 +203,8 @@
     "components": [
       "introduction",
       "consent",
-      "ColorfieldNonPermuted"
+      "ColorfieldNonPermuted",
+      "ColorfieldPermuted"
     ]
   }
 }
