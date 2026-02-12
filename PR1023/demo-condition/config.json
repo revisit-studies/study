@@ -194,7 +194,8 @@
     "components": [
       "introduction",
       {
-        "condition": "color",
+        "id": "color",
+        "conditional": true,
         "components": [
           "color-trial-1",
           "color-trial-2"
@@ -202,7 +203,8 @@
         "order": "random"
       },
       {
-        "condition": "size",
+        "id": "size",
+        "conditional": true,
         "components": [
           "size-trial-1",
           "size-trial-2"
@@ -210,7 +212,8 @@
         "order": "random"
       },
       {
-        "condition": "shape",
+        "id": "shape",
+        "conditional": true,
         "components": [
           "shape-trial-1",
           "shape-trial-2"
