@@ -1,8 +1,8 @@
 import {
-  Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Select, Tabs, Text, Tooltip,
+  Anchor, AppShell, Badge, Button, Card, Container, CopyButton, Divider, Flex, Image, rem, Select, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
-  IconAlertTriangle, IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
+  IconAlertTriangle, IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconCheck, IconCopy, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -197,6 +197,36 @@ function StudyCard({
                   {maxTime}
                 </Text>
               )}
+
+            {conditions.length > 0 && (
+              <Flex direction="row" align="center" gap="xs" mt="sm" wrap="wrap">
+                {conditions.map((condition) => {
+                  const conditionUrl = new URL(`${PREFIX}${url}`, window.location.origin);
+                  conditionUrl.searchParams.set('condition', condition);
+                  const conditionUrlString = conditionUrl.toString();
+
+                  return (
+                    <CopyButton key={condition} value={conditionUrlString}>
+                      {({ copied, copy }) => (
+                        <Tooltip label={copied ? 'Copied!' : 'Copy URL'}>
+                          <Badge
+                            size="sm"
+                            variant="light"
+                            rightSection={
+                              copied ? <IconCheck size={12} /> : <IconCopy size={12} />
+                            }
+                            onClick={copy}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            {condition}
+                          </Badge>
+                        </Tooltip>
+                      )}
+                    </CopyButton>
+                  );
+                })}
+              </Flex>
+            )}
 
             <Flex direction="row" align="end" gap="sm" mt="md">
               {conditions.length > 0 && (
