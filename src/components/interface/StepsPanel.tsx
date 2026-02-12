@@ -106,6 +106,7 @@ type BlockStepItem = StepItemBase & {
   type: 'block';
   order: Sequence['order'];
   orderPath?: string; // Order path for blocks
+  conditional?: boolean;
   numInterruptions?: number;
   numComponentsInSequence?: number;
   numComponentsInStudySequence?: number;
@@ -326,6 +327,7 @@ export function StepsPanel({
           // Block Attributes
           order: node.order,
           orderPath: node.orderPath,
+          conditional: node.conditional,
           numInterruptions: node.components.filter((comp) => typeof comp === 'string' && blockInterruptions.includes(comp)).length,
           numComponentsInSequence,
           numComponentsInStudySequence,
@@ -626,6 +628,7 @@ export function StepsPanel({
           const {
             order,
             orderPath,
+            conditional,
             numInterruptions,
             numComponentsInSequence,
             numComponentsInStudySequence,
@@ -746,6 +749,9 @@ export function StepsPanel({
                           <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
                         </Tooltip>
                       ) : null}
+                      {!isComponent && conditional && (
+                        <Badge size="xs" ml={5} variant="transparent">{label}</Badge>
+                      )}
                       {!isComponent && !isExcluded && (
                         <Badge ml={5} variant="light">
                           {(numComponentsInSequence || 0) - (numInterruptions || 0)}
