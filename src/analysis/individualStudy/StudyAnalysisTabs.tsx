@@ -73,6 +73,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [selectedParticipants, setSelectedParticipants] = useState<ParticipantData[]>([]);
   const [selectedConfigs, setSelectedConfigs] = useState<string[]>(['ALL']);
   const [availableConfigs, setAvailableConfigs] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
+  const [selectedConditions, setSelectedConditions] = useState<string[]>(['ALL']);
+  const [availableConditions, setAvailableConditions] = useState<{ value: string; label: string }[]>([]);
 
   const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
 
@@ -100,12 +102,22 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       ? configFiltered
       : configFiltered.filter((d) => selectedStages.includes(d.stage || ''));
 
+    // Apply condition filter before counting
+    const conditionFiltered = selectedConditions.includes('ALL')
+      ? stageFiltered
+      : stageFiltered.filter((d) => {
+        const conds = d.searchParams?.condition
+          ? d.searchParams.condition.split(',').map((c) => c.trim()).filter(Boolean)
+          : ['default'];
+        return conds.some((c) => selectedConditions.includes(c));
+      });
+
     return {
-      completed: stageFiltered.filter((d) => !d.rejected && d.completed).length,
-      inprogress: stageFiltered.filter((d) => !d.rejected && !d.completed).length,
-      rejected: stageFiltered.filter((d) => d.rejected).length,
+      completed: conditionFiltered.filter((d) => !d.rejected && d.completed).length,
+      inprogress: conditionFiltered.filter((d) => !d.rejected && !d.completed).length,
+      rejected: conditionFiltered.filter((d) => d.rejected).length,
     };
-  }, [expData, selectedStages, selectedConfigs]);
+  }, [expData, selectedStages, selectedConfigs, selectedConditions]);
 
   const selectedParticipantCounts = useMemo(() => {
     if (selectedParticipants.length === 0) return { completed: 0, inprogress: 0, rejected: 0 };
@@ -137,8 +149,18 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       ? configFiltered
       : configFiltered.filter((d) => selectedStages.includes(d.stage || ''));
 
-    return stageFiltered.sort(sortByStartTime);
-  }, [expData, includedParticipants, selectedStages, selectedConfigs]);
+    // Apply condition filter - if "ALL" is selected, show all participants
+    const conditionFiltered = selectedConditions.includes('ALL')
+      ? stageFiltered
+      : stageFiltered.filter((d) => {
+        const conds = d.searchParams?.condition
+          ? d.searchParams.condition.split(',').map((c) => c.trim()).filter(Boolean)
+          : ['default'];
+        return conds.some((c) => selectedConditions.includes(c));
+      });
+
+    return conditionFiltered.sort(sortByStartTime);
+  }, [expData, includedParticipants, selectedStages, selectedConfigs, selectedConditions]);
 
   // Load available stages
   const loadStages = useCallback(async () => {
@@ -188,7 +210,28 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     }
   }, [studyId, storageEngine, expData]);
 
-  // Load configs and clear selection when dependencies change or tab switches
+  // Load available conditions
+  const loadConditions = useCallback(async () => {
+    if (!studyId || !storageEngine) return;
+
+    try {
+      const conditionData = await storageEngine.getConditionData(studyId);
+      if (conditionData.allConditions.length === 0) {
+        setAvailableConditions([]);
+        return;
+      }
+      const conditionOptions = conditionData.allConditions.map((condition) => ({
+        value: condition,
+        label: condition,
+      }));
+      setAvailableConditions([{ value: 'ALL', label: 'ALL' }, ...conditionOptions]);
+    } catch (error) {
+      console.error('Failed to load conditions:', error);
+      setAvailableConditions([]);
+    }
+  }, [studyId, storageEngine]);
+
+  // Load configs and clear selection when dependencies change
   useEffect(() => {
     loadConfigs();
     setSelectedParticipants([]);
@@ -199,6 +242,12 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     loadStages();
     setSelectedParticipants([]);
   }, [loadStages, analysisTab]);
+
+  // Load conditions and clear selection when dependencies change
+  useEffect(() => {
+    loadConditions();
+    setSelectedParticipants([]);
+  }, [loadConditions]);
 
   useEffect(() => {
     if (!studyId) return () => { };
@@ -299,6 +348,36 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   }}
                 />
               </Flex>
+
+              {availableConditions.length > 0 && (
+                <Flex direction="row" align="center" gap="xs">
+                  <Text size="sm" fw={500}>Condition:</Text>
+                  <MultiSelect
+                    data={availableConditions}
+                    value={selectedConditions}
+                    onChange={(values) => {
+                      if (values.includes('ALL') && !selectedConditions.includes('ALL')) {
+                        setSelectedConditions(['ALL']);
+                      } else if (values.includes('ALL') && selectedConditions.includes('ALL')) {
+                        setSelectedConditions(values.filter((v) => v !== 'ALL'));
+                      } else if (values.length === 0) {
+                        setSelectedConditions(['ALL']);
+                      } else {
+                        setSelectedConditions(values);
+                      }
+                    }}
+                    w={180}
+                    size="sm"
+                    clearable={false}
+                    maxValues={5}
+                    styles={{
+                      input: {
+                        minHeight: '36px',
+                      },
+                    }}
+                  />
+                </Flex>
+              )}
 
               <Flex direction="row" align="center" gap="xs">
                 <Text size="sm" fw={500}>Participants:</Text>

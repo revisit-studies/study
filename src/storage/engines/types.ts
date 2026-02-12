@@ -63,6 +63,10 @@ interface StageData {
   allStages: StageInfo[];
 }
 
+export interface ConditionData {
+  allConditions: string[];
+}
+
 const defaultStageColor = '#F05A30';
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
@@ -298,6 +302,22 @@ export abstract class StorageEngine {
     };
     await this.setCurrentStage(studyId, 'DEFAULT', defaultStageColor);
     return defaultStageData;
+  }
+
+  async getConditionData(studyId: string): Promise<ConditionData> {
+    const participantsData = await this.getAllParticipantsData(studyId);
+    const conditionSet = new Set<string>();
+
+    Object.values(participantsData).forEach((p) => {
+      const cond = p.searchParams?.condition;
+      if (cond) {
+        cond.split(',').map((c) => c.trim()).filter(Boolean).forEach((c) => conditionSet.add(c));
+      }
+    });
+
+    return {
+      allConditions: Array.from(conditionSet).sort(),
+    };
   }
 
   // Setting current stage
