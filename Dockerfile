@@ -3,7 +3,7 @@ FROM node:lts AS builder
 WORKDIR /app
 
 COPY package.json yarn.lock ./
-RUN corepack enable && yarn install --frozen-lockfile
+RUN yarn install --frozen-lockfile
 
 COPY . .
 
