@@ -5,8 +5,8 @@ export function OptionLabel({
   label,
   infoText,
 }: {
-    label: string;
-    infoText?: string;
+  label: string;
+  infoText?: string;
 }) {
   return (
     <Flex direction="row" gap={4} align="center">
