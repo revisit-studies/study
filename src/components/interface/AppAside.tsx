@@ -54,7 +54,7 @@ export function AppAside() {
   const modes = useStoreSelector((state) => state.modes);
 
   return (
-    <AppShell.Aside className="studyBrowser" p="0">
+    <AppShell.Aside className="studyBrowser" data-testid="app-aside" p="0">
       <AppShell.Section
         p="sm"
         pb={0}
