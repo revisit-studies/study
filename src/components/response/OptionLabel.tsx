@@ -11,7 +11,8 @@ export function OptionLabel({
 }) {
   return (
     <Flex direction="row" gap={4} align="center">
-      <ReactMarkdownWrapper text={label} />
+      {/* Option labels don't need bottom padding and should use small text size */}
+      <ReactMarkdownWrapper text={label} option />
       {infoText && (
         <Tooltip label={infoText} multiline maw={400} position="bottom">
           <IconInfoCircle size={16} opacity={0.5} />

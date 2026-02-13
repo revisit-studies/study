@@ -10,7 +10,6 @@ import inputClasses from './css/Input.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
 export function RadioInput({
   response,
@@ -83,7 +82,7 @@ export function RadioInput({
                 alignItems: 'center',
               }}
             >
-              {horizontal && <ReactMarkdownWrapper text={radio.label} />}
+              {horizontal && <OptionLabel label={radio.label} infoText={radio.infoText} />}
               <Radio
                 disabled={disabled}
                 value={radio.value}

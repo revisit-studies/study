@@ -39,7 +39,12 @@ const markdownComponents: Partial<Components> = {
   }) { return <Image {...props} h={height} w={width} src={src?.startsWith('http') ? src : `${PREFIX}${src}`} />; },
 };
 
-export function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
+const optionMarkdownComponents: Partial<Components> = {
+  p({ node: _, ...props }) { return <Text {...props} component="span" size="sm" />; },
+};
+
+export function ReactMarkdownWrapper({ text, required, option }: { text: string; required?: boolean; option?: boolean }) {
+  const componentsToUse = option ? optionMarkdownComponents : markdownComponents;
   const rehypeAsterisk = useCallback(() => (tree: Root) => {
     if (!required) return;
     if (!tree) return;
@@ -140,7 +145,7 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
   }, [required]);
   return text.length > 0 && (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <ReactMarkdown components={markdownComponents} rehypePlugins={[rehypeRaw, rehypeAsterisk] as any} remarkPlugins={[remarkGfm]}>
+    <ReactMarkdown components={componentsToUse} rehypePlugins={[rehypeRaw, rehypeAsterisk] as any} remarkPlugins={[remarkGfm]}>
       {text}
     </ReactMarkdown>
   );
