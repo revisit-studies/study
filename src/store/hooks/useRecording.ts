@@ -208,7 +208,7 @@ export function useRecording() {
   }, []);
 
   useEffect(() => {
-    if (currentComponent !== '$screen-recording.co.screenRecordingPermission' && currentComponent !== 'end' && screenCaptureStarted && !isScreenCapturing) {
+    if (currentComponent !== '$screen-recording.components.screenRecordingPermission' && currentComponent !== 'end' && screenCaptureStarted && !isScreenCapturing) {
       setIsRejected(true);
     }
   }, [currentComponent, isScreenCapturing, screenCaptureStarted]);
