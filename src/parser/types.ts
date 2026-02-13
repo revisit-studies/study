@@ -326,7 +326,7 @@ export interface StringOption {
   label: string;
   /** The value stored in the participant's data. */
   value: string;
-  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. */
+  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to RadioResponse, CheckboxResponse, and RankingResponse */
   infoText?: string;
 }
 
