@@ -186,18 +186,11 @@ export async function loadLibrariesParseNamespace(importedLibraries: string[], e
         if (isInheritedComponent(component)) {
           const mergedComponent = merge({}, importedLibrariesData[libraryName].baseComponents![component.baseComponent], component) as IndividualComponent & { baseComponent?: string };
           delete mergedComponent.baseComponent;
-          return [
-            [`$${libraryName}.components.${componentName}`, mergedComponent],
-          ] as [string, IndividualComponent][];
+          return [`$${libraryName}.components.${componentName}`, mergedComponent] as [string, IndividualComponent];
         }
-        return [
-          [`$${libraryName}.components.${componentName}`, component],
-        ] as [string, IndividualComponent][];
+        return [`$${libraryName}.components.${componentName}`, component] as [string, IndividualComponent];
       })
-        .reduce((acc, [key, value]) => {
-          acc.push(key, value);
-          return acc;
-        }, []),
+      ,
     );
   });
 
