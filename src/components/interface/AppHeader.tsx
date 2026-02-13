@@ -128,7 +128,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   if (storageEngineFailedToConnect && firstMount) {
     storeDispatch(setAlertModal({
       show: true,
-      message: `You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you're taking the study you will not be compensated for your efforts. You are welcome to look around. If you are attempting to participate in the study, please email ${studyConfig.uiConfig.contactEmail} for assistance.`,
+      message: `You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you're taking the study you will not be compensated for your efforts. You are welcome to look around. If you are attempting to participate in the study, please first refresh and if it's still a problem email ${studyConfig.uiConfig.contactEmail} for assistance.`,
       title: 'Failed to connect to the storage engine',
     }));
     setFirstMount(false);
