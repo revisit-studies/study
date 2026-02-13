@@ -44,7 +44,7 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$adaptive-vlat.se.adaptive-vlat",
+      "$adaptive-vlat.sequences.adaptive-vlat",
       "feedback"
     ]
   }
