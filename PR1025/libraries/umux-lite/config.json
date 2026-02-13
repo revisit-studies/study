@@ -1,0 +1,34 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
+  "description": "The UMUX-Lite is a two-item questionnaire derived from the original UMUX. It is designed for situations where testing time is limited, offering a brief yet reliable measure of perceived usability. The two statements assess how usable and easy to use you find the system, providing a quick indication of overall user experience quality.",
+  "reference": "Lewis, James R., Brian S. Utesch, and Deborah E. Maher. \"UMUX-LITE: when there's no time for the SUS.\" Proceedings of the SIGCHI conference on human factors in computing systems. 2013.",
+  "doi": "10.1145/2470654.2481287", 
+  "components": {
+    "umux-lite": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "effectiveness",
+          "prompt": "This system's capabilities meet my **requirements**",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly Agree",
+          "leftLabel": "Strongly Disagree"
+        },
+        {
+          "id": "easy-to-use",
+          "prompt": "This system is **easy to use**",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 7,
+          "rightLabel": "Strongly Agree",
+          "leftLabel": "Strongly Disagree"
+        }
+      ]
+    }
+  },
+  "sequences": {}
+}
