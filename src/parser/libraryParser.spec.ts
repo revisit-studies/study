@@ -277,7 +277,7 @@ describe('Library Macro Expansion', () => {
       const result = expandLibrarySequences(sequence, mockLibraryData, errors);
 
       expect(errors).toHaveLength(1);
-      expect(errors[0].message).toContain('missingLib not found');
+      expect(errors[0].message).toContain('`missingLib` not found');
       expect(isComponentBlock(result)).toBe(true);
       if (isComponentBlock(result)) {
         expect(result.components).toEqual(['$missingLib.sequences.testSequence']);
@@ -294,7 +294,7 @@ describe('Library Macro Expansion', () => {
       const result = expandLibrarySequences(sequence, mockLibraryData, errors);
 
       expect(errors).toHaveLength(1);
-      expect(errors[0].message).toContain('missingSequence not found');
+      expect(errors[0].message).toContain('`missingSequence` not found');
       expect(isComponentBlock(result)).toBe(true);
       if (isComponentBlock(result)) {
         expect(result.components).toEqual(['$testLib.sequences.missingSequence']);
@@ -864,7 +864,8 @@ describe('verifyLibraryUsage', () => {
     };
 
     const errors: ParserErrorWarning[] = [];
-    verifyLibraryUsage(studyConfig, errors, libraryData);
+    const warnings: ParserErrorWarning[] = [];
+    verifyLibraryUsage(studyConfig, errors, warnings, libraryData);
 
     expect(errors).toHaveLength(0);
   });
@@ -917,7 +918,8 @@ describe('verifyLibraryUsage', () => {
     };
 
     const errors: ParserErrorWarning[] = [];
-    verifyLibraryUsage(studyConfig, errors, libraryData);
+    const warnings: ParserErrorWarning[] = [];
+    verifyLibraryUsage(studyConfig, errors, warnings, libraryData);
 
     expect(errors).toHaveLength(0);
   });
@@ -970,13 +972,14 @@ describe('verifyLibraryUsage', () => {
     };
 
     const errors: ParserErrorWarning[] = [];
-    verifyLibraryUsage(studyConfig, errors, libraryData);
+    const warnings: ParserErrorWarning[] = [];
+    verifyLibraryUsage(studyConfig, errors, warnings, libraryData);
 
     expect(errors).toHaveLength(1);
     expect(errors[0].message).toContain('missingBaseComp');
     expect(errors[0].message).toContain('not defined');
-    expect(errors[0].instancePath).toBe('/importedLibraries/testLib/components/derivedComp');
-    expect((errors[0].params as { action: string }).action).toBe('add the base component to the baseComponents object');
+    expect(errors[0].instancePath).toBe('/importedLibraries/testLib/baseComponents/');
+    expect((errors[0].params as { action: string }).action).toBe('Add the base component to the baseComponents object');
   });
 
   test('adds error when library has no baseComponents and component tries to inherit', () => {
@@ -1020,7 +1023,8 @@ describe('verifyLibraryUsage', () => {
     };
 
     const errors: ParserErrorWarning[] = [];
-    verifyLibraryUsage(studyConfig, errors, libraryData);
+    const warnings: ParserErrorWarning[] = [];
+    verifyLibraryUsage(studyConfig, errors, warnings, libraryData);
 
     expect(errors).toHaveLength(1);
     expect(errors[0].message).toContain('someBase');
@@ -1083,7 +1087,8 @@ describe('verifyLibraryUsage', () => {
     };
 
     const errors: ParserErrorWarning[] = [];
-    verifyLibraryUsage(studyConfig, errors, libraryData);
+    const warnings: ParserErrorWarning[] = [];
+    verifyLibraryUsage(studyConfig, errors, warnings, libraryData);
 
     expect(errors).toHaveLength(1);
     expect(errors[0].message).toContain('missingBase');
@@ -1148,7 +1153,8 @@ describe('verifyLibraryUsage', () => {
     };
 
     const errors: ParserErrorWarning[] = [];
-    verifyLibraryUsage(studyConfig, errors, libraryData);
+    const warnings: ParserErrorWarning[] = [];
+    verifyLibraryUsage(studyConfig, errors, warnings, libraryData);
 
     expect(errors).toHaveLength(2);
     expect(errors.some((e) => e.message.includes('missingBase1'))).toBe(true);
@@ -1184,9 +1190,69 @@ describe('verifyLibraryUsage', () => {
     };
 
     const errors: ParserErrorWarning[] = [];
-    verifyLibraryUsage(studyConfig, errors, libraryData);
+    const warnings: ParserErrorWarning[] = [];
+    verifyLibraryUsage(studyConfig, errors, warnings, libraryData);
 
     expect(errors).toHaveLength(0);
+  });
+
+  test('adds disabled-sidebar warning when library component uses sidebar while sidebar is disabled', () => {
+    const libraryData: Record<string, LibraryConfig> = {
+      testLib: {
+        $schema: '',
+        description: 'Test library',
+        components: {
+          componentWithSidebar: {
+            type: 'markdown',
+            path: 'test.md',
+            response: [
+              {
+                id: 'sidebarResponse',
+                type: 'shortText',
+                prompt: 'Sidebar response',
+                location: 'sidebar',
+              },
+            ],
+          } as IndividualComponent,
+        },
+        sequences: {},
+      },
+    };
+
+    const studyConfig: StudyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: false,
+      },
+      components: {},
+      sequence: {
+        order: 'fixed',
+        components: [],
+      },
+    };
+
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+    verifyLibraryUsage(studyConfig, errors, warnings, libraryData);
+
+    expect(errors).toHaveLength(0);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0].category).toBe('disabled-sidebar');
+    expect(warnings[0].message).toContain('componentWithSidebar');
+    expect(warnings[0].instancePath).toBe('/importedLibraries/testLib/uiConfig/');
   });
 });
 
