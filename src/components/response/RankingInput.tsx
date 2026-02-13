@@ -28,7 +28,7 @@ import classes from './css/RankingDnd.module.css';
 import { RankingResponse, StringOption } from '../../parser/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
 
-type Item = { id: string; label: string; symbol: string; infoText?: string };
+type Item = { id: string; symbol: string; option: StringOption };
 
 function SortableItem({ item, index }: { item: Item; index?: number }) {
   const {
@@ -55,7 +55,7 @@ function SortableItem({ item, index }: { item: Item; index?: number }) {
       p="sm"
     >
       {index !== undefined && <Text c="dimmed" mr="sm">{index}</Text>}
-      <OptionLabel label={item.label} infoText={item.infoText} />
+      <OptionLabel label={item.option.label} infoText={item.option.infoText} />
     </Paper>
   );
 }
@@ -79,11 +79,10 @@ function DroppableZone({ id, title, children }: { id: string; title: string; chi
   );
 }
 
-const createItems = (options: (StringOption | string)[]): Item[] => options.map((option) => ({
-  id: typeof option === 'string' ? option : option.value,
-  label: typeof option === 'string' ? option : option.label,
-  symbol: typeof option === 'string' ? option : option.value,
-  infoText: typeof option === 'string' ? undefined : option.infoText,
+const createItems = (options: (StringOption | string)[]): Item[] => options.map((item) => ({
+  id: typeof item === 'string' ? item : item.value,
+  symbol: typeof item === 'string' ? item : item.value,
+  option: typeof item === 'string' ? { label: item, value: item } : item,
 }));
 
 const useRankingLogic = (responseId: string, onChange?: (value: Record<string, string>) => void) => {
@@ -418,7 +417,7 @@ function RankingPairwiseComponent({
       });
 
       if (existingInOpposite) {
-        const itemLabel = items.find((i) => i.id === baseItemId)?.label;
+        const itemLabel = items.find((i) => i.id === baseItemId)?.option.label;
         setError?.(`Item "${itemLabel}" cannot be in both HIGH and LOW.`);
         return;
       }
