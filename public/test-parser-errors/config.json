@@ -49,10 +49,10 @@
       "baseComponent": "missingBaseComponent"
     },
     "workingBaseComponentFromLibrary": {
-      "baseComponent": "$test.co.test-md"
+      "baseComponent": "$test.components.test-md"
     },
     "missingComponentFromLibrary": {
-      "baseComponent": "$test.co.test-missing"
+      "baseComponent": "$test.components.test-missing"
     },
     "testComponent": {
       "type": "markdown",
@@ -115,9 +115,9 @@
       },
       "md2",
       "$test.sequences.small",
-      "$test.se.long",
+      "$test.sequences.long",
       "$test.components.test-md",
-      "$test.co.test-react",
+      "$test.components.test-react",
       "$test.components.test-missing",
       "$test.sequences.missingSequence",
       "missingBaseComponent",
