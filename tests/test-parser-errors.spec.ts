@@ -10,7 +10,7 @@ test('parser errors are shown correctly', async ({ page }) => {
 
   const errors = [
     'root:Could not find library test-missing',
-    '/baseComponents/:Base component missingBaseComponent and $test.co.test-missing are not defined in baseComponents object',
+    '/baseComponents/:Base component missingBaseComponent and $test.components.test-missing are not defined in baseComponents object',
     '/components/:Component missingComponent, nestedMissingComponent, $test.components.test-missing, and $test.sequences.missingSequence are not defined in components object',
     '/importedLibraries/test/sequence/:Sequence missingSequence not found in library test',
     '/sequence/:Component testBaseComponent is a base component and cannot be used in the sequence',
