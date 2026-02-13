@@ -1,1 +1,0 @@
-Here is the demo of supported input types. You may check the config file for reference.
