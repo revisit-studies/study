@@ -134,6 +134,7 @@ export function AppAside() {
         <Tabs
           value={activeTab}
           onChange={setActiveTab}
+          keepMounted={false}
           style={{
             display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden',
           }}
