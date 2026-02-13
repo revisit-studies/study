@@ -1,5 +1,6 @@
-import { Flex, Tooltip, Text } from '@mantine/core';
+import { Flex, Tooltip } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
 export function OptionLabel({
   label,
@@ -10,7 +11,7 @@ export function OptionLabel({
 }) {
   return (
     <Flex direction="row" gap={4} align="center">
-      <Text>{label}</Text>
+      <ReactMarkdownWrapper text={label} />
       {infoText && (
         <Tooltip label={infoText} multiline maw={400} position="bottom">
           <IconInfoCircle size={16} opacity={0.5} />
