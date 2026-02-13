@@ -2807,6 +2807,10 @@
       "additionalProperties": false,
       "description": "The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
       "properties": {
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to RadioResponse, CheckboxResponse, and RankingResponse",
+          "type": "string"
+        },
         "label": {
           "description": "The label displayed to participants. Markdown is supported.",
           "type": "string"

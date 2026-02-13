@@ -328,6 +328,8 @@ export interface StringOption {
   label: string;
   /** The value stored in the participant's data. */
   value: string;
+  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to RadioResponse, CheckboxResponse, and RankingResponse */
+  infoText?: string;
 }
 
 /**
@@ -920,7 +922,7 @@ export interface BaseIndividualComponent {
   /** Whether to show the previous button. If present, will override the previous button setting in the uiConfig. */
   previousButton?: boolean;
   /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
-  previousButtonText?:string;
+  previousButtonText?: string;
   /** Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig. */
   provideFeedback?: boolean;
   /** The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig. */
