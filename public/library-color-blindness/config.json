@@ -34,8 +34,8 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$color-blindness.se.short-test",
-      "$color-blindness.se.full-test"
+      "$color-blindness.sequences.short-test",
+      "$color-blindness.sequences.full-test"
     ]
   }
 }

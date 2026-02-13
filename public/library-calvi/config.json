@@ -35,9 +35,9 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$calvi.se.full",
-      "$calvi.se.specificBank",
-      "$calvi.se.fullBank"
+      "$calvi.sequences.full",
+      "$calvi.sequences.specificBank",
+      "$calvi.sequences.fullBank"
     ]
   }
 }

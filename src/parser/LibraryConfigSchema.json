@@ -157,7 +157,7 @@
             "type": "boolean"
           },
           "recordScreen": {
-            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
             "type": "boolean"
           },
           "response": {
@@ -580,6 +580,10 @@
     "DividerResponse": {
       "additionalProperties": false,
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "not": {}
         },
@@ -851,7 +855,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1150,7 +1154,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1317,7 +1321,7 @@
     },
     "LikertResponse": {
       "additionalProperties": false,
-      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"numItems\": 5, \"start\": 1, \"spacing\": 1 } ```",
+      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"labelLocation\": \"inline\", \"numItems\": 5, \"start\": 1, \"spacing\": 1 } ```",
       "properties": {
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
@@ -1333,6 +1337,15 @@
         },
         "infoText": {
           "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "labelLocation": {
+          "description": "The location of the labels. Defaults to inline.",
+          "enum": [
+            "above",
+            "inline",
+            "below"
+          ],
           "type": "string"
         },
         "leftLabel": {
@@ -1571,7 +1584,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1946,7 +1959,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -2017,7 +2030,7 @@
     },
     "RadioResponse": {
       "additionalProperties": false,
-      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [\"Option 1\", \"Option 2\"] } ```",
+      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [\"Option 1\", \"Option 2, Option 3\"], \"optionOrder\": \"random\", \"leftLabel\": \"Left\", \"rightLabel\": \"Right\", \"labelLocation\": \"inline\", \"horizontal\": true, \"withOther\": true } ```",
       "properties": {
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
@@ -2037,6 +2050,15 @@
         },
         "infoText": {
           "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "labelLocation": {
+          "description": "The location of the labels. This only works when horizontal is true. Defaults to inline.",
+          "enum": [
+            "above",
+            "inline",
+            "below"
+          ],
           "type": "string"
         },
         "leftLabel": {
@@ -2341,7 +2363,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3120,7 +3142,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3275,7 +3297,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3434,7 +3456,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3594,7 +3616,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {

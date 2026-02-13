@@ -35,7 +35,7 @@ ${libraryConfig.additionalDescription ? `## Additional Description\n\n${libraryC
 
 ${forDocs
     ? `<!-- Importing Links -->
-  import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
+import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
 
   <StructuredLinks
       demoLinks={[

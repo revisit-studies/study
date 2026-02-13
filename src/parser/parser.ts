@@ -111,7 +111,7 @@ function verifyStudySkip(
   });
 
   // If this block has a skip, add the skip.to component to the skipTargets array
-  if (sequence.skip) {
+  if (sequence.skip && sequence.skip.length > 0) {
     skipTargets.push(...sequence.skip.map((skip) => skip.to).filter((target) => target !== 'end'));
   }
 }
@@ -156,9 +156,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   Object.keys(studyConfig.components)
     .filter((componentName) => (
       !usedComponents.includes(componentName)
-      && !componentName.includes('.se.')
       && !componentName.includes('.sequences.')
-      && !componentName.includes('.co.')
       && !componentName.includes('.components.')
     ))
     .forEach((componentName) => {
@@ -202,7 +200,11 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
     }
   }
 
-  let errors: Required<ParsedConfig<StudyConfig>>['errors'] = studyValidate.errors || [];
+  let errors: Required<ParsedConfig<StudyConfig>>['errors'] = (studyValidate.errors || []).map((e) => ({
+    message: e.message || 'Validation error',
+    instancePath: (e.instancePath as string) || '',
+    params: (e.params as object) || {},
+  }));
   let warnings: Required<ParsedConfig<StudyConfig>>['warnings'] = [];
 
   // We can only run our custom validator if the schema validation passes
@@ -214,6 +216,13 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
     Object.values(importedLibrariesData).forEach((libraryData) => {
       data.components = { ...data.components, ...libraryData.components };
       data.baseComponents = { ...data.baseComponents, ...libraryData.components };
+    });
+
+    // Expand .co. macro to .components. in baseComponent references (after merging library components)
+    Object.values(data.components).forEach((component) => {
+      if (component && typeof component === 'object' && 'baseComponent' in component && typeof component.baseComponent === 'string' && component.baseComponent.includes('.co.')) {
+        component.baseComponent = component.baseComponent.replace('.co.', '.components.');
+      }
     });
 
     // Expand the imported sequences to use the correct component names

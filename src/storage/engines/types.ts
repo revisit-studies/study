@@ -35,7 +35,23 @@ export type SequenceAssignment = {
   stage: string; // The stage of the participant in the study
 };
 
-export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
+export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
+
+export function cleanupModes(modes: Record<string, boolean>): Record<REVISIT_MODE, boolean> {
+  const cleanedModes: Record<string, boolean> = { ...modes };
+
+  if ('studyNavigatorEnabled' in modes && !('developmentModeEnabled' in modes)) {
+    cleanedModes.developmentModeEnabled = modes.studyNavigatorEnabled;
+    delete cleanedModes.studyNavigatorEnabled;
+  }
+
+  if ('analyticsInterfacePubliclyAccessible' in modes && !('dataSharingEnabled' in modes)) {
+    cleanedModes.dataSharingEnabled = modes.analyticsInterfacePubliclyAccessible;
+    delete cleanedModes.analyticsInterfacePubliclyAccessible;
+  }
+
+  return cleanedModes as Record<REVISIT_MODE, boolean>;
+}
 
 export interface StageInfo {
   stageName: string;
@@ -568,6 +584,7 @@ export abstract class StorageEngine {
       rejected: false,
       participantTags: [],
       stage: currentStage,
+      createdTime: Date.now(),
     };
 
     if (modes.dataCollectionEnabled) {
@@ -814,6 +831,12 @@ export abstract class StorageEngine {
     if (!this.currentParticipantId || this.participantData === undefined) {
       throw new Error('Participant not initialized');
     }
+
+    // Don't save further answers if participant is rejected
+    if (this.participantData.rejected) {
+      return;
+    }
+
     // Update the local copy of the participant data
     this.participantData = {
       ...this.participantData,

@@ -74,4 +74,6 @@ export interface ParticipantData {
   participantTags: string[];
   /** The stage of the participant in the study. */
   stage: string;
+  /** Time that the participant registered for the study in epoch milliseconds. */
+  createdTime?: number;
 }
