@@ -1,5 +1,5 @@
 import {
-  Flex, FocusTrap, Radio,
+  Flex, FocusTrap, Radio, Text,
 } from '@mantine/core';
 import { useMemo } from 'react';
 import { ButtonsResponse, StringOption } from '../../parser/types';
@@ -7,7 +7,6 @@ import { generateErrorMessage } from './utils';
 import classes from './css/ButtonsInput.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
-import { OptionLabel } from './OptionLabel';
 
 export function ButtonsInput({
   response,
@@ -59,12 +58,7 @@ export function ButtonsInput({
               className={classes.root}
               p="xs"
             >
-              <Flex justify="center">
-                <OptionLabel
-                  label={radio.label}
-                  infoText={radio.infoText}
-                />
-              </Flex>
+              <Text size="sm">{radio.label}</Text>
             </Radio.Card>
           ))}
         </Flex>
