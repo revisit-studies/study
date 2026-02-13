@@ -40,7 +40,7 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$screen-recording.co.screenRecordingPermission",
+      "$screen-recording.components.screenRecordingPermission",
       "demo-recording"
     ]
   }

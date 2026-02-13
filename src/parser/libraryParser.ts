@@ -188,15 +188,12 @@ export async function loadLibrariesParseNamespace(importedLibraries: string[], e
           delete mergedComponent.baseComponent;
           return [
             [`$${libraryName}.components.${componentName}`, mergedComponent],
-            [`$${libraryName}.co.${componentName}`, mergedComponent],
           ] as [string, IndividualComponent][];
         }
         return [
           [`$${libraryName}.components.${componentName}`, component],
-          [`$${libraryName}.co.${componentName}`, component],
         ] as [string, IndividualComponent][];
       })
-        // spread double array to single array for Object.fromEntries
         .reduce((acc, [key, value]) => {
           acc.push(key, value);
           return acc;

@@ -9,9 +9,9 @@ import { ThinkAloudFooter } from '../../analysis/individualStudy/thinkAloud/Thin
 import { useCurrentIdentifier } from '../../routes/utils';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
 
-function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
+async function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
-    return storageEngine.getAllParticipantIds();
+    return (await storageEngine.getAllParticipantIds());
   }
   return null;
 }

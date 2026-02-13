@@ -9,7 +9,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { DownloadTidy, download } from './DownloadTidy';
 import { ParticipantData } from '../../storage/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { downloadParticipantsAudioZip, downloadParticipantsScreenRecordingZip } from '../../utils/handleDownloadAudio';
+import { downloadParticipantsAudioZip, downloadParticipantsScreenRecordingZip } from '../../utils/handleDownloadFiles';
 
 type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData[]>);
 

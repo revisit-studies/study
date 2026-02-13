@@ -105,7 +105,6 @@ export async function studyStoreCreator(
 
   const initialState: StoreState = {
     studyId,
-    isRecording: false,
     answers: Object.keys(answers).length > 0 ? answers : emptyAnswers,
     sequence,
     config,
@@ -143,9 +142,6 @@ export async function studyStoreCreator(
     reducers: {
       setConfig(state, { payload }: PayloadAction<StudyConfig>) {
         state.config = payload;
-      },
-      setIsRecording(state, { payload }: PayloadAction<boolean>) {
-        state.isRecording = payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       pushToFuncSequence(state, { payload }: PayloadAction<{ component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined }>) {

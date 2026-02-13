@@ -17,17 +17,18 @@ function isElement(node: unknown): node is Element {
   return !!node && typeof node === 'object' && (node as Element).type === 'element';
 }
 
-const markdownComponents: Partial<Components> = {
-  p({ node: _, ...props }) { return <Text {...props} pb={8} fw="inherit" ref={undefined} />; },
-  h1({ node: _, ...props }) { return <Title {...props} order={1} pb={12} />; },
-  h2({ node: _, ...props }) { return <Title {...props} order={2} pb={12} />; },
-  h3({ node: _, ...props }) { return <Title {...props} order={3} pb={12} />; },
-  h4({ node: _, ...props }) { return <Title {...props} order={4} pb={12} />; },
-  h5({ node: _, ...props }) { return <Title {...props} order={5} pb={12} />; },
-  h6({ node: _, ...props }) { return <Title {...props} order={6} pb={12} />; },
+const markdownComponents = (option?: boolean): Partial<Components> => ({
+  p({ node: _, ...props }) { return option ? <Text {...props} component="span" size="sm" /> : <Text {...props} pb={8} fw="inherit" ref={undefined} />; },
+  h1({ node: _, ...props }) { return <Title {...props} order={1} pb={option ? undefined : 12} />; },
+  h2({ node: _, ...props }) { return <Title {...props} order={2} pb={option ? undefined : 12} />; },
+  h3({ node: _, ...props }) { return <Title {...props} order={3} pb={option ? undefined : 12} />; },
+  h4({ node: _, ...props }) { return <Title {...props} order={4} pb={option ? undefined : 12} />; },
+  h5({ node: _, ...props }) { return <Title {...props} order={5} pb={option ? undefined : 12} />; },
+  h6({ node: _, ...props }) { return <Title {...props} order={6} pb={option ? undefined : 12} />; },
   a({ node: _, ...props }) { return <Anchor {...props} ref={undefined} />; },
-  ul({ node: _, ...props }) { return <List withPadding {...props} pb={8} />; },
-  ol({ node: _, type: _type, ...props }) { return <List {...props} type="ordered" withPadding pb={8} />; },
+  code({ node: _, ...props }) { return <Code {...props} mb={option ? undefined : 12} />; },
+  ul({ node: _, ...props }) { return <List withPadding {...props} pb={option ? undefined : 8} />; },
+  ol({ node: _, type: _type, ...props }) { return <List {...props} type="ordered" withPadding pb={option ? undefined : 8} />; },
   table({ node: _, ...props }) { return <Table {...props} mb={12} borderColor="grey" />; },
   thead({ node: _, ...props }) { return <Table.Thead {...props} />; },
   tbody({ node: _, ...props }) { return <Table.Tbody {...props} />; },
@@ -37,28 +38,37 @@ const markdownComponents: Partial<Components> = {
   img({
     node: _, width, height, src, ...props
   }) { return <Image {...props} h={height} w={width} src={src?.startsWith('http') ? src : `${PREFIX}${src}`} />; },
-};
+});
 
-const inlineMarkdownComponents: Partial<Components> = {
-  ...markdownComponents,
-  p({ node: _, ...props }) { return <Text {...props} component="span" />; },
-  code({ node: _, ...props }) { return <Code {...props} />; },
-};
-
-export function ReactMarkdownWrapper({ text, required, inline }: { text: string; required?: boolean; inline?: boolean }) {
+export function ReactMarkdownWrapper({ text, required, option }: { text: string; required?: boolean; option?: boolean }) {
+  const componentsToUse = markdownComponents(option);
   const rehypeAsterisk = useCallback(() => (tree: Root) => {
     if (!required) return;
     if (!tree) return;
 
     let ln: Element | null = null;
     let lp: Element | Root | null = null;
-    // Recursively find the last node
-    visit(tree, (node, _, parent) => {
-      if (isElement(node)) {
-        ln = node;
-        lp = parent!;
+    let lastTextNode: HastText | null = null;
+
+    visit(tree, (node) => {
+      if (isHastText(node) && node.value.trim().length > 0) {
+        lastTextNode = node;
       }
     });
+
+    if (lastTextNode) {
+      // Recursively find the last node
+      visit(tree, (node, _, parent) => {
+        if (!isElement(node)) return;
+        if (!node.children) return;
+
+        const containsLastText = node.children.some((child) => child === lastTextNode);
+        if (containsLastText) {
+          ln = node;
+          lp = parent!;
+        }
+      });
+    }
 
     const lastNode = ln as Element | null;
     const lastParent = lp as Element | null;
@@ -82,6 +92,8 @@ export function ReactMarkdownWrapper({ text, required, inline }: { text: string;
         const words = textNode.value.split(' ');
         const lastWord = words.pop();
         const newTextValue = words.join(' ');
+        // If newTextValue exists (i.e. we had multiple words), add space before last word
+        const needsSpace = newTextValue.length > 0;
         const newTextNode: Element = {
           type: 'element',
           tagName: 'span',
@@ -89,7 +101,7 @@ export function ReactMarkdownWrapper({ text, required, inline }: { text: string;
           children: [
             {
               type: 'text',
-              value: newTextValue ? `${newTextValue} ` : '',
+              value: needsSpace ? `${newTextValue} ` : '',
             },
             {
               type: 'element',
@@ -130,7 +142,7 @@ export function ReactMarkdownWrapper({ text, required, inline }: { text: string;
   }, [required]);
   return text.length > 0 && (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <ReactMarkdown components={inline ? inlineMarkdownComponents : markdownComponents} rehypePlugins={[rehypeRaw, rehypeAsterisk] as any} remarkPlugins={[remarkGfm]}>
+    <ReactMarkdown components={componentsToUse} rehypePlugins={[rehypeRaw, rehypeAsterisk] as any} remarkPlugins={[remarkGfm]}>
       {text}
     </ReactMarkdown>
   );

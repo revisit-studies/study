@@ -34,7 +34,7 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$demographics.co.demographics"
+      "$demographics.components.demographics"
     ]
   }
 }

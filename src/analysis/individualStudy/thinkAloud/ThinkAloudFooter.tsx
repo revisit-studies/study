@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Alert,
   AppShell,
   Button,
   Group, Popover, SegmentedControl, Select, Stack, Text,
@@ -25,7 +26,7 @@ import { TagSelector } from './tags/TagSelector';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { PREFIX } from '../../../utils/Prefix';
-import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadAudio';
+import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadFiles';
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { StorageEngine } from '../../../storage/engines/types';
 import { useReplayContext } from '../../../store/hooks/useReplay';
@@ -150,12 +151,15 @@ export function ThinkAloudFooter({
   }, [participantTags]);
 
   const currentTrialClean = useMemo(() => {
+    if (currentTrial.includes('__dynamicLoading')) {
+      return '';
+    }
     // if we find ourselves with a wrong current trial, erase it
     if (participant && !participant.answers[currentTrial]) {
       setSearchParams({ participantId, currentTrial: Object.entries(participant.answers).find(([_, ans]) => +ans.trialOrder.split('_')[0] === 0)?.[0] || '' });
     }
 
-    return participant ? participant.answers[currentTrial].componentName : '';
+    return participant?.answers[currentTrial]?.componentName ?? '';
   }, [currentTrial, participant, participantId, setSearchParams]);
 
   const xScale = useMemo(() => {
@@ -213,6 +217,8 @@ export function ThinkAloudFooter({
     if (!participant || !currentTrial) {
       return;
     }
+
+    // This doesnt work for dynamic
     let index = +participant.answers[currentTrial].trialOrder.split('_')[0] + indexChange;
 
     if (index >= Object.values(participant.answers).length) {
@@ -222,10 +228,11 @@ export function ThinkAloudFooter({
     }
 
     const newTrial = Object.values(participant.answers).find((ans) => +ans.trialOrder.split('_')[0] === index);
-
     const newTrialName = newTrial ? `${newTrial.componentName}_${newTrial.trialOrder.split('_')[0]}` : '';
 
     localStorage.setItem('currentTrial', newTrialName);
+
+    // This isnt actually doing anything without the other analysis tab open
     setSearchParams({ participantId, currentTrial: newTrialName });
   }, [currentTrial, participant, participantId, setSearchParams]);
 
@@ -272,6 +279,14 @@ export function ThinkAloudFooter({
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
+      {currentTrial && participant && currentTrialClean === '' && (
+      <div style={{
+        position: 'absolute', top: -5, left: 5, transform: 'translateY(-100%)',
+      }}
+      >
+        <Alert variant="filled" color="red" title="Participant hasn&apos;t completed any tasks." icon={<IconInfoCircle />} />
+      </div>
+      )}
       <Stack style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '100%' }} gap={5} justify="center">
 
         <AudioProvenanceVis setHasAudio={setHasAudio} saveProvenance={saveProvenance} setTime={onTimeUpdate} setTimeString={(_t) => setTimeString(_t)} answers={participant ? participant.answers : {}} taskName={currentTrial} context={isReplay ? 'provenanceVis' : 'audioAnalysis'} />

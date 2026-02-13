@@ -13,17 +13,18 @@ test('test', async ({ browser }) => {
     .nth(0)
     .getByText('Go to Study')
     .click();
-  await page.getByRole('tab', { name: 'All Trials View' }).click();
+  await page.getByRole('tab', { name: 'Browse Components' }).click();
 
-  await page.getByLabel('All Trials View').locator('a').filter({ hasText: 'barChart' }).click();
+  await page.getByLabel('Browse Components').locator('a').filter({ hasText: 'barChart' }).click();
   const iframe = await page.frameLocator('iframe').getByRole('img');
   await expect(iframe).toBeVisible();
 
-  await page.getByLabel('All Trials View').locator('a').filter({ hasText: 'introduction' }).click();
+  await page.getByLabel('Browse Components').locator('a').filter({ hasText: 'introduction' }).click();
   const introText = await page.getByText('Welcome to our study. This is');
   await expect(introText).toBeVisible();
 
-  await page.getByLabel('All Trials View').locator('a').filter({ hasText: 'end' }).click();
+  await page.getByRole('tab', { name: 'Participant View' }).click();
+  await page.getByLabel('Participant View').locator('a').filter({ hasText: 'end' }).click();
   const endText = await page.getByText('Please wait');
   await expect(endText).toBeVisible();
 });

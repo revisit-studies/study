@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import type {
-  Answer, ConfigResponseBlockLocation, ParticipantData, ResponseBlockLocation, SkipConditions, StringOption, StudyConfig, ValueOf,
+  Answer, ComponentBlock, ConfigResponseBlockLocation, InterruptionBlock, ParticipantData, ResponseBlockLocation, SkipConditions, StringOption, StudyConfig, ValueOf,
 } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/types';
 
@@ -151,16 +151,16 @@ export interface StimulusParams<T, S = never> {
 export interface Sequence {
   id?: string;
   orderPath: string;
-  order: string;
+  order: ComponentBlock['order'] | 'dynamic';
   components: (string | Sequence)[];
-  skip?: SkipConditions;
+  skip: SkipConditions;
+  interruptions?: InterruptionBlock[];
 }
 
 export type FormElementProvenance = { form: StoredAnswer['answer'] };
 export interface StoreState {
   studyId: string;
   participantId: string;
-  isRecording: boolean;
   answers: ParticipantData['answers'];
   sequence: Sequence;
   config: StudyConfig;
