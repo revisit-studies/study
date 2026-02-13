@@ -400,7 +400,7 @@
     "components": [
       "welcome",
       "consent",
-      "$mic-check.co.audioTest",
+      "$mic-check.components.audioTest",
       "demographics",
       "trainingWithFeedback",
       "coinImage",
