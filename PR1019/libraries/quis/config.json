@@ -1,0 +1,436 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
+  "description": "The Questionnaire for User Interaction Satisfaction (QUIS) is a measurement tool designed to assess a computer user's subjective satisfaction with the human-computer interface. The QUIS contains measures of overall system satisfaction and specific interface factors such as screen visibility, terminology and system information, learning factors, and system capabilities. This library includes six components, one for each individual dimension, as well as a sequence containing all dimensions.",
+  "reference": "Chin, J. P., Diehl, V. A. and Norman, K. L. (1988). Development of an instrument measuring user satisfaction of the human-computer interface. Proceedings of SIGCHI '88, (pp. 213-218), New York: ACM/SIGCHI. \n\n Chin, J. P., Norman, K. L., and Shneiderman, B. (1987). Subjective user evaluation of CF PASCAL programming tools.  Technical Report (CAR-TR-304).  College Park, MD:  Human-Computer Interaction Laboratory, Center for Automation Research, University of Maryland. \n\n Harper, B. D. and Norman, K. L. (1993). Improving User Satisfaction: The Questionnaire for User Interaction Satisfaction Version 5.5. Proceedings of the 1st Annual Mid-Atlantic Human Factors Conference, (pp. 224-228), Virginia Beach, VA.",
+  "externalLink": "https://isr.umd.edu/news/story/quis-questionnaire-for-user-interaction-satisfaction-70-isr-ip",
+  "components": {
+    "overall": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "terrible-wonderful",
+          "prompt": "Overall reaction to the system",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "withDontKnow": true,
+          "rightLabel": "Wonderful",
+          "leftLabel": "Terrible"
+        },
+        {
+          "id": "difficult-easy",
+          "prompt": "",
+          "required": true,
+          "location": "aboveStimulus", 
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Easy",
+          "leftLabel": "Difficult",
+          "withDontKnow": true
+        },
+        {
+          "id": "frustrating-satisfying",
+          "prompt": "",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Satisfying",
+          "leftLabel": "Frustrating",
+          "withDontKnow": true
+        },
+        {
+          "id": "",
+          "prompt": "",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Adequate power",
+          "leftLabel": "Inadequate power",
+          "withDontKnow": true
+        },
+        {
+          "id": "dull-stimulating",
+          "prompt": "",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Stimulating",
+          "leftLabel": "Dull",
+          "withDontKnow": true
+        },
+        {
+          "id": "rigid-flexible",
+          "prompt": "",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Flexible",
+          "leftLabel": "Rigid",
+          "withDontKnow": true
+        }
+      ]
+  },
+  "screen":{
+    "type": "questionnaire",
+    "response": [
+        {
+          "id": "characters-readable",
+          "prompt": "Characters on the computer screen",
+          "required": true,
+          "location": "aboveStimulus", 
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Easy to read",
+          "leftLabel": "Hard to read",
+          "withDontKnow": true
+        },
+        {
+          "id": "highlighting-helps",
+          "prompt": "Highlighting on the screen simplifies task",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Very much",
+          "leftLabel": "Not at all",
+          "withDontKnow": true
+        },
+        {
+          "id": "screen-organization",
+          "prompt": "Organization of information on screen",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Very clear",
+          "leftLabel": "Confusing",
+          "withDontKnow": true
+        },
+        {
+          "id": "screen-sequence",
+          "prompt": "Sequence of screens",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Very clear",
+          "leftLabel": "Confusing",
+          "withDontKnow": true
+        }
+    ]
+  },
+  "terminology-and-system-information":{
+    "type": "questionnaire",
+    "response": [
+        {
+          "id": "term-consistency",
+          "prompt": "Use of terms throughout system",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert", 
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Consistent",
+          "leftLabel": "Inconsistent",
+          "withDontKnow": true
+        },
+        {
+          "id": "term-relevance",
+          "prompt": "Computer terminology is related to the task you are doing",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Always",
+          "leftLabel": "Never",
+          "withDontKnow": true
+        },
+        {
+          "id": "message-position",
+          "prompt": "Position of messages on screen",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Consistent",
+          "leftLabel": "Inconsistent",
+          "withDontKnow": true
+        },
+        {
+          "id": "input-prompts",
+          "prompt": "Messages on screen which prompt user for input",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Clear",
+          "leftLabel": "Confusing",
+          "withDontKnow": true
+        },
+        {
+          "id": "system-feedback",
+          "prompt": "Computer keeps you informed about what it is doing",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Always",
+          "leftLabel": "Never",
+          "withDontKnow": true
+        },
+        {
+          "id": "error-messages",
+          "prompt": "Error messages",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Helpful",
+          "leftLabel": "Unhelpful",
+          "withDontKnow": true
+        }
+    ]
+  },
+  "learning":{
+    "type": "questionnaire",
+    "response": [
+      {
+        "id": "learning-operation",
+        "prompt": "Learning to operate the system",
+        "required": true,
+        "location": "aboveStimulus", 
+        "type": "likert",
+        "start": 0,
+        "numItems": 10,
+        "rightLabel": "Easy",
+        "leftLabel": "Difficult",
+        "withDontKnow": true
+      },
+      {
+        "id": "exploring-features",
+        "prompt": "Exploring new features by trial and error",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "likert",
+        "start": 0,
+        "numItems": 10,
+        "rightLabel": "Easy",
+        "leftLabel": "Difficult",
+        "withDontKnow": true
+      },
+      {
+        "id": "remembering-commands",
+        "prompt": "Remembering names and use of commands",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "likert",
+        "start": 0,
+        "numItems": 10,
+        "rightLabel": "Easy",
+        "leftLabel": "Difficult",
+        "withDontKnow": true
+      },
+      {
+        "id": "straight-forward-tasks",
+        "prompt": "Tasks can be performed in a straight-forward manner",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "likert", 
+        "start": 0,
+        "numItems": 10,
+        "rightLabel": "Always",
+        "leftLabel": "Never",
+        "withDontKnow": true
+      },
+      {
+        "id": "help-messages",
+        "prompt": "Help messages on the screen",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "likert",
+        "start": 0,
+        "numItems": 10,
+        "rightLabel": "Helpful",
+        "leftLabel": "Unhelpful",
+        "withDontKnow": true
+      },
+      {
+        "id": "reference-materials",
+        "prompt": "Supplemental reference materials",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "likert",
+        "start": 0,
+        "numItems": 10,
+        "rightLabel": "Clear",
+        "leftLabel": "Confusing",
+        "withDontKnow": true
+      }
+    ]
+  },
+  "system-capabilities":{
+    "type": "questionnaire",
+    "response": [
+      {
+        "id": "system-speed",
+        "prompt": "System speed",
+        "required": true,
+        "location": "aboveStimulus", 
+        "type": "likert",
+        "start": 0,
+        "numItems": 10,
+        "rightLabel": "Fast enough",
+        "leftLabel": "Too slow",
+        "withDontKnow": true
+      },
+      {
+        "id": "system-reliability", 
+        "prompt": "System reliability",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "likert",
+        "start": 0,
+        "numItems": 10,
+        "rightLabel": "Reliable",
+        "leftLabel": "Unreliable",
+        "withDontKnow": true
+      },
+      {
+        "id": "system-noise",
+        "prompt": "System tends to be",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "likert",
+        "start": 0,
+        "numItems": 10,
+        "rightLabel": "Quiet",
+        "leftLabel": "Noisy",
+        "withDontKnow": true
+      },
+      {
+        "id": "correcting-mistakes",
+        "prompt": "Correcting your mistakes",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "likert",
+        "start": 0,
+        "numItems": 10,
+        "rightLabel": "Easy",
+        "leftLabel": "Difficult",
+        "withDontKnow": true
+      },
+      {
+        "id": "user-needs",
+        "prompt": "Experienced and inexperienced users' needs are taken into consideration",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "likert", 
+        "start": 0,
+        "numItems": 10,
+        "rightLabel": "Always",
+        "leftLabel": "Never",
+        "withDontKnow": true
+      }
+    ]
+  },
+  "usability-and-ui":{
+    "type": "questionnaire",
+    "response": [
+        {
+          "id": "colors-and-sounds",
+          "prompt": "Use of colors and sounds",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Good",
+          "leftLabel": "Poor",
+          "withDontKnow": true
+        },
+        {
+          "id": "system-feedback",
+          "prompt": "System feedback",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Good", 
+          "leftLabel": "Poor",
+          "withDontKnow": true
+        },
+        {
+          "id": "error-response",
+          "prompt": "System response to errors",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Gracious",
+          "leftLabel": "Awkward",
+          "withDontKnow": true
+        },
+        {
+          "id": "system-messages",
+          "prompt": "System messages and reports",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Good",
+          "leftLabel": "Poor",
+          "withDontKnow": true
+        },
+        {
+          "id": "system-clutter",
+          "prompt": "System clutter and UI \"noise\"",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "start": 0,
+          "numItems": 10,
+          "rightLabel": "Good",
+          "leftLabel": "Poor",
+          "withDontKnow": true
+        }
+    ]
+  }
+},
+  "sequences": {
+    "6-dimensions": {
+      "id": "quis-6-dimensions",
+      "order": "fixed",
+      "components": [
+        "overall",
+        "screen",
+        "terminology-and-system-information",
+        "learning",
+        "system-capabilities",
+        "usability-and-ui"
+      ]
+    }
+  }
+}
