@@ -36,6 +36,10 @@
             "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
             "type": "boolean"
           },
+          "clickToRecord": {
+            "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+            "type": "boolean"
+          },
           "config": {
             "description": "The vega or vega-lite configuration.",
             "type": "object"
@@ -843,6 +847,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
@@ -1093,6 +1101,10 @@
         },
         "baseComponent": {
           "type": "string"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
         },
         "config": {
           "description": "The vega or vega-lite configuration.",
@@ -1523,6 +1535,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
@@ -1900,6 +1916,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -2295,6 +2315,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3213,6 +3237,10 @@
           "description": "The time in milliseconds to wait before automatically downloading the study data.",
           "type": "number"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "contactEmail": {
           "description": "The email address that used during the study if a participant clicks contact.",
           "type": "string"
@@ -3389,6 +3417,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "config": {
           "description": "The vega or vega-lite configuration.",
           "type": "object"
@@ -3544,6 +3576,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
@@ -3697,6 +3733,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3856,6 +3896,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
