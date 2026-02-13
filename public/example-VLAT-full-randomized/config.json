@@ -86,7 +86,7 @@
     "components": [
       "introduction",
       "consent",
-      "$vlat.se.full",
+      "$vlat.sequences.full",
       "survey"
     ]
   }

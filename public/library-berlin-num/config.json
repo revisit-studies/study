@@ -34,9 +34,9 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$berlin-num.se.adaptive",
-      "$berlin-num.se.four-items",
-      "$berlin-num.se.single-item"
+      "$berlin-num.sequences.adaptive",
+      "$berlin-num.sequences.four-items",
+      "$berlin-num.sequences.single-item"
     ]
   }
 }
