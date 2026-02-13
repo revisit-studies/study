@@ -178,6 +178,7 @@
           "id": "q-radio",
           "prompt": "Radio button example",
           "secondaryText": "Radio buttons for single selection",
+          "infoText": "Select the option that best represents your choice.",
           "type": "radio",
           "options": [
             {
