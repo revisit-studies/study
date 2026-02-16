@@ -51,8 +51,23 @@ export function ErrorLoadingConfig({
       return parsedMessages.every((m) => m.prefix === template.prefix && m.suffix === template.suffix);
     };
 
-    const pluralizeSuffix = (suffix: string, isPlural: boolean) => (isPlural ? suffix.replace(/\bis\b/, 'are').replace(/\buses\b/, 'use') : suffix);
+    const pluralizeSuffix = (suffix: string, isPlural: boolean) => {
+      if (!isPlural) return suffix;
 
+      const replacements: Array<[RegExp, string]> = [
+        // handle common verb pluralizations in error message suffixes
+        [/\bdoes not\b/, 'do not'],
+        [/\bhas\b/, 'have'],
+        [/\bis\b/, 'are'],
+        [/\buses\b/, 'use'],
+      ];
+
+      let result = suffix;
+      for (const [pattern, replacement] of replacements) {
+        result = result.replace(pattern, replacement);
+      }
+      return result;
+    };
     const parsed = messages.map(parseMessage);
     const validParsed = parsed.filter((p) => p !== null);
     if (validParsed.length !== parsed.length || !haveSameStructure(validParsed)) return messages;
