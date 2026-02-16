@@ -20,7 +20,7 @@ export default function ColorfieldPermuted({
 
   function permute(arr: number[]) {
     const myArr = [...arr];
-    for (let i = myArr.length - 1; i > 0; i -= i) {
+    for (let i = myArr.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
       [myArr[i], myArr[j]] = [myArr[j], myArr[i]];
     }
