@@ -1,5 +1,6 @@
 {
   "yaml.schemas": {
     "./src/parser/StudyConfigSchema.json": "*.yaml"
-  }
+  },
+  "python-envs.pythonProjects": []
 }
