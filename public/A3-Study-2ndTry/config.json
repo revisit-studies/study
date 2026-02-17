@@ -146,6 +146,82 @@
       ],
       "nextButtonLocation": "sidebar",
       "instructionLocation": "sidebar"
+    },
+    "LineChartNonPermuted": {
+      "meta": {
+        "difficulty": 5,
+        "chart": "line chart"
+      },
+      "description": "A non-permuted line chart",
+      "instruction": "The graph shows a line chart. Which month do you believe has the highest average value?",
+      "type": "react-component",
+      "path": "A3-Study-2ndTry/assets/LineChart.tsx",
+      "parameters": {
+        "permuted": false
+      },
+      "response": [
+        {
+          "id": "cm-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "placeholder": "Please select an option",
+          "options": [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December"
+          ]
+        }
+      ],
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar"
+    },
+    "LineChartPermuted": {
+      "meta": {
+        "difficulty": 5,
+        "chart": "line chart"
+      },
+      "description": "A permuted line chart",
+      "instruction": "The graph shows a line chart. Which month do you believe has the highest average value?",
+      "type": "react-component",
+      "path": "A3-Study-2ndTry/assets/LineChart.tsx",
+      "parameters": {
+        "permuted": true
+      },
+      "response": [
+        {
+          "id": "cm-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "placeholder": "Please select an option",
+          "options": [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December"
+          ]
+        }
+      ],
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar"
     }
   },
   "components": {
@@ -196,6 +272,12 @@
           3
         ]
       }
+    },
+    "LineChartNonPermuted": {
+      "baseComponent": "LineChartNonPermuted"
+    },
+    "LineChartPermuted": {
+      "baseComponent": "LineChartPermuted"
     }
   },
   "sequence": {
@@ -204,7 +286,9 @@
       "introduction",
       "consent",
       "ColorfieldNonPermuted",
-      "ColorfieldPermuted"
+      "ColorfieldPermuted",
+      "LineChartNonPermuted",
+      "LineChartPermuted"
     ]
   }
 }
