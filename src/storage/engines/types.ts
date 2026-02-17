@@ -69,6 +69,16 @@ export interface ConditionData {
 
 const defaultStageColor = '#F05A30';
 
+function parseStudyCondition(condition?: string | string[] | null): string[] {
+  if (!condition) {
+    return [];
+  }
+  if (Array.isArray(condition)) {
+    return condition.map((c) => c.trim()).filter(Boolean);
+  }
+  return condition.split(',').map((c) => c.trim()).filter(Boolean);
+}
+
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
   T extends 'sequenceArray'
@@ -305,14 +315,11 @@ export abstract class StorageEngine {
   }
 
   async getConditionData(studyId: string): Promise<ConditionData> {
-    const participantsData = await this.getAllParticipantsData(studyId);
+    const participants = Object.values(await this.getAllParticipantsData(studyId));
     const conditionSet = new Set<string>();
 
-    Object.values(participantsData).forEach((p) => {
-      const cond = p.searchParams?.condition;
-      if (cond) {
-        cond.split(',').map((c) => c.trim()).filter(Boolean).forEach((c) => conditionSet.add(c));
-      }
+    participants.forEach((p) => {
+      parseStudyCondition(p.conditions ?? (p as { studyCondition?: string | string[] }).studyCondition ?? p.searchParams?.condition).forEach((c) => conditionSet.add(c));
     });
 
     return {
@@ -592,6 +599,8 @@ export abstract class StorageEngine {
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
     const { currentRow, creationIndex } = await this._getSequence();
+    const parsedConditions = parseStudyCondition(searchParams.condition);
+    const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
@@ -599,6 +608,7 @@ export abstract class StorageEngine {
       participantIndex: creationIndex,
       answers: {},
       searchParams,
+      conditions,
       metadata,
       completed: false,
       rejected: false,
@@ -720,6 +730,32 @@ export abstract class StorageEngine {
     }
 
     this.participantData.searchParams = searchParams;
+
+    await this._pushToStorage(
+      `participants/${this.currentParticipantId}`,
+      'participantData',
+      this.participantData,
+    );
+  }
+
+  async updateStudyCondition(condition: string | string[]) {
+    await this.verifyStudyDatabase();
+
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const modes = await this.getModes(this.studyId);
+    if (!modes.developmentModeEnabled) {
+      throw new Error('Cannot update study condition when development mode is disabled');
+    }
+
+    if (!this.participantData) {
+      throw new Error('Participant data not initialized');
+    }
+
+    const parsedConditions = parseStudyCondition(condition);
+    this.participantData.conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
 
     await this._pushToStorage(
       `participants/${this.currentParticipantId}`,

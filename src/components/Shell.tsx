@@ -32,7 +32,7 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
 import { hash } from '../storage/engines/utils';
-import { filterSequenceByCondition, getSequenceConditions } from '../utils/handleSequenceConditions';
+import { filterSequenceByCondition, getSequenceConditions, parseConditionParam } from '../utils/handleSequenceConditions';
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
@@ -75,7 +75,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const [searchParams] = useSearchParams();
 
   const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
-  const studyCondition = useMemo(() => searchParams.get('condition'), [searchParams]);
+  const studyCondition = useMemo(() => parseConditionParam(searchParams.get('condition')), [searchParams]);
 
   useEffect(() => {
     async function initializeUserStoreRouting() {
@@ -93,6 +93,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             await generateSequenceArray(activeConfig),
           );
         }
+
+        const modes = await storageEngine.getModes(studyId);
 
         // Get or generate participant session
         const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
@@ -128,15 +130,14 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantId || urlParticipantId,
         );
 
-        if (studyCondition) {
+        if (studyCondition.length > 0 && modes.developmentModeEnabled) {
           const updatedSearchParams = {
             ...participantSession.searchParams,
-            condition: studyCondition,
+            condition: studyCondition.join(','),
           };
           await storageEngine.updateParticipantSearchParams(updatedSearchParams);
+          await storageEngine.updateStudyCondition(studyCondition);
         }
-
-        const modes = await storageEngine.getModes(studyId);
         const activeHash = await hash(JSON.stringify(activeConfig));
 
         let participantConfig = activeConfig;
@@ -163,16 +164,20 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         console.error('Error initializing user store routing:', error);
         // Fallback: initialize the store with empty data
         const generatedSequences = generateSequenceArray(activeConfig);
-        const matchingSequence = studyCondition
+        const matchingSequence = studyCondition.length > 0
           ? generatedSequences.find(
-            (sequence) => getSequenceConditions(sequence).includes(studyCondition),
+            (sequence) => studyCondition.some((condition) => getSequenceConditions(sequence).includes(condition)),
           )
           : generatedSequences[0];
+        const fallbackSequence = filterSequenceByCondition(
+          matchingSequence || generatedSequences[0],
+          studyCondition,
+        );
 
         const emptyStore = await studyStoreCreator(
           studyId,
           activeConfig,
-          matchingSequence || generatedSequences[0],
+          fallbackSequence,
           {
             language: '',
             userAgent: '',

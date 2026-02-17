@@ -14,7 +14,7 @@ import {
   Button,
 } from '@mantine/core';
 import {
-  IconArrowsShuffle, IconBrain, IconCheck, IconChevronUp, IconDice3, IconDice5, IconInfoCircle,
+  IconArrowsShuffle, IconBinaryTree, IconBrain, IconCheck, IconChevronUp, IconDice3, IconDice5, IconInfoCircle,
   IconPackageImport,
   IconX,
 } from '@tabler/icons-react';
@@ -714,6 +714,11 @@ export function StepsPanel({
                           <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
                         </Tooltip>
                       )}
+                      {!isComponent && conditional && (
+                        <Tooltip label={`Condition: ${label}`} position="right" withArrow>
+                          <IconBinaryTree size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
+                        </Tooltip>
+                      )}
                       {(component?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
                         <Tooltip label="Random responses" position="right" withArrow>
                           <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
@@ -749,9 +754,6 @@ export function StepsPanel({
                           <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
                         </Tooltip>
                       ) : null}
-                      {!isComponent && conditional && (
-                        <Badge size="xs" ml={5} variant="transparent">{label}</Badge>
-                      )}
                       {!isComponent && !isExcluded && (
                         <Badge ml={5} variant="light">
                           {(numComponentsInSequence || 0) - (numInterruptions || 0)}

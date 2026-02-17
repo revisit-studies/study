@@ -1,5 +1,5 @@
 import {
-  Anchor, AppShell, Badge, Button, Card, Container, CopyButton, Divider, Flex, Image, rem, Select, Tabs, Text, Tooltip,
+  Anchor, AppShell, Badge, Button, Card, Container, CopyButton, Divider, Flex, Image, MultiSelect, rem, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
   IconAlertTriangle, IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconCheck, IconCopy, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
@@ -71,7 +71,7 @@ function StudyCard({
   }, [modes, studyStatusAndTiming]);
 
   const conditions = useMemo(() => getSequenceConditions(config.sequence), [config.sequence]);
-  const [selectedCondition, setSelectedCondition] = useState<string>('default');
+  const [selectedConditions, setSelectedConditions] = useState<string[]>(['default']);
   const [conditionParticipantCounts, setConditionParticipantCounts] = useState<Record<string, number>>({});
 
   // Load participant counts into dropdown for each condition
@@ -97,6 +97,18 @@ function StudyCard({
       label: `${condition} (${conditionParticipantCounts[condition] || 0} participant${(conditionParticipantCounts[condition] || 0) === 1 ? '' : 's'})`,
     }))
   ), [conditions, conditionParticipantCounts]);
+
+  const selectedStudyConditions = useMemo(
+    () => selectedConditions.filter((condition) => condition !== 'default'),
+    [selectedConditions],
+  );
+
+  const studyUrl = useMemo(
+    () => (selectedStudyConditions.length > 0
+      ? `${PREFIX}${url}?condition=${selectedStudyConditions.join(',')}`
+      : `${PREFIX}${url}`),
+    [selectedStudyConditions, url],
+  );
 
   return (
     <Card key={configName} shadow="sm" radius="md" my="sm" withBorder>
@@ -228,13 +240,24 @@ function StudyCard({
               </Flex>
             )}
 
-            <Flex direction="row" align="end" gap="sm" mt="md">
+            <Flex direction="row" align="end" gap="sm" mt="md" wrap="wrap">
               {conditions.length > 0 && (
-                <Select
-                  value={selectedCondition}
+                <MultiSelect
+                  value={selectedConditions}
                   data={conditionOptions}
+                  w={260}
                   onChange={(value) => {
-                    setSelectedCondition(value || 'default');
+                    if (value.length === 0) {
+                      setSelectedConditions(['default']);
+                      return;
+                    }
+
+                    if (value.includes('default') && value.length > 1) {
+                      setSelectedConditions(value.filter((condition) => condition !== 'default'));
+                      return;
+                    }
+
+                    setSelectedConditions(value);
                   }}
                 />
               )}
@@ -250,7 +273,7 @@ function StudyCard({
               <Button
                 leftSection={<IconListCheck />}
                 component="a"
-                href={selectedCondition === 'default' ? `${PREFIX}${url}` : `${PREFIX}${url}?condition=${selectedCondition}`}
+                href={studyUrl}
               >
                 Go to Study
               </Button>

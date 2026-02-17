@@ -72,7 +72,7 @@ export function TableView({
   };
 
   const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => {
-    const hasCondition = visibleParticipants.some((participant) => participant.searchParams?.condition);
+    const hasCondition = visibleParticipants.some((participant) => participant.conditions ?? participant.searchParams?.condition);
 
     return [
       {
@@ -171,7 +171,13 @@ export function TableView({
       ] : []),
       ...(hasCondition ? [
         {
-          accessorFn: (row: ParticipantData) => row.searchParams?.condition || 'default',
+          accessorFn: (row: ParticipantData) => {
+            const { conditions } = row;
+            if (Array.isArray(conditions)) {
+              return conditions.join(',') || 'default';
+            }
+            return conditions ?? row.searchParams?.condition ?? 'default';
+          },
           header: 'Condition',
           size: 130,
         },

@@ -29,6 +29,7 @@ import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
+import { parseConditionParam } from '../../utils/handleSequenceConditions';
 import 'mantine-react-table/styles.css';
 import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
@@ -106,10 +107,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const conditionFiltered = selectedConditions.includes('ALL')
       ? stageFiltered
       : stageFiltered.filter((d) => {
-        const conds = d.searchParams?.condition
-          ? d.searchParams.condition.split(',').map((c) => c.trim()).filter(Boolean)
-          : ['default'];
-        return conds.some((c) => selectedConditions.includes(c));
+        const conds = parseConditionParam(d.conditions ?? d.searchParams?.condition);
+        const normalizedConds = conds.length > 0 ? conds : ['default'];
+        return normalizedConds.some((c) => selectedConditions.includes(c));
       });
 
     return {
@@ -153,10 +153,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const conditionFiltered = selectedConditions.includes('ALL')
       ? stageFiltered
       : stageFiltered.filter((d) => {
-        const conds = d.searchParams?.condition
-          ? d.searchParams.condition.split(',').map((c) => c.trim()).filter(Boolean)
-          : ['default'];
-        return conds.some((c) => selectedConditions.includes(c));
+        const conds = parseConditionParam(d.conditions ?? d.searchParams?.condition);
+        const normalizedConds = conds.length > 0 ? conds : ['default'];
+        return normalizedConds.some((c) => selectedConditions.includes(c));
       });
 
     return conditionFiltered.sort(sortByStartTime);

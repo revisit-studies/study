@@ -343,4 +343,41 @@ describe('getConditionParticipantCounts', () => {
   it('should return empty object for empty participant list', () => {
     expect(getConditionParticipantCounts([])).toEqual({});
   });
+
+  it('should prefer conditions over searchParams.condition', () => {
+    const participants = [
+      {
+        ...participantData, participantId: 'participant-top-level', conditions: ['color'], searchParams: { condition: 'size' },
+      },
+      { ...participantData, participantId: 'participant-fallback', searchParams: { condition: 'shape' } },
+    ];
+
+    expect(getConditionParticipantCounts(participants)).toEqual({
+      color: 1,
+      shape: 1,
+    });
+  });
+
+  it('should fall back to searchParams.condition when conditions are undefined', () => {
+    const participants = [
+      {
+        ...participantData, participantId: 'participant-no-top-level', conditions: undefined, searchParams: { condition: 'size' },
+      },
+    ];
+
+    expect(getConditionParticipantCounts(participants)).toEqual({
+      size: 1,
+    });
+  });
+
+  it('should count conditions with multiple values', () => {
+    const participants = [
+      { ...participantData, participantId: 'participant-multi', conditions: ['color', 'size'] },
+    ];
+
+    expect(getConditionParticipantCounts(participants)).toEqual({
+      color: 1,
+      size: 1,
+    });
+  });
 });

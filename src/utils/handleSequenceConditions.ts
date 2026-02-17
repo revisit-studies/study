@@ -74,7 +74,7 @@ export function getConditionParticipantCounts(participants: ParticipantData[]): 
   const counts: Record<string, number> = {};
 
   participants.forEach((participant) => {
-    const conditions = parseConditionParam(participant.searchParams?.condition);
+    const conditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
     if (conditions.length === 0) {
       counts.default = (counts.default || 0) + 1;
       return;
