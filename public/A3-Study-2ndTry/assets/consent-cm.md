@@ -2,11 +2,11 @@
 
 Before we begin, please read the following consent form carefully and thereafter complete the section below.
 
-**Goal:** To evaluate peoples perception of values presented on a chart.
+**Goal:** To evaluate the perception of averages in time series data.
 
-**Procedure:** In this experiment you are asked to judge what month has the highest average
+**Procedure:** In this experiment you are asked to judge what month has the highest average value.
 
-**Duration:** The estimated completion time for the experiment is 20 minutes.
+**Duration:** The estimated completion time for the experiment is 15-20 minutes.
 
 **Privacy:** Your participation is anonymous and your responses cannot be used to identify you.
 
