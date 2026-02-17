@@ -1,0 +1,401 @@
+{
+  "A_bloodGlucose_abnormal": {
+    "A_bloodGlucose_abnormal_fasting_value": {
+      "type": "numerical",
+      "value": 2.3,
+      "tolerance": 0.3,
+      "description": "What is the fasting blood glucose value?"
+    },
+    "A_bloodGlucose_abnormal_postprandial_value": {
+      "type": "numerical", 
+      "value": 12.2,
+      "tolerance": 0.3,
+      "description": "What is the two hours postprandial blood glucose value?"
+    },
+    "A_bloodGlucose_abnormal_fasting_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the fasting glucose normal?"
+    },
+    "A_bloodGlucose_abnormal_postprandial_normal": {
+      "type": "categorical",
+      "value": "No", 
+      "description": "Is the two hours postprandial glucose normal?"
+    }
+  },
+  
+  "A_bloodGlucose_normal": {
+    "A_bloodGlucose_normal_fasting_value": {
+      "type": "numerical",
+      "value": 5.2,
+      "tolerance": 0.3,
+      "description": "What is the fasting blood glucose value?"
+    },
+    "A_bloodGlucose_normal_postprandial_value": {
+      "type": "numerical",
+      "value": 6.3, 
+      "tolerance": 0.3,
+      "description": "What is the two hours postprandial blood glucose value?"
+    },
+    "A_bloodGlucose_normal_fasting_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the fasting glucose normal?"
+    },
+    "A_bloodGlucose_normal_postprandial_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the two hours postprandial glucose normal?"
+    }
+  },
+  
+  "A_bloodPressure_abnormal": {
+    "A_bloodPressure_abnormal_systolic_value": {
+      "type": "numerical",
+      "value": 147,
+      "tolerance": 3,
+      "description": "What is the systolic value?"
+    },
+    "A_bloodPressure_abnormal_diastolic_value": {
+      "type": "numerical",
+      "value": 105,
+      "tolerance": 3,
+      "description": "What is the diastolic value?"  
+    },
+    "A_bloodPressure_abnormal_systolic_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the systolic pressure normal?"
+    },
+    "A_bloodPressure_abnormal_diastolic_normal": {
+      "type": "categorical", 
+      "value": "No",
+      "description": "Is the diastolic pressure normal?"
+    }
+  },
+  
+  "A_bloodPressure_normal": {
+    "A_bloodPressure_normal_systolic_value": {
+      "type": "numerical",
+      "value": 137,
+      "tolerance": 3,
+      "description": "What is the systolic value?"
+    },
+    "A_bloodPressure_normal_diastolic_value": {
+      "type": "numerical", 
+      "value": 75.5,
+      "tolerance": 3,
+      "description": "What is the diastolic value?"
+    },
+    "A_bloodPressure_normal_systolic_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the systolic pressure normal?"
+    },
+    "A_bloodPressure_normal_diastolic_normal": {
+      "type": "categorical",
+      "value": "Yes", 
+      "description": "Is the diastolic pressure normal?"
+    }
+  },
+
+  "B_bloodGlucose_abnormal": {
+    "B_bloodGlucose_abnormal_fasting_value": {
+      "type": "numerical",
+      "value": 10,
+      "tolerance": 0.3,
+      "description": "What is the fasting blood glucose value?"
+    },
+    "B_bloodGlucose_abnormal_postprandial_value": {
+      "type": "numerical",
+      "value": 2.5,
+      "tolerance": 0.3,
+      "description": "What is the two hours postprandial blood glucose value?"
+    },
+    "B_bloodGlucose_abnormal_fasting_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the fasting glucose normal?"
+    },
+    "B_bloodGlucose_abnormal_postprandial_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the post-meal glucose normal?"
+    }
+  },
+
+  "B_bloodGlucose_normal": {
+    "B_bloodGlucose_normal_fasting_value": {
+      "type": "numerical",
+      "value": 4,
+      "tolerance": 0.3,
+      "description": "What is the fasting blood glucose value?"
+    },
+    "B_bloodGlucose_normal_postprandial_value": {
+      "type": "numerical",
+      "value": 5,
+      "tolerance": 0.3,
+      "description": "What is the two hours postprandial blood glucose value?"
+    },
+    "B_bloodGlucose_normal_fasting_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the fasting glucose normal?"
+    },
+    "B_bloodGlucose_normal_postprandial_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the post-meal glucose normal?"
+    }
+  },
+
+  "B_bloodPressure_abnormal": {
+    "B_bloodPressure_abnormal_systolic_value": {
+      "type": "numerical",
+      "value": 63,
+      "tolerance": 3,
+      "description": "What is the systolic value?"
+    },
+    "B_bloodPressure_abnormal_diastolic_value": {
+      "type": "numerical",
+      "value": 94,
+      "tolerance": 3,
+      "description": "What is the diastolic value?"
+    },
+    "B_bloodPressure_abnormal_systolic_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the systolic pressure normal?"
+    },
+    "B_bloodPressure_abnormal_diastolic_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the diastolic pressure normal?"
+    }
+  },
+
+  "B_bloodPressure_normal": {
+    "B_bloodPressure_normal_systolic_value": {
+      "type": "numerical",
+      "value": 93,
+      "tolerance": 3,
+      "description": "What is the systolic value?"
+    },
+    "B_bloodPressure_normal_diastolic_value": {
+      "type": "numerical",
+      "value": 67,
+      "tolerance": 3,
+      "description": "What is the diastolic value?"
+    },
+    "B_bloodPressure_normal_systolic_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the systolic pressure normal?"
+    },
+    "B_bloodPressure_normal_diastolic_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is diastolic pressure normal?"
+    }
+  },
+
+  "C_bloodGlucose_abnormal": {
+    "C_bloodGlucose_abnormal_fasting_value": {
+      "type": "numerical",
+      "value": 1.1,
+      "tolerance": 0.3,
+      "description": "What is the fasting glucose value?"
+    },
+    "C_bloodGlucose_abnormal_postprandial_value": {
+      "type": "numerical",
+      "value": 3.2,
+      "tolerance": 0.3,
+      "description": "What is the post-meal glucose value?"
+    },
+    "C_bloodGlucose_abnormal_fasting_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the fasting glucose normal?"
+    },
+    "C_bloodGlucose_abnormal_postprandial_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the post-meal glucose normal?"
+    }
+  },
+
+  "C_bloodGlucose_normal": {
+    "C_bloodGlucose_normal_fasting_value": {
+      "type": "numerical",
+      "value": 5.6,
+      "tolerance": 0.3,
+      "description": "What is the fasting glucose value?"
+    },
+    "C_bloodGlucose_normal_postprandial_value": {
+      "type": "numerical",
+      "value": 7.2,
+      "tolerance": 0.3,
+      "description": "What is the post-meal glucose value?"
+    },
+    "C_bloodGlucose_normal_fasting_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the fasting glucose normal?"
+    },
+    "C_bloodGlucose_normal_postprandial_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the post-meal glucose normal?"
+    }
+  },
+
+  "C_bloodPressure_abnormal": {
+    "C_bloodPressure_abnormal_systolic_value": {
+      "type": "numerical",
+      "value": 145,
+      "tolerance": 3,
+      "description": "What is the systolic value?"
+    },
+    "C_bloodPressure_abnormal_diastolic_value": {
+      "type": "numerical",
+      "value": 107,
+      "tolerance": 3,
+      "description": "What is the diastolic value?"
+    },
+    "C_bloodPressure_abnormal_systolic_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the systolic pressure normal?"
+    },
+    "C_bloodPressure_abnormal_diastolic_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the diastolic pressure normal?"
+    }
+  },
+
+  "C_bloodPressure_normal": {
+    "C_bloodPressure_normal_systolic_value": {
+      "type": "numerical",
+      "value": 115,
+      "tolerance": 3,
+      "description": "What is the systolic value?"
+    },
+    "C_bloodPressure_normal_diastolic_value": {
+      "type": "numerical",
+      "value": 77,
+      "tolerance": 3,
+      "description": "What is the diastolic value?"
+    },
+    "C_bloodPressure_normal_systolic_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the systolic pressure normal?"
+    },
+    "C_bloodPressure_normal_diastolic_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the diastolic pressure normal?"
+    }
+  },
+
+  "D_bloodGlucose_abnormal": {
+    "D_bloodGlucose_abnormal_fasting_value": {
+      "type": "numerical",
+      "value": 7.8,
+      "tolerance": 0.3,
+      "description": "What is the fasting blood glucose value?"
+    },
+    "D_bloodGlucose_abnormal_postprandial_value": {
+      "type": "numerical",
+      "value": 1319,
+      "tolerance": 0.3,
+      "description": "What is the two hours postprandial blood glucose value?"
+    },
+    "D_bloodGlucose_abnormal_fasting_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the fasting glucose normal?"
+    },
+    "D_bloodGlucose_abnormal_postprandial_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the post-meal glucose normal?"
+    }
+  },
+
+  "D_bloodGlucose_normal": {
+    "D_bloodGlucose_normal_fasting_value": {
+      "type": "numerical",
+      "value": 5.6,
+      "tolerance": 0.3,
+      "description": "What is the fasting blood glucose value?"
+    },
+    "D_bloodGlucose_normal_postprandial_value": {
+      "type": "numerical",
+      "value": 9.2,
+      "tolerance": 0.3,
+      "description": "What is the two hours postprandial blood glucose value?"
+    },
+    "D_bloodGlucose_normal_fasting_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the fasting glucose normal?"
+    },
+    "D_bloodGlucose_normal_postprandial_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the post-meal glucose normal?"
+    }
+  },
+
+  "D_bloodPressure_abnormal": {
+    "D_bloodPressure_abnormal_systolic_value": {
+      "type": "numerical",
+      "value": 148,
+      "tolerance": 3,
+      "description": "What is the systolic value?"
+    },
+    "D_bloodPressure_abnormal_diastolic_value": {
+      "type": "numerical",
+      "value": 101,
+      "tolerance": 3,
+      "description": "What is the diastolic value?"
+    },
+    "D_bloodPressure_abnormal_systolic_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the systolic pressure normal?"
+    },
+    "D_bloodPressure_abnormal_diastolic_normal": {
+      "type": "categorical",
+      "value": "No",
+      "description": "Is the diastolic pressure normal?"
+    }
+  },
+
+  "D_bloodPressure_normal": {
+    "D_bloodPressure_normal_systolic_value": {
+      "type": "numerical",
+      "value": 138,
+      "tolerance": 3,
+      "description": "What is the systolic value?"
+    },
+    "D_bloodPressure_normal_diastolic_value": {
+      "type": "numerical",
+      "value": 87,
+      "tolerance": 3,
+      "description": "What is the diastolic value?"
+    },
+    "D_bloodPressure_normal_systolic_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the systolic pressure normal?"
+    },
+    "D_bloodPressure_normal_diastolic_normal": {
+      "type": "categorical",
+      "value": "Yes",
+      "description": "Is the diastolic pressure normal?"
+    }
+  }
+}
