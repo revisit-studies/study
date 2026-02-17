@@ -31,7 +31,7 @@
             "response": [
                 {
                     "id": "q1-age",
-                    "prompt": "What is your age?",
+                    "prompt": "What is your age group?",
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "dropdown",
