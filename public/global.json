@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/GlobalConfigSchema.json",
   "configsList": [
+    "rrnl",
     "tutorial",
     "tutorial-replication",
     "demo-html",
@@ -53,6 +54,9 @@
     "basic-questionnaire-study"
   ],
   "configs": {
+    "rrnl": {
+      "path": "rrnl/config.json"
+    },
     "tutorial": {
       "path": "tutorial/config.json"
     },

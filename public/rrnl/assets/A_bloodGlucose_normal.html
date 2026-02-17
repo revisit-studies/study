@@ -1,0 +1,614 @@
+
+<!doctype html>
+<html>
+<head>
+    <title>Vega</title>
+    <script src="https://cdn.jsdelivr.net/npm/vega@6.2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@7.1.0"></script>
+</head>
+<body>
+<div id="vis0"></div>
+<div id="vis1"></div>
+<div id="bottomText"></div> <!--Added this-->
+<script type="text/javascript">
+const vegaspec0 = {
+    "width": 300,
+    "height": 30,
+    "padding": 10,
+    "title": {
+        "text": "",
+        "align": "left",
+        "font": "Arial",
+        "fontSize": 13,
+        "color": "black"
+    },
+    "data": [
+        {
+            "format": ".4f",
+            "name": "table",
+            "values": [
+                {
+                    "name": "",
+                    "end": 3.6,
+                    "color": "white",
+                    "order": 0
+                },
+                {
+                    "name": "",
+                    "end": 3.3,
+                    "color": "white",
+                    "order": 1
+                },
+                {
+                    "name": "",
+                    "end": 3.6,
+                    "color": "white",
+                    "order": 2
+                }
+            ]
+        },
+        {
+            "name": "stacked",
+            "source": "table",
+            "transform": [
+                {
+                    "type": "stack",
+                    "field": "end",
+                    "sort": {
+                        "field": "order"
+                    },
+                    "as": [
+                        "x0",
+                        "x1"
+                    ]
+                },
+                {
+                    "type": "formula",
+                    "as": "x0",
+                    "expr": "datum.order === 0 ? datum.x0 + 40 : datum.x0"
+                }
+            ]
+        },
+        {
+            "name": "separators",
+            "source": "stacked",
+            "transform": [
+                {
+                    "type": "filter",
+                    "expr": "datum.x1 < data('stacked')[data('stacked').length - 1].x1"
+                }
+            ]
+        }
+    ],
+    "scales": [
+        {
+            "name": "xscale",
+            "domain": {
+                "data": "stacked",
+                "field": "x1"
+            },
+            "range": "width",
+            "domainMin":0,
+            "zero": false
+        }
+    ],
+    "axes": [
+        {
+            "format": ".1f",
+            "orient": "bottom",
+            "scale": "xscale",
+            "offset": 0,
+            "tickCount": 2,
+            "values":[3.6,6.9] //Added
+        }
+    ],
+    "marks": [
+        {
+            "type": "rect",
+                "encode": {
+                    "enter": {
+                        "x": { "value": 0 },
+                        "y": { "value": 0 },
+                        "width": { "signal": "width" },
+                        "height": { "signal": "height" },
+                        "fill": { "value": "transparent" },
+                        "stroke": { "value": "black" },
+                        "strokeWidth": { "value": 1 }
+            }
+          }
+        },
+        {
+            "type": "rect",
+            "from": {
+                "data": "stacked"
+            },
+            "encode": {
+                "enter": {
+                    "height": {
+                        "value": 0
+                    },
+                    "x": {
+                        "scale": "xscale",
+                        "field": "x0"
+                    },
+                    "x2": {
+                        "scale": "xscale",
+                        "field": "x1"
+                    },
+                    "y": {
+                        "signal": "0"
+                    },
+                    "fill": {
+                        "field": "color"
+                    }
+                }
+            }
+        },
+        { //Added this for ind. title
+            "type":"text",
+            "encode":{
+                "enter":{
+                    "x":{"value": -18},
+                    "y":{"signal":"height / 2"},
+                    "text":{"value":["Fasting blood glucose", "(mmol/L)"]},
+                    "align":{"value":"right"},
+                    "baseline":{"value":"middle"},
+                    "fontSize":{"value":13}
+                }
+            }
+        },
+        {
+            "type": "text",
+            "from": {
+                "data": "stacked"
+            },
+            "encode": {
+                "enter": {
+                    "height": {
+                        "value": 30
+                    },
+                    "y": {
+                        "signal": "height/2"
+                    },
+                    "align": {
+                        "value": "center"
+                    },
+                    "baseline": {
+                        "value": "middle"
+                    },
+                    "fill": {
+                        "value": "black"
+                    },
+                    "fontSize": {
+                        "value": 12
+                    },
+                    "text": {
+                        "field": "name"
+                    }
+                },
+                "update": {
+                    "x": {
+                        "signal": "scale('xscale', (datum.x0 + datum.x1) / 2)"
+                    }
+                }
+            }
+        },
+        {
+            "type": "rule",
+            "from": {
+                "data": "separators"
+            },
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "field": "x1"
+                    },
+                    "y": {
+                        "signal": "0"
+                    },
+                    "y2": {
+                        "signal": "height + 0"
+                    },
+                    "stroke": {
+                        "value": "black"
+                    },
+                    "strokeWidth": {
+                        "value": 1
+                    }
+                }
+            }
+        },
+        {
+            "type": "rule",
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "value": 5.2
+                    },
+                    "y": {
+                        "signal": "height - 35 + 0 + 0" //Changed this 
+                    },
+                    "y2": {
+                        "signal": "height - 55 + 0 + 0" //Changed this
+                    },
+                    "stroke": {
+                        "value": "black"
+                    },
+                    "strokeWidth": {
+                        "value": 3
+                    }
+                }
+            }
+        },
+        {
+            "type": "symbol",
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "value": 5.2
+                    },
+                    "y": {
+                        "signal": "height - 35 + 0 + 0" //Changed this
+                    },
+                    "shape": {
+                        "value": "triangle-down"
+                    },
+                    "fill": {
+                        "value": "black"
+                    },
+                    "size": {
+                        "value": 150
+                    }
+                }
+            }
+        },
+        {
+            "type": "text",
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "value": 5.2
+                    },
+                    "y": {
+                        "signal": "height - 45 + 0 + -15" //Changed this
+                    },
+                    "text": {
+                        "value": 5.2
+                    },
+                    "align": {
+                        "value": "center"
+                    },
+                    "fill": {
+                        "value": "black"
+                    },
+                    "fontSize": {
+                        "value": 30
+                    }
+                }
+            }
+        }
+    ]
+};
+vegaEmbed('#vis0', vegaspec0);
+const vegaspec1 = {
+    "width": 300,
+    "height": 30,
+    "padding": 10,
+    "title": {
+        "text": "",
+        "align": "left",
+        "font": "sans-serif",
+        "fontSize": 13,
+        "color": "black"
+    },
+    "data": [
+        {
+            "format": ".4f",
+            "name": "table",
+            "values": [
+                {
+                    "name": "",
+                    "end": 3.9,
+                    "color": "white",
+                    "order": 0
+                },
+                {
+                    "name": "",
+                    "end": 7.1,
+                    "color": "white",
+                    "order": 1
+                },
+                {
+                    "name": "",
+                    "end": 3.9,
+                    "color": "white",
+                    "order": 2
+                }
+            ]
+        },
+        {
+            "name": "stacked",
+            "source": "table",
+            "transform": [
+                {
+                    
+                    "type": "stack",
+                    "field": "end",
+                    "sort": {
+                        "field": "order"
+                    },
+                    "as": [
+                        "x0",
+                        "x1"
+                    ]
+                },
+                {
+                    "type": "formula",
+                    "as": "x0",
+                    "expr": "datum.order === 0 ? datum.x0 + 30 : datum.x0"
+                }
+            ]
+        },
+        {
+            "name": "separators",
+            "source": "stacked",
+            "transform": [
+                {
+                    "type": "filter",
+                    "expr": "datum.x1 < data('stacked')[data('stacked').length - 1].x1"
+                }
+            ]
+        }
+    ],
+    "scales": [
+        {
+            "name": "xscale",
+            "domain": {
+                "data": "stacked",
+                "field": "x1"
+            },
+            "range": "width",
+            "domainMin": 0,
+            "zero": false
+        }
+    ],
+    "axes": [
+        {
+            "format": ".1f",
+            "orient": "bottom",
+            "scale": "xscale",
+            "offset": 0,
+            "tickCount": 2,
+            "values":[3.9,11] //Added this
+        }
+    ],
+    "marks": [
+         {
+            "type": "rect",
+                "encode": {
+                    "enter": {
+                        "x": { "value": 0 },
+                        "y": { "value": 0 },
+                        "width": { "signal": "width" },
+                        "height": { "signal": "height" },
+                        "fill": { "value": "transparent" },
+                        "stroke": { "value": "black" },
+                        "strokeWidth": { "value": 1 }
+            }
+          }
+        },
+        {
+            "type": "rect",
+            "from": {
+                "data": "stacked"
+            },
+            "encode": {
+                "enter": {
+                    "height": {
+                        "value": 0
+                    },
+                    "x": {
+                        "scale": "xscale",
+                        "field": "x0"
+                    },
+                    "x2": {
+                        "scale": "xscale",
+                        "field": "x1"
+                    },
+                    "y": {
+                        "signal": "0"
+                    },
+                    "fill": {
+                        "field": "color"
+                    }
+                }
+            }
+        },
+        { //Added this
+            "type":"text",
+            "encode":{
+                "enter":{
+                    "x":{"value": -10},
+                    "y":{"signal":"height / 2"},
+                    "text":{"value":["Two hours postprandial"," blood glucose (mmol/L)"]},
+                    "align":{"value":"right"},
+                    "baseline":{"value":"middle"},
+                    "fontSize":{"value":13}
+                }
+            }
+        },
+        {
+            "type": "text",
+            "from": {
+                "data": "stacked"
+            },
+            "encode": {
+                "enter": {
+                    "height": {
+                        "value": 30
+                    },
+                    "y": {
+                        "signal": "height + 30"
+                    },
+                    "align": {
+                        "value": "center"
+                    },
+                    "baseline": {
+                        "value": "middle"
+                    },
+                    "fill": {
+                        "value": "black"
+                    },
+                    "fontSize": {
+                        "value": 12
+                    },
+                    "text": {
+                        "field": "name"
+                    }
+                },
+                "update": {
+                    "x": {
+                        "signal": "scale('xscale', (datum.x0 + datum.x1) / 2)"
+                    }
+                }
+            }
+        },
+        {
+            "type": "rule",
+            "from": {
+                "data": "separators"
+            },
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "field": "x1"
+                    },
+                    "y": {
+                        "signal": "0"
+                    },
+                    "y2": {
+                        "signal": "height + 0"
+                    },
+                    "stroke": {
+                        "value": "black"
+                    },
+                    "strokeWidth": {
+                        "value": 1
+                    }
+                }
+            }
+        },
+        {
+            "type": "rule",
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "value": 6.3
+                    },
+                    "y": {
+                        "signal": "height - 15 + 0 - 20" //Changed this 
+                    },
+                    "y2": {
+                        "signal": "height - 35 + 0 - 20" //Changed this
+                    },
+                    "stroke": {
+                        "value": "black"
+                    },
+                    "strokeWidth": {
+                        "value": 3
+                    }
+                }
+            }
+        },
+        {
+            "type": "symbol",
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "value": 6.3
+                    },
+                    "y": {
+                        "signal": "height -55 + 0 + 20" //Changed this
+                    },
+                    "shape": {
+                        "value": "triangle-down" //Changed this
+                    },
+                    "fill": {
+                        "value": "black"
+                    },
+                    "size": {
+                        "value": 150
+                    }
+                }
+            }
+        },
+        {
+            "type": "text",
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "value": 6.3
+                    },
+                    "y": {
+                        "signal": "height - 65 + 0 + 5" //Changed this 
+                    },
+                    "text": {
+                        "value": 6.3
+                    },
+                    "align": {
+                        "value": "center"
+                    },
+                    "fill": {
+                        "value": "black"
+                    },
+                    "fontSize": {
+                        "value": 30
+                    }
+                }
+            }
+        }
+    ]
+};
+vegaEmbed('#vis1', vegaspec1);
+//Added this
+const bottomText = {
+    "width": 300,
+  "height": 15,
+  "padding": 10,
+  "marks": [
+    {
+      "type": "text",
+      "encode": {
+        "enter": {
+          "x": { "value": -10 },
+          "y": { "signal": "height / 2 " },
+          "text": {
+            "value": [
+              "Normal range: fasting blood glucose (3.6–6.9 mmol/L);"," Two hours postprandial blood glucose (3.9–11.0 mmol/L)"
+            ]
+          },
+          "align": { "value": "left" },
+          "baseline": { "value": "middle" },
+          "fontSize": { "value": 13 },
+          "font": { "value": "sans-serif" },
+          "fill": { "value": "black" }
+        }
+      }
+    }
+  ]
+};
+    
+vegaEmbed('#bottomText', bottomText); //Added this
+
+</script>
+</body>
+</html>
