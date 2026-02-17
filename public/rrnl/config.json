@@ -24,7 +24,11 @@
         "introduction": {
             "type": "markdown",
             "path": "rrnl/assets/introduction.md",
-            "response": []
+            "response": [],
+            "meta": {
+                "taskId": "introduction",
+                "trackTime": true
+            }
         },
         "participant-stats": {
             "type": "questionnaire",
@@ -38,7 +42,11 @@
                     "placeholder": "Please enter your age group",
                     "options": ["18-40", "40-60"]
                 }
-            ]
+            ],
+            "meta": {
+                "taskId": "participant-stats",
+                "trackTime": true
+            }
         },
         "A_bloodGlucose_abnormal": {
                 "type": "website",
@@ -765,12 +773,20 @@
         "break-component": {
             "type": "website",
             "path": "rrnl/assets/break-timer.html",
-            "response": []
+            "response": [],
+            "meta": {
+                "taskId": "break-component",
+                "trackTime": true
+            }
         },
         "study-results": {
             "type": "website",
             "path": "rrnl/assets/results.html",
-            "response": []
+            "response": [],
+            "meta": {
+                "taskId": "study-results",
+                "trackTime": true
+            }
         }
     },
     "sequence": {
