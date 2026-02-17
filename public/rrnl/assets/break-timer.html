@@ -97,6 +97,23 @@
             background: #219a52;
         }
         
+        .skip-button {
+            background: #e67e22;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            opacity: 0.8;
+        }
+        
+        .skip-button:hover {
+            background: #d35400;
+            opacity: 1;
+        }
+        
         .disabled-message {
             color: #7f8c8d;
             font-style: italic;
@@ -110,6 +127,8 @@
         <p class="instructions">You have completed the first half of the study!</p>
         
         <div class="timer" id="timer">05:00</div>
+        
+        <button class="skip-button" id="skip-timer" onclick="skipTimer()">Skip Timer (Testing)</button>
         
         <div id="break-content">
             <p class="instructions">Please take this <strong>5-minute break</strong> before continuing with the remaining visualizations.</p>
@@ -217,6 +236,12 @@
             // For now, it just changes the button text to indicate they can proceed
             document.getElementById('continue-btn').textContent = 'Continue to Next Section';
             document.getElementById('continue-btn').style.background = '#2ecc71';
+        }
+        
+        function skipTimer() {
+            // Set timer to 0 and trigger completion
+            timeLeft = 0;
+            updateTimer();
         }
         
         // Disable navigation when page loads
