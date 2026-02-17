@@ -1,5 +1,6 @@
 # Note
-We did not choose to replicate the Cleveland and McGill study. We checked our study with Professor Harrison and got confirmation that our study would be ok to replicate.
+We did not choose to replicate the Cleveland and McGill study. We checked our study with Professor Harrison and got confirmation that our study would be ok to replicate. Additionally, this assignment is an extension of our MQP team which consists of the members of this team (Zoe Fisk, Skyler Lin, Morgan Vasiliou) and another student from this CS4804 class, Zach Medailleu. Zach contributed to the technical achievements of this assignment.
+
 # Background
 In 2022, Liu et al. published a paper exploring how various contextual cues influence digital health information for younger vs. older adults using eye-tracking (https://doi.org/10.3390/su142416506). This study explored a visualization type called reference range number lines (RRNLs), which are a variant of number lines where an exact value is indicated along a scale and categorical ranges are visually indicated along that scale.
 
