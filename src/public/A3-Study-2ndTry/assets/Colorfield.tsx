@@ -1,19 +1,44 @@
-import data from './data.json';
+import { useMemo } from 'react';
+import datasets from './datasets.json';
 
 type Props = {
-    height?: number;
-    width?: number;
-};
+    height?: number
+    width?: number
+    parameters?: { datasetIndex?: number; permuted?: boolean }
+}
 
-export default function ColorfieldNotPermuted({
+/** Fisher-Yates shuffle using Math.random(). */
+function permute(arr: number[]) {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+export default function Colorfield({
   width = 1000,
   height = 140,
+  parameters,
 }: Props) {
-  const { series } = data;
+  const datasetIndex = parameters?.datasetIndex ?? 0;
+  const isPermuted = parameters?.permuted ?? false;
+  const data = datasets[datasetIndex];
+  const { series, months } = data;
   const { daysPerMonth } = data.meta;
-  const { months } = data;
 
-  const values = series.map((d) => d.value);
+  const values = useMemo(() => {
+    if (!isPermuted) return series.map((d) => d.value);
+
+    const byMonth: number[][] = Array.from(
+      { length: months.length },
+      () => [],
+    );
+    series.forEach((d) => byMonth[d.month].push(d.value));
+    return byMonth.flatMap((m) => permute(m));
+  }, [isPermuted, series, months]);
+
   const min = Math.min(...values);
   const max = Math.max(...values);
 
@@ -25,13 +50,11 @@ export default function ColorfieldNotPermuted({
     let b;
 
     if (t < 0.5) {
-      // blue -> white
       const k = t / 0.5;
       r = Math.round(255 * k);
       g = Math.round(255 * k);
       b = 255;
     } else {
-      // white -> red
       const k = (t - 0.5) / 0.5;
       r = 255;
       g = Math.round(255 * (1 - k));
@@ -54,18 +77,19 @@ export default function ColorfieldNotPermuted({
           border: '1px solid #333',
         }}
       >
-        {series.map((d, i) => {
+        {values.map((d, i) => {
           const isMonthEnd = (i + 1) % daysPerMonth === 0;
 
           return (
             <div
               key={i}
-              title={`Month ${d.month + 1}, Day ${d.dayOfMonth + 1}: ${d.value.toFixed(2)}`}
               style={{
                 width: stripeWidth,
                 height: '100%',
-                backgroundColor: colorScale(d.value),
-                borderRight: isMonthEnd ? '2px solid black' : undefined,
+                backgroundColor: colorScale(d),
+                borderRight: isMonthEnd
+                  ? '2px solid black'
+                  : undefined,
                 boxSizing: 'border-box',
               }}
             />

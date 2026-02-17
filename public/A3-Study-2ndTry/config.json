@@ -21,136 +21,10 @@
     "withSidebar": true
   },
   "baseComponents": {
-    "ColorfieldNonPermuted": {
-      "meta": {
-        "difficulty": 5,
-        "chart": "stacked bar"
-      },
-      "description": "A non permuted colorfield",
-      "instruction": "The graph shows a colorfield. Using the scale given, which month do you believe has the highest average value?",
-      "type": "react-component",
-      "path": "A3-Study-2ndTry/assets/colorfieldNotPermuted.tsx",
-      "parameters": {
-        "data": [
-          {
-            "name": "A",
-            "value": "30"
-          },
-          {
-            "name": "B",
-            "value": "40"
-          },
-          {
-            "name": "C",
-            "value": "50"
-          },
-          {
-            "name": "D",
-            "value": "40"
-          },
-          {
-            "name": "E",
-            "value": "60"
-          }
-        ],
-        "selectedIndices": [
-          1,
-          4
-        ]
-      },
-      "response": [
-        {
-          "id": "cm-response",
-          "prompt": "Answer:",
-          "location": "sidebar",
-          "type": "dropdown",
-          "placeholder": "Please select an option",
-          "options": [
-            "January",
-            "February",
-            "March",
-            "April",
-            "May",
-            "June",
-            "July",
-            "August",
-            "September",
-            "October",
-            "November",
-            "December"
-          ]
-        }
-      ],
-      "nextButtonLocation": "sidebar",
-      "instructionLocation": "sidebar"
-    },
-    "ColorfieldPermuted": {
-      "meta": {
-        "difficulty": 5,
-        "chart": "stacked bar"
-      },
-      "description": "A permuted colorfield",
-      "instruction": "The graph shows a colorfield. Using the scale given, which month do you believe has the highest average value?",
-      "type": "react-component",
-      "path": "A3-Study-2ndTry/assets/colorfieldPermuted.tsx",
-      "parameters": {
-        "data": [
-          {
-            "name": "A",
-            "value": "30"
-          },
-          {
-            "name": "B",
-            "value": "40"
-          },
-          {
-            "name": "C",
-            "value": "50"
-          },
-          {
-            "name": "D",
-            "value": "40"
-          },
-          {
-            "name": "E",
-            "value": "60"
-          }
-        ],
-        "selectedIndices": [
-          1,
-          4
-        ]
-      },
-      "response": [
-        {
-          "id": "cm-response",
-          "prompt": "Answer:",
-          "location": "sidebar",
-          "type": "dropdown",
-          "placeholder": "Please select an option",
-          "options":[
-            "January",
-            "February",
-            "March",
-            "April",
-            "May",
-            "June",
-            "July",
-            "August",
-            "September",
-            "October",
-            "November",
-            "December"
-          ]
-        }
-      ],
-      "nextButtonLocation": "sidebar",
-      "instructionLocation": "sidebar"
-    },
     "LineChartNonPermuted": {
       "meta": {
-        "difficulty": 5,
-        "chart": "line chart"
+        "chart": "line chart",
+        "permuted": false
       },
       "description": "A non-permuted line chart",
       "instruction": "The graph shows a line chart. Which month do you believe has the highest average value?",
@@ -187,13 +61,89 @@
     },
     "LineChartPermuted": {
       "meta": {
-        "difficulty": 5,
-        "chart": "line chart"
+        "chart": "line chart",
+        "permuted": true
       },
       "description": "A permuted line chart",
       "instruction": "The graph shows a line chart. Which month do you believe has the highest average value?",
       "type": "react-component",
       "path": "A3-Study-2ndTry/assets/LineChart.tsx",
+      "parameters": {
+        "permuted": true
+      },
+      "response": [
+        {
+          "id": "cm-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "placeholder": "Please select an option",
+          "options": [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December"
+          ]
+        }
+      ],
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar"
+    },
+    "ColorfieldNonPermuted": {
+      "meta": {
+        "chart": "colorfield",
+        "permuted": false
+      },
+      "description": "A non-permuted colorfield",
+      "instruction": "The graph shows a colorfield. Using the scale given, which month do you believe has the highest average value?",
+      "type": "react-component",
+      "path": "A3-Study-2ndTry/assets/Colorfield.tsx",
+      "parameters": {
+        "permuted": false
+      },
+      "response": [
+        {
+          "id": "cm-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "placeholder": "Please select an option",
+          "options": [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December"
+          ]
+        }
+      ],
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar"
+    },
+    "ColorfieldPermuted": {
+      "meta": {
+        "chart": "colorfield",
+        "permuted": true
+      },
+      "description": "A permuted colorfield",
+      "instruction": "The graph shows a colorfield. Using the scale given, which month do you believe has the highest average value?",
+      "type": "react-component",
+      "path": "A3-Study-2ndTry/assets/Colorfield.tsx",
       "parameters": {
         "permuted": true
       },
@@ -255,29 +205,485 @@
         }
       ]
     },
-    "ColorfieldNonPermuted": {
+    "line-np-00": {
+      "baseComponent": "LineChartNonPermuted",
+      "parameters": {
+        "datasetIndex": 0
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "January"
+        }
+      ]
+    },
+    "line-np-01": {
+      "baseComponent": "LineChartNonPermuted",
+      "parameters": {
+        "datasetIndex": 1
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "February"
+        }
+      ]
+    },
+    "line-np-02": {
+      "baseComponent": "LineChartNonPermuted",
+      "parameters": {
+        "datasetIndex": 2
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "March"
+        }
+      ]
+    },
+    "line-np-03": {
+      "baseComponent": "LineChartNonPermuted",
+      "parameters": {
+        "datasetIndex": 3
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "April"
+        }
+      ]
+    },
+    "line-np-04": {
+      "baseComponent": "LineChartNonPermuted",
+      "parameters": {
+        "datasetIndex": 4
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "May"
+        }
+      ]
+    },
+    "line-np-05": {
+      "baseComponent": "LineChartNonPermuted",
+      "parameters": {
+        "datasetIndex": 5
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "June"
+        }
+      ]
+    },
+    "line-np-06": {
+      "baseComponent": "LineChartNonPermuted",
+      "parameters": {
+        "datasetIndex": 6
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "July"
+        }
+      ]
+    },
+    "line-np-07": {
+      "baseComponent": "LineChartNonPermuted",
+      "parameters": {
+        "datasetIndex": 7
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "August"
+        }
+      ]
+    },
+    "line-np-08": {
+      "baseComponent": "LineChartNonPermuted",
+      "parameters": {
+        "datasetIndex": 8
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "September"
+        }
+      ]
+    },
+    "line-np-09": {
+      "baseComponent": "LineChartNonPermuted",
+      "parameters": {
+        "datasetIndex": 9
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "October"
+        }
+      ]
+    },
+    "line-p-00": {
+      "baseComponent": "LineChartPermuted",
+      "parameters": {
+        "datasetIndex": 10
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "November"
+        }
+      ]
+    },
+    "line-p-01": {
+      "baseComponent": "LineChartPermuted",
+      "parameters": {
+        "datasetIndex": 11
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "December"
+        }
+      ]
+    },
+    "line-p-02": {
+      "baseComponent": "LineChartPermuted",
+      "parameters": {
+        "datasetIndex": 12
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "January"
+        }
+      ]
+    },
+    "line-p-03": {
+      "baseComponent": "LineChartPermuted",
+      "parameters": {
+        "datasetIndex": 13
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "February"
+        }
+      ]
+    },
+    "line-p-04": {
+      "baseComponent": "LineChartPermuted",
+      "parameters": {
+        "datasetIndex": 14
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "March"
+        }
+      ]
+    },
+    "line-p-05": {
+      "baseComponent": "LineChartPermuted",
+      "parameters": {
+        "datasetIndex": 15
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "April"
+        }
+      ]
+    },
+    "line-p-06": {
+      "baseComponent": "LineChartPermuted",
+      "parameters": {
+        "datasetIndex": 16
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "May"
+        }
+      ]
+    },
+    "line-p-07": {
+      "baseComponent": "LineChartPermuted",
+      "parameters": {
+        "datasetIndex": 17
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "June"
+        }
+      ]
+    },
+    "line-p-08": {
+      "baseComponent": "LineChartPermuted",
+      "parameters": {
+        "datasetIndex": 18
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "July"
+        }
+      ]
+    },
+    "line-p-09": {
+      "baseComponent": "LineChartPermuted",
+      "parameters": {
+        "datasetIndex": 19
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "August"
+        }
+      ]
+    },
+    "cf-np-00": {
       "baseComponent": "ColorfieldNonPermuted",
       "parameters": {
-        "selectedIndices": [
-          0,
-          3
-        ]
-      }
+        "datasetIndex": 20
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "September"
+        }
+      ]
     },
-    "ColorfieldPermuted": {
+    "cf-np-01": {
+      "baseComponent": "ColorfieldNonPermuted",
+      "parameters": {
+        "datasetIndex": 21
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "October"
+        }
+      ]
+    },
+    "cf-np-02": {
+      "baseComponent": "ColorfieldNonPermuted",
+      "parameters": {
+        "datasetIndex": 22
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "November"
+        }
+      ]
+    },
+    "cf-np-03": {
+      "baseComponent": "ColorfieldNonPermuted",
+      "parameters": {
+        "datasetIndex": 23
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "December"
+        }
+      ]
+    },
+    "cf-np-04": {
+      "baseComponent": "ColorfieldNonPermuted",
+      "parameters": {
+        "datasetIndex": 24
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "January"
+        }
+      ]
+    },
+    "cf-np-05": {
+      "baseComponent": "ColorfieldNonPermuted",
+      "parameters": {
+        "datasetIndex": 25
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "February"
+        }
+      ]
+    },
+    "cf-np-06": {
+      "baseComponent": "ColorfieldNonPermuted",
+      "parameters": {
+        "datasetIndex": 26
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "March"
+        }
+      ]
+    },
+    "cf-np-07": {
+      "baseComponent": "ColorfieldNonPermuted",
+      "parameters": {
+        "datasetIndex": 27
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "April"
+        }
+      ]
+    },
+    "cf-np-08": {
+      "baseComponent": "ColorfieldNonPermuted",
+      "parameters": {
+        "datasetIndex": 28
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "May"
+        }
+      ]
+    },
+    "cf-np-09": {
+      "baseComponent": "ColorfieldNonPermuted",
+      "parameters": {
+        "datasetIndex": 29
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "June"
+        }
+      ]
+    },
+    "cf-p-00": {
       "baseComponent": "ColorfieldPermuted",
       "parameters": {
-        "selectedIndices": [
-          0,
-          3
-        ]
-      }
+        "datasetIndex": 30
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "July"
+        }
+      ]
     },
-    "LineChartNonPermuted": {
-      "baseComponent": "LineChartNonPermuted"
+    "cf-p-01": {
+      "baseComponent": "ColorfieldPermuted",
+      "parameters": {
+        "datasetIndex": 31
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "August"
+        }
+      ]
     },
-    "LineChartPermuted": {
-      "baseComponent": "LineChartPermuted"
+    "cf-p-02": {
+      "baseComponent": "ColorfieldPermuted",
+      "parameters": {
+        "datasetIndex": 32
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "September"
+        }
+      ]
+    },
+    "cf-p-03": {
+      "baseComponent": "ColorfieldPermuted",
+      "parameters": {
+        "datasetIndex": 33
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "October"
+        }
+      ]
+    },
+    "cf-p-04": {
+      "baseComponent": "ColorfieldPermuted",
+      "parameters": {
+        "datasetIndex": 34
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "November"
+        }
+      ]
+    },
+    "cf-p-05": {
+      "baseComponent": "ColorfieldPermuted",
+      "parameters": {
+        "datasetIndex": 35
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "December"
+        }
+      ]
+    },
+    "cf-p-06": {
+      "baseComponent": "ColorfieldPermuted",
+      "parameters": {
+        "datasetIndex": 36
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "January"
+        }
+      ]
+    },
+    "cf-p-07": {
+      "baseComponent": "ColorfieldPermuted",
+      "parameters": {
+        "datasetIndex": 37
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "February"
+        }
+      ]
+    },
+    "cf-p-08": {
+      "baseComponent": "ColorfieldPermuted",
+      "parameters": {
+        "datasetIndex": 38
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "March"
+        }
+      ]
+    },
+    "cf-p-09": {
+      "baseComponent": "ColorfieldPermuted",
+      "parameters": {
+        "datasetIndex": 39
+      },
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": "April"
+        }
+      ]
     }
   },
   "sequence": {
@@ -285,10 +691,51 @@
     "components": [
       "introduction",
       "consent",
-      "ColorfieldNonPermuted",
-      "ColorfieldPermuted",
-      "LineChartNonPermuted",
-      "LineChartPermuted"
+      {
+        "order": "random",
+        "components": [
+          "line-np-00",
+          "line-np-01",
+          "line-np-02",
+          "line-np-03",
+          "line-np-04",
+          "line-np-05",
+          "line-np-06",
+          "line-np-07",
+          "line-np-08",
+          "line-np-09",
+          "line-p-00",
+          "line-p-01",
+          "line-p-02",
+          "line-p-03",
+          "line-p-04",
+          "line-p-05",
+          "line-p-06",
+          "line-p-07",
+          "line-p-08",
+          "line-p-09",
+          "cf-np-00",
+          "cf-np-01",
+          "cf-np-02",
+          "cf-np-03",
+          "cf-np-04",
+          "cf-np-05",
+          "cf-np-06",
+          "cf-np-07",
+          "cf-np-08",
+          "cf-np-09",
+          "cf-p-00",
+          "cf-p-01",
+          "cf-p-02",
+          "cf-p-03",
+          "cf-p-04",
+          "cf-p-05",
+          "cf-p-06",
+          "cf-p-07",
+          "cf-p-08",
+          "cf-p-09"
+        ]
+      }
     ]
   }
 }

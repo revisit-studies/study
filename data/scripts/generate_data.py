@@ -192,25 +192,76 @@ def convertToJSON(series, winning_month, distracter_months, month_means, days_pe
 
     return data
 
+def generate_study_datasets(
+    num_datasets=40,
+    k=4,
+    d=2,
+    noise_level=2,
+    base_seed=100
+):
+    """
+    Generate multiple datasets for the full study.
+    Winning months are distributed evenly across the 12 months.
+    Each dataset gets a unique seed for reproducibility.
+    """
+    datasets = []
+    for i in range(num_datasets):
+        winning_month = i % MONTHS
+        seed = base_seed + i
+
+        s, win, dist, means = generate_series(
+            k=k,
+            d=d,
+            noise_level=noise_level,
+            winning_month=winning_month,
+            seed=seed
+        )
+
+        entry = convertToJSON(
+            s, win, dist, means,
+            DAYS_PER_MONTH, MONTHS,
+            k, d, noise_level, seed, MONTH_NAMES
+        )
+        entry["id"] = i
+        datasets.append(entry)
+
+        print(f"Dataset {i}: seed={seed}, winningMonth={MONTH_NAMES[winning_month]}")
+
+    return datasets
+
+
 if __name__ == "__main__":
-    s, win, dist, means = generate_series(
-        k=4,
-        d=2,
-        noise_level=2,
-        winning_month=7,
-        seed=1
-    )
+    import sys
 
-    print("Winning month:", MONTH_NAMES[win])
+    if "--study" in sys.argv:
+        # Generate 40 datasets for the full study
+        datasets = generate_study_datasets(num_datasets=40)
 
-    data = convertToJSON(s, win, dist, means, DAYS_PER_MONTH, MONTHS, 4, 2, 2, 1, MONTH_NAMES)
+        output_path = "../src/public/A3-Study-2ndTry/assets/datasets.json"
+        with open(output_path, "w") as f:
+            json.dump(datasets, f)
 
-    with open("data.json", "w") as f:
-        json.dump(data, f)
+        print(f"\nWrote {len(datasets)} datasets to {output_path}")
+    else:
+        # Original single-dataset generation
+        s, win, dist, means = generate_series(
+            k=4,
+            d=2,
+            noise_level=2,
+            winning_month=7,
+            seed=1
+        )
 
-    from common.plotting import plot_line, plot_colorfield
+        print("Winning month:", MONTH_NAMES[win])
 
-    # plot_line(s, permuted=False, title="Original Series")
-    # plot_line(s, permuted=True, title="Permuted Series")
-    plot_colorfield(s, permuted=False, title="Original Colorfield")
-    # plot_colorfield(s, permuted=True, title="Permuted Colorfield")
+        data = convertToJSON(s, win, dist, means, DAYS_PER_MONTH, MONTHS, 4, 2, 2, 1, MONTH_NAMES)
+
+        with open("data.json", "w") as f:
+            json.dump(data, f)
+
+        from common.plotting import plot_line, plot_colorfield
+
+        # plot_line(s, permuted=False, title="Original Series")
+        # plot_line(s, permuted=True, title="Permuted Series")
+        plot_colorfield(s, permuted=False, title="Original Colorfield")
+        # plot_colorfield(s, permuted=True, title="Permuted Colorfield")
