@@ -22,24 +22,25 @@ export function filterSequenceByCondition(sequence: Sequence, condition?: string
   }
 
   const filterNode = (node: Sequence): Sequence | null => {
-    const isMatchedCondition = !node.conditional || (node.id != null && conditions.includes(node.id));
+    const isConditionalNode = Boolean(node.conditional && node.id != null);
+    const isMatchedCondition = !isConditionalNode || conditions.includes(node.id as string);
+
+    // If a conditional node is not selected, exclude its entire subtree.
+    // This enforces hierarchical conditions where nested conditions require their parent.
+    if (isConditionalNode && !isMatchedCondition) {
+      return null;
+    }
 
     const filteredComponents: Sequence['components'] = [];
     for (const component of node.components) {
       if (typeof component === 'string') {
-        if (isMatchedCondition) {
-          filteredComponents.push(component);
-        }
+        filteredComponents.push(component);
       } else {
         const filteredChild = filterNode(component);
         if (filteredChild) {
           filteredComponents.push(filteredChild);
         }
       }
-    }
-
-    if (!isMatchedCondition && filteredComponents.length === 0) {
-      return null;
     }
 
     return { ...node, components: filteredComponents };

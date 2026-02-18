@@ -184,7 +184,7 @@ describe('filterSequenceByCondition', () => {
     expect(result.components[1]).toBe('outro');
   });
 
-  it('should keep nested matching conditions even if parent mismatches', () => {
+  it('should exclude nested condition when parent condition does not match', () => {
     const sequence: Sequence = {
       order: 'fixed',
       orderPath: '',
@@ -213,19 +213,9 @@ describe('filterSequenceByCondition', () => {
     };
 
     const result = filterSequenceByCondition(sequence, 'size');
-    expect(result.components).toHaveLength(3);
+    expect(result.components).toHaveLength(2);
     expect(result.components[0]).toBe('intro');
-    expect(result.components[2]).toBe('outro');
-
-    const colorBlock = result.components[1] as Sequence;
-    expect(colorBlock.id).toBe('color');
-    expect(colorBlock.conditional).toBe(true);
-    expect(colorBlock.components).toHaveLength(1);
-
-    const sizeBlock = colorBlock.components[0] as Sequence;
-    expect(sizeBlock.id).toBe('size');
-    expect(sizeBlock.conditional).toBe(true);
-    expect(sizeBlock.components).toEqual(['size-trial-1']);
+    expect(result.components[1]).toBe('outro');
   });
 });
 
