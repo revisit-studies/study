@@ -152,14 +152,26 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
         });
       }
 
+      const baseComponent = isInheritedComponent(component)
+        ? libraryData.baseComponents?.[component.baseComponent]
+        : undefined;
+      const resolvedComponent: Partial<IndividualComponent> = {
+        ...(baseComponent || {}),
+        ...component,
+      };
+
       // Verify sidebar is enabled if component uses sidebar locations
-      const sidebarDisabled = !(component.withSidebar ?? studyConfig.uiConfig.withSidebar);
-      const isUsingSidebar = ('instructionLocation' in component && component.instructionLocation === 'sidebar')
-        || ('nextButtonLocation' in component && component.nextButtonLocation === 'sidebar')
-        || ('response' in component && component.response?.some((r) => 'location' in r && r.location === 'sidebar'));
+      const sidebarDisabled = !(resolvedComponent.withSidebar ?? studyConfig.uiConfig.withSidebar);
+      const isUsingSidebar = resolvedComponent.instructionLocation === 'sidebar'
+        || resolvedComponent.nextButtonLocation === 'sidebar'
+        || resolvedComponent.response?.some((r) => 'location' in r && r.location === 'sidebar');
 
       if (sidebarDisabled && isUsingSidebar) {
-        const instancePath = component.withSidebar === false ? `/importedLibraries/${library}/components/` : `/importedLibraries/${library}/uiConfig/`;
+        const instancePath = component.withSidebar === false
+          ? `/importedLibraries/${library}/components/`
+          : baseComponent?.withSidebar === false
+            ? `/importedLibraries/${library}/baseComponents/`
+            : `/importedLibraries/${library}/uiConfig/`;
         warnings.push({
           message: `Component \`${componentName}\` in library \`${library}\` uses sidebar locations but sidebar is disabled`,
           instancePath,

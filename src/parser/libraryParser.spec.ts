@@ -1254,6 +1254,71 @@ describe('verifyLibraryUsage', () => {
     expect(warnings[0].message).toContain('componentWithSidebar');
     expect(warnings[0].instancePath).toBe('/importedLibraries/testLib/uiConfig/');
   });
+
+  test('adds disabled-sidebar warning when inherited library component uses sidebar from base component', () => {
+    const libraryData: Record<string, LibraryConfig> = {
+      testLib: {
+        $schema: '',
+        description: 'Test library',
+        baseComponents: {
+          baseSidebarComponent: {
+            type: 'markdown',
+            path: 'test.md',
+            withSidebar: false,
+            response: [
+              {
+                id: 'sidebarResponse',
+                type: 'shortText',
+                prompt: 'Sidebar response',
+                location: 'sidebar',
+              },
+            ],
+          } as IndividualComponent,
+        },
+        components: {
+          inheritedSidebarComponent: {
+            baseComponent: 'baseSidebarComponent',
+          },
+        },
+        sequences: {},
+      },
+    };
+
+    const studyConfig: StudyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      components: {},
+      sequence: {
+        order: 'fixed',
+        components: [],
+      },
+    };
+
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+    verifyLibraryUsage(studyConfig, errors, warnings, libraryData);
+
+    expect(errors).toHaveLength(0);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0].category).toBe('disabled-sidebar');
+    expect(warnings[0].message).toContain('inheritedSidebarComponent');
+    expect(warnings[0].instancePath).toBe('/importedLibraries/testLib/baseComponents/');
+  });
 });
 
 describe('loadLibrariesParseNamespace', () => {

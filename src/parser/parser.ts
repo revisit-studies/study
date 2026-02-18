@@ -3,7 +3,7 @@ import { parseDocument } from 'yaml';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
-  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig, ParserErrorWarning,
+  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig, ParserErrorWarning, IndividualComponent,
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
@@ -128,6 +128,8 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   // Verify components are well defined
   Object.entries(studyConfig.components)
     .forEach(([componentName, component]) => {
+      const isImportedLibraryComponent = componentName.startsWith('$') && componentName.includes('.components.');
+
       // Verify baseComponent is defined in baseComponents object
       if (isInheritedComponent(component) && !studyConfig.baseComponents?.[component.baseComponent]) {
         errors.push({
@@ -138,20 +140,35 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         });
       }
 
-      // Verify sidebar is enabled if component uses sidebar locations
-      const sidebarDisabled = !(component.withSidebar ?? studyConfig.uiConfig.withSidebar);
-      const isUsingSidebar = ('instructionLocation' in component && component.instructionLocation === 'sidebar')
-        || ('nextButtonLocation' in component && component.nextButtonLocation === 'sidebar')
-        || ('response' in component && component.response?.some((r) => 'location' in r && r.location === 'sidebar'));
+      const baseComponent = isInheritedComponent(component)
+        ? studyConfig.baseComponents?.[component.baseComponent]
+        : undefined;
+      const resolvedComponent: Partial<IndividualComponent> = {
+        ...(baseComponent || {}),
+        ...component,
+      };
 
-      if (sidebarDisabled && isUsingSidebar) {
-        const instancePath = component.withSidebar === false ? '/components/' : '/uiConfig/';
-        warnings.push({
-          message: `Component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
-          instancePath,
-          params: { action: 'Enable the sidebar or move the location to belowStimulus or aboveStimulus' },
-          category: 'disabled-sidebar',
-        });
+      // Verify sidebar is enabled if component uses sidebar locations
+      // Imported library components are validated in verifyLibraryUsage to avoid duplicate warnings.
+      if (!isImportedLibraryComponent) {
+        const sidebarDisabled = !(resolvedComponent.withSidebar ?? studyConfig.uiConfig.withSidebar);
+        const isUsingSidebar = resolvedComponent.instructionLocation === 'sidebar'
+          || resolvedComponent.nextButtonLocation === 'sidebar'
+          || resolvedComponent.response?.some((r) => 'location' in r && r.location === 'sidebar');
+
+        if (sidebarDisabled && isUsingSidebar) {
+          const instancePath = component.withSidebar === false
+            ? '/components/'
+            : baseComponent?.withSidebar === false
+              ? '/baseComponents/'
+              : '/uiConfig/';
+          warnings.push({
+            message: `Component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
+            instancePath,
+            params: { action: 'Enable the sidebar or move the location to belowStimulus or aboveStimulus' },
+            category: 'disabled-sidebar',
+          });
+        }
       }
     });
 

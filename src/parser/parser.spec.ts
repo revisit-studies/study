@@ -799,4 +799,124 @@ describe('Parser Warnings', () => {
     );
     expect(hasDisabledSidebarWarning).toBe(true);
   });
+
+  test('adds disabled-sidebar warning when inherited component uses sidebar locations from base component', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        baseSidebarComponent: {
+          type: 'markdown',
+          path: 'sidebar.md',
+          withSidebar: false,
+          response: [
+            {
+              id: 'sidebarResponse',
+              type: 'shortText',
+              prompt: 'Sidebar response',
+              location: 'sidebar',
+            },
+          ],
+        },
+      },
+      components: {
+        inheritedSidebarComponent: {
+          baseComponent: 'baseSidebarComponent',
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['inheritedSidebarComponent'],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const hasDisabledSidebarWarning = result.warnings.some(
+      (warning) => warning.category === 'disabled-sidebar'
+        && warning.message.includes('inheritedSidebarComponent')
+        && warning.instancePath === '/baseComponents/',
+    );
+    expect(hasDisabledSidebarWarning).toBe(true);
+  });
+
+  test('does not duplicate disabled-sidebar warnings for imported library components', async () => {
+    const mockLibraryConfig = {
+      $schema: '',
+      description: 'Test library',
+      components: {
+        baseComp: {
+          type: 'markdown',
+          path: 'test.md',
+          response: [
+            {
+              id: 'sidebarResponse',
+              type: 'shortText',
+              prompt: 'Sidebar response',
+              location: 'sidebar',
+            },
+          ],
+        },
+      },
+      sequences: {},
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global.fetch as any).mockResolvedValueOnce({
+      text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+    });
+
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: false,
+      },
+      importedLibraries: ['testLib'],
+      components: {
+        derivedComponent: {
+          baseComponent: '$testLib.components.baseComp',
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['derivedComponent'],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const disabledSidebarWarnings = result.warnings.filter(
+      (warning) => warning.category === 'disabled-sidebar',
+    );
+    expect(disabledSidebarWarnings).toHaveLength(1);
+    expect(disabledSidebarWarnings[0].instancePath).toBe('/importedLibraries/testLib/uiConfig/');
+  });
 });
