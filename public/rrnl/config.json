@@ -39,7 +39,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "dropdown",
-                    "placeholder": "Please enter your age group",
+                    "placeholder": "Please select your age group",
                     "options": ["18-40", "40-60"]
                 }
             ],
@@ -58,7 +58,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "A_bloodGlucose_abnormal_postprandial_value",
@@ -66,7 +68,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "A_bloodGlucose_abnormal_fasting_normal",
@@ -74,6 +78,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -82,6 +87,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
@@ -124,7 +130,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "A_bloodGlucose_normal_postprandial_value",
@@ -132,7 +140,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "A_bloodGlucose_normal_fasting_normal",
@@ -140,6 +150,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -148,6 +159,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
@@ -190,7 +202,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter systolic pressure (mmHg)",
+                        "min": 50,
+                        "max": 250
                     },
                     {
                         "id": "A_bloodPressure_abnormal_diastolic_value",
@@ -198,7 +212,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter diastolic pressure (mmHg)",
+                        "min": 30,
+                        "max": 150
                     },
                     {
                         "id": "A_bloodPressure_abnormal_systolic_normal",
@@ -206,6 +222,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -214,6 +231,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
@@ -256,7 +274,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter systolic pressure (mmHg)",
+                        "min": 50,
+                        "max": 250
                     },
                     {
                         "id": "A_bloodPressure_normal_diastolic_value",
@@ -264,7 +284,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter diastolic pressure (mmHg)",
+                        "min": 30,
+                        "max": 150
                     },
                     {
                         "id": "A_bloodPressure_normal_systolic_normal",
@@ -272,6 +294,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -280,6 +303,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
@@ -322,7 +346,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "B_bloodGlucose_abnormal_postprandial_value",
@@ -330,7 +356,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "B_bloodGlucose_abnormal_fasting_normal",
@@ -338,6 +366,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -346,6 +375,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
@@ -388,7 +418,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "B_bloodGlucose_normal_postprandial_value",
@@ -396,7 +428,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "B_bloodGlucose_normal_fasting_normal",
@@ -404,6 +438,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -412,7 +447,30 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
+                    }
+                ],
+                "correctAnswer": [
+                    {
+                        "id": "B_bloodGlucose_normal_fasting_value",
+                        "answer": 4,
+                        "acceptableLow": 3.7,
+                        "acceptableHigh": 4.3
+                    },
+                    {
+                        "id": "B_bloodGlucose_normal_postprandial_value",
+                        "answer": 5,
+                        "acceptableLow": 4.7,
+                        "acceptableHigh": 5.3
+                    },
+                    {
+                        "id": "B_bloodGlucose_normal_fasting_normal",
+                        "answer": "Yes"
+                    },
+                    {
+                        "id": "B_bloodGlucose_normal_postprandial_normal",
+                        "answer": "Yes"
                     }
                 ],
                 "instructionLocation": "aboveStimulus",
@@ -432,7 +490,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter systolic pressure (mmHg)",
+                        "min": 50,
+                        "max": 250
                     },
                     {
                         "id": "B_bloodPressure_abnormal_diastolic_value",
@@ -440,7 +500,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter diastolic pressure (mmHg)",
+                        "min": 30,
+                        "max": 150
                     },
                     {
                         "id": "B_bloodPressure_abnormal_systolic_normal",
@@ -448,6 +510,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -456,17 +519,22 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
                 "correctAnswer": [
                     {
                         "id": "B_bloodPressure_abnormal_systolic_value",
-                        "answer": 63
+                        "answer": 63,
+                        "acceptableLow": 60,
+                        "acceptableHigh": 66
                     },
                     {
                         "id": "B_bloodPressure_abnormal_diastolic_value",
-                        "answer": 94
+                        "answer": 94,
+                        "acceptableLow": 91,
+                        "acceptableHigh": 97
                     },
                     {
                         "id": "B_bloodPressure_abnormal_systolic_normal",
@@ -494,7 +562,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter systolic pressure (mmHg)",
+                        "min": 50,
+                        "max": 250
                     },
                     {
                         "id": "B_bloodPressure_normal_diastolic_value",
@@ -502,7 +572,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter diastolic pressure (mmHg)",
+                        "min": 30,
+                        "max": 150
                     },
                     {
                         "id": "B_bloodPressure_normal_systolic_normal",
@@ -510,6 +582,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -518,7 +591,30 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
+                    }
+                ],
+                "correctAnswer": [
+                    {
+                        "id": "B_bloodPressure_normal_systolic_value",
+                        "answer": 93,
+                        "acceptableLow": 90,
+                        "acceptableHigh": 96
+                    },
+                    {
+                        "id": "B_bloodPressure_normal_diastolic_value",
+                        "answer": 67,
+                        "acceptableLow": 64,
+                        "acceptableHigh": 70
+                    },
+                    {
+                        "id": "B_bloodPressure_normal_systolic_normal",
+                        "answer": "Yes"
+                    },
+                    {
+                        "id": "B_bloodPressure_normal_diastolic_normal",
+                        "answer": "Yes"
                     }
                 ],
                 "instructionLocation": "aboveStimulus",
@@ -538,7 +634,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "C_bloodGlucose_abnormal_postprandial_value",
@@ -546,7 +644,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "C_bloodGlucose_abnormal_fasting_normal",
@@ -554,6 +654,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -562,6 +663,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
@@ -604,7 +706,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "C_bloodGlucose_normal_postprandial_value",
@@ -612,7 +716,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "C_bloodGlucose_normal_fasting_normal",
@@ -620,6 +726,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -628,6 +735,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
@@ -670,7 +778,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter systolic pressure (mmHg)",
+                        "min": 50,
+                        "max": 250
                     },
                     {
                         "id": "C_bloodPressure_abnormal_diastolic_value",
@@ -678,7 +788,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter diastolic pressure (mmHg)",
+                        "min": 30,
+                        "max": 150
                     },
                     {
                         "id": "C_bloodPressure_abnormal_systolic_normal",
@@ -686,6 +798,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -694,6 +807,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
@@ -736,7 +850,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter systolic pressure (mmHg)",
+                        "min": 50,
+                        "max": 250
                     },
                     {
                         "id": "C_bloodPressure_normal_diastolic_value",
@@ -744,7 +860,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter diastolic pressure (mmHg)",
+                        "min": 30,
+                        "max": 150
                     },
                     {
                         "id": "C_bloodPressure_normal_systolic_normal",
@@ -752,6 +870,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -760,6 +879,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
@@ -802,7 +922,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "D_bloodGlucose_abnormal_postprandial_value",
@@ -810,7 +932,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 2000
                     },
                     {
                         "id": "D_bloodGlucose_abnormal_fasting_normal",
@@ -818,6 +942,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -826,6 +951,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
@@ -868,7 +994,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "D_bloodGlucose_normal_postprandial_value",
@@ -876,7 +1004,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter numerical value (mmol/L)",
+                        "min": 0,
+                        "max": 50
                     },
                     {
                         "id": "D_bloodGlucose_normal_fasting_normal",
@@ -884,6 +1014,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -934,7 +1065,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter systolic pressure (mmHg)",
+                        "min": 50,
+                        "max": 250
                     },
                     {
                         "id": "D_bloodPressure_abnormal_diastolic_value",
@@ -942,7 +1075,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter diastolic pressure (mmHg)",
+                        "min": 30,
+                        "max": 150
                     },
                     {
                         "id": "D_bloodPressure_abnormal_systolic_normal",
@@ -950,6 +1085,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -958,6 +1094,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
@@ -1000,7 +1137,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter systolic pressure (mmHg)",
+                        "min": 50,
+                        "max": 250
                     },
                     {
                         "id": "D_bloodPressure_normal_diastolic_value",
@@ -1008,7 +1147,9 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "numerical",
-                        "placeholder": "Enter numerical value"
+                        "placeholder": "Enter diastolic pressure (mmHg)",
+                        "min": 30,
+                        "max": 150
                     },
                     {
                         "id": "D_bloodPressure_normal_systolic_normal",
@@ -1016,6 +1157,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     },
                     {
@@ -1024,6 +1166,7 @@
                         "required": true,
                         "location": "belowStimulus",
                         "type": "dropdown",
+                        "placeholder": "Please select Yes or No",
                         "options": ["Yes", "No"]
                     }
                 ],
