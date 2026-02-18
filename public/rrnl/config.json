@@ -85,17 +85,33 @@
                         "options": ["Yes", "No"]
                     }
                 ],
+                "correctAnswer": [
+                    {
+                        "id": "A_bloodGlucose_abnormal_fasting_value",
+                        "answer": 2.3,
+                        "acceptableLow": 2.0,
+                        "acceptableHigh": 2.6
+                    },
+                    {
+                        "id": "A_bloodGlucose_abnormal_postprandial_value",
+                        "answer": 12.2,
+                        "acceptableLow": 11.9,
+                        "acceptableHigh": 12.5
+                    },
+                    {
+                        "id": "A_bloodGlucose_abnormal_fasting_normal",
+                        "answer": "No"
+                    },
+                    {
+                        "id": "A_bloodGlucose_abnormal_postprandial_normal",
+                        "answer": "No"
+                    }
+                ],
                 "instructionLocation": "aboveStimulus",
                 "allowFailedTraining": true,
                 "meta": {
                     "taskId": "A_bloodGlucose_abnormal",
-                    "trackTime": true,
-                    "correctAnswers": {
-                        "A_bloodGlucose_abnormal_fasting_value": 7.2,
-                        "A_bloodGlucose_abnormal_postprandial_value": 12.5,
-                        "A_bloodGlucose_abnormal_fasting_normal": "No",
-                        "A_bloodGlucose_abnormal_postprandial_normal": "No"
-                    }
+                    "trackTime": true
                 }
         },
         "A_bloodGlucose_normal": {
@@ -135,17 +151,33 @@
                         "options": ["Yes", "No"]
                     }
                 ],
+                "correctAnswer": [
+                    {
+                        "id": "A_bloodGlucose_normal_fasting_value",
+                        "answer": 5.2,
+                        "acceptableLow": 4.9,
+                        "acceptableHigh": 5.5
+                    },
+                    {
+                        "id": "A_bloodGlucose_normal_postprandial_value",
+                        "answer": 6.3,
+                        "acceptableLow": 6.0,
+                        "acceptableHigh": 6.6
+                    },
+                    {
+                        "id": "A_bloodGlucose_normal_fasting_normal",
+                        "answer": "Yes"
+                    },
+                    {
+                        "id": "A_bloodGlucose_normal_postprandial_normal",
+                        "answer": "Yes"
+                    }
+                ],
                 "instructionLocation": "aboveStimulus",
                 "allowFailedTraining": true,
                 "meta": {
                     "taskId": "A_bloodGlucose_normal",
-                    "trackTime": true,
-                    "correctAnswers": {
-                        "A_bloodGlucose_normal_fasting_value": 5.1,
-                        "A_bloodGlucose_normal_postprandial_value": 6.8,
-                        "A_bloodGlucose_normal_fasting_normal": "Yes",
-                        "A_bloodGlucose_normal_postprandial_normal": "Yes"
-                    }
+                    "trackTime": true
                 }
         },
         "A_bloodPressure_abnormal": {
@@ -185,17 +217,33 @@
                         "options": ["Yes", "No"]
                     }
                 ],
+                "correctAnswer": [
+                    {
+                        "id": "A_bloodPressure_abnormal_systolic_value",
+                        "answer": 147,
+                        "acceptableLow": 144,
+                        "acceptableHigh": 150
+                    },
+                    {
+                        "id": "A_bloodPressure_abnormal_diastolic_value",
+                        "answer": 105,
+                        "acceptableLow": 102,
+                        "acceptableHigh": 108
+                    },
+                    {
+                        "id": "A_bloodPressure_abnormal_systolic_normal",
+                        "answer": "No"
+                    },
+                    {
+                        "id": "A_bloodPressure_abnormal_diastolic_normal",
+                        "answer": "No"
+                    }
+                ],
                 "instructionLocation": "aboveStimulus",
                 "allowFailedTraining": true,
                 "meta": {
                     "taskId": "A_bloodPressure_abnormal",
-                    "trackTime": true,
-                    "correctAnswers": {
-                        "A_bloodPressure_abnormal_systolic_value": 165,
-                        "A_bloodPressure_abnormal_diastolic_value": 95,
-                        "A_bloodPressure_abnormal_systolic_normal": "No",
-                        "A_bloodPressure_abnormal_diastolic_normal": "No"
-                    }
+                    "trackTime": true
                 }
         },
         "A_bloodPressure_normal": {
@@ -233,6 +281,28 @@
                         "location": "belowStimulus",
                         "type": "dropdown",
                         "options": ["Yes", "No"]
+                    }
+                ],
+                "correctAnswer": [
+                    {
+                        "id": "A_bloodPressure_normal_systolic_value",
+                        "answer": 137,
+                        "acceptableLow": 134,
+                        "acceptableHigh": 140
+                    },
+                    {
+                        "id": "A_bloodPressure_normal_diastolic_value",
+                        "answer": 75.5,
+                        "acceptableLow": 72.5,
+                        "acceptableHigh": 78.5
+                    },
+                    {
+                        "id": "A_bloodPressure_normal_systolic_normal",
+                        "answer": "Yes"
+                    },
+                    {
+                        "id": "A_bloodPressure_normal_diastolic_normal",
+                        "answer": "Yes"
                     }
                 ],
                 "instructionLocation": "aboveStimulus",
@@ -277,6 +347,28 @@
                         "location": "belowStimulus",
                         "type": "dropdown",
                         "options": ["Yes", "No"]
+                    }
+                ],
+                "correctAnswer": [
+                    {
+                        "id": "B_bloodGlucose_abnormal_fasting_value",
+                        "answer": 10,
+                        "acceptableLow": 9.7,
+                        "acceptableHigh": 10.3
+                    },
+                    {
+                        "id": "B_bloodGlucose_abnormal_postprandial_value",
+                        "answer": 2.5,
+                        "acceptableLow": 2.2,
+                        "acceptableHigh": 2.8
+                    },
+                    {
+                        "id": "B_bloodGlucose_abnormal_fasting_normal",
+                        "answer": "No"
+                    },
+                    {
+                        "id": "B_bloodGlucose_abnormal_postprandial_normal",
+                        "answer": "No"
                     }
                 ],
                 "instructionLocation": "aboveStimulus",
@@ -367,6 +459,24 @@
                         "options": ["Yes", "No"]
                     }
                 ],
+                "correctAnswer": [
+                    {
+                        "id": "B_bloodPressure_abnormal_systolic_value",
+                        "answer": 63
+                    },
+                    {
+                        "id": "B_bloodPressure_abnormal_diastolic_value",
+                        "answer": 94
+                    },
+                    {
+                        "id": "B_bloodPressure_abnormal_systolic_normal",
+                        "answer": "No"
+                    },
+                    {
+                        "id": "B_bloodPressure_abnormal_diastolic_normal",
+                        "answer": "No"
+                    }
+                ],
                 "instructionLocation": "aboveStimulus",
                 "allowFailedTraining": true,
                 "meta": {
@@ -455,6 +565,28 @@
                         "options": ["Yes", "No"]
                     }
                 ],
+                "correctAnswer": [
+                    {
+                        "id": "C_bloodGlucose_abnormal_fasting_value",
+                        "answer": 1.1,
+                        "acceptableLow": 0.8,
+                        "acceptableHigh": 1.4
+                    },
+                    {
+                        "id": "C_bloodGlucose_abnormal_postprandial_value",
+                        "answer": 3.2,
+                        "acceptableLow": 2.9,
+                        "acceptableHigh": 3.5
+                    },
+                    {
+                        "id": "C_bloodGlucose_abnormal_fasting_normal",
+                        "answer": "No"
+                    },
+                    {
+                        "id": "C_bloodGlucose_abnormal_postprandial_normal",
+                        "answer": "No"
+                    }
+                ],
                 "instructionLocation": "aboveStimulus",
                 "allowFailedTraining": true,
                 "meta": {
@@ -497,6 +629,28 @@
                         "location": "belowStimulus",
                         "type": "dropdown",
                         "options": ["Yes", "No"]
+                    }
+                ],
+                "correctAnswer": [
+                    {
+                        "id": "C_bloodGlucose_normal_fasting_value",
+                        "answer": 5.6,
+                        "acceptableLow": 5.3,
+                        "acceptableHigh": 5.9
+                    },
+                    {
+                        "id": "C_bloodGlucose_normal_postprandial_value",
+                        "answer": 7.2,
+                        "acceptableLow": 6.9,
+                        "acceptableHigh": 7.5
+                    },
+                    {
+                        "id": "C_bloodGlucose_normal_fasting_normal",
+                        "answer": "Yes"
+                    },
+                    {
+                        "id": "C_bloodGlucose_normal_postprandial_normal",
+                        "answer": "Yes"
                     }
                 ],
                 "instructionLocation": "aboveStimulus",
@@ -543,6 +697,28 @@
                         "options": ["Yes", "No"]
                     }
                 ],
+                "correctAnswer": [
+                    {
+                        "id": "C_bloodPressure_abnormal_systolic_value",
+                        "answer": 145,
+                        "acceptableLow": 142,
+                        "acceptableHigh": 148
+                    },
+                    {
+                        "id": "C_bloodPressure_abnormal_diastolic_value",
+                        "answer": 107,
+                        "acceptableLow": 104,
+                        "acceptableHigh": 110
+                    },
+                    {
+                        "id": "C_bloodPressure_abnormal_systolic_normal",
+                        "answer": "No"
+                    },
+                    {
+                        "id": "C_bloodPressure_abnormal_diastolic_normal",
+                        "answer": "No"
+                    }
+                ],
                 "instructionLocation": "aboveStimulus",
                 "allowFailedTraining": true,
                 "meta": {
@@ -585,6 +761,28 @@
                         "location": "belowStimulus",
                         "type": "dropdown",
                         "options": ["Yes", "No"]
+                    }
+                ],
+                "correctAnswer": [
+                    {
+                        "id": "C_bloodPressure_normal_systolic_value",
+                        "answer": 115,
+                        "acceptableLow": 112,
+                        "acceptableHigh": 118
+                    },
+                    {
+                        "id": "C_bloodPressure_normal_diastolic_value",
+                        "answer": 77,
+                        "acceptableLow": 74,
+                        "acceptableHigh": 80
+                    },
+                    {
+                        "id": "C_bloodPressure_normal_systolic_normal",
+                        "answer": "Yes"
+                    },
+                    {
+                        "id": "C_bloodPressure_normal_diastolic_normal",
+                        "answer": "Yes"
                     }
                 ],
                 "instructionLocation": "aboveStimulus",
@@ -631,6 +829,28 @@
                         "options": ["Yes", "No"]
                     }
                 ],
+                "correctAnswer": [
+                    {
+                        "id": "D_bloodGlucose_abnormal_fasting_value",
+                        "answer": 7.8,
+                        "acceptableLow": 7.5,
+                        "acceptableHigh": 8.1
+                    },
+                    {
+                        "id": "D_bloodGlucose_abnormal_postprandial_value",
+                        "answer": 1319,
+                        "acceptableLow": 1316,
+                        "acceptableHigh": 1322
+                    },
+                    {
+                        "id": "D_bloodGlucose_abnormal_fasting_normal",
+                        "answer": "No"
+                    },
+                    {
+                        "id": "D_bloodGlucose_abnormal_postprandial_normal",
+                        "answer": "No"
+                    }
+                ],
                 "instructionLocation": "aboveStimulus",
                 "allowFailedTraining": true,
                 "meta": {
@@ -673,6 +893,28 @@
                         "location": "belowStimulus",
                         "type": "dropdown",
                         "options": ["Yes", "No"]
+                    }
+                ],
+                "correctAnswer": [
+                    {
+                        "id": "D_bloodGlucose_normal_fasting_value",
+                        "answer": 5.6,
+                        "acceptableLow": 5.3,
+                        "acceptableHigh": 5.9
+                    },
+                    {
+                        "id": "D_bloodGlucose_normal_postprandial_value",
+                        "answer": 9.2,
+                        "acceptableLow": 8.9,
+                        "acceptableHigh": 9.5
+                    },
+                    {
+                        "id": "D_bloodGlucose_normal_fasting_normal",
+                        "answer": "Yes"
+                    },
+                    {
+                        "id": "D_bloodGlucose_normal_postprandial_normal",
+                        "answer": "Yes"
                     }
                 ],
                 "instructionLocation": "aboveStimulus",
@@ -719,6 +961,28 @@
                         "options": ["Yes", "No"]
                     }
                 ],
+                "correctAnswer": [
+                    {
+                        "id": "D_bloodPressure_abnormal_systolic_value",
+                        "answer": 148,
+                        "acceptableLow": 145,
+                        "acceptableHigh": 151
+                    },
+                    {
+                        "id": "D_bloodPressure_abnormal_diastolic_value",
+                        "answer": 101,
+                        "acceptableLow": 98,
+                        "acceptableHigh": 104
+                    },
+                    {
+                        "id": "D_bloodPressure_abnormal_systolic_normal",
+                        "answer": "No"
+                    },
+                    {
+                        "id": "D_bloodPressure_abnormal_diastolic_normal",
+                        "answer": "No"
+                    }
+                ],
                 "instructionLocation": "aboveStimulus",
                 "allowFailedTraining": true,
                 "meta": {
@@ -761,6 +1025,28 @@
                         "location": "belowStimulus",
                         "type": "dropdown",
                         "options": ["Yes", "No"]
+                    }
+                ],
+                "correctAnswer": [
+                    {
+                        "id": "D_bloodPressure_normal_systolic_value",
+                        "answer": 138,
+                        "acceptableLow": 135,
+                        "acceptableHigh": 141
+                    },
+                    {
+                        "id": "D_bloodPressure_normal_diastolic_value",
+                        "answer": 87,
+                        "acceptableLow": 84,
+                        "acceptableHigh": 90
+                    },
+                    {
+                        "id": "D_bloodPressure_normal_systolic_normal",
+                        "answer": "Yes"
+                    },
+                    {
+                        "id": "D_bloodPressure_normal_diastolic_normal",
+                        "answer": "Yes"
                     }
                 ],
                 "instructionLocation": "aboveStimulus",
