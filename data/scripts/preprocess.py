@@ -10,6 +10,8 @@ def preprocess_tidy_csv(input_csv_path: Path, output_csv_path: Path) -> None:
     Reads the tidy CSV file from the reVISit website, reads the relevant data for analysis, and exports
     it as a new CSV file for use in the analysis notebook.
 
+    AI Usage Note: We want one row for each trial for every participant. That should include the chart type (line or colorfield), the permutation (ordered or permuted), a binary for if it is correct, and the response time if we have it. 
+
     Parameters:
         input_csv_path (Path): The path to the input tidy CSV file.
         output_csv_path (Path): The path where the processed CSV file will be saved.
@@ -57,12 +59,42 @@ def preprocess_tidy_csv(input_csv_path: Path, output_csv_path: Path) -> None:
 
     trial_df['responseTime'] = trial_df.apply(get_response_time, axis=1)
 
-    # Select and rename columns for output
+    # Select and rename columns for output (snake_case, response_time_ms)
     out_df = trial_df[['participantId', 'trialId', 'chartType', 'permuted', 'isCorrect', 'responseTime']].copy()
+    out_df = out_df.rename(columns={
+        'participantId': 'participant_id',
+        'trialId': 'trial_id',
+        'chartType': 'chart_type',
+        'permuted': 'permuted',
+        'isCorrect': 'is_correct',
+        'responseTime': 'response_time_ms',
+    })
 
     # Save to CSV
     out_df.to_csv(output_csv_path, index=False)
 
+def sample_analysis():
+    """
+    A sample analysis function to demonstrate how to read the cleaned CSV and perform basic analysis.
+    This is not meant to be comprehensive, but just a starting point for the analysis notebook.
+    """
+    df = pd.read_csv(CLEAN_CSV_PATH)
+
+    # Number of participants
+    print(f"\nNumber of Participants: {df['participant_id'].nunique()}")
+
+    # Accuracy by chart type
+    accuracy_by_chart = df.groupby('chart_type')['is_correct'].mean()
+    print("\nAccuracy by Chart Type:")
+    print(accuracy_by_chart)
+
+    # Response time by chart type
+    response_time_by_chart = df.groupby('chart_type')['response_time_ms'].mean()
+    print("\nAverage Response Time by Chart Type (ms):")
+    print(response_time_by_chart)
+
 if __name__ == "__main__":
     preprocess_tidy_csv(TIDY_CSV_PATH, CLEAN_CSV_PATH)
     print(f"Preprocessed data saved to {CLEAN_CSV_PATH}")
+
+    sample_analysis()
