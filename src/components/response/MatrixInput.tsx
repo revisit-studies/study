@@ -10,6 +10,7 @@ import checkboxClasses from './css/Checkbox.module.css';
 import radioClasses from './css/Radio.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
+import { OptionLabel } from './OptionLabel';
 import { generateErrorMessage } from './utils';
 
 function CheckboxComponent({
@@ -133,10 +134,15 @@ export function MatrixInput({
     satisfaction7: ['Highly Unsatisfied', 'Unsatisfied', 'Slightly Unsatisfied', 'Neutral', 'Slightly Satisfied', 'Satisfied', 'Highly Satisfied'],
   };
 
-  const _choices = typeof answerOptions === 'string' ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry })) : answerOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const _choices: StringOption[] = typeof answerOptions === 'string'
+    ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry }))
+    : answerOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+
+  const questions = response.questionOptions.map((question) => (typeof question === 'string' ? { value: question, label: question } : question));
+  const questionsByValue = Object.fromEntries(questions.map((question) => [question.value, question]));
 
   const { questionOrders } = useStoredAnswer();
-  const orderedQuestions = useMemo(() => questionOrders[response.id], [questionOrders, response.id]);
+  const orderedQuestions = useMemo(() => questionOrders[response.id] || questions.map((question) => question.value), [questionOrders, questions, response.id]);
 
   // Re-define on change functions. Dispatch answers to store.
   const onChangeRadio = (val: string, questionKey: string) => {
@@ -199,10 +205,9 @@ export function MatrixInput({
           }}
         >
           {_choices.map((entry, idx) => (
-            <Text
+            <Box
               key={`choice-${idx}-label`}
               style={{
-                fontWeight: 'bold',
                 textAlign: 'center',
                 fontSize: '0.8em',
               }}
@@ -210,8 +215,8 @@ export function MatrixInput({
               ml="xs"
               mr="xs"
             >
-              {entry.label}
-            </Text>
+              <OptionLabel label={entry.label} infoText={entry.infoText} />
+            </Box>
           ))}
         </div>
         {/* Row Headers */}
@@ -222,8 +227,8 @@ export function MatrixInput({
             gridTemplateRows: `repeat(${_m}, 1fr)`,
           }}
         >
-          {orderedQuestions.map((entry, idx) => (
-            <Text
+          {orderedQuestions.map((questionKey, idx) => (
+            <Box
               key={`question-${idx}-label`}
               style={{
                 height: '80px',
@@ -240,8 +245,8 @@ export function MatrixInput({
               miw={140}
               maw={400}
             >
-              {entry}
-            </Text>
+              <OptionLabel label={(questionsByValue[questionKey]?.label || questionKey)} infoText={questionsByValue[questionKey]?.infoText} />
+            </Box>
           ))}
         </div>
         {/* Rest */}
@@ -252,7 +257,7 @@ export function MatrixInput({
             gridTemplateRows: `repeat(${_m},1fr)`,
           }}
         >
-          {orderedQuestions.map((question, idx) => (
+          {orderedQuestions.map((questionKey, idx) => (
             <div
               key={`question-${idx}`}
               style={{
@@ -267,7 +272,7 @@ export function MatrixInput({
                   <RadioGroupComponent
                     disabled={disabled}
                     idx={idx}
-                    question={question}
+                    question={questionKey}
                     answer={answer}
                     _choices={_choices}
                     _n={_n}
@@ -279,7 +284,7 @@ export function MatrixInput({
                   <CheckboxComponent
                     disabled={disabled}
                     idx={idx}
-                    question={question}
+                    question={questionKey}
                     answer={answer}
                     _choices={_choices}
                     _n={_n}

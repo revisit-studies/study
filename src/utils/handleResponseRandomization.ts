@@ -38,15 +38,16 @@ export function randomizeOptions(componentConfig: IndividualComponent) {
 export function randomizeQuestionOrder(componentConfig: IndividualComponent) {
   return componentConfig.response.reduce((acc, response) => {
     if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
+      const questions = response.questionOptions
+        .map((question) => (typeof question === 'string' ? question : question.value));
       if (response.questionOrder === 'random') {
-        const questions = response.questionOptions;
         const shuffled = [...questions]
           .map((value) => ({ value, sort: Math.random() }))
           .sort((a, b) => a.sort - b.sort)
           .map(({ value }) => value);
         acc[response.id] = shuffled;
       } else {
-        acc[response.id] = response.questionOptions;
+        acc[response.id] = questions;
       }
     }
     return acc;

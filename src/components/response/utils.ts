@@ -91,7 +91,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         initField = [];
       } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
         initField = Object.fromEntries(
-          response.questionOptions.map((entry) => [entry, '']),
+          response.questionOptions.map((entry) => [typeof entry === 'string' ? entry : entry.value, '']),
         );
       } else if (response.type === 'slider' && response.startingValue) {
         initField = response.startingValue.toString();

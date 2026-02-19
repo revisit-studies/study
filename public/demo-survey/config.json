@@ -213,7 +213,11 @@
           "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
           "infoText": "Choose the option that best represents your answer.",
           "options": [
-            "Option 1",
+            {
+              "label": "Option 1",
+              "value": "Option 1",
+              "infoText": "This is info text for button option 1."
+            },
             "Option 2",
             "Option 3",
             "Option 4"
@@ -263,15 +267,39 @@
           "infoText": "For each animal, select all the categories that apply. You can select multiple checkboxes per row.",
           "type": "matrix-checkbox",
           "answerOptions": [
-            "Has Legs",
-            "Has Wings",
-            "Can Swim"
+            {
+              "label": "Has Legs",
+              "value": "Has Legs",
+              "infoText": "Use this when the animal has legs."
+            },
+            {
+              "label": "Has Wings",
+              "value": "Has Wings",
+              "infoText": "Use this when the animal has wings."
+            },
+            {
+              "label": "Can Swim",
+              "value": "Can Swim",
+              "infoText": "Use this when the animal can swim."
+            }
           ],
           "questionOptions": [
             "Dog",
-            "Snake",
-            "Eagle",
-            "Salmon",
+            {
+              "label": "Snake",
+              "value": "Snake",
+              "infoText": "Snakes do not have legs."
+            },
+            {
+              "label": "Eagle",
+              "value": "Eagle",
+              "infoText": "Eagles are birds with wings."
+            },
+            {
+              "label": "Salmon",
+              "value": "Salmon",
+              "infoText": "Salmon can swim."
+            },
             "Platypus"
           ]
         }
