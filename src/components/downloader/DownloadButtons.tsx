@@ -136,6 +136,7 @@ export function DownloadButtons({
           data={participants}
           studyId={studyId}
           hasAudio={hasAudio}
+          hasScreenRecording={hasScreenRecording}
         />
       )}
     </>

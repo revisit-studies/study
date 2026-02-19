@@ -14,7 +14,9 @@ import {
 import {
   IconBrandPython, IconLayoutColumns, IconTableExport, IconX,
 } from '@tabler/icons-react';
-import { useCallback, useMemo, useState } from 'react';
+import {
+  useCallback, useEffect, useMemo, useState,
+} from 'react';
 import { ParticipantData } from '../../storage/types';
 import { Prettify, StudyConfig } from '../../parser/types';
 import { StorageEngine } from '../../storage/engines/types';
@@ -34,10 +36,10 @@ const OPTIONAL_COMMON_PROPS = [
   'instruction',
   'responsePrompt',
   'answer',
+  'transcript',
   'correctAnswer',
   'duration',
   'cleanedDuration',
-  'transcript',
   'meta',
   'startTime',
   'endTime',
@@ -136,6 +138,10 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         if (properties.includes('answer')) {
           tidyRow.answer = typeof value === 'object' ? JSON.stringify(value) : value;
         }
+        if (properties.includes('transcript')) {
+          const identifier = trialAnswer.identifier || `${trialId}_${trialOrder}`;
+          tidyRow.transcript = transcripts?.[`${participant.participantId}_${identifier}`] ?? undefined;
+        }
         if (properties.includes('correctAnswer')) {
           const configCorrectAnswer = completeComponent.correctAnswer?.find((ans) => ans.id === key)?.answer;
           const answerCorrectAnswer = trialAnswer.correctAnswer.find((ans) => ans.id === key)?.answer;
@@ -153,9 +159,6 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         }
         if (properties.includes('cleanedDuration')) {
           tidyRow.cleanedDuration = cleanedDuration;
-        }
-        if (properties.includes('transcript')) {
-          tidyRow.transcript = transcripts?.[`${participant.participantId}_${trialOrder}`] ?? undefined;
         }
         if (properties.includes('meta')) {
           tidyRow.meta = JSON.stringify(completeComponent.meta, null, 2);
@@ -195,7 +198,12 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
     }).flat()], Array.from(newHeaders)];
 }
 
-async function getTableData(selectedProperties: Property[], data: ParticipantData[], storageEngine: StorageEngine | undefined, studyId: string) {
+async function getTableData(
+  selectedProperties: Property[],
+  data: ParticipantData[],
+  storageEngine: StorageEngine | undefined,
+  studyId: string,
+) {
   if (!storageEngine) {
     return { header: [], rows: [] };
   }
@@ -206,12 +214,14 @@ async function getTableData(selectedProperties: Property[], data: ParticipantDat
   const allConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
 
   const transcripts: Record<string, string | null> = {};
-  if (selectedProperties.includes('transcript') && storageEngine.getEngine() === 'firebase') {
+  if (selectedProperties.includes('transcript')) {
     const allAnswers = data.flatMap((p) => Object.values(p.answers).map((answer) => ({ answer, participantId: p.participantId })));
     await Promise.all(allAnswers.map(async ({ answer, participantId }) => {
-      const key = `${participantId}_${answer.trialOrder}`;
+      const identifier = answer.identifier || `${answer.componentName}_${answer.trialOrder}`;
+      const key = `${participantId}_${identifier}`;
+
       try {
-        const t = await (storageEngine as FirebaseStorageEngine).getTranscription(answer.componentName, participantId);
+        const t = await (storageEngine as FirebaseStorageEngine).getTranscription(identifier, participantId);
         const text = t?.results?.map((r) => r.alternatives?.[0]?.transcript).join(' ');
         transcripts[key] = text || null;
       } catch {
@@ -221,10 +231,11 @@ async function getTableData(selectedProperties: Property[], data: ParticipantDat
   }
 
   const header = combinedProperties;
-  const allData = data.map((participant) => {
-    const partDataToRows = participantDataToRows(participant, combinedProperties, allConfigs[participant.participantConfigHash], transcripts);
+  const allData = await Promise.all(data.map(async (participant) => {
+    const partDataToRows = await participantDataToRows(participant, combinedProperties, allConfigs[participant.participantConfigHash], transcripts);
+
     return partDataToRows;
-  });
+  }));
 
   const rows = allData.map((partData) => partData[0]);
   const newHeaders = new Set(allData.map((partData) => partData[1]).flat());
@@ -241,6 +252,7 @@ export function DownloadTidy({
   data,
   studyId,
   hasAudio,
+  hasScreenRecording,
 }: {
   opened: boolean;
   close: () => void;
@@ -248,6 +260,7 @@ export function DownloadTidy({
   data: ParticipantData[];
   studyId: string;
   hasAudio?: boolean;
+  hasScreenRecording?: boolean;
 }) {
   const [selectedProperties, setSelectedProperties] = useState<Array<OptionalProperty>>([
     'status',
@@ -261,12 +274,22 @@ export function DownloadTidy({
     'correctAnswer',
     'duration',
     'cleanedDuration',
-    'transcript',
   ]);
 
   const { storageEngine } = useStorageEngine();
   const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine, studyId]);
   const isFirebase = storageEngine?.getEngine() === 'firebase';
+  const transcriptAvailable = isFirebase && !!(hasAudio || hasScreenRecording);
+
+  useEffect(() => {
+    setSelectedProperties((prop) => {
+      if (transcriptAvailable) {
+        return prop.includes('transcript') ? prop : [...prop, 'transcript'];
+      }
+
+      return prop.includes('transcript') ? prop.filter((p) => p !== 'transcript') : prop;
+    });
+  }, [transcriptAvailable]);
 
   const downloadTidy = useCallback(() => {
     if (!tableData) {
@@ -321,7 +344,7 @@ export function DownloadTidy({
           </Flex>
         </Text>
         <Flex wrap="wrap" gap="4px">
-          {OPTIONAL_COMMON_PROPS.filter((prop) => prop !== 'transcript' || (hasAudio && isFirebase)).map((prop) => {
+          {OPTIONAL_COMMON_PROPS.filter((prop) => prop !== 'transcript' || transcriptAvailable).map((prop) => {
             const isSelected = selectedProperties.includes(prop);
 
             const button = (
