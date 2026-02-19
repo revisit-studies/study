@@ -54,7 +54,7 @@ export function AppAside() {
   const modes = useStoreSelector((state) => state.modes);
 
   return (
-    <AppShell.Aside className="studyBrowser" p="0">
+    <AppShell.Aside className="studyBrowser" data-testid="app-aside" p="0">
       <AppShell.Section
         p="sm"
         pb={0}
@@ -134,6 +134,7 @@ export function AppAside() {
         <Tabs
           value={activeTab}
           onChange={setActiveTab}
+          keepMounted={false}
           style={{
             display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden',
           }}
