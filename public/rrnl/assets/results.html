@@ -51,6 +51,17 @@
     </table>
   </div>
 
+  <div class="card">
+    <strong>Export your recorded answers (optional)</strong>
+    <p class="small muted">Copy this JSON if you want a record of what this browser stored.</p>
+    <div class="controls">
+      <button id="copyBtn">Copy JSON</button>
+      <button id="clearBtn">Clear stored answers (for next participant)</button>
+      <span class="small muted">Storage key: <code>rrnl_answer_store_v1</code></span>
+    </div>
+    <textarea id="exportBox" spellcheck="false"></textarea>
+  </div>
+
 <script>
 (async function() {
   const STORE_KEY = "rrnl_answer_store_v1";
