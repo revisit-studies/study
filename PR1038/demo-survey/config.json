@@ -118,7 +118,10 @@
           "type": "dropdown",
           "placeholder": "Enter your preference",
           "options": [
-            "Bar",
+            {
+              "label": "Bar",
+              "infoText": "A bar chart is useful for comparing values across categories."
+            },
             "Bubble",
             "Pie",
             "Stacked Bar"
@@ -136,7 +139,10 @@
             "Bubble",
             "Pie",
             "Stacked Bar",
-            "Line",
+            {
+              "label": "Line",
+              "infoText": "A line chart is commonly used for trends over time."
+            },
             "Scatter",
             "Histogram"
           ],
@@ -183,7 +189,6 @@
           "options": [
             {
               "label": "Option 1",
-              "value": "Option 1",
               "infoText": "This is info text for Option 1."
             },
             {
@@ -215,7 +220,6 @@
           "options": [
             {
               "label": "Option 1",
-              "value": "Option 1",
               "infoText": "This is info text for button option 1."
             },
             "Option 2",
@@ -269,17 +273,14 @@
           "answerOptions": [
             {
               "label": "Has Legs",
-              "value": "Has Legs",
               "infoText": "Use this when the animal has legs."
             },
             {
               "label": "Has Wings",
-              "value": "Has Wings",
               "infoText": "Use this when the animal has wings."
             },
             {
               "label": "Can Swim",
-              "value": "Can Swim",
               "infoText": "Use this when the animal can swim."
             }
           ],
@@ -287,17 +288,14 @@
             "Dog",
             {
               "label": "Snake",
-              "value": "Snake",
               "infoText": "Snakes do not have legs."
             },
             {
               "label": "Eagle",
-              "value": "Eagle",
               "infoText": "Eagles are birds with wings."
             },
             {
               "label": "Salmon",
-              "value": "Salmon",
               "infoText": "Salmon can swim."
             },
             "Platypus"
