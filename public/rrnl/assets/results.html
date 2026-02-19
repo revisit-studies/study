@@ -18,11 +18,6 @@
     .row-ok td{background:rgba(0,255,0,0.04)}
     .row-bad td{background:rgba(255,0,0,0.04)}
     .small{font-size:13px}
-    .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-    button{padding:10px 12px;border-radius:10px;border:1px solid #ccc;background:#fff;cursor:pointer}
-    button:hover{background:#f7f7f7}
-    textarea{width:100%;min-height:140px;border-radius:10px;border:1px solid #ccc;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
-    code{background:#f6f6f6;padding:2px 6px;border-radius:6px}
   </style>
 </head>
 <body>
@@ -41,25 +36,14 @@
       <thead>
         <tr>
           <th style="width:22%">Component</th>
-          <th style="width:30%">Question</th>
+          <th style="width:34%">Question</th>
           <th style="width:16%">Your answer</th>
-          <th style="width:18%">Correct</th>
+          <th style="width:14%">Correct</th>
           <th style="width:14%">Status</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
-  </div>
-
-  <div class="card">
-    <strong>Export your recorded answers (optional)</strong>
-    <p class="small muted">Copy this JSON if you want a record of what this browser stored.</p>
-    <div class="controls">
-      <button id="copyBtn">Copy JSON</button>
-      <button id="clearBtn">Clear stored answers (for next participant)</button>
-      <span class="small muted">Storage key: <code>rrnl_answer_store_v1</code></span>
-    </div>
-    <textarea id="exportBox" spellcheck="false"></textarea>
   </div>
 
 <script>
@@ -69,7 +53,6 @@
   const scoreText = document.getElementById("scoreText");
   const scoreDetail = document.getElementById("scoreDetail");
   const tbody = document.querySelector("#resultsTable tbody");
-  const exportBox = document.getElementById("exportBox");
 
   const log = (...a) => console.log("[rrnl-results]", ...a);
 
@@ -93,10 +76,6 @@
     return await res.json();
   }
 
-  function isNumeric(n) {
-    return typeof n === "number" && Number.isFinite(n);
-  }
-
   function parseNumberMaybe(v) {
     if (v == null) return null;
     const s = norm(v).replace(/[%\s,]/g, "");
@@ -106,10 +85,6 @@
   }
 
   function flattenSequence(node) {
-    // node can be:
-    // - string component key
-    // - { order, components: [...] } (nested)
-    // - array
     const out = [];
     if (!node) return out;
 
@@ -129,7 +104,6 @@
   }
 
   function buildCorrectAnswerMap(componentDef) {
-    // correctAnswer: [{ id, answer, acceptableLow, acceptableHigh }]
     const map = new Map();
     const arr = componentDef?.correctAnswer;
     if (!Array.isArray(arr)) return map;
@@ -141,39 +115,30 @@
 
   function formatCorrect(ca) {
     if (!ca) return "—";
-    const low = ca.acceptableLow;
-    const high = ca.acceptableHigh;
-    if (isNumeric(low) && isNumeric(high)) {
-      if (low === high) return `${low}`;
-      return `${low} – ${high}`;
-    }
-    if (ca.answer != null) return `${ca.answer}`;
+    if (ca.answer != null) return String(ca.answer);
     return "—";
   }
 
-  function grade(userValue, ca) {
-    if (!ca) return { ok: null, why: "No answer key for this item." };
+  // Exact-match grading ONLY:
+  // - If answer key is a number: compare numerically (Number(user) === Number(key))
+  // - Else: compare strings case-insensitively
+  function gradeExact(userValue, ca) {
+    if (!ca || ca.answer == null) return { ok: null, why: "No answer key for this item." };
 
-    const low = ca.acceptableLow;
-    const high = ca.acceptableHigh;
+    const expected = ca.answer;
 
-    // Range check if present
-    if (isNumeric(low) && isNumeric(high)) {
+    if (typeof expected === "number") {
       const userNum = parseNumberMaybe(userValue);
       if (userNum == null) return { ok: false, why: "No numeric answer recorded." };
-      const ok = userNum >= low && userNum <= high;
-      return { ok, why: ok ? "Within acceptable range." : "Outside acceptable range." };
+      const ok = userNum === expected;
+      return { ok, why: ok ? "Exact numeric match." : "Does not match." };
     }
 
-    // Exact match otherwise
-    const expected = ca.answer;
-    if (expected == null) return { ok: null, why: "No answer/range in key." };
     const ok = norm(userValue).toLowerCase() === norm(expected).toLowerCase();
     return { ok, why: ok ? "Exact match." : "Does not match." };
   }
 
   const store = loadStore();
-  exportBox.value = JSON.stringify(store, null, 2);
 
   let config;
   try {
@@ -202,7 +167,6 @@
     return;
   }
 
-  // Build rows for ONLY components that have a correctAnswer array
   let totalGradable = 0;
   let totalCorrect = 0;
   let rows = 0;
@@ -214,7 +178,7 @@
     const responseArr = compDef.response;
     const caMap = buildCorrectAnswerMap(compDef);
 
-    // Skip components without answer key (intro, break, participant stats, etc.)
+    // Only show components with an answer key
     if (!caMap.size) continue;
     if (!Array.isArray(responseArr) || responseArr.length === 0) continue;
 
@@ -224,14 +188,12 @@
       if (!id) continue;
 
       const ca = caMap.get(id) || null;
-
-      // If there's no key entry for this response, treat as ungraded
-      if (!ca) continue;
+      if (!ca || ca.answer == null) continue;
 
       totalGradable++;
 
       const userAnswer = store?.answers?.[compName]?.[id] ?? null;
-      const result = grade(userAnswer, ca);
+      const result = gradeExact(userAnswer, ca);
       if (result.ok === true) totalCorrect++;
 
       const tr = document.createElement("tr");
@@ -260,27 +222,7 @@
 
   const pct = totalGradable ? Math.round((totalCorrect / totalGradable) * 100) : 0;
   scoreText.textContent = `${totalCorrect} / ${totalGradable} (${pct}%)`;
-  scoreDetail.textContent =
-    "Grading uses acceptableLow/acceptableHigh for numeric questions and exact match for dropdowns.";
-
-  // Buttons
-  document.getElementById("copyBtn").addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(exportBox.value);
-      alert("Copied!");
-    } catch {
-      exportBox.select();
-      document.execCommand("copy");
-      alert("Copied (fallback)!");
-    }
-  });
-
-  document.getElementById("clearBtn").addEventListener("click", () => {
-    if (!confirm("Clear stored answers for the next participant?")) return;
-    localStorage.removeItem(STORE_KEY);
-    exportBox.value = JSON.stringify({ version: 1, answers: {} }, null, 2);
-    alert("Cleared. Refresh if you want the table to reset.");
-  });
+  scoreDetail.textContent = "Grading uses exact matches (numeric exact equality; dropdowns case-insensitive).";
 })();
 </script>
 </body>
