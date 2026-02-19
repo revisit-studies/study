@@ -282,13 +282,12 @@ export function DownloadTidy({
   const transcriptAvailable = isFirebase && !!(hasAudio || hasScreenRecording);
 
   useEffect(() => {
-    setSelectedProperties((prop) => {
-      if (transcriptAvailable) {
-        return prop.includes('transcript') ? prop : [...prop, 'transcript'];
-      }
-
-      return prop.includes('transcript') ? prop.filter((p) => p !== 'transcript') : prop;
-    });
+    // Only ensure that 'transcript' is removed when transcripts are not available.
+    // When transcripts are available, do not auto-select the 'transcript' column;
+    // this avoids eagerly fetching all transcripts until the user explicitly opts in.
+    if (!transcriptAvailable) {
+      setSelectedProperties((prop) => (prop.includes('transcript') ? prop.filter((p) => p !== 'transcript') : prop));
+    }
   }, [transcriptAvailable]);
 
   const downloadTidy = useCallback(() => {
