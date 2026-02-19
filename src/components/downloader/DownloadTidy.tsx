@@ -203,6 +203,8 @@ async function getTableData(
   data: ParticipantData[],
   storageEngine: StorageEngine | undefined,
   studyId: string,
+  hasAudio?: boolean,
+  hasScreenRecording?: boolean,
 ) {
   if (!storageEngine) {
     return { header: [], rows: [] };
@@ -214,7 +216,8 @@ async function getTableData(
   const allConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
 
   const transcripts: Record<string, string | null> = {};
-  if (selectedProperties.includes('transcript')) {
+  const transcriptAvailable = storageEngine.getEngine() === 'firebase' && !!(hasAudio || hasScreenRecording);
+  if (selectedProperties.includes('transcript') && transcriptAvailable) {
     const allAnswers = data.flatMap((p) => Object.values(p.answers).map((answer) => ({ answer, participantId: p.participantId })));
     await Promise.all(allAnswers.map(async ({ answer, participantId }) => {
       const identifier = answer.identifier || `${answer.componentName}_${answer.trialOrder}`;
@@ -277,7 +280,7 @@ export function DownloadTidy({
   ]);
 
   const { storageEngine } = useStorageEngine();
-  const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine, studyId]);
+  const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine, studyId, hasAudio, hasScreenRecording]);
   const isFirebase = storageEngine?.getEngine() === 'firebase';
   const transcriptAvailable = isFirebase && !!(hasAudio || hasScreenRecording);
 
