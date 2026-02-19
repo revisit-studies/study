@@ -148,9 +148,17 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         ...component,
       };
 
+      const isInheritedFromImportedLibrary = isInheritedComponent(component)
+        && component.baseComponent.startsWith('$')
+        && component.baseComponent.includes('.components.');
+
+      const isUsingSidebarInOwnComponent = component.instructionLocation === 'sidebar'
+        || component.nextButtonLocation === 'sidebar'
+        || component.response?.some((r) => 'location' in r && r.location === 'sidebar');
+
       // Verify sidebar is enabled if component uses sidebar locations
       // Imported library components are validated in verifyLibraryUsage to avoid duplicate warnings.
-      if (!isImportedLibraryComponent) {
+      if (!isImportedLibraryComponent && (!isInheritedFromImportedLibrary || isUsingSidebarInOwnComponent)) {
         const sidebarDisabled = !(resolvedComponent.withSidebar ?? studyConfig.uiConfig.withSidebar);
         const isUsingSidebar = resolvedComponent.instructionLocation === 'sidebar'
           || resolvedComponent.nextButtonLocation === 'sidebar'
