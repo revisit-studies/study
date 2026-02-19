@@ -298,7 +298,8 @@ export function DownloadTidy({
     const csv = [
       tableData.header.join(','),
       ...tableData.rows.map((row) => tableData.header.map((header) => {
-        const fieldValue = `${row[header]}`;
+        const rawValue = row[header] ?? '';
+        const fieldValue = typeof rawValue === 'object' ? JSON.stringify(rawValue) : `${rawValue}`;
         // Escape double quotes by replacing them with two double quotes
         const escapedValue = fieldValue.replace(/"/g, '""');
         return `"${escapedValue}"`; // Double-quote the field value
@@ -323,7 +324,7 @@ export function DownloadTidy({
 
     const numRowsShown = tableData.rows.length > 5 ? 5 : tableData.rows.length;
     const plural = numRowsShown === 1 ? '' : 's';
-    return `This is a preview of the first ${plural ? numRowsShown : ''} row${plural} of the CSV. The full CSV contains ${tableData.rows.length} row${plural}.`;
+    return `This is a preview of the first ${plural ? numRowsShown : ''} row${plural} of the CSV.The full CSV contains ${tableData.rows.length} row${plural}.`;
   }, [tableData]);
 
   return (
@@ -410,7 +411,7 @@ export function DownloadTidy({
                   <Table.Tr key={index}>
                     {tableData.header.map((header) => (
                       <Table.Td
-                        key={`${index}-${header}`}
+                        key={`${index} - ${header}`}
                         style={{
                           whiteSpace: ['description', 'instruction', 'participantId'].includes(header) ? 'normal' : 'nowrap',
                         }}
