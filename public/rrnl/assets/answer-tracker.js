@@ -9,6 +9,7 @@ window.answerTracker = {
     
     init() {
         // Generate unique session ID ONCE per study session (persistent across components)
+        // Enhanced to prevent conflicts between multiple users
         if (!localStorage.getItem('studySessionId')) {
             this.sessionId = this.generateSessionId();
             localStorage.setItem('studySessionId', this.sessionId);
@@ -43,39 +44,67 @@ window.answerTracker = {
     
     generateSessionId() {
         const timestamp = Date.now();
-        const random = Math.random().toString(36).substr(2, 9);
-        return `session_${timestamp}_${random}`;
+        const random = Math.random().toString(36).substring(2, 15);
+        // Add browser fingerprint to prevent collisions
+        const userInfo = navigator.userAgent.slice(-10);
+        const browserFingerprint = screen.width + 'x' + screen.height;
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
+        // Create a more unique session ID
+        const fingerprint = btoa(userInfo + browserFingerprint + timezone).slice(0,8);
+        return `session_${timestamp}_${random}_${fingerprint}`;
     },
     
-loadExistingData() {
-    try {
-        // DON'T CLEAR DATA - we want to preserve data across components!
-        // localStorage.removeItem('answerTracker'); // REMOVED THIS LINE
-        
-        // Try localStorage first
-        const existingData = localStorage.getItem('answerTracker');
-        if (existingData) {
-            const parsed = JSON.parse(existingData);
-            if (parsed.answers) {
-                // Load ALL data, regardless of session (preserve cross-component data)
-                this.answers = parsed.answers;
-                console.log(`📥 Loaded existing data for ${Object.keys(this.answers).length} components`);
+    loadExistingData() {
+        try {
+            // DON'T CLEAR DATA - we want to preserve data across components!
+            // localStorage.removeItem('answerTracker'); // REMOVED THIS LINE
+            
+            // Try localStorage first
+            const existingData = localStorage.getItem('answerTracker');
+            if (existingData) {
+                const parsed = JSON.parse(existingData);
+                if (parsed.answers) {
+                    // Load ALL data, regardless of session (preserve cross-component data)
+                    this.answers = parsed.answers;
+                    console.log(`📥 Loaded existing data for ${Object.keys(this.answers).length} components`);
+                    
+                    // Show multi-user warning
+                    this.showMultiUserWarning();
+                } else {
+                    console.log('🚫 No valid answers in stored data');
+                    this.answers = {};
+                }
             } else {
-                console.log('🚫 No valid answers in stored data');
+                console.log('📄 No existing data found - starting fresh');
                 this.answers = {};
             }
-        } else {
-            console.log('📄 No existing data found - starting fresh');
+            
+            // Also try to load from server if available
+            this.loadFromServer();
+        } catch (error) {
+            console.error('❌ Error loading existing data:', error);
             this.answers = {};
         }
-        
-        // Also try to load from server if available
-        this.loadFromServer();
-    } catch (error) {
-        console.error('❌ Error loading existing data:', error);
-        this.answers = {};
-    }
-},
+    },
+    
+    showMultiUserWarning() {
+        const componentCount = Object.keys(this.answers).length;
+        if (componentCount > 0) {
+            console.log('\n' + '⚠️'.repeat(30));
+            console.log('⚠️  MULTI-USER NOTICE');
+            console.log('⚠️'.repeat(30));
+            console.log('⚠️  This browser contains data from a previous session.');
+            console.log('⚠️  If multiple users are taking this study:');
+            console.log('⚠️  - Each user\'s data stays on their own computer');
+            console.log('⚠️  - Visit each computer individually to collect data');
+            console.log('⚠️  - Data collection pages only show THIS browser\'s data');
+            console.log('⚠️');
+            console.log(`⚠️  Current Session ID: ${this.sessionId}`);
+            console.log(`⚠️  Previous Components Found: ${componentCount}`);
+            console.log('⚠️'.repeat(30) + '\n');
+        }
+    },
     
     setupAutoSave() {
         // Save every 2 seconds
@@ -513,7 +542,8 @@ loadExistingData() {
             const data = {
                 sessionId: this.sessionId, // Use the persistent session ID
                 answers: this.answers,
-                lastUpdate: Date.now()
+                lastUpdate: Date.now(),
+                browserFingerprint: this.getBrowserFingerprint()
             };
             localStorage.setItem('answerTracker', JSON.stringify(data));
             
@@ -523,13 +553,23 @@ loadExistingData() {
             
             console.log(`💾 Saved to localStorage: ${Object.keys(this.answers).length} components`);
             
-            // Log message for data collection page users
+            // Log message for data collection page users - check URL path
             if (Object.keys(this.answers).length > 0) {
-                console.log(`📋 Visit http://localhost:8080/assets/data_collection.html to view/copy your data`);
+                console.log(`📋 Visit your data collection page to view/copy data`);
             }
         } catch (error) {
             console.error('❌ Failed to save to localStorage:', error);
         }
+    },
+    
+    getBrowserFingerprint() {
+        return {
+            screen: `${screen.width}x${screen.height}`,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            language: navigator.language,
+            userAgent: navigator.userAgent.slice(-20),
+            timestamp: Date.now()
+        };
     },
     
     saveToCSV() {
@@ -560,10 +600,12 @@ loadExistingData() {
                 sessionId: this.sessionId,
                 exportTime: Date.now(),
                 answers: this.answers,
+                browserFingerprint: this.getBrowserFingerprint(),
                 metadata: {
                     totalComponents: Object.keys(this.answers).length,
                     totalInteractions: this.getTotalInteractions(),
-                    studyDuration: Date.now() - Math.min(...Object.values(this.answers).map(c => c.startTime))
+                    studyDuration: this.answers && Object.keys(this.answers).length > 0 ? 
+                        Date.now() - Math.min(...Object.values(this.answers).map(c => c.startTime)) : 0
                 }
             };
             
@@ -604,7 +646,8 @@ loadExistingData() {
             const data = {
                 sessionId: this.sessionId,
                 answers: this.answers,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                browserFingerprint: this.getBrowserFingerprint()
             };
             
             fetch('/api/study/save-answers', {
@@ -663,12 +706,14 @@ loadExistingData() {
             'timestamp',
             'isoTimestamp',
             'timeFromComponentStart',
-            'interactionSequence'
+            'interactionSequence',
+            'browserFingerprint'
         ];
         
         const rows = [headers.join(',')];
         
         let participantId = this.sessionId; // Default to session ID
+        const fingerprint = JSON.stringify(this.getBrowserFingerprint());
         
         // Try to extract participant ID from responses
         Object.values(this.answers).forEach(component => {
@@ -697,7 +742,8 @@ loadExistingData() {
                         `"${interaction.timestamp}"`,
                         `"${new Date(interaction.timestamp).toISOString()}"`,
                         `"${interaction.timeFromStart}"`,
-                        `"${index + 1}"`
+                        `"${index + 1}"`,
+                        `"${fingerprint}"`
                     ];
                     rows.push(row.join(','));
                 });
@@ -747,7 +793,8 @@ loadExistingData() {
         return {
             sessionId: this.sessionId,
             answers: this.answers,
-            exportTime: Date.now()
+            exportTime: Date.now(),
+            browserFingerprint: this.getBrowserFingerprint()
         };
     },
     
@@ -755,6 +802,7 @@ loadExistingData() {
     clearData() {
         this.answers = {};
         localStorage.removeItem('answerTracker');
+        localStorage.removeItem('studySessionId');
         console.log('🗑️ Cleared all answer data');
     }
 };
