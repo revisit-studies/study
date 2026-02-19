@@ -99,8 +99,6 @@
       border:0;
       background:#fff;
     }
-
-    /* If you want to ensure the preview page can't navigate top, keep it in iframe */
   </style>
 </head>
 <body>
@@ -120,49 +118,46 @@
   </p>
 </div>
 
-  <div class="card">
-    <strong>Per-question results</strong>
-    <div class="small muted">If something looks blank, it usually means your browser didn’t record an answer for that item.</div>
-    <table id="resultsTable" aria-label="Results table">
-      <thead>
-        <tr>
-          <th style="width:22%">Component</th>
-          <th style="width:34%">Question</th>
-          <th style="width:16%">Your answer</th>
-          <th style="width:14%">Correct</th>
-          <th style="width:14%">Status</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+<div class="card">
+  <strong>Per-question results</strong>
+  <div class="small muted">If something looks blank, it usually means your browser didn’t record an answer for that item.</div>
+  <table id="resultsTable" aria-label="Results table">
+    <thead>
+      <tr>
+        <th style="width:22%">Visualization</th>
+        <th style="width:34%">Question</th>
+        <th style="width:16%">Your answer</th>
+        <th style="width:14%">Correct</th>
+        <th style="width:14%">Status</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
-  <!-- Modal -->
-  <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal">
-      <div class="modalHeader">
-        <div class="modalTitle" id="modalTitle">Preview</div>
-        <button class="modalClose" id="modalCloseBtn" type="button">Close</button>
-      </div>
-      <div class="modalBody">
-        <!-- sandbox: allow scripts so Vega renders; allow-same-origin so it can load its local assets -->
-        <iframe
-          class="modalIframe"
-          id="previewFrame"
-          sandbox="allow-scripts allow-same-origin"
-          loading="lazy"
-          title="Component preview"
-        ></iframe>
-      </div>
+<!-- Modal -->
+<div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modalHeader">
+      <div class="modalTitle" id="modalTitle">Preview</div>
+      <button class="modalClose" id="modalCloseBtn" type="button">Close</button>
+    </div>
+    <div class="modalBody">
+      <iframe
+        class="modalIframe"
+        id="previewFrame"
+        sandbox="allow-scripts allow-same-origin"
+        loading="lazy"
+        title="Component preview"
+      ></iframe>
     </div>
   </div>
+</div>
 
 <script>
 (async function() {
   const STORE_KEY = "rrnl_answer_store_v1";
 
-  const scoreText = document.getElementById("scoreText");
-  const scoreDetail = document.getElementById("scoreDetail");
   const tbody = document.querySelector("#resultsTable tbody");
 
   // Modal bits
@@ -260,17 +255,11 @@
 
     modalTitle.textContent = title || "Preview";
 
-    // IMPORTANT: results.html is at rrnl/assets/results.html
-    // config paths are like rrnl/assets/A_bloodGlucose_abnormal.html
-    // So from results.html, you can load the file via "./A_bloodGlucose_abnormal.html"
-    // We'll normalize to just the filename to be safe.
     const file = (path || "").split("/").pop();
     const src = file ? `./${file}` : "";
 
     previewFrame.src = src;
     modalOverlay.style.display = "flex";
-
-    // focus close button for accessibility
     setTimeout(() => modalCloseBtn.focus(), 0);
   }
 
@@ -295,8 +284,6 @@
     config = await fetchConfig();
     log("Loaded config keys:", Object.keys(config || {}));
   } catch (e) {
-    scoreText.textContent = "—";
-    scoreDetail.textContent = "Could not load answer key (config.json).";
     console.error(e);
     return;
   }
@@ -305,27 +292,39 @@
   const seqRoot = config?.sequence;
   const orderedComponents = flattenSequence(seqRoot?.components);
 
-  if (!componentsObj || typeof componentsObj !== "object") {
-    scoreText.textContent = "—";
-    scoreDetail.textContent = "config.components is missing.";
-    return;
-  }
-
-  if (!orderedComponents.length) {
-    scoreText.textContent = "—";
-    scoreDetail.textContent = "No components found in config.sequence.components.";
-    return;
-  }
-
-  let totalGradable = 0;
-  let totalCorrect = 0;
-  let rows = 0;
+  if (!componentsObj || typeof componentsObj !== "object") return;
+  if (!orderedComponents.length) return;
 
   // Precompute component -> path so we can attach preview icons
   const compPathMap = {};
   for (const [name, def] of Object.entries(componentsObj)) {
     if (def && typeof def.path === "string") compPathMap[name] = def.path;
   }
+
+  // Build display-name map: website components that are your 16 vis get vis_1..vis_16
+  // (leaves introduction/participant-stats/break-component/study-results alone if they appear)
+  const websiteVisComponentsInSequence = [];
+  for (const compName of orderedComponents) {
+    const def = componentsObj[compName];
+    if (def?.type === "website" && typeof def?.path === "string") {
+      // skip utility pages
+      if (compName === "break-component" || compName === "study-results") continue;
+      // treat these as "visualizations"
+      websiteVisComponentsInSequence.push(compName);
+    }
+  }
+
+  const displayNameMap = {};
+  websiteVisComponentsInSequence.forEach((compName, idx) => {
+    displayNameMap[compName] = `vis_${idx + 1}`;
+  });
+
+  // Helper to pick what to show participants
+  function getDisplayName(compName){
+    return displayNameMap[compName] || compName;
+  }
+
+  let rows = 0;
 
   for (const compName of orderedComponents) {
     const compDef = componentsObj[compName];
@@ -345,36 +344,32 @@
       const ca = caMap.get(id) || null;
       if (!ca || ca.answer == null) continue;
 
-      totalGradable++;
-
       const userAnswer = store?.answers?.[compName]?.[id] ?? null;
       const result = gradeExact(userAnswer, ca);
-      if (result.ok === true) totalCorrect++;
 
       const tr = document.createElement("tr");
       tr.className = result.ok ? "row-ok" : "row-bad";
 
       const statusPill = `<span class="pill ${result.ok ? "ok" : "bad"}">${result.ok ? "Correct" : "Incorrect"}</span>`;
 
-      // Build component cell HTML with icon
       const hasPath = !!compPathMap[compName];
       const iconHtml = hasPath
-        ? `<button class="iconBtn" type="button" title="Preview graph" aria-label="Preview graph for ${compName}" data-preview="${compName}">i</button>`
+        ? `<button class="iconBtn" type="button" title="Preview graph" aria-label="Preview graph for ${getDisplayName(compName)}" data-preview="${compName}">i</button>`
         : "";
 
-      tr.innerHTML = `
-        <td>
-          <div class="compCell">
-            <strong>${compName}</strong>
-            ${iconHtml}
-          </div>
-          <div class="small muted">${id}</div>
-        </td>
-        <td>${prompt}</td>
-        <td>${userAnswer == null ? "<span class='muted'>—</span>" : String(userAnswer)}</td>
-        <td>${formatCorrect(ca)}</td>
-        <td>${statusPill}<div class="small muted">${result.why}</div></td>
-      `;
+tr.innerHTML = `
+  <td>
+    <div class="compCell">
+      <strong>${getDisplayName(compName)}</strong>
+      ${iconHtml}
+    </div>
+  </td>
+  <td>${prompt}</td>
+  <td>${userAnswer == null ? "<span class='muted'>—</span>" : String(userAnswer)}</td>
+  <td>${formatCorrect(ca)}</td>
+  <td>${statusPill}<div class="small muted">${result.why}</div></td>
+`;
+
 
       tbody.appendChild(tr);
       rows++;
@@ -387,18 +382,9 @@
     if (!btn) return;
     const compName = btn.getAttribute("data-preview");
     const path = compPathMap[compName];
-    openPreview({ title: compName, path });
+    openPreview({ title: getDisplayName(compName), path });
   });
 
-  if (rows === 0) {
-    scoreText.textContent = "—";
-    scoreDetail.textContent = "No gradable questions found in config.json.";
-    return;
-  }
-
-  const pct = totalGradable ? Math.round((totalCorrect / totalGradable) * 100) : 0;
-  scoreText.textContent = `${totalCorrect} / ${totalGradable} (${pct}%)`;
-  scoreDetail.textContent = "Grading uses exact matches (numeric exact equality; dropdowns case-insensitive).";
 })();
 </script>
 </body>
