@@ -80,9 +80,9 @@ function DroppableZone({ id, title, children }: { id: string; title: string; chi
 }
 
 const createItems = (options: (StringOption | string)[]): Item[] => options.map((item) => ({
-  id: typeof item === 'string' ? item : item.value,
-  symbol: typeof item === 'string' ? item : item.value,
-  option: typeof item === 'string' ? { label: item, value: item } : item,
+  id: typeof item === 'string' ? item : item.value ?? item.label,
+  symbol: typeof item === 'string' ? item : item.value ?? item.label,
+  option: typeof item === 'string' ? { label: item, value: item } : { ...item, value: item.value ?? item.label },
 }));
 
 const useRankingLogic = (responseId: string, onChange?: (value: Record<string, string>) => void) => {

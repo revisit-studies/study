@@ -44,7 +44,11 @@ export function RadioInput({
   const storedAnswer = useStoredAnswer();
   const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
 
-  const orderedOptions = useMemo(() => optionOrders[response.id] || options.map((option) => (typeof (option) === 'string' ? { label: option, value: option } : option)), [optionOrders, options, response.id]);
+  const orderedOptions = useMemo(
+    () => optionOrders[response.id]
+      || options.map((option) => (typeof (option) === 'string' ? { label: option, value: option } : { ...option, value: option.value ?? option.label })),
+    [optionOrders, options, response.id],
+  );
 
   const [otherSelected, setOtherSelected] = useState(false);
 
@@ -73,7 +77,7 @@ export function RadioInput({
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
           {orderedOptions.map((radio) => (
             <div
-              key={`${radio.value}-${response.id}`}
+              key={`${radio.value ?? radio.label}-${response.id}`}
               style={{
                 display: 'flex',
                 flexDirection: horizontal ? 'column' : 'row',
@@ -85,7 +89,7 @@ export function RadioInput({
               {horizontal && <OptionLabel label={radio.label} infoText={radio.infoText} />}
               <Radio
                 disabled={disabled}
-                value={radio.value}
+                value={radio.value ?? radio.label}
                 label={<OptionLabel label={radio.label} infoText={radio.infoText} />}
                 styles={{
                   label: { display: !horizontal ? 'initial' : 'none' },

@@ -21,14 +21,14 @@ export function randomizeOptions(componentConfig: IndividualComponent) {
   return componentConfig.response.reduce((acc, response) => {
     if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons') {
       if (response.optionOrder === 'random') {
-        const options = response.options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+        const options = response.options.map((option) => (typeof option === 'string' ? { value: option, label: option } : { ...option, value: option.value ?? option.label }));
         const shuffled = [...options]
           .map((value) => ({ value, sort: Math.random() }))
           .sort((a, b) => a.sort - b.sort)
           .map(({ value }) => value);
         acc[response.id] = shuffled;
       } else {
-        acc[response.id] = response.options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+        acc[response.id] = response.options.map((option) => (typeof option === 'string' ? { value: option, label: option } : { ...option, value: option.value ?? option.label }));
       }
     }
     return acc;
@@ -39,7 +39,7 @@ export function randomizeQuestionOrder(componentConfig: IndividualComponent) {
   return componentConfig.response.reduce((acc, response) => {
     if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
       const questions = response.questionOptions
-        .map((question) => (typeof question === 'string' ? question : question.value));
+        .map((question) => (typeof question === 'string' ? question : question.value ?? question.label));
       if (response.questionOrder === 'random') {
         const shuffled = [...questions]
           .map((value) => ({ value, sort: Math.random() }))

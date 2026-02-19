@@ -39,7 +39,11 @@ export function CheckBoxInput({
   const storedAnswer = useStoredAnswer();
   const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
 
-  const orderedOptions = useMemo(() => optionOrders[response.id] || options.map((option) => (typeof (option) === 'string' ? { label: option, value: option } : option)), [optionOrders, options, response.id]);
+  const orderedOptions = useMemo(
+    () => optionOrders[response.id]
+      || options.map((option) => (typeof (option) === 'string' ? { label: option, value: option } : { ...option, value: option.value ?? option.label })),
+    [optionOrders, options, response.id],
+  );
 
   const [otherSelected, setOtherSelected] = useState(false);
 
@@ -58,9 +62,9 @@ export function CheckBoxInput({
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
           {orderedOptions.map((option) => (
             <Checkbox
-              key={option.value}
+              key={option.value ?? option.label}
               disabled={disabled}
-              value={option.value}
+              value={option.value ?? option.label}
               label={<OptionLabel label={option.label} infoText={option.infoText} />}
               classNames={{ input: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
             />

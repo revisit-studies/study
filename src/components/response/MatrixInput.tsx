@@ -43,9 +43,9 @@ function CheckboxComponent({
         <Checkbox
           disabled={disabled}
           key={`${checkbox.label}-${idx}`}
-          checked={answer.value[question].split('|').includes(checkbox.value)}
+          checked={answer.value[question].split('|').includes(checkbox.value ?? checkbox.label)}
           onChange={(event) => onChange(event, question, checkbox)}
-          value={checkbox.value}
+          value={checkbox.value ?? checkbox.label}
           classNames={{ input: checkboxClasses.fixDisabled, icon: checkboxClasses.fixDisabledIcon }}
         />
       ))}
@@ -93,7 +93,7 @@ function RadioGroupComponent({
         {_choices.map((radio: StringOption) => (
           <Radio
             disabled={disabled}
-            value={radio.value}
+            value={radio.value ?? radio.label}
             key={`${radio.label}-${idx}`}
             classNames={{ radio: radioClasses.fixDisabled, icon: radioClasses.fixDisabledIcon }}
           />
@@ -136,9 +136,9 @@ export function MatrixInput({
 
   const _choices: StringOption[] = typeof answerOptions === 'string'
     ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry }))
-    : answerOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+    : answerOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : { ...option, value: option.value ?? option.label }));
 
-  const questions = response.questionOptions.map((question) => (typeof question === 'string' ? { value: question, label: question } : question));
+  const questions = response.questionOptions.map((question) => (typeof question === 'string' ? { value: question, label: question } : { ...question, value: question.value ?? question.label }));
   const questionsByValue = Object.fromEntries(questions.map((question) => [question.value, question]));
 
   const { questionOrders } = useStoredAnswer();
@@ -160,7 +160,7 @@ export function MatrixInput({
     const payload = {
       questionKey,
       responseId: response.id,
-      value: option.value,
+      value: option.value ?? option.label,
       label: option.label,
       isChecked,
       choiceOptions: _choices,

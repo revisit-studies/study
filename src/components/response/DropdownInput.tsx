@@ -27,7 +27,7 @@ export function DropdownInput({
     infoText,
   } = response;
 
-  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : { ...option, value: option.value ?? option.label }));
   const isMultiselect = (response.minSelections && response.minSelections >= 1) || (response.maxSelections && response.maxSelections > 1);
   const renderOption = ({ option }: { option: { label: string; infoText?: string } }) => (
     <OptionLabel label={option.label} infoText={option.infoText} />

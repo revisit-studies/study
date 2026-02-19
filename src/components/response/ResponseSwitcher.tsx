@@ -115,7 +115,7 @@ export function ResponseSwitcher({
     }
 
     if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
-      return Object.fromEntries(response.questionOptions.map((entry) => [entry, '']));
+      return Object.fromEntries(response.questionOptions.map((entry) => [typeof entry === 'string' ? entry : entry.value ?? entry.label, '']));
     }
 
     if (response.type === 'slider' && response.startingValue) {

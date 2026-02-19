@@ -326,9 +326,9 @@ export interface NumberOption {
 export interface StringOption {
   /** The label displayed to participants. Markdown is supported. */
   label: string;
-  /** The value stored in the participant's data. */
-  value: string;
-  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to RadioResponse, CheckboxResponse, and RankingResponse */
+  /** The value stored in the participant's data. Defaults to label. */
+  value?: string;
+  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to responses that use StringOption, including DropdownResponse, RadioResponse, CheckboxResponse, ButtonsResponse, RankingResponse, and MatrixResponse. */
   infoText?: string;
 }
 
