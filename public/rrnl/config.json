@@ -964,7 +964,7 @@
                     },
                     {
                         "id": "D_bloodGlucose_abnormal_postprandial_value",
-                        "answer": 1319,
+                        "answer": 13.1,
                         "acceptableLow": 1316,
                         "acceptableHigh": 1322
                     },
