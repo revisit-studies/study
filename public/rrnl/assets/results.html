@@ -18,16 +18,107 @@
     .row-ok td{background:rgba(0,255,0,0.04)}
     .row-bad td{background:rgba(255,0,0,0.04)}
     .small{font-size:13px}
+
+    /* Component name + icon */
+    .compCell{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .iconBtn{
+      width:22px;
+      height:22px;
+      border-radius:999px;
+      border:1px solid #ccc;
+      background:#fff;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:0;
+      line-height:1;
+    }
+    .iconBtn:hover{background:#f7f7f7}
+    .iconBtn:focus{outline:2px solid #2563eb; outline-offset:2px}
+
+    /* Modal */
+    .modalOverlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:9999;
+    }
+    .modal{
+      width:min(980px, 100%);
+      height:min(720px, 100%);
+      background:#fff;
+      border-radius:14px;
+      border:1px solid #ddd;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      box-shadow:0 20px 60px rgba(0,0,0,0.25);
+    }
+    .modalHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 14px;
+      border-bottom:1px solid #eee;
+      background:#fafafa;
+    }
+    .modalTitle{
+      font-weight:600;
+      font-size:14px;
+      color:#111;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .modalClose{
+      border:1px solid #ccc;
+      background:#fff;
+      border-radius:10px;
+      padding:8px 10px;
+      cursor:pointer;
+    }
+    .modalClose:hover{background:#f7f7f7}
+    .modalBody{
+      flex:1;
+      background:#fff;
+    }
+    .modalIframe{
+      width:100%;
+      height:100%;
+      border:0;
+      background:#fff;
+    }
+
+    /* If you want to ensure the preview page can't navigate top, keep it in iframe */
   </style>
 </head>
 <body>
-  <h1>Study Review</h1>
-  <p class="muted">This page summarizes which answers you got right and wrong based on the study’s answer key.</p>
+<h1>Study Review</h1>
+<p class="muted">This page summarizes which answers you got right and wrong based on the study’s answer key.</p>
 
-  <div class="card" id="summaryCard">
-    <div><strong>Score:</strong> <span id="scoreText">—</span></div>
-    <div class="small muted" id="scoreDetail">—</div>
-  </div>
+<div class="card">
+  <p class="small muted" style="margin:0">
+    <strong>Note:</strong> The results below may not appear in the same order you saw the visualizations during the study, because the study order is randomized.
+  </p>
+</div>
+
+<div class="card">
+  <p style="margin:0">
+    <strong>Thank you for completing our study!</strong> We appreciate your time and effort, and are extremely grateful for your participation.
+    If you have any additional questions, feel free to contact our team at <a href="mailto:datavis-26@wpi.edu">datavis-26@wpi.edu</a>.
+  </p>
+</div>
 
   <div class="card">
     <strong>Per-question results</strong>
@@ -46,6 +137,26 @@
     </table>
   </div>
 
+  <!-- Modal -->
+  <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modalHeader">
+        <div class="modalTitle" id="modalTitle">Preview</div>
+        <button class="modalClose" id="modalCloseBtn" type="button">Close</button>
+      </div>
+      <div class="modalBody">
+        <!-- sandbox: allow scripts so Vega renders; allow-same-origin so it can load its local assets -->
+        <iframe
+          class="modalIframe"
+          id="previewFrame"
+          sandbox="allow-scripts allow-same-origin"
+          loading="lazy"
+          title="Component preview"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
 <script>
 (async function() {
   const STORE_KEY = "rrnl_answer_store_v1";
@@ -53,6 +164,13 @@
   const scoreText = document.getElementById("scoreText");
   const scoreDetail = document.getElementById("scoreDetail");
   const tbody = document.querySelector("#resultsTable tbody");
+
+  // Modal bits
+  const modalOverlay = document.getElementById("modalOverlay");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalCloseBtn = document.getElementById("modalCloseBtn");
+  const previewFrame = document.getElementById("previewFrame");
+  let lastFocusEl = null;
 
   const log = (...a) => console.log("[rrnl-results]", ...a);
 
@@ -120,8 +238,6 @@
   }
 
   // Exact-match grading ONLY:
-  // - If answer key is a number: compare numerically (Number(user) === Number(key))
-  // - Else: compare strings case-insensitively
   function gradeExact(userValue, ca) {
     if (!ca || ca.answer == null) return { ok: null, why: "No answer key for this item." };
 
@@ -137,6 +253,40 @@
     const ok = norm(userValue).toLowerCase() === norm(expected).toLowerCase();
     return { ok, why: ok ? "Exact match." : "Does not match." };
   }
+
+  // Modal helpers
+  function openPreview({ title, path }) {
+    lastFocusEl = document.activeElement;
+
+    modalTitle.textContent = title || "Preview";
+
+    // IMPORTANT: results.html is at rrnl/assets/results.html
+    // config paths are like rrnl/assets/A_bloodGlucose_abnormal.html
+    // So from results.html, you can load the file via "./A_bloodGlucose_abnormal.html"
+    // We'll normalize to just the filename to be safe.
+    const file = (path || "").split("/").pop();
+    const src = file ? `./${file}` : "";
+
+    previewFrame.src = src;
+    modalOverlay.style.display = "flex";
+
+    // focus close button for accessibility
+    setTimeout(() => modalCloseBtn.focus(), 0);
+  }
+
+  function closePreview() {
+    modalOverlay.style.display = "none";
+    previewFrame.src = "about:blank";
+    if (lastFocusEl && typeof lastFocusEl.focus === "function") lastFocusEl.focus();
+  }
+
+  modalCloseBtn.addEventListener("click", closePreview);
+  modalOverlay.addEventListener("click", (e) => {
+    if (e.target === modalOverlay) closePreview();
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modalOverlay.style.display === "flex") closePreview();
+  });
 
   const store = loadStore();
 
@@ -171,6 +321,12 @@
   let totalCorrect = 0;
   let rows = 0;
 
+  // Precompute component -> path so we can attach preview icons
+  const compPathMap = {};
+  for (const [name, def] of Object.entries(componentsObj)) {
+    if (def && typeof def.path === "string") compPathMap[name] = def.path;
+  }
+
   for (const compName of orderedComponents) {
     const compDef = componentsObj[compName];
     if (!compDef) continue;
@@ -178,7 +334,6 @@
     const responseArr = compDef.response;
     const caMap = buildCorrectAnswerMap(compDef);
 
-    // Only show components with an answer key
     if (!caMap.size) continue;
     if (!Array.isArray(responseArr) || responseArr.length === 0) continue;
 
@@ -201,8 +356,20 @@
 
       const statusPill = `<span class="pill ${result.ok ? "ok" : "bad"}">${result.ok ? "Correct" : "Incorrect"}</span>`;
 
+      // Build component cell HTML with icon
+      const hasPath = !!compPathMap[compName];
+      const iconHtml = hasPath
+        ? `<button class="iconBtn" type="button" title="Preview graph" aria-label="Preview graph for ${compName}" data-preview="${compName}">i</button>`
+        : "";
+
       tr.innerHTML = `
-        <td><strong>${compName}</strong><div class="small muted">${id}</div></td>
+        <td>
+          <div class="compCell">
+            <strong>${compName}</strong>
+            ${iconHtml}
+          </div>
+          <div class="small muted">${id}</div>
+        </td>
         <td>${prompt}</td>
         <td>${userAnswer == null ? "<span class='muted'>—</span>" : String(userAnswer)}</td>
         <td>${formatCorrect(ca)}</td>
@@ -213,6 +380,15 @@
       rows++;
     }
   }
+
+  // Wire up icon clicks (event delegation)
+  tbody.addEventListener("click", (e) => {
+    const btn = e.target.closest?.("button[data-preview]");
+    if (!btn) return;
+    const compName = btn.getAttribute("data-preview");
+    const path = compPathMap[compName];
+    openPreview({ title: compName, path });
+  });
 
   if (rows === 0) {
     scoreText.textContent = "—";
