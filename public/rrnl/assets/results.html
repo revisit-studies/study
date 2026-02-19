@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Results - Answer Comparison</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.4;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;   
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .summary-cards {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .summary-card {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+        }
+        
+        .score-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .components-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .accuracy-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.2em;
+        }
+        
+        .summary-card .big-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .visualization-section {
+            margin-bottom: 40px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .visualization-header {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .questions-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .questions-table th {
+            background-color: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .questions-table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: top;
+        }
+        
+        .questions-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .correct-row {
+            background-color: #d4edda;
+        }
+        
+        .incorrect-row {
+            background-color: #f8d7da;
+        }
+        
+        .status-correct {
+            color: #155724;
+            font-weight: bold;
+        }
+        
+        .status-incorrect {
+            color: #721c24;
+            font-weight: bold;
+        }
+        
+        .participant-answer {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border-left: 3px solid #007bff;
+        }
+        
+        .correct-answer {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border-left: 3px solid #28a745;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 20px;
+            margin: 20px 0;
+            color: #d32f2f;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            color: #856404;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background-color: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 20px;
+            margin: 20px 0;
+            color: #1976d2;
+            border-radius: 4px;
+        }
+        
+        .completion-notice {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .completion-notice h3 {
+            margin: 0 0 10px 0;
+        }
+        
+        .data-cleared-notice {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f1aeb5;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .actions {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        .nav-button {
+            background-color: #28a745;
+        }
+        
+        .nav-button:hover {
+            background-color: #218838;
+        }
+        
+        .debug-section {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Study Results - Answer Comparison</h1>
+        
+        <div id="loading" class="info">
+            <strong>🔍 Analyzing your study data...</strong><br>
+            Loading answer tracker data and comparing with correct answers.
+        </div>
+        
+        <div id="results-content" style="display: none;">
+            <!-- Results will be inserted here -->
+        </div>
+        
+        <div id="completion-notice" style="display: none;">
+            <div class="completion-notice">
+                <h3>🏁 Study Complete!</h3>
+                <p>Thank you for participating! Your data has been recorded.</p>
+                <p><strong>Click "Next" below to finish and clear your session data.</strong></p>
+            </div>
+        </div>
+        
+        <div id="data-cleared-notice" style="display: none;">
+            <div class="data-cleared-notice">
+                <strong>✅ Session Complete</strong><br>
+                Your data has been cleared. Ready for the next participant.
+            </div>
+        </div>
+        
+        <div class="actions">
+            <button onclick="refreshResults()">🔄 Refresh</button>
+            <button onclick="openDataCollection()" class="nav-button">📊 View Raw Data</button>
+            <button onclick="downloadCSV()">📥 Download CSV</button>
+            <button onclick="showDebugInfo()">🐛 Debug Matching</button>
+            <button onclick="clearData()">🗑️ Clear Data</button>
+        </div>
+    </div>
+
+    <script>
+        let configData = null;
+        let answerData = null;
+        let nextButtonObserver = null;
+        let dataCleared = false;
+        
+        async function loadConfig() {
+            try {
+                const response = await fetch('../config.json');
+                configData = await response.json();
+                console.log('✅ Config loaded:', Object.keys(configData.components || {}).length, 'components');
+                return true;
+            } catch (error) {
+                console.error('❌ Failed to load config:', error);
+                return false;
+            }
+        }
+        
+        function loadAnswerTrackerData() {
+            const raw = localStorage.getItem('answerTracker');
+            if (!raw) {
+                console.log('❌ No answer tracker data found');
+                return null;
+            }
+            
+            try {
+                answerData = JSON.parse(raw);
+                console.log('✅ Answer data loaded:', Object.keys(answerData.answers || {}).length, 'components');
+                return answerData;
+            } catch (error) {
+                console.error('❌ Error parsing answer data:', error);
+                return null;
+            }
+        }
+        
+        function extractCorrectAnswers() {
+            if (!configData || !configData.components) return {};
+            
+            const correctAnswers = {};
+            
+            Object.keys(configData.components).forEach(componentName => {
+                const component = configData.components[componentName];
+                if (component.correctAnswer && Array.isArray(component.correctAnswer)) {
+                    component.correctAnswer.forEach(item => {
+                        correctAnswers[item.id] = item.answer;
+                    });
+                }
+            });
+            
+            return correctAnswers;
+        }
+        
+        function matchAnswerTrackerToConfig() {
+            if (!answerData || !configData) return {};
+            
+            const correctAnswers = extractCorrectAnswers();
+            const matchedData = {};
+            
+            console.log('🔍 Starting position-based matching...');
+            console.log('Available correct answers:', Object.keys(correctAnswers));
+            
+            // Process each component from answer tracker (using same logic as data_collection.html)
+            Object.keys(answerData.answers).forEach(componentName => {
+                const component = answerData.answers[componentName];
+                console.log(`📋 Processing component: ${componentName}`);
+                
+                if (component.fields) {
+                    const questions = [];
+                    
+                    // Get field order from history (same as data_collection.html)
+                    const fieldOrder = [];
+                    const seenFields = new Set();
+                    
+                    if (component.history && Array.isArray(component.history)) {
+                        component.history.forEach(interaction => {
+                            if (!seenFields.has(interaction.fieldName)) {
+                                fieldOrder.push(interaction.fieldName);
+                                seenFields.add(interaction.fieldName);
+                            }
+                        });
+                    }
+                    
+                    // Add remaining fields
+                    Object.keys(component.fields).forEach(fieldName => {
+                        if (!seenFields.has(fieldName)) {
+                            fieldOrder.push(fieldName);
+                        }
+                    });
+                    
+                    console.log(`   Field order for ${componentName}:`, fieldOrder);
+                    
+                    // Define expected question patterns (same as data_collection.html)
+                    const getExpectedQuestions = (compName) => {
+                        if (compName.includes('bloodGlucose')) {
+                            return [
+                                { suffix: '_fasting_value', type: 'Fasting Blood Glucose Value (mmol/L)' },
+                                { suffix: '_postprandial_value', type: 'Postprandial Blood Glucose Value (mmol/L)' },
+                                { suffix: '_fasting_normal', type: 'Is Fasting Glucose Normal?' },
+                                { suffix: '_postprandial_normal', type: 'Is Postprandial Glucose Normal?' }
+                            ];
+                        } else if (compName.includes('bloodPressure')) {
+                            return [
+                                { suffix: '_systolic_value', type: 'Systolic Blood Pressure Value (mmHg)' },
+                                { suffix: '_diastolic_value', type: 'Diastolic Blood Pressure Value (mmHg)' },
+                                { suffix: '_systolic_normal', type: 'Is Systolic Pressure Normal?' },
+                                { suffix: '_diastolic_normal', type: 'Is Diastolic Pressure Normal?' }
+                            ];
+                        }
+                        return [];
+                    };
+                    
+                    const expectedQuestions = getExpectedQuestions(componentName);
+                    console.log(`   Expected questions for ${componentName}:`, expectedQuestions.map(q => q.suffix));
+                    
+                    // Match fields to expected questions by position
+                    fieldOrder.forEach((fieldName, index) => {
+                        const fieldData = component.fields[fieldName];
+                        
+                        if (index < expectedQuestions.length) {
+                            const expectedQuestion = expectedQuestions[index];
+                            const expectedQuestionId = componentName + expectedQuestion.suffix;
+                            
+                            console.log(`   🎯 Matching field ${index}: "${fieldName}" -> "${expectedQuestionId}"`);
+                            
+                            if (correctAnswers[expectedQuestionId] !== undefined) {
+                                const correctAnswer = correctAnswers[expectedQuestionId];
+                                const participantAnswer = fieldData.value;
+                                
+                                let isCorrect = false;
+                                let error = null;
+                                
+                                if (typeof correctAnswer === 'number' && !isNaN(participantAnswer)) {
+                                    const numericAnswer = parseFloat(participantAnswer);
+                                    error = Math.abs(numericAnswer - correctAnswer);
+                                    isCorrect = error < 0.5; // Tolerance for numerical answers
+                                } else {
+                                    // String comparison for Yes/No answers
+                                    const participantStr = String(participantAnswer).toLowerCase().trim();
+                                    const correctStr = String(correctAnswer).toLowerCase().trim();
+                                    isCorrect = participantStr === correctStr;
+                                }
+                                
+                                questions.push({
+                                    questionId: expectedQuestionId,
+                                    questionType: expectedQuestion.type,
+                                    participantAnswer,
+                                    correctAnswer,
+                                    isCorrect,
+                                    error,
+                                    fieldName,
+                                    position: index
+                                });
+                                
+                                console.log(`      ✅ Match found: ${participantAnswer} vs ${correctAnswer} (${isCorrect ? 'CORRECT' : 'INCORRECT'})`);
+                            } else {
+                                console.log(`      ❌ No correct answer found for: ${expectedQuestionId}`);
+                            }
+                        } else {
+                            console.log(`      ⚠️ Extra field at position ${index}: ${fieldName}`);
+                        }
+                    });
+                    
+                    if (questions.length > 0) {
+                        matchedData[componentName] = {
+                            questions,
+                            componentData: component
+                        };
+                        console.log(`   ✅ Matched ${questions.length} questions for ${componentName}`);
+                    } else {
+                        console.log(`   ❌ No questions matched for ${componentName}`);
+                    }
+                }
+            });
+            
+            console.log('🎯 Matching complete:', Object.keys(matchedData).length, 'components matched');
+            return matchedData;
+        }
+        
+        // NEW FUNCTION: Set up ReVISit Next button detection
+        function setupNextButtonDetection() {
+            console.log('🔍 Setting up Next button detection...');
+            
+            function findAndMonitorNextButton() {
+                try {
+                    // Look for ReVISit's next button in parent document
+                    const parentDoc = window.parent?.document;
+                    if (!parentDoc) return false;
+                    
+                    // Common ReVISit next button selectors
+                    const nextButtonSelectors = [
+                        '[data-testid="next-button"]',
+                        'button[type="submit"]',
+                        '.next-button',
+                        '[aria-label*="next"]',
+                        '[aria-label*="Next"]',
+                        'button:contains("Next")',
+                        'button:contains("Continue")',
+                        'button:contains("Finish")'
+                    ];
+                    
+                    let nextButton = null;
+                    
+                    // Try each selector
+                    nextButtonSelectors.forEach(selector => {
+                        if (!nextButton) {
+                            try {
+                                const buttons = parentDoc.querySelectorAll(selector);
+                                buttons.forEach(btn => {
+                                    const text = btn.textContent || btn.innerText || btn.value || '';
+                                    if (text.toLowerCase().includes('next') || 
+                                        text.toLowerCase().includes('continue') ||
+                                        text.toLowerCase().includes('finish') ||
+                                        btn.type === 'submit') {
+                                        nextButton = btn;
+                                    }
+                                });
+                            } catch (e) {
+                                // Ignore selector errors
+                            }
+                        }
+                    });
+                    
+                    // Also search all buttons for text content
+                    if (!nextButton) {
+                        const allButtons = parentDoc.querySelectorAll('button');
+                        allButtons.forEach(btn => {
+                            const text = btn.textContent || btn.innerText || '';
+                            if (text.toLowerCase().includes('next') || 
+                                text.toLowerCase().includes('continue') ||
+                                text.toLowerCase().includes('finish')) {
+                                nextButton = btn;
+                            }
+                        });
+                    }
+                    
+                    if (nextButton && !nextButton.hasResultsTracker) {
+                        nextButton.hasResultsTracker = true;
+                        
+                        console.log('🎯 Found Next button, adding click listener');
+                        
+                        nextButton.addEventListener('click', function(e) {
+                            console.log('🏁 Next button clicked on results page - clearing study data!');
+                            
+                            // Clear all study data
+                            clearStudyData();
+                            
+                            // Show completion notice
+                            showDataClearedNotice();
+                        });
+                        
+                        return true;
+                    }
+                    
+                } catch (error) {
+                    console.log('❌ Error setting up next button detection:', error);
+                }
+                
+                return false;
+            }
+            
+            // Try to find the button immediately
+            let found = findAndMonitorNextButton();
+            
+            if (!found) {
+                // Use MutationObserver to watch for the button appearing
+                nextButtonObserver = new MutationObserver(function(mutations) {
+                    let shouldCheck = false;
+                    
+                    mutations.forEach(mutation => {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.nodeType === 1) { // Element node
+                                if (node.matches && (node.matches('button') || node.querySelector('button'))) {
+                                    shouldCheck = true;
+                                }
+                            }
+                        });
+                    });
+                    
+                    if (shouldCheck) {
+                        const found = findAndMonitorNextButton();
+                        if (found) {
+                            nextButtonObserver.disconnect();
+                            console.log('✅ Next button found and monitored');
+                        }
+                    }
+                });
+                
+                // Observe parent document for new buttons
+                try {
+                    if (window.parent && window.parent.document) {
+                        nextButtonObserver.observe(window.parent.document.body, {
+                            childList: true,
+                            subtree: true
+                        });
+                        console.log('👁️ Watching for Next button to appear...');
+                    }
+                } catch (error) {
+                    console.log('❌ Cannot observe parent document');
+                }
+            }
+            
+            // Also try with delays
+            const delays = [500, 1000, 2000, 3000];
+            delays.forEach(delay => {
+                setTimeout(() => {
+                    if (!found) {
+                        found = findAndMonitorNextButton();
+                        if (found) {
+                            console.log(`✅ Next button found after ${delay}ms`);
+                        }
+                    }
+                }, delay);
+            });
+        }
+        
+        // NEW FUNCTION: Clear all study data
+        function clearStudyData() {
+            if (dataCleared) {
+                console.log('ℹ️ Data already cleared');
+                return;
+            }
+            
+            console.log('🗑️ Clearing all study data...');
+            
+            // Clear all localStorage items related to the study
+            const keysToRemove = [
+                'answerTracker',
+                'studySessionId',
+                'studyCompleted',
+                'studyCompletionTime',
+                'lastStudyActivity',
+                'csvHeadersLogged'
+            ];
+            
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+            });
+            
+            // Clear backup data
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('answerTracker_backup_')) {
+                    localStorage.removeItem(key);
+                }
+            });
+            
+            // Clear session storage
+            const sessionKeysToRemove = [
+                'answerTrackerCSVUrl',
+                'answerTrackerJSONUrl'
+            ];
+            
+            sessionKeysToRemove.forEach(key => {
+                sessionStorage.removeItem(key);
+            });
+            
+            // Mark as cleared
+            dataCleared = true;
+            
+            // Also clear the global tracker if available
+            if (window.answerTracker) {
+                window.answerTracker.clearData();
+            }
+            
+            console.log('✅ All study data cleared');
+        }
+        
+        // NEW FUNCTION: Show data cleared notice
+        function showDataClearedNotice() {
+            document.getElementById('results-content').style.display = 'none';
+            document.getElementById('completion-notice').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('data-cleared-notice').style.display = 'block';
+        }
+        
+        // NEW FUNCTION: Show completion notice when results are displayed
+        function showCompletionNotice() {
+            document.getElementById('completion-notice').style.display = 'block';
+        }
+        
+        function generateResultsDisplay() {
+            const matchedData = matchAnswerTrackerToConfig();
+            const components = Object.keys(matchedData);
+            
+            if (components.length === 0) {
+                return generateNoDataDisplay();
+            }
+            
+            // Calculate overall stats
+            let totalQuestions = 0;
+            let correctAnswers = 0;
+            
+            components.forEach(componentName => {
+                matchedData[componentName].questions.forEach(q => {
+                    totalQuestions++;
+                    if (q.isCorrect) correctAnswers++;
+                });
+            });
+            
+            const accuracy = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+            
+            // Show completion notice
+            showCompletionNotice();
+            
+            let html = `
+                <div class="summary-cards">
+                    <div class="summary-card score-card">
+                        <h3>Score</h3>
+                        <div class="big-number">${correctAnswers}/${totalQuestions}</div>
+                        <div>Questions Correct</div>
+                    </div>
+                    <div class="summary-card accuracy-card">
+                        <h3>Accuracy</h3>
+                        <div class="big-number">${accuracy}%</div>
+                        <div>Overall Performance</div>
+                    </div>
+                    <div class="summary-card components-card">
+                        <h3>Visualizations</h3>
+                        <div class="big-number">${components.length}</div>
+                        <div>Completed</div>
+                    </div>
+                </div>
+            `;
+            
+            // Generate table for each visualization
+            components.forEach(componentName => {
+                const component = matchedData[componentName];
+                const cleanName = componentName
+                    .replace(/([A-Z])_/, '$1: ')
+                    .replace(/_/g, ' ')
+                    .replace(/([a-z])([A-Z])/g, '$1 $2');
+                
+                html += `
+                    <div class="visualization-section">
+                        <div class="visualization-header">
+                            📊 ${cleanName}
+                        </div>
+                        <table class="questions-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 8%;">#</th>
+                                    <th style="width: 30%;">Question Type</th>
+                                    <th style="width: 22%;">Your Answer</th>
+                                    <th style="width: 22%;">Correct Answer</th>
+                                    <th style="width: 12%;">Status</th>
+                                    <th style="width: 6%;">Error</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                // Sort questions by position
+                component.questions.sort((a, b) => a.position - b.position);
+                
+                component.questions.forEach((question, index) => {
+                    const rowClass = question.isCorrect ? 'correct-row' : 'incorrect-row';
+                    const statusClass = question.isCorrect ? 'status-correct' : 'status-incorrect';
+                    const statusText = question.isCorrect ? '✅ Correct' : '❌ Incorrect';
+                    const errorText = question.error !== null ? question.error.toFixed(2) : 'N/A';
+                    
+                    html += `
+                        <tr class="${rowClass}">
+                            <td><strong>${index + 1}</strong></td>
+                            <td><strong>${question.questionType}</strong></td>
+                            <td><span class="participant-answer">${question.participantAnswer}</span></td>
+                            <td><span class="correct-answer">${question.correctAnswer}</span></td>
+                            <td><span class="${statusClass}">${statusText}</span></td>
+                            <td>${errorText}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            });
+            
+            return html;
+        }
+        
+        function generateNoDataDisplay() {
+            return `
+                <div class="warning">
+                    <strong>⚠️ No study data found</strong><br>
+                    Complete the study first, then return to this page to see your results.<br><br>
+                    <button onclick="openDataCollection()" class="nav-button">📊 View Data Collection Page</button>
+                </div>
+            `;
+        }
+        
+        async function analyzeAndDisplay() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results-content').style.display = 'none';
+            document.getElementById('completion-notice').style.display = 'none';
+            document.getElementById('data-cleared-notice').style.display = 'none';
+            
+            console.log('🔍 Starting analysis...');
+            
+            // Load config
+            const configLoaded = await loadConfig();
+            if (!configLoaded) {
+                document.getElementById('loading').innerHTML = `
+                    <div class="error">
+                        <strong>❌ Failed to load configuration</strong><br>
+                        Cannot load config.json. Check file path and permissions.
+                    </div>
+                `;
+                return;
+            }
+            
+            // Load answer data
+            const answers = loadAnswerTrackerData();
+            if (!answers) {
+                document.getElementById('loading').innerHTML = generateNoDataDisplay();
+                return;
+            }
+            
+            // Generate results
+            const resultsHTML = generateResultsDisplay();
+            
+            document.getElementById('results-content').innerHTML = resultsHTML;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('results-content').style.display = 'block';
+            
+            // Set up Next button detection after results are shown
+            setupNextButtonDetection();
+            
+            console.log('✅ Results displayed successfully');
+        }
+        
+        function refreshResults() {
+            analyzeAndDisplay();
+        }
+        
+        function openDataCollection() {
+            // Try different possible URLs for the data collection page
+            const possibleUrls = [
+                './data_collection.html',
+                'data_collection.html',
+                '../assets/data_collection.html'
+            ];
+            
+            // Try opening the first URL that might work
+            window.open(possibleUrls[0], '_blank');
+        }
+        
+        function downloadCSV() {
+            if (!answerData) {
+                alert('❌ No data to download');
+                return;
+            }
+            
+            const matchedData = matchAnswerTrackerToConfig();
+            const csvRows = [];
+            const headers = ['Visualization', 'Position', 'Question Type', 'Your Answer', 'Correct Answer', 'Is Correct', 'Error'];
+            
+            csvRows.push(headers.join(','));
+            
+            Object.keys(matchedData).forEach(componentName => {
+                matchedData[componentName].questions.forEach(q => {
+                    csvRows.push([
+                        `"${componentName}"`,
+                        `"${q.position + 1}"`,
+                        `"${q.questionType}"`,
+                        `"${q.participantAnswer}"`,
+                        `"${q.correctAnswer}"`,
+                        q.isCorrect ? 'TRUE' : 'FALSE',
+                        q.error !== null ? q.error.toFixed(3) : ''
+                    ].join(','));
+                });
+            });
+            
+            if (csvRows.length > 1) {
+                const csv = csvRows.join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(url);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `study_results_${answerData.sessionId}_${new Date().toISOString().slice(0,10)}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }
+        }
+        
+        function showDebugInfo() {
+            const correctAnswers = extractCorrectAnswers();
+            const matchedData = matchAnswerTrackerToConfig();
+            
+            let debug = `=== ANSWER MATCHING DEBUG ===\n\n`;
+            
+            if (answerData && answerData.answers) {
+                debug += `SESSION ID: ${answerData.sessionId}\n\n`;
+                debug += `PARTICIPANT ANSWERS:\n`;
+                Object.keys(answerData.answers).forEach(compName => {
+                    debug += `\n${compName}:\n`;
+                    const comp = answerData.answers[compName];
+                    if (comp.fields) {
+                        const fieldOrder = [];
+                        const seenFields = new Set();
+                        
+                        if (comp.history && Array.isArray(comp.history)) {
+                            comp.history.forEach(interaction => {
+                                if (!seenFields.has(interaction.fieldName)) {
+                                    fieldOrder.push(interaction.fieldName);
+                                    seenFields.add(interaction.fieldName);
+                                }
+                            });
+                        }
+                        
+                        Object.keys(comp.fields).forEach(fieldName => {
+                            if (!seenFields.has(fieldName)) {
+                                fieldOrder.push(fieldName);
+                            }
+                        });
+                        
+                        fieldOrder.forEach((fieldName, index) => {
+                            debug += `  Position ${index}: ${fieldName} = "${comp.fields[fieldName].value}"\n`;
+                        });
+                    }
+                });
+            }
+            
+            debug += `\n\nCORRECT ANSWERS:\n`;
+            Object.keys(correctAnswers).forEach(questionId => {
+                debug += `${questionId} = ${correctAnswers[questionId]}\n`;
+            });
+            
+            debug += `\n\nMATCHED RESULTS:\n`;
+            Object.keys(matchedData).forEach(compName => {
+                debug += `\n${compName}:\n`;
+                matchedData[compName].questions.forEach(q => {
+                    debug += `  Position ${q.position}: ${q.questionType}\n`;
+                    debug += `      Your: "${q.participantAnswer}"\n`;
+                    debug += `      Correct: "${q.correctAnswer}"\n`;
+                    debug += `      Status: ${q.isCorrect ? 'CORRECT' : 'INCORRECT'}\n\n`;
+                });
+            });
+            
+            const debugWindow = window.open('', '_blank');
+            debugWindow.document.write(`
+                <html>
+                <head><title>Debug Information</title></head>
+                <body style="font-family: monospace; padding: 20px;">
+                    <h1>Debug Information</h1>
+                    <pre style="white-space: pre-wrap; background: #f5f5f5; padding: 20px; border-radius: 5px;">${debug}</pre>
+                </body>
+                </html>
+            `);
+        }
+        
+        function clearData() {
+            if (confirm('⚠️ This will permanently delete all collected data. Are you sure?')) {
+                clearStudyData();
+                alert('🗑️ Data cleared');
+                analyzeAndDisplay();
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', function() {
+            console.log('🎉 Results page loaded');
+            analyzeAndDisplay();
+        });
+        
+        // Auto-refresh every 10 seconds if no results shown yet
+        setInterval(function() {
+            const content = document.getElementById('results-content');
+            if (content && content.style.display === 'none' && !dataCleared) {
+                analyzeAndDisplay();
+            }
+        }, 10000);
+        
+        // Clean up observer when page unloads
+        window.addEventListener('beforeunload', function() {
+            if (nextButtonObserver) {
+                nextButtonObserver.disconnect();
+            }
+        });
+    </script>
+</body>
+</html>
