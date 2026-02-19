@@ -188,6 +188,34 @@
             text-align: center;
         }
         
+        .raw-data-section {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .raw-csv-textarea {
+            width: 100%;
+            height: 300px;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 10px;
+            resize: vertical;
+        }
+        
+        .data-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
         .actions {
             text-align: center;
             margin: 30px 0;
@@ -255,10 +283,25 @@
             </div>
         </div>
         
+        <!-- NEW: Raw Data Section -->
+        <div id="raw-data-section" class="raw-data-section" style="display: none;">
+            <h3>📊 Raw Data Export</h3>
+            <div id="raw-data-info" class="data-info">
+                <!-- Data info will be inserted here -->
+            </div>
+            <textarea id="raw-csv-data" class="raw-csv-textarea" readonly placeholder="Raw CSV data will appear here..."></textarea>
+            <div style="text-align: center; margin-top: 10px;">
+                <button onclick="copyRawData()">📋 Copy to Clipboard</button>
+                <button onclick="downloadRawCSV()">📥 Download CSV</button>
+                <button onclick="downloadRawJSON()">📁 Download JSON</button>
+                <button onclick="hideRawData()">❌ Hide Raw Data</button>
+            </div>
+        </div>
+        
         <div class="actions">
             <button onclick="refreshResults()">🔄 Refresh</button>
-            <button onclick="openDataCollection()" class="nav-button">📊 View Raw Data</button>
-            <button onclick="downloadCSV()">📥 Download CSV</button>
+            <button onclick="showRawData()" class="nav-button">📊 View Raw Data</button>
+            <button onclick="downloadCSV()">📥 Download Results CSV</button>
             <button onclick="showDebugInfo()">🐛 Debug Matching</button>
             <button onclick="clearData()">🗑️ Clear Data</button>
         </div>
@@ -440,6 +483,197 @@
             
             console.log('🎯 Matching complete:', Object.keys(matchedData).length, 'components matched');
             return matchedData;
+        }
+        
+        // NEW: Show raw data section
+        function showRawData() {
+            if (!answerData || !answerData.answers) {
+                alert('❌ No data available to show');
+                return;
+            }
+            
+            // Generate raw CSV data (same logic as data_collection.html)
+            const rawCSV = generateRawCSVData();
+            
+            // Show data info
+            const componentCount = Object.keys(answerData.answers).length;
+            const totalRows = rawCSV.split('\n').length - 1; // Subtract header row
+            const sessionId = answerData.sessionId || 'Unknown';
+            const lastUpdate = new Date(answerData.lastUpdate || Date.now()).toLocaleString();
+            
+            document.getElementById('raw-data-info').innerHTML = `
+                <strong>Session:</strong> ${sessionId} | 
+                <strong>Components:</strong> ${componentCount} | 
+                <strong>Data Rows:</strong> ${totalRows} | 
+                <strong>Updated:</strong> ${lastUpdate}
+            `;
+            
+            // Show CSV data
+            document.getElementById('raw-csv-data').value = rawCSV;
+            
+            // Show the section
+            document.getElementById('raw-data-section').style.display = 'block';
+            
+            // Scroll to it
+            document.getElementById('raw-data-section').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // NEW: Hide raw data section
+        function hideRawData() {
+            document.getElementById('raw-data-section').style.display = 'none';
+        }
+        
+        // NEW: Generate raw CSV (same as data_collection.html logic)
+        function generateRawCSVData() {
+            if (!answerData || !answerData.answers) return 'No data available';
+            
+            const headers = [
+                'sessionId',
+                'component', 
+                'position',
+                'questionType',
+                'fieldName',
+                'finalValue',
+                'interactionType',
+                'timestamp',
+                'isoTimestamp',
+                'timeFromStart',
+                'interactionSequence'
+            ];
+            
+            const csvRows = [headers.join(',')];
+            
+            Object.keys(answerData.answers).forEach(componentName => {
+                const component = answerData.answers[componentName];
+                
+                if (component.fields) {
+                    // Get field order from history (same logic as data_collection.html)
+                    const fieldOrder = [];
+                    const seenFields = new Set();
+                    
+                    if (component.history && Array.isArray(component.history)) {
+                        component.history.forEach(interaction => {
+                            if (!seenFields.has(interaction.fieldName)) {
+                                fieldOrder.push(interaction.fieldName);
+                                seenFields.add(interaction.fieldName);
+                            }
+                        });
+                    }
+                    
+                    Object.keys(component.fields).forEach(fieldName => {
+                        if (!seenFields.has(fieldName)) {
+                            fieldOrder.push(fieldName);
+                        }
+                    });
+                    
+                    // Define expected question patterns
+                    const getExpectedQuestions = (compName) => {
+                        if (compName.includes('bloodGlucose')) {
+                            return [
+                                'Fasting Blood Glucose Value (mmol/L)',
+                                'Postprandial Blood Glucose Value (mmol/L)', 
+                                'Is Fasting Glucose Normal?',
+                                'Is Postprandial Glucose Normal?'
+                            ];
+                        } else if (compName.includes('bloodPressure')) {
+                            return [
+                                'Systolic Blood Pressure Value (mmHg)',
+                                'Diastolic Blood Pressure Value (mmHg)',
+                                'Is Systolic Pressure Normal?', 
+                                'Is Diastolic Pressure Normal?'
+                            ];
+                        }
+                        return [];
+                    };
+                    
+                    const expectedQuestions = getExpectedQuestions(componentName);
+                    
+                    fieldOrder.forEach((fieldName, index) => {
+                        const field = component.fields[fieldName];
+                        const questionType = expectedQuestions[index] || 'Unknown Question Type';
+                        
+                        const row = [
+                            `"${answerData.sessionId || 'unknown'}"`,
+                            `"${componentName}"`,
+                            `"${index + 1}"`,
+                            `"${questionType}"`,
+                            `"${fieldName}"`,
+                            `"${field.value}"`,
+                            `"${field.type}"`,
+                            `"${field.timestamp}"`,
+                            `"${new Date(field.timestamp).toISOString()}"`,
+                            `"${field.timestamp - component.startTime}"`,
+                            `"${index + 1}"`
+                        ];
+                        csvRows.push(row.join(','));
+                    });
+                }
+            });
+            
+            return csvRows.join('\n');
+        }
+        
+        // NEW: Copy raw data to clipboard
+        function copyRawData() {
+            const textarea = document.getElementById('raw-csv-data');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                alert('✅ Raw CSV data copied to clipboard!');
+            } catch (err) {
+                // Fallback for modern browsers
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    alert('✅ Raw CSV data copied to clipboard!');
+                }).catch(() => {
+                    alert('❌ Failed to copy data. Please select and copy manually.');
+                });
+            }
+        }
+        
+        // NEW: Download raw CSV
+        function downloadRawCSV() {
+            const csvData = document.getElementById('raw-csv-data').value;
+            if (!csvData || csvData === 'No data available') {
+                alert('❌ No data to download');
+                return;
+            }
+            
+            const blob = new Blob([csvData], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `study_raw_data_${answerData.sessionId || 'unknown'}_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+        
+        // NEW: Download raw JSON
+        function downloadRawJSON() {
+            if (!answerData) {
+                alert('❌ No data to download');
+                return;
+            }
+            
+            const jsonData = {
+                sessionId: answerData.sessionId,
+                exportTime: Date.now(),
+                rawAnswers: answerData.answers,
+                metadata: {
+                    totalComponents: Object.keys(answerData.answers || {}).length,
+                    exportSource: 'results_page_raw_export'
+                }
+            };
+            
+            const json = JSON.stringify(jsonData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `study_raw_data_${answerData.sessionId || 'unknown'}_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            window.URL.revokeObjectURL(url);
         }
         
         // NEW FUNCTION: Set up ReVISit Next button detection
@@ -635,6 +869,7 @@
             document.getElementById('results-content').style.display = 'none';
             document.getElementById('completion-notice').style.display = 'none';
             document.getElementById('loading').style.display = 'none';
+            document.getElementById('raw-data-section').style.display = 'none';
             document.getElementById('data-cleared-notice').style.display = 'block';
         }
         
@@ -749,8 +984,7 @@
             return `
                 <div class="warning">
                     <strong>⚠️ No study data found</strong><br>
-                    Complete the study first, then return to this page to see your results.<br><br>
-                    <button onclick="openDataCollection()" class="nav-button">📊 View Data Collection Page</button>
+                    Complete the study first, then return to this page to see your results.
                 </div>
             `;
         }
@@ -760,6 +994,7 @@
             document.getElementById('results-content').style.display = 'none';
             document.getElementById('completion-notice').style.display = 'none';
             document.getElementById('data-cleared-notice').style.display = 'none';
+            document.getElementById('raw-data-section').style.display = 'none';
             
             console.log('🔍 Starting analysis...');
             
@@ -799,18 +1034,6 @@
             analyzeAndDisplay();
         }
         
-        function openDataCollection() {
-            // Try different possible URLs for the data collection page
-            const possibleUrls = [
-                './data_collection.html',
-                'data_collection.html',
-                '../assets/data_collection.html'
-            ];
-            
-            // Try opening the first URL that might work
-            window.open(possibleUrls[0], '_blank');
-        }
-        
         function downloadCSV() {
             if (!answerData) {
                 alert('❌ No data to download');
@@ -840,7 +1063,7 @@
             if (csvRows.length > 1) {
                 const csv = csvRows.join('\n');
                 const blob = new Blob([csv], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(url);
+                const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `study_results_${answerData.sessionId}_${new Date().toISOString().slice(0,10)}.csv`;

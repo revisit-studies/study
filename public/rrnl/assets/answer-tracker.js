@@ -98,7 +98,7 @@ window.answerTracker = {
             console.log('⚠️  If multiple users are taking this study:');
             console.log('⚠️  - Each user\'s data stays on their own computer');
             console.log('⚠️  - Visit each computer individually to collect data');
-            console.log('⚠️  - Data collection pages only show THIS browser\'s data');
+            console.log('⚠️  - Results page shows only THIS browser\'s data');
             console.log('⚠️');
             console.log(`⚠️  Current Session ID: ${this.sessionId}`);
             console.log(`⚠️  Previous Components Found: ${componentCount}`);
@@ -426,12 +426,12 @@ window.answerTracker = {
         if (type === 'final' || type === 'selection' || type === 'mantine_option_click' || type === 'revisit_submit') {
             this.printAllAnswers();
             
-            // Log completion message for data collection page
+            // Log completion message
             const fieldCount = Object.keys(this.answers[this.currentComponent].fields).length;
             console.log(`📊 Component progress: ${fieldCount}/4 fields completed for ${this.currentComponent}`);
             
             if (fieldCount >= 4) {
-                console.log('✅ Component fully completed! Data ready for collection.');
+                console.log('✅ Component fully completed! Data ready for results page.');
             }
         }
         
@@ -553,9 +553,9 @@ window.answerTracker = {
             
             console.log(`💾 Saved to localStorage: ${Object.keys(this.answers).length} components`);
             
-            // Log message for data collection page users - check URL path
+            // UPDATED: Remove data_collection.html reference
             if (Object.keys(this.answers).length > 0) {
-                console.log(`📋 Visit your data collection page to view/copy data`);
+                console.log(`📊 Data ready! Use results page "View Raw Data" button for export`);
             }
         } catch (error) {
             console.error('❌ Failed to save to localStorage:', error);
