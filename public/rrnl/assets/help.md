@@ -2,4 +2,4 @@ The purpose of this study is to understand how various contextual cues affect ou
 
 You will be shown 16 visualizations in a random order. Each visualization will be different from all the others. For each visualization, you will answer 4 questions about it asking for the exact result of the test and whether or not that value is normal. You will be shown 8 visualizations in a row, then will be given a 5 minute break, then will complete the last 8 visualizations.
 
-Your responses will be timed, but please do not rush. At the end of the study, we will tell you how many questions you got correct. The study will begin when you click the “Start” button on the bottom right corner.
+Your responses will be timed, but please do not rush. At the end of the study, we will tell you how many questions you got correct.
