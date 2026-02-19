@@ -7,11 +7,13 @@ import {
   Group,
   LoadingOverlay,
   Modal,
+  Progress,
   Space,
   Table,
   Text,
 } from '@mantine/core';
 import {
+  IconAlertTriangle,
   IconBrandPython, IconLayoutColumns, IconTableExport, IconX,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -286,6 +288,10 @@ export function DownloadTidy({
   hasAudio?: boolean;
   hasScreenRecording?: boolean;
 }) {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [showTranscriptWarning, setShowTranscriptWarning] = useState(false);
+
   const [selectedProperties, setSelectedProperties] = useState<Array<OptionalProperty>>([
     'status',
     'rejectReason',
@@ -304,24 +310,65 @@ export function DownloadTidy({
   const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine, studyId, hasAudio, hasScreenRecording]);
   const isFirebase = storageEngine?.getEngine() === 'firebase';
   const transcriptAvailable = isFirebase && !!(hasAudio || hasScreenRecording);
+  const selectedParticipantCount = data.length;
+  const warnLargeTranscriptDownload = selectedProperties.includes('transcript') && selectedParticipantCount > 50;
 
-  const downloadTidy = useCallback(() => {
+  const downloadTidy = useCallback(async (skipWarning = false) => {
     if (!tableData) {
       return;
     }
 
-    const csv = [
-      tableData.header.join(','),
-      ...tableData.rows.map((row) => tableData.header.map((header) => {
-        const rawValue = row[header] ?? '';
-        const fieldValue = typeof rawValue === 'object' ? JSON.stringify(rawValue) : `${rawValue}`;
-        // Escape double quotes by replacing them with two double quotes
-        const escapedValue = fieldValue.replace(/"/g, '""');
-        return `"${escapedValue}"`; // Double-quote the field value
-      }).join(',')),
-    ].join('\n');
-    download(csv, filename);
-  }, [filename, tableData]);
+    if (warnLargeTranscriptDownload && !skipWarning) {
+      setShowTranscriptWarning(true);
+      return;
+    }
+
+    setShowTranscriptWarning(false);
+
+    setIsDownloading(true);
+    setDownloadProgress(0);
+
+    try {
+      const lines: string[] = [tableData.header.join(',')];
+      const totalRows = tableData.rows.length;
+
+      const chunkSize = 100;
+      const buildCsvChunk = async (startIndex: number): Promise<void> => {
+        const endIndex = Math.min(startIndex + chunkSize, totalRows);
+
+        for (let index = startIndex; index < endIndex; index += 1) {
+          const row = tableData.rows[index];
+          const serializedRow = tableData.header.map((header) => {
+            const rawValue = row[header] ?? '';
+            const fieldValue = typeof rawValue === 'object' ? JSON.stringify(rawValue) : `${rawValue}`;
+            // Escape double quotes by replacing them with two double quotes
+            const escapedValue = fieldValue.replace(/"/g, '""');
+            return `"${escapedValue}"`; // Double-quote the field value
+          }).join(',');
+          lines.push(serializedRow);
+        }
+
+        setDownloadProgress(totalRows === 0 ? 100 : Math.round((endIndex / totalRows) * 100));
+
+        if (endIndex < totalRows) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, 0);
+          });
+          await buildCsvChunk(endIndex);
+        }
+      };
+
+      await buildCsvChunk(0);
+
+      download(lines.join('\n'), filename);
+    } finally {
+      setDownloadProgress(100);
+      setTimeout(() => {
+        setIsDownloading(false);
+        setDownloadProgress(0);
+      }, 250);
+    }
+  }, [filename, tableData, warnLargeTranscriptDownload]);
 
   const handlePythonExportTIDY = useCallback(() => {
     if (!tableData) {
@@ -339,7 +386,7 @@ export function DownloadTidy({
 
     const numRowsShown = tableData.rows.length > 5 ? 5 : tableData.rows.length;
     const plural = numRowsShown === 1 ? '' : 's';
-    return `This is a preview of the first ${plural ? numRowsShown : ''} row${plural} of the CSV.The full CSV contains ${tableData.rows.length} row${plural}.`;
+    return `This is a preview of the first ${plural ? numRowsShown : ''} row${plural} of the CSV. The full CSV contains ${tableData.rows.length} row${plural}.`;
   }, [tableData]);
 
   return (
@@ -351,6 +398,18 @@ export function DownloadTidy({
       centered
       withCloseButton={false}
     >
+      {showTranscriptWarning && warnLargeTranscriptDownload && (
+        <Alert color="orange" icon={<IconAlertTriangle />} mb="sm">
+          This export includes transcripts for
+          {' '}
+          {selectedParticipantCount}
+          {' '}
+          selected participants, so it may take a while.
+        </Alert>
+      )}
+      {isDownloading && (
+        <Progress value={downloadProgress} animated />
+      )}
       <Box>
         <Text size="sm" fw={500} mb="xs">
           <Flex align="center" gap="xs">
@@ -451,23 +510,43 @@ export function DownloadTidy({
       <Space h="md" />
 
       <Group justify="right">
-        <Button onClick={close} color="dark" variant="subtle">
-          Close
-        </Button>
-        <Button
-          leftSection={<IconTableExport />}
-          onClick={downloadTidy}
-          data-autofocus
-        >
-          Download
-        </Button>
-        {studyId === '__revisit-widget' && (
-          <Button
-            onClick={handlePythonExportTIDY}
-          >
-            <IconBrandPython />
+        {!(showTranscriptWarning && warnLargeTranscriptDownload) && (
+          <Button onClick={close} color="dark" variant="subtle" disabled={isDownloading}>
+            Close
           </Button>
         )}
+
+        {showTranscriptWarning && warnLargeTranscriptDownload && (
+          <Button
+            variant="subtle"
+            color="gray"
+            onClick={() => setShowTranscriptWarning(false)}
+            disabled={isDownloading}
+          >
+            Cancel
+          </Button>
+        )}
+
+        <Button
+          leftSection={<IconTableExport />}
+          onClick={() => { downloadTidy(showTranscriptWarning); }}
+          data-autofocus
+          disabled={isDownloading || !tableData}
+          color={showTranscriptWarning && warnLargeTranscriptDownload ? 'orange' : undefined}
+        >
+          {showTranscriptWarning && warnLargeTranscriptDownload ? 'Continue Download' : 'Download'}
+        </Button>
+
+        {
+          studyId === '__revisit-widget' && (
+            <Button
+              onClick={handlePythonExportTIDY}
+              disabled={isDownloading}
+            >
+              <IconBrandPython />
+            </Button>
+          )
+        }
       </Group>
     </Modal>
   );
