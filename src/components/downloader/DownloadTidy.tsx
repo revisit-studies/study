@@ -14,9 +14,7 @@ import {
 import {
   IconBrandPython, IconLayoutColumns, IconTableExport, IconX,
 } from '@tabler/icons-react';
-import {
-  useCallback, useEffect, useMemo, useState,
-} from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ParticipantData } from '../../storage/types';
 import { Prettify, StudyConfig } from '../../parser/types';
 import { StorageEngine } from '../../storage/engines/types';
@@ -36,11 +34,11 @@ const OPTIONAL_COMMON_PROPS = [
   'instruction',
   'responsePrompt',
   'answer',
-  'transcript',
   'correctAnswer',
   'duration',
   'cleanedDuration',
   'meta',
+  'transcript',
   'startTime',
   'endTime',
   'responseMin',
@@ -60,6 +58,28 @@ type RequiredProperty = (typeof REQUIRED_PROPS)[number];
 type MetaProperty = `meta-${string}`;
 
 type Property = OptionalProperty | RequiredProperty | MetaProperty;
+// Cap in-flight transcript requests to avoid flooding browser/network/Firebase on large studies.
+const TRANSCRIPTION_CONCURRENCY_LIMIT = 50;
+
+async function runWithConcurrencyLimit(tasks: Array<() => Promise<void>>, concurrencyLimit: number) {
+  const safeLimit = Math.max(1, concurrencyLimit);
+  let nextIndex = 0;
+
+  const runNext = async (): Promise<void> => {
+    const currentIndex = nextIndex;
+    nextIndex += 1;
+
+    if (currentIndex >= tasks.length) {
+      return;
+    }
+
+    await tasks[currentIndex]();
+    await runNext();
+  };
+
+  const workers = Array.from({ length: Math.min(safeLimit, tasks.length) }, () => runNext());
+  await Promise.all(workers);
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TidyRow = Prettify<Record<RequiredProperty, any> & Partial<Record<OptionalProperty | MetaProperty, any>>> & Record<string, number | string[] | boolean | string | null>;
@@ -219,7 +239,7 @@ async function getTableData(
   const transcriptAvailable = storageEngine.getEngine() === 'firebase' && !!(hasAudio || hasScreenRecording);
   if (selectedProperties.includes('transcript') && transcriptAvailable) {
     const allAnswers = data.flatMap((p) => Object.values(p.answers).map((answer) => ({ answer, participantId: p.participantId })));
-    await Promise.all(allAnswers.map(async ({ answer, participantId }) => {
+    const tasks = allAnswers.map(({ answer, participantId }) => async () => {
       const identifier = answer.identifier || `${answer.componentName}_${answer.trialOrder}`;
       const key = `${participantId}_${identifier}`;
 
@@ -230,7 +250,8 @@ async function getTableData(
       } catch {
         transcripts[key] = null;
       }
-    }));
+    });
+    await runWithConcurrencyLimit(tasks, TRANSCRIPTION_CONCURRENCY_LIMIT);
   }
 
   const header = combinedProperties;
@@ -283,15 +304,6 @@ export function DownloadTidy({
   const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine, studyId, hasAudio, hasScreenRecording]);
   const isFirebase = storageEngine?.getEngine() === 'firebase';
   const transcriptAvailable = isFirebase && !!(hasAudio || hasScreenRecording);
-
-  useEffect(() => {
-    if (!transcriptAvailable) {
-      return;
-    }
-    setSelectedProperties((prop) => (
-      prop.includes('transcript') ? prop : [...prop, 'transcript']
-    ));
-  }, [transcriptAvailable]);
 
   const downloadTidy = useCallback(() => {
     if (!tableData) {
