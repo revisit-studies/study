@@ -1,0 +1,43 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  padding: 16px;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont,
+               "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.visColumn {
+  display: block;
+  width: 100%;
+}
+
+.visBlock {
+  display: block;
+  width: 100%;
+  clear: both;      
+  margin-bottom: 22px;
+}
+
+.vega-embed {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.vega-embed svg,
+.vega-embed canvas {
+  display: block !important;
+}
+
+.vega-actions,
+.vega-actions-wrapper {
+  display: none !important;
+}
+
+.vega-embed * {
+  user-select: none;
+}

@@ -3,15 +3,26 @@
 <html>
 <head>
     <title>Vega</title>
+    <link rel="stylesheet" href="./shared-vis.css">
     <script src="answer-tracker.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega@6.2.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@7.1.0"></script>
 </head>
 <body>
-<div id="vis0"></div>
-<div id="vis1"></div>
-<div id="bottomText"></div> <!--Added this-->
+    <div class="visColumn">
+        <div class="visBlock">
+            <div id="vis0"></div>
+        </div>
+
+        <div class="visBlock">
+            <div id="vis1"></div>
+        </div>
+
+        <div class="visBlock">
+            <div id="bottomText"></div>
+        </div>
+    </div>
 <script type="text/javascript">
 const vegaspec0 = {
     "width": 300,
