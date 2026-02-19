@@ -118,7 +118,11 @@
           "type": "dropdown",
           "placeholder": "Enter your preference",
           "options": [
-            "Bar",
+            {
+              "label": "Bar",
+              "value": "Bar",
+              "infoText": "A bar chart is useful for comparing values across categories."
+            },
             "Bubble",
             "Pie",
             "Stacked Bar"
@@ -136,7 +140,11 @@
             "Bubble",
             "Pie",
             "Stacked Bar",
-            "Line",
+            {
+              "label": "Line",
+              "value": "Line",
+              "infoText": "A line chart is commonly used for trends over time."
+            },
             "Scatter",
             "Histogram"
           ],
