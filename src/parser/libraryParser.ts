@@ -6,6 +6,7 @@ import {
 } from './types';
 import { isDynamicBlock, isInheritedComponent } from './utils';
 import { PREFIX } from '../utils/Prefix';
+import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 
 const ajv = new Ajv({ allowUnionTypes: true });
 ajv.addSchema(librarySchema);
@@ -139,6 +140,29 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
 
 // This function verifies that the library usage in the study config is valid
 export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserErrorWarning[], warnings: ParserErrorWarning[], importedLibrariesData: Record<string, LibraryConfig>) {
+  const allLibraryComponentNames = new Set(
+    Object.values(importedLibrariesData).flatMap((libraryData) => Object.keys(libraryData.components)),
+  );
+  const usedLibraryComponentNames = new Set<string>();
+  const componentsToVisit = [...getSequenceFlatMapWithInterruptions(studyConfig.sequence)];
+  const visited = new Set<string>();
+
+  while (componentsToVisit.length > 0) {
+    const currentComponentName = componentsToVisit.pop()!;
+    if (!visited.has(currentComponentName)) {
+      visited.add(currentComponentName);
+
+      if (allLibraryComponentNames.has(currentComponentName)) {
+        usedLibraryComponentNames.add(currentComponentName);
+      }
+
+      const currentComponent = studyConfig.components[currentComponentName];
+      if (currentComponent && isInheritedComponent(currentComponent)) {
+        componentsToVisit.push(currentComponent.baseComponent);
+      }
+    }
+  }
+
   Object.entries(importedLibrariesData).forEach(([library, libraryData]) => {
     // Verify that the library components are well defined
     Object.entries(libraryData.components).forEach(([componentName, component]) => {
@@ -150,6 +174,10 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
           params: { action: 'Add the base component to the baseComponents object' },
           category: 'undefined-base-component',
         });
+      }
+
+      if (!usedLibraryComponentNames.has(componentName)) {
+        return;
       }
 
       const baseComponent = isInheritedComponent(component)

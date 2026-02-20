@@ -1196,7 +1196,7 @@ describe('verifyLibraryUsage', () => {
     expect(errors).toHaveLength(0);
   });
 
-  test('adds disabled-sidebar warning when library component uses sidebar while sidebar is disabled', () => {
+  test('does not add disabled-sidebar warning for unused library component', () => {
     const libraryData: Record<string, LibraryConfig> = {
       testLib: {
         $schema: '',
@@ -1241,6 +1241,62 @@ describe('verifyLibraryUsage', () => {
       sequence: {
         order: 'fixed',
         components: [],
+      },
+    };
+
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+    verifyLibraryUsage(studyConfig, errors, warnings, libraryData);
+
+    expect(errors).toHaveLength(0);
+    expect(warnings).toHaveLength(0);
+  });
+
+  test('adds disabled-sidebar warning when used library component has sidebar locations', () => {
+    const libraryData: Record<string, LibraryConfig> = {
+      testLib: {
+        $schema: '',
+        description: 'Test library',
+        components: {
+          componentWithSidebar: {
+            type: 'markdown',
+            path: 'test.md',
+            response: [
+              {
+                id: 'sidebarResponse',
+                type: 'shortText',
+                prompt: 'Sidebar response',
+                location: 'sidebar',
+              },
+            ],
+          } as IndividualComponent,
+        },
+        sequences: {},
+      },
+    };
+
+    const studyConfig: StudyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: false,
+      },
+      components: {},
+      sequence: {
+        order: 'fixed',
+        components: ['componentWithSidebar'],
       },
     };
 
@@ -1305,7 +1361,7 @@ describe('verifyLibraryUsage', () => {
       components: {},
       sequence: {
         order: 'fixed',
-        components: [],
+        components: ['inheritedSidebarComponent'],
       },
     };
 
