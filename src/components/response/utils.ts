@@ -116,17 +116,18 @@ export const mergeReactiveAnswers = (
   reactiveAnswers: Record<string, StoredAnswer['answer'][string]>,
 ) => {
   const reactiveResponses = responses.filter((response) => response.type === 'reactive');
-  const mergedValues = { ...currentValues };
-  let hasReactiveUpdates = false;
+  let mergedValues: StoredAnswer['answer'] | null = null;
 
   reactiveResponses.forEach((response) => {
     if (Object.prototype.hasOwnProperty.call(reactiveAnswers, response.id)) {
+      if (mergedValues === null) {
+        mergedValues = { ...currentValues };
+      }
       mergedValues[response.id] = reactiveAnswers[response.id];
-      hasReactiveUpdates = true;
     }
   });
 
-  return hasReactiveUpdates ? mergedValues : currentValues;
+  return mergedValues ?? currentValues;
 };
 
 const generateValidation = (responses: Response[]) => {
