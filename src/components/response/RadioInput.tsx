@@ -2,7 +2,7 @@ import {
   Group, Input, Radio, rem, Text,
 } from '@mantine/core';
 import { useState, useMemo } from 'react';
-import { RadioResponse, StringOption } from '../../parser/types';
+import { ParsedStringOption, RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Radio.module.css';
@@ -10,6 +10,7 @@ import inputClasses from './css/Input.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
+import { parseStringOptions } from '../../utils/stringOptions';
 
 export function RadioInput({
   response,
@@ -42,9 +43,12 @@ export function RadioInput({
   } = response;
 
   const storedAnswer = useStoredAnswer();
-  const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
+  const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
 
-  const orderedOptions = useMemo(() => optionOrders[response.id] || options.map((option) => (typeof (option) === 'string' ? { label: option, value: option } : option)), [optionOrders, options, response.id]);
+  const orderedOptions = useMemo(
+    () => parseStringOptions(optionOrders[response.id] || options),
+    [optionOrders, options, response.id],
+  );
 
   const [otherSelected, setOtherSelected] = useState(false);
 

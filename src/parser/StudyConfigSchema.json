@@ -1698,7 +1698,14 @@
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/StringOption"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "type": "array"
             },
@@ -1752,7 +1759,14 @@
         "questionOptions": {
           "description": "The question options (rows) are the prompts for each response you'd like to record.",
           "items": {
-            "type": "string"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },
@@ -2852,7 +2866,7 @@
       "description": "The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
       "properties": {
         "infoText": {
-          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to RadioResponse, CheckboxResponse, and RankingResponse",
+          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to responses that use StringOption, including DropdownResponse, RadioResponse, CheckboxResponse, ButtonsResponse, RankingResponse, and MatrixResponse.",
           "type": "string"
         },
         "label": {
@@ -2860,13 +2874,12 @@
           "type": "string"
         },
         "value": {
-          "description": "The value stored in the participant's data.",
+          "description": "The value stored in the participant's data. Defaults to label.",
           "type": "string"
         }
       },
       "required": [
-        "label",
-        "value"
+        "label"
       ],
       "type": "object"
     },

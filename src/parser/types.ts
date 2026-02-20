@@ -326,10 +326,15 @@ export interface NumberOption {
 export interface StringOption {
   /** The label displayed to participants. Markdown is supported. */
   label: string;
-  /** The value stored in the participant's data. */
-  value: string;
-  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to RadioResponse, CheckboxResponse, and RankingResponse */
+  /** The value stored in the participant's data. Defaults to label. */
+  value?: string;
+  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to responses that use StringOption, including DropdownResponse, RadioResponse, CheckboxResponse, ButtonsResponse, RankingResponse, and MatrixResponse. */
   infoText?: string;
+}
+
+/** StringOption normalized to always include a value. */
+export interface ParsedStringOption extends Omit<StringOption, 'value'> {
+  value: string;
 }
 
 /**
@@ -526,9 +531,9 @@ Here's an example using custom columns (answerOptions):
 export interface MatrixResponse extends BaseResponse {
   type: 'matrix-radio' | 'matrix-checkbox';
   /** The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from. */
-  answerOptions: string[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
+  answerOptions: (StringOption | string)[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
   /** The question options (rows) are the prompts for each response you'd like to record. */
-  questionOptions: string[];
+  questionOptions: (StringOption | string)[];
   /** The order in which the questions are displayed. Defaults to fixed. */
   questionOrder?: 'fixed' | 'random';
 }

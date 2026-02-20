@@ -134,7 +134,13 @@ function getResponseOptions(response: Response): string {
   // example: Questions: Question 1, Question 2, Question 3
   // example: Answers: Answer 1, Answer 2, Answer 3
   if ('answerOptions' in response && 'questionOptions' in response) {
-    return `Questions: ${response.questionOptions.join(', ')} \n Answers: ${Array.isArray(response.answerOptions) ? response.answerOptions.join(', ') : response.answerOptions}`;
+    const questionOptions = response.questionOptions
+      .map((option) => (typeof option === 'string' ? option : option.label))
+      .join(', ');
+    const answerOptions = Array.isArray(response.answerOptions)
+      ? response.answerOptions.map((option) => (typeof option === 'string' ? option : option.label)).join(', ')
+      : response.answerOptions;
+    return `Questions: ${questionOptions} \n Answers: ${answerOptions}`;
   }
   // Likert Scale
   // example: Dislike ~ Like (9 items)
