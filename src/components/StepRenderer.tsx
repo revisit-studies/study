@@ -11,6 +11,7 @@ import { AppHeader } from './interface/AppHeader';
 import { AppNavBar } from './interface/AppNavBar';
 import { HelpModal } from './interface/HelpModal';
 import { AlertModal } from './interface/AlertModal';
+import { ConfigVersionWarningModal } from './interface/ConfigVersionWarningModal';
 import { EventType } from '../store/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { WindowEventsContext } from '../store/hooks/useWindowEvents';
@@ -157,6 +158,7 @@ export function StepRenderer() {
             {isScreenRecordingUserRejected && <ScreenRecordingRejection />}
             <HelpModal />
             <AlertModal />
+            <ConfigVersionWarningModal />
             <Flex direction="row" gap="xs">
               <AppNavBar width={sidebarWidth} top={showTitleBar ? 70 : 0} sidebarOpen={sidebarOpen} />
               {/* 10px is the gap between the sidebar and the main content */}
