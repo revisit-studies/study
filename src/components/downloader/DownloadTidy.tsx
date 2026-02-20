@@ -226,7 +226,6 @@ async function getTableData(
   storageEngine: StorageEngine | undefined,
   studyId: string,
   hasAudio?: boolean,
-  hasScreenRecording?: boolean,
 ) {
   if (!storageEngine) {
     return { header: [], rows: [] };
@@ -238,9 +237,12 @@ async function getTableData(
   const allConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
 
   const transcripts: Record<string, string | null> = {};
-  const transcriptAvailable = storageEngine.getEngine() === 'firebase' && !!(hasAudio || hasScreenRecording);
+  const transcriptAvailable = storageEngine.getEngine() === 'firebase' && !!hasAudio;
   if (selectedProperties.includes('transcript') && transcriptAvailable) {
-    const allAnswers = data.flatMap((p) => Object.values(p.answers).map((answer) => ({ answer, participantId: p.participantId })));
+    const allAnswers = data.flatMap((p) => Object.values(p.answers)
+      // Only fetch transcripts for trials that were actually started or completed.
+      .filter((answer) => ((answer?.endTime ?? -1) > 0) || ((answer?.startTime ?? -1) > 0))
+      .map((answer) => ({ answer, participantId: p.participantId })));
     const tasks = allAnswers.map(({ answer, participantId }) => async () => {
       const identifier = answer.identifier || `${answer.componentName}_${answer.trialOrder}`;
       const key = `${participantId}_${identifier}`;
@@ -278,7 +280,6 @@ export function DownloadTidy({
   data,
   studyId,
   hasAudio,
-  hasScreenRecording,
 }: {
   opened: boolean;
   close: () => void;
@@ -286,7 +287,6 @@ export function DownloadTidy({
   data: ParticipantData[];
   studyId: string;
   hasAudio?: boolean;
-  hasScreenRecording?: boolean;
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
@@ -307,9 +307,9 @@ export function DownloadTidy({
   ]);
 
   const { storageEngine } = useStorageEngine();
-  const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine, studyId, hasAudio, hasScreenRecording]);
+  const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine, studyId, hasAudio]);
   const isFirebase = storageEngine?.getEngine() === 'firebase';
-  const transcriptAvailable = isFirebase && !!(hasAudio || hasScreenRecording);
+  const transcriptAvailable = isFirebase && !!hasAudio;
   const selectedParticipantCount = data.length;
   const warnLargeTranscriptDownload = selectedProperties.includes('transcript') && selectedParticipantCount > 50;
 
@@ -333,32 +333,37 @@ export function DownloadTidy({
       const totalRows = tableData.rows.length;
 
       const chunkSize = 100;
-      const buildCsvChunk = async (startIndex: number): Promise<void> => {
-        const endIndex = Math.min(startIndex + chunkSize, totalRows);
+      const buildCsv = async (): Promise<void> => {
+        let startIndex = 0;
 
-        for (let index = startIndex; index < endIndex; index += 1) {
-          const row = tableData.rows[index];
-          const serializedRow = tableData.header.map((header) => {
-            const rawValue = row[header] ?? '';
-            const fieldValue = typeof rawValue === 'object' ? JSON.stringify(rawValue) : `${rawValue}`;
-            // Escape double quotes by replacing them with two double quotes
-            const escapedValue = fieldValue.replace(/"/g, '""');
-            return `"${escapedValue}"`; // Double-quote the field value
-          }).join(',');
-          lines.push(serializedRow);
-        }
+        while (startIndex < totalRows) {
+          const endIndex = Math.min(startIndex + chunkSize, totalRows);
 
-        setDownloadProgress(totalRows === 0 ? 100 : Math.round((endIndex / totalRows) * 100));
+          for (let index = startIndex; index < endIndex; index += 1) {
+            const row = tableData.rows[index];
+            const serializedRow = tableData.header.map((header) => {
+              const rawValue = row[header] ?? '';
+              const fieldValue = typeof rawValue === 'object' ? JSON.stringify(rawValue) : `${rawValue}`;
+              // Escape double quotes by replacing them with two double quotes
+              const escapedValue = fieldValue.replace(/"/g, '""');
+              return `"${escapedValue}"`; // Double-quote the field value
+            }).join(',');
+            lines.push(serializedRow);
+          }
 
-        if (endIndex < totalRows) {
-          await new Promise<void>((resolve) => {
-            setTimeout(resolve, 0);
-          });
-          await buildCsvChunk(endIndex);
+          setDownloadProgress(totalRows === 0 ? 100 : Math.round((endIndex / totalRows) * 100));
+          startIndex = endIndex;
+
+          if (startIndex < totalRows) {
+            // eslint-disable-next-line no-await-in-loop
+            await new Promise<void>((resolve) => {
+              setTimeout(resolve, 0);
+            });
+          }
         }
       };
 
-      await buildCsvChunk(0);
+      await buildCsv();
 
       download(lines.join('\n'), filename);
     } finally {
