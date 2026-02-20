@@ -3,11 +3,6 @@ import { expect, test } from '@playwright/test';
 test('test', async ({ page, browserName }) => {
   await page.goto('/demo-video');
 
-  const nextParticipantButton = page.getByRole('button', { name: 'Next Participant' });
-  if (await nextParticipantButton.isVisible()) {
-    await nextParticipantButton.click();
-  }
-
   await expect(page.getByText('Welcome to our study. This is an example study to show how to use the video stimulus.')).toBeVisible();
 
   await expect(page.getByRole('heading', { name: 'Video as a Stimulus' })).toBeVisible();
