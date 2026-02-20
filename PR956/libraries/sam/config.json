@@ -1,0 +1,94 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
+  "description": "The Self-Assessment Manikin (SAM) is a non-verbal pictorial assessment technique that directly measures the pleasure, arousal, and dominance associated with a person's affective reaction to a wide variety of stimuli. This library includes three components, one for each individual dimension, as well as a sequence containing all dimensions.",
+  "reference": "Bradley, M. M., & Lang, P. J. (1994). Measuring emotion: The Self-Assessment Manikin and the semantic differential. Journal of Behavior Therapy and Experimental Psychiatry, 25(1), 49–59.",
+  "doi": "10.1016/0005-7916(94)90063-9",
+  "components": {
+    "pleasure": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "pleasure",
+          "prompt": "",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "radio",
+          "horizontal": true,
+          "options": [
+            {"label": "![pleasure1](libraries/sam/assets/pleasure/pleasure1.png)", "value": "1"},
+            {"label": "![pleasure2](libraries/sam/assets/pleasure/pleasure2.png)", "value": "2"},
+            {"label": "![pleasure3](libraries/sam/assets/pleasure/pleasure3.png)", "value": "3"},
+            {"label": "![pleasure4](libraries/sam/assets/pleasure/pleasure4.png)", "value": "4"},
+            {"label": "![pleasure5](libraries/sam/assets/pleasure/pleasure5.png)", "value": "5"},
+            {"label": "![pleasure6](libraries/sam/assets/pleasure/pleasure6.png)", "value": "6"},
+            {"label": "![pleasure7](libraries/sam/assets/pleasure/pleasure7.png)", "value": "7"},
+            {"label": "![pleasure8](libraries/sam/assets/pleasure/pleasure8.png)", "value": "8"},
+            {"label": "![pleasure9](libraries/sam/assets/pleasure/pleasure9.png)", "value": "9"}
+          ],
+          "stylesheetPath": "libraries/sam/assets/stylesheet.css"
+        }
+      ]
+    },
+    "arousal": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "arousal",
+          "prompt": "",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "radio",
+          "horizontal": true,
+          "options": [
+            {"label": "![arousal1](libraries/sam/assets/arousal/arousal1.png)", "value": "1"},
+            {"label": "![arousal2](libraries/sam/assets/arousal/arousal2.png)", "value": "2"},
+            {"label": "![arousal3](libraries/sam/assets/arousal/arousal3.png)", "value": "3"},
+            {"label": "![arousal4](libraries/sam/assets/arousal/arousal4.png)", "value": "4"},
+            {"label": "![arousal5](libraries/sam/assets/arousal/arousal5.png)", "value": "5"},
+            {"label": "![arousal6](libraries/sam/assets/arousal/arousal6.png)", "value": "6"},
+            {"label": "![arousal7](libraries/sam/assets/arousal/arousal7.png)", "value": "7"},
+            {"label": "![arousal8](libraries/sam/assets/arousal/arousal8.png)", "value": "8"},
+            {"label": "![arousal9](libraries/sam/assets/arousal/arousal9.png)", "value": "9"}
+          ],
+          "stylesheetPath": "libraries/sam/assets/stylesheet.css"
+        }
+      ]
+    },
+    "dominance": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "dominance",
+          "prompt": "",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "radio",
+          "horizontal": true,
+          "options": [
+            {"label": "![dominance1](libraries/sam/assets/dominance/dominance1.png)", "value": "1"},
+            {"label": "![dominance2](libraries/sam/assets/dominance/dominance2.png)", "value": "2"},
+            {"label": "![dominance3](libraries/sam/assets/dominance/dominance3.png)", "value": "3"},
+            {"label": "![dominance4](libraries/sam/assets/dominance/dominance4.png)", "value": "4"},
+            {"label": "![dominance5](libraries/sam/assets/dominance/dominance5.png)", "value": "5"},
+            {"label": "![dominance6](libraries/sam/assets/dominance/dominance6.png)", "value": "6"},
+            {"label": "![dominance7](libraries/sam/assets/dominance/dominance7.png)", "value": "7"},
+            {"label": "![dominance8](libraries/sam/assets/dominance/dominance8.png)", "value": "8"},
+            {"label": "![dominance9](libraries/sam/assets/dominance/dominance9.png)", "value": "9"}
+          ],
+          "stylesheetPath": "libraries/sam/assets/stylesheet.css"
+        }  
+      ]
+    }
+  },
+  "sequences": {
+    "3-dimensions": {
+      "id": "sam-3-dimensions",
+      "order": "fixed",
+      "components": [
+        "pleasure",
+        "arousal",
+        "dominance"
+      ]
+    }
+  }
+}

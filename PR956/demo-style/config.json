@@ -1,0 +1,518 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Styling Demo Study",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-07-09",
+    "description": "A comprehensive demo of styled components and responses.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-style/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "windowEventDebounceTime": 200
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-style/assets/introduction.md",
+      "response": []
+    },
+    "markdown-component": {
+      "type": "markdown",
+      "path": "demo-style/assets/markdownComponent.md",
+      "response": [
+      ],
+      "style": {
+        "width": "800px",
+        "margin": "20px auto",
+        "padding": "30px",
+        "fontFamily": "Georgia, serif", 
+        "lineHeight": "2",
+        "backgroundColor": "#deeff5",
+        "fontSize": "16px",
+        "border": "1px solid #e0e0e0",
+        "borderRadius": "12px"
+      }
+    },
+    "react-component": {
+      "type": "react-component",
+      "path": "demo-click-accuracy-test/assets/ClickAccuracyTest.tsx",
+      "parameters": {
+        "speed": 100
+      },
+      "style": {
+        "width": "900px",
+        "margin": "20px auto",
+        "padding": "20px",
+        "backgroundColor": "#ffe7c7", 
+        "borderRadius": "10px"
+      },
+      "response": [
+        {
+          "id": "react-component-style",
+          "prompt": "This is a react component with the following style: <br> `width: 900px` <br> `margin: 20px auto` <br> `padding: 20px`  <br>  `backgroundColor: #ffe7c7` <br> `borderRadius: 10px`",
+          "type": "textOnly", 
+          "location": "aboveStimulus"
+        }
+      ]
+    },
+    "image-component": {
+      "type": "image",
+      "path": "demo-image/assets/uncertainty-1.png",
+      "response": [
+        {
+          "id": "image-component-style",
+          "prompt": "The style of this image component with the following style: <br> `width: 600px` <br> `margin: 30px auto` <br> `filter: blur(2px)` <br> `transform: rotate(2deg)` <br> `border: 1px solid black`",
+          "type": "textOnly",
+          "location": "aboveStimulus"
+        }
+      ],
+      "style": {
+        "width": "600px",
+        "margin": "30px auto",
+        "filter": "blur(2px)",
+        "transform": "rotate(2deg)",
+        "border": "1px solid black"
+      }
+    },
+    "website-component": {
+      "type": "website",
+      "path": "https://revisit.dev/docs/introduction/",
+      "style": {
+        "border": "5px solid #e0e0e0",
+        "borderRadius": "10px"
+      },
+      "response": [
+        {
+          "id": "website-component-style",
+          "prompt": "The style of this website component is: <br> `border: 5px solid #e0e0e0` <br> `borderRadius: 10px`",
+          "type": "textOnly",
+          "location": "aboveStimulus"
+        }
+      ]
+    },
+    "vega-component": {
+      "type": "vega",
+      "path": "demo-vega/specs/vegademo1.specs.json",
+      "response": [
+        {
+          "id": "vega-path-component-style",
+          "prompt": "The style of this vega component is: <br>`width: 500px` <br> `margin: 30px auto` <br> `padding: 16px`",
+          "type": "textOnly",
+          "location": "aboveStimulus"
+        }
+      ],
+      "style": {
+        "width": "500px",
+        "margin": "30px auto",
+        "padding": "16px"
+      }
+    },
+    "video-component": {
+      "type": "video",
+      "path": "demo-video/assets/venice.mp4",
+      "forceCompletion": false,
+      "withTimeline": true,
+      "response": [
+        {
+          "id": "video-component-style",
+          "prompt": "The style of this video component is <br> `width: 70%` <br> `margin: 30px auto` <br> `border: 2px solid black`",
+          "type": "textOnly",
+          "location": "aboveStimulus"
+        }
+      ],
+      "style": {
+        "width": "70%",
+        "margin": "30px auto",
+        "border": "2px solid black"
+      }
+    },
+    "responses": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "text-only-response-style",
+          "prompt": "The style of this Text-Only response is: <br> `backgroundColor: #e8f4f8`, `padding: 15px`, `borderRadius: 8px`, `fontSize: 16px`, `fontWeight: 500`, `color: #0f4c75`",
+          "type": "textOnly",
+          "location": "belowStimulus",
+          "style": {
+            "backgroundColor": "#e8f4f8",
+            "padding": "15px",
+            "borderRadius": "8px",
+            "fontSize": "16px",
+            "fontWeight": "500",
+            "color": "#0f4c75"
+          }
+        },
+        {
+          "id": "short-text-response-style",
+          "prompt": "What's your favorite color?",
+          "secondaryText": "fontFamily: 'Courier New', monospace; margin: 20px auto; padding: 10px; letterSpacing: 2px",
+          "type": "shortText",
+          "location": "belowStimulus",
+          "placeholder": "Enter your favorite color",
+          "required": false,
+          "style": {
+            "fontFamily": "'Courier New', monospace",
+            "margin": "20px auto",
+            "padding": "10px",
+            "letterSpacing": "2px"
+          }
+        },
+        {
+          "id": "numerical-response-style",
+          "prompt": "How many websites do you visit daily?",
+          "secondaryText": "width: 700px; margin: 10px auto; padding: 12px; border: 2px solid green; border-radius: 6px; background-color: #f8fff9; color: green",
+          "type": "numerical",
+          "location": "belowStimulus",
+          "min": 1,
+          "max": 999,
+          "placeholder": "Enter number",
+          "required": false,
+          "style": {
+            "width": "700px",
+            "margin": "10px auto",
+            "padding": "12px",
+            "border": "2px solid green",
+            "borderRadius": "6px",
+            "backgroundColor": "#f8fff9",
+            "color": "green"
+          }
+        },
+        {
+          "id": "long-text-response-style",
+          "type": "longText",
+          "prompt": "What makes a website design effective and visually appealing?",
+          "secondaryText": "width: 700px; margin: 25px auto; padding: 15px; border: 3px dashed #dc3545; border-radius: 10px; background-color: #fff5f5; color: #721c24; fontStyle: italic; fontWeight: 600; textTransform: lowercase", 
+          "location": "belowStimulus",
+          "placeholder": "Enter your answer",
+          "required": false,
+          "style": {
+            "width": "700px",
+            "margin": "25px auto",
+            "padding": "15px",
+            "border": "3px dashed #dc3545",
+            "borderRadius": "10px",
+            "backgroundColor": "#fff5f5",
+            "color": "#721c24",
+            "fontStyle": "italic",
+            "fontWeight": "600",
+            "textTransform": "lowercase"
+          }
+        },
+        {
+          "id": "likert-response-style",
+          "prompt": "How much do you enjoy interactive web elements?",
+          "secondaryText": "width: 700px; margin: 30px auto; padding: 20px; background: linear-gradient(#667eea, #764ba2); borderRadius: 12px; textAlign: center;",
+          "type": "likert",
+          "location": "belowStimulus",
+          "numItems": 7,
+          "leftLabel": "Not enjoyable at all",
+          "rightLabel": "Extremely enjoyable",
+          "required": false,
+          "style": {
+            "width": "700px",
+            "margin": "30px auto",
+            "padding": "20px",
+            "background": "linear-gradient(to bottom right, #f5f5f5, #e0e0e0)",
+            "borderRadius": "12px",
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "matrix-response-style",
+          "prompt": "What is your overall opinion on the use of the following CSS styles?",
+          "secondaryText": "width: 700px; margin: 15px auto; border: 3px solid #ffc107; borderRadius: 8px; padding: 15px; backgroundColor: #fff8e1; color: #856404; fontSize: 14px; fontWeight: 500; top: 10px; left: 10px",
+          "type": "matrix-radio",
+          "location": "belowStimulus",
+          "answerOptions": ["Needs improvement", "Fair", "Good", "Excellent"],
+          "questionOptions": ["Backgrounds", "Fonts", "Colors"],
+          "required": false,
+          "style": {
+            "width": "700px",
+            "margin": "15px auto",
+            "border": "3px solid #ffc107",
+            "borderRadius": "8px",
+            "padding": "15px",
+            "backgroundColor": "#fff8e1",
+            "color": "#856404",
+            "fontSize": "14px",
+            "fontWeight": "500",
+            "top": "10px",
+            "left": "20px"
+          }
+        },
+        {
+          "id": "buttons-response-style",
+          "prompt": "Would you use this styling approach in your own projects?",
+          "secondaryText": "width: 700px; margin: 25px auto; padding: 25px; border: 4px ridge #20c997; borderRadius: 30px; backgroundColor: #e8f8f5; color: #0f5132; textAlign: right; transform: rotate(-1deg); bottom: 8px",
+          "type": "buttons",
+          "location": "belowStimulus",
+          "options": ["Never", "Probably not", "Maybe", "Definitely"],
+          "required": false,
+          "style": {
+            "width": "700px",
+            "margin": "25px auto",
+            "padding": "25px",
+            "border": "4px ridge #20c997",
+            "borderRadius": "30px",
+            "backgroundColor": "#e8f8f5",
+            "color": "#0f5132",
+            "textAlign": "right",
+            "transform": "rotate(-1deg)",
+            "bottom": "8px"
+          }
+        }
+      ]
+    },
+    "markdown-styling": {
+      "type": "markdown",
+      "path": "demo-style/assets/componentStylesheet.md",
+      "stylesheetPath": "demo-style/assets/style/componentStylesheet.css",
+      "response": [
+      ]
+    },
+    "interactive-responses": {
+      "type": "markdown",
+      "path": "demo-style/assets/responseStylesheet.md",
+      "response": [
+        {
+          "id": "likert-response",
+          "prompt": "Try clicking on the background of this response and see what happens.",
+          "type": "likert",
+          "location": "belowStimulus",
+          "numItems": 5,
+          "leftLabel": "Needs improvement",
+          "rightLabel": "Excellent design",
+          "required": false,
+          "stylesheetPath": "demo-style/assets/style/responseStylesheet.css"
+        },
+        {
+          "id": "short-text-response",
+          "prompt": "Try hovering on this response block.",
+          "type": "shortText",
+          "location": "belowStimulus",
+          "required": false,
+          "stylesheetPath": "demo-style/assets/style/responseStylesheet.css"
+        },
+        {
+          "id": "final-feedback",
+          "prompt": "Please provide any feedback on this styling demo.",
+          "type": "longText",
+          "location": "belowStimulus",
+          "placeholder": "Your feedback",
+          "required": false,
+          "stylesheetPath": "demo-style/assets/style/responseStylesheet.css"
+        }
+      ]
+    },
+    "survey-form": {
+      "type": "image",
+      "path": "demo-style/assets/utah.jpg",
+      "stylesheetPath": "demo-style/assets/style/form.css",
+      "response": [
+        {
+          "id": "form-title",
+          "prompt": "Welcome to our study!",
+          "type": "textOnly",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "form-gender",
+          "required": false,  
+          "prompt": "What is your gender?",
+          "type": "radio",
+          "location": "belowStimulus",
+          "options": ["Male", "Female", "Other"]
+        },
+        {
+          "id": "form-age",
+          "required": false,
+          "prompt": "How old are you?",
+          "type": "radio",
+          "location": "belowStimulus",
+          "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
+        },
+        {
+          "id": "form-education",
+          "required": false,
+          "prompt": "What is your highest level of education?",
+          "type": "radio",
+          "location": "belowStimulus",
+          "options": ["High School", "Bachelor's", "Master's", "Doctorate"]
+        },
+        {
+          "id": "form-occupation",
+          "required": false,
+          "prompt": "What is your occupation?",
+          "type": "shortText",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "form-comment",
+          "required": false,
+          "prompt": "Please give us any feedback on this survey.",
+          "type": "longText",
+          "location": "belowStimulus"
+        }
+      ]
+    },
+    "large-text": {
+      "type": "questionnaire",
+      "stylesheetPath": "demo-style/assets/style/largeText.css",
+      "response": [
+        {
+          "id": "large-text-title",
+          "prompt": "Large Text Style Demo",
+          "type": "textOnly",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "large-text-age",
+          "required": false,
+          "prompt": "How old are you?",
+          "type": "radio",
+          "horizontal": true,
+          "location": "belowStimulus",
+          "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
+        },
+        {
+          "id": "large-text-readability",
+          "required": false,
+          "prompt": "How readable is this text?",
+          "type": "radio",
+          "horizontal": true,
+          "location": "belowStimulus",
+          "options": ["Very difficult", "Difficult", "Neutral", "Easy", "Very easy"]
+        },
+        {
+          "id": "large-text-fit",
+          "required": false,
+          "prompt": "Did the text fit well on your screen?",
+          "type": "radio",
+          "horizontal": true,
+          "options": ["Yes", "Mostly", "No"]
+        },
+        {
+          "id": "large-text-comment",
+          "required": false,
+          "prompt": "Do you have any comments or suggestions about the large text styling?",
+          "type": "longText",
+          "location": "belowStimulus",
+          "placeholder": "Your feedback"
+        }
+      ]
+    },
+    "layout": {
+      "type": "questionnaire",
+      "stylesheetPath": "demo-style/assets/style/layout.css",
+      "response": [
+        {
+          "id": "layout-title",
+          "prompt": "Layout Style Demo",
+          "type": "textOnly",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "layout-color",
+          "required": false,
+          "prompt": "What is your favorite color?",
+          "placeholder": "Enter your favorite color",
+          "type": "shortText",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "layout-website",
+          "required": false,
+          "prompt": "How many websites do you visit daily?",
+          "type": "numerical",
+          "location": "belowStimulus",
+          "min": 1,
+          "max": 99,
+          "placeholder": "Enter number"
+        },
+        {
+          "id": "layout-web-enjoyment",
+          "required": false,
+          "prompt": "Do you enjoy interactive web elements?",
+          "type": "radio",
+          "location": "belowStimulus",
+          "options": ["Yes", "No"]
+        },
+        {
+          "id": "layout-website-design",
+          "required": false,
+          "prompt": "What makes a website design effective and visually appealing?",
+          "type": "longText",
+          "location": "belowStimulus",
+          "placeholder": "Enter your answer"
+        },
+        {
+          "id": "layout-preference",
+          "required": false,
+          "prompt": "Would you use this styling approach in your own projects?",
+          "type": "buttons",
+          "location": "belowStimulus",
+          "options": ["Never", "Probably not", "Maybe", "Definitely"]
+        },
+        {
+          "id": "layout-opinion",
+          "required": false,
+          "prompt": "What is your overall opinion on the use of the following CSS styles?",
+          "type": "matrix-radio",
+          "location": "belowStimulus",
+          "answerOptions": ["Needs improvement", "Fair", "Good", "Excellent"],
+          "questionOptions": ["Backgrounds", "Fonts", "Colors"]
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "id": "style",
+        "order": "fixed",
+        "components": [
+          "markdown-component",
+          "react-component",
+          "image-component",
+          "website-component",
+          "vega-component",
+          "video-component",
+          "responses"
+        ]
+      },
+      {
+        "id": "stylesheet",
+        "order": "fixed",
+        "components": [
+          "markdown-styling",
+          "interactive-responses"
+        ]
+      },
+      {
+        "id": "demo",
+        "order": "fixed",
+        "components": [
+          "survey-form",
+          "large-text",
+          "layout"
+        ]
+      }
+    ]
+  }
+}
