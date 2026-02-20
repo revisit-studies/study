@@ -17,7 +17,7 @@ In the original study, participants were shown a RRNL showing blood glucose or b
 We recreated each of the visualization types for both normal and abnormal results of blood glucose and blood pressure conditions as done in the original study.
 
 Figure 2: Our replicated visualizations using Vega.
-![](README-images/OurReplicatedRRNLs.png)
+![](README-images/OurReplicatedRRNLs.png) 
 
 This amassed to 16 total visualizations: 4 vis types x 2 possibilities for normal x 2 test measures.
 
