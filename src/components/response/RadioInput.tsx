@@ -2,14 +2,15 @@ import {
   Group, Input, Radio, rem, Text,
 } from '@mantine/core';
 import { useState, useMemo } from 'react';
-import { RadioResponse, StringOption } from '../../parser/types';
+import { ParsedStringOption, RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Radio.module.css';
 import inputClasses from './css/Input.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
+import { OptionLabel } from './OptionLabel';
+import { parseStringOptions } from '../../utils/stringOptions';
 
 export function RadioInput({
   response,
@@ -42,9 +43,12 @@ export function RadioInput({
   } = response;
 
   const storedAnswer = useStoredAnswer();
-  const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
+  const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
 
-  const orderedOptions = useMemo(() => optionOrders[response.id] || options.map((option) => (typeof (option) === 'string' ? { label: option, value: option } : option)), [optionOrders, options, response.id]);
+  const orderedOptions = useMemo(
+    () => parseStringOptions(optionOrders[response.id] || options),
+    [optionOrders, options, response.id],
+  );
 
   const [otherSelected, setOtherSelected] = useState(false);
 
@@ -82,11 +86,11 @@ export function RadioInput({
                 alignItems: 'center',
               }}
             >
-              {horizontal && <ReactMarkdownWrapper text={radio.label} />}
+              {horizontal && <OptionLabel label={radio.label} infoText={radio.infoText} />}
               <Radio
                 disabled={disabled}
                 value={radio.value}
-                label={radio.label}
+                label={<OptionLabel label={radio.label} infoText={radio.infoText} />}
                 styles={{
                   label: { display: !horizontal ? 'initial' : 'none' },
                 }}
@@ -96,34 +100,34 @@ export function RadioInput({
             </div>
           ))}
           {withOther && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: horizontal ? 'column' : 'row',
-              gap: horizontal ? 'unset' : rem(12),
-              flex: stretch ? 1 : 'unset',
-              alignItems: 'center',
-            }}
-          >
-            {horizontal && <Text size="sm">Other</Text>}
-            <Radio
-              disabled={disabled}
-              value="other"
-              checked={otherSelected}
-              onClick={(event) => setOtherSelected(event.currentTarget.checked)}
-              label={!horizontal && (
-              <Input
-                mt={-8}
-                placeholder="Other"
-                disabled={!otherSelected}
-                {...otherValue}
-                classNames={{ input: inputClasses.fixDisabled }}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: horizontal ? 'column' : 'row',
+                gap: horizontal ? 'unset' : rem(12),
+                flex: stretch ? 1 : 'unset',
+                alignItems: 'center',
+              }}
+            >
+              {horizontal && <Text size="sm">Other</Text>}
+              <Radio
+                disabled={disabled}
+                value="other"
+                checked={otherSelected}
+                onClick={(event) => setOtherSelected(event.currentTarget.checked)}
+                label={!horizontal && (
+                  <Input
+                    mt={-8}
+                    placeholder="Other"
+                    disabled={!otherSelected}
+                    {...otherValue}
+                    classNames={{ input: inputClasses.fixDisabled }}
+                  />
+                )}
+                mt={0}
+                classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
               />
-              )}
-              mt={0}
-              classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
-            />
-          </div>
+            </div>
           )}
         </HorizontalHandler>
         {horizontal && label === 'inline' && rightLabel && <Text>{rightLabel}</Text>}

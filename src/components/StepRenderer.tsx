@@ -148,7 +148,7 @@ export function StepRenderer() {
             aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
             footer={{ height: isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0 }}
           >
-            <AppAside />
+            {asideOpen && <AppAside />}
             {showTitleBar && (
             <AppHeader developmentModeEnabled={developmentModeEnabled} dataCollectionEnabled={dataCollectionEnabled} />
             )}

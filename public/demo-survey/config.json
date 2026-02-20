@@ -118,7 +118,10 @@
           "type": "dropdown",
           "placeholder": "Enter your preference",
           "options": [
-            "Bar",
+            {
+              "label": "Bar",
+              "infoText": "A bar chart is useful for comparing values across categories."
+            },
             "Bubble",
             "Pie",
             "Stacked Bar"
@@ -136,7 +139,10 @@
             "Bubble",
             "Pie",
             "Stacked Bar",
-            "Line",
+            {
+              "label": "Line",
+              "infoText": "A line chart is commonly used for trends over time."
+            },
             "Scatter",
             "Histogram"
           ],
@@ -181,8 +187,14 @@
           "infoText": "Select the option that best represents your choice.",
           "type": "radio",
           "options": [
-            "Option 1",
-            "Option 2"
+            {
+              "label": "Option 1",
+              "infoText": "This is info text for Option 1."
+            },
+            {
+              "label": "Option 2",
+              "value": "Option 2"
+            }
           ],
           "withOther": true
         },
@@ -206,7 +218,10 @@
           "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
           "infoText": "Choose the option that best represents your answer.",
           "options": [
-            "Option 1",
+            {
+              "label": "Option 1",
+              "infoText": "This is info text for button option 1."
+            },
             "Option 2",
             "Option 3",
             "Option 4"
@@ -256,15 +271,33 @@
           "infoText": "For each animal, select all the categories that apply. You can select multiple checkboxes per row.",
           "type": "matrix-checkbox",
           "answerOptions": [
-            "Has Legs",
-            "Has Wings",
-            "Can Swim"
+            {
+              "label": "Has Legs",
+              "infoText": "Use this when the animal has legs."
+            },
+            {
+              "label": "Has Wings",
+              "infoText": "Use this when the animal has wings."
+            },
+            {
+              "label": "Can Swim",
+              "infoText": "Use this when the animal can swim."
+            }
           ],
           "questionOptions": [
             "Dog",
-            "Snake",
-            "Eagle",
-            "Salmon",
+            {
+              "label": "Snake",
+              "infoText": "Snakes do not have legs."
+            },
+            {
+              "label": "Eagle",
+              "infoText": "Eagles are birds with wings."
+            },
+            {
+              "label": "Salmon",
+              "infoText": "Salmon can swim."
+            },
             "Platypus"
           ]
         }
@@ -501,7 +534,7 @@
         }
       ]
     },
-     "Sidebar Form Elements": {
+    "Sidebar Form Elements": {
       "type": "questionnaire",
       "response": [
         {
@@ -510,7 +543,7 @@
           "prompt": "# Form Elements in Sidebars \n\n This page shows form elements that can be used in the sidebar. \n\n For all elements that have horizontal and vertical variants, you should always use the vertical one in the sidebars. \n\n Matrix form elements are not supported in the sidebar. \n\n Limit Likert scales to 7 or less to fit. \n\n Limit the number of buttons to avoid overflow.",
           "restartEnumeration": true
         },
-       {
+        {
           "id": "numericalInputTitle",
           "type": "textOnly",
           "prompt": "## Numerical Inputs",

@@ -14,6 +14,7 @@
     "generate-schemas": "yarn generate-schema:StudyConfig && yarn generate-schema:GlobalConfig && yarn generate-schema:LibraryConfig",
     "test": "playwright test",
     "unittest": "vitest",
+    "find-revisit-users": "bash scripts/find-revisit-users.sh",
     "preinstall": "node -e \"if(!/yarn\\.js$/.test(process.env.npm_execpath))throw new Error('Use yarn')\"",
     "postinstall": "husky"
   },
@@ -78,8 +79,8 @@
     "typedoc-plugin-markdown": "^4.9.0",
     "use-deep-compare-effect": "^1.8.1",
     "uuid": "^11.0.5",
-    "vega": "^5.0.0",
-    "vega-lite": "^5.0.0",
+    "vega": "^6.2.0",
+    "vega-lite": "^5.23.0",
     "vite": "^7.1.6",
     "wavesurfer-react": "^3.0.4",
     "wavesurfer.js": "^7.10.1",

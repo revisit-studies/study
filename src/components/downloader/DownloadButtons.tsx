@@ -135,6 +135,7 @@ export function DownloadButtons({
           filename={fileName ? `${fileName}_tidy.csv` : `${studyId}_all_tidy.csv`}
           data={participants}
           studyId={studyId}
+          hasAudio={hasAudio}
         />
       )}
     </>

@@ -280,7 +280,9 @@ export interface UIConfig {
   allowFailedTraining?: boolean;
   /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false. */
   recordAudio?: boolean;
-  /** Whether or not we want to utilize screen recording feature. If true, will record audio on all components unless deactivated on individual components. This must be set to true if you want to record audio on any component in your study. Defaults to false. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before any component that you want to record the screen on to ensure permissions are granted and screen capture has started. */
+  /** Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false. */
+  clickToRecord?: boolean;
+  /** Whether or not we want to utilize screen recording feature. If true, will record audio on all components unless deactivated on individual components. This must be set to true if you want to record audio on any component in your study. Defaults to false. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before any component that you want to record the screen on to ensure permissions are granted and screen capture has started. */
   recordScreen?: boolean;
   /** Desired fps for recording screen. If possible, this value will be used, but if it's not possible, the user agent will use the closest possible match. */
   recordScreenFPS?: number;
@@ -324,7 +326,14 @@ export interface NumberOption {
 export interface StringOption {
   /** The label displayed to participants. Markdown is supported. */
   label: string;
-  /** The value stored in the participant's data. */
+  /** The value stored in the participant's data. Defaults to label. */
+  value?: string;
+  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to responses that use StringOption, including DropdownResponse, RadioResponse, CheckboxResponse, ButtonsResponse, RankingResponse, and MatrixResponse. */
+  infoText?: string;
+}
+
+/** StringOption normalized to always include a value. */
+export interface ParsedStringOption extends Omit<StringOption, 'value'> {
   value: string;
 }
 
@@ -522,9 +531,9 @@ Here's an example using custom columns (answerOptions):
 export interface MatrixResponse extends BaseResponse {
   type: 'matrix-radio' | 'matrix-checkbox';
   /** The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from. */
-  answerOptions: string[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
+  answerOptions: (StringOption | string)[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
   /** The question options (rows) are the prompts for each response you'd like to record. */
-  questionOptions: string[];
+  questionOptions: (StringOption | string)[];
   /** The order in which the questions are displayed. Defaults to fixed. */
   questionOrder?: 'fixed' | 'random';
 }
@@ -918,7 +927,7 @@ export interface BaseIndividualComponent {
   /** Whether to show the previous button. If present, will override the previous button setting in the uiConfig. */
   previousButton?: boolean;
   /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
-  previousButtonText?:string;
+  previousButtonText?: string;
   /** Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig. */
   provideFeedback?: boolean;
   /** The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig. */
@@ -927,7 +936,9 @@ export interface BaseIndividualComponent {
   allowFailedTraining?: boolean;
   /** Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig. */
   recordAudio?: boolean;
-  /** Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started. */
+  /** Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false. */
+  clickToRecord?: boolean;
+  /** Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started. */
   recordScreen?: boolean;
   /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig. */
   enumerateQuestions?: boolean;
@@ -1519,6 +1530,8 @@ export interface DynamicBlock {
   functionPath: string;
   /** The parameters that are passed to the function. These can be used within your function to render different things. */
   parameters?: Record<string, unknown>;
+  /** The conditional property shows the block only when the URL condition matches its `id`. */
+  conditional?: boolean;
 }
 
 /** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).
@@ -1638,6 +1651,8 @@ export interface ComponentBlock {
   interruptions?: InterruptionBlock[];
   /** The skip conditions for the block. */
   skip?: SkipConditions;
+  /** The conditional property shows the block only when the URL condition matches its `id`. */
+  conditional?: boolean;
 }
 
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
@@ -1775,14 +1790,17 @@ export interface LibraryConfig {
   baseComponents?: BaseComponents;
 }
 
+export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar';
+
 /**
  * @ignore
  * Helper error type to make reading the error messages easier
  */
 export type ParserErrorWarning = {
   instancePath: string;
-  message?: string;
+  message: string;
   params: object;
+  category: ErrorWarningCategory;
 }
 
 /**
