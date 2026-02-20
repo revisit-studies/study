@@ -3,7 +3,7 @@ import { parseDocument } from 'yaml';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
-  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig,
+  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig, ParserErrorWarning, IndividualComponent,
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
@@ -22,7 +22,7 @@ function verifyGlobalConfig(data: GlobalConfig) {
   const errors: { message: string }[] = [];
   const configsListVerified = data.configsList.every((configName) => {
     if (data.configs[configName] === undefined) {
-      errors.push({ message: `Config ${configName} is not defined in configs object, but is present in configsList` });
+      errors.push({ message: `Config \`${configName}\` is not defined in configs object, but is present in configsList` });
       return false;
     }
     return true;
@@ -51,7 +51,8 @@ export function parseGlobalConfig(fileData: string) {
 function verifyStudySkip(
   sequence: StudyConfig['sequence'],
   skipTargets: string[],
-  errors: { message: string, instancePath: string, params: { 'action': string } }[] = [],
+  errors: ParserErrorWarning[] = [],
+  warnings: ParserErrorWarning[] = [],
 ) {
   if (isDynamicBlock(sequence)) {
     return;
@@ -59,11 +60,12 @@ function verifyStudySkip(
 
   // Base case: empty sequence
   if (sequence.components.length === 0) {
-    // Push an error for an empty components array
-    errors.push({
+    // Push a warning for an empty components array
+    warnings.push({
       message: 'Sequence has an empty components array',
       instancePath: '/sequence/',
-      params: { action: 'remove empty components block' },
+      params: { action: 'Remove empty components block or add components to the sequence' },
+      category: 'sequence-validation',
     });
     return;
   }
@@ -106,7 +108,7 @@ function verifyStudySkip(
       }
     } else {
       // Recursive case: component is a block
-      verifyStudySkip(component, skipTargets, errors);
+      verifyStudySkip(component, skipTargets, errors, warnings);
     }
   });
 
@@ -121,18 +123,61 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   const errors: ParsedConfig<StudyConfig>['errors'] = [];
   const warnings: ParsedConfig<StudyConfig>['warnings'] = [];
 
-  verifyLibraryUsage(studyConfig, errors, importedLibrariesData);
+  verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
 
   // Verify components are well defined
   Object.entries(studyConfig.components)
     .forEach(([componentName, component]) => {
+      const isImportedLibraryComponent = componentName.startsWith('$') && componentName.includes('.components.');
+
       // Verify baseComponent is defined in baseComponents object
       if (isInheritedComponent(component) && !studyConfig.baseComponents?.[component.baseComponent]) {
         errors.push({
           message: `Base component \`${component.baseComponent}\` is not defined in baseComponents object`,
-          instancePath: `/components/${componentName}`,
-          params: { action: 'add the base component to the baseComponents object' },
+          instancePath: '/baseComponents/',
+          params: { action: 'Add the base component to the baseComponents object' },
+          category: 'undefined-base-component',
         });
+      }
+
+      const baseComponent = isInheritedComponent(component)
+        ? studyConfig.baseComponents?.[component.baseComponent]
+        : undefined;
+      const resolvedComponent: Partial<IndividualComponent> = {
+        ...(baseComponent || {}),
+        ...component,
+      };
+
+      const isInheritedFromImportedLibrary = isInheritedComponent(component)
+        && component.baseComponent.startsWith('$')
+        && component.baseComponent.includes('.components.');
+
+      const isUsingSidebarInOwnComponent = component.instructionLocation === 'sidebar'
+        || component.nextButtonLocation === 'sidebar'
+        || component.response?.some((r) => 'location' in r && r.location === 'sidebar');
+      const hasOwnSidebarOverride = component.withSidebar !== undefined;
+
+      // Verify sidebar is enabled if component uses sidebar locations
+      // Imported library components are validated in verifyLibraryUsage to avoid duplicate warnings.
+      if (!isImportedLibraryComponent && (!isInheritedFromImportedLibrary || isUsingSidebarInOwnComponent || hasOwnSidebarOverride)) {
+        const sidebarDisabled = !(resolvedComponent.withSidebar ?? studyConfig.uiConfig.withSidebar);
+        const isUsingSidebar = resolvedComponent.instructionLocation === 'sidebar'
+          || resolvedComponent.nextButtonLocation === 'sidebar'
+          || resolvedComponent.response?.some((r) => 'location' in r && r.location === 'sidebar');
+
+        if (sidebarDisabled && isUsingSidebar) {
+          const instancePath = component.withSidebar === false
+            ? '/components/'
+            : baseComponent?.withSidebar === false
+              ? '/baseComponents/'
+              : '/uiConfig/';
+          warnings.push({
+            message: `Component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
+            instancePath,
+            params: { action: 'Enable the sidebar or move the location to belowStimulus or aboveStimulus' },
+            category: 'disabled-sidebar',
+          });
+        }
       }
     });
 
@@ -142,13 +187,21 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   usedComponents.forEach((component) => {
     // Verify component is defined in components object
     if (!studyConfig.components[component]) {
-      errors.push({
-        message: studyConfig.baseComponents?.[component]
-          ? `Component \`${component}\` is a base component and cannot be used in the sequence`
-          : `Component \`${component}\` is not defined in components object`,
-        instancePath: '/sequence/',
-        params: { action: 'add the component to the components object' },
-      });
+      if (studyConfig.baseComponents?.[component]) {
+        errors.push({
+          message: `Component \`${component}\` is a base component and cannot be used in the sequence`,
+          instancePath: '/sequence/',
+          params: { action: 'Remove the base component from the sequence' },
+          category: 'sequence-validation',
+        });
+      } else {
+        errors.push({
+          message: `Component \`${component}\` is not defined in components object`,
+          instancePath: '/components/',
+          params: { action: 'Add the component to the components object' },
+          category: 'undefined-component',
+        });
+      }
     }
   });
 
@@ -163,18 +216,20 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
       warnings.push({
         message: `Component \`${componentName}\` is defined in components object but not used deterministically in the sequence`,
         instancePath: '/components/',
-        params: { action: 'remove the component from the components object or add it to the sequence' },
+        params: { action: 'Remove the component from the components object or add it to the sequence' },
+        category: 'unused-component',
       });
     });
 
   // Verify skip blocks are well defined
   const missingSkipTargets: string[] = [];
-  verifyStudySkip(studyConfig.sequence, missingSkipTargets);
+  verifyStudySkip(studyConfig.sequence, missingSkipTargets, errors, warnings);
   missingSkipTargets.forEach((skipTarget) => {
     errors.push({
       message: `Skip target \`${skipTarget}\` does not occur after the skip block it is used in`,
       instancePath: '/sequence/',
-      params: { action: 'add the target to the sequence after the skip block' },
+      params: { action: 'Add the target to the sequence after the skip block' },
+      category: 'skip-validation',
     });
   });
 
@@ -200,12 +255,13 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
     }
   }
 
-  let errors: Required<ParsedConfig<StudyConfig>>['errors'] = (studyValidate.errors || []).map((e) => ({
+  let errors: ParserErrorWarning[] = (studyValidate.errors || []).map((e) => ({
     message: e.message || 'Validation error',
     instancePath: (e.instancePath as string) || '',
     params: (e.params as object) || {},
+    category: 'invalid-config',
   }));
-  let warnings: Required<ParsedConfig<StudyConfig>>['warnings'] = [];
+  let warnings: ParserErrorWarning[] = [];
 
   // We can only run our custom validator if the schema validation passes
   if (validatedData && data) {
@@ -232,7 +288,12 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
     errors = [...errors, ...parserErrors];
     warnings = [...warnings, ...parserWarnings];
   } else {
-    errors = [...errors, { message: 'There was an issue validating your config file', instancePath: 'root', params: { action: 'fix the errors in your file or make sure the global config references the right file path' } }];
+    errors = [...errors, {
+      message: 'There was an issue validating your config file',
+      instancePath: 'root',
+      params: { action: 'Fix the errors in your file or make sure the global config references the right file path' },
+      category: 'invalid-config',
+    }];
   }
 
   return { ...data as StudyConfig, errors, warnings };

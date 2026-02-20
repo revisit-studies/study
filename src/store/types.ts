@@ -155,6 +155,7 @@ export interface Sequence {
   components: (string | Sequence)[];
   skip: SkipConditions;
   interruptions?: InterruptionBlock[];
+  conditional?: boolean;
 }
 
 export type FormElementProvenance = { form: StoredAnswer['answer'] };

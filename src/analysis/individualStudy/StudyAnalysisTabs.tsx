@@ -29,6 +29,7 @@ import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
+import { parseConditionParam } from '../../utils/handleSequenceConditions';
 import 'mantine-react-table/styles.css';
 import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
@@ -73,6 +74,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [selectedParticipants, setSelectedParticipants] = useState<ParticipantData[]>([]);
   const [selectedConfigs, setSelectedConfigs] = useState<string[]>(['ALL']);
   const [availableConfigs, setAvailableConfigs] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
+  const [selectedConditions, setSelectedConditions] = useState<string[]>(['ALL']);
+  const [availableConditions, setAvailableConditions] = useState<{ value: string; label: string }[]>([]);
 
   const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
 
@@ -100,12 +103,21 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       ? configFiltered
       : configFiltered.filter((d) => selectedStages.includes(d.stage || ''));
 
+    // Apply condition filter before counting
+    const conditionFiltered = selectedConditions.includes('ALL')
+      ? stageFiltered
+      : stageFiltered.filter((d) => {
+        const conds = parseConditionParam(d.conditions ?? d.searchParams?.condition);
+        const normalizedConds = conds.length > 0 ? conds : ['default'];
+        return normalizedConds.some((c) => selectedConditions.includes(c));
+      });
+
     return {
-      completed: stageFiltered.filter((d) => !d.rejected && d.completed).length,
-      inprogress: stageFiltered.filter((d) => !d.rejected && !d.completed).length,
-      rejected: stageFiltered.filter((d) => d.rejected).length,
+      completed: conditionFiltered.filter((d) => !d.rejected && d.completed).length,
+      inprogress: conditionFiltered.filter((d) => !d.rejected && !d.completed).length,
+      rejected: conditionFiltered.filter((d) => d.rejected).length,
     };
-  }, [expData, selectedStages, selectedConfigs]);
+  }, [expData, selectedStages, selectedConfigs, selectedConditions]);
 
   const selectedParticipantCounts = useMemo(() => {
     if (selectedParticipants.length === 0) return { completed: 0, inprogress: 0, rejected: 0 };
@@ -137,8 +149,17 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       ? configFiltered
       : configFiltered.filter((d) => selectedStages.includes(d.stage || ''));
 
-    return stageFiltered.sort(sortByStartTime);
-  }, [expData, includedParticipants, selectedStages, selectedConfigs]);
+    // Apply condition filter - if "ALL" is selected, show all participants
+    const conditionFiltered = selectedConditions.includes('ALL')
+      ? stageFiltered
+      : stageFiltered.filter((d) => {
+        const conds = parseConditionParam(d.conditions ?? d.searchParams?.condition);
+        const normalizedConds = conds.length > 0 ? conds : ['default'];
+        return normalizedConds.some((c) => selectedConditions.includes(c));
+      });
+
+    return conditionFiltered.sort(sortByStartTime);
+  }, [expData, includedParticipants, selectedStages, selectedConfigs, selectedConditions]);
 
   // Load available stages
   const loadStages = useCallback(async () => {
@@ -188,7 +209,18 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     }
   }, [studyId, storageEngine, expData]);
 
-  // Load configs and clear selection when dependencies change or tab switches
+  const allConditions = useMemo(() => {
+    if (!expData) return [];
+    const conditionSet = new Set<string>();
+    Object.values(expData).forEach((participant) => {
+      const parsedConditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
+      const normalizedConditions = parsedConditions.length > 0 ? parsedConditions : ['default'];
+      normalizedConditions.forEach((condition) => conditionSet.add(condition));
+    });
+    return Array.from(conditionSet).sort();
+  }, [expData]);
+
+  // Load configs and clear selection when dependencies change
   useEffect(() => {
     loadConfigs();
     setSelectedParticipants([]);
@@ -199,6 +231,28 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     loadStages();
     setSelectedParticipants([]);
   }, [loadStages, analysisTab]);
+
+  // Load condition options from already-loaded participant data and clear selection when they change
+  useEffect(() => {
+    if (allConditions.length === 0) {
+      setAvailableConditions([]);
+      setSelectedConditions(['ALL']);
+      setSelectedParticipants([]);
+      return;
+    }
+
+    const conditionOptions = allConditions.map((condition) => ({
+      value: condition,
+      label: condition,
+    }));
+    setAvailableConditions([{ value: 'ALL', label: 'ALL' }, ...conditionOptions]);
+    setSelectedConditions((previousSelection) => {
+      const validSelections = new Set(['ALL', ...allConditions]);
+      const nextSelection = previousSelection.filter((value) => validSelections.has(value));
+      return nextSelection.length > 0 ? nextSelection : ['ALL'];
+    });
+    setSelectedParticipants([]);
+  }, [allConditions]);
 
   useEffect(() => {
     if (!studyId) return () => { };
@@ -299,6 +353,36 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   }}
                 />
               </Flex>
+
+              {availableConditions.length > 0 && (
+                <Flex direction="row" align="center" gap="xs">
+                  <Text size="sm" fw={500}>Condition:</Text>
+                  <MultiSelect
+                    data={availableConditions}
+                    value={selectedConditions}
+                    onChange={(values) => {
+                      if (values.includes('ALL') && !selectedConditions.includes('ALL')) {
+                        setSelectedConditions(['ALL']);
+                      } else if (values.includes('ALL') && selectedConditions.includes('ALL')) {
+                        setSelectedConditions(values.filter((v) => v !== 'ALL'));
+                      } else if (values.length === 0) {
+                        setSelectedConditions(['ALL']);
+                      } else {
+                        setSelectedConditions(values);
+                      }
+                    }}
+                    w={180}
+                    size="sm"
+                    clearable={false}
+                    maxValues={5}
+                    styles={{
+                      input: {
+                        minHeight: '36px',
+                      },
+                    }}
+                  />
+                </Flex>
+              )}
 
               <Flex direction="row" align="center" gap="xs">
                 <Text size="sm" fw={500}>Participants:</Text>
