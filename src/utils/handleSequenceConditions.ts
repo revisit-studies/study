@@ -14,6 +14,26 @@ export function parseConditionParam(condition?: string | string[] | null): strin
   return condition.split(',').map((c) => c.trim()).filter(Boolean);
 }
 
+export function resolveParticipantConditions({
+  urlCondition,
+  participantConditions,
+  participantSearchParamCondition,
+  allowUrlOverride,
+}: {
+  urlCondition?: string | string[] | null;
+  participantConditions?: string[] | null;
+  participantSearchParamCondition?: string | string[] | null;
+  allowUrlOverride: boolean;
+}): string[] {
+  const parsedUrlCondition = parseConditionParam(urlCondition);
+
+  if (allowUrlOverride && parsedUrlCondition.length > 0) {
+    return parsedUrlCondition;
+  }
+
+  return parseConditionParam(participantConditions ?? participantSearchParamCondition);
+}
+
 export function filterSequenceByCondition(sequence: Sequence, condition?: string | string[] | null): Sequence {
   const conditions = parseConditionParam(condition);
 

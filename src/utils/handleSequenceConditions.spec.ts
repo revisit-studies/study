@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   parseConditionParam,
+  resolveParticipantConditions,
   filterSequenceByCondition,
   getSequenceConditions,
   getConditionParticipantCounts,
@@ -216,6 +217,52 @@ describe('filterSequenceByCondition', () => {
     expect(result.components).toHaveLength(2);
     expect(result.components[0]).toBe('intro');
     expect(result.components[1]).toBe('outro');
+  });
+});
+
+describe('resolveParticipantConditions', () => {
+  it('should use persisted participant conditions when URL override is disabled', () => {
+    const result = resolveParticipantConditions({
+      urlCondition: 'shape',
+      participantConditions: ['color'],
+      participantSearchParamCondition: 'size',
+      allowUrlOverride: false,
+    });
+
+    expect(result).toEqual(['color']);
+  });
+
+  it('should use persisted search param condition when participant conditions are missing', () => {
+    const result = resolveParticipantConditions({
+      urlCondition: 'shape',
+      participantConditions: undefined,
+      participantSearchParamCondition: 'size',
+      allowUrlOverride: false,
+    });
+
+    expect(result).toEqual(['size']);
+  });
+
+  it('should use URL condition when override is enabled', () => {
+    const result = resolveParticipantConditions({
+      urlCondition: 'shape,color',
+      participantConditions: ['size'],
+      participantSearchParamCondition: 'size',
+      allowUrlOverride: true,
+    });
+
+    expect(result).toEqual(['shape', 'color']);
+  });
+
+  it('should fall back to persisted condition when URL condition is empty with override enabled', () => {
+    const result = resolveParticipantConditions({
+      urlCondition: '',
+      participantConditions: ['size'],
+      participantSearchParamCondition: 'color',
+      allowUrlOverride: true,
+    });
+
+    expect(result).toEqual(['size']);
   });
 });
 

@@ -32,7 +32,11 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
 import { hash } from '../storage/engines/utils';
-import { filterSequenceByCondition, parseConditionParam } from '../utils/handleSequenceConditions';
+import {
+  filterSequenceByCondition,
+  parseConditionParam,
+  resolveParticipantConditions,
+} from '../utils/handleSequenceConditions';
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
@@ -146,7 +150,13 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], studyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
         }
 
-        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, studyCondition);
+        const effectiveStudyCondition = resolveParticipantConditions({
+          urlCondition: studyCondition,
+          participantConditions: participantSession.conditions,
+          participantSearchParamCondition: participantSession.searchParams?.condition,
+          allowUrlOverride: modes.developmentModeEnabled,
+        });
+        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, effectiveStudyCondition);
         // Initialize the redux stores
         const newStore = await studyStoreCreator(
           studyId,
