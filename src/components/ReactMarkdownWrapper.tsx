@@ -1,6 +1,6 @@
 import ReactMarkdown, { Components } from 'react-markdown';
 import {
-  Text, Title, Anchor, List, Table, Image,
+  Code, Text, Title, Anchor, List, Table, Image,
 } from '@mantine/core';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
@@ -17,17 +17,18 @@ function isElement(node: unknown): node is Element {
   return !!node && typeof node === 'object' && (node as Element).type === 'element';
 }
 
-const markdownComponents: Partial<Components> = {
-  p({ node: _, ...props }) { return <Text {...props} pb={8} fw="inherit" ref={undefined} />; },
-  h1({ node: _, ...props }) { return <Title {...props} order={1} pb={12} />; },
-  h2({ node: _, ...props }) { return <Title {...props} order={2} pb={12} />; },
-  h3({ node: _, ...props }) { return <Title {...props} order={3} pb={12} />; },
-  h4({ node: _, ...props }) { return <Title {...props} order={4} pb={12} />; },
-  h5({ node: _, ...props }) { return <Title {...props} order={5} pb={12} />; },
-  h6({ node: _, ...props }) { return <Title {...props} order={6} pb={12} />; },
+const markdownComponents = (inline?: boolean): Partial<Components> => ({
+  p({ node: _, ...props }) { return inline ? <Text {...props} component="span" size="sm" /> : <Text {...props} pb={8} fw="inherit" ref={undefined} />; },
+  h1({ node: _, ...props }) { return <Title {...props} order={1} pb={inline ? undefined : 12} />; },
+  h2({ node: _, ...props }) { return <Title {...props} order={2} pb={inline ? undefined : 12} />; },
+  h3({ node: _, ...props }) { return <Title {...props} order={3} pb={inline ? undefined : 12} />; },
+  h4({ node: _, ...props }) { return <Title {...props} order={4} pb={inline ? undefined : 12} />; },
+  h5({ node: _, ...props }) { return <Title {...props} order={5} pb={inline ? undefined : 12} />; },
+  h6({ node: _, ...props }) { return <Title {...props} order={6} pb={inline ? undefined : 12} />; },
   a({ node: _, ...props }) { return <Anchor {...props} ref={undefined} />; },
-  ul({ node: _, ...props }) { return <List withPadding {...props} pb={8} />; },
-  ol({ node: _, type: _type, ...props }) { return <List {...props} type="ordered" withPadding pb={8} />; },
+  code({ node: _, ...props }) { return <Code {...props} />; },
+  ul({ node: _, ...props }) { return <List withPadding {...props} pb={inline ? undefined : 8} />; },
+  ol({ node: _, type: _type, ...props }) { return <List {...props} type="ordered" withPadding pb={inline ? undefined : 8} />; },
   table({ node: _, ...props }) { return <Table {...props} mb={12} borderColor="grey" />; },
   thead({ node: _, ...props }) { return <Table.Thead {...props} />; },
   tbody({ node: _, ...props }) { return <Table.Tbody {...props} />; },
@@ -37,9 +38,10 @@ const markdownComponents: Partial<Components> = {
   img({
     node: _, width, height, src, ...props
   }) { return <Image {...props} h={height} w={width} src={src?.startsWith('http') ? src : `${PREFIX}${src}`} />; },
-};
+});
 
-export function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
+export function ReactMarkdownWrapper({ text, required, inline }: { text: string; required?: boolean; inline?: boolean }) {
+  const componentsToUse = markdownComponents(inline);
   const rehypeAsterisk = useCallback(() => (tree: Root) => {
     if (!required) return;
     if (!tree) return;
@@ -140,7 +142,7 @@ export function ReactMarkdownWrapper({ text, required }: { text: string; require
   }, [required]);
   return text.length > 0 && (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <ReactMarkdown components={markdownComponents} rehypePlugins={[rehypeRaw, rehypeAsterisk] as any} remarkPlugins={[remarkGfm]}>
+    <ReactMarkdown components={componentsToUse} rehypePlugins={[rehypeRaw, rehypeAsterisk] as any} remarkPlugins={[remarkGfm]}>
       {text}
     </ReactMarkdown>
   );

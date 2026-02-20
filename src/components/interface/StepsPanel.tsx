@@ -96,9 +96,10 @@ type ComponentStepItem = StepItemBase & {
   href?: string;
   isInterruption?: boolean;
   isLibraryImport: boolean;
+  importedLibraryName?: string;
   component?: StudyConfig['components'][string];
   componentAnswer?: StoredAnswer;
-  componentName: string; // Full component name (e.g., package.co.ComponentName)
+  componentName: string; // Full component name (e.g., package.components.ComponentName)
   isExcluded?: boolean; // Component was excluded from participant sequence
 };
 
@@ -109,11 +110,45 @@ type BlockStepItem = StepItemBase & {
   numInterruptions?: number;
   numComponentsInSequence?: number;
   numComponentsInStudySequence?: number;
+  isLibraryImport?: boolean;
+  importedLibraryName?: string;
   childrenRange?: { start: number; end: number }; // Pre-computed indices of children in fullFlatTree
   isExcluded?: boolean; // Block was excluded from participant sequence
 };
 
 type StepItem = ComponentStepItem | BlockStepItem;
+
+type SequenceWithImportReference = Sequence & {
+  __revisitImportedSequenceRef?: string;
+};
+
+function parseLibraryComponentReference(componentName: string) {
+  const separator = componentName.includes('.components.')
+    ? '.components.'
+    : (componentName.includes('.co.') ? '.co.' : false);
+  const isLibraryImport = separator !== false && componentName.startsWith('$');
+  const label = isLibraryImport ? componentName.split(separator).at(-1)! : componentName;
+  const importedLibraryName = isLibraryImport ? componentName.split(separator)[0].slice(1) : undefined;
+  return { isLibraryImport, label, importedLibraryName };
+}
+
+function getImportedSequenceReference(sequence?: Sequence | null): string | undefined {
+  return (sequence as SequenceWithImportReference | undefined | null)?.__revisitImportedSequenceRef;
+}
+
+function parseLibrarySequenceReference(blockId: string, importedSequenceReference?: string) {
+  const importReference = importedSequenceReference || blockId;
+  const separator = importReference.includes('.sequences.')
+    ? '.sequences.'
+    : (importReference.includes('.se.') ? '.se.' : false);
+  const isLibraryImport = separator !== false && importReference.startsWith('$');
+  const labelSeparator = blockId.includes('.sequences.')
+    ? '.sequences.'
+    : (blockId.includes('.se.') ? '.se.' : false);
+  const label = labelSeparator ? blockId.split(labelSeparator).at(-1)! : blockId;
+  const importedLibraryName = isLibraryImport ? importReference.split(separator)[0].slice(1) : undefined;
+  return { isLibraryImport, label, importedLibraryName };
+}
 
 /**
  * Find blocks in sequenceBlock that are missing from participantNode by comparing orderPath
@@ -222,17 +257,20 @@ export function StepsPanel({
     if (participantSequence === undefined) {
       // Browse Components
       newFlatTree = Object.keys(studyConfig.components).map((key) => {
-        const coOrComponents = key.includes('.co.')
-          ? '.co.'
-          : (key.includes('.components.') ? '.components.' : false);
+        const {
+          label,
+          isLibraryImport,
+          importedLibraryName,
+        } = parseLibraryComponentReference(key);
 
         return {
           type: 'component',
-          label: coOrComponents ? key.split(coOrComponents).at(-1)! : key,
+          label,
           indentLevel: 0,
           path: `browse.${key}`,
           href: `/${studyId}/reviewer-${key}`,
-          isLibraryImport: coOrComponents !== false,
+          isLibraryImport,
+          importedLibraryName,
           componentName: key,
         };
       });
@@ -250,9 +288,11 @@ export function StepsPanel({
       const traverse = (node: string | Sequence, indentLevel: number, parentNode: Sequence, parentPath: string, dynamic = false) => {
         if (typeof node === 'string') {
           // Check to see if the component is from imported library
-          const coOrComponents = node.includes('.co.')
-            ? '.co.'
-            : (node.includes('.components.') ? '.components.' : false);
+          const {
+            label,
+            isLibraryImport,
+            importedLibraryName,
+          } = parseLibraryComponentReference(node);
 
           // Generate component identifier for participantAnswers lookup
           const componentIdentifier = dynamic ? `${parentNode.id}_${idx}_${node}_${dynamicIdx}` : `${node}_${idx}`;
@@ -260,10 +300,11 @@ export function StepsPanel({
 
           newFlatTree.push({
             type: 'component',
-            label: coOrComponents ? node.split(coOrComponents).at(-1)! : node,
+            label,
             indentLevel,
             path: componentPath,
-            isLibraryImport: coOrComponents !== false,
+            isLibraryImport,
+            importedLibraryName,
 
             // Component Attributes
             href: dynamic ? `/${studyId}/${encryptIndex(idx)}/${encryptIndex(dynamicIdx)}` : `/${studyId}/${encryptIndex(idx)}`,
@@ -311,10 +352,12 @@ export function StepsPanel({
 
         // Determine label for block - extract sequence name for library sequences
         const blockId = node.id ?? node.order;
-        const seOrSequences = typeof blockId === 'string' && (blockId.includes('.se.')
-          ? '.se.'
-          : (blockId.includes('.sequences.') ? '.sequences.' : false));
-        const blockLabel = seOrSequences ? blockId.split(seOrSequences).at(-1)! : blockId;
+        const importedSequenceReference = getImportedSequenceReference(node) || getImportedSequenceReference(matchingStudySequence);
+        const {
+          label: blockLabel,
+          isLibraryImport: isLibraryBlockImport,
+          importedLibraryName: blockImportedLibraryName,
+        } = parseLibrarySequenceReference(String(blockId), importedSequenceReference);
 
         // Push the block itself
         newFlatTree.push({
@@ -329,6 +372,8 @@ export function StepsPanel({
           numInterruptions: node.components.filter((comp) => typeof comp === 'string' && blockInterruptions.includes(comp)).length,
           numComponentsInSequence,
           numComponentsInStudySequence,
+          isLibraryImport: isLibraryBlockImport,
+          importedLibraryName: blockImportedLibraryName,
         });
 
         // Reset dynamicIdx when entering a new dynamic block
@@ -353,17 +398,20 @@ export function StepsPanel({
           // First, add excluded components (strings)
           const excludedComponents = findExcludedComponents(matchingStudySequence, node);
           excludedComponents.forEach((excludedComponent) => {
-            const coOrComponents = excludedComponent.includes('.co.')
-              ? '.co.'
-              : (excludedComponent.includes('.components.') ? '.components.' : false);
+            const {
+              label,
+              isLibraryImport,
+              importedLibraryName,
+            } = parseLibraryComponentReference(excludedComponent);
             const excludedComponentPath = `${blockPath}.${excludedComponent}_excluded`;
 
             newFlatTree.push({
               type: 'component',
-              label: coOrComponents ? excludedComponent.split(coOrComponents).at(-1)! : excludedComponent,
+              label,
               indentLevel: indentLevel + 1,
               path: excludedComponentPath,
-              isLibraryImport: coOrComponents !== false,
+              isLibraryImport,
+              importedLibraryName,
               component: studyConfig.components[excludedComponent],
               componentName: excludedComponent,
               isExcluded: true,
@@ -377,10 +425,11 @@ export function StepsPanel({
 
             // Determine label for excluded block - extract sequence name for library sequences
             const excludedBlockId = excludedBlock.id ?? excludedBlock.order;
-            const excludedSeOrSequences = typeof excludedBlockId === 'string' && (excludedBlockId.includes('.se.')
-              ? '.se.'
-              : (excludedBlockId.includes('.sequences.') ? '.sequences.' : false));
-            const excludedBlockLabel = excludedSeOrSequences ? excludedBlockId.split(excludedSeOrSequences).at(-1)! : excludedBlockId;
+            const {
+              label: excludedBlockLabel,
+              isLibraryImport: isExcludedBlockImport,
+              importedLibraryName: excludedBlockImportedLibraryName,
+            } = parseLibrarySequenceReference(String(excludedBlockId), getImportedSequenceReference(excludedBlock));
 
             // Add the excluded block
             newFlatTree.push({
@@ -395,6 +444,8 @@ export function StepsPanel({
               numInterruptions: 0,
               numComponentsInSequence: 0,
               numComponentsInStudySequence: countComponentsInSequence(excludedBlock, participantAnswers),
+              isLibraryImport: isExcludedBlockImport,
+              importedLibraryName: excludedBlockImportedLibraryName,
               isExcluded: true,
             });
 
@@ -402,17 +453,20 @@ export function StepsPanel({
             const traverseExcluded = (excludedNode: Sequence, excludedIndentLevel: number, excludedParentPath: string) => {
               excludedNode.components.forEach((child) => {
                 if (typeof child === 'string') {
-                  const coOrComponents = child.includes('.co.')
-                    ? '.co.'
-                    : (child.includes('.components.') ? '.components.' : false);
+                  const {
+                    label,
+                    isLibraryImport,
+                    importedLibraryName,
+                  } = parseLibraryComponentReference(child);
                   const childPath = `${excludedParentPath}.${child}_excluded`;
 
                   newFlatTree.push({
                     type: 'component',
-                    label: coOrComponents ? child.split(coOrComponents).at(-1)! : child,
+                    label,
                     indentLevel: excludedIndentLevel,
                     path: childPath,
-                    isLibraryImport: coOrComponents !== false,
+                    isLibraryImport,
+                    importedLibraryName,
                     component: studyConfig.components[child],
                     componentName: child,
                     isExcluded: true,
@@ -422,10 +476,11 @@ export function StepsPanel({
 
                   // Determine label for nested excluded block - extract sequence name for library sequences
                   const childBlockId = child.id ?? child.order;
-                  const childSeOrSequences = typeof childBlockId === 'string' && (childBlockId.includes('.se.')
-                    ? '.se.'
-                    : (childBlockId.includes('.sequences.') ? '.sequences.' : false));
-                  const childBlockLabel = childSeOrSequences ? childBlockId.split(childSeOrSequences).at(-1)! : childBlockId;
+                  const {
+                    label: childBlockLabel,
+                    isLibraryImport: isChildBlockImport,
+                    importedLibraryName: childBlockImportedLibraryName,
+                  } = parseLibrarySequenceReference(String(childBlockId), getImportedSequenceReference(child));
 
                   newFlatTree.push({
                     type: 'block',
@@ -437,6 +492,8 @@ export function StepsPanel({
                     numInterruptions: 0,
                     numComponentsInSequence: 0,
                     numComponentsInStudySequence: countComponentsInSequence(child, participantAnswers),
+                    isLibraryImport: isChildBlockImport,
+                    importedLibraryName: childBlockImportedLibraryName,
                     isExcluded: true,
                   });
 
@@ -616,12 +673,13 @@ export function StepsPanel({
           const block = item.type === 'block' ? item : undefined;
           const isComponent = !!comp;
           const {
-            isLibraryImport,
             href,
             isInterruption,
             component,
             componentAnswer,
             componentName,
+            isLibraryImport: isComponentLibraryImport,
+            importedLibraryName: componentImportedLibraryName,
           } = (comp ?? {}) as Partial<ComponentStepItem>;
           const {
             order,
@@ -629,7 +687,11 @@ export function StepsPanel({
             numInterruptions,
             numComponentsInSequence,
             numComponentsInStudySequence,
+            isLibraryImport: isBlockLibraryImport,
+            importedLibraryName: blockImportedLibraryName,
           } = (block ?? {}) as Partial<BlockStepItem>;
+          const isLibraryImport = isComponent ? isComponentLibraryImport : isBlockLibraryImport;
+          const importedLibraryName = isComponent ? componentImportedLibraryName : blockImportedLibraryName;
           const correctAnswer = componentAnswer?.correctAnswer?.length
             ? componentAnswer.correctAnswer
             : component?.correctAnswer;
@@ -707,7 +769,7 @@ export function StepsPanel({
                         </Tooltip>
                       )}
                       {isLibraryImport && (
-                        <Tooltip label="Package import" position="right" withArrow>
+                        <Tooltip label={importedLibraryName ? `Imported from ${importedLibraryName}` : 'Package import'} position="right" withArrow>
                           <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
                         </Tooltip>
                       )}

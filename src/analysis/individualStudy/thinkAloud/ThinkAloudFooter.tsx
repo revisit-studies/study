@@ -151,6 +151,9 @@ export function ThinkAloudFooter({
   }, [participantTags]);
 
   const currentTrialClean = useMemo(() => {
+    if (currentTrial.includes('__dynamicLoading')) {
+      return '';
+    }
     // if we find ourselves with a wrong current trial, erase it
     if (participant && !participant.answers[currentTrial]) {
       setSearchParams({ participantId, currentTrial: Object.entries(participant.answers).find(([_, ans]) => +ans.trialOrder.split('_')[0] === 0)?.[0] || '' });
@@ -214,6 +217,8 @@ export function ThinkAloudFooter({
     if (!participant || !currentTrial) {
       return;
     }
+
+    // This doesnt work for dynamic
     let index = +participant.answers[currentTrial].trialOrder.split('_')[0] + indexChange;
 
     if (index >= Object.values(participant.answers).length) {
@@ -223,10 +228,11 @@ export function ThinkAloudFooter({
     }
 
     const newTrial = Object.values(participant.answers).find((ans) => +ans.trialOrder.split('_')[0] === index);
-
     const newTrialName = newTrial ? `${newTrial.componentName}_${newTrial.trialOrder.split('_')[0]}` : '';
 
     localStorage.setItem('currentTrial', newTrialName);
+
+    // This isnt actually doing anything without the other analysis tab open
     setSearchParams({ participantId, currentTrial: newTrialName });
   }, [currentTrial, participant, participantId, setSearchParams]);
 

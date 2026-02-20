@@ -2,7 +2,7 @@ import {
   Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
-  IconAlertTriangle, IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
+  IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -33,6 +33,7 @@ function StudyCard({
   const { storageEngine } = useStorageEngine();
 
   const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
+
   useEffect(() => {
     if (!storageEngine) return;
     storageEngine.getParticipantsStatusCounts(configName).then((status) => {
@@ -74,20 +75,10 @@ function StudyCard({
       {config.errors.length > 0
         ? (
           <>
-            <Text fw="bold">{configName}</Text>
-            <Flex align="center" direction="row">
-              <IconAlertTriangle color="red" />
-              <Text fw="bold" ml={8} color="red">Errors</Text>
-            </Flex>
+            <Text size="md" fw="bold">{configName}</Text>
             <ErrorLoadingConfig issues={config.errors} type="error" />
             {config.warnings.length > 0 && (
-              <>
-                <Flex align="center" direction="row">
-                  <IconAlertTriangle color="orange" />
-                  <Text fw="bold" ml={8} color="orange">Warnings</Text>
-                </Flex>
-                <ErrorLoadingConfig issues={config.warnings} type="warning" />
-              </>
+              <ErrorLoadingConfig issues={config.warnings} type="warning" />
             )}
           </>
         )
@@ -120,13 +111,7 @@ function StudyCard({
             </Text>
 
             {config.warnings.length > 0 && (
-              <>
-                <Flex align="center" direction="row">
-                  <IconAlertTriangle color="orange" />
-                  <Text fw="bold" ml={8} color="orange">Warnings</Text>
-                </Flex>
-                <ErrorLoadingConfig issues={config.warnings} type="warning" />
-              </>
+              <ErrorLoadingConfig issues={config.warnings} type="warning" />
             )}
 
             <Divider my="md" />

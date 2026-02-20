@@ -32,7 +32,7 @@ export function ButtonsInput({
   const storedAnswer = useStoredAnswer();
   const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
 
-  const orderedOptions = useMemo(() => optionOrders[response.id] || options, [optionOrders, options, response.id]);
+  const orderedOptions = useMemo(() => optionOrders[response.id] || options.map((option) => (typeof option === 'string' ? { label: option, value: option } : option)), [optionOrders, options, response.id]);
 
   const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 
@@ -58,7 +58,7 @@ export function ButtonsInput({
               className={classes.root}
               p="xs"
             >
-              <Text>{radio.label}</Text>
+              <Text size="sm">{radio.label}</Text>
             </Radio.Card>
           ))}
         </Flex>
