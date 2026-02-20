@@ -4,7 +4,7 @@ import {
 import {
   ChangeEvent, useMemo,
 } from 'react';
-import { MatrixResponse, StringOption } from '../../parser/types';
+import { MatrixResponse, ParsedStringOption } from '../../parser/types';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
 import checkboxClasses from './css/Checkbox.module.css';
 import radioClasses from './css/Radio.module.css';
@@ -12,6 +12,7 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import { generateErrorMessage } from './utils';
+import { parseStringOptions } from '../../utils/stringOptions';
 
 function CheckboxComponent({
   _choices,
@@ -22,12 +23,12 @@ function CheckboxComponent({
   onChange,
   disabled,
 }: {
-  _choices: StringOption[],
+  _choices: ParsedStringOption[],
   _n: number,
   idx: number,
   question: string,
   answer: { value: Record<string, string> },
-  onChange: (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: StringOption) => void
+  onChange: (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: ParsedStringOption) => void
   disabled: boolean
 }) {
   return (
@@ -39,13 +40,13 @@ function CheckboxComponent({
         justifyItems: 'center',
       }}
     >
-      {_choices.map((checkbox: StringOption) => (
+      {_choices.map((checkbox: ParsedStringOption) => (
         <Checkbox
           disabled={disabled}
           key={`${checkbox.label}-${idx}`}
-          checked={answer.value[question].split('|').includes(checkbox.value ?? checkbox.label)}
+          checked={(answer.value[question] || '').split('|').includes(checkbox.value)}
           onChange={(event) => onChange(event, question, checkbox)}
-          value={checkbox.value ?? checkbox.label}
+          value={checkbox.value}
           classNames={{ input: checkboxClasses.fixDisabled, icon: checkboxClasses.fixDisabledIcon }}
         />
       ))}
@@ -62,7 +63,7 @@ function RadioGroupComponent({
   onChange,
   disabled,
 }: {
-  _choices: StringOption[],
+  _choices: ParsedStringOption[],
   _n: number,
   idx: number,
   question: string,
@@ -90,10 +91,10 @@ function RadioGroupComponent({
           justifyItems: 'center',
         }}
       >
-        {_choices.map((radio: StringOption) => (
+        {_choices.map((radio: ParsedStringOption) => (
           <Radio
             disabled={disabled}
-            value={radio.value ?? radio.label}
+            value={radio.value}
             key={`${radio.label}-${idx}`}
             classNames={{ radio: radioClasses.fixDisabled, icon: radioClasses.fixDisabledIcon }}
           />
@@ -134,11 +135,11 @@ export function MatrixInput({
     satisfaction7: ['Highly Unsatisfied', 'Unsatisfied', 'Slightly Unsatisfied', 'Neutral', 'Slightly Satisfied', 'Satisfied', 'Highly Satisfied'],
   };
 
-  const _choices: StringOption[] = typeof answerOptions === 'string'
-    ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry }))
-    : answerOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : { ...option, value: option.value ?? option.label }));
+  const _choices: ParsedStringOption[] = typeof answerOptions === 'string'
+    ? parseStringOptions(_choiceStringToColumns[answerOptions])
+    : parseStringOptions(answerOptions);
 
-  const questions = response.questionOptions.map((question) => (typeof question === 'string' ? { value: question, label: question } : { ...question, value: question.value ?? question.label }));
+  const questions = parseStringOptions(response.questionOptions);
   const questionsByValue = Object.fromEntries(questions.map((question) => [question.value, question]));
 
   const { questionOrders } = useStoredAnswer();
@@ -155,12 +156,12 @@ export function MatrixInput({
     storeDispatch(setMatrixAnswersRadio(payload));
   };
 
-  const onChangeCheckbox = (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: StringOption) => {
+  const onChangeCheckbox = (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: ParsedStringOption) => {
     const isChecked = event.target.checked;
     const payload = {
       questionKey,
       responseId: response.id,
-      value: option.value ?? option.label,
+      value: option.value,
       label: option.label,
       isChecked,
       choiceOptions: _choices,

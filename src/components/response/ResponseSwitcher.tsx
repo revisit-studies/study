@@ -25,6 +25,7 @@ import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
+import { parseStringOptionValue } from '../../utils/stringOptions';
 
 export function ResponseSwitcher({
   response,
@@ -115,7 +116,7 @@ export function ResponseSwitcher({
     }
 
     if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
-      return Object.fromEntries(response.questionOptions.map((entry) => [typeof entry === 'string' ? entry : entry.value ?? entry.label, '']));
+      return Object.fromEntries(response.questionOptions.map((entry) => [parseStringOptionValue(entry), '']));
     }
 
     if (response.type === 'slider' && response.startingValue) {

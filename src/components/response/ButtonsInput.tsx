@@ -2,12 +2,13 @@ import {
   Flex, FocusTrap, Radio,
 } from '@mantine/core';
 import { useMemo } from 'react';
-import { ButtonsResponse, StringOption } from '../../parser/types';
+import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import classes from './css/ButtonsInput.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
+import { parseStringOptions } from '../../utils/stringOptions';
 
 export function ButtonsInput({
   response,
@@ -31,11 +32,10 @@ export function ButtonsInput({
   } = response;
 
   const storedAnswer = useStoredAnswer();
-  const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
+  const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
 
   const orderedOptions = useMemo(
-    () => optionOrders[response.id]
-      || options.map((option) => (typeof option === 'string' ? { label: option, value: option } : { ...option, value: option.value ?? option.label })),
+    () => parseStringOptions(optionOrders[response.id] || options),
     [optionOrders, options, response.id],
   );
 

@@ -25,10 +25,11 @@ import { useMemo, useState, useEffect } from 'react';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import classes from './css/RankingDnd.module.css';
-import { RankingResponse, StringOption } from '../../parser/types';
+import { ParsedStringOption, RankingResponse, StringOption } from '../../parser/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
+import { parseStringOptions } from '../../utils/stringOptions';
 
-type Item = { id: string; symbol: string; option: StringOption };
+type Item = { id: string; symbol: string; option: ParsedStringOption };
 
 function SortableItem({ item, index }: { item: Item; index?: number }) {
   const {
@@ -79,10 +80,10 @@ function DroppableZone({ id, title, children }: { id: string; title: string; chi
   );
 }
 
-const createItems = (options: (StringOption | string)[]): Item[] => options.map((item) => ({
-  id: typeof item === 'string' ? item : item.value ?? item.label,
-  symbol: typeof item === 'string' ? item : item.value ?? item.label,
-  option: typeof item === 'string' ? { label: item, value: item } : { ...item, value: item.value ?? item.label },
+const createItems = (options: (StringOption | string)[]): Item[] => parseStringOptions(options).map((item) => ({
+  id: item.value,
+  symbol: item.value,
+  option: item,
 }));
 
 const useRankingLogic = (responseId: string, onChange?: (value: Record<string, string>) => void) => {

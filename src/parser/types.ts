@@ -332,6 +332,11 @@ export interface StringOption {
   infoText?: string;
 }
 
+/** StringOption normalized to always include a value. */
+export interface ParsedStringOption extends Omit<StringOption, 'value'> {
+  value: string;
+}
+
 /**
  * The BaseResponse interface is used to define the required fields for all responses.
  * Other Response interfaces inherit properties from the BaseResponse interface.
