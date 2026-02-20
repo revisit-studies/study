@@ -80,6 +80,84 @@ export function ErrorLoadingConfig({
     return [`${template.prefix}${combinedItems}${suffix}`];
   };
 
+  const formatIssueMessage = (issue: ParsedConfig<StudyConfig>['errors'][number]): string => {
+    if (issue.message === 'must have required property') {
+      const { missingProperty } = (issue.params as { missingProperty?: string });
+      if (missingProperty) {
+        return `Missing required property \`${missingProperty}\``;
+      }
+    }
+    if (issue.message.startsWith('must have required property')) {
+      const { missingProperty } = (issue.params as { missingProperty?: string });
+      if (missingProperty) {
+        return `Missing required property \`${missingProperty}\``;
+      }
+    }
+    return issue.message || 'No message provided';
+  };
+
+  const isAnyOfIssue = (issue: ParsedConfig<StudyConfig>['errors'][number]) => issue.message === 'must match a schema in anyOf';
+
+  const getMissingRequiredProperty = (issue: ParsedConfig<StudyConfig>['errors'][number]) => {
+    if (!issue.message.includes('must have required property')) {
+      return null;
+    }
+    const { missingProperty } = (issue.params as { missingProperty?: string });
+    return typeof missingProperty === 'string' ? missingProperty : null;
+  };
+
+  const normalizeMessages = (groupedIssues: ParsedConfig<StudyConfig>['errors']): string[] => {
+    const hasAnyOfIssue = groupedIssues.some(isAnyOfIssue);
+
+    let filteredIssues = groupedIssues.filter((issue) => {
+      if (!isAnyOfIssue(issue)) {
+        return true;
+      }
+      return groupedIssues.length === 1;
+    });
+
+    // anyOf validation often includes required-property errors from alternate schemas.
+    // Prefer the most frequent missing property when alternatives disagree.
+    if (hasAnyOfIssue) {
+      const missingPropertyCounts = new Map<string, number>();
+      filteredIssues.forEach((issue) => {
+        const missingProperty = getMissingRequiredProperty(issue);
+        if (missingProperty) {
+          missingPropertyCounts.set(missingProperty, (missingPropertyCounts.get(missingProperty) || 0) + 1);
+        }
+      });
+
+      if (missingPropertyCounts.size > 1) {
+        const maxCount = Math.max(...missingPropertyCounts.values());
+        const dominantMissingProperties = new Set(
+          Array.from(missingPropertyCounts.entries())
+            .filter(([, countForProperty]) => countForProperty === maxCount)
+            .map(([property]) => property),
+        );
+
+        if (dominantMissingProperties.size < missingPropertyCounts.size) {
+          filteredIssues = filteredIssues.filter((issue) => {
+            const missingProperty = getMissingRequiredProperty(issue);
+            return !missingProperty || dominantMissingProperties.has(missingProperty);
+          });
+        }
+      }
+    }
+
+    const formatted = filteredIssues.map(formatIssueMessage);
+    const combined = combineMessages(formatted);
+
+    // Collapse exact duplicates and show frequency to reduce noisy schema errors
+    const messageCounts = new Map<string, number>();
+    combined.forEach((msg) => {
+      messageCounts.set(msg, (messageCounts.get(msg) || 0) + 1);
+    });
+
+    return Array.from(messageCounts.entries()).map(([msg, countForMessage]) => (
+      countForMessage > 1 ? `${msg} (x${countForMessage})` : msg
+    ));
+  };
+
   type Issue = ParsedConfig<StudyConfig>['errors'][number];
 
   type IssueGroup = {
@@ -175,8 +253,7 @@ export function ErrorLoadingConfig({
                 </Group>
                 <List size="xs" spacing="xs" mt="xs" listStyleType="none">
                   {entries.map((item, index) => {
-                    const messages = item.issues.map((issue) => issue.message || 'No message provided');
-                    const combinedMessages = combineMessages(messages);
+                    const normalizedMessages = normalizeMessages(item.issues);
 
                     return (
                       <List.Item key={`${item.path}-${item.action}-${index}`}>
@@ -191,8 +268,9 @@ export function ErrorLoadingConfig({
                               {item.path}
                               :
                             </Code>
-                            {combinedMessages.map((msg, msgIdx) => (
+                            {normalizedMessages.map((msg, msgIdx) => (
                               <Text key={`${item.path}-${index}-${msgIdx}-msg`} component="span">
+                                {msgIdx > 0 && <br />}
                                 <ReactMarkdownWrapper text={msg} inline />
                               </Text>
                             ))}
