@@ -1,0 +1,71 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "Basic Questionnaire Study",
+        "version": "pilot",
+        "authors": [
+            "The reVISit Team"
+        ],
+        "date": "2024-03-19",
+        "description": "A simple questionnaire study",
+        "organizations": [
+            "University of Utah",
+            "WPI"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "contact@revisit.dev",
+        "helpTextPath": "basic-questionnaire-study/assets/help.md",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "withSidebar": true
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "basic-questionnaire-study/assets/introduction.md",
+            "response": []
+        },
+        "bar1": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "path": "basic-questionnaire-study/assets/bar_chart.html",
+            "response": [
+                {
+                "id": "html-response",
+                "prompt": "Answer:",
+                "location": "sidebar",
+                "type": "numerical",
+                "placeholder": "0-7",
+                "min": 0,
+                "max": 7
+                }
+            ]
+        },
+        "bar2": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "path": "basic-questionnaire-study/assets/diverging_bar.html",
+            "response": [
+                {
+                "id": "html-response",
+                "prompt": "Answer:",
+                "location": "sidebar",
+                "type": "numerical",
+                "placeholder": "0-7",
+                "min": 0,
+                "max": 7
+                }
+            ]
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "bar1",
+            "bar2"
+        ]
+    }
+}
