@@ -19,7 +19,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get git diff
+      - name: Get git diff and changed files
         id: get_diff
         run: |
           # Get the diff between the previous commit and the current one
@@ -60,238 +60,239 @@ jobs:
             ':!vite.config.ts' \
             ':!playwright.config.ts' \
             ':!**.md')
-
+          
           # Check if diff is empty
           if [ -z "$DIFF" ]; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
             exit 0
           fi
-
+          
           echo "has_changes=true" >> $GITHUB_OUTPUT
-
-          # Truncate diff if too large (~8000 tokens ≈ 32000 chars)
-          # Keep track if we truncated
+          
+          # Get list of changed files (relative paths)
+          CHANGED_FILES=$(git diff HEAD^ HEAD --name-only --diff-filter=ACMR -- \
+            ':!package-lock.json' \
+            ':!yarn.lock' \
+            ':!.yarn/**' \
+            ':!node_modules/**' \
+            ':!dist/**' \
+            ':!build/**' \
+            ':!*.spec.ts' \
+            ':!*.spec.tsx' \
+            ':!tests/**' \
+            ':!.github/**' \
+            ':!public/libraries/**' \
+            ':!public/**/assets/**' \
+            ':!.eslintrc*' \
+            ':!tsconfig*.json' \
+            ':!vite.config.ts' \
+            ':!playwright.config.ts' \
+            ':!**.md' \
+            2>/dev/null || git diff --name-only --diff-filter=ACMR -- \
+            ':!package-lock.json' \
+            ':!yarn.lock' \
+            ':!.yarn/**' \
+            ':!node_modules/**' \
+            ':!dist/**' \
+            ':!build/**' \
+            ':!*.spec.ts' \
+            ':!*.spec.tsx' \
+            ':!tests/**' \
+            ':!.github/**' \
+            ':!public/libraries/**' \
+            ':!public/**/assets/**' \
+            ':!.eslintrc*' \
+            ':!tsconfig*.json' \
+            ':!vite.config.ts' \
+            ':!playwright.config.ts' \
+            ':!**.md')
+          
+          # Truncate diff if too large (keep it reasonable for issue body)
           DIFF_LENGTH=${#DIFF}
-          if [ $DIFF_LENGTH -gt 32000 ]; then
-            DIFF="${DIFF:0:32000}"
+          if [ $DIFF_LENGTH -gt 20000 ]; then
+            DIFF="${DIFF:0:20000}"
             echo "truncated=true" >> $GITHUB_OUTPUT
           else
             echo "truncated=false" >> $GITHUB_OUTPUT
           fi
-
-          # Save diff to file for next step
+          
+          # Save for next steps
           echo "$DIFF" > /tmp/git_diff.txt
+          echo "$CHANGED_FILES" > /tmp/changed_files.txt
 
-      - name: Load doc coverage mapping
+      - name: Check if changes are doc-relevant
         if: steps.get_diff.outputs.has_changes == 'true'
-        id: doc_coverage
+        id: check_relevance
         run: |
-          DOC_COVERAGE=$(cat .github/doc-coverage.md)
-          # Escape newlines for JSON
-          DOC_COVERAGE=$(echo "$DOC_COVERAGE" | jq -Rs .)
-          echo "mapping=$DOC_COVERAGE" >> $GITHUB_OUTPUT
-
-      - name: Call Claude API
-        if: steps.get_diff.outputs.has_changes == 'true'
-        id: claude_response
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          DOC_COVERAGE: ${{ steps.doc_coverage.outputs.mapping }}
-          TRUNCATED: ${{ steps.get_diff.outputs.truncated }}
-        run: |
-          # Read git diff
-          DIFF=$(cat /tmp/git_diff.txt)
-
-          # Build the prompt
-          read -r -d '' SYSTEM_PROMPT << 'EOF' || true
-          You are a documentation expert for ReVISit, a platform for building and analyzing user studies on interactive data visualization tools.
-
-          ReVISit is configured via JSON study config files and uses TypeScript for component development. The platform accepts:
-          - Study configuration files (JSON schemas)
-          - React components with props
-          - Exported TypeScript types and interfaces
-          - Utility functions and APIs
-
-          Your job is to analyze code changes and determine if any publicly-facing APIs, configuration schemas, TypeScript types/interfaces, or component props have changed in ways that require documentation updates.
-
-          Here is the documentation coverage mapping - understand which source directories map to which doc areas:
-
-          EOF
-
-          SYSTEM_PROMPT="$SYSTEM_PROMPT
-          $DOC_COVERAGE"
-
-          read -r -d '' USER_PROMPT << 'EOF' || true
-          Please analyze the following git diff and determine if documentation updates are needed.
-
-          Your response MUST be valid JSON with this exact structure:
-          {
-            "doc_relevant": boolean,
-            "summary": "one sentence summary of changes",
-            "affected_areas": ["array", "of", "doc", "areas"],
-            "what_changed": "specific description of the code changes",
-            "what_to_update": "specific description of what the docs should reflect",
-            "severity": "low|medium|high",
-            "reasoning": "brief explanation of your analysis"
-          }
-
-          If doc_relevant is false, you can leave other fields as empty strings/arrays.
-          EOF
-
-          if [ "$TRUNCATED" == "true" ]; then
-            USER_PROMPT="$USER_PROMPT
-
-          NOTE: The git diff was truncated to fit within token limits. Analyze what's available, but note that there may be additional changes not shown."
+          # Read documentation coverage configuration
+          DOC_COVERAGE=".github/doc-coverage.md"
+          
+          # Extract high-priority file patterns (always doc-relevant)
+          HIGH_PRIORITY_PATTERNS=(
+            "src/parser/types.ts"
+            "src/components/"
+            "src/store/types.ts"
+            "src/storage/"
+          )
+          
+          CHANGED_FILES=$(cat /tmp/changed_files.txt)
+          DOC_RELEVANT=false
+          MATCHED_PATTERNS=""
+          
+          while IFS= read -r file; do
+            # Skip empty lines
+            [ -z "$file" ] && continue
+            
+            # Check if file matches any high-priority patterns
+            for pattern in "${HIGH_PRIORITY_PATTERNS[@]}"; do
+              if [[ "$file" == "$pattern"* ]] || [[ "$file" == "$pattern" ]]; then
+                DOC_RELEVANT=true
+                MATCHED_PATTERNS="$MATCHED_PATTERNS- $file"$'\n'
+                break
+              fi
+            done
+          done <<< "$CHANGED_FILES"
+          
+          echo "doc_relevant=$DOC_RELEVANT" >> $GITHUB_OUTPUT
+          echo "matched_patterns=$MATCHED_PATTERNS" >> $GITHUB_OUTPUT
+          
+          if [ "$DOC_RELEVANT" = false ]; then
+            echo "No doc-relevant files changed. Skipping issue creation."
           fi
 
-          USER_PROMPT="$USER_PROMPT
+      - name: Build issue body for Copilot
+        if: steps.get_diff.outputs.has_changes == 'true' && steps.check_relevance.outputs.doc_relevant == 'true'
+        id: issue_body
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          REPO_NAME: ${{ github.repository }}
+          MATCHED_PATTERNS: ${{ steps.check_relevance.outputs.matched_patterns }}
+          TRUNCATED: ${{ steps.get_diff.outputs.truncated }}
+        run: |
+          DIFF=$(cat /tmp/git_diff.txt)
+          
+          # Build the issue body with clear instructions for Copilot
+          read -r -d '' ISSUE_BODY << 'EOF' || true
+          # Documentation Update Required
+          
+          Code changes in this repository require documentation updates. Please analyze the code changes and update the documentation accordingly.
+          
+          ## Changed Files
+          These files were modified:
+          
+          ```
+          ${MATCHED_PATTERNS}
+          ```
+          
+          ## Code Changes
+          
+          Here is the diff of the changes:
+          
+          ```diff
+          ${DIFF}
+          ```
+          
+          ${TRUNCATION_NOTE}
+          
+          ## Documentation Areas That May Be Affected
+          
+          Based on the files changed, please review and update documentation in these areas:
+          
+          - **Config Reference**: If you modified `src/parser/types.ts`, the study configuration schema documentation
+          - **Component API**: If you modified `src/components/`, the component props and interfaces
+          - **Data Export Reference**: If you modified `src/store/types.ts` or data-related types
+          - **Storage Configuration**: If you modified `src/storage/`, the storage backend documentation
+          
+          ## Instructions for Documentation Update
+          
+          1. Review the code diff above to understand what changed
+          2. Identify which documentation pages need updates
+          3. Update the relevant sections with:
+             - New or modified field descriptions
+             - Updated interface/type definitions
+             - New props or parameters
+             - Removed or renamed APIs (deprecation notices)
+          4. Add examples if applicable
+          5. Update any tables of contents or navigation that reference changed items
+          
+          ## Reference Information
+          
+          - **Triggered by commit**: [${REPO_NAME}@${COMMIT_SHA:0:7}](https://github.com/${REPO_NAME}/commit/${COMMIT_SHA})
+          - **Workflow**: [.github/workflows/doc-sync.yml](${REPO_NAME}/blob/${COMMIT_SHA}/.github/workflows/doc-sync.yml)
+          
+          Please open a PR with your documentation updates. Reference this issue in your PR.
+          EOF
+          
+          # Handle truncation note
+          if [ "${TRUNCATED}" == "true" ]; then
+            TRUNCATION_NOTE="**Note:** The diff was truncated to fit in this issue. Check the commit directly for the complete changes."
+          else
+            TRUNCATION_NOTE=""
+          fi
+          
+          # Substitute variables (properly escape them for the shell)
+          ISSUE_BODY=$(echo "$ISSUE_BODY" | sed \
+            -e "s|\${MATCHED_PATTERNS}|${MATCHED_PATTERNS}|g" \
+            -e "s|\${DIFF}|${DIFF//&/\\&}|g" \
+            -e "s|\${TRUNCATION_NOTE}|${TRUNCATION_NOTE}|g" \
+            -e "s|\${REPO_NAME}|${REPO_NAME}|g" \
+            -e "s|\${COMMIT_SHA:0:7}|${COMMIT_SHA:0:7}|g" \
+            -e "s|\${COMMIT_SHA}|${COMMIT_SHA}|g")
+          
+          # Save to file (using base64 to preserve special chars)
+          echo "$ISSUE_BODY" | base64 > /tmp/issue_body.txt
+          
+          # Also provide a short title based on changed files
+          FIRST_FILE=$(head -1 /tmp/changed_files.txt | xargs basename)
+          ISSUE_TITLE="[Doc Sync] Update documentation for changes in $FIRST_FILE"
+          echo "title=$ISSUE_TITLE" >> $GITHUB_OUTPUT
 
-          GIT DIFF:
-          ===========
-          $DIFF
-          ==========="
-
-          # Call Claude API
-          RESPONSE=$(curl -s -X POST https://api.anthropic.com/v1/messages \
-            -H "x-api-key: $ANTHROPIC_API_KEY" \
-            -H "anthropic-version: 2023-06-01" \
-            -H "content-type: application/json" \
+      - name: Create issue and assign to Copilot
+        if: steps.get_diff.outputs.has_changes == 'true' && steps.check_relevance.outputs.doc_relevant == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_REPO_TOKEN }}
+          ISSUE_BODY_B64: $(cat /tmp/issue_body.txt)
+          ISSUE_TITLE: ${{ steps.issue_body.outputs.title }}
+        run: |
+          # Decode issue body
+          ISSUE_BODY=$(cat /tmp/issue_body.txt | base64 -d)
+          
+          # Create issue using GitHub REST API
+          RESPONSE=$(curl -s -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$DOCS_REPO/issues" \
             -d @- << PAYLOAD
           {
-            "model": "claude-sonnet-4-20250514",
-            "max_tokens": 1024,
-            "system": $(echo "$SYSTEM_PROMPT" | jq -Rs .),
-            "messages": [
-              {
-                "role": "user",
-                "content": $(echo "$USER_PROMPT" | jq -Rs .)
-              }
-            ]
+            "title": "$ISSUE_TITLE",
+            "body": $(echo "$ISSUE_BODY" | jq -Rs .),
+            "labels": ["doc-sync", "auto-generated"]
           }
           PAYLOAD
           )
-
-          # Check for API errors
-          if echo "$RESPONSE" | jq -e '.error' >/dev/null 2>&1; then
-            echo "::warning::Claude API error: $(echo "$RESPONSE" | jq -r '.error.message')"
-            echo "api_error=true" >> $GITHUB_OUTPUT
+          
+          # Extract issue number
+          ISSUE_NUMBER=$(echo "$RESPONSE" | jq -r '.number // empty')
+          
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "::warning::Failed to create issue in $DOCS_REPO"
+            echo "$RESPONSE" | jq . >&2
             exit 0
           fi
-
-          # Extract the response text
-          CONTENT=$(echo "$RESPONSE" | jq -r '.content[0].text')
-
-          if [ -z "$CONTENT" ]; then
-            echo "::warning::Claude API returned empty content"
-            echo "api_error=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Try to extract JSON from the response (it might have markdown code block)
-          if echo "$CONTENT" | grep -q '```json'; then
-            JSON_RESPONSE=$(echo "$CONTENT" | sed -n '/```json/,/```/p' | sed '1d;$d')
+          
+          echo "Created issue #$ISSUE_NUMBER in $DOCS_REPO"
+          
+          # Assign to copilot user
+          ASSIGN_RESPONSE=$(curl -s -X PATCH \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$DOCS_REPO/issues/$ISSUE_NUMBER" \
+            -d '{"assignees": ["copilot"]}')
+          
+          ASSIGNEE=$(echo "$ASSIGN_RESPONSE" | jq -r '.assignees[0].login // empty')
+          
+          if [ "$ASSIGNEE" = "copilot" ]; then
+            echo "✅ Issue #$ISSUE_NUMBER assigned to @copilot"
+            echo "GitHub Copilot will automatically start working on the documentation updates"
           else
-            JSON_RESPONSE="$CONTENT"
-          fi
-
-          # Validate JSON
-          if ! echo "$JSON_RESPONSE" | jq empty 2>/dev/null; then
-            echo "::warning::Claude response is not valid JSON: $JSON_RESPONSE"
-            echo "api_error=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Save parsed response
-          echo "$JSON_RESPONSE" > /tmp/claude_response.json
-          echo "api_error=false" >> $GITHUB_OUTPUT
-
-      - name: Create issue if doc-relevant
-        if: steps.get_diff.outputs.has_changes == 'true' && steps.claude_response.outputs.api_error == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.DOCS_REPO_TOKEN }}
-          COMMIT_SHA: ${{ github.sha }}
-          REPO_NAME: ${{ github.repository }}
-        run: |
-          # Parse Claude response
-          RESPONSE=$(cat /tmp/claude_response.json)
-
-          DOC_RELEVANT=$(echo "$RESPONSE" | jq -r '.doc_relevant')
-          SUMMARY=$(echo "$RESPONSE" | jq -r '.summary // ""')
-          AFFECTED_AREAS=$(echo "$RESPONSE" | jq -r '.affected_areas | join(", ") // ""')
-          WHAT_CHANGED=$(echo "$RESPONSE" | jq -r '.what_changed // ""')
-          WHAT_TO_UPDATE=$(echo "$RESPONSE" | jq -r '.what_to_update // ""')
-          SEVERITY=$(echo "$RESPONSE" | jq -r '.severity // "medium"')
-          REASONING=$(echo "$RESPONSE" | jq -r '.reasoning // ""')
-
-          # Exit early if not doc-relevant
-          if [ "$DOC_RELEVANT" != "true" ]; then
-            echo "No documentation updates needed for this change."
-            exit 0
-          fi
-
-          # Build issue title
-          ISSUE_TITLE="Doc sync: $SUMMARY"
-
-          # Build issue body
-          read -r -d '' ISSUE_BODY << 'EOF' || true
-          ## What Changed
-          ${WHAT_CHANGED}
-
-          ## Affected Documentation Areas
-          ${AFFECTED_AREAS}
-
-          ## What Should Be Updated
-          ${WHAT_TO_UPDATE}
-
-          ## Analysis Details
-          **Severity:** ${SEVERITY}  
-          **Reasoning:** ${REASONING}
-
-          ---
-
-          **Triggered by:** [${REPO_NAME}@${COMMIT_SHA:0:7}](https://github.com/${REPO_NAME}/commit/${COMMIT_SHA})
-
-          This issue was automatically created by the [Documentation Sync workflow](.github/workflows/doc-sync.yml) based on code changes merged to `main`.
-          EOF
-
-          # Substitute variables
-          ISSUE_BODY=$(echo "$ISSUE_BODY" | sed \
-            -e "s|\${WHAT_CHANGED}|$WHAT_CHANGED|g" \
-            -e "s|\${AFFECTED_AREAS}|$AFFECTED_AREAS|g" \
-            -e "s|\${WHAT_TO_UPDATE}|$WHAT_TO_UPDATE|g" \
-            -e "s|\${SEVERITY}|$SEVERITY|g" \
-            -e "s|\${REASONING}|$REASONING|g" \
-            -e "s|\${REPO_NAME}|$REPO_NAME|g" \
-            -e "s|\${COMMIT_SHA:0:7}|${COMMIT_SHA:0:7}|g" \
-            -e "s|\${COMMIT_SHA}|$COMMIT_SHA|g")
-
-          # Build labels array
-          LABELS='["doc-sync", "auto-generated"'
-          case "$SEVERITY" in
-            high)
-              LABELS="$LABELS, \"needs-urgent-update\"]"
-              ;;
-            medium)
-              LABELS="$LABELS, \"needs-update\"]"
-              ;;
-            low)
-              LABELS="$LABELS, \"documentation\"]"
-              ;;
-            *)
-              LABELS="$LABELS]"
-              ;;
-          esac
-
-          # Create issue using GitHub CLI
-          gh issue create \
-            --repo "$DOCS_REPO" \
-            --title "$ISSUE_TITLE" \
-            --body "$ISSUE_BODY" \
-            --label $LABELS \
-            >/dev/null 2>&1
-
-          if [ $? -eq 0 ]; then
-            echo "✅ Documentation sync issue created in $DOCS_REPO"
-          else
-            echo "::warning::Failed to create issue in $DOCS_REPO (repo may not exist or token may lack permissions)"
-          fi
+            echo "::warning::Failed to assign issue to copilot: $ASSIGN_RESPONSE"
