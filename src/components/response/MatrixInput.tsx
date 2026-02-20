@@ -142,8 +142,14 @@ export function MatrixInput({
     [answerOptions],
   );
 
-  const questions = parseStringOptions(response.questionOptions);
-  const questionsByValue = Object.fromEntries(questions.map((question) => [question.value, question]));
+  const questions = useMemo(
+    () => parseStringOptions(response.questionOptions),
+    [response.questionOptions],
+  );
+  const questionsByValue = useMemo(
+    () => Object.fromEntries(questions.map((question) => [question.value, question])),
+    [questions],
+  );
 
   const { questionOrders } = useStoredAnswer();
   const orderedQuestions = useMemo(() => questionOrders[response.id] || questions.map((question) => question.value), [questionOrders, questions, response.id]);
