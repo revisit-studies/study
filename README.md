@@ -25,3 +25,38 @@ Dev branch
 Main branch
 | Run release workflow on merge
 References are updated and commit is tagged
+
+## Documentation Synchronization
+
+When code changes are merged to `main` that affect public-facing APIs, configuration schemas, TypeScript types/interfaces, or component props, a GitHub Actions workflow automatically creates an issue in the documentation repository ([revisit-studies/reVISit-studies.github.io](https://github.com/revisit-studies/reVISit-studies.github.io)) to track documentation updates needed.
+
+### How It Works
+
+The [Documentation Sync workflow](.github/workflows/doc-sync.yml) is triggered on every push to `main`:
+
+1. **Extract changes**: Gets a git diff of changed files, filtering out noise (lock files, test files, build artifacts, etc.)
+2. **Analyze with AI**: Passes the diff to Claude AI with context about which source directories map to which documentation areas
+3. **Determine relevance**: Claude determines if the changes require documentation updates
+4. **Create issue**: If relevant, an issue is automatically created in the docs repo with:
+   - Summary of what changed
+   - Which documentation areas are affected
+   - Specific suggestions for what to update
+   - Severity level (low/medium/high)
+   - Link back to the triggering commit
+
+### Maintaining Doc Coverage
+
+The mapping of source code directories to documentation areas is defined in [`.github/doc-coverage.md`](.github/doc-coverage.md). When adding new source directories or major features:
+
+1. Update `.github/doc-coverage.md` to include the new directory/feature
+2. Specify which documentation areas it affects (e.g., "Config Reference", "Component API")
+3. Note which types of changes are always, usually, or rarely documentation-relevant
+4. The workflow will use this mapping to accurately route future doc-sync issues
+
+### Configuration
+
+Required GitHub secrets (set in repository settings):
+- `ANTHROPIC_API_KEY`: API key for Claude AI (used to analyze code changes)
+- `DOCS_REPO_TOKEN`: GitHub personal access token with `issues:write` permission on the docs repository
+
+The workflow itself is graceful – if the API call fails or returns invalid data, it logs a warning but doesn't block deployment.
