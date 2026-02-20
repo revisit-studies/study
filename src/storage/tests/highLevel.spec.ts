@@ -1,6 +1,7 @@
 import {
   expect, test, beforeEach, describe,
   afterEach,
+  vi,
 } from 'vitest';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
@@ -120,6 +121,18 @@ describe.each([
     expect(sequenceAssignment!.conditions).toEqual(['color']);
   });
 
+  test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
+    const createSequenceAssignmentSpy = vi.spyOn(
+      storageEngine as unknown as { _createSequenceAssignment: (...args: unknown[]) => Promise<void> },
+      '_createSequenceAssignment',
+    );
+
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const sequenceAssignmentPayload = createSequenceAssignmentSpy.mock.calls[0][1] as Record<string, unknown>;
+    expect(Object.hasOwn(sequenceAssignmentPayload, 'conditions')).toBe(false);
+  });
+
   test('updateStudyCondition only updates conditions in development mode', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
@@ -146,6 +159,19 @@ describe.each([
     const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantSession.participantId);
     expect(sequenceAssignment).toBeDefined();
     expect(sequenceAssignment!.conditions).toEqual(['size']);
+  });
+
+  test('updateStudyCondition omits undefined conditions when clearing condition', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const updateSequenceAssignmentSpy = vi.spyOn(
+      storageEngine as unknown as { _updateSequenceAssignmentFields: (...args: unknown[]) => Promise<void> },
+      '_updateSequenceAssignmentFields',
+    );
+
+    await storageEngine.updateStudyCondition('');
+
+    const updatePayload = updateSequenceAssignmentSpy.mock.calls[0][1] as Record<string, unknown>;
+    expect(Object.hasOwn(updatePayload, 'conditions')).toBe(false);
   });
 
   test('getConditionData includes default when participants have no explicit condition', async () => {

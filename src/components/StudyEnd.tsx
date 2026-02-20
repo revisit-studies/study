@@ -13,7 +13,6 @@ import { download } from './downloader/DownloadTidy';
 import { useStudyId } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { useStoreDispatch, useStoreActions } from '../store/store';
-import { useEvent } from '../store/hooks/useEvent';
 
 export function StudyEnd() {
   const studyConfig = useStudyConfig();
@@ -24,61 +23,63 @@ export function StudyEnd() {
   const isAnalysis = useIsAnalysis();
 
   const [completed, setCompleted] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const cancelledRef = useRef(false);
+  const storageEngineRef = useRef(storageEngine);
 
-  const runVerify = useCallback(async () => {
-    if (storageEngine && !cancelledRef.current) {
-      const isComplete = await storageEngine.verifyCompletion();
-      if (isComplete && !cancelledRef.current) {
-        setCompleted(true);
-      }
-    }
+  useEffect(() => {
+    storageEngineRef.current = storageEngine;
   }, [storageEngine]);
-
-  const verifyLoop = useEvent(async () => {
-    if (completed || cancelledRef.current) {
-      return;
-    }
-    try {
-      await runVerify();
-    } catch (error) {
-      console.error('An error occurred while verifying completion', error);
-    } finally {
-      // Schedule the next execution after the current one is complete
-      // Only schedule if not completed and not cancelled to avoid unnecessary iterations
-      if (!completed && !cancelledRef.current) {
-        timeoutRef.current = setTimeout(verifyLoop, 2000);
-      }
-    }
-  });
 
   useEffect(() => {
     // Don't save to the storage engine in analysis
-    if (isAnalysis) {
-      setCompleted(true);
-      return;
+    if (!isAnalysis) {
+      // Set completed in the store
+      dispatch(setParticipantCompleted(true));
+
+      let cancelled = false;
+      let timeoutId: NodeJS.Timeout | null = null;
+      const verifyLoop = async () => {
+        if (cancelled) {
+          return;
+        }
+
+        const engine = storageEngineRef.current;
+        if (!engine) {
+          timeoutId = setTimeout(() => {
+            verifyLoop();
+          }, 2000);
+          return;
+        }
+
+        try {
+          const isComplete = await engine.verifyCompletion();
+          if (isComplete) {
+            setCompleted(true);
+            return;
+          }
+        } catch (error) {
+          console.error('An error occurred while verifying completion', error);
+        }
+
+        if (!cancelled) {
+          timeoutId = setTimeout(() => {
+            verifyLoop();
+          }, 2000);
+        }
+      };
+
+      verifyLoop();
+
+      return () => {
+        cancelled = true;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+      };
     }
 
-    // Reset cancelled flag for React 18 StrictMode remounts
-    cancelledRef.current = false;
-
-    // Set completed in the store
-    dispatch(setParticipantCompleted(true));
-
-    // Start the first execution
-    verifyLoop();
-
-    // verify that storageEngine.verifyCompletion() returns true, loop until it does
-
-    // Cleanup function to prevent memory leaks
-    return () => {
-      cancelledRef.current = true;
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    };
+    setCompleted(true);
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

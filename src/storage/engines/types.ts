@@ -507,7 +507,7 @@ export abstract class StorageEngine {
           answered: [],
           isDynamic: false,
           stage: currentStage,
-          conditions,
+          ...(conditions ? { conditions } : {}),
         };
         // Mark the first reject as claimed
         await this._claimSequenceAssignment(firstReject.participantId, firstReject);
@@ -527,7 +527,7 @@ export abstract class StorageEngine {
         answered: [],
         isDynamic: false,
         stage: currentStage,
-        conditions,
+        ...(conditions ? { conditions } : {}),
       };
       await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
     }
@@ -774,9 +774,10 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    await this._updateSequenceAssignmentFields(this.currentParticipantId, {
-      conditions: this.participantData.conditions,
-    });
+    await this._updateSequenceAssignmentFields(
+      this.currentParticipantId,
+      this.participantData.conditions ? { conditions: this.participantData.conditions } : {},
+    );
   }
 
   // Rejects a participant with the given participantId and reason.
