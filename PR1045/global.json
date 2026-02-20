@@ -41,6 +41,8 @@
     "library-screen-recording",
     "library-smeq",
     "library-sus",
+    "library-umux",
+    "library-umux-lite",
     "library-virtual-chinrest",
     "library-vlat",
     "test-audio",
@@ -214,6 +216,14 @@
     },
     "test-step-logic": {
       "path": "test-step-logic/config.json",
+      "test": true
+    },
+    "library-umux": {
+      "path": "library-umux/config.json",
+      "test": true
+    },
+    "library-umux-lite": {
+      "path": "library-umux-lite/config.json",
       "test": true
     },
     "library-virtual-chinrest": {
