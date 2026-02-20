@@ -986,4 +986,125 @@ describe('Parser Warnings', () => {
     );
     expect(matchingWarnings).toHaveLength(1);
   });
+
+  test('reports missing base component from imported library after namespacing merge', async () => {
+    const mockLibraryConfig = {
+      $schema: '',
+      description: 'Test library',
+      components: {
+        derivedComp: {
+          baseComponent: 'missingBase',
+        },
+      },
+      sequences: {},
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global.fetch as any).mockResolvedValueOnce({
+      text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+    });
+
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      importedLibraries: ['testLib'],
+      components: {},
+      sequence: {
+        order: 'fixed',
+        components: ['$testLib.components.derivedComp'],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const missingBaseErrors = result.errors.filter(
+      (error) => error.category === 'undefined-base-component'
+        && error.instancePath === '/importedLibraries/testLib/baseComponents/'
+        && error.message.includes('missingBase'),
+    );
+    expect(missingBaseErrors).toHaveLength(1);
+  });
+
+  test('attributes imported inherited sidebar warning to library baseComponents after merge', async () => {
+    const mockLibraryConfig = {
+      $schema: '',
+      description: 'Test library',
+      baseComponents: {
+        baseComp: {
+          type: 'markdown',
+          path: 'test.md',
+          withSidebar: false,
+          response: [
+            {
+              id: 'sidebarResponse',
+              type: 'shortText',
+              prompt: 'Sidebar response',
+              location: 'sidebar',
+            },
+          ],
+        },
+      },
+      components: {
+        derivedComp: {
+          baseComponent: 'baseComp',
+        },
+      },
+      sequences: {},
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global.fetch as any).mockResolvedValueOnce({
+      text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+    });
+
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      importedLibraries: ['testLib'],
+      components: {},
+      sequence: {
+        order: 'fixed',
+        components: ['$testLib.components.derivedComp'],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const inheritedSidebarWarnings = result.warnings.filter(
+      (warning) => warning.category === 'disabled-sidebar'
+        && warning.message.includes('$testLib.components.derivedComp')
+        && warning.instancePath === '/importedLibraries/testLib/baseComponents/',
+    );
+    expect(inheritedSidebarWarnings).toHaveLength(1);
+  });
 });

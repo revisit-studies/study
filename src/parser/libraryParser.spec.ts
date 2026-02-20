@@ -1471,6 +1471,11 @@ describe('loadLibrariesParseNamespace', () => {
     expect(derivedCompRecord.type).toBe('markdown');
     expect(derivedCompRecord.path).toBe('base.md');
     expect(derivedCompRecord.baseComponent).toBeUndefined(); // Should be removed
+    expect(result.testLib.__revisitInheritedComponentMetadata).toEqual({
+      '$testLib.components.derivedComp': {
+        baseComponent: 'baseComp',
+      },
+    });
   });
 
   test('filters out libraries with missing components', async () => {

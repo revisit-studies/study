@@ -16,6 +16,10 @@ type SequenceWithImportReference = StudyConfig['sequence'] & {
   __revisitImportedSequenceRef?: string;
 };
 
+type LibraryConfigWithInheritanceMetadata = LibraryConfig & {
+  __revisitInheritedComponentMetadata?: Record<string, { baseComponent: string; withSidebar?: boolean }>;
+};
+
 function normalizeLibraryMacroReference(reference: string): string {
   let normalizedReference = reference;
   if (normalizedReference.includes('.co.')) {
@@ -139,7 +143,12 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
 }
 
 // This function verifies that the library usage in the study config is valid
-export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserErrorWarning[], warnings: ParserErrorWarning[], importedLibrariesData: Record<string, LibraryConfig>) {
+export function verifyLibraryUsage(
+  studyConfig: StudyConfig,
+  errors: ParserErrorWarning[],
+  warnings: ParserErrorWarning[],
+  importedLibrariesData: Record<string, LibraryConfigWithInheritanceMetadata>,
+) {
   const allLibraryComponentNames = new Set(
     Object.values(importedLibrariesData).flatMap((libraryData) => Object.keys(libraryData.components)),
   );
@@ -166,10 +175,17 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
   Object.entries(importedLibrariesData).forEach(([library, libraryData]) => {
     // Verify that the library components are well defined
     Object.entries(libraryData.components).forEach(([componentName, component]) => {
+      const baseComponentRef = isInheritedComponent(component)
+        ? component.baseComponent
+        : libraryData.__revisitInheritedComponentMetadata?.[componentName]?.baseComponent;
+      const ownWithSidebar = isInheritedComponent(component)
+        ? component.withSidebar
+        : libraryData.__revisitInheritedComponentMetadata?.[componentName]?.withSidebar;
+
       // Verify baseComponent is defined in baseComponents object
-      if (isInheritedComponent(component) && !libraryData.baseComponents?.[component.baseComponent]) {
+      if (baseComponentRef && !libraryData.baseComponents?.[baseComponentRef]) {
         errors.push({
-          message: `Base component \`${component.baseComponent}\` is not defined in baseComponents object in library \`${library}\``,
+          message: `Base component \`${baseComponentRef}\` is not defined in baseComponents object in library \`${library}\``,
           instancePath: `/importedLibraries/${library}/baseComponents/`,
           params: { action: 'Add the base component to the baseComponents object' },
           category: 'undefined-base-component',
@@ -180,8 +196,8 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
         return;
       }
 
-      const baseComponent = isInheritedComponent(component)
-        ? libraryData.baseComponents?.[component.baseComponent]
+      const baseComponent = baseComponentRef
+        ? libraryData.baseComponents?.[baseComponentRef]
         : undefined;
       const resolvedComponent: Partial<IndividualComponent> = {
         ...(baseComponent || {}),
@@ -195,7 +211,7 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
         || resolvedComponent.response?.some((r) => 'location' in r && r.location === 'sidebar');
 
       if (sidebarDisabled && isUsingSidebar) {
-        const instancePath = component.withSidebar === false
+        const instancePath = ownWithSidebar === false
           ? `/importedLibraries/${library}/components/`
           : baseComponent?.withSidebar === false
             ? `/importedLibraries/${library}/baseComponents/`
@@ -262,7 +278,7 @@ export async function loadLibrariesParseNamespace(importedLibraries: string[], e
 
     return [library, libraryData];
   });
-  const importedLibrariesData: Record<string, ParsedConfig<LibraryConfig>> = Object.fromEntries(await Promise.all(loadedLibraries));
+  const importedLibrariesData: Record<string, ParsedConfig<LibraryConfigWithInheritanceMetadata>> = Object.fromEntries(await Promise.all(loadedLibraries));
 
   // Filter out the missing imported libraries
   Object.entries(importedLibrariesData).forEach(([libraryName, libraryData]) => {
@@ -276,16 +292,30 @@ export async function loadLibrariesParseNamespace(importedLibraries: string[], e
     if (!importedLibrariesData[libraryName]) {
       return;
     }
+    const inheritedComponentMetadata: Record<string, { baseComponent: string; withSidebar?: boolean }> = {};
+
     importedLibrariesData[libraryName].components = Object.fromEntries(
       Object.entries(importedLibrariesData[libraryName].components).map(([componentName, component]) => {
+        const namespacedComponentName = `$${libraryName}.components.${componentName}`;
         if (isInheritedComponent(component)) {
-          const mergedComponent = merge({}, importedLibrariesData[libraryName].baseComponents![component.baseComponent], component) as IndividualComponent & { baseComponent?: string };
+          inheritedComponentMetadata[namespacedComponentName] = {
+            baseComponent: component.baseComponent,
+            ...(component.withSidebar !== undefined ? { withSidebar: component.withSidebar } : {}),
+          };
+          const mergedComponent = merge(
+            {},
+            importedLibrariesData[libraryName].baseComponents?.[component.baseComponent],
+            component,
+          ) as IndividualComponent & { baseComponent?: string };
           delete mergedComponent.baseComponent;
-          return [`$${libraryName}.components.${componentName}`, mergedComponent];
+          return [namespacedComponentName, mergedComponent];
         }
-        return [`$${libraryName}.components.${componentName}`, component];
+        return [namespacedComponentName, component];
       }),
     );
+    if (Object.keys(inheritedComponentMetadata).length > 0) {
+      importedLibrariesData[libraryName].__revisitInheritedComponentMetadata = inheritedComponentMetadata;
+    }
   });
 
   return importedLibrariesData;
