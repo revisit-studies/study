@@ -184,9 +184,14 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       throw new Error('Failed to retrieve sequence assignment for update');
     }
 
+    const updatedData = { ...data.data, ...updatedFields };
+    if (Object.hasOwn(updatedFields, 'conditions') && updatedFields.conditions === undefined) {
+      delete updatedData.conditions;
+    }
+
     await this.supabase
       .from('revisit')
-      .update({ data: { ...data.data, ...updatedFields } })
+      .update({ data: updatedData })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', sequenceAssignmentPath);
   }

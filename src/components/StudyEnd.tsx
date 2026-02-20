@@ -2,7 +2,7 @@ import {
   Center, Flex, Loader, Space, Text,
 } from '@mantine/core';
 import {
-  useEffect, useState, useCallback, useMemo,
+  useEffect, useState, useCallback, useMemo, useRef,
 } from 'react';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
@@ -23,25 +23,63 @@ export function StudyEnd() {
   const isAnalysis = useIsAnalysis();
 
   const [completed, setCompleted] = useState(false);
+  const storageEngineRef = useRef(storageEngine);
+
+  useEffect(() => {
+    storageEngineRef.current = storageEngine;
+  }, [storageEngine]);
 
   useEffect(() => {
     // Don't save to the storage engine in analysis
-    if (isAnalysis) {
-      setCompleted(true);
-      return;
+    if (!isAnalysis) {
+      // Set completed in the store
+      dispatch(setParticipantCompleted(true));
+
+      let cancelled = false;
+      let timeoutId: NodeJS.Timeout | null = null;
+      const verifyLoop = async () => {
+        if (cancelled) {
+          return;
+        }
+
+        const engine = storageEngineRef.current;
+        if (!engine) {
+          timeoutId = setTimeout(() => {
+            verifyLoop();
+          }, 2000);
+          return;
+        }
+
+        try {
+          const isComplete = await engine.verifyCompletion();
+          if (isComplete) {
+            setCompleted(true);
+            return;
+          }
+        } catch (error) {
+          console.error('An error occurred while verifying completion', error);
+        }
+
+        if (!cancelled) {
+          timeoutId = setTimeout(() => {
+            verifyLoop();
+          }, 2000);
+        }
+      };
+
+      verifyLoop();
+
+      return () => {
+        cancelled = true;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+      };
     }
 
-    // Set completed in the store
-    dispatch(setParticipantCompleted(true));
-
-    // verify that storageEngine.verifyCompletion() returns true, loop until it does
-    const interval = setInterval(async () => {
-      const isComplete = await storageEngine!.verifyCompletion();
-      if (isComplete) {
-        setCompleted(true);
-        clearInterval(interval);
-      }
-    }, 2000);
+    setCompleted(true);
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

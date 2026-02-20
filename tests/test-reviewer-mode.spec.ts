@@ -25,6 +25,6 @@ test('test', async ({ browser }) => {
 
   await page.getByRole('tab', { name: 'Participant View' }).click();
   await page.getByLabel('Participant View').locator('a').filter({ hasText: 'end' }).click();
-  const endText = await page.getByText('Please wait');
+  const endText = await page.getByText('Thank you');
   await expect(endText).toBeVisible();
 });

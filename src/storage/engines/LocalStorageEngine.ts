@@ -83,10 +83,14 @@ export class LocalStorageEngine extends StorageEngine {
     if (!existingAssignment) {
       throw new Error(`Sequence assignment for participant ${participantId} not found`);
     }
-    sequenceAssignments[participantId] = {
+    const updatedAssignment = {
       ...existingAssignment,
       ...updatedFields,
     };
+    if (Object.hasOwn(updatedFields, 'conditions') && updatedFields.conditions === undefined) {
+      delete updatedAssignment.conditions;
+    }
+    sequenceAssignments[participantId] = updatedAssignment;
     await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
   }
 
