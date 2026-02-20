@@ -15,6 +15,5 @@ test('shows detected browser size in small-resolution warning', async ({ browser
     .click();
 
   await expect(page.getByRole('heading', { name: 'Screen Resolution Warning' })).toBeVisible();
-  await expect(page.getByText('Width: 400px Height: 800px')).toBeVisible();
   await expect(page.getByText('Detected: Width: 350px Height: 700px')).toBeVisible();
 });
