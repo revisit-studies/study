@@ -155,10 +155,11 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
       const isUsingSidebarInOwnComponent = component.instructionLocation === 'sidebar'
         || component.nextButtonLocation === 'sidebar'
         || component.response?.some((r) => 'location' in r && r.location === 'sidebar');
+      const hasOwnSidebarOverride = component.withSidebar !== undefined;
 
       // Verify sidebar is enabled if component uses sidebar locations
       // Imported library components are validated in verifyLibraryUsage to avoid duplicate warnings.
-      if (!isImportedLibraryComponent && (!isInheritedFromImportedLibrary || isUsingSidebarInOwnComponent)) {
+      if (!isImportedLibraryComponent && (!isInheritedFromImportedLibrary || isUsingSidebarInOwnComponent || hasOwnSidebarOverride)) {
         const sidebarDisabled = !(resolvedComponent.withSidebar ?? studyConfig.uiConfig.withSidebar);
         const isUsingSidebar = resolvedComponent.instructionLocation === 'sidebar'
           || resolvedComponent.nextButtonLocation === 'sidebar'

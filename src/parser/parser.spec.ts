@@ -919,4 +919,71 @@ describe('Parser Warnings', () => {
     expect(disabledSidebarWarnings).toHaveLength(1);
     expect(disabledSidebarWarnings[0].instancePath).toBe('/importedLibraries/testLib/uiConfig/');
   });
+
+  test('adds disabled-sidebar warning when component disables sidebar inherited from imported base component', async () => {
+    const mockLibraryConfig = {
+      $schema: '',
+      description: 'Test library',
+      components: {
+        baseComp: {
+          type: 'markdown',
+          path: 'test.md',
+          response: [
+            {
+              id: 'sidebarResponse',
+              type: 'shortText',
+              prompt: 'Sidebar response',
+              location: 'sidebar',
+            },
+          ],
+        },
+      },
+      sequences: {},
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global.fetch as any).mockResolvedValueOnce({
+      text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+    });
+
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      importedLibraries: ['testLib'],
+      components: {
+        derivedComponent: {
+          baseComponent: '$testLib.components.baseComp',
+          withSidebar: false,
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['derivedComponent'],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const matchingWarnings = result.warnings.filter(
+      (warning) => warning.category === 'disabled-sidebar'
+        && warning.message.includes('derivedComponent')
+        && warning.instancePath === '/components/',
+    );
+    expect(matchingWarnings).toHaveLength(1);
+  });
 });
