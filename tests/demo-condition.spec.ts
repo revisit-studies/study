@@ -20,6 +20,37 @@ async function expectStudyComplete(page: import('@playwright/test').Page) {
 }
 
 test.describe('demo-condition', () => {
+  test('cannot switch to another condition after reload when development mode is disabled', async ({ page }) => {
+    // Disable development mode so condition changes in the URL do not override persisted participant conditions.
+    await page.goto('/analysis/stats/demo-condition/manage');
+    await expect(page.getByRole('heading', { name: 'ReVISit Modes' })).toBeVisible({ timeout: 5000 });
+
+    const developmentModeSwitch = page
+      .locator('h5:has-text("Development Mode")')
+      .locator('xpath=following::input[@role="switch"][1]');
+    const developmentModeSwitchControl = page
+      .locator('h5:has-text("Development Mode")')
+      .locator('xpath=following::label[.//input[@role="switch"]][1]');
+    await expect(developmentModeSwitch).toHaveCount(1);
+    await expect(developmentModeSwitchControl).toHaveCount(1);
+    if (await developmentModeSwitch.isChecked()) {
+      await developmentModeSwitchControl.click();
+    }
+    await expect(developmentModeSwitch).not.toBeChecked();
+
+    // Start the participant in the color condition.
+    await page.goto('/demo-condition?condition=color');
+    await expect(page.getByText('Welcome to this condition-based demo.')).toBeVisible({ timeout: 5000 });
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(page.getByText(/Which color is the (lightest|darkest)\?/)).toBeVisible({ timeout: 5000 });
+
+    // Change URL condition and reload. Participant should stay on the original condition branch.
+    await page.goto('/demo-condition?condition=size');
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(page.getByText(/Which color is the (lightest|darkest)\?/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/Which shape is the (largest|smallest)\?/)).not.toBeVisible();
+  });
+
   test('with condition=color, only color trials are shown', async ({ page }) => {
     await page.goto('/demo-condition?condition=color');
 

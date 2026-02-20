@@ -213,7 +213,7 @@ export class LocalStorageEngine extends StorageEngine {
 
     // Set the mode
     modes[mode] = value;
-    this.studyDatabase.setItem(key, modes);
+    await this.studyDatabase.setItem(key, modes);
   }
 
   protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
