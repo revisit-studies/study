@@ -14,6 +14,13 @@ import { OptionLabel } from './OptionLabel';
 import { generateErrorMessage } from './utils';
 import { parseStringOptions } from '../../utils/stringOptions';
 
+const CHOICE_STRING_TO_COLUMNS: Record<string, string[]> = {
+  likely5: ['Highly Unlikely', 'Unlikely', 'Neutral', 'Likely', 'Highly Likely'],
+  likely7: ['Highly Unlikely', 'Unlikely', 'Slightly Unlikely', 'Neutral', 'Slightly Likely', 'Likely', 'Highly Likely'],
+  satisfaction5: ['Highly Unsatisfied', 'Unsatisfied', 'Neutral', 'Satisfied', 'Highly Satisfied'],
+  satisfaction7: ['Highly Unsatisfied', 'Unsatisfied', 'Slightly Unsatisfied', 'Neutral', 'Slightly Satisfied', 'Satisfied', 'Highly Satisfied'],
+};
+
 function CheckboxComponent({
   _choices,
   _n,
@@ -128,16 +135,12 @@ export function MatrixInput({
     infoText,
   } = response;
 
-  const _choiceStringToColumns: Record<string, string[]> = {
-    likely5: ['Highly Unlikely', 'Unlikely', 'Neutral', 'Likely', 'Highly Likely'],
-    likely7: ['Highly Unlikely', 'Unlikely', 'Slightly Unlikely', 'Neutral', 'Slightly Likely', 'Likely', 'Highly Likely'],
-    satisfaction5: ['Highly Unsatisfied', 'Unsatisfied', 'Neutral', 'Satisfied', 'Highly Satisfied'],
-    satisfaction7: ['Highly Unsatisfied', 'Unsatisfied', 'Slightly Unsatisfied', 'Neutral', 'Slightly Satisfied', 'Satisfied', 'Highly Satisfied'],
-  };
-
-  const _choices: ParsedStringOption[] = typeof answerOptions === 'string'
-    ? parseStringOptions(_choiceStringToColumns[answerOptions])
-    : parseStringOptions(answerOptions);
+  const _choices = useMemo<ParsedStringOption[]>(
+    () => (typeof answerOptions === 'string'
+      ? parseStringOptions(CHOICE_STRING_TO_COLUMNS[answerOptions])
+      : parseStringOptions(answerOptions)),
+    [answerOptions],
+  );
 
   const questions = parseStringOptions(response.questionOptions);
   const questionsByValue = Object.fromEntries(questions.map((question) => [question.value, question]));
