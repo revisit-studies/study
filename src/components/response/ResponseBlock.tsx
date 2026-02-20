@@ -18,7 +18,7 @@ import {
 } from '../../store/store';
 
 import { NextButton } from '../NextButton';
-import { generateInitFields, useAnswerField } from './utils';
+import { generateInitFields, mergeReactiveAnswers, useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
 import { FormElementProvenance, StoredAnswer, ValidationStatus } from '../../store/types';
@@ -154,10 +154,11 @@ export function ResponseBlock({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [responses, storedAnswer]);
   useEffect(() => {
-    const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
-    if (reactiveAnswers && ReactiveResponse) {
-      const answerId = ReactiveResponse.id;
-      answerValidator.setValues({ ...answerValidator.values, [answerId]: reactiveAnswers[answerId] as string[] });
+    if (reactiveAnswers) {
+      const mergedValues = mergeReactiveAnswers(responsesWithDefaults, answerValidator.values, reactiveAnswers);
+      if (mergedValues !== answerValidator.values) {
+        answerValidator.setValues(mergedValues);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reactiveAnswers]);

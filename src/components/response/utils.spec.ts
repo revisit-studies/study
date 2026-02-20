@@ -52,3 +52,28 @@ describe('generateInitFields', () => {
     });
   });
 });
+
+describe('mergeReactiveAnswers', () => {
+  it('merges all reactive response ids from a single submission', async () => {
+    const { mergeReactiveAnswers } = await import('./utils');
+
+    const mergedValues = mergeReactiveAnswers(
+      [
+        {
+          id: 'answer1',
+          prompt: 'First reactive answer',
+          type: 'reactive',
+        },
+        {
+          id: 'answer2',
+          prompt: 'Second reactive answer',
+          type: 'reactive',
+        },
+      ],
+      { answer1: 0, answer2: 0, other: 'keep-me' },
+      { answer1: 1, answer2: 2 },
+    );
+
+    expect(mergedValues).toEqual({ answer1: 1, answer2: 2, other: 'keep-me' });
+  });
+});
