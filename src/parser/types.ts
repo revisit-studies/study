@@ -1525,6 +1525,8 @@ export interface DynamicBlock {
   functionPath: string;
   /** The parameters that are passed to the function. These can be used within your function to render different things. */
   parameters?: Record<string, unknown>;
+  /** The conditional property shows the block only when the URL condition matches its `id`. */
+  conditional?: boolean;
 }
 
 /** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).
@@ -1644,6 +1646,8 @@ export interface ComponentBlock {
   interruptions?: InterruptionBlock[];
   /** The skip conditions for the block. */
   skip?: SkipConditions;
+  /** The conditional property shows the block only when the URL condition matches its `id`. */
+  conditional?: boolean;
 }
 
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */

@@ -26,8 +26,11 @@ import { useAsync } from '../../store/hooks/useAsync';
 import { getCleanedDuration } from '../../utils/getCleanedDuration';
 import { showNotification } from '../../utils/notifications';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { parseConditionParam } from '../../utils/handleSequenceConditions';
 
 const OPTIONAL_COMMON_PROPS = [
+  'condition',
+  'stage',
   'status',
   'rejectReason',
   'rejectTime',
@@ -99,6 +102,8 @@ export function download(graph: string, filename: string) {
 function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig, transcripts?: Record<string, string | null>): [TidyRow[], string[]] {
   const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (Object.entries(participant.answers).length)) * 100).toFixed(2);
   const newHeaders = new Set<string>();
+  const participantConditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
+  const conditionValue = participantConditions.length > 0 ? participantConditions.join(',') : 'default';
 
   return [[
     {
@@ -107,6 +112,8 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
       trialOrder: null,
       responseId: 'participantTags',
       answer: JSON.stringify(participant.participantTags),
+      ...(properties.includes('condition') ? { condition: conditionValue } : {}),
+      ...(properties.includes('stage') ? { stage: participant.stage } : {}),
     },
     ...Object.values(participant.answers).map((trialAnswer) => {
       // Get the whole component, including the base component if there is inheritance
@@ -133,6 +140,12 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         });
 
         const response = completeComponent.response.find((resp) => resp.id === key);
+        if (properties.includes('condition')) {
+          tidyRow.condition = conditionValue;
+        }
+        if (properties.includes('stage')) {
+          tidyRow.stage = participant.stage;
+        }
         if (properties.includes('status')) {
           tidyRow.status = participant.rejected ? 'rejected' : (participant.completed ? 'completed' : 'in progress');
         }
@@ -214,6 +227,8 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
         trialOrder,
         responseId: 'windowEvents',
         answer: JSON.stringify(windowEventsCount),
+        ...(properties.includes('condition') ? { condition: conditionValue } : {}),
+        ...(properties.includes('stage') ? { stage: participant.stage } : {}),
       } as TidyRow);
 
       return rows;
@@ -258,7 +273,11 @@ async function getTableData(
     await runWithConcurrencyLimit(tasks, TRANSCRIPTION_CONCURRENCY_LIMIT);
   }
 
-  const header = combinedProperties;
+  const hasCondition = data.some((p) => {
+    const legacyStudyCondition = (p as { studyCondition?: string | string[] }).studyCondition;
+    return parseConditionParam(p.conditions ?? legacyStudyCondition ?? p.searchParams?.condition).length > 0;
+  });
+  const header = combinedProperties.filter((p) => p !== 'condition' || hasCondition);
   const allData = await Promise.all(data.map(async (participant) => {
     const partDataToRows = await participantDataToRows(participant, combinedProperties, allConfigs[participant.participantConfigHash], transcripts);
 
@@ -293,6 +312,8 @@ export function DownloadTidy({
   const [showTranscriptWarning, setShowTranscriptWarning] = useState(false);
 
   const [selectedProperties, setSelectedProperties] = useState<Array<OptionalProperty>>([
+    'condition',
+    'stage',
     'status',
     'rejectReason',
     'description',

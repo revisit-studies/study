@@ -6,6 +6,7 @@ import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
 import { RevisitNotification } from '../../utils/notifications';
+import { parseConditionParam } from '../../utils/handleSequenceConditions';
 import {
   ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
 } from '../../analysis/individualStudy/thinkAloud/types';
@@ -33,6 +34,7 @@ export type SequenceAssignment = {
   answered: string[]; // Number of answered questions
   isDynamic: boolean; // Whether the study contains dynamic blocks
   stage: string; // The stage of the participant in the study
+  conditions?: string[]; // The study condition(s) assigned to this participant.
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
@@ -61,6 +63,11 @@ export interface StageInfo {
 interface StageData {
   currentStage: StageInfo;
   allStages: StageInfo[];
+}
+
+export interface ConditionData {
+  allConditions: string[];
+  conditionCounts: Record<string, number>;
 }
 
 const defaultStageColor = '#F05A30';
@@ -185,6 +192,13 @@ export abstract class StorageEngine {
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
 
+  // Updates specific top-level fields in an existing sequence assignment without modifying timestamp fields.
+  // This operation is a shallow patch (no deep merge for nested objects).
+  protected abstract _updateSequenceAssignmentFields(
+    participantId: string,
+    updatedFields: Partial<SequenceAssignment>,
+  ): Promise<void>;
+
   // Sets the participant to completed in the sequence assignments in the realtime database.
   protected abstract _completeCurrentParticipantRealtime(): Promise<void>;
 
@@ -298,6 +312,24 @@ export abstract class StorageEngine {
     };
     await this.setCurrentStage(studyId, 'DEFAULT', defaultStageColor);
     return defaultStageData;
+  }
+
+  async getConditionData(studyId: string): Promise<ConditionData> {
+    const sequenceAssignments = await this.getAllSequenceAssignments(studyId);
+    const conditionCounts: Record<string, number> = {};
+
+    sequenceAssignments.forEach((assignment) => {
+      const normalizedConditions = parseConditionParam(assignment.conditions);
+      const conditionValues = normalizedConditions.length > 0 ? normalizedConditions : ['default'];
+      conditionValues.forEach((condition) => {
+        conditionCounts[condition] = (conditionCounts[condition] || 0) + 1;
+      });
+    });
+
+    return {
+      allConditions: Object.keys(conditionCounts).sort(),
+      conditionCounts,
+    };
   }
 
   // Setting current stage
@@ -443,7 +475,7 @@ export abstract class StorageEngine {
   // This function is one of the most critical functions in the storage engine.
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
-  protected async _getSequence() {
+  protected async _getSequence(conditions?: string[]) {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
@@ -475,6 +507,7 @@ export abstract class StorageEngine {
           answered: [],
           isDynamic: false,
           stage: currentStage,
+          conditions,
         };
         // Mark the first reject as claimed
         await this._claimSequenceAssignment(firstReject.participantId, firstReject);
@@ -494,6 +527,7 @@ export abstract class StorageEngine {
         answered: [],
         isDynamic: false,
         stage: currentStage,
+        conditions,
       };
       await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
     }
@@ -571,7 +605,9 @@ export abstract class StorageEngine {
     }
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
-    const { currentRow, creationIndex } = await this._getSequence();
+    const parsedConditions = parseConditionParam(searchParams.condition);
+    const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
+    const { currentRow, creationIndex } = await this._getSequence(conditions);
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
@@ -579,6 +615,7 @@ export abstract class StorageEngine {
       participantIndex: creationIndex,
       answers: {},
       searchParams,
+      conditions,
       metadata,
       completed: false,
       rejected: false,
@@ -689,6 +726,57 @@ export abstract class StorageEngine {
       'participantData',
       this.participantData,
     );
+  }
+
+  // Updates the participant's stored search params.
+  async updateParticipantSearchParams(searchParams: Record<string, string>) {
+    await this.verifyStudyDatabase();
+
+    if (!this.participantData) {
+      throw new Error('Participant data not initialized');
+    }
+
+    this.participantData.searchParams = searchParams;
+
+    await this._pushToStorage(
+      `participants/${this.currentParticipantId}`,
+      'participantData',
+      this.participantData,
+    );
+  }
+
+  async updateStudyCondition(condition: string | string[]) {
+    await this.verifyStudyDatabase();
+
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const modes = await this.getModes(this.studyId);
+    if (!modes.developmentModeEnabled) {
+      throw new Error('Cannot update study condition when development mode is disabled');
+    }
+
+    if (!this.participantData) {
+      throw new Error('Participant data not initialized');
+    }
+
+    const parsedConditions = parseConditionParam(condition);
+    this.participantData.conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
+
+    await this._pushToStorage(
+      `participants/${this.currentParticipantId}`,
+      'participantData',
+      this.participantData,
+    );
+
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
+    await this._updateSequenceAssignmentFields(this.currentParticipantId, {
+      conditions: this.participantData.conditions,
+    });
   }
 
   // Rejects a participant with the given participantId and reason.

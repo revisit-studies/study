@@ -473,6 +473,10 @@
           },
           "type": "array"
         },
+        "conditional": {
+          "description": "The conditional property shows the block only when the URL condition matches its `id`.",
+          "type": "boolean"
+        },
         "id": {
           "description": "The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property.",
           "type": "string"
@@ -748,6 +752,10 @@
       "additionalProperties": false,
       "description": "The DynamicBlock interface is used to define a block where displayed components are controlled by a function. This is useful when you want to generate the sequence based on answers to previous questions or other factors.\n\nThe functionPath property is a path to the function that generates the components. This should be a relative path from the src/public folder.\n\nHere's an example of how to use the DynamicBlock:\n\n```js {   \"id\": \"funcBlock\",   \"order\": \"dynamic\",   \"functionPath\": \"<study-name>/assets/function.js\",   \"parameters\": {     \"param1\": \"value1\",     \"param2\": \"value2\"   } } ```",
       "properties": {
+        "conditional": {
+          "description": "The conditional property shows the block only when the URL condition matches its `id`.",
+          "type": "boolean"
+        },
         "functionPath": {
           "description": "The path to the function that generates the components. This should be a relative path from the src/public folder.",
           "type": "string"
