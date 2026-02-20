@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <script src="https://d3js.org/d3.v7.js"></script>
+    <script src="../../revisitUtilities/revisit-communicate.js"></script>
 </head>
 
 <body>
@@ -11,6 +12,7 @@
 </body>
 
 <script>
+    Revisit.onDataReceive((data) => {
     height = 500;
     width = 500;
     padding = 25;
@@ -18,11 +20,21 @@
     svg.attr("width", width + 2 * padding)
         .attr("height", height + 2 * padding);
 
-    let data = [0.32, -0.36, 1.2, -1.3, 0.82, 0.4, -0.3];
-    var fulldata = d3.csvParse("shown,value\nhidden,0.32\nhidden,-0.36\nhidden,1.2\nvisible,-1.3\nhidden,0.82\nvisible,0.4\nhidden,-0.3")
+    const barData = data['barData']
+    const selectedIndices =  data['indices']
+    var visible = [];
 
-    let selected = ["hidden","hidden","hidden","visible","hidden","visible","hidden"];
-    let spacing = height / data.length;
+    var dataObj = [];
+    for(var i = 0; i < barData.length; i++){
+        if (selectedIndices.includes(i)){
+            visible[i] = "visible"
+        } else{
+            visible[i] = "hidden"
+        }
+        dataObj[i] = {bars:barData[i], visible:visible[i]}
+    }
+
+    let spacing = height / barData.length;
 
     let min = -2;
     let max = 2;
@@ -35,26 +47,26 @@
     let color = "white";
 
     svg.selectAll(".bar")
-        .data(fulldata)
+        .data(dataObj)
         .join("rect")
             .classed("bar", true)
             .attr("transform", "translate(" + padding + "," + padding + ")")
             .attr("x", (d, i) => i * spacing + 5)
-            .attr("y", d => yScale(Math.max(0,d.value)))
+            .attr("y", d => yScale(Math.max(0,d.bars)))
             .attr("width", 50)
-            .attr("height", d => Math.abs(yScale(0)-yScale(d.value)))
+            .attr("height", d => Math.abs(yScale(0)-yScale(d.bars)))
             .style("fill", 'white')
             .style("stroke", "black");
 
     svg.selectAll(".barlabel")
-        .data(fulldata)
+        .data(dataObj)
         .join("circle")
         .classed("barlabel", true)
         .attr("transform", "translate(" + padding + "," + padding + ")")
         .attr("cx", (d, i) => (i * spacing + 5)+25)
-        .attr("cy",d => yScale(d.value/2))
+        .attr("cy",d => yScale(0.2 * Math.sign(d.bars)))
         .attr("r", 10)
-        .attr("visibility",d => d.shown)
+        .attr("visibility",d => d.visible)
         .attr("stroke", "white")
         .attr("fill", "black");
 
@@ -69,5 +81,6 @@
         .attr("y1",height/2+padding)
         .attr("y2",height/2+padding)
         .attr("stroke","black");
+    });
 </script>
 </html>

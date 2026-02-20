@@ -21,51 +21,67 @@
         "autoDownloadStudy": false,
         "withSidebar": true
     },
+    "baseComponents": {
+        "bar-chart": {
+            "type": "website",
+            "response": [
+            {
+                "id": "barChart",
+                "prompt": "Your selected answer:",
+                "required": true,
+                "location": "belowStimulus",
+                "type": "reactive"
+            }
+            ],
+            "path": "basic-questionnaire-study/assets/bar_chart.html",
+            "instructionLocation": "aboveStimulus"
+        },
+        "diverging_bar": {
+            "type": "website",
+            "response": [
+            {
+                "id": "barChart",
+                "prompt": "Your selected answer:",
+                "required": true,
+                "location": "belowStimulus",
+                "type": "reactive"
+            }
+            ],
+            "path": "basic-questionnaire-study/assets/diverging_bar.html",
+            "instructionLocation": "aboveStimulus"
+        }
+    },
     "components": {
         "introduction": {
             "type": "markdown",
             "path": "basic-questionnaire-study/assets/introduction.md",
             "response": []
         },
-        "bar1": {
-            "type": "website",
-            "nextButtonLocation": "sidebar",
-            "path": "basic-questionnaire-study/assets/bar_chart.html",
-            "response": [
-                {
-                "id": "html-response",
-                "prompt": "Answer:",
-                "location": "sidebar",
-                "type": "numerical",
-                "placeholder": "0-7",
-                "min": 0,
-                "max": 7
-                }
-            ]
+        "bar-chart-1":{
+            "baseComponent": "bar-chart",
+            "description": "A trial for the user to click the largest bar",
+            "instruction": "Click on the largest bar",
+            "parameters": {
+                "barData": [0.32, 0.2, 1.2, 1.3, 0.82, 0.4, 0.3],
+                "indices": [2,4]
+            }
         },
-        "bar2": {
-            "type": "website",
-            "nextButtonLocation": "sidebar",
-            "path": "basic-questionnaire-study/assets/diverging_bar.html",
-            "response": [
-                {
-                "id": "html-response",
-                "prompt": "Answer:",
-                "location": "sidebar",
-                "type": "numerical",
-                "placeholder": "0-7",
-                "min": 0,
-                "max": 7
-                }
-            ]
+        "bar-chart-2":{
+            "baseComponent": "diverging_bar",
+            "description": "A trial for the user to click the largest bar",
+            "instruction": "Click on the largest bar",
+            "parameters": {
+                "barData": [0.32, -0.2, -1.2, 1.3, 0.82, -0.4, 0.3],
+                "indices": [2,4]
+            }
         }
     },
     "sequence": {
         "order": "fixed",
         "components": [
             "introduction",
-            "bar1",
-            "bar2"
+            "bar-chart-1",
+            "bar-chart-2"
         ]
     }
 }
