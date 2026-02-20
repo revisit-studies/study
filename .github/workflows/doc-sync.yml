@@ -22,9 +22,16 @@ jobs:
       - name: Get git diff and changed files
         id: get_diff
         run: |
-          # Get the diff between the previous commit and the current one
+          BEFORE_SHA="${{ github.event.before }}"
+          AFTER_SHA="${{ github.sha }}"
+          EMPTY_TREE=$(git hash-object -t tree /dev/null)
+          
+          if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            BEFORE_SHA="$EMPTY_TREE"
+          fi
+          
           # Filter out files that don't need doc consideration
-          DIFF=$(git diff HEAD^ HEAD --ignore-all-space -- \
+          CHANGED_FILES=$(git diff "$BEFORE_SHA" "$AFTER_SHA" --name-only --diff-filter=ACMR -- \
             ':!package-lock.json' \
             ':!yarn.lock' \
             ':!.yarn/**' \
@@ -33,16 +40,19 @@ jobs:
             ':!build/**' \
             ':!*.spec.ts' \
             ':!*.spec.tsx' \
+            ':!*.test.ts' \
+            ':!*.test.tsx' \
             ':!tests/**' \
             ':!.github/**' \
             ':!public/libraries/**' \
             ':!public/**/assets/**' \
             ':!.eslintrc*' \
+            ':!eslint.config.js' \
             ':!tsconfig*.json' \
             ':!vite.config.ts' \
             ':!playwright.config.ts' \
             ':!**.md' \
-            2>/dev/null || git diff --ignore-all-space -- \
+            2>/dev/null || git diff "$BEFORE_SHA" "$AFTER_SHA" --name-only --diff-filter=ACMR -- \
             ':!package-lock.json' \
             ':!yarn.lock' \
             ':!.yarn/**' \
@@ -51,89 +61,54 @@ jobs:
             ':!build/**' \
             ':!*.spec.ts' \
             ':!*.spec.tsx' \
+            ':!*.test.ts' \
+            ':!*.test.tsx' \
             ':!tests/**' \
             ':!.github/**' \
             ':!public/libraries/**' \
             ':!public/**/assets/**' \
             ':!.eslintrc*' \
+            ':!eslint.config.js' \
             ':!tsconfig*.json' \
             ':!vite.config.ts' \
             ':!playwright.config.ts' \
             ':!**.md')
           
-          # Check if diff is empty
-          if [ -z "$DIFF" ]; then
+          # Check if changes are empty
+          if [ -z "$CHANGED_FILES" ]; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
             exit 0
           fi
           
           echo "has_changes=true" >> $GITHUB_OUTPUT
-          
-          # Get list of changed files (relative paths)
-          CHANGED_FILES=$(git diff HEAD^ HEAD --name-only --diff-filter=ACMR -- \
-            ':!package-lock.json' \
-            ':!yarn.lock' \
-            ':!.yarn/**' \
-            ':!node_modules/**' \
-            ':!dist/**' \
-            ':!build/**' \
-            ':!*.spec.ts' \
-            ':!*.spec.tsx' \
-            ':!tests/**' \
-            ':!.github/**' \
-            ':!public/libraries/**' \
-            ':!public/**/assets/**' \
-            ':!.eslintrc*' \
-            ':!tsconfig*.json' \
-            ':!vite.config.ts' \
-            ':!playwright.config.ts' \
-            ':!**.md' \
-            2>/dev/null || git diff --name-only --diff-filter=ACMR -- \
-            ':!package-lock.json' \
-            ':!yarn.lock' \
-            ':!.yarn/**' \
-            ':!node_modules/**' \
-            ':!dist/**' \
-            ':!build/**' \
-            ':!*.spec.ts' \
-            ':!*.spec.tsx' \
-            ':!tests/**' \
-            ':!.github/**' \
-            ':!public/libraries/**' \
-            ':!public/**/assets/**' \
-            ':!.eslintrc*' \
-            ':!tsconfig*.json' \
-            ':!vite.config.ts' \
-            ':!playwright.config.ts' \
-            ':!**.md')
-          
-          # Truncate diff if too large (keep it reasonable for issue body)
-          DIFF_LENGTH=${#DIFF}
-          if [ $DIFF_LENGTH -gt 20000 ]; then
-            DIFF="${DIFF:0:20000}"
-            echo "truncated=true" >> $GITHUB_OUTPUT
-          else
-            echo "truncated=false" >> $GITHUB_OUTPUT
-          fi
-          
-          # Save for next steps
-          echo "$DIFF" > /tmp/git_diff.txt
+
+          echo "before_sha=$BEFORE_SHA" >> $GITHUB_OUTPUT
           echo "$CHANGED_FILES" > /tmp/changed_files.txt
 
       - name: Check if changes are doc-relevant
         if: steps.get_diff.outputs.has_changes == 'true'
         id: check_relevance
         run: |
-          # Read documentation coverage configuration
           DOC_COVERAGE=".github/doc-coverage.md"
+          HIGH_PRIORITY_PATTERNS=()
           
-          # Extract high-priority file patterns (always doc-relevant)
-          HIGH_PRIORITY_PATTERNS=(
-            "src/parser/types.ts"
-            "src/components/"
-            "src/store/types.ts"
-            "src/storage/"
-          )
+          if [ -f "$DOC_COVERAGE" ]; then
+            mapfile -t HIGH_PRIORITY_PATTERNS < <(awk '
+              BEGIN { in_section = 0 }
+              /^## High-Priority File Patterns/ { in_section = 1; next }
+              /^## / { if (in_section) exit }
+              in_section && match($0, /`([^`]+)`/, m) { print m[1] }
+            ' "$DOC_COVERAGE")
+          fi
+          
+          if [ "${#HIGH_PRIORITY_PATTERNS[@]}" -eq 0 ]; then
+            HIGH_PRIORITY_PATTERNS=(
+              "src/parser/types.ts"
+              "src/components/"
+              "src/store/types.ts"
+              "src/storage/"
+            )
+          fi
           
           CHANGED_FILES=$(cat /tmp/changed_files.txt)
           DOC_RELEVANT=false
@@ -165,47 +140,39 @@ jobs:
         id: issue_body
         env:
           COMMIT_SHA: ${{ github.sha }}
+          BEFORE_SHA: ${{ steps.get_diff.outputs.before_sha }}
           REPO_NAME: ${{ github.repository }}
           MATCHED_PATTERNS: ${{ steps.check_relevance.outputs.matched_patterns }}
-          TRUNCATED: ${{ steps.get_diff.outputs.truncated }}
         run: |
-          DIFF=$(cat /tmp/git_diff.txt)
-          
-          # Build the issue body with clear instructions for Copilot
-          read -r -d '' ISSUE_BODY << 'EOF' || true
+          DOC_COVERAGE_URL="https://github.com/${REPO_NAME}/blob/${COMMIT_SHA}/.github/doc-coverage.md"
+          WORKFLOW_URL="https://github.com/${REPO_NAME}/blob/${COMMIT_SHA}/.github/workflows/doc-sync.yml"
+          COMPARE_URL="https://github.com/${REPO_NAME}/compare/${BEFORE_SHA}...${COMMIT_SHA}"
+
+          cat > /tmp/issue_body.txt <<EOF
           # Documentation Update Required
-          
+
           Code changes in this repository require documentation updates. Please analyze the code changes and update the documentation accordingly.
-          
+
           ## Changed Files
           These files were modified:
-          
-          ```
+
           ${MATCHED_PATTERNS}
-          ```
-          
+
           ## Code Changes
-          
-          Here is the diff of the changes:
-          
-          ```diff
-          ${DIFF}
-          ```
-          
-          ${TRUNCATION_NOTE}
-          
+
+          For security reasons, the full diff is not included in this issue.
+
+          Review the code changes here:
+          ${COMPARE_URL}
+
           ## Documentation Areas That May Be Affected
-          
-          Based on the files changed, please review and update documentation in these areas:
-          
-          - **Config Reference**: If you modified `src/parser/types.ts`, the study configuration schema documentation
-          - **Component API**: If you modified `src/components/`, the component props and interfaces
-          - **Data Export Reference**: If you modified `src/store/types.ts` or data-related types
-          - **Storage Configuration**: If you modified `src/storage/`, the storage backend documentation
-          
+
+          Use the documentation coverage mapping to identify which pages to update:
+          ${DOC_COVERAGE_URL}
+
           ## Instructions for Documentation Update
-          
-          1. Review the code diff above to understand what changed
+
+          1. Review the code changes at the compare link above
           2. Identify which documentation pages need updates
           3. Update the relevant sections with:
              - New or modified field descriptions
@@ -214,33 +181,14 @@ jobs:
              - Removed or renamed APIs (deprecation notices)
           4. Add examples if applicable
           5. Update any tables of contents or navigation that reference changed items
-          
+
           ## Reference Information
-          
+
           - **Triggered by commit**: [${REPO_NAME}@${COMMIT_SHA:0:7}](https://github.com/${REPO_NAME}/commit/${COMMIT_SHA})
-          - **Workflow**: [.github/workflows/doc-sync.yml](${REPO_NAME}/blob/${COMMIT_SHA}/.github/workflows/doc-sync.yml)
-          
+          - **Workflow**: [.github/workflows/doc-sync.yml](${WORKFLOW_URL})
+
           Please open a PR with your documentation updates. Reference this issue in your PR.
           EOF
-          
-          # Handle truncation note
-          if [ "${TRUNCATED}" == "true" ]; then
-            TRUNCATION_NOTE="**Note:** The diff was truncated to fit in this issue. Check the commit directly for the complete changes."
-          else
-            TRUNCATION_NOTE=""
-          fi
-          
-          # Substitute variables (properly escape them for the shell)
-          ISSUE_BODY=$(echo "$ISSUE_BODY" | sed \
-            -e "s|\${MATCHED_PATTERNS}|${MATCHED_PATTERNS}|g" \
-            -e "s|\${DIFF}|${DIFF//&/\\&}|g" \
-            -e "s|\${TRUNCATION_NOTE}|${TRUNCATION_NOTE}|g" \
-            -e "s|\${REPO_NAME}|${REPO_NAME}|g" \
-            -e "s|\${COMMIT_SHA:0:7}|${COMMIT_SHA:0:7}|g" \
-            -e "s|\${COMMIT_SHA}|${COMMIT_SHA}|g")
-          
-          # Save to file (using base64 to preserve special chars)
-          echo "$ISSUE_BODY" | base64 > /tmp/issue_body.txt
           
           # Also provide a short title based on changed files
           FIRST_FILE=$(head -1 /tmp/changed_files.txt | xargs basename)
@@ -251,11 +199,9 @@ jobs:
         if: steps.get_diff.outputs.has_changes == 'true' && steps.check_relevance.outputs.doc_relevant == 'true'
         env:
           GH_TOKEN: ${{ secrets.DOCS_REPO_TOKEN }}
-          ISSUE_BODY_B64: $(cat /tmp/issue_body.txt)
           ISSUE_TITLE: ${{ steps.issue_body.outputs.title }}
         run: |
-          # Decode issue body
-          ISSUE_BODY=$(cat /tmp/issue_body.txt | base64 -d)
+          ISSUE_BODY=$(cat /tmp/issue_body.txt)
           
           # Create issue using GitHub REST API
           RESPONSE=$(curl -s -X POST \
@@ -296,3 +242,4 @@ jobs:
             echo "GitHub Copilot will automatically start working on the documentation updates"
           else
             echo "::warning::Failed to assign issue to copilot: $ASSIGN_RESPONSE"
+          fi

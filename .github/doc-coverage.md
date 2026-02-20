@@ -1,14 +1,15 @@
 # Documentation Coverage Mapping
 
-This file helps the documentation sync workflow identify which code changes are documentation-relevant. The workflow matches changed file paths against the patterns defined below to determine whether to create a documentation sync issue.
+This file helps the documentation sync workflow identify which code changes are documentation-relevant. The workflow reads the patterns in the "High-Priority File Patterns" section below and matches changed file paths against them to decide whether to create a documentation sync issue.
 
 ## How the Workflow Uses This File
 
 The documentation sync workflow:
 1. Extracts a git diff of changed files
-2. Matches file paths against the high-priority patterns below
-3. If any changed files match a high-priority pattern, creates an issue in the docs repo
-4. Assigns the issue to the `copilot` user for documentation updates
+2. Reads the high-priority patterns in this file
+3. Matches file paths against those patterns
+4. If any changed files match a high-priority pattern, creates an issue in the docs repo
+5. Assigns the issue to the `copilot` user for documentation updates
 
 **To trigger documentation sync, changed files must match at least one of the high-priority file patterns** defined in the next section.
 
@@ -95,14 +96,14 @@ If a commit touches one or more of these files, an issue is automatically create
 
 These files are excluded from triggering documentation sync (filtered out of git diff):
 
-- **Test files:** `*.spec.ts`, `*.test.ts`
-- **Build configuration:** `vite.config.ts`, `tsconfig.json`, `playwright.config.ts`
+- **Test files:** `*.spec.ts`, `*.spec.tsx`, `*.test.ts`, `*.test.tsx`, `tests/**`
+- **Build configuration:** `vite.config.ts`, `tsconfig*.json`, `playwright.config.ts`
 - **Linting configuration:** `.eslintrc*`, `eslint.config.js`
 - **Lock files:** `package-lock.json`, `yarn.lock`, `.yarn/**`
 - **Build artifacts:** `dist/`, `build/`, `node_modules/`
 - **Library assets:** `public/libraries/**`, `public/**/assets/**`
 - **Markdown docs:** `**.md`
-- **CI/CD workflows:** `.github/` (internal GitHub Actions files)
+- **CI/CD workflows:** `.github/**`
 
 ## Maintaining This File
 

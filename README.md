@@ -28,18 +28,19 @@ References are updated and commit is tagged
 
 ## Documentation Synchronization
 
-When code changes are merged to `main` that affect public-facing APIs, configuration schemas, TypeScript types/interfaces, or component props, a GitHub Actions workflow automatically creates an issue in the documentation repository ([revisit-studies/reVISit-studies.github.io](https://github.com/revisit-studies/reVISit-studies.github.io)) to track documentation updates needed.
+When code changes are pushed to `dev` that affect public-facing APIs, configuration schemas, TypeScript types/interfaces, or component props, a GitHub Actions workflow automatically creates an issue in the documentation repository ([revisit-studies/reVISit-studies.github.io](https://github.com/revisit-studies/reVISit-studies.github.io)) to track documentation updates needed.
 
 ### How It Works
 
 The [Documentation Sync workflow](.github/workflows/doc-sync.yml) is triggered on every push to `dev`:
 
 1. **Extract changes**: Gets a git diff of changed files, filtering out noise (lock files, test files, build artifacts, etc.)
-2. **Check relevance**: Matches changed file paths against patterns in `.github/doc-coverage.md` to determine if the change is documentation-relevant
+2. **Check relevance**: Reads the high-priority patterns in `.github/doc-coverage.md` and matches them against changed file paths
 3. **Exit early if not relevant**: If no doc-relevant files changed, the workflow completes without creating an issue
 4. **Create detailed issue**: If relevant files changed, creates an issue in the docs repo with:
-   - Complete code diff of the changes
-   - List of affected documentation areas
+   - Link to the compare view for the code changes
+   - List of changed files
+   - Link to the documentation coverage mapping
    - Clear instructions for Copilot on what needs to be updated
    - Link back to the triggering commit
 5. **Assign to Copilot**: Assigns the issue to the `copilot` user
