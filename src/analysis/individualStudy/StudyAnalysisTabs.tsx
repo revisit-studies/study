@@ -217,6 +217,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       const conditionData = await storageEngine.getConditionData(studyId);
       if (conditionData.allConditions.length === 0) {
         setAvailableConditions([]);
+        setSelectedConditions(['ALL']);
         return;
       }
       const conditionOptions = conditionData.allConditions.map((condition) => ({
@@ -224,9 +225,16 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
         label: condition,
       }));
       setAvailableConditions([{ value: 'ALL', label: 'ALL' }, ...conditionOptions]);
+      setSelectedConditions((previousSelection) => {
+        const validSelections = new Set(['ALL', ...conditionData.allConditions]);
+        const nextSelection = previousSelection.filter((value) => validSelections.has(value));
+
+        return nextSelection.length > 0 ? nextSelection : ['ALL'];
+      });
     } catch (error) {
       console.error('Failed to load conditions:', error);
       setAvailableConditions([]);
+      setSelectedConditions(['ALL']);
     }
   }, [studyId, storageEngine]);
 
