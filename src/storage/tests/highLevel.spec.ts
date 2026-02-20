@@ -113,6 +113,11 @@ describe.each([
     const participantData = await storageEngine.getParticipantData(participantSession.participantId);
     expect(participantData).toBeDefined();
     expect(participantData!.conditions).toEqual(['color']);
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantSession.participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.conditions).toEqual(['color']);
   });
 
   test('updateStudyCondition only updates conditions in development mode', async () => {
@@ -136,6 +141,11 @@ describe.each([
     participantData = await storageEngine.getParticipantData(participantSession.participantId);
     expect(participantData).toBeDefined();
     expect(participantData!.conditions).toEqual(['size']);
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantSession.participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.conditions).toEqual(['size']);
   });
 
   test('getConditionData includes default when participants have no explicit condition', async () => {
@@ -145,6 +155,7 @@ describe.each([
 
     const conditionData = await storageEngine.getConditionData(studyId);
     expect(conditionData.allConditions).toEqual(['color', 'default']);
+    expect(conditionData.conditionCounts).toEqual({ color: 1, default: 1 });
   });
 
   test('getConditionData excludes default when all participants have explicit conditions', async () => {
@@ -154,6 +165,7 @@ describe.each([
 
     const conditionData = await storageEngine.getConditionData(studyId);
     expect(conditionData.allConditions).toEqual(['color', 'size']);
+    expect(conditionData.conditionCounts).toEqual({ color: 1, size: 1 });
   });
 
   test('initializeParticipantSession with urlParticipantId', async () => {

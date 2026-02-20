@@ -209,34 +209,16 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     }
   }, [studyId, storageEngine, expData]);
 
-  // Load available conditions
-  const loadConditions = useCallback(async () => {
-    if (!studyId || !storageEngine) return;
-
-    try {
-      const conditionData = await storageEngine.getConditionData(studyId);
-      if (conditionData.allConditions.length === 0) {
-        setAvailableConditions([]);
-        setSelectedConditions(['ALL']);
-        return;
-      }
-      const conditionOptions = conditionData.allConditions.map((condition) => ({
-        value: condition,
-        label: condition,
-      }));
-      setAvailableConditions([{ value: 'ALL', label: 'ALL' }, ...conditionOptions]);
-      setSelectedConditions((previousSelection) => {
-        const validSelections = new Set(['ALL', ...conditionData.allConditions]);
-        const nextSelection = previousSelection.filter((value) => validSelections.has(value));
-
-        return nextSelection.length > 0 ? nextSelection : ['ALL'];
-      });
-    } catch (error) {
-      console.error('Failed to load conditions:', error);
-      setAvailableConditions([]);
-      setSelectedConditions(['ALL']);
-    }
-  }, [studyId, storageEngine]);
+  const allConditions = useMemo(() => {
+    if (!expData) return [];
+    const conditionSet = new Set<string>();
+    Object.values(expData).forEach((participant) => {
+      const parsedConditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
+      const normalizedConditions = parsedConditions.length > 0 ? parsedConditions : ['default'];
+      normalizedConditions.forEach((condition) => conditionSet.add(condition));
+    });
+    return Array.from(conditionSet).sort();
+  }, [expData]);
 
   // Load configs and clear selection when dependencies change
   useEffect(() => {
@@ -250,11 +232,27 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     setSelectedParticipants([]);
   }, [loadStages, analysisTab]);
 
-  // Load conditions and clear selection when dependencies change
+  // Load condition options from already-loaded participant data and clear selection when they change
   useEffect(() => {
-    loadConditions();
+    if (allConditions.length === 0) {
+      setAvailableConditions([]);
+      setSelectedConditions(['ALL']);
+      setSelectedParticipants([]);
+      return;
+    }
+
+    const conditionOptions = allConditions.map((condition) => ({
+      value: condition,
+      label: condition,
+    }));
+    setAvailableConditions([{ value: 'ALL', label: 'ALL' }, ...conditionOptions]);
+    setSelectedConditions((previousSelection) => {
+      const validSelections = new Set(['ALL', ...allConditions]);
+      const nextSelection = previousSelection.filter((value) => validSelections.has(value));
+      return nextSelection.length > 0 ? nextSelection : ['ALL'];
+    });
     setSelectedParticipants([]);
-  }, [loadConditions]);
+  }, [allConditions]);
 
   useEffect(() => {
     if (!studyId) return () => { };

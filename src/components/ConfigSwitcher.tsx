@@ -18,7 +18,7 @@ import { useStorageEngine } from '../storage/storageEngineHooks';
 import { REVISIT_MODE } from '../storage/engines/types';
 import { useAuth } from '../store/hooks/useAuth';
 import { isCloudStorageEngine } from '../storage/engines/utils';
-import { getConditionParticipantCounts, getSequenceConditions } from '../utils/handleSequenceConditions';
+import { getSequenceConditions } from '../utils/handleSequenceConditions';
 
 function StudyCard({
   configName,
@@ -80,8 +80,8 @@ function StudyCard({
     async function loadConditionCounts() {
       if (!storageEngine) return;
       try {
-        const participants = await storageEngine.getAllParticipantsData(configName);
-        setConditionParticipantCounts(getConditionParticipantCounts(participants));
+        const conditionData = await storageEngine.getConditionData(configName);
+        setConditionParticipantCounts(conditionData.conditionCounts);
       } catch (error) {
         setConditionParticipantCounts({});
         console.error('Failed to load condition counts:', error);
