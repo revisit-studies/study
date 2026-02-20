@@ -1781,6 +1781,8 @@ export interface LibraryConfig {
   baseComponents?: BaseComponents;
 }
 
+export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar';
+
 /**
  * @ignore
  * Helper error type to make reading the error messages easier
@@ -1789,6 +1791,7 @@ export type ParserErrorWarning = {
   instancePath: string;
   message: string;
   params: object;
+  category: ErrorWarningCategory;
 }
 
 /**

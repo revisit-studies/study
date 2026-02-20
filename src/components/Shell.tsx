@@ -44,7 +44,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       getStudyConfig(studyId, globalConfig).then((config) => {
         setActiveConfig(config);
       });
-      return () => {};
+      return () => { };
     }
     if (globalConfig && studyId) {
       const messageListener = (event: MessageEvent) => {
@@ -65,7 +65,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         window.removeEventListener('message', messageListener);
       };
     }
-    return () => {};
+    return () => { };
   }, [globalConfig, studyId]);
 
   const [routes, setRoutes] = useState<RouteObject[]>([]);
@@ -81,7 +81,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       if (!storageEngine || !activeConfig || !studyId) return;
 
       try {
-      // Make sure that we have a study database and that the study database has a sequence array
+        // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(studyId);
         await storageEngine.saveConfig(activeConfig);
 
