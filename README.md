@@ -9,7 +9,7 @@ In 2022, Liu et al. published a paper exploring how various contextual cues infl
 The variables for this study were age and visualization type. Age was classified into younger (age 18-40 years old) and older (60+ years old). Visualization types were classified as A, B, C, and D where each subsequent visualization added another contextual cue from the previous one. A was a RRNL with no color, B was the same visualization with colored reference ranges, C was the same as Vis B but included category labels (low, normal, high), and D was the same as C but included a speech bubble to indicate the average value for the participants age.
 
 Figure 1: Original image of all stimuli from the study
-** INSERT IMAGE FROM STUDY OF THE FOUR VIS TYPES **
+![](README-images/originalStudyVisExamples.png)
 
 In the original study, participants were shown a RRNL showing blood glucose or blood pressure values and were asked to indicate the exact value being shown on the number line and whether or not that value fell within normal ranges. The accuracy and time of task completion were measured, as were eye-tracking measures such as time to first fixation. Because of convenience sampling constraints, we were not able to collect data on older adults (60+) and only collected data for young adults (18-40). Additionally, we were not able to use eye-tracking measures because of equipment constraints. Our project instead focuses on replicating the accuracy and time of completion results for all visualization types for younger adults.
 
