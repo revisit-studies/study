@@ -27,7 +27,9 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const storeDispatch = useStoreDispatch();
   const [vegaConfig, setVegaConfig] = useState<VisualizationSpec | null>(null);
   const [loading, setLoading] = useState(true);
-  const [answered, setAnswered] = useState(false);
+
+  const [stimulusStatus, setStimulusStatus] = useState(false);
+  const [stimulusAnswer, setStimulusAnswer] = useState<Record<string, string | number>>({});
 
   const identifier = useCurrentIdentifier();
 
@@ -83,10 +85,11 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       value,
     }));
 
+    // Save provenance state after every event
     setAnswer({
-      status: answered,
+      status: stimulusStatus,
       provenanceGraph: trrack.graph.backend,
-      answers: {},
+      answers: stimulusAnswer,
     });
   });
 
@@ -97,13 +100,13 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       value: structuredClone(value),
     }));
 
-    setAnswered(true);
+    setStimulusStatus(true);
+    setStimulusAnswer({ [responseId]: response });
+
     setAnswer({
       status: true,
       provenanceGraph: trrack.graph.backend,
-      answers: {
-        [responseId]: response,
-      },
+      answers: { [responseId]: response },
     });
   });
 

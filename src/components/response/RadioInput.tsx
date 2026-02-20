@@ -9,7 +9,7 @@ import classes from './css/Radio.module.css';
 import inputClasses from './css/Input.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
+import { OptionLabel } from './OptionLabel';
 
 export function RadioInput({
   response,
@@ -82,11 +82,11 @@ export function RadioInput({
                 alignItems: 'center',
               }}
             >
-              {horizontal && <ReactMarkdownWrapper text={radio.label} />}
+              {horizontal && <OptionLabel label={radio.label} infoText={radio.infoText} />}
               <Radio
                 disabled={disabled}
                 value={radio.value}
-                label={radio.label}
+                label={<OptionLabel label={radio.label} infoText={radio.infoText} />}
                 styles={{
                   label: { display: !horizontal ? 'initial' : 'none' },
                 }}
@@ -96,34 +96,34 @@ export function RadioInput({
             </div>
           ))}
           {withOther && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: horizontal ? 'column' : 'row',
-              gap: horizontal ? 'unset' : rem(12),
-              flex: stretch ? 1 : 'unset',
-              alignItems: 'center',
-            }}
-          >
-            {horizontal && <Text size="sm">Other</Text>}
-            <Radio
-              disabled={disabled}
-              value="other"
-              checked={otherSelected}
-              onClick={(event) => setOtherSelected(event.currentTarget.checked)}
-              label={!horizontal && (
-              <Input
-                mt={-8}
-                placeholder="Other"
-                disabled={!otherSelected}
-                {...otherValue}
-                classNames={{ input: inputClasses.fixDisabled }}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: horizontal ? 'column' : 'row',
+                gap: horizontal ? 'unset' : rem(12),
+                flex: stretch ? 1 : 'unset',
+                alignItems: 'center',
+              }}
+            >
+              {horizontal && <Text size="sm">Other</Text>}
+              <Radio
+                disabled={disabled}
+                value="other"
+                checked={otherSelected}
+                onClick={(event) => setOtherSelected(event.currentTarget.checked)}
+                label={!horizontal && (
+                  <Input
+                    mt={-8}
+                    placeholder="Other"
+                    disabled={!otherSelected}
+                    {...otherValue}
+                    classNames={{ input: inputClasses.fixDisabled }}
+                  />
+                )}
+                mt={0}
+                classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
               />
-              )}
-              mt={0}
-              classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
-            />
-          </div>
+            </div>
           )}
         </HorizontalHandler>
         {horizontal && label === 'inline' && rightLabel && <Text>{rightLabel}</Text>}

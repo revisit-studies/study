@@ -9,6 +9,7 @@ import classes from './css/Checkbox.module.css';
 import inputClasses from './css/Input.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
+import { OptionLabel } from './OptionLabel';
 
 export function CheckBoxInput({
   response,
@@ -60,7 +61,7 @@ export function CheckBoxInput({
               key={option.value}
               disabled={disabled}
               value={option.value}
-              label={option.label}
+              label={<OptionLabel label={option.label} infoText={option.infoText} />}
               classNames={{ input: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
             />
           ))}

@@ -157,7 +157,7 @@
             "type": "boolean"
           },
           "recordScreen": {
-            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
             "type": "boolean"
           },
           "response": {
@@ -863,7 +863,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1162,7 +1162,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1592,7 +1592,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1967,7 +1967,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -2371,7 +2371,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -2815,6 +2815,10 @@
       "additionalProperties": false,
       "description": "The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
       "properties": {
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to RadioResponse, CheckboxResponse, and RankingResponse",
+          "type": "string"
+        },
         "label": {
           "description": "The label displayed to participants. Markdown is supported.",
           "type": "string"
@@ -3150,7 +3154,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3305,7 +3309,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3464,7 +3468,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3624,7 +3628,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {

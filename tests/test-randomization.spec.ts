@@ -35,7 +35,7 @@ test('test', async ({ page }) => {
   const sequenceOccurences = flattenedSequenceArray.map((sequence) => {
     expect(sequence.length).toBe(24);
 
-    const occurrences: Record<string, number | undefined> = sequence.reduce((acc, curr) => { acc[curr] = (acc[curr] || 0) + 1; return acc; }, {});
+    const occurrences: Record<string, number | undefined> = sequence.reduce((acc, curr) => { acc[curr] = (acc[curr] || 0) + 1; return acc; }, {} as Record<string, number | undefined>);
 
     expect(occurrences.introduction).toBe(2);
     expect(occurrences.end).toBe(1);
@@ -109,10 +109,6 @@ test('test', async ({ page }) => {
   expect(globalOcurrences.trial18).toBe(500);
   expect(globalOcurrences.trial19).toBe(500);
   expect(globalOcurrences.trial20).toBe(500);
-
-  // Check to make sure that the admin panel renders with such a complex sequence
-  await page.locator('.studyBrowserMenuDropdown').click();
-  await page.getByRole('menuitem', { name: 'Study Browser' }).click();
 
   const sequenceHeader = await page.locator('#root').getByText('Study Browser');
   await expect(sequenceHeader).toBeVisible();

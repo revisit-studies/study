@@ -36,6 +36,10 @@
             "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
             "type": "boolean"
           },
+          "clickToRecord": {
+            "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+            "type": "boolean"
+          },
           "config": {
             "description": "The vega or vega-lite configuration.",
             "type": "object"
@@ -157,7 +161,7 @@
             "type": "boolean"
           },
           "recordScreen": {
-            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
             "type": "boolean"
           },
           "response": {
@@ -851,6 +855,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
@@ -924,7 +932,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1102,6 +1110,10 @@
         "baseComponent": {
           "type": "string"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "config": {
           "description": "The vega or vega-lite configuration.",
           "type": "object"
@@ -1223,7 +1235,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1531,6 +1543,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
@@ -1604,7 +1620,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1910,6 +1926,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
@@ -1979,7 +1999,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -2305,6 +2325,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
@@ -2383,7 +2407,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -2827,6 +2851,10 @@
       "additionalProperties": false,
       "description": "The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
       "properties": {
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to RadioResponse, CheckboxResponse, and RankingResponse",
+          "type": "string"
+        },
         "label": {
           "description": "The label displayed to participants. Markdown is supported.",
           "type": "string"
@@ -3221,6 +3249,10 @@
           "description": "The time in milliseconds to wait before automatically downloading the study data.",
           "type": "number"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "contactEmail": {
           "description": "The email address that used during the study if a participant clicks contact.",
           "type": "string"
@@ -3282,7 +3314,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If true, will record audio on all components unless deactivated on individual components. This must be set to true if you want to record audio on any component in your study. Defaults to false. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before any component that you want to record the screen on to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If true, will record audio on all components unless deactivated on individual components. This must be set to true if you want to record audio on any component in your study. Defaults to false. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before any component that you want to record the screen on to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "recordScreenFPS": {
@@ -3397,6 +3429,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "config": {
           "description": "The vega or vega-lite configuration.",
           "type": "object"
@@ -3470,7 +3506,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3552,6 +3588,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
@@ -3625,7 +3665,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3707,6 +3747,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
@@ -3784,7 +3828,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3866,6 +3910,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
@@ -3944,7 +3992,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
