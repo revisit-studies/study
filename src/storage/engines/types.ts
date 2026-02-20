@@ -317,10 +317,25 @@ export abstract class StorageEngine {
   async getConditionData(studyId: string): Promise<ConditionData> {
     const participants = Object.values(await this.getAllParticipantsData(studyId));
     const conditionSet = new Set<string>();
+    let hasDefaultCondition = false;
 
     participants.forEach((p) => {
-      parseStudyCondition(p.conditions ?? (p as { studyCondition?: string | string[] }).studyCondition ?? p.searchParams?.condition).forEach((c) => conditionSet.add(c));
+      const parsedConditions = parseStudyCondition(
+        p.conditions
+        ?? (p as { studyCondition?: string | string[] }).studyCondition
+        ?? p.searchParams?.condition,
+      );
+
+      if (parsedConditions.length === 0) {
+        hasDefaultCondition = true;
+      } else {
+        parsedConditions.forEach((c) => conditionSet.add(c));
+      }
     });
+
+    if (hasDefaultCondition) {
+      conditionSet.add('default');
+    }
 
     return {
       allConditions: Array.from(conditionSet).sort(),

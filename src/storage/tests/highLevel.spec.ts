@@ -138,6 +138,24 @@ describe.each([
     expect(participantData!.conditions).toEqual(['size']);
   });
 
+  test('getConditionData includes default when participants have no explicit condition', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    await storageEngine.clearCurrentParticipantId();
+    await storageEngine.initializeParticipantSession({ condition: 'color' }, configSimple, participantMetadata);
+
+    const conditionData = await storageEngine.getConditionData(studyId);
+    expect(conditionData.allConditions).toEqual(['color', 'default']);
+  });
+
+  test('getConditionData excludes default when all participants have explicit conditions', async () => {
+    await storageEngine.initializeParticipantSession({ condition: 'color' }, configSimple, participantMetadata);
+    await storageEngine.clearCurrentParticipantId();
+    await storageEngine.initializeParticipantSession({ condition: 'size' }, configSimple, participantMetadata);
+
+    const conditionData = await storageEngine.getConditionData(studyId);
+    expect(conditionData.allConditions).toEqual(['color', 'size']);
+  });
+
   test('initializeParticipantSession with urlParticipantId', async () => {
     const urlParticipantId = 'url-participant-id';
 
