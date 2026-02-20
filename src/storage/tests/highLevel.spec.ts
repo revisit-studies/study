@@ -161,17 +161,20 @@ describe.each([
     expect(sequenceAssignment!.conditions).toEqual(['size']);
   });
 
-  test('updateStudyCondition omits undefined conditions when clearing condition', async () => {
-    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-    const updateSequenceAssignmentSpy = vi.spyOn(
-      storageEngine as unknown as { _updateSequenceAssignmentFields: (...args: unknown[]) => Promise<void> },
-      '_updateSequenceAssignmentFields',
+  test('updateStudyCondition clears conditions in sequence assignment when condition is unset', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession(
+      { condition: 'color' },
+      configSimple,
+      participantMetadata,
     );
 
     await storageEngine.updateStudyCondition('');
 
-    const updatePayload = updateSequenceAssignmentSpy.mock.calls[0][1] as Record<string, unknown>;
-    expect(Object.hasOwn(updatePayload, 'conditions')).toBe(false);
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantSession.participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.conditions).toBeUndefined();
+    expect(Object.hasOwn(sequenceAssignment!, 'conditions')).toBe(false);
   });
 
   test('getConditionData includes default when participants have no explicit condition', async () => {

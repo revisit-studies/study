@@ -16,6 +16,7 @@ import {
   Firestore,
   Timestamp,
   collection,
+  deleteField,
   doc,
   enableNetwork,
   getDoc,
@@ -248,7 +249,15 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       participantId,
     );
 
-    await updateDoc(participantSequenceAssignmentDoc, updatedFields);
+    const firebaseUpdatedFields: Record<string, unknown> = { ...updatedFields };
+    if (Object.hasOwn(updatedFields, 'conditions') && updatedFields.conditions === undefined) {
+      firebaseUpdatedFields.conditions = deleteField();
+    }
+    if (Object.keys(firebaseUpdatedFields).length === 0) {
+      return;
+    }
+
+    await updateDoc(participantSequenceAssignmentDoc, firebaseUpdatedFields);
   }
 
   protected async _completeCurrentParticipantRealtime() {

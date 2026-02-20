@@ -776,7 +776,7 @@ export abstract class StorageEngine {
 
     await this._updateSequenceAssignmentFields(
       this.currentParticipantId,
-      this.participantData.conditions ? { conditions: this.participantData.conditions } : {},
+      { conditions: this.participantData.conditions },
     );
   }
 
