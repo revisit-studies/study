@@ -63,9 +63,7 @@ export function ButtonsInput({
               className={classes.root}
               p="xs"
             >
-              <Flex justify="center">
-                <OptionLabel label={radio.label} infoText={radio.infoText} />
-              </Flex>
+              <OptionLabel label={radio.label} infoText={radio.infoText} button />
             </Radio.Card>
           ))}
         </Flex>
