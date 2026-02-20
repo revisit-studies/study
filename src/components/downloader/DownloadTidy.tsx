@@ -397,6 +397,8 @@ export function DownloadTidy({
       title="Tidy CSV Exporter"
       centered
       withCloseButton={false}
+      closeOnClickOutside={!(isDownloading || (showTranscriptWarning && warnLargeTranscriptDownload))}
+      closeOnEscape={!(isDownloading || (showTranscriptWarning && warnLargeTranscriptDownload))}
     >
       {showTranscriptWarning && warnLargeTranscriptDownload && (
         <Alert color="orange" icon={<IconAlertTriangle />} mb="sm">
