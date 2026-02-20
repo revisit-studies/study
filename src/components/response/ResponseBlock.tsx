@@ -256,7 +256,7 @@ export function ResponseBlock({
             // If the user has failed the training, wait 5 seconds and redirect to a fail page
             if (!allowFailedTraining) {
               setTimeout(() => {
-                navigate('./../__trainingFailed');
+                navigate(`./../__trainingFailed${window.location.search}`);
               }, 5000);
             }
           } else if (trainingAttempts - newAttemptsUsed === 1) {
