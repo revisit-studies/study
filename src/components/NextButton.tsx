@@ -49,7 +49,7 @@ export function NextButton({
       return;
     }
     if (nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
-      navigate('./../__timedOut');
+      navigate(`./../__timedOut${window.location.search}`);
     }
   }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
 

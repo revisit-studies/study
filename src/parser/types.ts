@@ -326,10 +326,15 @@ export interface NumberOption {
 export interface StringOption {
   /** The label displayed to participants. Markdown is supported. */
   label: string;
-  /** The value stored in the participant's data. */
-  value: string;
-  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to RadioResponse, CheckboxResponse, and RankingResponse */
+  /** The value stored in the participant's data. Defaults to label. */
+  value?: string;
+  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to responses that use StringOption, including DropdownResponse, RadioResponse, CheckboxResponse, ButtonsResponse, RankingResponse, and MatrixResponse. */
   infoText?: string;
+}
+
+/** StringOption normalized to always include a value. */
+export interface ParsedStringOption extends Omit<StringOption, 'value'> {
+  value: string;
 }
 
 /**
@@ -526,9 +531,9 @@ Here's an example using custom columns (answerOptions):
 export interface MatrixResponse extends BaseResponse {
   type: 'matrix-radio' | 'matrix-checkbox';
   /** The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from. */
-  answerOptions: string[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
+  answerOptions: (StringOption | string)[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
   /** The question options (rows) are the prompts for each response you'd like to record. */
-  questionOptions: string[];
+  questionOptions: (StringOption | string)[];
   /** The order in which the questions are displayed. Defaults to fixed. */
   questionOrder?: 'fixed' | 'random';
 }
@@ -1525,6 +1530,8 @@ export interface DynamicBlock {
   functionPath: string;
   /** The parameters that are passed to the function. These can be used within your function to render different things. */
   parameters?: Record<string, unknown>;
+  /** The conditional property shows the block only when the URL condition matches its `id`. */
+  conditional?: boolean;
 }
 
 /** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).
@@ -1644,6 +1651,8 @@ export interface ComponentBlock {
   interruptions?: InterruptionBlock[];
   /** The skip conditions for the block. */
   skip?: SkipConditions;
+  /** The conditional property shows the block only when the URL condition matches its `id`. */
+  conditional?: boolean;
 }
 
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */

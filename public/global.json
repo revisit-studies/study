@@ -16,6 +16,7 @@
     "demo-video-slider",
     "demo-video",
     "demo-dynamic",
+    "demo-condition",
     "demo-style",
     "demo-yaml",
     "demo-ranking-widget",
@@ -87,6 +88,9 @@
     },
     "demo-dynamic": {
       "path": "demo-dynamic/config.json"
+    },
+    "demo-condition": {
+      "path": "demo-condition/config.json"
     },
     "demo-html-trrack": {
       "path": "demo-html-trrack/config.json"

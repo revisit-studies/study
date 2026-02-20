@@ -1,8 +1,8 @@
 import {
-  Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text, Tooltip,
+  Anchor, AppShell, Badge, Button, Card, Container, CopyButton, Divider, Flex, Image, MultiSelect, rem, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
-  IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
+  IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconCheck, IconCopy, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -18,6 +18,7 @@ import { useStorageEngine } from '../storage/storageEngineHooks';
 import { REVISIT_MODE } from '../storage/engines/types';
 import { useAuth } from '../store/hooks/useAuth';
 import { isCloudStorageEngine } from '../storage/engines/utils';
+import { getSequenceConditions } from '../utils/handleSequenceConditions';
 
 function StudyCard({
   configName,
@@ -69,6 +70,46 @@ function StudyCard({
     }
     return 'Data Collection Disabled';
   }, [modes, studyStatusAndTiming]);
+
+  const conditions = useMemo(() => getSequenceConditions(config.sequence), [config.sequence]);
+  const [selectedConditions, setSelectedConditions] = useState<string[]>(['default']);
+  const [conditionParticipantCounts, setConditionParticipantCounts] = useState<Record<string, number>>({});
+
+  // Load participant counts into dropdown for each condition
+  useEffect(() => {
+    async function loadConditionCounts() {
+      if (!storageEngine) return;
+      try {
+        const conditionData = await storageEngine.getConditionData(configName);
+        setConditionParticipantCounts(conditionData.conditionCounts);
+      } catch (error) {
+        setConditionParticipantCounts({});
+        console.error('Failed to load condition counts:', error);
+      }
+    }
+
+    loadConditionCounts();
+  }, [configName, storageEngine]);
+
+  const conditionOptions = useMemo(() => (
+    ['default', ...conditions].map((condition) => ({
+      value: condition,
+      // e.g. default (10 participants)
+      label: `${condition} (${conditionParticipantCounts[condition] || 0} participant${(conditionParticipantCounts[condition] || 0) === 1 ? '' : 's'})`,
+    }))
+  ), [conditions, conditionParticipantCounts]);
+
+  const selectedStudyConditions = useMemo(
+    () => selectedConditions.filter((condition) => condition !== 'default'),
+    [selectedConditions],
+  );
+
+  const studyUrl = useMemo(
+    () => (selectedStudyConditions.length > 0
+      ? `${PREFIX}${url}?condition=${selectedStudyConditions.join(',')}`
+      : `${PREFIX}${url}`),
+    [selectedStudyConditions, url],
+  );
 
   return (
     <Card key={configName} shadow="sm" radius="md" my="sm" withBorder>
@@ -154,7 +195,57 @@ function StudyCard({
                 </Text>
               )}
 
-            <Flex direction="row" align="end" gap="sm" mt="md">
+            {conditions.length > 0 && (
+              <Flex direction="row" align="center" gap="xs" mt="sm" wrap="wrap">
+                {conditions.map((condition) => {
+                  const conditionUrl = new URL(`${PREFIX}${url}`, window.location.origin);
+                  conditionUrl.searchParams.set('condition', condition);
+                  const conditionUrlString = conditionUrl.toString();
+
+                  return (
+                    <CopyButton key={condition} value={conditionUrlString}>
+                      {({ copied, copy }) => (
+                        <Tooltip label={copied ? 'Copied!' : 'Copy URL'}>
+                          <Badge
+                            size="sm"
+                            variant="light"
+                            rightSection={
+                              copied ? <IconCheck size={12} /> : <IconCopy size={12} />
+                            }
+                            onClick={copy}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            {condition}
+                          </Badge>
+                        </Tooltip>
+                      )}
+                    </CopyButton>
+                  );
+                })}
+              </Flex>
+            )}
+
+            <Flex direction="row" align="end" gap="sm" mt="md" wrap="wrap">
+              {conditions.length > 0 && (
+                <MultiSelect
+                  value={selectedConditions}
+                  data={conditionOptions}
+                  w={260}
+                  onChange={(value) => {
+                    if (value.length === 0) {
+                      setSelectedConditions(['default']);
+                      return;
+                    }
+
+                    if (value.includes('default') && value.length > 1) {
+                      setSelectedConditions(value.filter((condition) => condition !== 'default'));
+                      return;
+                    }
+
+                    setSelectedConditions(value);
+                  }}
+                />
+              )}
               <Button
                 leftSection={<IconChartHistogram />}
                 style={{ marginLeft: 'auto' }}
@@ -167,7 +258,7 @@ function StudyCard({
               <Button
                 leftSection={<IconListCheck />}
                 component="a"
-                href={`${PREFIX}${url}`}
+                href={studyUrl}
               >
                 Go to Study
               </Button>

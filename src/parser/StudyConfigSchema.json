@@ -498,6 +498,10 @@
           },
           "type": "array"
         },
+        "conditional": {
+          "description": "The conditional property shows the block only when the URL condition matches its `id`.",
+          "type": "boolean"
+        },
         "id": {
           "description": "The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property.",
           "type": "string"
@@ -813,6 +817,10 @@
       "additionalProperties": false,
       "description": "The DynamicBlock interface is used to define a block where displayed components are controlled by a function. This is useful when you want to generate the sequence based on answers to previous questions or other factors.\n\nThe functionPath property is a path to the function that generates the components. This should be a relative path from the src/public folder.\n\nHere's an example of how to use the DynamicBlock:\n\n```js {   \"id\": \"funcBlock\",   \"order\": \"dynamic\",   \"functionPath\": \"<study-name>/assets/function.js\",   \"parameters\": {     \"param1\": \"value1\",     \"param2\": \"value2\"   } } ```",
       "properties": {
+        "conditional": {
+          "description": "The conditional property shows the block only when the URL condition matches its `id`.",
+          "type": "boolean"
+        },
         "functionPath": {
           "description": "The path to the function that generates the components. This should be a relative path from the src/public folder.",
           "type": "string"
@@ -1690,7 +1698,14 @@
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/StringOption"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "type": "array"
             },
@@ -1744,7 +1759,14 @@
         "questionOptions": {
           "description": "The question options (rows) are the prompts for each response you'd like to record.",
           "items": {
-            "type": "string"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },
@@ -2844,7 +2866,7 @@
       "description": "The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
       "properties": {
         "infoText": {
-          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to RadioResponse, CheckboxResponse, and RankingResponse",
+          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to responses that use StringOption, including DropdownResponse, RadioResponse, CheckboxResponse, ButtonsResponse, RankingResponse, and MatrixResponse.",
           "type": "string"
         },
         "label": {
@@ -2852,13 +2874,12 @@
           "type": "string"
         },
         "value": {
-          "description": "The value stored in the participant's data.",
+          "description": "The value stored in the participant's data. Defaults to label.",
           "type": "string"
         }
       },
       "required": [
-        "label",
-        "value"
+        "label"
       ],
       "type": "object"
     },

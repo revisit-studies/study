@@ -2029,6 +2029,33 @@ describe('utils.tsx', () => {
 
         expect(result[0].options).toBe('Questions: Q1, Q2 \n Answers: satisfaction5');
       });
+
+      it('should format matrix response with mixed string and StringOption entries', () => {
+        const studyConfig = {
+          components: {
+            matrixMixed: {
+              response: [
+                {
+                  type: 'matrix-radio',
+                  prompt: 'Rate these',
+                  questionOptions: [
+                    'Q1',
+                    { label: 'Question 2', value: 'q2' },
+                  ],
+                  answerOptions: [
+                    { label: 'Answer 1', value: 'a1' },
+                    'Answer 2',
+                  ],
+                },
+              ],
+            },
+          },
+        } as unknown as StudyConfig;
+
+        const result = getResponseStats([], studyConfig);
+
+        expect(result[0].options).toBe('Questions: Q1, Question 2 \n Answers: Answer 1, Answer 2');
+      });
     });
 
     describe('likert response options', () => {
