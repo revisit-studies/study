@@ -173,8 +173,8 @@ export function TableView({
         {
           accessorFn: (row: ParticipantData) => {
             const { conditions } = row;
-            if (Array.isArray(conditions)) {
-              return conditions.join(',') || 'default';
+            if (Array.isArray(conditions) && conditions.length > 0) {
+              return conditions.join(',');
             }
             return conditions ?? row.searchParams?.condition ?? 'default';
           },

@@ -127,7 +127,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           ip: ip.ip,
         };
 
-        const participantSession = await storageEngine.initializeParticipantSession(
+        let participantSession = await storageEngine.initializeParticipantSession(
           searchParamsObject,
           activeConfig,
           metadata,
@@ -141,6 +141,11 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           };
           await storageEngine.updateParticipantSearchParams(updatedSearchParams);
           await storageEngine.updateStudyCondition(studyCondition);
+          participantSession = {
+            ...participantSession,
+            searchParams: updatedSearchParams,
+            conditions: studyCondition,
+          };
         }
         const activeHash = await hash(JSON.stringify(activeConfig));
 

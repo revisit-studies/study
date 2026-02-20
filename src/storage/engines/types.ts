@@ -6,6 +6,7 @@ import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
 import { RevisitNotification } from '../../utils/notifications';
+import { parseConditionParam } from '../../utils/handleSequenceConditions';
 import {
   ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
 } from '../../analysis/individualStudy/thinkAloud/types';
@@ -70,16 +71,6 @@ export interface ConditionData {
 }
 
 const defaultStageColor = '#F05A30';
-
-function parseStudyCondition(condition?: string | string[] | null): string[] {
-  if (!condition) {
-    return [];
-  }
-  if (Array.isArray(condition)) {
-    return condition.map((c) => c.trim()).filter(Boolean);
-  }
-  return condition.split(',').map((c) => c.trim()).filter(Boolean);
-}
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
@@ -328,7 +319,7 @@ export abstract class StorageEngine {
     const conditionCounts: Record<string, number> = {};
 
     sequenceAssignments.forEach((assignment) => {
-      const normalizedConditions = parseStudyCondition(assignment.conditions);
+      const normalizedConditions = parseConditionParam(assignment.conditions);
       const conditionValues = normalizedConditions.length > 0 ? normalizedConditions : ['default'];
       conditionValues.forEach((condition) => {
         conditionCounts[condition] = (conditionCounts[condition] || 0) + 1;
@@ -614,7 +605,7 @@ export abstract class StorageEngine {
     }
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
-    const parsedConditions = parseStudyCondition(searchParams.condition);
+    const parsedConditions = parseConditionParam(searchParams.condition);
     const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
     const { currentRow, creationIndex } = await this._getSequence(conditions);
     this.participantData = {
@@ -770,7 +761,7 @@ export abstract class StorageEngine {
       throw new Error('Participant data not initialized');
     }
 
-    const parsedConditions = parseStudyCondition(condition);
+    const parsedConditions = parseConditionParam(condition);
     this.participantData.conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
 
     await this._pushToStorage(
