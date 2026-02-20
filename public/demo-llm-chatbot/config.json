@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "LLM Chatbot",
+    "title": "LLM-based Chatbot",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
     "date": "2025-10-09",
-    "description": "A simple demo of using LLM chatbot.",
+    "description": "A simple demo of integrating an LLM-based chatbot into a study.",
     "organizations": [
       "University of Utah",
       "WPI",

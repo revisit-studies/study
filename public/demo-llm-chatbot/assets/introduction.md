@@ -1,66 +1,109 @@
 # Introduction
 
-This demo study illustrates how to integrate an **LLM-based chatbot** into the ReVISit platform. In this demo, participants can ask questions about a visualization through the chatbot. The model returns contextual, streaming responses that evolve over the course of the conversation, while remaining lightweight and efficient.
+This demo study shows how to use an LLM-based chatbot in a reVISit study. Participants can ask questions about a clustered heatmap, and the chatbot responds with streaming text. When a question needs exact data values or visual details, the chatbot can request the dataset or the chart image through tools.
 
-Below, we describe the chatbot’s features and explain how to set up and customize it. Researchers can use this demo as a template to build their own chatbots and adapt them to their study needs.
+Below we describe what makes the chatbot good for studies, the core features, and how to customize it.
 
 ## Features
 
-This study is developed with the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses), which is the new and recommended API by OpenAI.
+This study uses the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses).
 
-### Context Management
+### Conversation memory
 
-The Responses API does not automatically remember context between turns (the Assistants API is stateful by default but will be [deprecated on August 26, 2026](https://platform.openai.com/docs/assistants/migration)). To achieve coherent multi-turn interactions, this demo implements a compact history strategy:
+Conversation memory is how the model stays aware of prior turns. In the Responses API, you can link turns by sending `previous_response_id`.
 
-* Preserve recent turns: The last 5 messages (user and assistant) are included in each request.
-* Summarize older history: Earlier conversation parts are periodically summarized into a short summary by a lightweight `gpt-4o-mini` call.
-* Combined context: The system prompt, short summary, and recent messages are passed as input each time.
+In this chatbot, each request includes `previous_response_id` from the prior response when available. This keeps the chat continuous without sending the full history, which keeps the code and payload small.
 
-This balances memory continuity with low token cost.
+Learn more: [Conversation state](https://developers.openai.com/api/docs/guides/conversation-state/)
 
-### Streaming Responses
+### Streaming responses
 
-In this study, we stream model outputs token by token to create a smooth, real-time interaction similar to ChatGPT in the browser. In the OpenAI Responses API, streaming means the model returns output incrementally (token-by-token or chunk-by-chunk) as it is generated, rather than waiting to send the full response at the end. This reduces perceived latency because users see text immediately, and it enables real-time UI features such as typing indicators, live summaries, and partial results while the remaining output is still being generated.
+Streaming returns the reply in small chunks as it is generated. This reduces perceived latency and makes the interface feel responsive.
 
-See OpenAI [Streaming API responses](https://platform.openai.com/docs/guides/streaming-responses?api-mode=chat) for details.
+To enable this, we set `stream: true` for the main answer request and render tokens as they arrive.
 
-### File Inputs
+Learn more: [Streaming API responses](https://developers.openai.com/api/docs/guides/streaming-responses/)
 
-The chatbot accepts both data files and visual images:
+### Tool calls: Send the chart image and dataset only when needed
 
-* CSV file: The dataset associated with the visualization.
-* PNG image: The chart image used for visual reference.
+Tool calling lets the model ask the app to run functions (tools) and then use the results in its answer.
 
-In this example, the CSV file is sent inline as text, and the PNG image is sent via OpenAI file storage. The chatbot uses the OpenAI file system to provide structured file inputs: files (such as the chart image and data) are uploaded to OpenAI’s file storage and referenced in API calls using a `file_id` (e.g., `"file-8ppKBEn7v3HWDqRe1LLKCw"` for a specific image). This approach avoids re-sending large file content in every request, speeds up repeated access, and increases reliability compared to sending raw base64-encoded data. For each input, provide the corresponding `file_id` in the payload (see the [OpenAI File API documentation](https://platform.openai.com/docs/api-reference/files) for details).
+In this study, the model requests the image or the dataset only when a question requires exact values or visual details. This keeps most turns fast and avoids unnecessary data transfer. We expose two tools:
+* `get_dataset_csv`: loads the CSV file and returns it as text.
+* `get_chart_image_file_id`: returns a pre-uploaded OpenAI `file_id` for the chart image.
+
+To call tools, we use a two-step request flow. A short planning call asks whether tools are needed, and a second call delivers the final answer with the tool results.
+
+Learn more: [Function calling](https://platform.openai.com/docs/guides/function-calling)
+
+### Provenance and results are recorded
+
+* Interaction provenance is tracked by Trrack and visible in the participant reply interface.
+* You can download the full chat history as JSON or CSV.
+
+## Usage / Customization
+
+### Set up the API key
+
+We use a proxy server to keep API keys off the client. Use the provided proxy:
+[https://github.com/visdesignlab/openai-api-proxy](https://github.com/visdesignlab/openai-api-proxy)
+
+Follow that repo to set your OpenAI API key and deploy the proxy.
+
+In `.env`, set `VITE_OPENAI_API_URL`:
+* Local development: `VITE_OPENAI_API_URL="http://localhost:3000"`
+* Production: `VITE_OPENAI_API_URL=https://apps.vdl.sci.utah.edu/openai-proxy`
 
 
-### System Prompt and Configuration
-The system prompt defines the chatbot’s initial behavior and can be customized per study condition. In this implementation it is set in `ChatInterface.tsx` as `prePrompt` and passed as the initial system message for every request. Researchers can test different prompts by editing that string.
+### Request payloads (what we send to the API)
 
-### Provenance and Chat History
+The Responses API expects a JSON payload, which is the request body sent in `fetch(..., { body: JSON.stringify({ ... }) })` in `ChatInterface.tsx`. In other words, every field inside that JSON object (such as `model`, `instructions`, `tools`, `input`, and so on) is a payload parameter. In this demo, the payload shape is designed to be easy to reason about and to keep data transfer minimal.
 
-* Provenance of user interaction is tracked by Trrack. Researchers can review all participant interactions in the participant reply interface.
-* The full chat history can be downloaded in the study results.
+There are two requests in this chatbot: a small tool-selection call and a streaming answer call.
 
-## How to use it
+**Shared fields (both calls):**
+* `model`: which model to use (`gpt-5.2`).
+* `instructions`: the system prompt plus tool-use rules.
+* `tools` and `tool_choice`: the two available tools and `auto` selection.
+* `previous_response_id` (when available): links to the previous turn so the model has conversation memory without sending the full history.
 
-### API key
+**Tool-selection call (small and focused):**
+* `input`: an array with one user item, where content is typed as `input_text`.
+* `stream: false`, `max_output_tokens: 64`, and `temperature: 0` to keep the response short and focused on tool requests.
 
-We provide a proxy server for the OpenAI API ([https://github.com/visdesignlab/openai-api-proxy](https://github.com/visdesignlab/openai-api-proxy)).
+**Streaming answer call (no tools needed):**
+* `input`: the same user item as above.
+* `stream: true` and `max_output_tokens: 1600` to stream the assistant reply.
 
-Please configure your OpenAI API credentials there and deploy the server following the instructions in the repository.
+**Streaming answer call (tools requested):**
+* `input`: an array of `function_call_output` items, one per tool call.
+* For the chart image, we also append a user item whose content is `input_image` with the `file_id`.
+* The streaming call uses `previous_response_id` from the tool-selection response so the model can continue the same turn.
 
-To use our proxy server, you need to  set `VITE_OPENAI_API_URL` in  `.env`.
-For the production version of the study, set `VITE_OPENAI_API_URL="https://github.com/visdesignlab/openai-api-proxy"`. For the local version of the study, set `VITE_OPENAI_API_URL="http://localhost:3000"`.
+This layout keeps the payload explicit and predictable: user text is always `input_text`, tool results are always `function_call_output`, and images are passed as `input_image` only when needed.
 
-### Customization
+### Customize the chatbot
 
-In `ChatInterface.tsx`, the most relevant customizable parameters are:
+All key settings live in `ChatInterface.tsx`. These are the most relevant parameters:
 
-* Chart image (PNG file) and dataset (CSV file)
-* `prePrompt`: Customize the system prompt that guides the chatbot’s responses.
-* `model`: Choose any [OpenAI model](https://platform.openai.com/docs/models) (e.g., `gpt-4o`) to suit your research needs.
-* `max_output_tokens`: Set the maximum length for LLM responses.
-* `temperature`: Control the randomness and creativity of the LLM output (lower = more deterministic).
-* Summarization settings: `summaryPrompt`, `model`, `temperature`, and `max_output_tokens` for the summarization step used in chat context compression.
-* Context window sizes: How many messages to keep in memory before summarizing (e.g., keep last 5, summarize when >5).
+**Change the assistant behavior (system prompt):**
+Edit `prePrompt` and `toolPolicy` to control how the assistant responds and when it should use tools.
+
+Learn more: [System instructions](https://platform.openai.com/docs/guides/responses#system-instructions)
+
+**Change the model:**
+Update `model` (currently `gpt-5.2`) in both the tool-selection request and the streaming request.
+
+Learn more: [Model list](https://platform.openai.com/docs/models)
+
+**Change response length and style:**
+* `max_output_tokens`: maximum reply length.
+* `temperature`: creativity level.
+
+Learn more: [Responses API parameters](https://platform.openai.com/docs/api-reference/responses)
+
+**Change the data or chart image:**
+* Dataset: replace `assets/data/clustered-heatmap.csv` to your dataset.
+* Chart image: replace the OpenAI `file_id` to your image returned by `get_chart_image_file_id`.
+
+Learn more: [Files API](https://platform.openai.com/docs/api-reference/files)

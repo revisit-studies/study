@@ -1,5 +1,5 @@
 import {
-  useState, useRef, useEffect, useMemo,
+  useState, useRef, useEffect,
 } from 'react';
 import { IconMessage, IconSend } from '@tabler/icons-react';
 import {
@@ -13,7 +13,6 @@ import {
   Paper,
   Divider,
   rem,
-  Box,
   Card,
 } from '@mantine/core';
 import { ChatMessage, ChatProvenanceState } from './types';
@@ -22,6 +21,8 @@ import { Trrack } from '@trrack/core';
 import { ActionCreatorWithPayload } from '@reduxjs/toolkit';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { PREFIX } from '../../../utils/Prefix';
+import { useStudyId } from '../../../routes/utils';
 
 export default function ChatInterface(
   { setAnswer, provenanceState, trrack, actions, updateProvenanceState, onMessagesUpdate }:
@@ -41,114 +42,64 @@ export default function ChatInterface(
 
 
   // Define the system prompt
-  const prePrompt = `You are a helpful assistant that explains a clustered heatmap using: a clustered heatmap image and the underlying CSV data. Users may ask any question about the chart.
-Guidelines:
-- Answer clearly and directly; use the CSV for specific evidence (row/column names, values) when helpful.
-- Briefly explain clustering/dendrograms only as needed.
-- If the question is ambiguous, ask one clarifying question.
-- If something cannot be determined from the image/CSV, say so.`;
+  const prePrompt = `You are a helpful assistant who is helping a user explore and understand a clustered heatmap. Your goal is to help the user explore and understand the clustered heatmap while they view the chart. You will be given: (1) the chart image and (2) the underlying dataset as a CSV file.
 
-  const initialMessages: ChatMessage[] = useMemo(() => [
-    {
-      role: 'system',
-      content: `${prePrompt}`,
-      timestamp: new Date().getTime(),
-      display: false,
-    },
-  ], [prePrompt]);
+Gating policy:
+- Default: respond normally and do not mention chart/data/instructions.
+- Only use background when the user explicitly asks about the chart, dataset/CSV, or instructions, or when the question clearly depends on them.
+- If unclear, ask one short clarifying question.
 
-  // Local React states for chat history
-  const [messages, setMessages] = useState<ChatMessage[]>([...initialMessages]);
-  const [shortSummary, setShortSummary] = useState<string>(""); // short summary of the old conversation
+How to respond:
+- Be concise, clear, and direct.
+- Limit the response to 400 tokens.
+- Use dataset.csv for exact values and comparisons. Do not invent labels or numbers. If something is missing, say so and ask one short follow-up question.`;
 
-  // Load existing provenance state
+  // IMPORTANT: only mention tools you actually provide
+  const toolPolicy =
+`Tools (call only when needed):
+- get_dataset_csv: returns dataset.csv as JSON { csv: string }
+- get_chart_image_file_id: returns JSON { file_id: string } for the chart image
+
+Rules:
+- If the user asks for exact values, rankings, or anything that depends on dataset.csv, call get_dataset_csv BEFORE answering.
+- If the user asks about chart layout/axes/structure that requires the chart image, call get_chart_image_file_id BEFORE answering.
+- Do not invent numbers; use the CSV for exact values.`;
+
+  const instructions = `${prePrompt}\n\n${toolPolicy}`;
+
+  // ---------- State ----------
+  const [messages, setMessages] = useState<ChatMessage[]>(provenanceState?.messages ?? []);
+  const messagesRef = useRef<ChatMessage[]>(provenanceState?.messages ?? []);
+
+  const [previousResponseId, setPreviousResponseId] = useState<string | null>(null);
+
   useEffect(() => {
     if (provenanceState) {
-      console.log("provenanceState:", provenanceState);
       setMessages(provenanceState.messages);
-      console.log("provenanceState.messages:", provenanceState.messages);
     } else {
-      setMessages([...initialMessages]);
+      setMessages([]);
     }
-  }, [provenanceState, initialMessages]);
+    setPreviousResponseId(null);
+  }, [provenanceState]);
 
-  // Update parent component when messages change
   useEffect(() => {
     if (onMessagesUpdate) {
       onMessagesUpdate(messages);
     }
+    messagesRef.current = messages;
   }, [messages, onMessagesUpdate]);
 
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const studyId = useStudyId();
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-
-  async function summarizeHistory(oldMessages: ChatMessage[]) {
-    const summaryPrompt = `
-    Summarize the following conversation between the user and assistant.
-    Capture important facts, conclusions, and tone, but omit greetings or filler.
-
-    Conversation:
-    ${oldMessages.map(m => `${m.role}: ${m.content}`).join("\n")}
-    `;
-
-    const resp = await fetch(`${import.meta.env.VITE_OPENAI_API_URL}/v1/responses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        input: [{ role: "system", content: [{ type: "input_text", text: summaryPrompt }] }],
-        max_output_tokens: 400,
-        temperature: 0.3,
-      }),
-    });
-
-    const data = await resp.json();
-    const text = data.output?.[0]?.content?.[0]?.text || "";
-    setShortSummary(prev => prev ? `${prev}\n${text}` : text);
-  }
-
-  const getCompactContext = (msgList: ChatMessage[]) => {
-    const recent = msgList.slice(-5);
-    const context = [];
-
-    context.push({
-      role: "system",
-      content: [{ type: "input_text", text: initialMessages[0].content }],
-    });
-
-    if (shortSummary) {
-      context.push({
-        role: "system",
-        content: [{ type: "input_text", text: `Summary of earlier conversation:\n${shortSummary}` }],
-      });
-      console.log("shortSummary:", shortSummary);
-    }
-
-    recent.forEach((m) => {
-      if (m.role === "assistant") {
-        context.push({
-          role: "assistant",
-          content: [{ type: "output_text", text: m.content }],
-        });
-      } else {
-        context.push({
-          role: m.role,
-          content: [{ type: "input_text", text: m.content }],
-        });
-      }
-    });
-
-    return context;
-  };
-
-
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll
   useEffect(() => {
-    const headerHeight = 80; // Adjust this value to match your header's height in px
+    const headerHeight = 80;
     if (messagesEndRef.current) {
       const scrollArea = messagesEndRef.current.parentElement;
       if (scrollArea) {
@@ -162,172 +113,297 @@ Guidelines:
     }
   }, [messages]);
 
-  // Focus input on mount
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+  // ---------- Tools ----------
+  const toolDefinitions = [
+    {
+      type: 'function',
+      name: 'get_dataset_csv',
+      description: 'Return dataset.csv for the clustered heatmap as JSON { csv: string }.',
+      strict: true,
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+        additionalProperties: false,
+      },
+    },
+    {
+      type: 'function',
+      name: 'get_chart_image_file_id',
+      description: 'Return JSON { file_id: string } for the clustered heatmap image.',
+      strict: true,
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+        additionalProperties: false,
+      },
+    },
+  ] as const;
 
+  const executeToolCall = async (call: any): Promise<{ name: string; output: any }> => {
+    if (call.name === 'get_dataset_csv') {
+      const csvResponse = await fetch(`${PREFIX}${studyId}/assets/data/clustered-heatmap.csv`);
+      if (!csvResponse.ok) {
+        throw new Error('Failed to load dataset CSV for clustered-heatmap');
+      }
+      const csv = await csvResponse.text();
+      return { name: call.name, output: { csv } };
+    }
 
-  // handleSubmit(): Triggered when the user presses Enter or clicks Send.
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    if (!inputValue.trim() || isLoading) return;
-  
-    const userMessage: ChatMessage = {
-      role: "user",
-      content: inputValue.trim(),
-      timestamp: new Date().getTime(),
+    if (call.name === 'get_chart_image_file_id') {
+      const file_id = 'file-7oYLNxSQQrn81bHMPi1E8A'; // Clustered Heatmap image
+      return { name: call.name, output: { file_id } };
+    }
+
+    throw new Error(`Unknown tool: ${call.name}`);
+  };
+
+  const tryExtractFunctionCalls = (data: any) => {
+    const out = Array.isArray(data?.output) ? data.output : [];
+    return out.filter((item: any) => item?.type === 'function_call');
+  };
+
+  // ---------- Streaming ----------
+  const streamAssistantResponse = async (
+    inputPayload: unknown[],
+    streamPreviousResponseId?: string | null,
+  ) => {
+    const response = await fetch(
+      `${import.meta.env.VITE_OPENAI_API_URL}/v1/responses`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'gpt-5.2',
+          stream: true,
+          store: true,
+          truncation: 'auto',
+          instructions,
+          tools: toolDefinitions,
+          tool_choice: 'auto',
+          input: inputPayload,
+          temperature: 0.7,
+          max_output_tokens: 1600,
+          ...(streamPreviousResponseId ? { previous_response_id: streamPreviousResponseId } : {}),
+        }),
+      },
+    );
+
+    if (!response.ok || !response.body) {
+      const errorText = await response.text().catch(() => '');
+      throw new Error(`Failed to start stream: ${response.status} ${errorText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    let assistantMessage: ChatMessage = {
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
       display: true,
     };
-  
+
+    let firstTokenSeen = false;
+    let streamedResponseId: string | null = null;
+    let streamDone = false;
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const dataStr = trimmed.replace(/^data:\s*/, '');
+        if (!dataStr) continue;
+
+        if (dataStr === '[DONE]') {
+          streamDone = true;
+          break;
+        }
+
+        try {
+          const parsed = JSON.parse(dataStr);
+
+          if (parsed.type === 'response.created') {
+            streamedResponseId = parsed.response?.id || parsed.response_id || streamedResponseId;
+          }
+
+          if (parsed.type === 'response.output_text.delta') {
+            if (!firstTokenSeen) {
+              firstTokenSeen = true;
+              setIsLoading(false);
+
+              setMessages((prev) => [
+                ...prev,
+                { ...assistantMessage, content: parsed.delta },
+              ]);
+            }
+
+            assistantMessage.content += parsed.delta;
+
+            setMessages((prev) => {
+              const last = prev[prev.length - 1];
+              if (last?.role === 'assistant') {
+                return [...prev.slice(0, -1), { ...last, content: assistantMessage.content }];
+              }
+              return prev;
+            });
+          }
+
+          if (parsed.type === 'response.output_text.done' || parsed.type === 'response.output_item.done') {
+            streamedResponseId = parsed.response?.id || parsed.response_id || streamedResponseId;
+          }
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.warn('Failed to parse SSE line', dataStr, err);
+        }
+      }
+
+      if (streamDone) break;
+    }
+
+    if (!firstTokenSeen) {
+      setIsLoading(false);
+    }
+
+    return { assistantMessage, streamedResponseId };
+  };
+
+  // ---------- Tool selection (non-stream) ----------
+  const requestToolSelection = async (
+    userInputItem: any,
+    priorResponseId: string | null,
+  ) => {
+    const response = await fetch(`${import.meta.env.VITE_OPENAI_API_URL}/v1/responses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gpt-5.2',
+        stream: false,
+        store: true,
+        truncation: 'auto',
+        instructions,
+        tools: toolDefinitions,
+        tool_choice: 'auto',
+        input: [userInputItem],
+        // Keep this call small; we just want tool requests, not a full answer here.
+        max_output_tokens: 64,
+        temperature: 0,
+        ...(priorResponseId ? { previous_response_id: priorResponseId } : {}),
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      throw new Error(`Tool selection failed: ${response.status} ${errorText || response.statusText}`);
+    }
+
+    return response.json();
+  };
+
+  // ---------- Submit ----------
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim() || isLoading) return;
+
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: inputValue.trim(),
+      timestamp: Date.now(),
+      display: true,
+    };
+
     setMessages((prev) => [...prev, userMessage]);
-    setInputValue("");
+    setInputValue('');
     setIsLoading(true);
     setError(null);
-
-
-  
     try {
-      // Load CSV data (small enough to inline)
-      const csvResponse = await fetch(`/demo-llm-chatbot/assets/data/clustered-heatmap.csv`);
-      const csvData = await csvResponse.text();
+      const priorResponseId = previousResponseId;
 
-      // Build input for Responses API
-      const inputPayload = [
-        // Context
-        ...getCompactContext(messages),
-        // Current user turn (with CSV + image)
-        {
-          role: "user",
-          content: [
-            { type: "input_text", text: userMessage.content },
-            {
-              type: "input_text",
-              text: `Here is the CSV data for the example clustered heatmap:\n\n${csvData}`,
-            },
-            {
-              type: "input_image",
-              file_id: "file-8ppKBEn7v3HWDqRe1LLKCw"
-            },
-          ],
-        },
-      ];
-  
-      const response = await fetch(
-        `${import.meta.env.VITE_OPENAI_API_URL}/v1/responses`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "gpt-4o",
-            stream: true,
-            input: inputPayload,
-            temperature: 0.7,
-            max_output_tokens: 400,
-          }),
-        }
-      );
-  
-      
-      if (!response.ok || !response.body) {
-        throw new Error("Failed to start stream");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      let assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: "",
-        timestamp: Date.now(),
-        display: true,
+      const userInputItem = {
+        role: 'user',
+        content: [{ type: 'input_text', text: userMessage.content }],
       };
 
-      // Add assistant placeholder
-      // setMessages((prev) => [...prev, assistantMessage]);
+      // 1) Non-stream call to decide whether tools are needed.
+      const firstData = await requestToolSelection(userInputItem, priorResponseId);
 
-      let firstTokenSeen = false;
+      const firstResponseId: string | null = firstData?.id || firstData?.response?.id || null;
+      const functionCalls = tryExtractFunctionCalls(firstData);
 
-      while (true) {
-        const { done, value } = await reader!.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        console.log("RAW CHUNK:", chunk); // 👈 log what the proxy sends
-      
-      
-        const lines = chunk.split("\n");
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const dataStr = line.replace("data: ", "").trim();
-            if (dataStr === "[DONE]") return; // end of stream
-            try {
-              const parsed = JSON.parse(dataStr);
-              console.log("PARSED SSE DATA:", parsed);
-            
-              if (parsed.type === "response.output_text.delta") {
+      if (!functionCalls.length) {
+        // No tools requested -> stream the answer directly.
+        const streamResult = await streamAssistantResponse([userInputItem], priorResponseId);
+        if (streamResult.streamedResponseId) setPreviousResponseId(streamResult.streamedResponseId);
 
-                // first token arrived
-                if (!firstTokenSeen) {
-                  firstTokenSeen = true;
-                  setIsLoading(false); // hide the loader "AI is thinking"
+        const fullMessages = messagesRef.current;
+        trrack.apply('updateMessages', actions.updateMessages(fullMessages));
+        updateProvenanceState(fullMessages);
+        return;
+      }
 
-                  // create assistant message only when first token arrives
-                  setMessages((prev) => [
-                    ...prev,
-                    { ...assistantMessage, content: parsed.delta },
-                  ]);
-                }
-                assistantMessage.content += parsed.delta;
-            
-                // update React state live
-                setMessages((prev) => {
-                  const last = prev[prev.length - 1];
-                  if (last?.role === "assistant") {
-                    return [...prev.slice(0, -1), { ...last, content: assistantMessage.content }];
-                  }
-                  return prev;
-                });
-              }
-            
-              if (parsed.type === "response.output_text.done" || parsed.type === "response.output_item.done") {
-                console.log("FINAL:", assistantMessage.content);
-              }
-            } catch (err) {
-              console.warn("Failed to parse SSE line", dataStr, err);
-            }            
-          }
+      // Tools requested -> execute and continue the same response.
+      if (firstResponseId) setPreviousResponseId(firstResponseId);
+
+      const functionCallOutputs: any[] = [];
+      let pendingImageFileId: string | null = null;
+
+      for (const call of functionCalls) {
+        const toolResult = await executeToolCall(call);
+
+        if (toolResult.name === 'get_chart_image_file_id') {
+          pendingImageFileId = toolResult.output?.file_id || null;
         }
 
+        functionCallOutputs.push({
+          type: 'function_call_output',
+          call_id: call.call_id,
+          output: JSON.stringify(toolResult.output), // ✅ structured tool output
+        });
       }
-      
 
-      // Add the new messages
-      const fullMessages = [...messages, userMessage, assistantMessage];
-
-      // Summarize older messages if chat too long
-      if (fullMessages.length > 5) {
-        const oldPart = fullMessages.slice(0, -6); // summarize older ones, keep last 6
-        await summarizeHistory(oldPart);
+      // If an image was requested, include it as context for the streaming continuation.
+      const streamInputPayload: any[] = [...functionCallOutputs];
+      if (pendingImageFileId) {
+        streamInputPayload.push({
+          role: 'user',
+          content: [
+            {
+              type: 'input_image',
+              file_id: pendingImageFileId,
+            },
+          ],
+        });
       }
-  
-      trrack.apply("updateMessages", actions.updateMessages(fullMessages));
-  
+
+      // 2) Stream the final answer by continuing from the tool-requesting response.
+      const streamResult = await streamAssistantResponse(streamInputPayload, firstResponseId);
+      if (streamResult.streamedResponseId) setPreviousResponseId(streamResult.streamedResponseId);
+
+      const fullMessages = messagesRef.current;
+      trrack.apply('updateMessages', actions.updateMessages(fullMessages));
       updateProvenanceState(fullMessages);
-  
     } catch (err) {
-      console.error("Error getting LLM response:", err);
-      setError(err instanceof Error ? err.message : "Failed to get response. Please try again.");
+      // eslint-disable-next-line no-console
+      console.error('Error getting LLM response:', err);
+      setError('Failed to get response. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
-  
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e);
+      handleSubmit(e as unknown as React.FormEvent);
     }
   };
 
@@ -338,13 +414,13 @@ Guidelines:
       </Text>
       <Divider my="sm" />
       {/* Messages Container */}
-      <ScrollArea style={{ flex: 1, minHeight: rem(320), marginBottom: rem(16) }} offsetScrollbars>
+      <ScrollArea style={{ flex: 1, minHeight: rem(270), marginBottom: rem(16) }} offsetScrollbars>
         {messages.length === 0 ? (
           <Flex direction="column" align="center" justify="center" py="xl" style={{ color: '#6B7280' }}>
             <IconMessage size={48} style={{ opacity: 0.5, marginBottom: rem(12) }} />
             <Text size="lg" fw={500} mb={4}>Start a conversation</Text>
             <Text size="sm" color="dimmed">
-              Ask me anything about the clustered heatmap!
+              Ask me anything about the clustered heatmap on the left!
             </Text>
           </Flex>
         ) : (
@@ -428,7 +504,7 @@ Guidelines:
           ref={inputRef}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDown}
           placeholder="Ask me about the chart..."
           minRows={2}
           maxRows={4}
@@ -449,7 +525,6 @@ Guidelines:
           <IconSend size={18} />
         </Button>
       </form>
-      {/* Accessibility Info */}
       <Text mt="md" size="xs" color="dimmed">
         Press Enter to send, Shift+Enter for new line. All conversations are recorded for research purposes.
       </Text>
