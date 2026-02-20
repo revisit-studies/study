@@ -1251,6 +1251,60 @@ describe('utils.tsx', () => {
         // But avgTime excludes rejected participant's data
         expect(result.avgTime).toBe(10);
       });
+
+      it('should compute overview correctly for stage-filtered subset', () => {
+        const allParticipants = [
+          createMockParticipant({
+            participantId: '1',
+            stage: 'stage-a',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({ componentName: 'comp1', startTime: 1, endTime: 11001 }),
+            },
+          }),
+          createMockParticipant({
+            participantId: '2',
+            stage: 'stage-b',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({ componentName: 'comp1', startTime: 1, endTime: 21001 }),
+            },
+          }),
+        ];
+
+        const stageFiltered = allParticipants.filter((p) => p.stage === 'stage-a');
+        const result = getOverviewStats(stageFiltered);
+
+        expect(result.participantCounts.total).toBe(1);
+        expect(result.avgTime).toBe(11);
+      });
+
+      it('should compute overview correctly for config-filtered subset', () => {
+        const allParticipants = [
+          createMockParticipant({
+            participantId: '1',
+            participantConfigHash: 'config-a',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({ componentName: 'comp1', startTime: 1, endTime: 10001 }),
+            },
+          }),
+          createMockParticipant({
+            participantId: '2',
+            participantConfigHash: 'config-b',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({ componentName: 'comp1', startTime: 1, endTime: 30001 }),
+            },
+          }),
+        ];
+
+        const configFiltered = allParticipants.filter((p) => p.participantConfigHash === 'config-a');
+        const result = getOverviewStats(configFiltered);
+
+        expect(result.participantCounts.total).toBe(1);
+        expect(result.avgTime).toBe(10);
+      });
     });
   });
 
