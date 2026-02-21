@@ -6,12 +6,11 @@
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-06-15",
+    "date": "2026-02-21",
     "description": "A demo of using dynamic React stimuli and using provenance tracking with the trrack library for data collection.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
