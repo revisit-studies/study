@@ -63,10 +63,17 @@ function checkMatrixResponse(response: MatrixResponse, value: Record<string, str
   return null;
 }
 
-const queryParameters = new URLSearchParams(window.location.search);
+const getQueryParameters = () => {
+  if (typeof window === 'undefined') {
+    return new URLSearchParams('');
+  }
+
+  return new URLSearchParams(window.location.search);
+};
 
 export const generateInitFields = (responses: Response[], storedAnswer: StoredAnswer['answer']) => {
   let initObj = {};
+  const queryParameters = getQueryParameters();
 
   responses.forEach((response) => {
     const answer = storedAnswer ? storedAnswer[response.id] : {};

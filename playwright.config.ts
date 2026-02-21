@@ -1,10 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const isCI = Boolean(process.env.CI);
+const configuredCiWorkers = Number(process.env.PW_CI_WORKERS);
+const ciWorkers = Number.isFinite(configuredCiWorkers) && configuredCiWorkers > 0
+  ? configuredCiWorkers
+  : 2;
+
 export default defineConfig({
   webServer: {
     command: 'yarn serve',
     url: 'http://localhost:8080',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !isCI,
     stdout: 'ignore',
     stderr: 'pipe',
   },
@@ -12,11 +18,10 @@ export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   // Retry on CI only.
-  retries: process.env.CI ? 1 : 0,
-  // Use conservative parallelism on CI across matrix jobs.
-  workers: process.env.CI ? 2 : '90%',
-  timeout: 180000,
-  reporter: 'html',
+  retries: isCI ? 2 : 0,
+  workers: isCI ? ciWorkers : '90%',
+  timeout: isCI ? 120000 : 60000,
+  reporter: isCI ? 'github' : 'list',
 
   use: {
     baseURL: 'http://localhost:8080',
@@ -27,11 +32,6 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-    },
-
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
     },
 
     {

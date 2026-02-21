@@ -29,7 +29,7 @@ import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
-import { parseConditionParam } from '../../utils/handleSequenceConditions';
+import { parseConditionParam } from '../../utils/handleConditionLogic';
 import 'mantine-react-table/styles.css';
 import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
