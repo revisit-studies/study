@@ -22,5 +22,5 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Run Playwright tests
+      - name: Run unit tests
         run: yarn unittest
