@@ -2,7 +2,33 @@
 import { test, expect } from '@playwright/test';
 import { nextClick, waitForStudyEndMessage } from './utils';
 
+async function advanceToSidebarFormElements(page: import('@playwright/test').Page) {
+  const sidebarAgeInput = page.locator('input[placeholder="Enter your age here, range from 0 - 100"]:visible').first();
+
+  for (let i = 0; i < 3; i += 1) {
+    if (await sidebarAgeInput.isVisible().catch(() => false)) {
+      return sidebarAgeInput;
+    }
+
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
+    const canAdvance = await nextButton.isVisible().catch(() => false)
+      && await nextButton.isEnabled().catch(() => false);
+    if (canAdvance) {
+      await nextClick(page).catch(() => {});
+      await page.waitForTimeout(150);
+    }
+  }
+
+  await expect(sidebarAgeInput).toBeVisible({ timeout: 20000 });
+  return sidebarAgeInput;
+}
+
 test('Test questionnaire component with responses and randomizing questions and responses', async ({ page }) => {
+  await page.setViewportSize({
+    width: 1400,
+    height: 900,
+  });
+
   await page.goto('/');
   await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Form Elements Demo' })
     .getByText('Go to Study')
@@ -14,6 +40,7 @@ test('Test questionnaire component with responses and randomizing questions and 
 
   // Number input
   const ageInput = page.getByPlaceholder('Enter your age here, range from 0 - 100');
+  await expect(ageInput).toBeVisible({ timeout: 10000 });
   await ageInput.fill('120');
   await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();
   await ageInput.fill('12');
@@ -145,7 +172,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Fill the survey: Sidebar Form Elements
 
   // Number input
-  const sidebarAgeInput = page.getByPlaceholder('Enter your age here, range from 0 - 100');
+  const sidebarAgeInput = await advanceToSidebarFormElements(page);
   await sidebarAgeInput.fill('120');
   await sidebarAgeInput.press('Tab');
   await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();

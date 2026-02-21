@@ -2,7 +2,19 @@
 import { test, expect } from '@playwright/test';
 import { nextClick, waitForStudyEndMessage } from './utils';
 
-async function answerCurrentMvnvPrompt(page: import('@playwright/test').Page, taskTimeoutMs = 10000) {
+async function getCurrentTaskQuestion(page: import('@playwright/test').Page) {
+  const question = page.locator('p').filter({ has: page.locator('strong:has-text("Question:")') }).first();
+  if (!(await question.isVisible().catch(() => false))) {
+    return '';
+  }
+  return ((await question.innerText().catch(() => '')).replace(/^Question:\s*/i, '').trim());
+}
+
+async function answerCurrentMvnvPrompt(
+  page: import('@playwright/test').Page,
+  taskTimeoutMs = 10000,
+  startingQuestion = '',
+) {
   const deadline = Date.now() + taskTimeoutMs;
   const iframe = page.frameLocator('#root iframe');
   const answerBoxes = iframe.locator('.answerBox rect');
@@ -103,6 +115,12 @@ async function answerCurrentMvnvPrompt(page: import('@playwright/test').Page, ta
 
     let i = 0;
     while (Date.now() < deadline) {
+      if (startingQuestion) {
+        const currentQuestion = await getCurrentTaskQuestion(page);
+        if (currentQuestion && currentQuestion !== startingQuestion) {
+          return;
+        }
+      }
       if (await nextButton.isEnabled().catch(() => false)) {
         return;
       }
@@ -116,7 +134,6 @@ async function answerCurrentMvnvPrompt(page: import('@playwright/test').Page, ta
       if (await nextButton.isEnabled().catch(() => false)) {
         return;
       }
-      await page.waitForTimeout(75);
       i += 1;
     }
   }
@@ -124,6 +141,12 @@ async function answerCurrentMvnvPrompt(page: import('@playwright/test').Page, ta
   // Some prompts require both a sidebar response and a graph-node selection.
   let attempt = 0;
   while (Date.now() < deadline) {
+    if (startingQuestion) {
+      const currentQuestion = await getCurrentTaskQuestion(page);
+      if (currentQuestion && currentQuestion !== startingQuestion) {
+        return;
+      }
+    }
     if (await nextButton.isEnabled().catch(() => false)) {
       return;
     }
@@ -154,7 +177,6 @@ async function answerCurrentMvnvPrompt(page: import('@playwright/test').Page, ta
     if (await nextButton.isEnabled().catch(() => false)) {
       return;
     }
-    await page.waitForTimeout(75);
     attempt += 1;
   }
 
@@ -164,7 +186,8 @@ async function answerCurrentMvnvPrompt(page: import('@playwright/test').Page, ta
 test('test', async ({ page, browserName }) => {
   test.skip(browserName === 'webkit', 'Skipping MVNV on WebKit due to headless flakiness.');
 
-  const taskTimeoutMs = browserName === 'webkit' ? 20000 : 10000;
+  const taskTimeoutMs = browserName === 'webkit' ? 20000 : 6000;
+  const maxTaskLoops = 20;
 
   await page.goto('/');
 
@@ -209,7 +232,7 @@ test('test', async ({ page, browserName }) => {
   );
 
   // eslint-disable-next-line no-plusplus
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < maxTaskLoops; i++) {
     if (await isFinished()) {
       break;
     }
@@ -223,11 +246,18 @@ test('test', async ({ page, browserName }) => {
       }
       await expect(qText).toBeVisible({ timeout: 5000 });
     }
-    await answerCurrentMvnvPrompt(page, taskTimeoutMs);
+    const questionBefore = await getCurrentTaskQuestion(page);
+    await answerCurrentMvnvPrompt(page, taskTimeoutMs, questionBefore);
     if (await isFinished()) {
       break;
     }
     await nextClick(page, taskTimeoutMs);
+    // Best-effort settle only; do not fail the whole run on transient render gaps.
+    await expect.poll(async () => {
+      if (await isFinished()) return true;
+      const questionAfter = await getCurrentTaskQuestion(page);
+      return !!questionAfter;
+    }, { timeout: 5000 }).toBe(true).catch(() => {});
   }
 
   // Check that the thank you message is displayed

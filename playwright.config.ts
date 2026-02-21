@@ -21,7 +21,7 @@ export default defineConfig({
   retries: isCI ? 1 : 0,
   workers: isCI ? ciWorkers : '90%',
   timeout: isCI ? 180000 : 60000,
-  reporter: isCI ? (process.env.PW_CI_REPORTER || 'dot') : 'html',
+  reporter: isCI ? 'github' : 'list',
 
   use: {
     baseURL: 'http://localhost:8080',
