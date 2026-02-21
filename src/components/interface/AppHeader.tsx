@@ -127,9 +127,9 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   const participantId = useStoreSelector((state) => state.participantId);
   const participantMetadata = useStoreSelector((state) => state.metadata);
   useEffect(() => {
-    if (!storageEngineFailedToConnect && firstMount) {
-      return undefined;
-    }
+    // if (!storageEngineFailedToConnect && firstMount) {
+    //   return undefined;
+    // }
 
     // Wait for 5 seconds before showing the storage connection error
     const timeoutId = window.setTimeout(() => {
@@ -140,7 +140,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
         title: 'Failed to connect to the storage engine',
       }));
       setFirstMount(false);
-    }, 1000);
+    }, 5000);
 
     return () => window.clearTimeout(timeoutId);
   }, [participantId, participantMetadata, setAlertModal, storageEngineFailedToConnect, storeDispatch, studyConfig.uiConfig.contactEmail, studyId]);
