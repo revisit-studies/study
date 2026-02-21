@@ -335,7 +335,16 @@ export function ConfigSwitcher({
   const others = useMemo(() => configsFiltered.filter((configName) => !configName.startsWith('demo-') && !configName.startsWith('tutorial') && !configName.startsWith('example-') && !configName.startsWith('test-') && !configName.startsWith('library-')), [configsFiltered]);
 
   const [searchParams] = useSearchParams();
-  const tab = useMemo(() => searchParams.get('tab') || (others.length > 0 ? 'Others' : 'Demos'), [others.length, searchParams]);
+  const firstTab = useMemo(() => {
+    if (others.length > 0) return 'Others';
+    if (demos.length > 0) return 'Demos';
+    if (examples.length > 0) return 'Examples';
+    if (tutorials.length > 0) return 'Tutorials';
+    if (tests.length > 0) return 'Tests';
+    if (libraries.length > 0) return 'Libraries';
+    return 'Demos';
+  }, [others, demos, examples, tutorials, tests, libraries]);
+  const tab = useMemo(() => searchParams.get('tab') || firstTab, [firstTab, searchParams]);
   const navigate = useNavigate();
 
   return (
@@ -349,16 +358,26 @@ export function ConfigSwitcher({
           src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`}
           alt="reVISit"
         />
-        <Tabs variant="outline" defaultValue={others.length > 0 ? 'Others' : 'Demos'} value={tab} onChange={(value) => navigate(`/?tab=${value}`)}>
+        <Tabs variant="outline" defaultValue={firstTab} value={tab} onChange={(value) => navigate(`/?tab=${value}`)}>
           <Tabs.List>
             {others.length > 0 && (
               <Tabs.Tab value="Others">Your Studies</Tabs.Tab>
             )}
-            <Tabs.Tab value="Demos">Demo Studies</Tabs.Tab>
-            <Tabs.Tab value="Examples">Example Studies</Tabs.Tab>
-            <Tabs.Tab value="Tutorials">Tutorials</Tabs.Tab>
-            <Tabs.Tab value="Tests">Tests</Tabs.Tab>
-            <Tabs.Tab value="Libraries">Libraries</Tabs.Tab>
+            {demos.length > 0 && (
+              <Tabs.Tab value="Demos">Demo Studies</Tabs.Tab>
+            )}
+            {examples.length > 0 && (
+              <Tabs.Tab value="Examples">Example Studies</Tabs.Tab>
+            )}
+            {tutorials.length > 0 && (
+              <Tabs.Tab value="Tutorials">Tutorials</Tabs.Tab>
+            )}
+            {tests.length > 0 && (
+              <Tabs.Tab value="Tests">Tests</Tabs.Tab>
+            )}
+            {libraries.length > 0 && (
+              <Tabs.Tab value="Libraries">Libraries</Tabs.Tab>
+            )}
           </Tabs.List>
 
           {others.length > 0 && (
@@ -367,31 +386,50 @@ export function ConfigSwitcher({
             </Tabs.Panel>
           )}
 
-          <Tabs.Panel value="Demos">
-            <Text c="dimmed" mt="sm">These studies show off individual features of the reVISit platform.</Text>
-            <StudyCards configNames={demos} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-          </Tabs.Panel>
+          {demos.length > 0 && (
+            <Tabs.Panel value="Demos">
+              <Text c="dimmed" mt="sm">These studies show off individual features of the reVISit platform.</Text>
+              <StudyCards configNames={demos} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+            </Tabs.Panel>
+          )}
 
-          <Tabs.Panel value="Examples">
-            <Text c="dimmed" mt="sm">These are full studies that demonstrate the capabilities of the reVISit platform.</Text>
-            <StudyCards configNames={examples} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-          </Tabs.Panel>
+          {examples.length > 0 && (
+            <Tabs.Panel value="Examples">
+              <Text c="dimmed" mt="sm">These are full studies that demonstrate the capabilities of the reVISit platform.</Text>
+              <StudyCards configNames={examples} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+            </Tabs.Panel>
+          )}
 
-          <Tabs.Panel value="Tutorials">
-            <Text c="dimmed" mt="sm">These studies are designed to help you learn how to use the reVISit platform.</Text>
-            <StudyCards configNames={tutorials} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-          </Tabs.Panel>
+          {tutorials.length > 0 && (
+            <Tabs.Panel value="Tutorials">
+              <Text c="dimmed" mt="sm">These studies are designed to help you learn how to use the reVISit platform.</Text>
+              <StudyCards configNames={tutorials} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+            </Tabs.Panel>
+          )}
 
-          <Tabs.Panel value="Tests">
-            <Text c="dimmed" mt="sm">These studies exist for testing purposes.</Text>
-            <StudyCards configNames={tests} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-          </Tabs.Panel>
+          {tests.length > 0 && (
+            <Tabs.Panel value="Tests">
+              <Text c="dimmed" mt="sm">These studies exist for testing purposes.</Text>
+              <StudyCards configNames={tests} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+            </Tabs.Panel>
+          )}
 
-          <Tabs.Panel value="Libraries">
-            <Text c="dimmed" mt="sm">Here you can see an example of every library that we publish.</Text>
-            <StudyCards configNames={libraries} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-          </Tabs.Panel>
+          {libraries.length > 0 && (
+            <Tabs.Panel value="Libraries">
+              <Text c="dimmed" mt="sm">Here you can see an example of every library that we publish.</Text>
+              <StudyCards configNames={libraries} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+            </Tabs.Panel>
+          )}
         </Tabs>
+
+        {configsFiltered.length === 0 && (
+          <Text c="dimmed" ta="center" mt="xl">
+            No studies found. Studies can be added in your
+            {' '}
+            <Text span ff="monospace">global.json</Text>
+            .
+          </Text>
+        )}
       </Container>
     </AppShell.Main>
   );
