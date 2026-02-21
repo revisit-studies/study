@@ -15,7 +15,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-react-trrack/assets/help.md",
+    "helpTextPath": "demo-react-trrack/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,

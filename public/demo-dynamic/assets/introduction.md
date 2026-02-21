@@ -1,6 +1,6 @@
 # Introduction
 
-Welcome to our study. This is a sample study demonstrating how to create a study page using dynamic blocks.
+This is a sample study demonstrating how to create a study page using dynamic blocks.
 
 Make sure to review [the documentation for dynamic blocks](https://revisit.dev/docs/designing-studies/dynamic-blocks/).
 

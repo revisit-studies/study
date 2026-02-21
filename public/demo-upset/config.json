@@ -18,7 +18,8 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "withSidebar": false
+    "withSidebar": false,
+    "helpTextPath": "demo-upset/assets/introduction.md"
   },
   "components": {
     "upset": {

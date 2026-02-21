@@ -4,7 +4,7 @@ This is an demo study to show how to use ranking widget.
 
 During this study, you will:
 - Experience **sublist ranking** by ordering items in your preferred sequence
-- Try **categorical ranking** by sorting items into High, Medium, and Low priority groups  
+- Try **categorical ranking** by sorting items into High, Medium, and Low priority groups 
 - Complete **pairwise comparisons** by choosing between pairs of options
 
 ## Reference

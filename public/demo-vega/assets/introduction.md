@@ -12,4 +12,3 @@ The first demo is a basic bar chart with hover interaction to show tooltips. Par
 ## Vega Demo 2
 The second demo is a more complex visualization. It uses a movies dataset, participants can select which attributes to use for the scatter plot axis.
 
-

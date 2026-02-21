@@ -11,7 +11,7 @@ Load custom CSS files for comprehensive styling:
 
 ```ts
 "uiConfig": {
-  "stylesheetPath": "my-study/assets/styles.css"
+ "stylesheetPath": "my-study/assets/styles.css"
 }
 ```
 
@@ -20,10 +20,10 @@ Apply specific styling directly to components or responses:
 
 ```ts
 {
-  "style": {
-    "width": "600px",
-    "fontSize": "18px",
-  }
+ "style": {
+ "width": "600px",
+ "fontSize": "18px",
+ }
 }
 ```
 
