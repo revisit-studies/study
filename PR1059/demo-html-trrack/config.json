@@ -6,12 +6,11 @@
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-14",
+    "date": "2026-02-21",
     "description": "An example study that implements Trrack library for provenance tracking in HTML stimuli.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
@@ -29,7 +28,7 @@
       "path": "demo-html-trrack/assets/introduction.md",
       "response": []
     },
-    "countDots1": {
+    "countDots": {
       "type": "website",
       "nextButtonLocation": "sidebar",
       "meta": {
@@ -53,7 +52,7 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "countDots1"
+      "countDots"
     ]
   }
 }
