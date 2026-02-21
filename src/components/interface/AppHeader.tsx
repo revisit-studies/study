@@ -125,7 +125,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   const { setAlertModal } = useStoreActions();
   const [firstMount, setFirstMount] = useState(true);
   useEffect(() => {
-    if (!storageEngineFailedToConnect && firstMount) {
+    if (!storageEngineFailedToConnect || !firstMount) {
       return undefined;
     }
 
