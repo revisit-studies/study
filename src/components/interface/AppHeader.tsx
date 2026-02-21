@@ -142,7 +142,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
     }, 5000);
 
     return () => window.clearTimeout(timeoutId);
-  }, [setAlertModal, storageEngineFailedToConnect, storeDispatch, studyConfig.uiConfig.contactEmail, studyId]);
+  }, [setAlertModal, storageEngineFailedToConnect, storeDispatch]);
 
   return (
     <AppShell.Header className="header" p="md">
