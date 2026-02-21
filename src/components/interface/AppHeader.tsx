@@ -123,22 +123,27 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
 
   // Check if we have issues connecting to the database, if so show alert modal
   const { setAlertModal } = useStoreActions();
+  const [firstMount, setFirstMount] = useState(true);
   const participantId = useStoreSelector((state) => state.participantId);
+  const participantMetadata = useStoreSelector((state) => state.metadata);
   useEffect(() => {
-    if (!storageEngineFailedToConnect) {
+    if (!storageEngineFailedToConnect && firstMount) {
       return undefined;
     }
 
+    // Wait for 5 seconds before showing the storage connection error
     const timeoutId = window.setTimeout(() => {
       storeDispatch(setAlertModal({
         show: true,
-        message: `You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you're taking the study you will not be compensated for your efforts. You are welcome to look around. If you are attempting to participate in the study, please email ${studyConfig.uiConfig.contactEmail} for assistance.\n\nStudy ID: ${studyId}\nParticipant ID: ${participantId}\nStorage Engine: ${import.meta.env.VITE_STORAGE_ENGINE}\nTimestamp (UTC): ${new Date().toISOString()}\nURL: ${window.location.href}`,
+        message: `You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you're taking the study you will not be compensated for your efforts. You are welcome to look around. If you are attempting to participate in the study, please email ${studyConfig.uiConfig.contactEmail} for assistance.
+        \n\nStudy ID: ${studyId}\nURL: ${window.location.href}\nParticipant ID: ${participantId}\nTimestamp (UTC): ${new Date().toISOString()}\nStorage Engine: ${import.meta.env.VITE_STORAGE_ENGINE}\nUser Agent: ${participantMetadata.userAgent}\nResolution: ${JSON.stringify(participantMetadata.resolution, null, 2)}\nIP: ${participantMetadata.ip}\nLanguage: ${participantMetadata.language}`,
         title: 'Failed to connect to the storage engine',
       }));
-    }, 5000);
+      setFirstMount(false);
+    }, 1000);
 
     return () => window.clearTimeout(timeoutId);
-  }, [participantId, setAlertModal, storageEngineFailedToConnect, storeDispatch, studyConfig.uiConfig.contactEmail, studyId]);
+  }, [participantId, participantMetadata, setAlertModal, storageEngineFailedToConnect, storeDispatch, studyConfig.uiConfig.contactEmail, studyId]);
 
   return (
     <AppShell.Header className="header" p="md">
@@ -157,7 +162,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
               >
                 {studyConfig?.studyMetadata.title}
               </Title>
-            ) : null }
+            ) : null}
           </Flex>
         </Grid.Col>
 
@@ -170,15 +175,15 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
             {(isAudioRecording || isScreenRecording) && (
-            <Group ml="xl" gap={20} wrap="nowrap">
-              <Text c="red">
-                Recording
-                {isScreenRecording && ' screen'}
-                {isScreenRecording && isAudioRecording && ' and'}
-                {isAudioRecording && ' audio'}
-              </Text>
-              {isAudioRecording && <RecordingAudioWaveform />}
-            </Group>
+              <Group ml="xl" gap={20} wrap="nowrap">
+                <Text c="red">
+                  Recording
+                  {isScreenRecording && ' screen'}
+                  {isScreenRecording && isAudioRecording && ' and'}
+                  {isAudioRecording && ' audio'}
+                </Text>
+                {isAudioRecording && <RecordingAudioWaveform />}
+              </Group>
             )}
             {storageEngineFailedToConnect && <Tooltip multiline withArrow arrowSize={6} w={300} label="Failed to connect to the storage engine. Study data will not be saved. Check your connection or restart the app."><Badge size="lg" color="red">Storage Disconnected</Badge></Tooltip>}
             {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
@@ -215,10 +220,10 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 <Menu.Item
                   component="a"
                   href={
-                        studyConfig !== null
-                          ? `mailto:${studyConfig.uiConfig.contactEmail}`
-                          : undefined
-                      }
+                    studyConfig !== null
+                      ? `mailto:${studyConfig.uiConfig.contactEmail}`
+                      : undefined
+                  }
                   leftSection={<IconMail size={14} />}
                 >
                   Contact
