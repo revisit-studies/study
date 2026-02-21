@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
+import { waitForStudyEndMessage } from './waitForStudyEndMessage';
 
 test('test', async ({ page }) => {
   await page.goto('/');
@@ -99,5 +100,5 @@ test('test', async ({ page }) => {
   }
 
   // Check that the thank you message is displayed
-  await page.getByText('Please wait while your answers are uploaded.').click();
+  await waitForStudyEndMessage(page);
 });

@@ -4,6 +4,7 @@ import {
   CheckboxResponse, DropdownResponse, MatrixResponse, NumberOption, NumericalResponse, RadioResponse, Response, StringOption,
 } from '../../parser/types';
 import { StoredAnswer } from '../../store/types';
+import { parseStringOptionValue } from '../../utils/stringOptions';
 
 function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
   // Check max and min selections
@@ -91,7 +92,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         initField = [];
       } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
         initField = Object.fromEntries(
-          response.questionOptions.map((entry) => [entry, '']),
+          response.questionOptions.map((entry) => [parseStringOptionValue(entry), '']),
         );
       } else if (response.type === 'slider' && response.startingValue) {
         initField = response.startingValue.toString();
@@ -107,6 +108,26 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
   });
 
   return { ...initObj };
+};
+
+export const mergeReactiveAnswers = (
+  responses: Response[],
+  currentValues: StoredAnswer['answer'],
+  reactiveAnswers: Record<string, StoredAnswer['answer'][string]>,
+) => {
+  const reactiveResponses = responses.filter((response) => response.type === 'reactive');
+  let mergedValues: StoredAnswer['answer'] | null = null;
+
+  reactiveResponses.forEach((response) => {
+    if (Object.prototype.hasOwnProperty.call(reactiveAnswers, response.id)) {
+      if (mergedValues === null) {
+        mergedValues = { ...currentValues };
+      }
+      mergedValues[response.id] = reactiveAnswers[response.id];
+    }
+  });
+
+  return mergedValues ?? currentValues;
 };
 
 const generateValidation = (responses: Response[]) => {

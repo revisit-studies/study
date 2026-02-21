@@ -16,6 +16,7 @@
     "demo-video-slider",
     "demo-video",
     "demo-dynamic",
+    "demo-condition",
     "demo-style",
     "demo-yaml",
     "demo-ranking-widget",
@@ -41,6 +42,8 @@
     "library-screen-recording",
     "library-smeq",
     "library-sus",
+    "library-umux",
+    "library-umux-lite",
     "library-virtual-chinrest",
     "library-vlat",
     "test-audio",
@@ -84,6 +87,9 @@
     },
     "demo-dynamic": {
       "path": "demo-dynamic/config.json"
+    },
+    "demo-condition": {
+      "path": "demo-condition/config.json"
     },
     "demo-html-trrack": {
       "path": "demo-html-trrack/config.json"
@@ -214,6 +220,14 @@
     },
     "test-step-logic": {
       "path": "test-step-logic/config.json",
+      "test": true
+    },
+    "library-umux": {
+      "path": "library-umux/config.json",
+      "test": true
+    },
+    "library-umux-lite": {
+      "path": "library-umux-lite/config.json",
       "test": true
     },
     "library-virtual-chinrest": {
