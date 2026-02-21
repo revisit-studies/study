@@ -20,7 +20,7 @@ export function ConfigVersionWarningModal() {
   const studyHref = useHref(`/${studyId}`);
 
   return (
-    <Modal opened={opened} centered size="lg" withCloseButton={false} onClose={() => setOpened(false)}>
+    <Modal opened={opened} centered size="lg" withCloseButton={false} closeOnClickOutside={false} closeOnEscape={false} onClose={() => {}}>
       <Alert
         color="yellow"
         radius="xs"
@@ -35,9 +35,6 @@ export function ConfigVersionWarningModal() {
         </Text>
 
         <Group w="100%" justify="end">
-          <Button onClick={() => setOpened(false)} variant="subtle" color="yellow" size="xs">
-            Continue with old config
-          </Button>
           <Button onClick={() => getNewParticipant(storageEngine, studyHref)} color="yellow" variant="filled">
             Next Participant
           </Button>
