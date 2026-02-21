@@ -1,5 +1,5 @@
 import {
-  Alert, Button, Group, Modal, Text,
+  Alert, Anchor, Button, Group, Modal, Text,
 } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -15,6 +15,8 @@ export function AlertModal() {
 
   useEffect(() => setOpened(alertModal.show), [alertModal.show]);
 
+  const messageParts = alertModal.message.split(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,})/g);
+
   return (
     <Modal opened={opened} centered size="lg" withCloseButton={false} onClose={close}>
       <Alert
@@ -25,8 +27,13 @@ export function AlertModal() {
         onClose={close}
         styles={{ root: { backgroundColor: 'unset' } }}
       >
-        <Text my="md">
-          {alertModal.message}
+        <Text my="md" style={{ whiteSpace: 'pre-line' }}>
+          {messageParts.map((part, index) => {
+            if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/.test(part)) {
+              return <Anchor key={`${part}-${index}`} href={`mailto:${part}`}>{part}</Anchor>;
+            }
+            return <span key={`${part}-${index}`}>{part}</span>;
+          })}
         </Text>
 
         <Group w="100%" justify="end">

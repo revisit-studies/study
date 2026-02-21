@@ -123,15 +123,22 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
 
   // Check if we have issues connecting to the database, if so show alert modal
   const { setAlertModal } = useStoreActions();
-  const [firstMount, setFirstMount] = useState(true);
-  if (storageEngineFailedToConnect && firstMount) {
-    storeDispatch(setAlertModal({
-      show: true,
-      message: `You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you're taking the study you will not be compensated for your efforts. You are welcome to look around. If you are attempting to participate in the study, please email ${studyConfig.uiConfig.contactEmail} for assistance.`,
-      title: 'Failed to connect to the storage engine',
-    }));
-    setFirstMount(false);
-  }
+  const participantId = useStoreSelector((state) => state.participantId);
+  useEffect(() => {
+    if (!storageEngineFailedToConnect) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      storeDispatch(setAlertModal({
+        show: true,
+        message: `You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you're taking the study you will not be compensated for your efforts. You are welcome to look around. If you are attempting to participate in the study, please email ${studyConfig.uiConfig.contactEmail} for assistance.\n\nStudy ID: ${studyId}\nParticipant ID: ${participantId}\nStorage Engine: ${import.meta.env.VITE_STORAGE_ENGINE}\nTimestamp (UTC): ${new Date().toISOString()}\nURL: ${window.location.href}`,
+        title: 'Failed to connect to the storage engine',
+      }));
+    }, 5000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [participantId, setAlertModal, storageEngineFailedToConnect, storeDispatch, studyConfig.uiConfig.contactEmail, studyId]);
 
   return (
     <AppShell.Header className="header" p="md">
