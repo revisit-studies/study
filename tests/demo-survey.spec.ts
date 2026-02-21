@@ -14,7 +14,7 @@ test('test', async ({ page }) => {
   // Number input
   const ageInput = page.getByPlaceholder('Enter your age here, range from 0 - 100');
   await ageInput.fill('120');
-  await expect(page.getByText('Please enter a value of 100 or less')).toBeVisible();
+  await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();
   await ageInput.fill('12');
 
   // Slider
@@ -146,7 +146,8 @@ test('test', async ({ page }) => {
   // Number input
   const sidebarAgeInput = page.getByPlaceholder('Enter your age here, range from 0 - 100');
   await sidebarAgeInput.fill('120');
-  await expect(page.getByText('Please enter a value of 100 or less')).toBeVisible();
+  await sidebarAgeInput.press('Tab');
+  await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();
   await sidebarAgeInput.fill('12');
 
   // Slider
