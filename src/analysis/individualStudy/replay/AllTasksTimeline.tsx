@@ -8,7 +8,7 @@ import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
 import { StoredAnswer, StudyConfig } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
-import { parseConditionParam } from '../../../utils/handleSequenceConditions';
+import { parseConditionParam } from '../../../utils/handleConditionLogic';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;

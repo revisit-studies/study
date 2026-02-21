@@ -47,7 +47,6 @@ export function TaskProvenanceTimeline({
             if (graph) {
               return (
                 <TaskProvenanceNodes
-                  answer={answers[trialName]}
                   key={name + provenanceArea}
                   height={height}
                   currentNode={currentNode}

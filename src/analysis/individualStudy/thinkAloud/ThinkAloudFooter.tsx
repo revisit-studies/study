@@ -4,7 +4,8 @@ import {
   AppShell,
   Button,
   Center,
-  Group, Popover, SegmentedControl, Select, Stack, Text,
+  ColorSwatch,
+  Group, HoverCard, Popover, SegmentedControl, Select, Stack, Text,
   Tooltip,
 } from '@mantine/core';
 import { useSearchParams } from 'react-router';
@@ -14,7 +15,7 @@ import {
 import * as d3 from 'd3';
 
 import {
-  IconArrowLeft, IconArrowRight, IconDeviceDesktopDown, IconInfoCircle, IconMusicDown, IconPlayerPauseFilled, IconPlayerPlayFilled, IconRestore,
+  IconArrowLeft, IconArrowRight, IconDeviceDesktopDown, IconInfoCircle, IconMusicDown, IconPalette, IconPlayerPauseFilled, IconPlayerPlayFilled, IconRestore,
 } from '@tabler/icons-react';
 import { useAsync } from '../../../store/hooks/useAsync';
 import { useAuth } from '../../../store/hooks/useAuth';
@@ -31,6 +32,9 @@ import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handl
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { StorageEngine } from '../../../storage/engines/types';
 import { useReplayContext } from '../../../store/hooks/useReplay';
+import {
+  buildProvenanceLegendEntries,
+} from '../../../components/audioAnalysis/provenanceColors';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
@@ -278,6 +282,15 @@ export function ThinkAloudFooter({
 
   const [timeString, setTimeString] = useState<string>('');
 
+  const provenanceLegendEntries = useMemo(() => {
+    const answer = participant?.answers[currentTrial];
+    if (!answer?.provenanceGraph) {
+      return new Map<string, { label: string; color: string }>();
+    }
+
+    return buildProvenanceLegendEntries(Object.values(answer.provenanceGraph));
+  }, [participant, currentTrial]);
+
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
       {currentTrial && participant && currentTrialClean === '' && (
@@ -299,7 +312,7 @@ export function ThinkAloudFooter({
             <Text ff="monospace" style={{ textAlign: 'right' }} mt="lg" c="dimmed">{timeString}</Text>
 
             <Tooltip label={hasEnded ? 'Restart' : isPlaying ? 'Pause' : 'Play'}>
-              <ActionIcon mt={25} size="xl" variant="light" onClick={() => { setIsPlaying(!isPlaying); }}>
+              <ActionIcon mt={25} size="lg" variant="light" onClick={() => { setIsPlaying(!isPlaying); }}>
                 {hasEnded ? <IconRestore /> : isPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
               </ActionIcon>
             </Tooltip>
@@ -485,6 +498,23 @@ export function ThinkAloudFooter({
             )}
             <ParticipantRejectModal selectedParticipants={[]} footer />
           </Group>
+          {provenanceLegendEntries.size > 1 && (
+            <HoverCard width={160} position="top" withArrow shadow="md">
+              <HoverCard.Target>
+                <ActionIcon c="" size="lg" variant="light" mt="lg" style={{ cursor: 'default' }}><IconPalette /></ActionIcon>
+              </HoverCard.Target>
+              <HoverCard.Dropdown>
+                <Stack gap={6}>
+                  {Array.from(provenanceLegendEntries.entries()).map(([key, value]) => (
+                    <Group key={key} gap={8}>
+                      <ColorSwatch color={value.color} size={12} />
+                      <span style={{ fontSize: 12 }}>{value.label}</span>
+                    </Group>
+                  ))}
+                </Stack>
+              </HoverCard.Dropdown>
+            </HoverCard>
+          )}
         </Group>
       </Stack>
     </AppShell.Footer>

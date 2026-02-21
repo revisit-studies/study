@@ -5,7 +5,7 @@ import {
   filterSequenceByCondition,
   getSequenceConditions,
   getConditionParticipantCounts,
-} from './handleSequenceConditions';
+} from './handleConditionLogic';
 import { Sequence } from '../store/types';
 import { ParticipantData } from '../storage/types';
 import { QuestionnaireComponent, StudyConfig } from '../parser/types';
@@ -174,6 +174,21 @@ describe('filterSequenceByCondition', () => {
     const sizeBlock = result.components[2] as Sequence;
     expect(sizeBlock.id).toBe('size');
     expect(sizeBlock.conditional).toBe(true);
+  });
+
+  it('should include multiple conditions when passed as an array', () => {
+    const sequence = createTestSequence();
+    const result = filterSequenceByCondition(sequence, ['color', 'size']);
+
+    expect(result.components).toHaveLength(4);
+    expect(result.components[0]).toBe('intro');
+    expect(result.components[3]).toBe('outro');
+
+    const colorBlock = result.components[1] as Sequence;
+    expect(colorBlock.id).toBe('color');
+
+    const sizeBlock = result.components[2] as Sequence;
+    expect(sizeBlock.id).toBe('size');
   });
 
   it('should exclude non-matching conditions', () => {

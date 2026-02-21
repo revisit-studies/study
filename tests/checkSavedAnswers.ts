@@ -24,12 +24,15 @@ async function getCurrentParticipantData(page: Page, studyIdExternal: string) {
 }
 
 export async function checkSavedAnswers(page: Page, studyId: string) {
+  await expect.poll(async () => {
+    const participantData = await getCurrentParticipantData(page, studyId) as ParticipantData;
+    const { answers } = participantData;
+    const answeredQuestions = Object.entries(answers).filter(([key, value]) => !key.startsWith('_') && value.endTime > -1);
+    return answeredQuestions.length - Object.keys(answers).length;
+  }, { timeout: 10000 }).toBe(0);
+
   const participantData = await getCurrentParticipantData(page, studyId) as ParticipantData;
   const { answers } = participantData;
-
-  // Check that every answer was saved, they all have an endtime > -1
-  const answeredQuestions = Object.entries(answers).filter(([key, value]) => !key.startsWith('_') && value.endTime > -1);
-  await expect(answeredQuestions.length).toEqual(Object.keys(answers).length);
 
   if (studyId === 'example-VLAT-full-randomized') {
     // Check specific answers for VLAT study

@@ -54,6 +54,15 @@ function verifyStudySkip(
   errors: ParserErrorWarning[] = [],
   warnings: ParserErrorWarning[] = [],
 ) {
+  const removeTargetInPlace = (targetName: string) => {
+    // Walk backward so removing items does not affect yet-to-visit indices.
+    for (let index = skipTargets.length - 1; index >= 0; index -= 1) {
+      if (skipTargets[index] === targetName) {
+        skipTargets.splice(index, 1);
+      }
+    }
+  };
+
   if (isDynamicBlock(sequence)) {
     return;
   }
@@ -72,19 +81,7 @@ function verifyStudySkip(
 
   // If the block has an ID, remove it from the skipTargets array
   if (sequence.id) {
-    // Use splice to remove all instances of the id from the array in place
-    const idxToRemove = skipTargets
-      .map((target, idx) => {
-        if (target === sequence.id) {
-          return idx;
-        }
-        return null;
-      });
-    idxToRemove.forEach((idx) => {
-      if (idx !== null) {
-        skipTargets.splice(idx, 1);
-      }
-    });
+    removeTargetInPlace(sequence.id);
   }
 
   // Recursive case: sequence has at least one component
@@ -92,19 +89,7 @@ function verifyStudySkip(
     if (typeof component === 'string') {
       // If the component is a string, check if it is in the skipTargets array
       if (skipTargets.includes(component)) {
-        // Use splice to remove the target from the array in place
-        const idxToRemove = skipTargets
-          .map((target, idx) => {
-            if (target === component) {
-              return idx;
-            }
-            return null;
-          });
-        idxToRemove.forEach((idx) => {
-          if (idx !== null) {
-            skipTargets.splice(idx, 1);
-          }
-        });
+        removeTargetInPlace(component);
       }
     } else {
       // Recursive case: component is a block
