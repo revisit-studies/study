@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
+import { waitForStudyEndMessage } from './waitForStudyEndMessage';
 
 test('test', async ({ page }) => {
   await page.goto('/');
@@ -178,6 +179,5 @@ test('test', async ({ page }) => {
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the thank you message is displayed
-  const endText = await page.getByText('Please wait while your answers are uploaded.');
-  await expect(endText).toBeVisible();
+  await waitForStudyEndMessage(page);
 });

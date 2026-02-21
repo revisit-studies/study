@@ -13,6 +13,35 @@ To run this demo experiment locally, you will need to install node on your compu
 * To run locally, run `yarn serve`.
 * Go to [http://localhost:8080](http://localhost:8080) to view it in your browser. The page will reload when you make changes. 
 
+## Adding Tests
+
+This repo uses two test types:
+
+* **Unit tests** with **Vitest** for parser, utility, and component logic.
+* **End-to-end (E2E) tests** with **Playwright** for participant/designer flows in a running app.
+
+### Unit tests (Vitest)
+
+* Co-locate unit tests with the source file they cover.
+* Use the same base filename and add `.spec.` (for example: `src/parser/parser.ts` -> `src/parser/parser.spec.ts`).
+* Use `vitest` APIs (`describe`, `test`/`it`, `expect`).
+* Run unit tests with:
+
+```bash
+yarn unittest
+```
+
+### E2E tests (Playwright)
+
+* Put E2E tests in the root `tests/` directory.
+* Name files with `.spec.ts` (for example: `tests/demo-vlat.spec.ts`).
+* Keep tests focused on user-observable behavior (navigation, input, progression, reviewer/designer behavior).
+* Run E2E tests with:
+
+```bash
+yarn test
+```
+
 ## Release Instructions
 
 Releasing reVISit.dev happens automatically when a PR is merged into the `main` branch. The name of the pull request should be the title of the release, e.g. `v1.0.0`. Releasing creates a tag with the same name as the PR, but the official GitGub release should be created manually. The `main` branch is protected and requires two reviews before merging.
