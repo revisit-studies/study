@@ -406,14 +406,15 @@ export abstract class StorageEngine {
     );
     await this._cacheStorageObject(`configs/${configHash}`, 'config');
 
-    // Clear sequence array and current participant data if the config has changed
+    // Clear sequence array if the config has changed.
+    // Keep currentParticipantId so existing participant sessions can continue
+    // against their original participantConfigHash.
     if (currentConfigHash && currentConfigHash !== configHash) {
       try {
         await this._deleteFromStorage('', 'sequenceArray');
       } catch {
         // pass, if this happens, we didn't have a sequence array yet
       }
-      await this.clearCurrentParticipantId();
     }
 
     await this._setCurrentConfigHash(configHash);
