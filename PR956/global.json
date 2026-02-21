@@ -47,6 +47,7 @@
     "library-virtual-chinrest",
     "library-vlat",
     "test-audio",
+    "test-device-restriction",
     "test-library",
     "test-likert-matrix",
     "test-parser-errors",
@@ -198,6 +199,9 @@
     "test-audio": {
       "path": "test-audio/config.json",
       "test": true
+    },
+    "test-device-restriction": {
+      "path": "test-device-restriction/config.json"
     },
     "test-library": {
       "path": "test-library/config.json",
