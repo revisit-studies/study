@@ -10,8 +10,7 @@
     "description": "A demo of the Upset component using @visdesignlab/upset2-react as a React component.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {

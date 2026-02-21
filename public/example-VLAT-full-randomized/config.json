@@ -10,8 +10,7 @@
     "description": "A replication of the VLAT questionnaire by Lee et al., TVCG 2016 (doi:10.1109/TVCG.2016.2598920) randomized between visualizations, using image stimuli.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
@@ -24,7 +23,9 @@
     "studyEndMsg": "Thank you for completing the study. You may click this link and return to Prolific: [https://app.prolific.com/submissions/complete?cc=CE96X7ST&PROLIFIC_ID={PARTICIPANT_ID}](https://app.prolific.com/submissions/complete?cc=CE96X7ST&PROLIFIC_ID={PARTICIPANT_ID})",
     "urlParticipantIdParam": "PROLIFIC_ID"
   },
-  "importedLibraries": ["vlat"],
+  "importedLibraries": [
+    "vlat"
+  ],
   "components": {
     "introduction": {
       "type": "markdown",

@@ -10,8 +10,7 @@
     "description": "A simple demo of using video as a stimulus. Data is collected via a numeric response field.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {

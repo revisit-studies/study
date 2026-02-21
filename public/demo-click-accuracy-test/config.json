@@ -10,8 +10,7 @@
     "description": "A demo of using dynamic React stimuli and using provenance tracking with the trrack library for data collection.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
