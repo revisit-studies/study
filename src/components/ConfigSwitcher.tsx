@@ -18,7 +18,7 @@ import { useStorageEngine } from '../storage/storageEngineHooks';
 import { REVISIT_MODE } from '../storage/engines/types';
 import { useAuth } from '../store/hooks/useAuth';
 import { isCloudStorageEngine } from '../storage/engines/utils';
-import { getSequenceConditions } from '../utils/handleSequenceConditions';
+import { getSequenceConditions } from '../utils/handleConditionLogic';
 
 function StudyCard({
   configName,
