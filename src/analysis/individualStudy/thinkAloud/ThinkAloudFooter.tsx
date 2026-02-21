@@ -4,7 +4,8 @@ import {
   AppShell,
   Button,
   Center,
-  Group, Popover, SegmentedControl, Select, Stack, Text,
+  ColorSwatch,
+  Group, HoverCard, Popover, SegmentedControl, Select, Stack, Text,
   Tooltip,
 } from '@mantine/core';
 import { useSearchParams } from 'react-router';
@@ -14,7 +15,7 @@ import {
 import * as d3 from 'd3';
 
 import {
-  IconArrowLeft, IconArrowRight, IconDeviceDesktopDown, IconInfoCircle, IconMusicDown, IconPlayerPauseFilled, IconPlayerPlayFilled, IconRestore,
+  IconArrowLeft, IconArrowRight, IconDeviceDesktopDown, IconInfoCircle, IconMusicDown, IconPalette, IconPlayerPauseFilled, IconPlayerPlayFilled, IconRestore,
 } from '@tabler/icons-react';
 import { useAsync } from '../../../store/hooks/useAsync';
 import { useAuth } from '../../../store/hooks/useAuth';
@@ -35,6 +36,8 @@ import { useReplayContext } from '../../../store/hooks/useReplay';
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
 };
+
+const colorPalette = ['#4269d0', '#ff725c', '#6cc5b0', '#3ca951', '#ff8ab7', '#a463f2', '#97bbf5', '#9c6b4e'];
 
 function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -278,6 +281,22 @@ export function ThinkAloudFooter({
 
   const [timeString, setTimeString] = useState<string>('');
 
+  const colorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    map.set('Root', '#efb118');
+    const answer = participant?.answers[currentTrial];
+    if (answer?.provenanceGraph) {
+      let idx = 0;
+      Object.entries(answer.provenanceGraph.stimulus?.nodes || {}).forEach(([, node]: [string, { label: string }]) => {
+        if (!map.has(node.label)) {
+          map.set(node.label, colorPalette[idx]);
+          idx = (idx + 1) % colorPalette.length;
+        }
+      });
+    }
+    return map;
+  }, [participant, currentTrial]);
+
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
       {currentTrial && participant && currentTrialClean === '' && (
@@ -299,7 +318,7 @@ export function ThinkAloudFooter({
             <Text ff="monospace" style={{ textAlign: 'right' }} mt="lg" c="dimmed">{timeString}</Text>
 
             <Tooltip label={hasEnded ? 'Restart' : isPlaying ? 'Pause' : 'Play'}>
-              <ActionIcon mt={25} size="xl" variant="light" onClick={() => { setIsPlaying(!isPlaying); }}>
+              <ActionIcon mt={25} size="lg" variant="light" onClick={() => { setIsPlaying(!isPlaying); }}>
                 {hasEnded ? <IconRestore /> : isPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
               </ActionIcon>
             </Tooltip>
@@ -485,6 +504,23 @@ export function ThinkAloudFooter({
             )}
             <ParticipantRejectModal selectedParticipants={[]} footer />
           </Group>
+          {colorMap.size > 1 && (
+            <HoverCard width={160} position="top" withArrow shadow="md">
+              <HoverCard.Target>
+                <ActionIcon c="" size="lg" variant="light" mt="lg" style={{ cursor: 'default' }}><IconPalette /></ActionIcon>
+              </HoverCard.Target>
+              <HoverCard.Dropdown>
+                <Stack gap={6}>
+                  {Array.from(colorMap.keys()).map((key) => (
+                    <Group key={key} gap={8}>
+                      <ColorSwatch color={colorMap.get(key)!} size={12} />
+                      <span style={{ fontSize: 12 }}>{key}</span>
+                    </Group>
+                  ))}
+                </Stack>
+              </HoverCard.Dropdown>
+            </HoverCard>
+          )}
         </Group>
       </Stack>
     </AppShell.Footer>
