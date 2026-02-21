@@ -1011,7 +1011,7 @@ export default function CoolComponent({ parameters, setAnswer }: StimulusParams<
 ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v2.3.2/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.3.2/src/public/demo-react-trrack/assets)
  * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.3.2/src/public/example-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
@@ -1086,7 +1086,7 @@ export interface ImageComponent extends BaseIndividualComponent {
 </script>
 ```
 
-  * If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.
+  * If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenance` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.
 
 ```js
 const trrack = initializeTrrack({
