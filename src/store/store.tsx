@@ -24,6 +24,7 @@ export async function studyStoreCreator(
   participantId: string,
   completed: boolean,
   storageEngineFailedToConnect: boolean,
+  isStalledConfig: boolean = false,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
@@ -134,6 +135,7 @@ export async function studyStoreCreator(
     completed,
     clickedPrevious: false,
     storageEngineFailedToConnect,
+    isStalledConfig,
   };
 
   const storeSlice = createSlice({

@@ -176,6 +176,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantSession.participantId,
           participantSession.completed,
           false,
+          participantSession.participantConfigHash !== activeHash,
         );
         setStore(newStore);
       } catch (error) {
