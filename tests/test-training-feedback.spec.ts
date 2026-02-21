@@ -1,12 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+import { nextClick } from './utils';
 
-async function goToTraining(page) {
-  // Check that the page contains the introduction text
-  const introText = await page.getByText('Welcome to our study. This is a more complex example to show how to embed React.js');
-  await expect(introText).toBeVisible({ timeout: 5000 });
+async function goToTraining(page: Page) {
+  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check the page contains consent form
   const consent = await page.getByRole('heading', { name: 'Consent' });
@@ -25,7 +24,16 @@ async function goToTraining(page) {
   await expect(trainingImg).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
+}
+
+async function answerTrainingTrialCorrectly(page: Page) {
+  await page.getByPlaceholder('0-100').fill('66');
+  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await expect(page.getByText('You have answered the question correctly.')).toBeVisible();
+  const nextButton = page.getByRole('button', { name: 'Next', exact: true });
+  await expect(nextButton).toBeEnabled();
+  await nextClick(page);
 }
 
 test('test', async ({ page }) => {
@@ -63,8 +71,13 @@ test('test', async ({ page }) => {
 
   await goToTraining(page);
 
-  // Answer the training question correctly and expect the next button to be enabled
-  await page.getByPlaceholder('0-100').fill('66');
-  await page.getByRole('button', { name: 'Check Answer' }).click();
-  await expect(nextButton).toBeEnabled();
+  // Answer all four training trials correctly and ensure we progress past training.
+  await answerTrainingTrialCorrectly(page);
+  await answerTrainingTrialCorrectly(page);
+  await answerTrainingTrialCorrectly(page);
+  await answerTrainingTrialCorrectly(page);
+
+  // First non-training trial should not require Check Answer.
+  await expect(page.getByPlaceholder('0-100')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Check Answer' })).toBeHidden();
 });

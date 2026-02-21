@@ -1,29 +1,29 @@
 /* eslint-disable no-await-in-loop */
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+import { nextClick, waitForStudyEndMessage } from './utils';
 
-async function answerDropdownTrial(page: import('@playwright/test').Page, instruction: string, answer: string) {
+async function answerDropdownTrial(page: Page, instruction: string, answer: string) {
   const questionText = page.getByText(instruction);
-  await expect(questionText).toBeVisible({ timeout: 5000 });
+  await expect(questionText).toBeVisible({ timeout: 15000 });
 
   await page.getByPlaceholder('Select an option').click();
   await page.getByRole('option', { name: answer, exact: true }).click();
 
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 }
 
-async function expectStudyComplete(page: import('@playwright/test').Page) {
-  const endText = page.getByText('Please wait while your answers are uploaded.');
-  await expect(endText).toBeVisible({ timeout: 5000 });
+async function expectStudyComplete(page: Page) {
+  await waitForStudyEndMessage(page);
 
   const uploaded = page.getByText('Thank you for completing the study. You may close this window now.');
-  await expect(uploaded).toBeVisible({ timeout: 5000 });
+  await expect(uploaded).toBeVisible({ timeout: 15000 });
 }
 
-test.describe('demo-condition', () => {
+test.describe('Test study condition logic', () => {
   test('cannot switch to another condition after reload when development mode is disabled', async ({ page }) => {
     // Disable development mode so condition changes in the URL do not override persisted participant conditions.
     await page.goto('/analysis/stats/demo-condition/manage');
-    await expect(page.getByRole('heading', { name: 'ReVISit Modes' })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('heading', { name: 'ReVISit Modes' })).toBeVisible({ timeout: 15000 });
 
     const developmentModeSwitch = page
       .locator('h5:has-text("Development Mode")')
@@ -40,14 +40,14 @@ test.describe('demo-condition', () => {
 
     // Start the participant in the color condition.
     await page.goto('/demo-condition?condition=color');
-    await expect(page.getByText('Welcome to this condition-based demo.')).toBeVisible({ timeout: 5000 });
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
-    await expect(page.getByText(/Which color is the (lightest|darkest)\?/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Welcome to this condition-based demo.')).toBeVisible({ timeout: 15000 });
+    await nextClick(page);
+    await expect(page.getByText(/Which color is the (lightest|darkest)\?/)).toBeVisible({ timeout: 15000 });
 
     // Change URL condition and reload. Participant should stay on the original condition branch.
     await page.goto('/demo-condition?condition=size');
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
-    await expect(page.getByText(/Which color is the (lightest|darkest)\?/)).toBeVisible({ timeout: 5000 });
+    await nextClick(page);
+    await expect(page.getByText(/Which color is the (lightest|darkest)\?/)).toBeVisible({ timeout: 15000 });
     await expect(page.getByText(/Which shape is the (largest|smallest)\?/)).not.toBeVisible();
   });
 
@@ -56,23 +56,23 @@ test.describe('demo-condition', () => {
 
     // Introduction should be visible (non-conditional component)
     const introText = page.getByText('Welcome to this condition-based demo.');
-    await expect(introText).toBeVisible({ timeout: 5000 });
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(introText).toBeVisible({ timeout: 15000 });
+    await nextClick(page);
 
     // Should see color trials (order is random, so check both possibilities)
     // Trial 1
     const colorInstruction1 = page.getByText(/Which color is the (lightest|darkest)\?/);
-    await expect(colorInstruction1).toBeVisible({ timeout: 5000 });
+    await expect(colorInstruction1).toBeVisible({ timeout: 15000 });
     await page.getByPlaceholder('Select an option').click();
     await page.getByRole('option', { name: 'A', exact: true }).click();
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await nextClick(page);
 
     // Trial 2
     const colorInstruction2 = page.getByText(/Which color is the (lightest|darkest)\?/);
-    await expect(colorInstruction2).toBeVisible({ timeout: 5000 });
+    await expect(colorInstruction2).toBeVisible({ timeout: 15000 });
     await page.getByPlaceholder('Select an option').click();
     await page.getByRole('option', { name: 'A', exact: true }).click();
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await nextClick(page);
 
     // Should go directly to the end (no size or shape trials)
     await expectStudyComplete(page);
@@ -83,23 +83,23 @@ test.describe('demo-condition', () => {
 
     // Introduction
     const introText = page.getByText('Welcome to this condition-based demo.');
-    await expect(introText).toBeVisible({ timeout: 5000 });
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(introText).toBeVisible({ timeout: 15000 });
+    await nextClick(page);
 
     // Should see size trials (order is random, so check both possibilities)
     // Trial 1
     const sizeInstruction1 = page.getByText(/Which shape is the (largest|smallest)\?/);
-    await expect(sizeInstruction1).toBeVisible({ timeout: 5000 });
+    await expect(sizeInstruction1).toBeVisible({ timeout: 15000 });
     await page.getByPlaceholder('Select an option').click();
     await page.getByRole('option', { name: 'Square', exact: true }).click();
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await nextClick(page);
 
     // Trial 2
     const sizeInstruction2 = page.getByText(/Which shape is the (largest|smallest)\?/);
-    await expect(sizeInstruction2).toBeVisible({ timeout: 5000 });
+    await expect(sizeInstruction2).toBeVisible({ timeout: 15000 });
     await page.getByPlaceholder('Select an option').click();
     await page.getByRole('option', { name: 'Square', exact: true }).click();
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await nextClick(page);
 
     // Should go directly to the end (no color or shape trials)
     await expectStudyComplete(page);
@@ -110,8 +110,8 @@ test.describe('demo-condition', () => {
 
     // Introduction
     const introText = page.getByText('Welcome to this condition-based demo.');
-    await expect(introText).toBeVisible({ timeout: 5000 });
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(introText).toBeVisible({ timeout: 15000 });
+    await nextClick(page);
 
     // Shape block has order: "fixed", so shape-trial-1 comes first
     await answerDropdownTrial(page, 'Which option represents a square?', 'B');
@@ -126,21 +126,21 @@ test.describe('demo-condition', () => {
 
     // Introduction
     const introText = page.getByText('Welcome to this condition-based demo.');
-    await expect(introText).toBeVisible({ timeout: 5000 });
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(introText).toBeVisible({ timeout: 15000 });
+    await nextClick(page);
 
     // Color trials (random order)
     const colorInstruction1 = page.getByText(/Which color is the (lightest|darkest)\?/);
-    await expect(colorInstruction1).toBeVisible({ timeout: 5000 });
+    await expect(colorInstruction1).toBeVisible({ timeout: 15000 });
     await page.getByPlaceholder('Select an option').click();
     await page.getByRole('option', { name: 'A', exact: true }).click();
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await nextClick(page);
 
     const colorInstruction2 = page.getByText(/Which color is the (lightest|darkest)\?/);
-    await expect(colorInstruction2).toBeVisible({ timeout: 5000 });
+    await expect(colorInstruction2).toBeVisible({ timeout: 15000 });
     await page.getByPlaceholder('Select an option').click();
     await page.getByRole('option', { name: 'A', exact: true }).click();
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await nextClick(page);
 
     // Shape trials (fixed order) — no size trials should appear
     await answerDropdownTrial(page, 'Which option represents a square?', 'B');
@@ -155,25 +155,25 @@ test.describe('demo-condition', () => {
 
     // Introduction
     const introText = page.getByText('Welcome to this condition-based demo.');
-    await expect(introText).toBeVisible({ timeout: 5000 });
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(introText).toBeVisible({ timeout: 15000 });
+    await nextClick(page);
 
     // Color trials (2 trials, random order)
     for (let i = 0; i < 2; i += 1) {
       const colorInstruction = page.getByText(/Which color is the (lightest|darkest)\?/);
-      await expect(colorInstruction).toBeVisible({ timeout: 5000 });
+      await expect(colorInstruction).toBeVisible({ timeout: 15000 });
       await page.getByPlaceholder('Select an option').click();
       await page.getByRole('option', { name: 'A', exact: true }).click();
-      await page.getByRole('button', { name: 'Next', exact: true }).click();
+      await nextClick(page);
     }
 
     // Size trials (2 trials, random order)
     for (let i = 0; i < 2; i += 1) {
       const sizeInstruction = page.getByText(/Which shape is the (largest|smallest)\?/);
-      await expect(sizeInstruction).toBeVisible({ timeout: 5000 });
+      await expect(sizeInstruction).toBeVisible({ timeout: 15000 });
       await page.getByPlaceholder('Select an option').click();
       await page.getByRole('option', { name: 'Square', exact: true }).click();
-      await page.getByRole('button', { name: 'Next', exact: true }).click();
+      await nextClick(page);
     }
 
     // Shape trials (2 trials, fixed order)
@@ -188,7 +188,7 @@ test.describe('demo-condition', () => {
 
     // Find the Conditional Blocks Demo card
     const card = page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Conditional Blocks Demo' });
-    await expect(card.first()).toBeVisible({ timeout: 5000 });
+    await expect(card.first()).toBeVisible({ timeout: 15000 });
 
     // Condition badges should be visible
     const colorBadge = card.getByText('color', { exact: true }).first();

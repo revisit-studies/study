@@ -26,7 +26,7 @@ import { useAsync } from '../../store/hooks/useAsync';
 import { getCleanedDuration } from '../../utils/getCleanedDuration';
 import { showNotification } from '../../utils/notifications';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
-import { parseConditionParam } from '../../utils/handleSequenceConditions';
+import { parseConditionParam } from '../../utils/handleConditionLogic';
 
 const OPTIONAL_COMMON_PROPS = [
   'condition',

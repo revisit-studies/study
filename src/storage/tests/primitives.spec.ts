@@ -162,6 +162,31 @@ describe.each([
     expect(updatedModes.developmentModeEnabled).toBe(true);
   });
 
+  test('setMode toggles each ReVISit mode independently', async () => {
+    const initialModes = await storageEngine.getModes(studyId);
+    expect(initialModes.dataCollectionEnabled).toBe(true);
+    expect(initialModes.developmentModeEnabled).toBe(true);
+    expect(initialModes.dataSharingEnabled).toBe(true);
+
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
+    const afterDataCollectionToggle = await storageEngine.getModes(studyId);
+    expect(afterDataCollectionToggle.dataCollectionEnabled).toBe(false);
+    expect(afterDataCollectionToggle.developmentModeEnabled).toBe(true);
+    expect(afterDataCollectionToggle.dataSharingEnabled).toBe(true);
+
+    await storageEngine.setMode(studyId, 'developmentModeEnabled', false);
+    const afterDevelopmentToggle = await storageEngine.getModes(studyId);
+    expect(afterDevelopmentToggle.dataCollectionEnabled).toBe(false);
+    expect(afterDevelopmentToggle.developmentModeEnabled).toBe(false);
+    expect(afterDevelopmentToggle.dataSharingEnabled).toBe(true);
+
+    await storageEngine.setMode(studyId, 'dataSharingEnabled', false);
+    const afterDataSharingToggle = await storageEngine.getModes(studyId);
+    expect(afterDataSharingToggle.dataCollectionEnabled).toBe(false);
+    expect(afterDataSharingToggle.developmentModeEnabled).toBe(false);
+    expect(afterDataSharingToggle.dataSharingEnabled).toBe(false);
+  });
+
   // cleanupModes test
   test('cleanupModes updates old modes to new modes', async () => {
     const oldModes = {

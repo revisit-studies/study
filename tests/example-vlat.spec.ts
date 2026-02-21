@@ -1,15 +1,16 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
 import { checkSavedAnswers } from './checkSavedAnswers';
+import { nextClick, waitForStudyEndMessage } from './utils';
 
-test('test', async ({ page }) => {
+test('Test example VLAT full randomized', async ({ page }) => {
   await page.goto('/example-VLAT-full-randomized?PROLIFIC_ID=test');
 
   await page.getByRole('heading', { name: 'What is VLAT?' }).click();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   await page.getByPlaceholder('Your Initials').fill('test');
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   const questionArray = new Array(53).fill(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -22,19 +23,16 @@ test('test', async ({ page }) => {
     await page.locator('input[type="radio"]').nth(0).click();
     await page.locator('input[type="radio"]').nth(0).click();
     await page.locator('input[type="radio"]').nth(0).click();
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await nextClick(page);
   }
 
   await page.getByPlaceholder('Enter your answer here.').click();
   await page.getByPlaceholder('Enter your answer here.').fill('no');
   await page.getByLabel('Did anything not render or display properly?*').fill('no');
   await page.getByLabel('Any other issues or anything you would like to tell us?*').fill('no');
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
-  await page.getByText('Please wait while your answers are uploaded.').click();
-
-  const uploaded = await page.getByText('Thank you for completing the study.');
-  await expect(uploaded).toBeVisible();
+  await waitForStudyEndMessage(page);
 
   await checkSavedAnswers(page, 'example-VLAT-full-randomized');
 });
