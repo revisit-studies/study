@@ -1,0 +1,107 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
+  "description": "BeauVis is a validated scale for assessing the aesthetic pleasure of visualizations. This library contains three components for the 3-, 4-, and 5-item versions of the BeauVis scale.\n\nWhen using this library, please replace the `vis-example.png` file with your own visualization.",
+  "reference": "T. He, P. Isenberg, R. Dachselt, and T. Isenberg, “BeauVis: A Validated Scale for Measuring the Aesthetic Pleasure of Visual Representations,” IEEE Transactions on Visualization and Computer Graphics, pp. 1–11, 2022",
+  "doi": "10.1109/tvcg.2022.3209390",
+  "externalLink": "https://www.aviz.fr/Research/BeauVis-Scale",
+  "components": {
+    "5items": {
+      "type": "image",
+      "path": "libraries/beauvis/assets/vis-example.png",
+      "style": {
+        "width": "800px"
+      },
+      "response": [
+        {
+          "id": "5items-response",
+          "prompt": "To what extent do you agree that this visual representation is...?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "matrix-radio",
+          "questionOrder":"random",
+          "answerOptions": [
+            "Strongly disagree",
+            "Disagree",
+            "Slightly disagree",
+            "Neutral",
+            "Slightly agree",
+            "Agree",
+            "Strongly agree"
+          ],
+          "questionOptions": [
+            "enjoyable",
+            "likable",
+            "pleasing",
+            "nice",
+            "appealing"
+          ]
+        }
+      ]
+    },
+    "4items": {
+      "type": "image",
+      "path": "libraries/previs/assets/vis-example.png",
+      "style": {
+        "width": "800px"
+      },
+      "response": [
+        {
+          "id": "4items-response",
+          "prompt": "To what extent do you agree that this visual representation is...?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "matrix-radio",
+          "questionOrder":"random",
+          "answerOptions": [
+            "Strongly disagree",
+            "Disagree",
+            "Slightly disagree",
+            "Neutral",
+            "Slightly agree",
+            "Agree",
+            "Strongly agree"
+          ],
+          "questionOptions": [
+            "enjoyable",
+            "likable",
+            "pleasing",
+            "nice"
+          ]
+        }
+      ]
+    },
+    "3items": {
+      "type": "image",
+      "path": "libraries/previs/assets/vis-example.png",
+      "style": {
+        "width": "800px"
+      },
+      "response": [
+        {
+          "id": "3items-response",
+          "prompt": "To what extent do you agree that this visual representation is...?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "matrix-radio",
+          "questionOrder":"random",
+          "answerOptions": [
+            "Strongly disagree",
+            "Disagree",
+            "Slightly disagree",
+            "Neutral",
+            "Slightly agree",
+            "Agree",
+            "Strongly agree"
+          ],
+          "questionOptions": [
+            "enjoyable",
+            "likable",
+            "pleasing"
+          ]
+        }
+      ]
+    }
+  },
+  "sequences": {
+  }
+}

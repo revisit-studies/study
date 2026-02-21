@@ -1,0 +1,68 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Video as a Stimulus",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "A simple demo of using video as a stimulus. Data is collected via a numeric response field.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-video/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 200
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-video/assets/introduction.md",
+      "response": []
+    },
+    "internal": {
+      "type": "video",
+      "path": "demo-video/assets/venice.mp4",
+      "forceCompletion": true,
+      "response": []
+    },
+    "missingInternal": {
+      "type": "video",
+      "path": "demo-video/assets/london.mp4",
+      "forceCompletion": true,
+      "response": []
+    },
+    "external": {
+      "type": "video",
+      "path": "https://www.youtube.com/watch?v=icPHcK_cCF4",
+      "forceCompletion": false,
+      "withTimeline": true,
+      "response": []
+    },
+    "missingExternal": {
+      "type": "video",
+      "path": "https://www.youtube.com/watch",
+      "forceCompletion": true,
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "internal",
+      "missingInternal",
+      "external",
+      "missingExternal"
+    ]
+  }
+}
