@@ -194,7 +194,7 @@ export function ResponseBlock({
   }, [matrixAnswers, rankingAnswers]);
 
   useEffect(() => {
-    trrack.apply('update', actions.updateFormAction(structuredClone(answerValidator.values)));
+    trrack.apply('Update form field', actions.updateFormAction(structuredClone(answerValidator.values)));
 
     storeDispatch(
       updateResponseBlockValidation({

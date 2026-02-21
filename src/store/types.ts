@@ -185,4 +185,5 @@ export interface StoreState {
   completed: boolean;
   clickedPrevious: boolean;
   storageEngineFailedToConnect: boolean;
+  isStalledConfig: boolean;
 }
