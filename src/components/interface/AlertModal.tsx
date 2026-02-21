@@ -36,12 +36,17 @@ export function AlertModal() {
     const subject = encodeURIComponent(`Storage Connection Issue (${studyId})`);
     const body = encodeURIComponent(`I encountered a storage connection issue while taking a study.\n\n Warning message:\n${alertModal.message}\n\nDiagnostics information:\n${diagnosticsMessage}`);
     return `mailto:${studyConfig.uiConfig.contactEmail}?subject=${subject}&body=${body}`;
-  }, [diagnosticsMessage, studyConfig.uiConfig.contactEmail, studyId]);
+  }, [alertModal.message, diagnosticsMessage, studyConfig.uiConfig.contactEmail, studyId]);
 
   const handleCopyMessage = useCallback(async () => {
-    await navigator.clipboard.writeText(diagnosticsMessage);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1000);
+    try {
+      if (!window.isSecureContext || !navigator.clipboard?.writeText) return;
+      await navigator.clipboard.writeText(diagnosticsMessage);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1000);
+    } catch {
+      // Fail silently when clipboard access is unavailable or denied.
+    }
   }, [diagnosticsMessage]);
 
   return (
