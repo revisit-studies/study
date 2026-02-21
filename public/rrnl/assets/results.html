@@ -357,18 +357,18 @@
         ? `<button class="iconBtn" type="button" title="Preview graph" aria-label="Preview graph for ${getDisplayName(compName)}" data-preview="${compName}">i</button>`
         : "";
 
-tr.innerHTML = `
-  <td>
-    <div class="compCell">
-      <strong>${getDisplayName(compName)}</strong>
-      ${iconHtml}
-    </div>
-  </td>
-  <td>${prompt}</td>
-  <td>${userAnswer == null ? "<span class='muted'>—</span>" : String(userAnswer)}</td>
-  <td>${formatCorrect(ca)}</td>
-  <td>${statusPill}<div class="small muted">${result.why}</div></td>
-`;
+        tr.innerHTML = `
+        <td>
+            <div class="compCell">
+            <strong>${getDisplayName(compName)}</strong>
+            ${iconHtml}
+            </div>
+        </td>
+        <td>${prompt}</td>
+        <td>${userAnswer == null ? "<span class='muted'>—</span>" : String(userAnswer)}</td>
+        <td>${formatCorrect(ca)}</td>
+        <td>${statusPill}<div class="small muted">${result.why}</div></td>
+        `;
 
 
       tbody.appendChild(tr);

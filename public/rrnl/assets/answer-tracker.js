@@ -58,7 +58,7 @@
       return doc;
     } catch (e) {
       warn(
-        "❌ Cannot access parent document. You need iframe sandbox allow-same-origin.",
+        "Cannot access parent document. You need iframe sandbox allow-same-origin.",
         e
       );
       return null;
@@ -226,7 +226,7 @@
         store.answers[componentName][responseId] = value;
         saves++;
 
-        log("✅ Saved answer:", { componentName, responseId, value });
+        log("Saved answer:", { componentName, responseId, value });
       }
 
       if (matched === 0) warn("No sidebar labels matched prompts for this component.");
@@ -238,7 +238,6 @@
       }
     }
 
-    // Run once immediately
     scanAndSave();
 
     // Observe UI changes
