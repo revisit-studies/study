@@ -1156,8 +1156,8 @@ If you are using Vega, you can use signals with `revisitAnswer` to send the user
     }
   ]
 }
-In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.
 ```
+ In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.
 */
 export interface VegaComponentPath extends BaseIndividualComponent {
   type: 'vega';
@@ -1193,8 +1193,8 @@ IIf you are using Vega, you can use signals with `revisitAnswer` to send the use
     }
   ]
 }
-In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response.
 ```
+ In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response.
 */
 export interface VegaComponentConfig extends BaseIndividualComponent {
   type: 'vega';
