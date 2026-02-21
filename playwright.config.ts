@@ -18,9 +18,9 @@ export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   // Retry on CI only.
-  retries: isCI ? 1 : 0,
+  retries: isCI ? 2 : 0,
   workers: isCI ? ciWorkers : '90%',
-  timeout: isCI ? 180000 : 60000,
+  timeout: isCI ? 120000 : 60000,
   reporter: isCI ? 'github' : 'list',
 
   use: {
