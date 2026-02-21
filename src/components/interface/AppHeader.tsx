@@ -124,26 +124,23 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   // Check if we have issues connecting to the database, if so show alert modal
   const { setAlertModal } = useStoreActions();
   const [firstMount, setFirstMount] = useState(true);
-  const participantId = useStoreSelector((state) => state.participantId);
-  const participantMetadata = useStoreSelector((state) => state.metadata);
   useEffect(() => {
-    // if (!storageEngineFailedToConnect && firstMount) {
-    //   return undefined;
-    // }
+    if (!storageEngineFailedToConnect && firstMount) {
+      return undefined;
+    }
 
     // Wait for 5 seconds before showing the storage connection error
     const timeoutId = window.setTimeout(() => {
       storeDispatch(setAlertModal({
         show: true,
-        message: `You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you're taking the study you will not be compensated for your efforts. You are welcome to look around. If you are attempting to participate in the study, please email ${studyConfig.uiConfig.contactEmail} for assistance.
-        \n\nStudy ID: ${studyId}\nURL: ${window.location.href}\nParticipant ID: ${participantId}\nTimestamp (UTC): ${new Date().toISOString()}\nStorage Engine: ${import.meta.env.VITE_STORAGE_ENGINE}\nUser Agent: ${participantMetadata.userAgent}\nResolution: ${JSON.stringify(participantMetadata.resolution, null, 2)}\nIP: ${participantMetadata.ip}\nLanguage: ${participantMetadata.language}`,
+        message: 'You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you\'re taking the study you will not be compensated for your efforts. You are welcome to look around.',
         title: 'Failed to connect to the storage engine',
       }));
       setFirstMount(false);
     }, 5000);
 
     return () => window.clearTimeout(timeoutId);
-  }, [participantId, participantMetadata, setAlertModal, storageEngineFailedToConnect, storeDispatch, studyConfig.uiConfig.contactEmail, studyId]);
+  }, [setAlertModal, storageEngineFailedToConnect, storeDispatch, studyConfig.uiConfig.contactEmail, studyId]);
 
   return (
     <AppShell.Header className="header" p="md">
