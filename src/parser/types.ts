@@ -857,7 +857,7 @@ export type Response = NumericalResponse | ShortTextResponse | LongTextResponse 
       "location": "belowStimulus",
       "type": "numerical"
     }
-  ]
+  ],
   "correctAnswer": [{
     "id": "response1",
     "answer": 4
@@ -993,11 +993,11 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * So, for example, if I had the following ReactComponent in my config
 ```js
 {
-  type: 'react-component';
-  path: 'my_study/CoolComponent.tsx';
+  type: 'react-component',
+  path: 'my_study/CoolComponent.tsx',
   parameters: {
-    name: 'Zach';
-    age: 26;
+    name: 'Zach',
+    age: 26
   }
 }
 ```
