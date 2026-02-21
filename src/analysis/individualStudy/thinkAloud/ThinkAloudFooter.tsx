@@ -32,12 +32,13 @@ import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handl
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { StorageEngine } from '../../../storage/engines/types';
 import { useReplayContext } from '../../../store/hooks/useReplay';
+import {
+  buildProvenanceLegendEntries,
+} from '../../../components/audioAnalysis/provenanceColors';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
 };
-
-const colorPalette = ['#4269d0', '#ff725c', '#6cc5b0', '#3ca951', '#ff8ab7', '#a463f2', '#97bbf5', '#9c6b4e'];
 
 function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -281,20 +282,13 @@ export function ThinkAloudFooter({
 
   const [timeString, setTimeString] = useState<string>('');
 
-  const colorMap = useMemo(() => {
-    const map = new Map<string, string>();
-    map.set('Root', '#efb118');
+  const provenanceLegendEntries = useMemo(() => {
     const answer = participant?.answers[currentTrial];
-    if (answer?.provenanceGraph) {
-      let idx = 0;
-      Object.entries(answer.provenanceGraph.stimulus?.nodes || {}).forEach(([, node]: [string, { label: string }]) => {
-        if (!map.has(node.label)) {
-          map.set(node.label, colorPalette[idx]);
-          idx = (idx + 1) % colorPalette.length;
-        }
-      });
+    if (!answer?.provenanceGraph) {
+      return new Map<string, { label: string; color: string }>();
     }
-    return map;
+
+    return buildProvenanceLegendEntries(Object.values(answer.provenanceGraph));
   }, [participant, currentTrial]);
 
   return (
@@ -504,17 +498,17 @@ export function ThinkAloudFooter({
             )}
             <ParticipantRejectModal selectedParticipants={[]} footer />
           </Group>
-          {colorMap.size > 1 && (
+          {provenanceLegendEntries.size > 1 && (
             <HoverCard width={160} position="top" withArrow shadow="md">
               <HoverCard.Target>
                 <ActionIcon c="" size="lg" variant="light" mt="lg" style={{ cursor: 'default' }}><IconPalette /></ActionIcon>
               </HoverCard.Target>
               <HoverCard.Dropdown>
                 <Stack gap={6}>
-                  {Array.from(colorMap.keys()).map((key) => (
+                  {Array.from(provenanceLegendEntries.entries()).map(([key, value]) => (
                     <Group key={key} gap={8}>
-                      <ColorSwatch color={colorMap.get(key)!} size={12} />
-                      <span style={{ fontSize: 12 }}>{key}</span>
+                      <ColorSwatch color={value.color} size={12} />
+                      <span style={{ fontSize: 12 }}>{value.label}</span>
                     </Group>
                   ))}
                 </Stack>
