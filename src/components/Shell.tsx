@@ -36,7 +36,7 @@ import {
   filterSequenceByCondition,
   parseConditionParam,
   resolveParticipantConditions,
-} from '../utils/handleSequenceConditions';
+} from '../utils/handleConditionLogic';
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
