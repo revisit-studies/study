@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
+import { waitForStudyEndMessage } from './waitForStudyEndMessage';
 
 async function answerDropdownTrial(page: import('@playwright/test').Page, instruction: string, answer: string) {
   const questionText = page.getByText(instruction);
@@ -12,8 +13,7 @@ async function answerDropdownTrial(page: import('@playwright/test').Page, instru
 }
 
 async function expectStudyComplete(page: import('@playwright/test').Page) {
-  const endText = page.getByText('Please wait while your answers are uploaded.');
-  await expect(endText).toBeVisible({ timeout: 5000 });
+  await waitForStudyEndMessage(page);
 
   const uploaded = page.getByText('Thank you for completing the study. You may close this window now.');
   await expect(uploaded).toBeVisible({ timeout: 5000 });

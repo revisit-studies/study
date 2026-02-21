@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
+import { waitForStudyEndMessage } from './waitForStudyEndMessage';
 
 test('Test questionnaire component with responses and randomizing questions and responses', async ({ page }) => {
   await page.goto('/');
@@ -185,6 +186,5 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the thank you message is displayed
-  const endText = await page.getByText('Please wait while your answers are uploaded.');
-  await expect(endText).toBeVisible();
+  await waitForStudyEndMessage(page);
 });

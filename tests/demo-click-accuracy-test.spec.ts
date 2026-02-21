@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
+import { waitForStudyEndMessage } from './waitForStudyEndMessage';
 
 test('Test React component with reactive response', async ({ page }) => {
   const trialLen = 2;
@@ -35,5 +36,5 @@ test('Test React component with reactive response', async ({ page }) => {
     await page.waitForTimeout(100);
   }
   // Check that the thank you message is displayed
-  await page.getByText('Please wait while your answers are uploaded.').click();
+  await waitForStudyEndMessage(page);
 });

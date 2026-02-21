@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForStudyEndMessage } from './waitForStudyEndMessage';
 
 test('Test website component with reactive response', async ({ page }) => {
   await page.goto('/');
@@ -52,6 +53,5 @@ test('Test website component with reactive response', async ({ page }) => {
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the end of study text renders
-  const endText = await page.getByText('Please wait while your answers are uploaded.');
-  await expect(endText).toBeVisible();
+  await waitForStudyEndMessage(page);
 });

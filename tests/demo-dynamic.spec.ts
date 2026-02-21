@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
+import { waitForStudyEndMessage } from './waitForStudyEndMessage';
 
 test('Test dynamic block', async ({ page }) => {
   const trialLen = 10;
@@ -73,6 +74,5 @@ test('Test dynamic block', async ({ page }) => {
 
     await page.waitForTimeout(1000);
   }
-  const endText = await page.getByText('Please wait while your answers are uploaded.');
-  await expect(endText).toBeVisible();
+  await waitForStudyEndMessage(page);
 });

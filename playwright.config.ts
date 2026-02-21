@@ -12,9 +12,9 @@ export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   // Retry on CI only.
-  retries: process.env.CI ? 2 : 0,
-  // Opt out of parallel tests on CI.
-  workers: process.env.CI ? 1 : undefined,
+  retries: process.env.CI ? 1 : 0,
+  // Use conservative parallelism on CI across matrix jobs.
+  workers: process.env.CI ? 2 : '90%',
   timeout: 180000,
   reporter: 'html',
 
