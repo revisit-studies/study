@@ -207,12 +207,10 @@ function RGBColorMixTask({ parameters, setAnswer, provenanceState }: StimulusPar
                 style={{ backgroundColor: color, border: '2px solid #222' }}
                 aria-label={`add-${color}`}
               >
-                <span style={{
-                  color: '#fff', fontSize: 24, fontWeight: 700, lineHeight: 1,
-                }}
-                >
-                  +
-                </span>
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+                  <line x1="5" y1="12" x2="19" y2="12" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+                </svg>
               </ActionIcon>
               <ActionIcon
                 radius="xl"
