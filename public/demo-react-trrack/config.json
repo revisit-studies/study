@@ -23,15 +23,15 @@
   },
   "baseComponents": {
     "trial": {
-      "description": "try to click on the center of the moving dot",
-      "instruction": "Click on the moving dot",
+      "description": "build a color by adding or removing red, green, and blue counts",
+      "instruction": "Match the target color by building your RGB color record",
       "type": "react-component",
       "path": "demo-react-trrack/assets/DemoReactTrrack.tsx",
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "accuracy",
-          "prompt": "Your click distance to circle center",
+          "id": "colorSelection",
+          "prompt": "Your current RGB record and normalized color",
           "location": "sidebar",
           "type": "reactive"
         }
@@ -44,24 +44,32 @@
       "path": "demo-react-trrack/assets/introduction.md",
       "response": []
     },
-    "trial1": {
+    "trial-crimson": {
       "baseComponent": "trial",
       "meta": {
         "nr-dots": 1
       },
       "parameters": {
-        "speed": 100,
-        "taskid": "accuracy"
+        "taskid": "colorSelection",
+        "targetColor": {
+          "red": 220,
+          "green": 70,
+          "blue": 80
+        }
       }
     },
-    "trial2": {
+    "trial-azure": {
       "baseComponent": "trial",
       "meta": {
         "nr-dots": 1
       },
       "parameters": {
-        "speed": 200,
-        "taskid": "accuracy"
+        "taskid": "colorSelection",
+        "targetColor": {
+          "red": 60,
+          "green": 130,
+          "blue": 230
+        }
       }
     }
   },
@@ -69,8 +77,8 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "trial1",
-      "trial2"
+      "trial-crimson",
+      "trial-azure"
     ]
   }
 }

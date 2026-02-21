@@ -1,142 +1,260 @@
-import * as d3 from 'd3';
 import {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
-import { Box, Slider } from '@mantine/core';
+import {
+  ActionIcon, Box, Stack, Text,
+} from '@mantine/core';
 import { initializeTrrack, Registry } from '@trrack/core';
-import { useChartDimensions } from '../../example-cleveland/assets/hooks/useChartDimensions';
 import { StimulusParams } from '../../../store/types';
 
-const chartSettings = {
-  marginBottom: 40,
-  marginLeft: 40,
-  marginTop: 15,
-  marginRight: 15,
-  height: 650,
-  width: 850,
-};
+type RGBChannel = 'red' | 'green' | 'blue';
 
-interface ClickAccuracyTest {
-  distance: number;
-  speed: number;
-  clickX: number;
-  clickY: number;
+interface RGBState {
+  red: number;
+  green: number;
+  blue: number;
+  targetRed: number;
+  targetGreen: number;
+  targetBlue: number;
 }
 
+interface TargetColorParam {
+  red?: number;
+  green?: number;
+  blue?: number;
+}
+
+const normalizeChannel = (value: number | undefined) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(255, Math.round(value)));
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ClickAccuracyTest({ parameters, setAnswer, provenanceState }: StimulusParams<any, { distance: number, speed: number, clickX: number, clickY: number }>) {
-  const [ref, dms] = useChartDimensions(chartSettings);
-  const [x, setX] = useState(100);
-  const [y, setY] = useState(100);
-  const [speed, setSpeed] = useState(parameters.speed);
+function RGBColorMixTask({ parameters, setAnswer, provenanceState }: StimulusParams<any, RGBState>) {
   const { taskid } = parameters;
+  const configTargetColor = parameters.targetColor as TargetColorParam | undefined;
+  const [record, setRecord] = useState({ red: 0, green: 0, blue: 0 });
+  const [targetColor, setTargetColor] = useState(() => {
+    if (
+      provenanceState?.targetRed !== undefined
+      && provenanceState.targetGreen !== undefined
+      && provenanceState.targetBlue !== undefined
+    ) {
+      return {
+        red: provenanceState.targetRed,
+        green: provenanceState.targetGreen,
+        blue: provenanceState.targetBlue,
+      };
+    }
+    return {
+      red: normalizeChannel(configTargetColor?.red),
+      green: normalizeChannel(configTargetColor?.green),
+      blue: normalizeChannel(configTargetColor?.blue),
+    };
+  });
 
   useEffect(() => {
-    if (provenanceState?.speed !== undefined) {
-      setSpeed(provenanceState.speed);
+    if (provenanceState) {
+      setRecord({
+        red: provenanceState.red ?? 0,
+        green: provenanceState.green ?? 0,
+        blue: provenanceState.blue ?? 0,
+      });
+      if (
+        provenanceState.targetRed !== undefined
+        && provenanceState.targetGreen !== undefined
+        && provenanceState.targetBlue !== undefined
+      ) {
+        setTargetColor({
+          red: provenanceState.targetRed,
+          green: provenanceState.targetGreen,
+          blue: provenanceState.targetBlue,
+        });
+      } else {
+        setTargetColor({
+          red: normalizeChannel(configTargetColor?.red),
+          green: normalizeChannel(configTargetColor?.green),
+          blue: normalizeChannel(configTargetColor?.blue),
+        });
+      }
+    } else {
+      setTargetColor({
+        red: normalizeChannel(configTargetColor?.red),
+        green: normalizeChannel(configTargetColor?.green),
+        blue: normalizeChannel(configTargetColor?.blue),
+      });
     }
-  }, [provenanceState?.speed]);
+  }, [configTargetColor?.blue, configTargetColor?.green, configTargetColor?.red, provenanceState]);
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
 
-    const clickAction = reg.register('click', (state, click: {clickX: number, clickY: number, distance: number}) => {
-      state.clickX = click.clickX;
-      state.clickY = click.clickY;
-      state.distance = click.distance;
+    const addColorAction = reg.register('addColor', (state, color: RGBChannel) => {
+      state[color] += 1;
       return state;
     });
 
-    const speedAction = reg.register('speed', (state, _speed: number) => {
-      state.speed = _speed;
+    const removeColorAction = reg.register('removeColor', (state, color: RGBChannel) => {
+      state[color] = Math.max(0, state[color] - 1);
       return state;
     });
 
     const trrackInst = initializeTrrack({
       registry: reg,
       initialState: {
-        distance: 0, speed: parameters.speed, clickX: 0, clickY: 0,
+        red: 0,
+        green: 0,
+        blue: 0,
+        targetRed: targetColor.red,
+        targetGreen: targetColor.green,
+        targetBlue: targetColor.blue,
       },
     });
 
     return {
       actions: {
-        clickAction,
-        speedAction,
+        addColorAction,
+        removeColorAction,
       },
       trrack: trrackInst,
     };
-  }, [parameters.speed]);
+  }, [targetColor.blue, targetColor.green, targetColor.red]);
 
-  const handleSpeedChange = useCallback((_speed: number) => {
-    setSpeed(_speed);
-    trrack.apply('Speed', actions.speedAction(_speed));
+  const mixedColor = useMemo(() => {
+    const total = record.red + record.green + record.blue;
+    if (total === 0) {
+      return null;
+    }
+    return {
+      red: Math.round((record.red / total) * 255),
+      green: Math.round((record.green / total) * 255),
+      blue: Math.round((record.blue / total) * 255),
+    };
+  }, [record.blue, record.green, record.red]);
 
+  const updateAnswer = useCallback((nextRecord: { red: number, green: number, blue: number }) => {
+    const total = nextRecord.red + nextRecord.green + nextRecord.blue;
+    const normalized = total > 0
+      ? {
+        red: Math.round((nextRecord.red / total) * 255),
+        green: Math.round((nextRecord.green / total) * 255),
+        blue: Math.round((nextRecord.blue / total) * 255),
+      }
+      : null;
     setAnswer({
-      status: true,
-      provenanceGraph: trrack.graph.backend,
-      answers: {},
-    });
-  }, [actions, setAnswer, trrack]);
-
-  const clickCallback = useCallback((e: React.MouseEvent) => {
-    const circle = d3.select('#movingCircle');
-    const svg = d3.select('#clickAccuracySvg');
-    const pointer = d3.pointer(e, svg.node());
-
-    const circlePos = [+circle.attr('cx') + dms.marginLeft / 2, +circle.attr('cy') + dms.marginTop / 2];
-
-    const distance = `${Math.round(Math.sqrt((pointer[0] - circlePos[0]) ** 2 + (pointer[1] - circlePos[1]) ** 2))}px`;
-
-    trrack.apply('Clicked', actions.clickAction({ distance: +distance, clickX: pointer[0], clickY: pointer[1] }));
-
-    setAnswer({
-      status: true,
+      status: total > 0,
       provenanceGraph: trrack.graph.backend,
       answers: {
-        [taskid]: distance,
+        [taskid]: total > 0
+          ? `record: R=${nextRecord.red}, G=${nextRecord.green}, B=${nextRecord.blue}; normalized: rgb(${normalized?.red}, ${normalized?.green}, ${normalized?.blue})`
+          : 'No color selected',
       },
     });
-  }, [actions, setAnswer, taskid, trrack, dms]);
+  }, [setAnswer, taskid, trrack]);
+
+  const changeColorCount = useCallback((color: RGBChannel, delta: 1 | -1) => {
+    setRecord((prev) => {
+      const next = {
+        ...prev,
+        [color]: Math.max(0, prev[color] + delta),
+      };
+
+      if (delta === 1) {
+        trrack.apply(`Add ${color}`, actions.addColorAction(color));
+      } else if (prev[color] > 0) {
+        trrack.apply(`Remove ${color}`, actions.removeColorAction(color));
+      }
+      return next;
+    });
+  }, [actions, trrack]);
 
   useEffect(() => {
-    const nxtX = Math.random() * 800;
-    const nxtY = Math.random() * 600;
-    const distance = Math.sqrt((nxtX - x) ** 2 + (nxtY - y) ** 2);
-    const time = (distance / speed) * 1000;
-    const svgElement = d3.select(ref.current);
-    svgElement.select('circle')
-      .transition()
-      .duration(time)
-      .ease(d3.easeLinear)
-      .attr('cx', nxtX)
-      .attr('cy', nxtY)
-      .on('end', () => {
-        setX(nxtX);
-        setY(nxtY);
-      });
-  }, [ref, speed, x, y]);
+    updateAnswer(record);
+  }, [record, updateAnswer]);
 
   return (
-    <>
-      <div className="Chart__wrapper" ref={ref} onClick={clickCallback} style={{ height: '650px' }}>
-        <svg id="clickAccuracySvg" width={dms.width} height={dms.height}>
-          <g
-            transform={`translate(${[dms.marginLeft / 2, dms.marginTop / 2].join(
-              ',',
-            )})`}
-          >
-            <rect width="800" height="600" stroke="black" strokeWidth="5" fill="none" />
-            <circle id="movingCircle" cx="100" cy="100" r="10" />
-          </g>
-        </svg>
-      </div>
-      <Box>
-        Adjust speed (px/s):
-        <Slider w={800} min={10} max={1000} value={speed} onChange={handleSpeedChange} />
-      </Box>
-    </>
+    <Stack gap="xl" style={{ maxWidth: 440, margin: '0 auto' }}>
+      <Stack gap="sm" align="center">
+        <Text fw={600}>Target color</Text>
+        <Box
+          style={{
+            width: 180,
+            height: 180,
+            borderRadius: '50%',
+            border: '2px solid #222',
+            backgroundColor: `rgb(${targetColor.red}, ${targetColor.green}, ${targetColor.blue})`,
+          }}
+        />
+      </Stack>
+
+      <Stack gap="sm">
+        <Text fw={600} style={{ textAlign: 'center' }}>Build your color record (add/remove RGB)</Text>
+        <Box
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '16px',
+          }}
+        >
+          {(['red', 'green', 'blue'] as RGBChannel[]).map((color) => (
+            <Stack key={color} gap="xs" align="center">
+              <ActionIcon
+                radius="xl"
+                size={56}
+                onClick={() => changeColorCount(color, 1)}
+                style={{ backgroundColor: color, border: '2px solid #222' }}
+                aria-label={`add-${color}`}
+              >
+                <span style={{
+                  color: '#fff', fontSize: 24, fontWeight: 700, lineHeight: 1,
+                }}
+                >
+                  +
+                </span>
+              </ActionIcon>
+              <ActionIcon
+                radius="xl"
+                size={36}
+                onClick={() => changeColorCount(color, -1)}
+                variant="outline"
+                color="dark"
+                aria-label={`remove-${color}`}
+              >
+                -
+              </ActionIcon>
+              <Text size="sm" fw={500}>
+                {color.toUpperCase()}
+                :
+                {record[color]}
+              </Text>
+            </Stack>
+          ))}
+        </Box>
+      </Stack>
+
+      <Stack gap="sm" align="center">
+        <Text fw={600}>Your normalized selected color</Text>
+        <Box
+          style={{
+            width: 180,
+            height: 180,
+            borderRadius: '50%',
+            border: '2px solid #222',
+            backgroundColor: mixedColor
+              ? `rgb(${mixedColor.red}, ${mixedColor.green}, ${mixedColor.blue})`
+              : 'transparent',
+          }}
+        />
+        <Text>
+          {mixedColor
+            ? `rgb(${mixedColor.red}, ${mixedColor.green}, ${mixedColor.blue})`
+            : 'No color selected yet'}
+        </Text>
+      </Stack>
+    </Stack>
   );
 }
 
-export default ClickAccuracyTest;
+export default RGBColorMixTask;
