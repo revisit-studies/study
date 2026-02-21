@@ -6,7 +6,7 @@
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2025-01-10",
+    "date": "2026-02-21",
     "description": "A demo of how to do training.",
     "organizations": [
       "University of Utah",
@@ -109,7 +109,11 @@
       "correctAnswer": [
         {
           "id": "quiz",
-          "answer": ["A","D","F"]
+          "answer": [
+            "A",
+            "D",
+            "F"
+          ]
         }
       ],
       "provideFeedback": true,
