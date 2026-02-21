@@ -47,33 +47,13 @@
           "hidden": false
         }
       ]
-    },
-    "countDots2": {
-      "type": "website",
-      "nextButtonLocation": "sidebar",
-      "meta": {
-        "difficulty": "easy"
-      },
-      "description": "Add a total of 5 - 10 circles",
-      "instruction": "Add a total of 5 to 15 circles. You can remove if you add more.",
-      "path": "demo-html-trrack/assets/dots-count.html",
-      "response": [
-        {
-          "id": "circlesCount",
-          "prompt": "Answer:",
-          "location": "sidebar",
-          "type": "reactive",
-          "hidden": false
-        }
-      ]
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
       "introduction",
-      "countDots1",
-      "countDots2"
+      "countDots1"
     ]
   }
 }
