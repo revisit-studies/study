@@ -152,7 +152,7 @@ Rules:
     }
 
     if (call.name === 'get_chart_image_file_id') {
-      const file_id = 'file-7oYLNxSQQrn81bHMPi1E8A'; // Clustered Heatmap image
+      const file_id = 'file-2jqhMr5MJe3bxfvXeaJYpd'; // Clustered Heatmap image file-7oYLNxSQQrn81bHMPi1E8A 
       return { name: call.name, output: { file_id } };
     }
 
