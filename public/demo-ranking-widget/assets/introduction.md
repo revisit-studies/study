@@ -1,6 +1,6 @@
 # Introduction
 
-Welcome to our study. This is an example study to show how to use ranking widget. 
+This is an demo study to show how to use ranking widget. 
 
 During this study, you will:
 - Experience **sublist ranking** by ordering items in your preferred sequence

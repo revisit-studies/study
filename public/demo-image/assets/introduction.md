@@ -1,8 +1,14 @@
 # Introduction
 
-Welcome to our study. This is a replication of a study by Padilla et al., published in  Frontiers in Psychology, 2021.
+This demo introduced how to use images as stimuli in reVISit, and how to collect data via form fields. 
 
-## Instructions
+
+
+## Study Scenario
+
+This is a replication of a study by Padilla et al., published in  Frontiers in Psychology, 2021.
+
+### Instructions
 
 The following instructions describe the tasks you will see and how to complete them. If you need to refer to these instructions during the experiment, please click on help at the top of the page.
 
