@@ -23,7 +23,7 @@ export function AlertModal() {
   useEffect(() => setOpened(alertModal.show), [alertModal.show]);
   const isStorageEngineAlert = alertModal.title === 'Failed to connect to the storage engine';
 
-  const diagnosticsMessage = `Study ID: ${studyId}\nURL: ${window.location.href}\nParticipant ID: ${participantId}\nTimestamp(UTC): ${new Date().toISOString()}\nStorage Engine: ${import.meta.env.VITE_STORAGE_ENGINE}\nUser Agent: ${participantMetadata.userAgent}\nResolution: ${JSON.stringify(participantMetadata.resolution, null, 2)}\nIP: ${participantMetadata.ip}\nLanguage: ${participantMetadata.language}`;
+  const diagnosticsMessage = `Study ID: ${studyId}\nURL: ${window.location.href}\nParticipant ID: ${participantId}\nTimestamp (UTC): ${new Date().toISOString()}\nStorage Engine: ${import.meta.env.VITE_STORAGE_ENGINE}\nUser Agent: ${participantMetadata.userAgent}\nResolution: ${JSON.stringify(participantMetadata.resolution, null, 2)}\nIP: ${participantMetadata.ip}\nLanguage: ${participantMetadata.language}`;
 
   const handleCopyMessage = useCallback(async () => {
     await navigator.clipboard.writeText(diagnosticsMessage);
