@@ -12,7 +12,10 @@ test('test', async ({ page }) => {
   // Fill the survey: Form Elements
 
   // Number input
-  await page.getByPlaceholder('Enter your age here, range from 0 - 100').fill('12');
+  const ageInput = page.getByPlaceholder('Enter your age here, range from 0 - 100');
+  await ageInput.fill('120');
+  await expect(page.getByText('Please enter a value of 100 or less')).toBeVisible();
+  await ageInput.fill('12');
 
   // Slider
   await page.locator('.mantine-Slider-track').click();
@@ -141,7 +144,10 @@ test('test', async ({ page }) => {
   // Fill the survey: Sidebar Form Elements
 
   // Number input
-  await page.getByPlaceholder('Enter your age here, range from 0 - 100').fill('12');
+  const sidebarAgeInput = page.getByPlaceholder('Enter your age here, range from 0 - 100');
+  await sidebarAgeInput.fill('120');
+  await expect(page.getByText('Please enter a value of 100 or less')).toBeVisible();
+  await sidebarAgeInput.fill('12');
 
   // Slider
   await page.locator('.mantine-Slider-track').click();
