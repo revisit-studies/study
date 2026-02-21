@@ -1,0 +1,294 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Using Randomization",
+    "description": "This is a test study to check the functionality of the reVISit sequence generator. This study is not meant to be used for any real data collection.",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2024-02-23",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "jwilburn@sci.utah.edu",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withSidebar": true,
+    "withProgressBar": true
+  },
+  "baseComponents": {
+    "trial": {
+      "type": "questionnaire",
+      "response": [],
+      "nextButtonLocation": "aboveStimulus",
+      "instruction": "Please answer the following questions...",
+      "instructionLocation": "aboveStimulus"
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "test-randomization/assets/introduction.md",
+      "response": [],
+      "nextButtonLocation": "aboveStimulus",
+      "instructionLocation": "aboveStimulus",
+      "description": "this is an introduction to the study",
+      "meta": {
+        "difficulty": "easy"
+      }
+    },
+    "trial1": {
+      "baseComponent": "trial"
+    },
+    "trial2": {
+      "baseComponent": "trial"
+    },
+    "trial3": {
+      "baseComponent": "trial"
+    },
+    "trial4": {
+      "baseComponent": "trial"
+    },
+    "trial5": {
+      "baseComponent": "trial"
+    },
+    "trial6": {
+      "baseComponent": "trial"
+    },
+    "trial7": {
+      "baseComponent": "trial"
+    },
+    "trial8": {
+      "baseComponent": "trial"
+    },
+    "trial9": {
+      "baseComponent": "trial"
+    },
+    "trial10": {
+      "baseComponent": "trial"
+    },
+    "trial11": {
+      "baseComponent": "trial"
+    },
+    "trial12": {
+      "baseComponent": "trial"
+    },
+    "trial13": {
+      "baseComponent": "trial"
+    },
+    "trial14": {
+      "baseComponent": "trial"
+    },
+    "trial15": {
+      "baseComponent": "trial"
+    },
+    "trial16": {
+      "baseComponent": "trial"
+    },
+    "trial17": {
+      "baseComponent": "trial"
+    },
+    "trial18": {
+      "baseComponent": "trial"
+    },
+    "trial19": {
+      "baseComponent": "trial"
+    },
+    "trial20": {
+      "baseComponent": "trial"
+    },
+    "trial21": {
+      "baseComponent": "trial"
+    },
+    "trial22": {
+      "baseComponent": "trial"
+    },
+    "break1": {
+      "type": "markdown",
+      "path": "test-randomization/assets/break.md",
+      "response": [],
+      "nextButtonLocation": "aboveStimulus",
+      "instructionLocation": "aboveStimulus"
+    },
+    "break2": {
+      "type": "markdown",
+      "path": "test-randomization/assets/break.md",
+      "response": [],
+      "nextButtonLocation": "aboveStimulus",
+      "instructionLocation": "aboveStimulus"
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "introduction",
+      {
+        "order": "latinSquare",
+        "numSamples": 5,
+        "components": [
+          "trial1",
+          "trial2",
+          "trial3",
+          "trial4",
+          "trial5",
+          "trial6",
+          "trial7",
+          "trial8",
+          "trial9",
+          "trial10"
+        ],
+        "interruptions": [
+          {
+            "spacing": 2,
+            "firstLocation": 0,
+            "components": [
+              "break1"
+            ]
+          },
+          {
+            "spacing": "random",
+            "numInterruptions": 2,
+            "components": [
+              "break2"
+            ]
+          }
+        ]
+      },
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+          {
+            "order": "latinSquare",
+            "numSamples": 1,
+            "components": [
+              {
+                "order": "latinSquare",
+                "numSamples": 5,
+                "components": [
+                  "trial11",
+                  "trial12",
+                  "trial13",
+                  "trial14",
+                  "trial15",
+                  "trial16",
+                  "trial17",
+                  "trial18",
+                  "trial19",
+                  "trial20"
+                ],
+                "interruptions": [
+                  {
+                    "spacing": 2,
+                    "firstLocation": 0,
+                    "components": [
+                      "break1"
+                    ]
+                  },
+                  {
+                    "spacing": "random",
+                    "numInterruptions": 2,
+                    "components": [
+                      "break2"
+                    ]
+                  }
+                ]
+              },
+              {
+                "order": "latinSquare",
+                "numSamples": 5,
+                "components": [
+                  "trial11",
+                  "trial12",
+                  "trial13",
+                  "trial14",
+                  "trial15",
+                  "trial16",
+                  "trial17",
+                  "trial18",
+                  "trial19",
+                  "trial20"
+                ],
+                "interruptions": [
+                  {
+                    "spacing": 2,
+                    "firstLocation": 0,
+                    "components": [
+                      "break1"
+                    ]
+                  },
+                  {
+                    "spacing": "random",
+                    "numInterruptions": 2,
+                    "components": [
+                      "break2"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+          {
+            "order": "latinSquare",
+            "numSamples": 1,
+            "components": [
+              "trial21",
+              "trial22",
+              {
+                "order": "latinSquare",
+                "numSamples": 1,
+                "components": [
+                  "trial21",
+                  "trial22",
+                  {
+                    "order": "latinSquare",
+                    "numSamples": 1,
+                    "components": [
+                      "trial21",
+                      "trial22"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "numSamples": 1,
+            "components": [
+              "trial21",
+              "trial22",
+              {
+                "order": "latinSquare",
+                "numSamples": 1,
+                "components": [
+                  "trial21",
+                  "trial22",
+                  {
+                    "order": "latinSquare",
+                    "numSamples": 1,
+                    "components": [
+                      "trial21",
+                      "trial22"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
