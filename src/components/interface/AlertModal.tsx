@@ -21,6 +21,7 @@ export function AlertModal() {
   const close = useCallback(() => storeDispatch(setAlertModal({ ...alertModal, show: false, title: '' })), [alertModal, setAlertModal, storeDispatch]);
 
   useEffect(() => setOpened(alertModal.show), [alertModal.show]);
+  const isStorageEngineAlert = alertModal.title === 'Failed to connect to the storage engine';
 
   const diagnosticsMessage = `Study ID: ${studyId}\nURL: ${window.location.href}\nParticipant ID: ${participantId}\nTimestamp(UTC): ${new Date().toISOString()}\nStorage Engine: ${import.meta.env.VITE_STORAGE_ENGINE}\nUser Agent: ${participantMetadata.userAgent}\nResolution: ${JSON.stringify(participantMetadata.resolution, null, 2)}\nIP: ${participantMetadata.ip}\nLanguage: ${participantMetadata.language}`;
 
@@ -28,13 +29,13 @@ export function AlertModal() {
     await navigator.clipboard.writeText(diagnosticsMessage);
     setCopied(true);
     setTimeout(() => setCopied(false), 1000);
-  }, [alertModal.message, diagnosticsMessage]);
+  }, [diagnosticsMessage]);
 
   return (
     <Modal
       opened={opened}
       centered
-      size="80%"
+      size={isStorageEngineAlert ? '70%' : 'lg'}
       withCloseButton={false}
       onClose={close}
     >
@@ -48,29 +49,35 @@ export function AlertModal() {
       >
         <Text my="md">
           {alertModal.message}
-          {' '}
-          Please email if you need help
-          <Anchor href={`mailto:${studyConfig.uiConfig.contactEmail}`} ml={4}>
-            {studyConfig.uiConfig.contactEmail}
-          </Anchor>
-          &nbsp; and include the following details to help us troubleshoot the issue:
+          {isStorageEngineAlert && (
+            <>
+              {' '}
+              Please email if you need help
+              <Anchor href={`mailto:${studyConfig.uiConfig.contactEmail}`} ml={4}>
+                {studyConfig.uiConfig.contactEmail}
+              </Anchor>
+              {' and include the following details to help us troubleshoot the issue:'}
+            </>
+          )}
         </Text>
 
-        <Box pos="relative">
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            onClick={handleCopyMessage}
-            style={{
-              position: 'absolute',
-              top: 6,
-              right: 6,
-            }}
-          >
-            {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
-          </ActionIcon>
-          <Code block>{diagnosticsMessage}</Code>
-        </Box>
+        {isStorageEngineAlert && (
+          <Box pos="relative">
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              onClick={handleCopyMessage}
+              style={{
+                position: 'absolute',
+                top: 6,
+                right: 6,
+              }}
+            >
+              {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+            </ActionIcon>
+            <Code block>{diagnosticsMessage}</Code>
+          </Box>
+        )}
 
         <Group w="100%" justify="end">
           <Button onClick={close} color="red" variant="filled" m="xs">Continue Study</Button>
