@@ -1,22 +1,21 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Dynamic React Stimuli and Provenance Tracking",
+    "title": "React Stimulus and Provenance Tracking",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-06-15",
+    "date": "2026-02-21",
     "description": "A demo of using dynamic React stimuli and using provenance tracking with the trrack library for data collection.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-click-accuracy-test/assets/help.md",
+    "helpTextPath": "demo-react-trrack/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -27,7 +26,7 @@
       "description": "try to click on the center of the moving dot",
       "instruction": "Click on the moving dot",
       "type": "react-component",
-      "path": "demo-click-accuracy-test/assets/ClickAccuracyTest.tsx",
+      "path": "demo-react-trrack/assets/DemoReactTrrack.tsx",
       "nextButtonLocation": "sidebar",
       "response": [
         {
@@ -42,7 +41,7 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "demo-click-accuracy-test/assets/introduction.md",
+      "path": "demo-react-trrack/assets/introduction.md",
       "response": []
     },
     "trial1": {
