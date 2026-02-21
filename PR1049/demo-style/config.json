@@ -48,7 +48,7 @@
     },
     "react-component": {
       "type": "react-component",
-      "path": "demo-click-accuracy-test/assets/ClickAccuracyTest.tsx",
+      "path": "demo-react-trrack/assets/DemoReactTrrack.tsx",
       "parameters": {
         "speed": 100
       },
