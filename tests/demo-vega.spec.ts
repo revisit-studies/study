@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { expect, test } from '@playwright/test';
 
-test('test', async ({ page }) => {
+test('Test vega component with reactive response', async ({ page }) => {
   await page.goto('/demo-vega');
 
   await expect(page.getByRole('heading', { name: 'Vega Stimuli Demo' })).toBeVisible();

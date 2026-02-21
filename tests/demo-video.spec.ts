@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('test', async ({ page, browserName }) => {
+test('Test video component with force completion and missing asset errors', async ({ page, browserName }) => {
   await page.goto('/demo-video');
 
   await expect(page.getByText('Welcome to our study. This is an example study to show how to use the video stimulus.')).toBeVisible();
