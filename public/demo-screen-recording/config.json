@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "HTML as a Stimulus with Screen Recording",
     "version": "pilot",
@@ -69,6 +69,6 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": ["introduction", "$screen-recording.co.screenRecordingPermission", "external_website", "external_website2", "barChart"]
+    "components": ["introduction", "$screen-recording.components.screenRecordingPermission", "external_website", "external_website2", "barChart"]
   }
 }

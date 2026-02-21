@@ -36,6 +36,10 @@
             "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
             "type": "boolean"
           },
+          "clickToRecord": {
+            "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+            "type": "boolean"
+          },
           "config": {
             "description": "The vega or vega-lite configuration.",
             "type": "object"
@@ -157,7 +161,7 @@
             "type": "boolean"
           },
           "recordScreen": {
-            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
             "type": "boolean"
           },
           "response": {
@@ -193,7 +197,7 @@
           },
           "style": {
             "$ref": "#/definitions/Styles",
-            "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+            "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
           },
           "stylesheetPath": {
             "description": "The path to the external stylesheet file.",
@@ -241,16 +245,45 @@
       "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```js \"baseComponents\": { \"my-image-component\": { \"instructionLocation\": \"sidebar\", \"nextButtonLocation\": \"sidebar\", \"path\": \"<study-name>/assets/my-image.jpg\", \"response\": [   {     \"id\": \"my-image-id\",     \"options\": [\"Europe\", \"Japan\", \"USA\"],     \"prompt\": \"Your Selected Answer:\",     \"type\": \"dropdown\"   } ], \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```js \"components\": { \"q1\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with largest GDP\", \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with lowest GDP\", \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with highest exports of Wheat\", \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
       "type": "object"
     },
+    "BrowserRules": {
+      "additionalProperties": false,
+      "description": "Rules specifying which browsers and their minimum versions the study supports.",
+      "properties": {
+        "allowed": {
+          "description": "List of browser types and their minimum version to support.",
+          "items": {
+            "$ref": "#/definitions/UserBrowser"
+          },
+          "type": "array"
+        },
+        "blockedMessage": {
+          "description": "Optional message to be displayed when browser criterias are not met.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "allowed"
+      ],
+      "type": "object"
+    },
     "ButtonsResponse": {
       "additionalProperties": false,
       "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys.\n\nExample: ```js {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -303,7 +336,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -334,6 +367,10 @@
       "additionalProperties": false,
       "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```js { \"id\": \"q7\", \"prompt\": \"Checkbox example (not required)\", \"location\": \"aboveStimulus\", \"type\": \"checkbox\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -344,6 +381,10 @@
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -405,7 +446,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -456,6 +497,10 @@
             ]
           },
           "type": "array"
+        },
+        "conditional": {
+          "description": "The conditional property shows the block only when the URL condition matches its `id`.",
+          "type": "boolean"
         },
         "id": {
           "description": "The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property.",
@@ -561,10 +606,119 @@
       ],
       "type": "object"
     },
+    "DeviceRules": {
+      "additionalProperties": false,
+      "description": "Rules specifying which device types the study supports.",
+      "properties": {
+        "allowed": {
+          "description": "List of device types to support.",
+          "items": {
+            "$ref": "#/definitions/UserDevice"
+          },
+          "type": "array"
+        },
+        "blockedMessage": {
+          "description": "Optional message to be displayed when device criterias are not met.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "allowed"
+      ],
+      "type": "object"
+    },
+    "DisplayRules": {
+      "additionalProperties": false,
+      "description": "Rules specifying which minimum screen dimensions for the study.",
+      "properties": {
+        "minHeight": {
+          "description": "The minimum screen width size for the study",
+          "type": "number"
+        },
+        "minWidth": {
+          "description": "The minimum screen height size for the study",
+          "type": "number"
+        }
+      },
+      "required": [
+        "minHeight",
+        "minWidth"
+      ],
+      "type": "object"
+    },
+    "DividerResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "not": {}
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "not": {}
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "not": {}
+        },
+        "prompt": {
+          "not": {}
+        },
+        "required": {
+          "not": {}
+        },
+        "requiredLabel": {
+          "not": {}
+        },
+        "requiredValue": {
+          "not": {}
+        },
+        "secondaryText": {
+          "not": {}
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "divider",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "not": {}
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "type": "object"
+    },
     "DropdownResponse": {
       "additionalProperties": false,
       "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.\n\nExample: ```js { \"id\": \"q-color\", \"prompt\": \"What is your favorite color?\", \"location\": \"aboveStimulus\", \"type\": \"dropdown\", \"placeholder\": \"Please choose your favorite color\", \"options\": [\"Red\", \"Blue\"] } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -573,9 +727,21 @@
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "maxSelections": {
+          "description": "The maximum number of selections that are required. This will make the dropdown a multiselect dropdown.",
+          "type": "number"
+        },
+        "minSelections": {
+          "description": "The minimum number of selections that are required. This will make the dropdown a multiselect dropdown.",
+          "type": "number"
         },
         "options": {
           "description": "The options that are displayed in the dropdown.",
@@ -620,7 +786,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -651,6 +817,10 @@
       "additionalProperties": false,
       "description": "The DynamicBlock interface is used to define a block where displayed components are controlled by a function. This is useful when you want to generate the sequence based on answers to previous questions or other factors.\n\nThe functionPath property is a path to the function that generates the components. This should be a relative path from the src/public folder.\n\nHere's an example of how to use the DynamicBlock:\n\n```js {   \"id\": \"funcBlock\",   \"order\": \"dynamic\",   \"functionPath\": \"<study-name>/assets/function.js\",   \"parameters\": {     \"param1\": \"value1\",     \"param2\": \"value2\"   } } ```",
       "properties": {
+        "conditional": {
+          "description": "The conditional property shows the block only when the URL condition matches its `id`.",
+          "type": "boolean"
+        },
         "functionPath": {
           "description": "The path to the function that generates the components. This should be a relative path from the src/public folder.",
           "type": "string"
@@ -683,6 +853,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -758,7 +932,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -794,7 +968,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -936,6 +1110,10 @@
         "baseComponent": {
           "type": "string"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "config": {
           "description": "The vega or vega-lite configuration.",
           "type": "object"
@@ -1057,7 +1235,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1093,7 +1271,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1141,6 +1319,27 @@
       ],
       "type": "object"
     },
+    "InputRules": {
+      "additionalProperties": false,
+      "description": "Rules specifying which input methods the study supports.",
+      "properties": {
+        "allowed": {
+          "description": "List of inputs to support.",
+          "items": {
+            "$ref": "#/definitions/UserInput"
+          },
+          "type": "array"
+        },
+        "blockedMessage": {
+          "description": "Optional message to be displayed when input criterias are not met.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "allowed"
+      ],
+      "type": "object"
+    },
     "InterruptionBlock": {
       "anyOf": [
         {
@@ -1154,14 +1353,31 @@
     },
     "LikertResponse": {
       "additionalProperties": false,
-      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"numItems\": 5, \"start\": 1, \"spacing\": 1 } ```",
+      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"labelLocation\": \"inline\", \"numItems\": 5, \"start\": 1, \"spacing\": 1 } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "labelLocation": {
+          "description": "The location of the labels. Defaults to inline.",
+          "enum": [
+            "above",
+            "inline",
+            "below"
+          ],
           "type": "string"
         },
         "leftLabel": {
@@ -1213,7 +1429,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1244,12 +1460,20 @@
       "additionalProperties": false,
       "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```js { \"id\": \"q-name\", \"prompt\": \"What is your first name?\", \"location\": \"aboveStimulus\", \"type\": \"longText\", \"placeholder\": \"Please enter your first name\" } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -1285,7 +1509,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1317,6 +1541,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -1392,7 +1620,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1428,7 +1656,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1470,7 +1698,14 @@
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/StringOption"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "type": "array"
             },
@@ -1493,12 +1728,20 @@
           ],
           "description": "The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from."
         },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -1516,7 +1759,14 @@
         "questionOptions": {
           "description": "The question options (rows) are the prompts for each response you'd like to record.",
           "items": {
-            "type": "string"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },
@@ -1545,7 +1795,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1599,12 +1849,20 @@
       "additionalProperties": false,
       "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.\n\nExample: ```js { \"id\": \"q-numerical\", \"prompt\": \"Numerical example\", \"location\": \"aboveStimulus\", \"type\": \"numerical\", \"placeholder\": \"Enter your age, range from 0 - 120\", \"max\": 120, \"min\": 0 } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -1648,7 +1906,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1680,6 +1938,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -1751,7 +2013,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1787,7 +2049,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1822,8 +2084,12 @@
     },
     "RadioResponse": {
       "additionalProperties": false,
-      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [\"Option 1\", \"Option 2\"] } ```",
+      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [\"Option 1\", \"Option 2, Option 3\"], \"optionOrder\": \"random\", \"leftLabel\": \"Left\", \"rightLabel\": \"Right\", \"labelLocation\": \"inline\", \"horizontal\": true, \"withOther\": true } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1834,6 +2100,19 @@
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "labelLocation": {
+          "description": "The location of the labels. This only works when horizontal is true. Defaults to inline.",
+          "enum": [
+            "above",
+            "inline",
+            "below"
+          ],
           "type": "string"
         },
         "leftLabel": {
@@ -1895,7 +2174,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -1956,8 +2235,12 @@
     },
     "RankingResponse": {
       "additionalProperties": false,
-      "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options. There are three types of ranking widgets: sublist, categorical, and pairwise.\n\n```js { \"id\": \"ranking-sublist\", \"type\": \"ranking-sublist\", \"prompt\": \"Rank the following options\", \"location\": \"belowStimulus\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] \"numItems\": 2 } ```",
+      "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options.\n\nThere are three types of ranking widgets: Ranking Sublist: The participant is asked to rank a subset of items from a larger list. Ranking Categorical: The participant is asked to rank items within categories: HIGH, MEDIUM, and LOW. Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.\n\n```js { \"id\": \"ranking-sublist\", \"type\": \"ranking-sublist\", \"prompt\": \"Rank your top 2 favorite fruits from the list below\", \"location\": \"belowStimulus\", \"options\": [\"Apple\", \"Banana\", \"Orange\", \"Strawberry\", \"Grapes\"], \"numItems\": 2 }, { \"id\": \"ranking-categorical\", \"type\": \"ranking-categorical\", \"prompt\": \"Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.\", \"location\": \"belowStimulus\", \"options\": [\"Drawing\", \"Singing\", \"Hiking\", \"Dancing\", \"Photography\"] }, { \"id\": \"ranking-pairwise\", \"type\": \"ranking-pairwise\", \"prompt\": \"Which meal would you prefer\", \"location\": \"belowStimulus\", \"options\": [\"Pizza\", \"Sushi\", \"Burger\", \"Pasta\", \"Salad\", \"Tacos\"] } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1966,12 +2249,16 @@
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "numItems": {
-          "description": "The number of options to render. Applies only to sublist and categorical ranking widgets.",
+          "description": "The number of items to rank. Applies only to sublist and categorical ranking widgets.",
           "type": "number"
         },
         "options": {
@@ -2013,7 +2300,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2046,10 +2333,14 @@
     },
     "ReactComponent": {
       "additionalProperties": false,
-      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts { parameters: T; setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\nparameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config ```js { type: 'react-component'; path: 'my_study/CoolComponent.tsx'; parameters: {  name: 'Zach';  age: 26; } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) { // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v2.2.0/src/public/demo-click-accuracy-test/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.2.0/src/public/example-brush-interactions/assets)",
+      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts { parameters: T; setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\nparameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config ```js { type: 'react-component'; path: 'my_study/CoolComponent.tsx'; parameters: {  name: 'Zach';  age: 26; } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) { // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.3.2/src/public/demo-react-trrack/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.3.2/src/public/example-brush-interactions/assets)",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -2130,7 +2421,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -2166,7 +2457,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2204,12 +2495,20 @@
       "additionalProperties": false,
       "description": "The ReactiveResponse interface is used to define the properties of a reactive response. ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list.\n\n```js { \"id\": \"reactiveResponse\", \"prompt\": \"Answer clicked in the stimulus\", \"location\": \"aboveStimulus\", \"type\": \"reactive\" } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -2241,7 +2540,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2346,6 +2645,9 @@
         },
         {
           "$ref": "#/definitions/TextOnlyResponse"
+        },
+        {
+          "$ref": "#/definitions/DividerResponse"
         }
       ]
     },
@@ -2353,12 +2655,20 @@
       "additionalProperties": false,
       "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.\n\n```js { \"id\": \"q-short-text\", \"prompt\": \"Short text example\", \"location\": \"aboveStimulus\", \"type\": \"shortText\", \"placeholder\": \"Enter your answer here\" } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -2394,7 +2704,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2444,12 +2754,20 @@
       "additionalProperties": false,
       "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.\n\nExample: ```js { \"id\": \"q-slider\", \"prompt\": \"How are you feeling?\", \"location\": \"aboveStimulus\", \"type\": \"slider\", \"options\": [  {    \"label\": \"Bad\",    \"value\": 0  },  {    \"label\": \"OK\",    \"value\": 50  },  {    \"label\": \"Good\",    \"value\": 100  } ] } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -2508,7 +2826,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2547,24 +2865,27 @@
       "additionalProperties": false,
       "description": "The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
       "properties": {
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to responses that use StringOption, including DropdownResponse, RadioResponse, CheckboxResponse, ButtonsResponse, RankingResponse, and MatrixResponse.",
+          "type": "string"
+        },
         "label": {
           "description": "The label displayed to participants. Markdown is supported.",
           "type": "string"
         },
         "value": {
-          "description": "The value stored in the participant's data.",
+          "description": "The value stored in the participant's data. Defaults to label.",
           "type": "string"
         }
       },
       "required": [
-        "label",
-        "value"
+        "label"
       ],
       "type": "object"
     },
     "StudyConfig": {
       "additionalProperties": false,
-      "description": "The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.\n\n```js { \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json\", \"studyMetadata\": {  ... }, \"uiConfig\": {  ... }, \"components\": {  ... }, \"sequence\": {  ... } } ```\n\n:::info For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually. ::: <br/>\n\nThe `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.",
+      "description": "The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.\n\n```js { \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json\", \"studyMetadata\": {  ... }, \"uiConfig\": {  ... }, \"components\": {  ... }, \"sequence\": {  ... } } ```\n\n:::info For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually. ::: <br/>\n\nThe `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.",
       "properties": {
         "$schema": {
           "description": "A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information",
@@ -2609,6 +2930,10 @@
         "studyMetadata": {
           "$ref": "#/definitions/StudyMetadata",
           "description": "The metadata for the study. This is used to identify the study and version in the data file."
+        },
+        "studyRules": {
+          "$ref": "#/definitions/StudyRules",
+          "description": "The study rules for the study. This is used to configure study constraints such as browsers, device sizes, etc."
         },
         "uiConfig": {
           "$ref": "#/definitions/UIConfig",
@@ -2667,6 +2992,29 @@
         "description",
         "organizations"
       ],
+      "type": "object"
+    },
+    "StudyRules": {
+      "additionalProperties": false,
+      "description": "The StudyRules are used to define a study's constraints to determine whether a participant can take the study. If the criteria are not met, a warning message will be displayed. Below is an example of a StudyRules entry in your study configuration file:\n\n```js { \"studyRules\": {  \"display\": {    \"minHeight\": 400,    \"minWidth\": 800  },  \"browsers\": {    \"allowed\": [      {        \"name\": \"chrome\",        \"minVersion\": 100      },      {        \"name\": \"firefox\",        \"minVersion\": 100      },      {        \"name\": \"safari\",        \"minVersion\": 10      }    ],    \"blockedMessage\": \"This study can only run in chrome, firefox, or safari. (<-- if blockedMesage is not set, a default message is displayed)\"  },  \"devices\": {    \"allowed\": [\"tablet\", \"desktop\", \"mobile\"],    \"blockedMessage\": \"... (<-- if blockedMesage is not set, a default message is displayed)\"  },  \"inputs\": {    \"allowed\": [\"touch\", \"mouse\"],    \"blockedMessage\": \"... (<-- if blockedMesage is not set, a default message is displayed)\"  } } } ```",
+      "properties": {
+        "browsers": {
+          "$ref": "#/definitions/BrowserRules",
+          "description": "Browser constraints"
+        },
+        "devices": {
+          "$ref": "#/definitions/DeviceRules",
+          "description": "Browser constraints"
+        },
+        "display": {
+          "$ref": "#/definitions/DisplayRules",
+          "description": "Display size constraints"
+        },
+        "inputs": {
+          "$ref": "#/definitions/InputRules",
+          "description": "Input constraints"
+        }
+      },
       "type": "object"
     },
     "Styles": {
@@ -2829,11 +3177,19 @@
       "additionalProperties": false,
       "description": "The TextOnlyResponse interface is used to define the properties of a text only response. TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information. It does not accept any input from the user.\n\nExample: ```js {   \"id\": \"textOnlyResponse\",   \"type\": \"textOnly\",   \"prompt\": \"This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.\",   \"location\": \"belowStimulus\",   \"restartEnumeration\": true } ```\n\nIn this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "not": {}
         },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
         "location": {
@@ -2865,7 +3221,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -2906,6 +3262,10 @@
           "description": "The time in milliseconds to wait before automatically downloading the study data.",
           "type": "number"
         },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
+        },
         "contactEmail": {
           "description": "The email address that used during the study if a participant clicks contact.",
           "type": "string"
@@ -2925,14 +3285,6 @@
         "logoPath": {
           "description": "The path to the logo image. This is displayed on the landing page and the header.",
           "type": "string"
-        },
-        "minHeightSize": {
-          "description": "The minimum screen height size for the study",
-          "type": "number"
-        },
-        "minWidthSize": {
-          "description": "The minimum screen width size for the study",
-          "type": "number"
         },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled.",
@@ -2975,7 +3327,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If true, will record audio on all components unless deactivated on individual components. This must be set to true if you want to record audio on any component in your study. Defaults to false. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before any component that you want to record the screen on to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If true, will record audio on all components unless deactivated on individual components. This must be set to true if you want to record audio on any component in your study. Defaults to false. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before any component that you want to record the screen on to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "recordScreenFPS": {
@@ -3039,6 +3391,39 @@
       ],
       "type": "object"
     },
+    "UserBrowser": {
+      "additionalProperties": false,
+      "description": "UserBrowser is used to define a mininum browser requirement for the study to run.",
+      "properties": {
+        "minVersion": {
+          "description": "Minimum version of the browser to support.",
+          "type": "number"
+        },
+        "name": {
+          "description": "Name of the browser. e.g. chrome, firefox, safari.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "UserDevice": {
+      "enum": [
+        "desktop",
+        "tablet",
+        "mobile"
+      ],
+      "type": "string"
+    },
+    "UserInput": {
+      "enum": [
+        "mouse",
+        "touch"
+      ],
+      "type": "string"
+    },
     "VegaComponent": {
       "anyOf": [
         {
@@ -3055,6 +3440,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "config": {
@@ -3130,7 +3519,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3166,7 +3555,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -3210,6 +3599,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3285,7 +3678,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3321,7 +3714,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -3365,6 +3758,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3444,7 +3841,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3480,7 +3877,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
@@ -3520,10 +3917,14 @@
     },
     "WebsiteComponent": {
       "additionalProperties": false,
-      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/assets/website.html\", } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/website.html\", \"parameters\": {  \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3] }, \"response\": [  {    \"id\": \"barChart\",    \"prompt\": \"Your selected answer:\",    \"location\": \"belowStimulus\",    \"type\": \"reactive\"  } ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {  const barData = data['barData'];  ... });\n\n// Call out that 'barChart' needs to match ID in 'response' object Revisit.postAnswers({ barChart: userAnswer }); </script> ```\n\n If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```js const trrack = initializeTrrack({ initialState, registry });\n\n... Revisit.postProvenance(trrack.graph.backend); ```",
+      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/assets/website.html\", } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/website.html\", \"parameters\": {  \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3] }, \"response\": [  {    \"id\": \"barChart\",    \"prompt\": \"Your selected answer:\",    \"location\": \"belowStimulus\",    \"type\": \"reactive\"  } ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {  const barData = data['barData'];  ... });\n\n// Call out that 'barChart' needs to match ID in 'response' object Revisit.postAnswers({ barChart: userAnswer }); </script> ```\n\n If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenance` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```js const trrack = initializeTrrack({ initialState, registry });\n\n... Revisit.postProvenance(trrack.graph.backend); ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3604,7 +4005,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3640,7 +4041,7 @@
         },
         "style": {
           "$ref": "#/definitions/Styles",
-          "description": "You can set styles here, using React CSSProperties, for example: {\"width\": 100} or {\"width\": \"50%\"}"
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",

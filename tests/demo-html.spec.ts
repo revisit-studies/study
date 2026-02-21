@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test';
+import { checkSavedAnswers } from './checkSavedAnswers';
+import { waitForStudyEndMessage } from './waitForStudyEndMessage';
 
 test('html demo works as intended with previous button', async ({ browser }) => {
   const page = await browser.newPage();
@@ -70,6 +72,10 @@ test('html demo works as intended with previous button', async ({ browser }) => 
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the end of study text renders
-  const endText = await page.getByText('Please wait while your answers are uploaded.');
-  await expect(endText).toBeVisible();
+  await waitForStudyEndMessage(page);
+
+  const uploaded = await page.getByText('Thank you for completing the study. You may close this window now.');
+  await expect(uploaded).toBeVisible();
+
+  await checkSavedAnswers(page, 'demo-html');
 });

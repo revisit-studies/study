@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "CALVI: Critical Thinking Assessment for Literacy in Visualizations",
     "version": "1.0.0",
@@ -35,9 +35,9 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$calvi.se.full",
-      "$calvi.se.specificBank",
-      "$calvi.se.fullBank"
+      "$calvi.sequences.full",
+      "$calvi.sequences.specificBank",
+      "$calvi.sequences.fullBank"
     ]
   }
 }

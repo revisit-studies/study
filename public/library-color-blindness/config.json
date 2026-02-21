@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Color-Blindness Test",
     "version": "1.0.0",
@@ -34,8 +34,8 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$color-blindness.se.short-test",
-      "$color-blindness.se.full-test"
+      "$color-blindness.sequences.short-test",
+      "$color-blindness.sequences.full-test"
     ]
   }
 }

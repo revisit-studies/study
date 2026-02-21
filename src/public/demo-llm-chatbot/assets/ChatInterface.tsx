@@ -1,5 +1,5 @@
 import {
-  useState, useRef, useEffect,
+  useState, useRef, useEffect, type ComponentPropsWithoutRef, type ReactNode,
 } from 'react';
 import { IconMessage, IconSend } from '@tabler/icons-react';
 import {
@@ -15,32 +15,119 @@ import {
   rem,
   Card,
 } from '@mantine/core';
-import { ChatMessage, ChatProvenanceState } from './types';
-import { StimulusParams } from '../../../store/types';
 import { Trrack } from '@trrack/core';
-import { ActionCreatorWithPayload } from '@reduxjs/toolkit';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { ChatMessage, ChatProvenanceState } from './types';
 import { PREFIX } from '../../../utils/Prefix';
 import { useStudyId } from '../../../routes/utils';
 
+type ChatTrrackState = {
+  messages: ChatMessage[];
+};
+
+type UpdateMessagesAction = (messages: ChatMessage[]) => { payload: ChatMessage[]; type: string };
+
+type ToolName = 'get_dataset_csv' | 'get_chart_image_file_id';
+
+type OpenAIFunctionCall = {
+  type: 'function_call';
+  name: ToolName;
+  call_id: string;
+};
+
+type ToolResult = {
+  name: ToolName;
+  output: { csv: string } | { file_id: string };
+};
+
+type ToolSelectionResponse = {
+  id?: string;
+  response?: { id?: string };
+  output?: unknown[];
+};
+
+type StreamEvent = {
+  type?: string;
+  delta?: string;
+  response?: { id?: string };
+  response_id?: string;
+};
+
+type UserTextInputItem = {
+  role: 'user';
+  content: Array<{ type: 'input_text'; text: string }>;
+};
+
+type FunctionOutputInputItem = {
+  type: 'function_call_output';
+  call_id: string;
+  output: string;
+};
+
+type UserImageInputItem = {
+  role: 'user';
+  content: Array<{ type: 'input_image'; file_id: string }>;
+};
+
+type StreamInputItem = UserTextInputItem | FunctionOutputInputItem | UserImageInputItem;
+
+type MarkdownCodeProps = ComponentPropsWithoutRef<'code'> & {
+  inline?: boolean;
+  children?: ReactNode;
+};
+
+function MarkdownParagraph(props: ComponentPropsWithoutRef<'p'>) {
+  return <Text size="sm" {...props} />;
+}
+
+function MarkdownListItem(props: ComponentPropsWithoutRef<'li'>) {
+  return <li style={{ marginLeft: 16 }} {...props} />;
+}
+
+function MarkdownCode({
+  inline = false,
+  children,
+  ...props
+}: MarkdownCodeProps) {
+  return (
+    <code
+      style={{
+        backgroundColor: inline ? '#e9ecef' : '#f1f3f5',
+        borderRadius: 4,
+        padding: inline ? '2px 4px' : '8px',
+        display: inline ? 'inline' : 'block',
+        overflowX: 'auto',
+        fontFamily: 'monospace',
+        color: '#212529',
+      }}
+      {...props}
+    >
+      {children}
+    </code>
+  );
+}
+
+const markdownComponents = {
+  p: MarkdownParagraph,
+  li: MarkdownListItem,
+  code: MarkdownCode,
+};
+
 export default function ChatInterface(
-  { setAnswer, provenanceState, trrack, actions, updateProvenanceState, onMessagesUpdate }:
   {
-    setAnswer: StimulusParams<never>['setAnswer'],
+    provenanceState, trrack, actions, updateProvenanceState, onMessagesUpdate,
+  }:
+  {
     provenanceState?: ChatProvenanceState,
-    trrack: Trrack<{
-        messages: never[];
-    }, string>,
+    trrack: Trrack<ChatTrrackState, string>,
     actions: {
-      updateMessages: ActionCreatorWithPayload<ChatMessage[], string>;
+      updateMessages: UpdateMessagesAction;
     },
     updateProvenanceState: (messages: ChatMessage[]) => void,
     onMessagesUpdate?: (messages: ChatMessage[]) => void
   },
 ) {
-
-
   // Define the system prompt
   const prePrompt = `You are a helpful assistant who is helping a user explore and understand a clustered heatmap. Your goal is to help the user explore and understand the clustered heatmap while they view the chart. You will be given: (1) the chart image and (2) the underlying dataset as a CSV file.
 
@@ -55,8 +142,7 @@ How to respond:
 - Use dataset.csv for exact values and comparisons. Do not invent labels or numbers. If something is missing, say so and ask one short follow-up question.`;
 
   // IMPORTANT: only mention tools you actually provide
-  const toolPolicy =
-`Tools (call only when needed):
+  const toolPolicy = `Tools (call only when needed):
 - get_dataset_csv: returns dataset.csv as JSON { csv: string }
 - get_chart_image_file_id: returns JSON { file_id: string } for the chart image
 
@@ -141,7 +227,7 @@ Rules:
     },
   ] as const;
 
-  const executeToolCall = async (call: any): Promise<{ name: string; output: any }> => {
+  const executeToolCall = async (call: OpenAIFunctionCall): Promise<ToolResult> => {
     if (call.name === 'get_dataset_csv') {
       const csvResponse = await fetch(`${PREFIX}${studyId}/assets/data/clustered-heatmap.csv`);
       if (!csvResponse.ok) {
@@ -152,21 +238,38 @@ Rules:
     }
 
     if (call.name === 'get_chart_image_file_id') {
-      const file_id = 'file-2jqhMr5MJe3bxfvXeaJYpd'; // Clustered Heatmap image file-7oYLNxSQQrn81bHMPi1E8A 
-      return { name: call.name, output: { file_id } };
+      const fileId = 'file-2jqhMr5MJe3bxfvXeaJYpd'; // Clustered Heatmap image file-7oYLNxSQQrn81bHMPi1E8A
+      return { name: call.name, output: { file_id: fileId } };
     }
 
     throw new Error(`Unknown tool: ${call.name}`);
   };
 
-  const tryExtractFunctionCalls = (data: any) => {
-    const out = Array.isArray(data?.output) ? data.output : [];
-    return out.filter((item: any) => item?.type === 'function_call');
+  const tryExtractFunctionCalls = (data: unknown): OpenAIFunctionCall[] => {
+    if (!data || typeof data !== 'object' || !('output' in data)) {
+      return [];
+    }
+
+    const { output } = data as ToolSelectionResponse;
+    if (!Array.isArray(output)) {
+      return [];
+    }
+
+    return output.filter((item): item is OpenAIFunctionCall => (
+      !!item
+      && typeof item === 'object'
+      && 'type' in item
+      && item.type === 'function_call'
+      && 'name' in item
+      && (item.name === 'get_dataset_csv' || item.name === 'get_chart_image_file_id')
+      && 'call_id' in item
+      && typeof item.call_id === 'string'
+    ));
   };
 
   // ---------- Streaming ----------
   const streamAssistantResponse = async (
-    inputPayload: unknown[],
+    inputPayload: StreamInputItem[],
     streamPreviousResponseId?: string | null,
   ) => {
     const response = await fetch(
@@ -198,7 +301,7 @@ Rules:
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
 
-    let assistantMessage: ChatMessage = {
+    const assistantMessage: ChatMessage = {
       role: 'assistant',
       content: '',
       timestamp: Date.now(),
@@ -210,65 +313,79 @@ Rules:
     let streamDone = false;
     let buffer = '';
 
-    while (true) {
+    const processDecodedLines = (lines: string[]) => {
+      let shouldStop = false;
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data:')) {
+          const dataStr = trimmed.replace(/^data:\s*/, '');
+          if (dataStr) {
+            if (dataStr === '[DONE]') {
+              streamDone = true;
+              shouldStop = true;
+              break;
+            }
+
+            try {
+              const parsed = JSON.parse(dataStr) as StreamEvent;
+
+              if (parsed.type === 'response.created') {
+                streamedResponseId = parsed.response?.id || parsed.response_id || streamedResponseId;
+              }
+
+              if (parsed.type === 'response.output_text.delta' && typeof parsed.delta === 'string') {
+                if (!firstTokenSeen) {
+                  firstTokenSeen = true;
+                  setIsLoading(false);
+
+                  setMessages((prev) => [
+                    ...prev,
+                    { ...assistantMessage, content: parsed.delta as string },
+                  ]);
+                }
+
+                assistantMessage.content += parsed.delta;
+
+                setMessages((prev) => {
+                  const last = prev[prev.length - 1];
+                  if (last?.role === 'assistant') {
+                    return [...prev.slice(0, -1), { ...last, content: assistantMessage.content }];
+                  }
+                  return prev;
+                });
+              }
+
+              if (parsed.type === 'response.output_text.done' || parsed.type === 'response.output_item.done') {
+                streamedResponseId = parsed.response?.id || parsed.response_id || streamedResponseId;
+              }
+            } catch (err) {
+              console.warn('Failed to parse SSE line', dataStr, err);
+            }
+          }
+        }
+      }
+
+      return shouldStop;
+    };
+
+    const readStream = async () => {
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done) {
+        return;
+      }
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
 
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith('data:')) continue;
-        const dataStr = trimmed.replace(/^data:\s*/, '');
-        if (!dataStr) continue;
-
-        if (dataStr === '[DONE]') {
-          streamDone = true;
-          break;
-        }
-
-        try {
-          const parsed = JSON.parse(dataStr);
-
-          if (parsed.type === 'response.created') {
-            streamedResponseId = parsed.response?.id || parsed.response_id || streamedResponseId;
-          }
-
-          if (parsed.type === 'response.output_text.delta') {
-            if (!firstTokenSeen) {
-              firstTokenSeen = true;
-              setIsLoading(false);
-
-              setMessages((prev) => [
-                ...prev,
-                { ...assistantMessage, content: parsed.delta },
-              ]);
-            }
-
-            assistantMessage.content += parsed.delta;
-
-            setMessages((prev) => {
-              const last = prev[prev.length - 1];
-              if (last?.role === 'assistant') {
-                return [...prev.slice(0, -1), { ...last, content: assistantMessage.content }];
-              }
-              return prev;
-            });
-          }
-
-          if (parsed.type === 'response.output_text.done' || parsed.type === 'response.output_item.done') {
-            streamedResponseId = parsed.response?.id || parsed.response_id || streamedResponseId;
-          }
-        } catch (err) {
-          // eslint-disable-next-line no-console
-          console.warn('Failed to parse SSE line', dataStr, err);
-        }
+      const shouldStop = processDecodedLines(lines);
+      if (!shouldStop && !streamDone) {
+        await readStream();
       }
+    };
 
-      if (streamDone) break;
-    }
+    await readStream();
 
     if (!firstTokenSeen) {
       setIsLoading(false);
@@ -279,9 +396,9 @@ Rules:
 
   // ---------- Tool selection (non-stream) ----------
   const requestToolSelection = async (
-    userInputItem: any,
+    userInputItem: UserTextInputItem,
     priorResponseId: string | null,
-  ) => {
+  ): Promise<ToolSelectionResponse> => {
     const response = await fetch(`${import.meta.env.VITE_OPENAI_API_URL}/v1/responses`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -310,7 +427,7 @@ Rules:
   };
 
   // ---------- Submit ----------
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<Element>) => {
     e.preventDefault();
     if (!inputValue.trim() || isLoading) return;
 
@@ -328,7 +445,7 @@ Rules:
     try {
       const priorResponseId = previousResponseId;
 
-      const userInputItem = {
+      const userInputItem: UserTextInputItem = {
         role: 'user',
         content: [{ type: 'input_text', text: userMessage.content }],
       };
@@ -353,14 +470,14 @@ Rules:
       // Tools requested -> execute and continue the same response.
       if (firstResponseId) setPreviousResponseId(firstResponseId);
 
-      const functionCallOutputs: any[] = [];
+      const toolResults = await Promise.all(functionCalls.map((call) => executeToolCall(call)));
+      const functionCallOutputs: FunctionOutputInputItem[] = [];
       let pendingImageFileId: string | null = null;
 
-      for (const call of functionCalls) {
-        const toolResult = await executeToolCall(call);
-
+      functionCalls.forEach((call, index) => {
+        const toolResult = toolResults[index];
         if (toolResult.name === 'get_chart_image_file_id') {
-          pendingImageFileId = toolResult.output?.file_id || null;
+          pendingImageFileId = 'file_id' in toolResult.output ? toolResult.output.file_id : null;
         }
 
         functionCallOutputs.push({
@@ -368,10 +485,10 @@ Rules:
           call_id: call.call_id,
           output: JSON.stringify(toolResult.output), // ✅ structured tool output
         });
-      }
+      });
 
       // If an image was requested, include it as context for the streaming continuation.
-      const streamInputPayload: any[] = [...functionCallOutputs];
+      const streamInputPayload: StreamInputItem[] = [...functionCallOutputs];
       if (pendingImageFileId) {
         streamInputPayload.push({
           role: 'user',
@@ -392,7 +509,6 @@ Rules:
       trrack.apply('updateMessages', actions.updateMessages(fullMessages));
       updateProvenanceState(fullMessages);
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Error getting LLM response:', err);
       setError('Failed to get response. Please try again.');
     } finally {
@@ -441,37 +557,16 @@ Rules:
                     color: message.role === 'user' ? '#fff' : '#212529',
                   }}
                 >
-                {message.role === 'assistant' ? (
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    p: ({ node, ...props }) => <Text size="sm" {...props} />,
-                    li: ({ node, ...props }) => (
-                      <li style={{ marginLeft: 16 }} {...props} />
-                    ),
-                    code: ({ inline, children, ...props }: any) => (
-                      <code
-                        style={{
-                          backgroundColor: inline ? '#e9ecef' : '#f1f3f5',
-                          borderRadius: 4,
-                          padding: inline ? '2px 4px' : '8px',
-                          display: inline ? 'inline' : 'block',
-                          overflowX: 'auto',
-                          fontFamily: 'monospace',
-                          color: '#212529',
-                        }}
-                        {...props}
-                      >
-                        {children}
-                      </code>
-                    ),
-                  }}
-                >
-                  {message.content}
-                </ReactMarkdown>
-              ) : (
-                <Text size="sm">{message.content}</Text>
-              )}
+                  {message.role === 'assistant' ? (
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={markdownComponents}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  ) : (
+                    <Text size="sm">{message.content}</Text>
+                  )}
                   <Text size="xs" mt={4} color={message.role === 'user' ? 'blue.1' : 'gray.6'}>
                     {new Date(message.timestamp).toLocaleTimeString()}
                   </Text>

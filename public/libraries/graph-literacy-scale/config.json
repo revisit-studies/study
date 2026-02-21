@@ -1,6 +1,6 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/LibraryConfigSchema.json",
-  "description": "The Graph Literacy Scale is a 13-item instrument that measures people’s ability to understand common graphical formats, with a focus on health-related graphs. This library contains 13 components, each corresponding to a question of the Graph Literacy Scale. It also includes a sequence of all 13 components (the full Graph Literacy Scale).",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
+  "description": "The Graph Literacy Scale is a 13-item instrument that measures people's ability to understand common graphical formats, with a focus on health-related graphs. This library contains 13 components, each corresponding to a question of the Graph Literacy Scale. It also includes a sequence of all 13 components (the full Graph Literacy Scale).",
   "reference": "Galesic M, Garcia-Retamero R. Graph literacy: a cross-cultural comparison. Med Decis Making. 2011 May-Jun;31(3):444-57.",
   "doi": "10.1177/0272989X10373805",
   "baseComponents": {
@@ -12,7 +12,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "pie-cancer": {
       "type": "image",
@@ -22,7 +23,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "line-Adeolitis": {
       "type": "image",
@@ -32,7 +34,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "icon-diseaseX": {
       "type": "image",
@@ -42,7 +45,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "bar-treat-heart-disease": {
       "type": "image",
@@ -52,7 +56,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "line-treat-psoriasis": {
       "type": "image",
@@ -62,7 +67,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "line-Coliosis-Tiosis": {
       "type": "image",
@@ -72,7 +78,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "bar-cancer-die": {
       "type": "image",
@@ -82,7 +89,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     }
   },
   "components": {
@@ -100,7 +108,8 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q2": {
       "baseComponent": "bar-cancer-recovery",
@@ -116,7 +125,8 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q3": {
       "baseComponent": "pie-cancer",
@@ -132,7 +142,8 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q4": {
       "baseComponent": "pie-cancer",
@@ -148,7 +159,8 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q5": {
       "baseComponent": "line-Adeolitis",
@@ -164,7 +176,8 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q6": {
       "baseComponent": "line-Adeolitis",
@@ -181,12 +194,13 @@
           "type": "radio",
           "options": [
             "From 1975 to 1980",
-            "From 2000 to 2005", 
+            "From 2000 to 2005",
             "Increase was the same in both intervals",
             "Don't know"
           ]
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q7": {
       "baseComponent": "line-Adeolitis",
@@ -202,7 +216,8 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q8": {
       "baseComponent": "icon-diseaseX",
@@ -218,7 +233,8 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q9": {
       "baseComponent": "icon-diseaseX",
@@ -234,7 +250,8 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q10": {
       "baseComponent": "bar-treat-heart-disease",
@@ -251,12 +268,13 @@
           "type": "radio",
           "options": [
             "Crosicol",
-            "Hertinol", 
+            "Hertinol",
             "They are equal",
             "Can't say"
           ]
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q11": {
       "baseComponent": "line-treat-psoriasis",
@@ -274,11 +292,12 @@
           "options": [
             "Apsoriatin",
             "Nopsorian",
-            "They are equal", 
+            "They are equal",
             "Can't say"
           ]
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q12": {
       "baseComponent": "line-Coliosis-Tiosis",
@@ -300,7 +319,8 @@
             "Can't say"
           ]
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q13": {
       "baseComponent": "bar-cancer-die",
@@ -316,7 +336,8 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     }
   },
   "sequences": {

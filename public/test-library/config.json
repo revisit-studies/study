@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.2.0/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Using library imports",
     "version": "pilot",
@@ -36,7 +36,7 @@
       ]
     },
     "my-test2": {
-      "baseComponent": "$test.co.test-md",
+      "baseComponent": "$test.components.test-md",
       "response": [
         {
           "id": "test-response",
@@ -46,7 +46,7 @@
       ]
     },
     "mini-vlat-treemap-modified": {
-      "baseComponent": "$mini-vlat.co.treemap",
+      "baseComponent": "$mini-vlat.components.treemap",
       "instruction": "new instruction."
     }
   },
@@ -54,9 +54,9 @@
     "order": "fixed",
     "components": [
       "$test.sequences.small",
-      "$test.se.long",
+      "$test.sequences.long",
       "$test.components.test-md",
-      "$test.co.test-react",
+      "$test.components.test-react",
       "my-test",
       "my-test2",
       "$test.components.test-inherited",

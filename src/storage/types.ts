@@ -72,4 +72,10 @@ export interface ParticipantData {
   } | false;
   /** The component blocks that the participant entered. */
   participantTags: string[];
+  /** The stage of the participant in the study. */
+  stage: string;
+  /** The study condition(s) the participant was assigned to. Derived from the URL 'condition' query parameter. */
+  conditions?: string[];
+  /** Time that the participant registered for the study in epoch milliseconds. */
+  createdTime?: number;
 }

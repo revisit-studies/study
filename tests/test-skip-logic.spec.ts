@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect, Page } from '@playwright/test';
+import { waitForStudyEndMessage } from './waitForStudyEndMessage';
 
 async function answerTrial1(page, q1, q2) {
   await page.getByLabel(q1).check();
@@ -54,7 +55,7 @@ async function verifyTargetBlockComponent(page) {
 }
 
 async function verifyStudyEnd(page) {
-  await expect(page.getByText('Please wait while your answers are uploaded.')).toBeVisible();
+  await waitForStudyEndMessage(page);
   await page.waitForTimeout(100);
 }
 
@@ -173,7 +174,6 @@ test('test', async ({ page }) => {
 
   // ***** All questions are correct *****
   await goToCheck(page, 'end');
-  await page.getByText('Thank you for completing the study. You may close this window now.').click();
   // Verify that the participant data has the block id as a tag
   const tags = await getTags(page);
   expect(tags).toContain('testBlockId');
@@ -234,7 +234,6 @@ test('test', async ({ page }) => {
   await answerTrial1(page, 'Red', 'Cat'); // incorrect
   await verifyTargetComponent(page);
   await verifyStudyEnd(page);
-  await page.getByText('Thank you for completing the study. You may close this window now.').click();
   const tags2 = await getTags(page);
   expect(tags2).toHaveLength(0);
 });

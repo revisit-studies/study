@@ -20,15 +20,20 @@ export function useStudyId(): string {
 
 export function useCurrentStep() {
   const { index } = useParams();
-  if (index === undefined) {
-    return 0;
-  }
 
-  if (index.startsWith('reviewer-') || index.startsWith('__')) {
-    return index;
-  }
+  const decrypted = useMemo(() => {
+    if (index === undefined) {
+      return 0;
+    }
 
-  return decryptIndex(index);
+    if (index.startsWith('reviewer-') || index.startsWith('__')) {
+      return index;
+    }
+
+    return decryptIndex(index);
+  }, [index]);
+
+  return decrypted;
 }
 
 const modules = import.meta.glob(

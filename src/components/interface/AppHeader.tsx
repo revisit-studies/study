@@ -18,6 +18,8 @@ import {
   IconChartHistogram,
   IconDotsVertical,
   IconMail,
+  IconMicrophone,
+  IconMicrophoneOff,
   IconSchema,
   IconUserPlus,
 } from '@tabler/icons-react';
@@ -35,12 +37,13 @@ import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
-import { useScreenRecordingContext } from '../../store/hooks/useScreenRecording';
+import { useRecordingContext } from '../../store/hooks/useRecording';
 
-export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
+export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
 
   const answers = useStoreSelector((state) => state.answers);
+  const storageEngineFailedToConnect = useStoreSelector((state) => state.storageEngineFailedToConnect);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText, toggleStudyBrowser, incrementHelpCounter } = useStoreActions();
@@ -82,10 +85,9 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   const [isTruncated, setIsTruncated] = useState(false);
   const lastProgressRef = useRef<number>(0);
 
-  const isRecording = useStoreSelector((store) => store.isRecording);
-  const { isScreenRecording, isAudioRecording: isScreenWithAudioRecording } = useScreenRecordingContext();
-
-  const isAudioRecording = isRecording || isScreenWithAudioRecording;
+  const {
+    isScreenRecording, isAudioRecording, setIsMuted, isMuted, clickToRecord,
+  } = useRecordingContext();
 
   const { funcIndex } = useParams();
 
@@ -120,6 +122,18 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
     }
   }, [answers, flatSequence, studyConfig, currentStep, storageEngine, dataCollectionEnabled, funcIndex]);
 
+  // Check if we have issues connecting to the database, if so show alert modal
+  const { setAlertModal } = useStoreActions();
+  const [firstMount, setFirstMount] = useState(true);
+  if (storageEngineFailedToConnect && firstMount) {
+    storeDispatch(setAlertModal({
+      show: true,
+      message: `You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you're taking the study you will not be compensated for your efforts. You are welcome to look around. If you are attempting to participate in the study, please first refresh and if it's still a problem email ${studyConfig.uiConfig.contactEmail} for assistance.`,
+      title: 'Failed to connect to the storage engine',
+    }));
+    setFirstMount(false);
+  }
+
   return (
     <AppShell.Header className="header" p="md">
       <Grid mt={-7} align="center">
@@ -152,15 +166,29 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
             {(isAudioRecording || isScreenRecording) && (
             <Group ml="xl" gap={20} wrap="nowrap">
               <Text c="red">
-                Recording
+                {((isAudioRecording && !isMuted) || (isScreenRecording)) && 'Recording'}
                 {isScreenRecording && ' screen'}
-                {isScreenRecording && isAudioRecording && ' and'}
-                {isAudioRecording && ' audio'}
+                {isScreenRecording && isAudioRecording && !isMuted && ' and'}
+                {isAudioRecording && !isMuted && ' audio'}
               </Text>
-              {isAudioRecording && <RecordingAudioWaveform />}
+              {isAudioRecording && !isMuted && <RecordingAudioWaveform />}
+              {clickToRecord ? (
+                <Tooltip label="Press and hold to unmute">
+                  <ActionIcon variant="light" size="md" aria-label="Press and hold to unmute" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
+                    {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
+                  </ActionIcon>
+                </Tooltip>
+              ) : (
+                <Tooltip label={`Press to ${isMuted ? 'unmute' : 'mute'}`}>
+                  <ActionIcon variant="light" size="md" aria-label="Press and hold to unmute" onClick={() => setIsMuted(!isMuted)}>
+                    {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
+                  </ActionIcon>
+                </Tooltip>
+              )}
             </Group>
             )}
-            {!dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
+            {storageEngineFailedToConnect && <Tooltip multiline withArrow arrowSize={6} w={300} label="Failed to connect to the storage engine. Study data will not be saved. Check your connection or restart the app."><Badge size="lg" color="red">Storage Disconnected</Badge></Tooltip>}
+            {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
@@ -183,7 +211,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
-                {studyNavigatorEnabled && (
+                {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconSchema size={14} />}
                     onClick={() => storeDispatch(toggleStudyBrowser())}
@@ -202,7 +230,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 >
                   Contact
                 </Menu.Item>
-                {studyNavigatorEnabled && (
+                {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconUserPlus size={14} />}
                     onClick={() => getNewParticipant(storageEngine, studyHref)}
@@ -210,7 +238,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                     Next Participant
                   </Menu.Item>
                 )}
-                {studyNavigatorEnabled && (
+                {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconChartHistogram size={14} />}
                     component="a"

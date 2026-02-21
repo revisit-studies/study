@@ -2,7 +2,7 @@ import {
   Box, Button, Title,
 } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { useScreenRecordingContext } from '../../../../store/hooks/useScreenRecording';
+import { useRecordingContext } from '../../../../store/hooks/useRecording';
 import { StimulusParams } from '../../../../store/types';
 import { RecordingAudioWaveform } from '../../../../components/interface/RecordingAudioWaveform';
 
@@ -15,7 +15,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
     isScreenCapturing: screenCapturing,
     screenRecordingError: error,
     audioMediaStream,
-  } = useScreenRecordingContext();
+  } = useRecordingContext();
 
   // audioCapturingSuccess is set to true when we detect sound.
   const [audioCapturingSuccess, setAudioCapturingSuccess] = useState(false);

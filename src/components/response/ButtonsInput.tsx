@@ -1,12 +1,14 @@
 import {
-  Flex, FocusTrap, Radio, Text,
+  Flex, FocusTrap, Radio,
 } from '@mantine/core';
 import { useMemo } from 'react';
-import { ButtonsResponse, StringOption } from '../../parser/types';
+import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import classes from './css/ButtonsInput.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
+import { OptionLabel } from './OptionLabel';
+import { parseStringOptions } from '../../utils/stringOptions';
 
 export function ButtonsInput({
   response,
@@ -26,12 +28,16 @@ export function ButtonsInput({
     required,
     secondaryText,
     options,
+    infoText,
   } = response;
 
   const storedAnswer = useStoredAnswer();
-  const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
+  const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
 
-  const orderedOptions = useMemo(() => optionOrders[response.id] || options, [optionOrders, options, response.id]);
+  const orderedOptions = useMemo(
+    () => parseStringOptions(optionOrders[response.id] || options),
+    [optionOrders, options, response.id],
+  );
 
   const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 
@@ -39,12 +45,12 @@ export function ButtonsInput({
     <FocusTrap>
       <Radio.Group
         name={`radioInput${response.id}`}
-        label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} />}
+        label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
         key={response.id}
         {...answer}
-          // This overrides the answers error. Which..is bad?
         error={error}
+        errorProps={{ c: required ? 'red' : 'orange' }}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
         <Flex justify="space-between" align="center" gap="xl" mt="xs">
@@ -57,7 +63,7 @@ export function ButtonsInput({
               className={classes.root}
               p="xs"
             >
-              <Text>{radio.label}</Text>
+              <OptionLabel label={radio.label} infoText={radio.infoText} button />
             </Radio.Card>
           ))}
         </Flex>

@@ -10,8 +10,7 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 
 export function ResolutionWarning() {
   const studyConfig = useStudyConfig();
-  const minWidth = studyConfig.uiConfig.minWidthSize;
-  const minHeight = studyConfig.uiConfig.minHeightSize;
+  const { minWidth, minHeight } = studyConfig.studyRules?.display ?? {};
 
   const [showWarning, setShowWarning] = useState(false);
   const [isRejected, setIsRejected] = useState(false);

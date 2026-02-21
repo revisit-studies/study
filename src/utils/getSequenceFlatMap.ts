@@ -1,5 +1,4 @@
-import type { ComponentBlockWithOrderPath } from '../components/interface/StepsPanel';
-import { ComponentBlock, DynamicBlock, StudyConfig } from '../parser/types';
+import { DynamicBlock, StudyConfig } from '../parser/types';
 import { isDynamicBlock } from '../parser/utils';
 import { Sequence } from '../store/types';
 
@@ -7,7 +6,7 @@ export function getSequenceFlatMap<T extends Sequence | StudyConfig['sequence']>
   return isDynamicBlock(sequence) ? [sequence.id] : sequence.components.flatMap((component) => (typeof component === 'string' ? component : getSequenceFlatMap(component)));
 }
 
-export function findAllFuncBlocks(sequence: StudyConfig['sequence']): DynamicBlock[] {
+function findAllFuncBlocks(sequence: StudyConfig['sequence']): DynamicBlock[] {
   return isDynamicBlock(sequence) ? [sequence] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
 }
 
@@ -96,32 +95,21 @@ export function findIndexOfBlock(sequence: Sequence, to: string): number {
   return toReturn.found ? toReturn.distance : -1;
 }
 
-export function configSequenceToUniqueTrials(sequence: ComponentBlock | DynamicBlock, orderPath = 'root'): { componentName: string, orderPath: string, timesSeenInBlock: number }[] {
-  if (isDynamicBlock(sequence)) {
-    return [];
-  }
-
-  const result: { componentName: string, orderPath: string, timesSeenInBlock: number }[] = [];
-  const componentsSeen: Record<string, number> = {};
-  sequence.components.forEach((component, index) => {
-    if (typeof component === 'string') {
-      result.push({ componentName: component, orderPath, timesSeenInBlock: componentsSeen[component] || 0 });
-      componentsSeen[component] = componentsSeen[component] ? componentsSeen[component] + 1 : 1;
-    } else {
-      result.push(...configSequenceToUniqueTrials(component, `${orderPath}-${index}`));
-    }
-  });
-  return result;
-}
-
-export function addPathToComponentBlock(order: StudyConfig['sequence'] | ComponentBlockWithOrderPath | string, orderPath: string): ComponentBlockWithOrderPath | string {
+export function addPathToComponentBlock(order: StudyConfig['sequence'] | Sequence | string, orderPath: string): Sequence | string {
   if (typeof order === 'string') {
     return order;
   }
   if (isDynamicBlock(order)) {
-    return { ...order, orderPath, components: [] };
+    return {
+      ...order, orderPath, components: [], skip: [], interruptions: [],
+    };
   }
   return {
-    ...order, orderPath, order: order.order, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)),
+    ...order,
+    orderPath,
+    order: order.order,
+    components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)),
+    skip: order.skip || [],
+    interruptions: order.interruptions || [],
   };
 }

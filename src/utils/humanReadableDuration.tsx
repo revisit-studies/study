@@ -1,4 +1,4 @@
-export function humanReadableDuration(msDuration: number) {
+export function youtubeReadableDuration(msDuration: number) {
   if (Number.isNaN(msDuration as number)) {
     return undefined;
   }
@@ -15,5 +15,5 @@ export function humanReadableDuration(msDuration: number) {
   const minutes: string = m < 10 ? `0${m}` : `${m}`;
   const hours: string = h < 10 ? `0${h}` : `${h}`;
 
-  return `${h > 0 ? `${hours}h` : ''} ${m > 0 ? `${minutes}m` : ''} ${seconds}s`;
+  return `${h > 0 ? `${hours}:` : ''}${`${minutes}`}:${seconds}`;
 }

@@ -1,9 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+import { AuthError, createClient } from '@supabase/supabase-js';
 import {
-  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType,
+  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
+  CloudStorageEngine, cleanupModes,
 } from './types';
 
-export class SupabaseStorageEngine extends StorageEngine {
+export class SupabaseStorageEngine extends CloudStorageEngine {
   private supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 
   constructor(testing: boolean = false) {
@@ -165,6 +166,36 @@ export class SupabaseStorageEngine extends StorageEngine {
       .eq('docId', `sequenceAssignment_${participantId}`);
   }
 
+  protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {
+    await this.verifyStudyDatabase();
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentPath = `sequenceAssignment_${participantId}`;
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', sequenceAssignmentPath)
+      .single();
+
+    if (error || !data) {
+      throw new Error('Failed to retrieve sequence assignment for update');
+    }
+
+    const updatedData = { ...data.data, ...updatedFields };
+    if (Object.hasOwn(updatedFields, 'conditions') && updatedFields.conditions === undefined) {
+      delete updatedData.conditions;
+    }
+
+    await this.supabase
+      .from('revisit')
+      .update({ data: updatedData })
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', sequenceAssignmentPath);
+  }
+
   protected async _completeCurrentParticipantRealtime() {
     await this.verifyStudyDatabase();
     if (!this.currentParticipantId) {
@@ -290,7 +321,17 @@ export class SupabaseStorageEngine extends StorageEngine {
   }
 
   async initializeStudyDb(studyId: string) {
-    const { error } = await this.supabase.auth.signInAnonymously();
+    // Check if we have a session
+    let error: AuthError | null = null;
+    const { data } = await this.getSession();
+    if (!data.session) {
+      const { error: authError } = await this.supabase.auth.signInAnonymously();
+      if (authError) {
+        error = authError;
+        console.error('Error signing in anonymously:', error);
+        throw new Error('Failed to sign in anonymously');
+      }
+    }
 
     // Write a row into the revisit table for the study
     const { error: schemaError } = await this.supabase
@@ -336,14 +377,27 @@ export class SupabaseStorageEngine extends StorageEngine {
       // get the metadata field from the data object
       const metadata = data[0].data;
       if (metadata) {
-        return metadata;
+        const modes = metadata as Record<string, boolean>;
+        const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
+
+        if (needsUpdate) {
+          const cleanedModes = cleanupModes(modes);
+          await this.supabase
+            .from('revisit')
+            .update({ data: cleanedModes })
+            .eq('studyId', `${this.collectionPrefix}${studyId}`)
+            .eq('docId', 'metadata');
+          return cleanedModes;
+        }
+
+        return modes;
       }
     }
 
     const defaultModes = {
       dataCollectionEnabled: true,
-      studyNavigatorEnabled: true,
-      analyticsInterfacePubliclyAccessible: true,
+      developmentModeEnabled: true,
+      dataSharingEnabled: true,
     };
     await this.supabase
       .from('revisit')
@@ -368,6 +422,18 @@ export class SupabaseStorageEngine extends StorageEngine {
         studyId: `${this.collectionPrefix}${studyId}`,
         docId: 'metadata',
         data: modes,
+      })
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'metadata');
+  }
+
+  protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
+    await this.supabase
+      .from('revisit')
+      .upsert({
+        studyId: `${this.collectionPrefix}${studyId}`,
+        docId: 'metadata',
+        data: modesDocument,
       })
       .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
@@ -580,5 +646,160 @@ export class SupabaseStorageEngine extends StorageEngine {
           data: snapshots,
         });
     }
+  }
+
+  // Gets data from the user-management collection based on the inputted string
+  async getUserManagementData(key: 'authentication'): Promise<{ isEnabled: boolean } | undefined>;
+
+  async getUserManagementData(key: 'adminUsers'): Promise<{ adminUsersList: StoredUser[] } | undefined>;
+
+  async getUserManagementData(
+    key: 'authentication' | 'adminUsers',
+  ): Promise<{ isEnabled: boolean } | { adminUsersList: StoredUser[] } | undefined> {
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', '')
+      .eq('docId', 'user-management')
+      .single();
+
+    if (error) {
+      console.error(`Error fetching user management data for key ${key}:`, error);
+      return undefined;
+    }
+
+    this.userManagementData = data?.data || {};
+
+    if (key in this.userManagementData) {
+      // Type narrowing to ensure correct return type
+      if (key === 'authentication') {
+        const value = this.userManagementData[key];
+        if (value && typeof value === 'object' && 'isEnabled' in value) {
+          return value as { isEnabled: boolean };
+        }
+      } else if (key === 'adminUsers') {
+        const value = this.userManagementData[key];
+        if (value && typeof value === 'object' && 'adminUsersList' in value) {
+          return value as { adminUsersList: StoredUser[] };
+        }
+      }
+    }
+    return undefined;
+  }
+
+  protected async _updateAdminUsersList(adminUsers: { adminUsersList: StoredUser[]; }) {
+    await this.getUserManagementData('adminUsers');
+    const updatedData = structuredClone(this.userManagementData);
+    updatedData.adminUsers = { adminUsersList: adminUsers.adminUsersList };
+
+    const { error } = await this.supabase
+      .from('revisit')
+      .upsert({
+        studyId: '',
+        docId: 'user-management',
+        data: updatedData,
+      });
+
+    if (error) {
+      console.error('Error updating admin users list:', error);
+      throw new Error('Failed to update admin users list');
+    }
+  }
+
+  async changeAuth(bool: boolean) {
+    await this.getUserManagementData('authentication');
+    const updatedData = structuredClone(this.userManagementData);
+    updatedData.authentication = { isEnabled: bool };
+
+    const { error } = await this.supabase
+      .from('revisit')
+      .upsert({
+        studyId: '',
+        docId: 'user-management',
+        data: updatedData,
+      });
+
+    if (error) {
+      console.error('Error changing authentication state:', error);
+      throw new Error('Failed to change authentication state');
+    }
+  }
+
+  async addAdminUser(user: StoredUser) {
+    await this.getUserManagementData('adminUsers');
+    const updatedData = structuredClone(this.userManagementData);
+    if (!updatedData.adminUsers) {
+      updatedData.adminUsers = { adminUsersList: [] };
+    }
+    updatedData.adminUsers.adminUsersList.push(user);
+
+    await this._updateAdminUsersList(updatedData.adminUsers);
+  }
+
+  async removeAdminUser(email: string): Promise<void> {
+    await this.getUserManagementData('adminUsers');
+    const updatedData = structuredClone(this.userManagementData);
+    if (updatedData.adminUsers) {
+      updatedData.adminUsers.adminUsersList = updatedData.adminUsers.adminUsersList.filter(
+        (user) => user.email !== email,
+      );
+      await this._updateAdminUsersList(updatedData.adminUsers);
+    } else {
+      console.warn('No admin users found to remove');
+    }
+  }
+
+  async login() {
+    const { error } = await this.supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { redirectTo: window.location.href },
+    });
+
+    if (error) throw error;
+
+    // Redirect-based flow: user not available immediately
+    const { data: sessionData } = await this.supabase.auth.getSession();
+    const user = sessionData.session?.user;
+
+    return user ? { email: user.email ?? null, uid: user.id } : null;
+  }
+
+  async getSession() {
+    return this.supabase.auth.getSession();
+  }
+
+  unsubscribe(callback: (cloudUser: StoredUser | null) => Promise<void>) {
+    let lastUid: string | null = null;
+    let count = 0;
+
+    const { data: listener } = this.supabase.auth.onAuthStateChange(async (_event, session) => {
+      const user = session?.user
+        ? ({
+          email: session.user.email,
+          uid: session.user.id,
+        } as StoredUser)
+        : null;
+
+      const uid = user?.uid ?? null;
+      // If first time and no user, just call back with null
+      if (user === null && count === 0) {
+        count += 1;
+        callback(null);
+        return;
+      }
+
+      // Only invoke callback if the user actually changed
+      if (uid === lastUid) return;
+      lastUid = uid;
+
+      await callback(user);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }
+
+  async logout() {
+    const { error } = await this.supabase.auth.signOut();
+    if (error) throw error;
   }
 }

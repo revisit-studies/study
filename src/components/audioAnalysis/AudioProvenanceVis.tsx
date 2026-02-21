@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Box, Center, Group, Loader, Stack,
+  Box, Group, LoadingOverlay, Stack,
 } from '@mantine/core';
 import { useSearchParams, useNavigate } from 'react-router';
 import {
@@ -13,64 +12,62 @@ import {
   Registry, Trrack, initializeTrrack, isRootNode,
 } from '@trrack/core';
 import WaveSurferType from 'wavesurfer.js';
-import { useCurrentComponent, useCurrentIdentifier, useCurrentStep } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { useStoreActions, useStoreDispatch, useStoreSelector } from '../../store/store';
-import { WithinTaskTimeline } from './WithinTaskTimeline';
+import { TaskProvenanceTimeline } from './TaskProvenanceTimeline';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { Timer } from './Timer';
-import { humanReadableDuration } from '../../utils/humanReadableDuration';
-import { ResponseBlockLocation } from '../../parser/types';
-import { useUpdateProvenance } from './useUpdateProvenance';
+import { youtubeReadableDuration } from '../../utils/humanReadableDuration';
+import { ResponseBlockLocation, StoredAnswer } from '../../parser/types';
 import { useEvent } from '../../store/hooks/useEvent';
+import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { useUpdateProvenance } from './useUpdateProvenance';
+import { useReplayContext } from '../../store/hooks/useReplay';
 
 const margin = {
-  left: 0, top: 0, right: 0, bottom: 0,
+  left: 20, top: 0, right: 20, bottom: 0,
 };
 
 function safe<T>(p: Promise<T>): Promise<T | null> {
   return p.catch(() => null);
 }
 
-export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: string) => void }) {
-  const [searchParams] = useSearchParams();
-  const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
-  const timestamp = useMemo(() => searchParams.get('t') || undefined, [searchParams]);
+export function AudioProvenanceVis({
+  setTimeString,
+  answers,
+  setTime,
+  taskName,
+  context,
+  saveProvenance,
+  setHasAudio,
+}: {
+  setTimeString: (time: string) => void;
+  answers: Record<string, StoredAnswer>;
+  setTime: (time: number) => void;
+  taskName: string;
+  context: 'audioAnalysis' | 'provenanceVis';
+  saveProvenance: ((state: unknown) => void);
+  setHasAudio: (b: boolean) => void;
+}) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
 
-  const replayTimestamp = useMemo(() => {
-    if (!timestamp) {
-      return undefined;
-    }
-
-    // If the timestamp is already in milliseconds, return it
-    if (!Number.isNaN(Number(timestamp))) {
-      return parseInt(timestamp, 10);
-    }
-
-    const hours = parseInt(timestamp.match(/(\d+)h/)?.[1] || '0', 10);
-    const minutes = parseInt(timestamp.match(/(\d+)m/)?.[1] || '0', 10);
-    const seconds = parseInt(timestamp.match(/(\d+)s/)?.[1] || '0', 10);
-
-    const milliseconds = (hours * 3600 + minutes * 60 + seconds) * 1000;
-    return milliseconds;
-  }, [timestamp]);
+  const {
+    audioRef, updateReplayRef, duration, setDuration, seekTime,
+  } = useReplayContext();
 
   const { storageEngine } = useStorageEngine();
 
-  const analysisIsPlaying = useStoreSelector((state) => state.analysisIsPlaying);
-  const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
+  const [analysisHasAudio, _setAnalysisHasAudio] = useState(true);
 
-  const {
-    saveAnalysisState, setAnalysisHasAudio, setAnalysisIsPlaying, setProvenanceJumpTime,
-  } = useStoreActions();
-  const storeDispatch = useStoreDispatch();
-
-  const currentComponent = useCurrentComponent();
-  const currentStep = useCurrentStep();
-  useEffect(() => { storeDispatch(saveAnalysisState({ prov: undefined, location: 'stimulus' })); }, [currentStep, saveAnalysisState, storeDispatch]);
+  const setAnalysisHasAudio = useCallback((b: boolean) => {
+    _setAnalysisHasAudio(b);
+    setHasAudio(b);
+  }, [setHasAudio]);
 
   const [ref, { width }] = useResizeObserver();
   const [waveSurferWidth, setWaveSurferWidth] = useState<number>(0);
+
+  const startTime = useMemo(() => answers[taskName]?.startTime || 0, [answers, taskName]);
 
   const [currentNode, setCurrentNode] = useState<string | null>(null);
   const [currentResponseNodes, setCurrentResponseNodes] = useState<Record<ResponseBlockLocation, string | undefined>>({
@@ -81,24 +78,21 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   });
   const [currentGlobalNode, setCurrentGlobalNode] = useState<{name: string, time: number} | null>(null);
 
-  const [totalAudioLength, setTotalAudioLength] = useState<number>(0);
-
-  const answers = useStoreSelector((state) => state.answers);
-
+  // playtime in epoch ms
   const [playTime, setPlayTime] = useState<number>(0);
 
-  const currentTimeRef = useRef<number>(0); // time in seconds
+  const wavesurfer = useRef<WaveSurferType | null>(null);
 
   const waveSurferDiv = useRef(null);
+
+  const navigate = useNavigate();
 
   const [waveSurferLoading, setWaveSurferLoading] = useState<boolean>(true);
 
   const trrackForTrial = useRef<Trrack<object, string> | null>(null);
 
-  const identifier = useCurrentIdentifier();
-
   const _setCurrentResponseNodes = useEvent((node: string | null, location: ResponseBlockLocation) => {
-    const graph = answers[identifier]?.provenanceGraph[location];
+    const graph = answers[taskName]?.provenanceGraph[location];
     if (graph && node) {
       if (!currentGlobalNode || graph.nodes[node].createdOn > currentGlobalNode.time || playTime < currentGlobalNode.time) {
         setCurrentGlobalNode({ name: node || '', time: graph.nodes[node].createdOn });
@@ -108,52 +102,101 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
     setCurrentResponseNodes({ ...currentResponseNodes, [location]: node });
   });
 
-  useUpdateProvenance('aboveStimulus', playTime, answers[identifier]?.provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes);
+  const _setPlayTime = useThrottledCallback((n: number) => {
+    setPlayTime(startTime + n);
+    if (setTime) {
+      setTime(startTime + n);
+    }
+  }, 100); // 100ms throttle
 
-  useUpdateProvenance('belowStimulus', playTime, answers[identifier]?.provenanceGraph.belowStimulus, currentResponseNodes.belowStimulus, _setCurrentResponseNodes);
-
-  useUpdateProvenance('sidebar', playTime, answers[identifier]?.provenanceGraph.sidebar, currentResponseNodes.sidebar, _setCurrentResponseNodes);
-
-  // Make sure we always pause analysis when we change participants or tasks
   useEffect(() => {
-    storeDispatch(setAnalysisIsPlaying(false));
-  }, [participantId, currentComponent, currentStep, storeDispatch, setAnalysisIsPlaying, identifier]);
+    _setPlayTime(seekTime * 1000);
+  }, [seekTime, _setPlayTime]);
+
+  useEffect(() => {
+    if (taskName) {
+      localStorage.setItem('currentTrial', taskName);
+      if (answers[taskName]?.trialOrder) {
+        localStorage.setItem('trialOrder', answers[taskName].trialOrder);
+      }
+    }
+  }, [answers, taskName]);
+
+  useEffect(() => {
+    const listener = (e: StorageEvent) => {
+      if (!e.newValue) {
+        return;
+      }
+
+      if (e.key === 'participantId') {
+        setSearchParams((params) => {
+          params.set('participantId', e.newValue || '');
+
+          return params;
+        });
+      }
+      if (e.key === 'currentTrial') {
+        setSearchParams((params) => {
+          params.set('currentTrial', e.newValue || '');
+
+          return params;
+        });
+      }
+
+      if (e.key === 'trialOrder') {
+        if (context === 'provenanceVis') {
+          navigate(taskName ? `./../${encryptIndex(+e.newValue)}?participantId=${participantId}&currentTrial=${taskName}` : `./${e.newValue}?participantId=${participantId}&currentTrial=${taskName}`);
+        }
+      }
+    };
+
+    window.addEventListener('storage', listener);
+
+    return () => window.removeEventListener('storage', listener);
+  }, [context, navigate, participantId, setSearchParams, taskName]);
+
+  useUpdateProvenance('aboveStimulus', playTime, answers[taskName]?.provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes, saveProvenance);
+
+  useUpdateProvenance('belowStimulus', playTime, answers[taskName]?.provenanceGraph.belowStimulus, currentResponseNodes.belowStimulus, _setCurrentResponseNodes, saveProvenance);
+
+  useUpdateProvenance('sidebar', playTime, answers[taskName]?.provenanceGraph.sidebar, currentResponseNodes.sidebar, _setCurrentResponseNodes, saveProvenance);
+
   // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
   useEffect(() => {
-    if (identifier && answers[identifier]?.provenanceGraph) {
+    if (taskName && answers[taskName]?.provenanceGraph) {
       const reg = Registry.create();
 
       const trrack = initializeTrrack({ registry: reg, initialState: {} });
 
-      if (answers[identifier]?.provenanceGraph.stimulus) {
-        trrack.importObject(structuredClone(answers[identifier]?.provenanceGraph!.stimulus));
+      if (answers[taskName]?.provenanceGraph.stimulus) {
+        trrack.importObject(structuredClone(answers[taskName]?.provenanceGraph!.stimulus));
 
         trrackForTrial.current = trrack;
       }
     }
-  }, [answers, identifier, storeDispatch]);
+  }, [answers, taskName]);
 
   const _setCurrentNode = useCallback((node: string | undefined) => {
     if (!node) {
       return;
     }
 
-    if (identifier && trrackForTrial.current) {
-      storeDispatch(saveAnalysisState({ prov: trrackForTrial.current.getState(answers[identifier]?.provenanceGraph.stimulus?.nodes[node]), location: 'stimulus' }));
+    if (taskName && trrackForTrial.current && context === 'provenanceVis' && saveProvenance) {
+      saveProvenance({ prov: trrackForTrial.current.getState(answers[taskName]?.provenanceGraph.stimulus?.nodes[node]), location: 'stimulus' });
 
       trrackForTrial.current.to(node);
     }
 
     _setCurrentResponseNodes(node, 'stimulus');
     setCurrentNode(node);
-  }, [identifier, _setCurrentResponseNodes, storeDispatch, saveAnalysisState, answers]);
+  }, [taskName, context, _setCurrentResponseNodes, saveProvenance, answers]);
 
   // use effect to control the current provenance node based on the changing playtime.
   useEffect(() => {
-    if (!identifier || !trrackForTrial.current || !answers[identifier]?.provenanceGraph) {
+    if (!taskName || !trrackForTrial.current || !answers[taskName]?.provenanceGraph) {
       return;
     }
-    const provGraph = answers[identifier]?.provenanceGraph;
+    const provGraph = answers[taskName]?.provenanceGraph;
 
     if (!provGraph.stimulus) {
       return;
@@ -185,196 +228,130 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
     if (tempNode.id !== currentNode) {
       _setCurrentNode(tempNode.id);
     }
-  }, [_setCurrentNode, currentNode, participantId, playTime, identifier, answers]);
-
-  const startTime = useMemo(() => answers[identifier]?.startTime || 0, [answers, identifier]);
+  }, [_setCurrentNode, currentNode, participantId, playTime, taskName, answers]);
 
   useEffect(() => {
-    if (startTime) {
-      setPlayTime(startTime + (replayTimestamp || 0));
-      currentTimeRef.current = replayTimestamp || 0;
-    }
-  }, [startTime, replayTimestamp]);
-
-  useEffect(() => {
-    if (totalAudioLength === 0) {
+    if (duration === 0) {
       setTimeString('');
     } else if (playTime !== 0) {
-      setTimeString(`${humanReadableDuration(playTime - startTime)} / ${humanReadableDuration(totalAudioLength * 1000)}`);
+      setTimeString(`${youtubeReadableDuration((playTime - startTime))}/${youtubeReadableDuration(duration * 1000)}`);
     }
-  }, [identifier, playTime, setTimeString, startTime, totalAudioLength]);
+  }, [taskName, playTime, setTimeString, startTime, duration]);
 
   useEffect(() => {
-    if (!analysisHasAudio) {
-      // eslint-disable-next-line no-unsafe-optional-chaining
-      const length = answers[identifier]?.endTime - answers[identifier]?.startTime;
-      setTotalAudioLength(length > -1 ? length / 1000 : 0);
-    }
-  }, [analysisHasAudio, answers, identifier]);
-
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (totalAudioLength > 0 && replayTimestamp) {
-      const maxTime = totalAudioLength * 1000;
-
-      if (replayTimestamp > maxTime) {
-        navigate(`?participantId=${participantId}&t=${maxTime}`);
-      }
-    }
-  }, [totalAudioLength, replayTimestamp, participantId, navigate]);
+    // eslint-disable-next-line no-unsafe-optional-chaining
+    const length = answers[taskName]?.endTime - answers[taskName]?.startTime;
+    setDuration(length > -1 ? length / 1000 : 0);
+  }, [analysisHasAudio, answers, taskName, setDuration]);
 
   const isAnalysis = useIsAnalysis();
-  const wavesurfer = useRef<WaveSurferType | null>(null);
 
-  const handleWSMount = useCallback(
+  const handleWSMount = useEvent(
     async (waveSurfer: WaveSurferType | null) => {
       wavesurfer.current = waveSurfer;
-      if (identifier.includes('__dynamicLoading')) {
+
+      if (taskName.includes('__dynamicLoading')) {
         return;
       }
-      if (waveSurfer && isAnalysis && identifier && storageEngine) {
+
+      audioRef.current = null;
+      updateReplayRef();
+
+      if (waveSurfer && isAnalysis && taskName && storageEngine) {
         try {
           if (!participantId) {
             throw new Error('Participant ID is required to load audio');
           }
 
           const [audioUrl, screenUrl] = await Promise.all([
-            safe(storageEngine.getAudio(identifier, participantId)),
-            safe(storageEngine.getScreenRecording(identifier, participantId)),
+            safe(storageEngine.getAudio(taskName, participantId)),
+            safe(storageEngine.getScreenRecording(taskName, participantId)),
           ]);
-
-          // Mute wavesurfer if audio is played from the screen recorded video.
-          wavesurfer.current?.setMuted(!!screenUrl);
 
           const url = screenUrl ?? audioUrl ?? null;
 
           if (!url) {
-            storeDispatch(setAnalysisHasAudio(false));
+            setAnalysisHasAudio(false);
+            setWaveSurferLoading(false);
+            wavesurfer.current?.empty();
             return;
           }
 
-          await waveSurfer.load(url!);
+          await waveSurfer.load(url!, undefined, duration);
           setWaveSurferLoading(false);
-          storeDispatch(setAnalysisHasAudio(true));
 
-          setTotalAudioLength(waveSurfer.getDuration());
+          audioRef.current = waveSurfer.getMediaElement();
+          updateReplayRef();
+
           setWaveSurferWidth(waveSurfer.getWidth());
+          setAnalysisHasAudio(true);
           waveSurfer.seekTo(0);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
-        } catch (error: any) {
-          storeDispatch(setAnalysisHasAudio(false));
-          throw new Error(error);
+        } catch (error: unknown) {
+          setAnalysisHasAudio(false);
+          setWaveSurferLoading(false);
+          audioRef.current = null;
+          updateReplayRef();
+          throw new Error(error as string);
         }
       } else {
-        storeDispatch(setAnalysisHasAudio(false));
-        setTotalAudioLength(0);
+        setAnalysisHasAudio(false);
+        setWaveSurferLoading(false);
+        audioRef.current = null;
+        updateReplayRef();
+        setDuration(0);
       }
     },
-    [identifier, isAnalysis, storageEngine, participantId, storeDispatch, setAnalysisHasAudio],
   );
 
-  const _setPlayTime = useThrottledCallback((n: number, percent: number | undefined) => {
-    // if were past the end, pause the timer
-    const audioEndTime = totalAudioLength * 1000 + startTime;
-
-    currentTimeRef.current = n - startTime;
-
-    if (n > audioEndTime) {
-      storeDispatch(setAnalysisIsPlaying(false));
-      setPlayTime(n);
-
-      return;
-    }
-
-    setPlayTime(n);
-
-    if (wavesurfer.current && percent !== undefined && !Number.isNaN(percent)) {
-      setTimeout(() => {
-        wavesurfer.current?.seekTo(percent);
-      });
-    }
-  }, 100); // 100ms throttle
-
-  useEffect(() => {
-    if (wavesurfer.current) {
-      if (analysisIsPlaying) {
-        wavesurfer.current.play();
-      } else {
-        wavesurfer.current.pause();
-      }
-    }
-  }, [wavesurfer, analysisIsPlaying, totalAudioLength, startTime, setPlayTime]);
-
-  useEffect(() => {
-    storeDispatch(setProvenanceJumpTime(currentTimeRef.current));
-  }, [analysisIsPlaying, setProvenanceJumpTime, storeDispatch]);
-
-  const handleClickUpdateTimer = useCallback(() => {
-    storeDispatch(setProvenanceJumpTime(currentTimeRef.current));
-  }, [setProvenanceJumpTime, storeDispatch]);
-
   const xScale = useMemo(() => {
-    if (!answers[identifier]?.startTime || !answers[identifier]?.endTime) {
+    if (!answers[taskName]?.startTime || !answers[taskName]?.endTime) {
       return null;
     }
-
-    // eslint-disable-next-line no-unsafe-optional-chaining
-    const endTime = totalAudioLength > 0 ? answers[identifier]?.startTime + totalAudioLength * 1000 : answers[identifier]?.endTime;
-
-    const scale = d3.scaleLinear([margin.left, width + margin.left + margin.right]).domain([answers[identifier]?.startTime, endTime]).clamp(true);
+    const scale = d3.scaleLinear([margin.left, width - margin.right]).domain([0, duration]).clamp(true);
 
     return scale;
-  }, [answers, identifier, totalAudioLength, width]);
-
-  useEffect(() => {
-    handleWSMount(wavesurfer.current);
-  }, [_setPlayTime, handleWSMount, participantId, wavesurfer]);
+  }, [answers, taskName, duration, width]);
 
   return (
-    <Group wrap="nowrap" gap={10} mx={10}>
+    <Group wrap="nowrap" gap={0} mx={0}>
       <Stack ref={ref} style={{ width: '100%' }} gap={0}>
-        <Center />
-        {participantId !== undefined && identifier
+        <LoadingOverlay visible={waveSurferLoading} overlayProps={{ blur: 5, backgroundOpacity: 0.35 }} />
+
+        {participantId !== undefined && taskName
           ? (
-            <Box
-              ref={waveSurferDiv}
-              style={{
-                overflow: 'hidden', width: '100%', pointerEvents: 'none',
-              }}
-              display={analysisHasAudio ? 'block' : 'none'}
-              id="waveformDiv"
-            >
-              <WaveSurfer onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} waveColor="#484848" progressColor="#e15759" barHeight={0} cursorColor="rgba(0, 0, 0, 0)">
-                <WaveForm id="waveform" height={50} />
-              </WaveSurfer>
-              {waveSurferLoading ? <Loader /> : null}
+            <Box pos="relative" ml={margin.left} mr={margin.right}>
+              <Box
+                ref={waveSurferDiv}
+                style={{
+                  overflow: 'hidden', width: '100%', pointerEvents: 'none',
+                }}
+                display={analysisHasAudio ? 'block' : 'none'}
+                id="waveformDiv"
+              >
+                <WaveSurfer backend="MediaElement" onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} waveColor="#484848" progressColor="cornflowerblue" barHeight={0} cursorColor="rgba(0, 0, 0, 0)">
+                  <WaveForm id="waveform" height={50} />
+                </WaveSurfer>
+              </Box>
             </Box>
           ) : null}
 
-        {xScale && identifier && answers[identifier]?.provenanceGraph
+        {xScale && taskName && answers[taskName]?.provenanceGraph
           ? (
-            <WithinTaskTimeline
+            <TaskProvenanceTimeline
               xScale={xScale}
-              trialName={identifier}
+              trialName={taskName}
               currentNode={currentGlobalNode?.name || ''}
               answers={answers}
-              width={waveSurferWidth || width}
+              width={waveSurferWidth || (width - margin.left - margin.right)}
               height={25}
+              margin={margin}
+              startTime={answers[taskName]?.startTime}
             />
           ) : null}
+
         {xScale ? (
-          <Timer
-            duration={totalAudioLength * 1000}
-            height={(analysisHasAudio ? 50 : 0) + 25}
-            isPlaying={analysisIsPlaying}
-            startTime={startTime}
-            width={width}
-            xScale={xScale}
-            updateTimer={_setPlayTime}
-            initialTime={replayTimestamp ? startTime + replayTimestamp : undefined}
-            onClickUpdateTimer={handleClickUpdateTimer}
-          />
+          <Timer height={(analysisHasAudio ? 49 : 0) + 25} width={width} xScale={xScale} debounceUpdateTimer={_setPlayTime} />
         ) : null}
       </Stack>
     </Group>

@@ -1,4 +1,3 @@
-import { User } from '@firebase/auth';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import throttle from 'lodash.throttle';
@@ -7,25 +6,21 @@ import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
 import { RevisitNotification } from '../../utils/notifications';
+import { parseConditionParam } from '../../utils/handleSequenceConditions';
+import {
+  ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
+} from '../../analysis/individualStudy/thinkAloud/types';
 
 export interface StoredUser {
-  email: string,
+  email: string | null,
   uid: string | null,
 }
 
-export interface LocalStorageUser {
-  name: string,
-  email: string,
-  uid: string,
-}
-
-export type UserOptions = User | LocalStorageUser | null;
-
 export interface UserWrapped {
-  user: UserOptions,
+  user: StoredUser | null,
   determiningStatus: boolean,
   isAdmin: boolean,
-  adminVerification:boolean
+  adminVerification: boolean
 }
 
 export type SequenceAssignment = {
@@ -38,21 +33,64 @@ export type SequenceAssignment = {
   total: number; // Total number of questions/steps
   answered: string[]; // Number of answered questions
   isDynamic: boolean; // Whether the study contains dynamic blocks
+  stage: string; // The stage of the participant in the study
+  conditions?: string[]; // The study condition(s) assigned to this participant.
 };
 
-export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
+export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
+
+export function cleanupModes(modes: Record<string, boolean>): Record<REVISIT_MODE, boolean> {
+  const cleanedModes: Record<string, boolean> = { ...modes };
+
+  if ('studyNavigatorEnabled' in modes && !('developmentModeEnabled' in modes)) {
+    cleanedModes.developmentModeEnabled = modes.studyNavigatorEnabled;
+    delete cleanedModes.studyNavigatorEnabled;
+  }
+
+  if ('analyticsInterfacePubliclyAccessible' in modes && !('dataSharingEnabled' in modes)) {
+    cleanedModes.dataSharingEnabled = modes.analyticsInterfacePubliclyAccessible;
+    delete cleanedModes.analyticsInterfacePubliclyAccessible;
+  }
+
+  return cleanedModes as Record<REVISIT_MODE, boolean>;
+}
+
+export interface StageInfo {
+  stageName: string;
+  color: string;
+}
+
+interface StageData {
+  currentStage: StageInfo;
+  allStages: StageInfo[];
+}
+
+export interface ConditionData {
+  allConditions: string[];
+  conditionCounts: Record<string, number>;
+}
+
+const defaultStageColor = '#F05A30';
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
   T extends 'sequenceArray'
-    ? Sequence[]
-    : T extends 'participantData'
-    ? ParticipantData
-    : T extends 'config'
-    ? StudyConfig
-    : Blob; // Fallback for any random string
+  ? Sequence[]
+  : T extends 'participantData'
+  ? ParticipantData
+  : T extends 'config'
+  ? StudyConfig
+  : T extends 'transcription.txt'
+  ? TranscribedAudio
+  : T extends 'editedText'
+  ? TaglessEditedText[]
+  : T extends 'participantTags'
+  ? ParticipantTags
+  : T extends 'tags'
+  ? Tag[]
+  : Blob; // Fallback for any random string
 
-export interface CloudStorageEngineError {
+interface CloudStorageEngineError {
   title: string;
   message: string;
   details?: string;
@@ -154,6 +192,13 @@ export abstract class StorageEngine {
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
 
+  // Updates specific top-level fields in an existing sequence assignment without modifying timestamp fields.
+  // This operation is a shallow patch (no deep merge for nested objects).
+  protected abstract _updateSequenceAssignmentFields(
+    participantId: string,
+    updatedFields: Partial<SequenceAssignment>,
+  ): Promise<void>;
+
   // Sets the participant to completed in the sequence assignments in the realtime database.
   protected abstract _completeCurrentParticipantRealtime(): Promise<void>;
 
@@ -174,10 +219,13 @@ export abstract class StorageEngine {
   abstract connect(): Promise<void>;
 
   // Gets the modes for the given studyId. The modes are stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
-  abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean>>;
+  abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean> & { stage?: StageData }>;
 
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
+
+  // Protected helper: Sets the full modes document (including stage data and mode flags)
+  protected abstract _setModesDocument(studyId: string, modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData }): Promise<void>;
 
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
@@ -248,6 +296,100 @@ export abstract class StorageEngine {
   // Verify study database using provided primitive from storage engine with a throttle of 10 seconds.
   protected async verifyStudyDatabase() {
     return await this.__throttleVerifyStudyDatabase();
+  }
+
+  async getStageData(studyId: string): Promise<StageData> {
+    const modesDoc = await this.getModes(studyId);
+
+    if (modesDoc && modesDoc.stage) {
+      return modesDoc.stage as StageData;
+    }
+
+    // Set default stage data if it doesn't exist
+    const defaultStageData: StageData = {
+      currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
+      allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
+    };
+    await this.setCurrentStage(studyId, 'DEFAULT', defaultStageColor);
+    return defaultStageData;
+  }
+
+  async getConditionData(studyId: string): Promise<ConditionData> {
+    const sequenceAssignments = await this.getAllSequenceAssignments(studyId);
+    const conditionCounts: Record<string, number> = {};
+
+    sequenceAssignments.forEach((assignment) => {
+      const normalizedConditions = parseConditionParam(assignment.conditions);
+      const conditionValues = normalizedConditions.length > 0 ? normalizedConditions : ['default'];
+      conditionValues.forEach((condition) => {
+        conditionCounts[condition] = (conditionCounts[condition] || 0) + 1;
+      });
+    });
+
+    return {
+      allConditions: Object.keys(conditionCounts).sort(),
+      conditionCounts,
+    };
+  }
+
+  // Setting current stage
+  async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor): Promise<void> {
+    const modesDoc = await this.getModes(studyId);
+
+    // Initialize if doesn't exist or invalid
+    if (!modesDoc.stage) {
+      modesDoc.stage = {
+        currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
+        allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
+      };
+    }
+
+    // Check if stage already exists in allStages
+    const existingStageIndex = modesDoc.stage.allStages.findIndex(
+      (s) => s.stageName === stageName,
+    );
+
+    if (existingStageIndex === -1) {
+      modesDoc.stage.allStages.push({ stageName, color });
+    }
+
+    modesDoc.stage.currentStage = { stageName, color };
+
+    const updatedModesDoc = {
+      ...modesDoc,
+      stage: modesDoc.stage,
+    };
+
+    await this._setModesDocument(studyId, updatedModesDoc);
+  }
+
+  // Updating stage color
+  async updateStageColor(studyId: string, stageName: string, color: string): Promise<void> {
+    const modesDoc = await this.getModes(studyId);
+
+    if (!modesDoc.stage) {
+      throw new Error('Stage data not initialized');
+    }
+
+    const updatedAllStages = modesDoc.stage.allStages.map(
+      (s) => (s.stageName === stageName ? { ...s, color } : s),
+    );
+
+    const updatedCurrentStage = modesDoc.stage.currentStage.stageName === stageName
+      ? { ...modesDoc.stage.currentStage, color }
+      : modesDoc.stage.currentStage;
+
+    const updatedStageData = {
+      currentStage: updatedCurrentStage,
+      allStages: updatedAllStages,
+    };
+
+    const updatedModesDoc = {
+      ...modesDoc,
+      stage: updatedStageData,
+    };
+
+    await this._setModesDocument(studyId, updatedModesDoc);
   }
 
   // Saves the new config for the study. This will overwrite the existing sequence array so that the new sequences are compatible with the new config.
@@ -333,7 +475,7 @@ export abstract class StorageEngine {
   // This function is one of the most critical functions in the storage engine.
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
-  protected async _getSequence() {
+  protected async _getSequence(conditions?: string[]) {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
@@ -343,6 +485,8 @@ export abstract class StorageEngine {
     let sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
     const modes = await this.getModes(this.studyId);
+    const stageData = await this.getStageData(this.studyId);
+    const currentStage = stageData.currentStage.stageName;
 
     // Find all rejected documents
     const rejectedDocs = sequenceAssignments
@@ -362,6 +506,8 @@ export abstract class StorageEngine {
           total: 0,
           answered: [],
           isDynamic: false,
+          stage: currentStage,
+          ...(conditions ? { conditions } : {}),
         };
         // Mark the first reject as claimed
         await this._claimSequenceAssignment(firstReject.participantId, firstReject);
@@ -380,6 +526,8 @@ export abstract class StorageEngine {
         total: 0,
         answered: [],
         isDynamic: false,
+        stage: currentStage,
+        ...(conditions ? { conditions } : {}),
       };
       await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
     }
@@ -447,6 +595,8 @@ export abstract class StorageEngine {
 
     // Get modes
     const modes = await this.getModes(this.studyId);
+    const stageData = await this.getStageData(this.studyId);
+    const currentStage = stageData.currentStage.stageName;
 
     if (isParticipantData(participant)) {
       // Participant already initialized
@@ -455,7 +605,9 @@ export abstract class StorageEngine {
     }
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
-    const { currentRow, creationIndex } = await this._getSequence();
+    const parsedConditions = parseConditionParam(searchParams.condition);
+    const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
+    const { currentRow, creationIndex } = await this._getSequence(conditions);
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
@@ -463,10 +615,13 @@ export abstract class StorageEngine {
       participantIndex: creationIndex,
       answers: {},
       searchParams,
+      conditions,
       metadata,
       completed: false,
       rejected: false,
       participantTags: [],
+      stage: currentStage,
+      createdTime: Date.now(),
     };
 
     if (modes.dataCollectionEnabled) {
@@ -488,6 +643,30 @@ export abstract class StorageEngine {
     }
     const sequenceAssignments = await this.getAllSequenceAssignments(studyIdToUse);
     return sequenceAssignments.map((assignment) => assignment.participantId);
+  }
+
+  async saveTags(tags: Tag[], tagType: string) {
+    await this._pushToStorage(`audio/transcriptAndTags/${tagType}`, 'tags', tags);
+  }
+
+  async getTags(tagType: string) {
+    return await this._getFromStorage(`audio/transcriptAndTags/${tagType}`, 'tags');
+  }
+
+  async getAllParticipantAndTaskTags(authEmail: string, participantId: string) {
+    const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags');
+
+    if (tags?.participantTags) {
+      return tags;
+    }
+
+    this.saveAllParticipantAndTaskTags(authEmail, participantId, { participantTags: [], taskTags: {} });
+
+    return { participantTags: [], taskTags: {} };
+  }
+
+  async saveAllParticipantAndTaskTags(authEmail: string, participantId: string, participantTags: ParticipantTags) {
+    return this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags', participantTags);
   }
 
   // Gets the participant data for the current participant or a specific participantId.
@@ -549,20 +728,71 @@ export abstract class StorageEngine {
     );
   }
 
+  // Updates the participant's stored search params.
+  async updateParticipantSearchParams(searchParams: Record<string, string>) {
+    await this.verifyStudyDatabase();
+
+    if (!this.participantData) {
+      throw new Error('Participant data not initialized');
+    }
+
+    this.participantData.searchParams = searchParams;
+
+    await this._pushToStorage(
+      `participants/${this.currentParticipantId}`,
+      'participantData',
+      this.participantData,
+    );
+  }
+
+  async updateStudyCondition(condition: string | string[]) {
+    await this.verifyStudyDatabase();
+
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const modes = await this.getModes(this.studyId);
+    if (!modes.developmentModeEnabled) {
+      throw new Error('Cannot update study condition when development mode is disabled');
+    }
+
+    if (!this.participantData) {
+      throw new Error('Participant data not initialized');
+    }
+
+    const parsedConditions = parseConditionParam(condition);
+    this.participantData.conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
+
+    await this._pushToStorage(
+      `participants/${this.currentParticipantId}`,
+      'participantData',
+      this.participantData,
+    );
+
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
+    await this._updateSequenceAssignmentFields(
+      this.currentParticipantId,
+      { conditions: this.participantData.conditions },
+    );
+  }
+
   // Rejects a participant with the given participantId and reason.
-  async rejectParticipant(participantId: string, reason: string, studyId?: string) {
+  async rejectParticipant(participantId: string, reason: string) {
     const participant = await this._getFromStorage(
       `participants/${participantId}`,
       'participantData',
-      studyId,
     );
 
     try {
       // If the user doesn't exist or is already rejected, return
       if (
         !participant
-          || !isParticipantData(participant)
-          || participant.rejected
+        || !isParticipantData(participant)
+        || participant.rejected
       ) {
         return;
       }
@@ -593,11 +823,10 @@ export abstract class StorageEngine {
   }
 
   // Un-rejects a participant with the given participantId.
-  async undoRejectParticipant(participantId: string, studyId?: string) {
+  async undoRejectParticipant(participantId: string) {
     const participant = await this._getFromStorage(
       `participants/${participantId}`,
       'participantData',
-      studyId,
     );
 
     try {
@@ -691,6 +920,12 @@ export abstract class StorageEngine {
     if (!this.currentParticipantId || this.participantData === undefined) {
       throw new Error('Participant not initialized');
     }
+
+    // Don't save further answers if participant is rejected
+    if (this.participantData.rejected) {
+      return;
+    }
+
     // Update the local copy of the participant data
     this.participantData = {
       ...this.participantData,
@@ -774,6 +1009,8 @@ export abstract class StorageEngine {
     if (this.participantData && serverEndTime === localEndTime) {
       this.participantData.completed = true;
       if (modes.dataCollectionEnabled) {
+        await this._completeCurrentParticipantRealtime();
+
         await this._pushToStorage(
           `participants/${this.currentParticipantId}`,
           'participantData',
@@ -783,8 +1020,6 @@ export abstract class StorageEngine {
           `participants/${this.currentParticipantId}`,
           'participantData',
         );
-
-        await this._completeCurrentParticipantRealtime();
       }
 
       return true;
@@ -793,7 +1028,7 @@ export abstract class StorageEngine {
     return false;
   }
 
-  async getAsset(url:string | null) {
+  async getAsset(url: string | null) {
     if (!url) {
       return null;
     }
@@ -936,7 +1171,7 @@ export abstract class StorageEngine {
         status: 'FAILED',
         error: {
           message:
-              'There is currently no data in your study. A snapshot could not be created.',
+            'There is currently no data in your study. A snapshot could not be created.',
           title: 'Failed to Create Snapshot.',
         },
       };
@@ -1030,7 +1265,7 @@ export abstract class StorageEngine {
         error: {
           title: 'Failed to delete live data or snapshot',
           message:
-              'There was an unspecified error when trying to remove a snapshot or live data.',
+            'There was an unspecified error when trying to remove a snapshot or live data.',
         },
       };
     }
@@ -1095,7 +1330,7 @@ export abstract class StorageEngine {
         error: {
           title: 'Failed to restore a snapshot fully.',
           message:
-              'There was an unspecified error when trying to restore this snapshot.',
+            'There was an unspecified error when trying to restore this snapshot.',
         },
       };
     }
@@ -1160,6 +1395,12 @@ export abstract class CloudStorageEngine extends StorageEngine {
 
   // Removes the admin user with the given email from the storage engine.
   abstract removeAdminUser(email: string): Promise<void>;
+
+  abstract login(): Promise<StoredUser | null | void>;
+
+  abstract unsubscribe(callback: (user: StoredUser | null) => Promise<void>): () => void;
+
+  abstract logout(): Promise<void>;
 
   /*
   * HIGHER-LEVEL METHODS
