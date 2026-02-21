@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('test', async ({ page }) => {
+test('Test website component with reactive response', async ({ page }) => {
   await page.goto('/');
 
   // Click on html-input

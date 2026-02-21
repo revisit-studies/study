@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
 
-test('test', async ({ page }) => {
+test('Test example cleveland', async ({ page }) => {
   await page.goto('/');
 
   await page.getByRole('tab', { name: 'Example Studies' }).click();

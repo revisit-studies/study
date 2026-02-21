@@ -2,7 +2,7 @@
 import { test, expect } from '@playwright/test';
 import { checkSavedAnswers } from './checkSavedAnswers';
 
-test('test', async ({ page }) => {
+test('Test example VLAT full randomized', async ({ page }) => {
   await page.goto('/example-VLAT-full-randomized?PROLIFIC_ID=test');
 
   await page.getByRole('heading', { name: 'What is VLAT?' }).click();

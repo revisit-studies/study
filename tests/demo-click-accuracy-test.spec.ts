@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
 
-test('test', async ({ page }) => {
+test('Test React component with reactive response', async ({ page }) => {
   const trialLen = 2;
   await page.goto('/');
 

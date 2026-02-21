@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
 
-test('test', async ({ page }) => {
+test('Test dynamic block', async ({ page }) => {
   const trialLen = 10;
   await page.goto('/');
 
@@ -11,7 +11,7 @@ test('test', async ({ page }) => {
 
   // Check for introduction page
   const introText = await page.getByRole('heading', { name: 'Introduction' });
-  await expect(introText).toBeVisible({ });
+  await expect(introText).toBeVisible({});
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check for dynamic blocks
@@ -54,15 +54,15 @@ test('test', async ({ page }) => {
 
     expectedLeft = previousAnswers.reduce((leftVal, answer) => {
       const isCorrect = (answer.answer.buttonResponse === 'Left' && answer.parameters.left > answer.parameters.right)
-                        || (answer.answer.buttonResponse === 'Right' && answer.parameters.right > answer.parameters.left)
-                        || (answer.answer.buttonResponse === 'Same' && answer.parameters.left === answer.parameters.right);
+        || (answer.answer.buttonResponse === 'Right' && answer.parameters.right > answer.parameters.left)
+        || (answer.answer.buttonResponse === 'Same' && answer.parameters.left === answer.parameters.right);
       return isCorrect ? Math.min(100, leftVal + 10) : Math.max(0, leftVal - 10);
     }, 30);
 
     expectedRight = previousAnswers.reduce((rightVal, answer) => {
       const isCorrect = (answer.answer.buttonResponse === 'Right' && answer.parameters.right > answer.parameters.left)
-                        || (answer.answer.buttonResponse === 'Left' && answer.parameters.left > answer.parameters.right)
-                        || (answer.answer.buttonResponse === 'Same' && answer.parameters.left === answer.parameters.right);
+        || (answer.answer.buttonResponse === 'Left' && answer.parameters.left > answer.parameters.right)
+        || (answer.answer.buttonResponse === 'Same' && answer.parameters.left === answer.parameters.right);
       return isCorrect ? Math.max(0, rightVal - 10) : Math.min(100, rightVal + 10);
     }, 70);
 

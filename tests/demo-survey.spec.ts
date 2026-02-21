@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
 
-test('test', async ({ page }) => {
+test('Test questionnaire component with responses and randomizing questions and responses', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Form Elements Demo' })
     .getByText('Go to Study')

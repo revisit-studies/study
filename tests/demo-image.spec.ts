@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('test', async ({ page }) => {
+test('Test image component', async ({ page }) => {
   await page.goto('/');
 
   // Click on image-demo

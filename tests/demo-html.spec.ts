@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { checkSavedAnswers } from './checkSavedAnswers';
 
-test('html demo works as intended with previous button', async ({ browser }) => {
+test('Test website component with previous button', async ({ browser }) => {
   const page = await browser.newPage();
   await page.setViewportSize({
     width: 1200,

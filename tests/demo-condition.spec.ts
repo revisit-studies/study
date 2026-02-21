@@ -19,7 +19,7 @@ async function expectStudyComplete(page: import('@playwright/test').Page) {
   await expect(uploaded).toBeVisible({ timeout: 5000 });
 }
 
-test.describe('demo-condition', () => {
+test.describe('Test study condition logic', () => {
   test('cannot switch to another condition after reload when development mode is disabled', async ({ page }) => {
     // Disable development mode so condition changes in the URL do not override persisted participant conditions.
     await page.goto('/analysis/stats/demo-condition/manage');
