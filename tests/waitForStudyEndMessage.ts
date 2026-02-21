@@ -1,17 +1,21 @@
 import { expect, Page } from '@playwright/test';
 
 const UPLOADING_MESSAGE = 'Please wait while your answers are uploaded.';
-const COMPLETED_MESSAGE = /^Thank you for completing the study(\. You may close this window now\.)?$/;
+const DEFAULT_COMPLETED_MESSAGE = 'Thank you for completing the study. You may close this window now.';
+const PROLIFIC_COMPLETED_MESSAGE = /Thank you for completing the study\.\s*You may click this link and return to Prolific/i;
 
 export async function waitForStudyEndMessage(page: Page, timeout = 30000) {
   const uploading = page.getByText(UPLOADING_MESSAGE, { exact: true });
-  const completed = page.getByText(COMPLETED_MESSAGE);
+  const defaultCompleted = page.getByText(DEFAULT_COMPLETED_MESSAGE, { exact: true });
+  const prolificCompleted = page.getByText(PROLIFIC_COMPLETED_MESSAGE);
 
   await expect.poll(async () => (
-    (await completed.isVisible()) || (await uploading.isVisible())
+    (await defaultCompleted.isVisible())
+    || (await prolificCompleted.isVisible())
+    || (await uploading.isVisible())
   ), { timeout }).toBe(true);
 
-  if (!(await completed.isVisible())) {
-    await expect(completed).toBeVisible({ timeout });
+  if (!(await defaultCompleted.isVisible()) && !(await prolificCompleted.isVisible())) {
+    await expect(defaultCompleted.or(prolificCompleted)).toBeVisible({ timeout });
   }
 }
