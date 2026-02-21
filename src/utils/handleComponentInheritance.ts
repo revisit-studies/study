@@ -19,3 +19,8 @@ export function getComponent(name: string, studyConfig: StudyConfig): Individual
   }
   return studyComponentToIndividualComponent(studyConfig.components[name], studyConfig);
 }
+
+export function getComponentName(sequenceName: string) {
+  const m = sequenceName.split(':');
+  return m[m.length - 1];
+}

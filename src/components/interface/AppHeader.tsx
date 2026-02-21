@@ -36,7 +36,7 @@ import { calculateProgressData } from '../../storage/engines/utils';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
-import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { getComponentName, studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { useRecordingContext } from '../../store/hooks/useRecording';
 
 export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
@@ -50,7 +50,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   const { storageEngine } = useStorageEngine();
 
   const currentComponent = useCurrentComponent();
-  const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
+  const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[getComponentName(currentComponent)] || {}, studyConfig), [currentComponent, studyConfig]);
 
   const currentStep = useCurrentStep();
 

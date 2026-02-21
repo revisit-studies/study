@@ -21,11 +21,12 @@ import {
 import { useNavigate, useLocation } from 'react-router';
 import { ParticipantData, Response, StudyConfig } from '../../parser/types';
 import { Sequence, StoredAnswer } from '../../store/types';
-import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
+import { addPathToComponentBlock, getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useStudyId } from '../../routes/utils';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { isDynamicBlock } from '../../parser/utils';
 import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
+import { getComponentName } from '../../utils/handleComponentInheritance';
 
 function hasRandomization(responses: Response[]) {
   return responses.some((response) => {
@@ -98,6 +99,7 @@ type ComponentStepItem = StepItemBase & {
   isLibraryImport: boolean;
   importedLibraryName?: string;
   component?: StudyConfig['components'][string];
+  sequenceName: string;
   componentAnswer?: StoredAnswer;
   componentName: string; // Full component name (e.g., package.components.ComponentName)
   isExcluded?: boolean; // Component was excluded from participant sequence
@@ -257,12 +259,14 @@ export function StepsPanel({
     let newFlatTree: StepItem[] = [];
     if (participantSequence === undefined) {
       // Browse Components
-      newFlatTree = Object.keys(studyConfig.components).map((key) => {
+      newFlatTree = getSequenceFlatMap(studyConfig.sequence).map((key) => {
         const {
           label,
           isLibraryImport,
           importedLibraryName,
         } = parseLibraryComponentReference(key);
+
+        const componentName = getComponentName(key);
 
         return {
           type: 'component',
@@ -272,7 +276,8 @@ export function StepsPanel({
           href: `/${studyId}/reviewer-${key}`,
           isLibraryImport,
           importedLibraryName,
-          componentName: key,
+          componentName,
+          sequenceName: key,
         };
       });
     } else {
@@ -313,6 +318,7 @@ export function StepsPanel({
             component: studyConfig.components[node],
             componentAnswer: participantAnswers[componentIdentifier],
             componentName: node,
+            sequenceName: node,
           });
 
           if (dynamic) {
@@ -417,6 +423,7 @@ export function StepsPanel({
               component: studyConfig.components[excludedComponent],
               componentName: excludedComponent,
               isExcluded: true,
+              sequenceName: excludedComponent,
             });
           });
 
@@ -472,6 +479,7 @@ export function StepsPanel({
                     component: studyConfig.components[child],
                     componentName: child,
                     isExcluded: true,
+                    sequenceName: child,
                   });
                 } else {
                   const childBlockPath = `${excludedParentPath}.${child.id ?? child.order}_excluded`;
@@ -544,7 +552,7 @@ export function StepsPanel({
     // Set full and rendered flat tree
     setFullFlatTree(newFlatTree);
     setRenderedFlatTree(newFlatTree);
-  }, [fullOrder, participantAnswers, participantSequence, studyConfig.components, studyId]);
+  }, [fullOrder, participantAnswers, participantSequence, studyConfig, studyConfig.components, studyId]);
 
   const collapseBlock = useCallback((startIndex: number, startItem: StepItem) => {
     setRenderedFlatTree((prevRenderedFlatTree) => {
@@ -680,6 +688,7 @@ export function StepsPanel({
             component,
             componentAnswer,
             componentName,
+            sequenceName,
             isLibraryImport: isComponentLibraryImport,
             importedLibraryName: componentImportedLibraryName,
           } = (comp ?? {}) as Partial<ComponentStepItem>;
@@ -740,7 +749,7 @@ export function StepsPanel({
                   onClick={() => {
                     if (isComponent && href && !isExcluded) {
                       if (isAnalysis) {
-                        navigate(`/analysis/stats/${studyId}/stats/${encodeURIComponent(String(componentName))}`);
+                        navigate(`/analysis/stats/${studyId}/stats/${encodeURIComponent(String(sequenceName))}`);
                       } else {
                         navigate(`${href}${location.search}`);
                       }

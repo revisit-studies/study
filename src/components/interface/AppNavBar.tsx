@@ -5,13 +5,13 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { ResponseBlock } from '../response/ResponseBlock';
 import { useCurrentComponent } from '../../routes/utils';
-import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { getComponentName, studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
 export function AppNavBar({ width, top, sidebarOpen }: { width: number, top: number, sidebarOpen: boolean }) {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentComponent = useCurrentComponent();
-  const stepConfig = studyConfig.components[currentComponent];
+  const stepConfig = studyConfig.components[getComponentName(currentComponent)];
 
   const currentConfig = useMemo(() => {
     if (stepConfig) {

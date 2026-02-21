@@ -7,20 +7,23 @@ import { Response, StudyConfig } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
-function filterParticipants(visibleParticipants: ParticipantData[], componentName?: string, excludeRejected?: boolean): ParticipantData[] {
+function filterParticipants(visibleParticipants: ParticipantData[], identifier?: string, excludeRejected?: boolean): ParticipantData[] {
   return visibleParticipants.filter((participant) => {
     // Filter out rejected participants if excludeRejected is true
     const isNotRejected = !excludeRejected || !participant.rejected;
 
     // Filter by component - participant must have an answer for the component and has finished it
-    const hasValidComponentAnswer = !componentName || Object.values(participant.answers).some((answer) => answer.componentName === componentName && answer.startTime > 0 && answer.endTime !== -1);
+    const hasValidComponentAnswer = !identifier || Object.values(participant.answers).some((answer) => {
+      const cleanAnswerIdentifier = answer.identifier.replace(/_[^_]*$/, '');
+      return cleanAnswerIdentifier === identifier && answer.startTime > 0 && answer.endTime !== -1;
+    });
 
     return isNotRejected && hasValidComponentAnswer;
   });
 }
 
-function calculateParticipantCounts(visibleParticipants: ParticipantData[], componentName?: string): ParticipantCounts {
-  const filteredParticipants = filterParticipants(visibleParticipants, componentName, false);
+function calculateParticipantCounts(visibleParticipants: ParticipantData[], identifier?: string): ParticipantCounts {
+  const filteredParticipants = filterParticipants(visibleParticipants, identifier, false);
 
   const participantCounts: ParticipantCounts = {
     total: filteredParticipants.length,
@@ -33,9 +36,9 @@ function calculateParticipantCounts(visibleParticipants: ParticipantData[], comp
   return participantCounts;
 }
 
-function calculateDateStats(visibleParticipants: ParticipantData[], componentName?: string): { startDate: Date | null; endDate: Date | null } {
+function calculateDateStats(visibleParticipants: ParticipantData[], identifier?: string): { startDate: Date | null; endDate: Date | null } {
   // Filter out rejected participants and filter by component if provided
-  const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
+  const filteredParticipants = filterParticipants(visibleParticipants, identifier, true);
   const answers = filteredParticipants
     .flatMap((participant) => Object.values(participant.answers))
     .filter((answer) => answer.endTime !== -1);
@@ -53,15 +56,16 @@ function calculateDateStats(visibleParticipants: ParticipantData[], componentNam
   };
 }
 
-function calculateTimeStats(visibleParticipants: ParticipantData[], componentName?: string): { avgTime: number; avgCleanTime: number; participantsWithInvalidCleanTimeCount: number } {
+function calculateTimeStats(visibleParticipants: ParticipantData[], identifier?: string): { avgTime: number; avgCleanTime: number; participantsWithInvalidCleanTimeCount: number } {
   // Filter out rejected participants and filter by component if provided
-  const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
+  const filteredParticipants = filterParticipants(visibleParticipants, identifier, true);
 
   let participantsWithInvalidCleanTimeCount = 0;
+
   const time = filteredParticipants.reduce((acc, participant) => {
     let hasInvalidCleanTime = false;
     const timeStats = Object.values(participant.answers)
-      .filter((answer) => (!componentName || answer.componentName === componentName) && answer.endTime !== -1)
+      .filter((answer) => (!identifier || answer.identifier.replace(/_[^_]*$/, '') === identifier) && answer.endTime !== -1)
       .map((answer) => {
         const cleanedDuration = getCleanedDuration(answer as never);
         if (cleanedDuration === -1) {

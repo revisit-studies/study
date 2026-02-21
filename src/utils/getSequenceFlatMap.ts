@@ -2,8 +2,10 @@ import { DynamicBlock, StudyConfig } from '../parser/types';
 import { isDynamicBlock } from '../parser/utils';
 import { Sequence } from '../store/types';
 
-export function getSequenceFlatMap<T extends Sequence | StudyConfig['sequence']>(sequence: T): string[] {
-  return isDynamicBlock(sequence) ? [sequence.id] : sequence.components.flatMap((component) => (typeof component === 'string' ? component : getSequenceFlatMap(component)));
+export function getSequenceFlatMap<T extends Sequence | StudyConfig['sequence']>(sequence: T, block:string = ''): string[] {
+  return isDynamicBlock(sequence)
+    ? [`${block ? `${block}:` : ''}${sequence.id}`]
+    : sequence.components.flatMap((component) => (typeof component === 'string' ? (`${sequence.id ? `${sequence.id}:` : ''}${component}`) : getSequenceFlatMap(component, `${block}:${sequence.id || ''}`)));
 }
 
 function findAllFuncBlocks(sequence: StudyConfig['sequence']): DynamicBlock[] {
