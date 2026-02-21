@@ -24,3 +24,8 @@ Li, Q., Joo, S. J., Yeatman, J. D., & Reinecke, K. (2020). Controlling for Parti
  journal = {Scientific Reports}
 }
 ```
+
+## Relevant files:
+ * [The Config](https://github.com/revisit-studies/study/blob/main/public/library-virtual-chinrest/config.json)
+
+## Relevant documentation:

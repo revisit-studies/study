@@ -5,3 +5,8 @@ This is an example study designed to demonstrate how to embed various question t
 You'll also see how to randomize the order of options within a question, as well as the order of questions within a form.
 
 Make sure to review [the documentation for BaseResponse](https://revisit.dev/docs/typedoc/interfaces/BaseResponse/).
+
+## Relevant files:
+ * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-survey/config.json)
+
+## Relevant documentation:

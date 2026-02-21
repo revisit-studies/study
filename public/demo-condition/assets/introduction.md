@@ -9,3 +9,14 @@ Try these URLs:
 - [/demo-condition?condition=size](../demo-condition?condition=size)
 - [/demo-condition?condition=shape](../demo-condition?condition=shape)
 - [/demo-condition?condition=color,size](../demo-condition?condition=color,size)
+
+## Relevant files:
+ * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-condition/config.json)
+ * [color-trial-1.html](https://github.com/revisit-studies/study/blob/main/public/demo-condition/assets/color-trial-1.html)
+ * [color-trial-2.html](https://github.com/revisit-studies/study/blob/main/public/demo-condition/assets/color-trial-2.html)
+ * [shape-trial-1.html](https://github.com/revisit-studies/study/blob/main/public/demo-condition/assets/shape-trial-1.html)
+ * [shape-trial-2.html](https://github.com/revisit-studies/study/blob/main/public/demo-condition/assets/shape-trial-2.html)
+ * [size-trial-1.html](https://github.com/revisit-studies/study/blob/main/public/demo-condition/assets/size-trial-1.html)
+ * [size-trial-2.html](https://github.com/revisit-studies/study/blob/main/public/demo-condition/assets/size-trial-2.html)
+
+## Relevant documentation:
