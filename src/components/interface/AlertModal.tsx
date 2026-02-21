@@ -5,6 +5,9 @@ import { IconAlertCircle } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useStoreActions, useStoreDispatch, useStoreSelector } from '../../store/store';
 
+const EMAIL_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,})/g;
+const SINGLE_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/;
+
 export function AlertModal() {
   const alertModal = useStoreSelector((state) => state.alertModal);
   const { setAlertModal } = useStoreActions();
@@ -15,7 +18,7 @@ export function AlertModal() {
 
   useEffect(() => setOpened(alertModal.show), [alertModal.show]);
 
-  const messageParts = alertModal.message.split(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,})/g);
+  const messageParts = alertModal.message.split(EMAIL_REGEX);
 
   return (
     <Modal opened={opened} centered size="lg" withCloseButton={false} onClose={close}>
@@ -29,10 +32,10 @@ export function AlertModal() {
       >
         <Text my="md" style={{ whiteSpace: 'pre-line' }}>
           {messageParts.map((part, index) => {
-            if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/.test(part)) {
-              return <Anchor key={`${part}-${index}`} href={`mailto:${part}`}>{part}</Anchor>;
+            if (SINGLE_EMAIL_REGEX.test(part)) {
+              return <Anchor key={`email-${part}-${index}`} href={`mailto:${part}`}>{part}</Anchor>;
             }
-            return <span key={`${part}-${index}`}>{part}</span>;
+            return <span key={`text-${index}`}>{part}</span>;
           })}
         </Text>
 
