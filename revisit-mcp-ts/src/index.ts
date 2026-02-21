@@ -9,6 +9,61 @@ import {
   validateGlobalConfig,
   validateStudyConfig
 } from './utils';
+import fs from 'fs';
+
+const debugLogPath = "/Users/dyr429/Workspace/revisit-latest/.cursor/debug.log";
+
+function debugLog(payload: Record<string, unknown>) {
+  try {
+    // #region agent log
+    fetch("http://127.0.0.1:7242/ingest/20547c30-f61e-4d2d-a5bf-8584288c671f", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }).catch(() => {
+      fs.appendFileSync(debugLogPath, `${JSON.stringify(payload)}\n`);
+    });
+    // #endregion agent log
+  } catch {
+    fs.appendFileSync(debugLogPath, `${JSON.stringify(payload)}\n`);
+  }
+}
+
+process.on("uncaughtException", (error) => {
+  debugLog({
+    sessionId: "debug-session",
+    runId: "run1",
+    hypothesisId: "H7",
+    location: "revisit-mcp-ts/index.ts:uncaughtException",
+    message: "Uncaught exception",
+    data: { error: error instanceof Error ? error.message : String(error) },
+    timestamp: Date.now()
+  });
+});
+
+process.on("unhandledRejection", (reason) => {
+  debugLog({
+    sessionId: "debug-session",
+    runId: "run1",
+    hypothesisId: "H7",
+    location: "revisit-mcp-ts/index.ts:unhandledRejection",
+    message: "Unhandled rejection",
+    data: { reason: String(reason) },
+    timestamp: Date.now()
+  });
+});
+
+process.on("exit", (code) => {
+  debugLog({
+    sessionId: "debug-session",
+    runId: "run1",
+    hypothesisId: "H7",
+    location: "revisit-mcp-ts/index.ts:exit",
+    message: "Process exiting",
+    data: { code },
+    timestamp: Date.now()
+  });
+});
 
 
 
@@ -690,12 +745,57 @@ server.registerTool("validatestudyconfig",
 
 (async () => {
   try {
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H7",
+      location: "revisit-mcp-ts/index.ts:startup",
+      message: "MCP server starting",
+      data: { nodeVersion: process.version, cwd: process.cwd(), argv: process.argv },
+      timestamp: Date.now()
+    });
     // Load schemas before starting the server
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H7",
+      location: "revisit-mcp-ts/index.ts:startup",
+      message: "Loading schemas",
+      data: {},
+      timestamp: Date.now()
+    });
     await loadSchemas();
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H7",
+      location: "revisit-mcp-ts/index.ts:startup",
+      message: "Schemas loaded",
+      data: {},
+      timestamp: Date.now()
+    });
 
     const transport = new StdioServerTransport();
     await server.connect(transport);
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H7",
+      location: "revisit-mcp-ts/index.ts:startup",
+      message: "MCP server connected",
+      data: {},
+      timestamp: Date.now()
+    });
   } catch (error) {
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H7",
+      location: "revisit-mcp-ts/index.ts:startup",
+      message: "MCP server failed",
+      data: { error: error instanceof Error ? error.message : String(error) },
+      timestamp: Date.now()
+    });
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Failed to start Revisit MCP server: ${message}`);
     process.exit(1);

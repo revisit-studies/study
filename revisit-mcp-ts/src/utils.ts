@@ -1,11 +1,29 @@
 import path from 'path';
 import Ajv from 'ajv';
+import fsSync from 'fs';
 
 // Load the actual JSON schemas from the Revisit project
 let globalConfigSchema: any = null;
 let studyConfigSchema: any = null;
 let globalValidate: any = null;
 let studyValidate: any = null;
+const debugLogPath = "/Users/dyr429/Workspace/revisit-latest/.cursor/debug.log";
+
+function debugLog(payload: Record<string, unknown>) {
+  try {
+    // #region agent log
+    fetch("http://127.0.0.1:7242/ingest/20547c30-f61e-4d2d-a5bf-8584288c671f", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }).catch(() => {
+      fsSync.appendFileSync(debugLogPath, `${JSON.stringify(payload)}\n`);
+    });
+    // #endregion agent log
+  } catch {
+    fsSync.appendFileSync(debugLogPath, `${JSON.stringify(payload)}\n`);
+  }
+}
 
 export async function loadSchemas() {
   const fs = await import('fs/promises');
@@ -13,13 +31,62 @@ export async function loadSchemas() {
   try {
     // Load global config schema
     const globalSchemaPath = path.join(__dirname, '..', '..', 'src', 'parser', 'GlobalConfigSchema.json');
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H8",
+      location: "utils.ts:loadSchemas",
+      message: "Reading schema files",
+      data: {
+        globalSchemaPath,
+        studySchemaPath: path.join(__dirname, '..', '..', 'src', 'parser', 'StudyConfigSchema.json'),
+        globalSchemaExists: fsSync.existsSync(globalSchemaPath)
+      },
+      timestamp: Date.now()
+    });
     const globalSchemaContent = await fs.readFile(globalSchemaPath, 'utf-8');
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H8",
+      location: "utils.ts:loadSchemas",
+      message: "Global schema read",
+      data: { size: globalSchemaContent.length },
+      timestamp: Date.now()
+    });
     globalConfigSchema = JSON.parse(globalSchemaContent);
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H8",
+      location: "utils.ts:loadSchemas",
+      message: "Global schema parsed",
+      data: {},
+      timestamp: Date.now()
+    });
 
     // Load study config schema
     const studySchemaPath = path.join(__dirname, '..', '..', 'src', 'parser', 'StudyConfigSchema.json');
     const studySchemaContent = await fs.readFile(studySchemaPath, 'utf-8');
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H8",
+      location: "utils.ts:loadSchemas",
+      message: "Study schema read",
+      data: { size: studySchemaContent.length, studySchemaExists: fsSync.existsSync(studySchemaPath) },
+      timestamp: Date.now()
+    });
     studyConfigSchema = JSON.parse(studySchemaContent);
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H8",
+      location: "utils.ts:loadSchemas",
+      message: "Study schema parsed",
+      data: {},
+      timestamp: Date.now()
+    });
 
     // Initialize AJV validators
     const ajv = new Ajv({
@@ -29,16 +96,45 @@ export async function loadSchemas() {
       allowUnionTypes: true
     });
 
-    ajv.addSchema(globalConfigSchema);
-    ajv.addSchema(studyConfigSchema);
+    globalConfigSchema.$id = "GlobalConfigSchema";
+    studyConfigSchema.$id = "StudyConfigSchema";
+    ajv.addSchema(globalConfigSchema, "GlobalConfigSchema");
+    ajv.addSchema(studyConfigSchema, "StudyConfigSchema");
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H8",
+      location: "utils.ts:loadSchemas",
+      message: "AJV schemas added",
+      data: {},
+      timestamp: Date.now()
+    });
 
-    globalValidate = ajv.getSchema('#/definitions/GlobalConfig');
-    studyValidate = ajv.getSchema('#/definitions/StudyConfig');
+    globalValidate = ajv.getSchema('GlobalConfigSchema#/definitions/GlobalConfig');
+    studyValidate = ajv.getSchema('StudyConfigSchema#/definitions/StudyConfig');
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H8",
+      location: "utils.ts:loadSchemas",
+      message: "AJV validators created",
+      data: { hasGlobal: Boolean(globalValidate), hasStudy: Boolean(studyValidate) },
+      timestamp: Date.now()
+    });
 
     if (!globalValidate || !studyValidate) {
       throw new Error('Schema validators could not be initialized');
     }
   } catch (error) {
+    debugLog({
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H8",
+      location: "utils.ts:loadSchemas",
+      message: "Schema load failed",
+      data: { error: error instanceof Error ? error.message : String(error) },
+      timestamp: Date.now()
+    });
     globalConfigSchema = null;
     studyConfigSchema = null;
     globalValidate = null;
