@@ -1,8 +1,8 @@
 /* eslint-disable no-await-in-loop */
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { nextClick, waitForStudyEndMessage } from './utils';
 
-async function getCurrentTaskQuestion(page: import('@playwright/test').Page) {
+async function getCurrentTaskQuestion(page: Page) {
   const question = page.locator('p').filter({ has: page.locator('strong:has-text("Question:")') }).first();
   if (!(await question.isVisible().catch(() => false))) {
     return '';
@@ -11,7 +11,7 @@ async function getCurrentTaskQuestion(page: import('@playwright/test').Page) {
 }
 
 async function answerCurrentMvnvPrompt(
-  page: import('@playwright/test').Page,
+  page: Page,
   taskTimeoutMs = 10000,
   startingQuestion = '',
 ) {

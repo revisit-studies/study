@@ -1,4 +1,9 @@
-import { expect, test, Page } from '@playwright/test';
+import {
+  expect,
+  test,
+  Page,
+  Locator,
+} from '@playwright/test';
 import { nextClick, waitForStudyEndMessage } from './utils';
 
 async function getAvailableItemsZone(page: Page) {
@@ -9,8 +14,8 @@ async function getAvailableItemsZone(page: Page) {
 
 async function dragWithMouse(
   page: Page,
-  source: import('@playwright/test').Locator,
-  target: import('@playwright/test').Locator,
+  source: Locator,
+  target: Locator,
   dropOnTargetCenter = false,
 ) {
   await expect(source).toBeVisible();

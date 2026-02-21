@@ -1,8 +1,8 @@
 /* eslint-disable no-await-in-loop */
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { nextClick, waitForStudyEndMessage } from './utils';
 
-async function advanceToSidebarFormElements(page: import('@playwright/test').Page) {
+async function advanceToSidebarFormElements(page: Page) {
   const sidebarAgeInput = page.locator('input[placeholder="Enter your age here, range from 0 - 100"]:visible').first();
 
   for (let i = 0; i < 3; i += 1) {
