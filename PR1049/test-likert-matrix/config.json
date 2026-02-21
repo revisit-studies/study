@@ -1,0 +1,84 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "Test LIKERT",
+        "version": "pilot",
+        "authors": [
+            "The reVISit Team"
+        ],
+        "date": "2024-11-24",
+        "description": "Testing for likert",
+        "organizations": [
+            "University of Utah",
+            "WPI",
+            "University of Toronto"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "contact@revisit.dev",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "withSidebar": true,
+        "urlParticipantIdParam": "PROLIFIC_PID",
+        "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [yourProlificLink](yourProlificLink)"
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "likert-component"
+        ]
+    },
+    "components": {
+        "likert-component": {
+            "response": [
+                {
+                    "id": "my_likert",
+                    "prompt": "How likely would you be to own each of the following pets?",
+                    "secondaryText": "1 = Not at all confident, 5 = Very confident",
+                    "location": "aboveStimulus",
+                    "type": "matrix-radio",
+                    "answerOptions": "satisfaction5",
+                    "questionOptions": [
+                        "Cat",
+                        "Dog",
+                        "Rat",
+                        "Horse",
+                        "Sentient Robot"
+                    ]
+                },
+                {
+                    "id": "additional_likert",
+                    "prompt": "For each animal, select all that apply.",
+                    "secondaryText": "1 = Not at all confident, 5 = Very confident",
+                    "location": "aboveStimulus",
+                    "type": "matrix-checkbox",
+                    "answerOptions": [
+                        "I've never seen that animal",
+                        "I've never owned one.",
+                        "I know somebody who owns this type of animal",
+                        "I owned one when I was a child.",
+                        "I own one now"
+                    ],
+                    "questionOptions": [
+                        "Cat",
+                        "Dog",
+                        "Rat",
+                        "Horse",
+                        "Sentient Robot"
+                    ]
+                },
+                {
+                    "id": "q1",
+                    "prompt": "How useful did you find the rectangular selection method? ",
+                    "location": "aboveStimulus",
+                    "type": "likert",
+                    "numItems": 7,
+                    "rightLabel": "Like",
+                    "leftLabel": "Dislike"
+                }
+            ],
+            "type": "questionnaire"
+        }
+    }
+}
