@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { waitForStudyEndMessage } from './waitForStudyEndMessage';
+import { nextClick, waitForStudyEndMessage } from './utils';
 
 test('Test image component', async ({ page }) => {
   await page.goto('/');
@@ -9,12 +9,10 @@ test('Test image component', async ({ page }) => {
     .getByText('Go to Study')
     .click();
 
-  // Check that the page contains the introduction text
-  const introText = await page.getByText('Welcome to our study. This is a replication of a study by Padilla et al., publis');
-  await expect(introText).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check the page contains the question
   const question1Text = await page.getByText('Will you issue blankets to the alpacas?');
@@ -26,7 +24,7 @@ test('Test image component', async ({ page }) => {
 
   // Select a response and click next
   await page.getByLabel('Yes').check();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check the page contains the question
   const question2Text = await page.getByText('Will you issue blankets to the alpacas?');
@@ -50,14 +48,14 @@ test('Test image component', async ({ page }) => {
 
   // Select a response and click next
   await page.getByLabel('Yes').check();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check the page contains the visualization
   const img4 = await page.getByRole('main').getByRole('img');
   await expect(img4).toBeVisible();
 
   // Select a response and click next
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check that the end of study text renders
   await waitForStudyEndMessage(page);

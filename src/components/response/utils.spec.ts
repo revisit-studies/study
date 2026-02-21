@@ -2,6 +2,7 @@ import {
   afterEach, beforeEach, describe, expect, it,
 } from 'vitest';
 import type { MatrixResponse } from '../../parser/types';
+import { generateInitFields, mergeReactiveAnswers } from './utils';
 
 describe('generateInitFields', () => {
   const originalWindow = globalThis.window;
@@ -28,9 +29,7 @@ describe('generateInitFields', () => {
     });
   });
 
-  it('uses question label when matrix question value is omitted', async () => {
-    const { generateInitFields } = await import('./utils');
-
+  it('uses question label when matrix question value is omitted', () => {
     const response: MatrixResponse = {
       id: 'matrix-question-fallback',
       prompt: 'Matrix prompt',
@@ -54,9 +53,7 @@ describe('generateInitFields', () => {
 });
 
 describe('mergeReactiveAnswers', () => {
-  it('merges all reactive response ids from a single submission', async () => {
-    const { mergeReactiveAnswers } = await import('./utils');
-
+  it('merges all reactive response ids from a single submission', () => {
     const mergedValues = mergeReactiveAnswers(
       [
         {

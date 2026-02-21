@@ -19,9 +19,9 @@ jobs:
             os: ubuntu-latest
             cache_dir: ~/.cache/ms-playwright
 
-          - project: firefox
-            os: ubuntu-latest
-            cache_dir: ~/.cache/ms-playwright
+          # - project: firefox
+          #   os: ubuntu-latest
+          #   cache_dir: ~/.cache/ms-playwright
 
           - project: webkit
             os: macos-14

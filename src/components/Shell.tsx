@@ -107,9 +107,12 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           : undefined;
         const searchParamsObject = Object.fromEntries(searchParams.entries());
 
-        const ipRes = await fetch('https://api.ipify.org?format=json').catch(
-          (_) => '',
-        );
+        const ipTimeoutController = new AbortController();
+        const ipTimeoutId = window.setTimeout(() => ipTimeoutController.abort(), 1200);
+        const ipRes = await fetch('https://api.ipify.org?format=json', {
+          signal: ipTimeoutController.signal,
+        }).catch(() => '');
+        window.clearTimeout(ipTimeoutId);
         const ip: { ip: string } = ipRes instanceof Response ? await ipRes.json() : { ip: '' };
 
         const metadata: ParticipantMetadata = {

@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { expect, test } from '@playwright/test';
+import { nextClick, waitForStudyEndMessage } from './utils';
 
 test('Test vega component with reactive response', async ({ page }) => {
   await page.goto('/demo-vega');
@@ -7,7 +8,7 @@ test('Test vega component with reactive response', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Vega Stimuli Demo' })).toBeVisible();
   await expect(page.getByText('This is a demo study that uses stimuli built with Vega')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   await expect(page.getByText('Click on the bar with the highest value.')).toBeVisible();
 
@@ -56,7 +57,7 @@ test('Test vega component with reactive response', async ({ page }) => {
   await firstConfidenceSlider.press('ArrowRight');
 
   await expect(nextButton).toBeEnabled();
-  await nextButton.click();
+  await nextClick(page);
 
   await expect(page.getByText('Select the movie with highest World Wide Gross.')).toBeVisible();
 
@@ -106,8 +107,7 @@ test('Test vega component with reactive response', async ({ page }) => {
   await secondConfidenceSlider.press('ArrowRight');
 
   await expect(nextButton).toBeEnabled();
-  await nextButton.click();
+  await nextClick(page);
 
-  await expect(page.getByText('Please wait while your answers are uploaded.')).toBeVisible();
-  await expect(page.getByText('Thank you for completing the study. You may close this window now.')).toBeVisible();
+  await waitForStudyEndMessage(page);
 });

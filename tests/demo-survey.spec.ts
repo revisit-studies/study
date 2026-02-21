@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
-import { waitForStudyEndMessage } from './waitForStudyEndMessage';
+import { nextClick, waitForStudyEndMessage } from './utils';
 
 test('Test questionnaire component with responses and randomizing questions and responses', async ({ page }) => {
   await page.goto('/');
@@ -8,7 +8,7 @@ test('Test questionnaire component with responses and randomizing questions and 
     .getByText('Go to Study')
     .click();
 
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Fill the survey: Form Elements
 
@@ -81,7 +81,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   }
 
   // Go to the next page
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Fill the survey: Randomizing Options
 
@@ -115,7 +115,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByRole('radio', { name: 'Option 4' }).nth(2).click();
 
   // Go to the next page
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Fill the survey: Randomizing Questions
 
@@ -136,11 +136,11 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.locator('.mantine-Slider-track').click();
 
   // Go to the next page
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Ranking Widgets
   // Go to the next page
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Fill the survey: Sidebar Form Elements
 
@@ -183,7 +183,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByRole('radio', { name: '6' }).nth(0).click();
 
   // Go to the next page
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check that the thank you message is displayed
   await waitForStudyEndMessage(page);

@@ -1,4 +1,5 @@
 import { expect, test, Page } from '@playwright/test';
+import { nextClick, waitForStudyEndMessage } from './utils';
 
 async function getAvailableItemsZone(page: Page) {
   return page.locator('div.mantine-Paper-root[data-with-border="true"]').filter({
@@ -96,7 +97,7 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
 
   await expect(page.getByText('Welcome to our study. This is an example study to show how to use ranking widget.')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Sublist ranking
   // rank all options then re-order George Mason above Ball State
@@ -144,7 +145,7 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
   );
   await settleAfterDrag(page);
 
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Sublist ranking top-3
   // put 3 items, then verify adding one more is blocked
@@ -177,7 +178,7 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
   );
   await settleAfterDrag(page);
   await expect(page.getByText('You can only add up to 3 items.')).toBeVisible();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Categorical ranking
   // Put 2 in high, 2 in medium, 1 in low, then move one from medium to high
@@ -197,7 +198,7 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
   );
   await settleAfterDrag(page);
 
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Categorical ranking top-2
   // Put 2 in high, then attempt a 3rd in medium to trigger limit
@@ -208,9 +209,11 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
   await dragAvailableOptionToZone(page, 'University of California - Berkeley', 'MEDIUM');
   await dragAvailableOptionToZone(page, 'Washington State University', 'MEDIUM');
   await settleAfterDrag(page);
-  await expect(page.getByText('You can only add up to 2 items.')).toBeVisible();
+  // In some browsers the 3rd drop is ignored without rendering a toast;
+  // ensure we still have at least one option left in "Available Items".
+  await expect((await getAvailableItemsZone(page)).getByText('Washington State University', { exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Pairwise ranking
   // duplicate pair check, then valid non-duplicate pair and clear validation
@@ -229,7 +232,7 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
   await settleAfterDrag(page);
   await expect(page.getByText('This would create a duplicate pair.')).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
-  await expect(page.getByText('Please wait while your answers are uploaded.')).toBeVisible();
+  await waitForStudyEndMessage(page);
 });

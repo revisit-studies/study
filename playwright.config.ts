@@ -15,7 +15,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   // Use conservative parallelism on CI across matrix jobs.
   workers: process.env.CI ? 2 : '90%',
-  timeout: 180000,
+  timeout: process.env.CI ? 180000 : 60000,
   reporter: 'html',
 
   use: {

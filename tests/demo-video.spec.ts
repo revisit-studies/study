@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { nextClick, waitForStudyEndMessage } from './utils';
 
 test('Test video component with force completion and missing asset errors', async ({ page, browserName }) => {
   await page.goto('/demo-video');
@@ -7,7 +8,7 @@ test('Test video component with force completion and missing asset errors', asyn
 
   await expect(page.getByRole('heading', { name: 'Video as a Stimulus' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   const video = page.locator('.video#internal video').first();
   const playButton = page.locator('.video#internal button[data-plyr="play"]').first();
@@ -30,7 +31,7 @@ test('Test video component with force completion and missing asset errors', asyn
     await page.waitForTimeout(7000);
 
     await expect(nextButton).toBeEnabled({ timeout: 20000 });
-    await nextButton.click();
+    await nextClick(page);
   }
 
   await expect(page.getByText('404')).toBeVisible();
@@ -43,7 +44,7 @@ test('Test video component with force completion and missing asset errors', asyn
   await expect(externalLabel).toBeVisible();
   await externalLabel.click();
   await expect(nextButton).toBeEnabled();
-  await nextButton.click();
+  await nextClick(page);
 
   await expect(page.getByText('404')).toBeVisible();
   await expect(page.getByText('https://www.youtube.com/watch')).toBeVisible();
@@ -55,6 +56,5 @@ test('Test video component with force completion and missing asset errors', asyn
   await expect(endLabel).toBeVisible();
   await endLabel.click();
 
-  const endText = page.getByText('Please wait while your answers are uploaded.');
-  await expect(endText).toBeVisible();
+  await waitForStudyEndMessage(page);
 });

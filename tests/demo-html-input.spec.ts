@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { waitForStudyEndMessage } from './waitForStudyEndMessage';
+import { nextClick, waitForStudyEndMessage } from './utils';
 
 test('Test website component with reactive response', async ({ page }) => {
   await page.goto('/');
@@ -9,12 +9,10 @@ test('Test website component with reactive response', async ({ page }) => {
     .getByText('Go to Study')
     .click();
 
-  // Check that the page contains the introduction text
-  const introText = await page.getByText('Welcome to our study. This is an example study to show how to embed html element');
-  await expect(introText).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check the page contains the question
   const questionText = await page.getByText('Click on the largest bar');
@@ -32,7 +30,7 @@ test('Test website component with reactive response', async ({ page }) => {
   await expect(responseValue).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check the page contains the question
   const questionText2 = await page.getByText('Click on the smallest bar');
@@ -50,7 +48,7 @@ test('Test website component with reactive response', async ({ page }) => {
   await expect(responseValue2).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check that the end of study text renders
   await waitForStudyEndMessage(page);
