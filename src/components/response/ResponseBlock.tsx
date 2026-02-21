@@ -5,6 +5,7 @@ import {
 import React, {
   useEffect, useMemo, useState, useCallback,
 } from 'react';
+import isEqual from 'lodash.isequal';
 import { useNavigate } from 'react-router';
 import { Registry, initializeTrrack } from '@trrack/core';
 import {
@@ -156,7 +157,7 @@ export function ResponseBlock({
   useEffect(() => {
     if (reactiveAnswers) {
       const mergedValues = mergeReactiveAnswers(responsesWithDefaults, answerValidator.values, reactiveAnswers);
-      if (mergedValues !== answerValidator.values) {
+      if (!isEqual(mergedValues, answerValidator.values)) {
         answerValidator.setValues(mergedValues);
       }
     }
