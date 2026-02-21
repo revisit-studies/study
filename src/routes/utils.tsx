@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   useEffect, useMemo, useState,
 } from 'react';
@@ -33,7 +33,13 @@ export function useCurrentStep() {
     return decryptIndex(index);
   }, [index]);
 
-  return decrypted;
+  const [searchParams] = useSearchParams();
+
+  const currentTrial = searchParams.get('currentTrial') || '';
+
+  const currentTrialNumberFromQuery = +currentTrial.slice(currentTrial.lastIndexOf('_') + 1);
+
+  return currentTrial ? currentTrialNumberFromQuery : decrypted;
 }
 
 const modules = import.meta.glob(
