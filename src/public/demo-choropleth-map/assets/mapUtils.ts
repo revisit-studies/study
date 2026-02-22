@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
+import type { Feature, FeatureCollection, Geometry } from 'geojson';
 import type { Topology } from 'topojson-specification';
 import mapData from './states-albers-10m.json' assert { type: 'json' };
 import type { CsvRow, USObjectData, SvgSelection } from './types';
@@ -40,11 +41,14 @@ export function drawMap(
     .geoIdentity()
     .fitSize([MAP_WIDTH, MAP_HEIGHT], topojson.feature(us, us.objects.states));
   const path = d3.geoPath().projection(projection);
-  const statesFeature = topojson.feature(us, us.objects.states);
+  const statesFeature = topojson.feature(us, us.objects.states) as FeatureCollection<
+    Geometry,
+    { name: string }
+  >;
 
   svg
     .append('g')
-    .selectAll('path')
+    .selectAll<SVGPathElement, Feature<Geometry, { name: string }>>('path')
     .data(statesFeature.features)
     .join('path')
     .attr('d', path)
