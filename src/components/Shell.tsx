@@ -32,6 +32,11 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
 import { hash } from '../storage/engines/utils';
+import {
+  filterSequenceByCondition,
+  parseConditionParam,
+  resolveParticipantConditions,
+} from '../utils/handleConditionLogic';
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
@@ -44,7 +49,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       getStudyConfig(studyId, globalConfig).then((config) => {
         setActiveConfig(config);
       });
-      return () => {};
+      return () => { };
     }
     if (globalConfig && studyId) {
       const messageListener = (event: MessageEvent) => {
@@ -65,7 +70,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         window.removeEventListener('message', messageListener);
       };
     }
-    return () => {};
+    return () => { };
   }, [globalConfig, studyId]);
 
   const [routes, setRoutes] = useState<RouteObject[]>([]);
@@ -74,6 +79,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const [searchParams] = useSearchParams();
 
   const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
+  const studyCondition = useMemo(() => parseConditionParam(searchParams.get('condition')), [searchParams]);
 
   useEffect(() => {
     async function initializeUserStoreRouting() {
@@ -81,7 +87,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       if (!storageEngine || !activeConfig || !studyId) return;
 
       try {
-      // Make sure that we have a study database and that the study database has a sequence array
+        // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(studyId);
         await storageEngine.saveConfig(activeConfig);
 
@@ -92,6 +98,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           );
         }
 
+        const modes = await storageEngine.getModes(studyId);
+
         // Get or generate participant session
         const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
           ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
@@ -99,9 +107,12 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           : undefined;
         const searchParamsObject = Object.fromEntries(searchParams.entries());
 
-        const ipRes = await fetch('https://api.ipify.org?format=json').catch(
-          (_) => '',
-        );
+        const ipTimeoutController = new AbortController();
+        const ipTimeoutId = window.setTimeout(() => ipTimeoutController.abort(), 1200);
+        const ipRes = await fetch('https://api.ipify.org?format=json', {
+          signal: ipTimeoutController.signal,
+        }).catch(() => '');
+        window.clearTimeout(ipTimeoutId);
         const ip: { ip: string } = ipRes instanceof Response ? await ipRes.json() : { ip: '' };
 
         const metadata: ParticipantMetadata = {
@@ -119,14 +130,26 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           ip: ip.ip,
         };
 
-        const participantSession = await storageEngine.initializeParticipantSession(
+        let participantSession = await storageEngine.initializeParticipantSession(
           searchParamsObject,
           activeConfig,
           metadata,
           participantId || urlParticipantId,
         );
 
-        const modes = await storageEngine.getModes(studyId);
+        if (studyCondition.length > 0 && modes.developmentModeEnabled) {
+          const updatedSearchParams = {
+            ...participantSession.searchParams,
+            condition: studyCondition.join(','),
+          };
+          await storageEngine.updateParticipantSearchParams(updatedSearchParams);
+          await storageEngine.updateStudyCondition(studyCondition);
+          participantSession = {
+            ...participantSession,
+            searchParams: updatedSearchParams,
+            conditions: studyCondition,
+          };
+        }
         const activeHash = await hash(JSON.stringify(activeConfig));
 
         let participantConfig = activeConfig;
@@ -135,26 +158,41 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], studyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
         }
 
+        const effectiveStudyCondition = resolveParticipantConditions({
+          urlCondition: studyCondition,
+          participantConditions: participantSession.conditions,
+          participantSearchParamCondition: participantSession.searchParams?.condition,
+          allowUrlOverride: modes.developmentModeEnabled,
+        });
+        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, effectiveStudyCondition);
         // Initialize the redux stores
         const newStore = await studyStoreCreator(
           studyId,
           participantConfig,
-          participantSession.sequence,
+          filteredParticipantSequence,
           metadata,
           participantSession.answers,
           modes,
           participantSession.participantId,
           participantSession.completed,
           false,
+          participantSession.participantConfigHash !== activeHash,
         );
         setStore(newStore);
       } catch (error) {
         console.error('Error initializing user store routing:', error);
         // Fallback: initialize the store with empty data
+        const generatedSequences = generateSequenceArray(activeConfig);
+        const matchingSequence = generatedSequences[0];
+        const fallbackSequence = filterSequenceByCondition(
+          matchingSequence,
+          studyCondition,
+        );
+
         const emptyStore = await studyStoreCreator(
           studyId,
           activeConfig,
-          generateSequenceArray(activeConfig)[0],
+          fallbackSequence,
           {
             language: '',
             userAgent: '',
@@ -170,7 +208,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             ip: '',
           },
           {},
-          { studyNavigatorEnabled: true, analyticsInterfacePubliclyAccessible: true, dataCollectionEnabled: false },
+          { developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: false },
           '',
           false,
           true,
@@ -209,7 +247,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       ]);
     }
     initializeUserStoreRouting();
-  }, [storageEngine, activeConfig, studyId, searchParams, participantId]);
+  }, [storageEngine, activeConfig, studyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
 

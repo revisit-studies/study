@@ -1,6 +1,6 @@
 import { EventType } from '../store/types';
 
-export function getCleanedDuration(answer: { startTime: number; endTime: number; windowEvents: EventType[] }): number | undefined {
+export function getCleanedDuration(answer: { startTime: number; endTime: number; windowEvents: EventType[] }): number {
   const duration = answer.endTime === -1 ? undefined : answer.endTime - answer.startTime;
   const visibilityEvents = (answer.windowEvents || [])
     .filter((event) => event !== undefined)
@@ -20,5 +20,7 @@ export function getCleanedDuration(answer: { startTime: number; endTime: number;
     i += 1;
   }
   const cleanedDuration = duration ? duration - timeNavigatedAway : undefined;
-  return cleanedDuration;
+
+  // If the cleaned duration is negative, return -1
+  return cleanedDuration && cleanedDuration >= 0 ? cleanedDuration : -1;
 }

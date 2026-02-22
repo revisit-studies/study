@@ -4,7 +4,7 @@ import {
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import {
-  ResponseBlockLocation, StudyConfig, StringOption, ValueOf, Answer, ParticipantData,
+  ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData,
 } from '../parser/types';
 import {
   StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
@@ -24,6 +24,7 @@ export async function studyStoreCreator(
   participantId: string,
   completed: boolean,
   storageEngineFailedToConnect: boolean,
+  isStalledConfig: boolean = false,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
@@ -105,7 +106,6 @@ export async function studyStoreCreator(
 
   const initialState: StoreState = {
     studyId,
-    isRecording: false,
     answers: Object.keys(answers).length > 0 ? answers : emptyAnswers,
     sequence,
     config,
@@ -135,6 +135,7 @@ export async function studyStoreCreator(
     completed,
     clickedPrevious: false,
     storageEngineFailedToConnect,
+    isStalledConfig,
   };
 
   const storeSlice = createSlice({
@@ -143,9 +144,6 @@ export async function studyStoreCreator(
     reducers: {
       setConfig(state, { payload }: PayloadAction<StudyConfig>) {
         state.config = payload;
-      },
-      setIsRecording(state, { payload }: PayloadAction<boolean>) {
-        state.isRecording = payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       pushToFuncSequence(state, { payload }: PayloadAction<{ component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined }>) {
@@ -249,7 +247,7 @@ export async function studyStoreCreator(
           state.matrixAnswers = {};
         }
       },
-      setMatrixAnswersCheckbox: (state, action: PayloadAction<{ questionKey: string, responseId: string, value: string, label: string, isChecked: boolean, choiceOptions: StringOption[] } | null>) => {
+      setMatrixAnswersCheckbox: (state, action: PayloadAction<{ questionKey: string, responseId: string, value: string, label: string, isChecked: boolean, choiceOptions: ParsedStringOption[] } | null>) => {
         if (action.payload) {
           const {
             responseId, questionKey, value, isChecked, choiceOptions,

@@ -1,4 +1,3 @@
-import type { ComponentBlockWithOrderPath } from '../components/interface/StepsPanel';
 import { DynamicBlock, StudyConfig } from '../parser/types';
 import { isDynamicBlock } from '../parser/utils';
 import { Sequence } from '../store/types';
@@ -96,14 +95,21 @@ export function findIndexOfBlock(sequence: Sequence, to: string): number {
   return toReturn.found ? toReturn.distance : -1;
 }
 
-export function addPathToComponentBlock(order: StudyConfig['sequence'] | ComponentBlockWithOrderPath | string, orderPath: string): ComponentBlockWithOrderPath | string {
+export function addPathToComponentBlock(order: StudyConfig['sequence'] | Sequence | string, orderPath: string): Sequence | string {
   if (typeof order === 'string') {
     return order;
   }
   if (isDynamicBlock(order)) {
-    return { ...order, orderPath, components: [] };
+    return {
+      ...order, orderPath, components: [], skip: [], interruptions: [],
+    };
   }
   return {
-    ...order, orderPath, order: order.order, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)),
+    ...order,
+    orderPath,
+    order: order.order,
+    components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)),
+    skip: order.skip || [],
+    interruptions: order.interruptions || [],
   };
 }

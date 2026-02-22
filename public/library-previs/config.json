@@ -34,7 +34,7 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$previs.se.4dimensions"
+      "$previs.sequences.4dimensions"
     ]
   }
 }

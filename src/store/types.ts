@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import type {
-  Answer, ConfigResponseBlockLocation, ParticipantData, ResponseBlockLocation, SkipConditions, StringOption, StudyConfig, ValueOf,
+  Answer, ComponentBlock, ConfigResponseBlockLocation, InterruptionBlock, ParsedStringOption, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
 } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/types';
 
@@ -121,7 +121,7 @@ export interface StoredAnswer {
   /** The correct answer for the component. */
   correctAnswer: Answer[];
   /** The order of question options in the component. */
-  optionOrders: Record<string, StringOption[]>;
+  optionOrders: Record<string, ParsedStringOption[]>;
   /** The order of the questions in a matrix component. */
   questionOrders: Record<string, string[]>;
   /** The order of the form elements in a base response. */
@@ -151,16 +151,17 @@ export interface StimulusParams<T, S = never> {
 export interface Sequence {
   id?: string;
   orderPath: string;
-  order: string;
+  order: ComponentBlock['order'] | 'dynamic';
   components: (string | Sequence)[];
-  skip?: SkipConditions;
+  skip: SkipConditions;
+  interruptions?: InterruptionBlock[];
+  conditional?: boolean;
 }
 
 export type FormElementProvenance = { form: StoredAnswer['answer'] };
 export interface StoreState {
   studyId: string;
   participantId: string;
-  isRecording: boolean;
   answers: ParticipantData['answers'];
   sequence: Sequence;
   config: StudyConfig;
@@ -184,4 +185,5 @@ export interface StoreState {
   completed: boolean;
   clickedPrevious: boolean;
   storageEngineFailedToConnect: boolean;
+  isStalledConfig: boolean;
 }
