@@ -1,0 +1,51 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Choropleth Map with Provenance Tracking",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "A choropleth map showing unemployment rates across the United States with provenance tracking.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": false,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "nextOnEnter": true
+  },
+  "components": {
+    "mapComponent": {
+      "description": "Choropleth map colored by unemployment rate.",
+      "instruction": "Select top 3 states with highest unemployment rates.",
+      "type": "react-component",
+      "path": "demo-choropleth-map/assets/Map.tsx",
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar",
+      "parameters": {
+        "dataset": "unemployment",
+        "valueField": "rate",
+        "legendTitle": "Unemployment Rate (%)",
+        "domain": [
+          0,
+          8
+        ]
+      },
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "mapComponent"
+    ]
+  }
+}

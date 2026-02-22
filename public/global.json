@@ -53,7 +53,8 @@
     "test-parser-errors",
     "test-randomization",
     "test-skip-logic",
-    "test-step-logic"
+    "test-step-logic",
+    "demo-choropleth-map"
   ],
   "configs": {
     "tutorial": {
@@ -112,6 +113,9 @@
     },
     "demo-ranking-widget": {
       "path": "demo-ranking-widget/config.json"
+    },
+    "demo-choropleth-map": {
+      "path": "demo-choropleth-map/config.json"
     },
     "example-brush-interactions": {
       "path": "example-brush-interactions/config.json"
