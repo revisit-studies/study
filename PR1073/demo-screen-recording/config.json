@@ -33,7 +33,6 @@
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
-      "previousButton": true,
       "recordAudio": true,
       "recordScreen": false
     },
@@ -41,7 +40,6 @@
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
-      "previousButton": true,
       "recordAudio": true,
       "recordScreen": true
     },
@@ -69,6 +67,6 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": ["introduction", "$screen-recording.co.screenRecordingPermission", "external_website", "external_website2", "barChart"]
+    "components": ["introduction", "$screen-recording.components.screenRecordingPermission", "external_website", "external_website2", "barChart"]
   }
 }

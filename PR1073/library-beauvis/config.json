@@ -34,9 +34,9 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$beauvis.co.5items",
-      "$beauvis.co.4items",
-      "$beauvis.co.3items"
+      "$beauvis.components.5items",
+      "$beauvis.components.4items",
+      "$beauvis.components.3items"
     ]
   }
 }

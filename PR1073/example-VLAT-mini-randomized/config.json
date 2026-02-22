@@ -86,7 +86,7 @@
     "components": [
       "introduction",
       "consent",
-      "$mini-vlat.se.full",
+      "$mini-vlat.sequences.full",
       "survey"
     ]
   }
