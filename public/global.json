@@ -20,6 +20,7 @@
     "demo-style",
     "demo-yaml",
     "demo-ranking-widget",
+    "demo-choropleth-map",
     "example-brush-interactions",
     "example-cleveland",
     "example-mvnv",
@@ -53,8 +54,7 @@
     "test-parser-errors",
     "test-randomization",
     "test-skip-logic",
-    "test-step-logic",
-    "demo-choropleth-map"
+    "test-step-logic"
   ],
   "configs": {
     "tutorial": {
