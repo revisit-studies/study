@@ -1,6 +1,4 @@
-# Introduction
-
-This demo introduced how to use images as stimuli in reVISit, and how to collect data via form fields. 
+This demo introduced how to use images as stimuli in reVISit, and how to collect data via form fields.
 
 ## Study Scenario
 

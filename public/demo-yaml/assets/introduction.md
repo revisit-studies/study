@@ -1,5 +1,3 @@
-# Introduction
-
 This is an example study to show how to use YAML to design a study, instead of the usual JSON.
 
 ## Relevant files:

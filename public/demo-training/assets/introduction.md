@@ -1,5 +1,3 @@
-# Introduction
-
 This demo shows how training tasks, where users can attempt an answer and are warned if it's wrong work in reVISit.
 
 ## Relevant files:

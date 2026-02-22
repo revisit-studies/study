@@ -1,7 +1,5 @@
-# Introduction
-
 This is an example project to show how to pass answers from React component to reVISit Framework.
-It also shows how to use the Trrack library to track user interactions in React components. 
+It also shows how to use the Trrack library to track user interactions in React components.
 
 The example is a click accuracy test – to test your accuracy of clicking on a moving dot.
 
