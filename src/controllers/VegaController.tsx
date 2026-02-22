@@ -10,6 +10,7 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StimulusParams } from '../store/types';
 import { useCurrentIdentifier } from '../routes/utils';
+import { useEvent } from '../store/hooks/useEvent';
 
 type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
 
@@ -26,6 +27,9 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const storeDispatch = useStoreDispatch();
   const [vegaConfig, setVegaConfig] = useState<VisualizationSpec | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [stimulusStatus, setStimulusStatus] = useState(false);
+  const [stimulusAnswer, setStimulusAnswer] = useState<Record<string, string | number>>({});
 
   const identifier = useCurrentIdentifier();
 
@@ -70,27 +74,41 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       }),
     );
 
-    storeDispatch(setReactiveAnswers(answers));
+    if (Object.keys(answers).length > 0) {
+      storeDispatch(setReactiveAnswers(answers));
+    }
   }, [storeDispatch, updateResponseBlockValidation, identifier, setReactiveAnswers]);
 
-  const handleSignalEvt = useCallback((key: string, value: unknown) => {
+  const handleSignalEvt = useEvent((key: string, value: unknown) => {
     trrack.apply(key, actions.signalAction({
       key,
       value,
     }));
-  }, [actions, trrack]);
 
-  const handleRevisitAnswer = useCallback((key: string, value: Parameters<ValueOf<Listeners>>[1]) => {
+    // Save provenance state after every event
+    setAnswer({
+      status: stimulusStatus,
+      provenanceGraph: trrack.graph.backend,
+      answers: stimulusAnswer,
+    });
+  });
+
+  const handleRevisitAnswer = useEvent((key: string, value: Parameters<ValueOf<Listeners>>[1]) => {
     const { responseId, response } = value;
+    trrack.apply(key, actions.signalAction({
+      key,
+      value: structuredClone(value),
+    }));
+
+    setStimulusStatus(true);
+    setStimulusAnswer({ [responseId]: response });
 
     setAnswer({
       status: true,
       provenanceGraph: trrack.graph.backend,
-      answers: {
-        [responseId]: response,
-      },
+      answers: { [responseId]: response },
     });
-  }, [setAnswer, trrack.graph.backend]);
+  });
 
   const signalListeners = useMemo(() => {
     const signals = vegaConfig?.config?.signals;
@@ -129,7 +147,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
   useEffect(() => {
     if (view && provState && provState.event && provState.event.key) {
-      view!.signal(provState.event.key, provState.event.value).run();
+      view!.signal(provState.event.key, structuredClone(provState.event.value)).run();
     }
   }, [view, provState]);
 

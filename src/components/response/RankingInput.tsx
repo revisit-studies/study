@@ -23,11 +23,13 @@ import {
 } from '@mantine/core';
 import { useMemo, useState, useEffect } from 'react';
 import { InputLabel } from './InputLabel';
+import { OptionLabel } from './OptionLabel';
 import classes from './css/RankingDnd.module.css';
-import { RankingResponse, StringOption } from '../../parser/types';
+import { ParsedStringOption, RankingResponse, StringOption } from '../../parser/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
+import { parseStringOptions } from '../../utils/stringOptions';
 
-type Item = { id: string; label: string; symbol: string };
+type Item = { id: string; symbol: string; option: ParsedStringOption };
 
 function SortableItem({ item, index }: { item: Item; index?: number }) {
   const {
@@ -54,7 +56,7 @@ function SortableItem({ item, index }: { item: Item; index?: number }) {
       p="sm"
     >
       {index !== undefined && <Text c="dimmed" mr="sm">{index}</Text>}
-      <Text>{item.label}</Text>
+      <OptionLabel label={item.option.label} infoText={item.option.infoText} />
     </Paper>
   );
 }
@@ -78,10 +80,10 @@ function DroppableZone({ id, title, children }: { id: string; title: string; chi
   );
 }
 
-const createItems = (options: (StringOption | string)[]): Item[] => options.map((option) => ({
-  id: typeof option === 'string' ? option : option.value,
-  label: typeof option === 'string' ? option : option.label,
-  symbol: typeof option === 'string' ? option : option.value,
+const createItems = (options: (StringOption | string)[]): Item[] => parseStringOptions(options).map((item) => ({
+  id: item.value,
+  symbol: item.value,
+  option: item,
 }));
 
 const useRankingLogic = (responseId: string, onChange?: (value: Record<string, string>) => void) => {
@@ -271,7 +273,7 @@ function RankingCategoricalComponent({
       if (!item) return prev;
 
       if (targetCategory !== 'unassigned' && numItems
-          && (prev[targetCategory as keyof typeof prev] as Item[]).length >= numItems) {
+        && (prev[targetCategory as keyof typeof prev] as Item[]).length >= numItems) {
         setError?.(`You can only add up to ${numItems} items.`);
         return prev;
       }
@@ -416,7 +418,7 @@ function RankingPairwiseComponent({
       });
 
       if (existingInOpposite) {
-        const itemLabel = items.find((i) => i.id === baseItemId)?.label;
+        const itemLabel = items.find((i) => i.id === baseItemId)?.option.label;
         setError?.(`Item "${itemLabel}" cannot be in both HIGH and LOW.`);
         return;
       }

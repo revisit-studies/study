@@ -20,7 +20,9 @@ export default defineConfig(({ command, mode }) => {
     test: {
       exclude: ['./tests/**', 'node_modules/**'],
       setupFiles: ['vitest-localstorage-mock'],
-      fileParallelism: false,
+      fileParallelism: true,
+      maxWorkers: '100%',
+      minWorkers: 1,
     },
   };
 });

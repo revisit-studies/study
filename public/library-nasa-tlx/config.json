@@ -34,8 +34,8 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$nasa-tlx.se.nasa-tlx-with-source-of-load-evaluation",
-      "$nasa-tlx.co.nasa-tlx"
+      "$nasa-tlx.sequences.nasa-tlx-with-source-of-load-evaluation",
+      "$nasa-tlx.components.nasa-tlx"
     ]
   }
 }
