@@ -33,7 +33,6 @@
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
-      "previousButton": true,
       "recordAudio": true,
       "recordScreen": false
     },
@@ -41,7 +40,6 @@
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
-      "previousButton": true,
       "recordAudio": true,
       "recordScreen": true
     },
