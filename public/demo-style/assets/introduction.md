@@ -44,8 +44,7 @@ Apply specific styling directly to components or responses:
  * [style/layout.css](https://github.com/revisit-studies/study/blob/main/public/demo-style/assets/style/layout.css)
  * [style/responseStylesheet.css](https://github.com/revisit-studies/study/blob/main/public/demo-style/assets/style/responseStylesheet.css)
  * [style/uiStylesheet.css](https://github.com/revisit-studies/study/blob/main/public/demo-style/assets/style/uiStylesheet.css)
- * [uncertainty-1.png](https://github.com/revisit-studies/study/blob/main/public/demo-style/assets/uncertainty-1.png)
- * [utah.jpg](https://github.com/revisit-studies/study/blob/main/public/demo-style/assets/utah.jpg)
-## Relevant documentation:
+ 
+ ## Relevant documentation:
 
  * [Applying Styles](https://revisit.dev/docs/designing-studies/applying-style/)

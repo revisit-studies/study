@@ -13,7 +13,11 @@ The first demo is a basic bar chart with hover interaction to show tooltips. Par
 The second demo is a more complex visualization. It uses a movies dataset, participants can select which attributes to use for the scatter plot axis.
 
 ## Relevant files:
+
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-vega/config.json)
+ * [Vega Demo 1 Spec](https://github.com/revisit-studies/study/blob/main/public/demo-vega/specs/vegademo1.specs.json)
+ * [Vega Demo 2 Spec](https://github.com/revisit-studies/study/blob/main/public/demo-vega/specs/vegademo2.specs.json)
+
 ## Relevant documentation:
 
  * [Designing a Vega Stimulus](https://revisit.dev/docs/designing-studies/vega-stimulus/)

@@ -1,11 +1,9 @@
-# Introduction
-
 This is an demo study to show how to use ranking widget. 
 
-During this study, you will:
-- Experience **sublist ranking** by ordering items in your preferred sequence
-- Try **categorical ranking** by sorting items into High, Medium, and Low priority groups 
-- Complete **pairwise comparisons** by choosing between pairs of options
+The study demontrates
+- **sublist ranking** by ordering items in your preferred sequence
+- **categorical ranking** by sorting items into High, Medium, and Low priority groups 
+- **pairwise comparisons** by choosing between pairs of options
 
 ## Reference
 
@@ -16,6 +14,7 @@ DOI: [10.1145/3290605.3300742](https://dx.doi.org/10.1145/3290605.3300742)
 
 ## Relevant files:
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-ranking-widget/config.json)
+ 
 ## Relevant documentation:
 
  * [Designing Forms](https://revisit.dev/docs/designing-studies/forms/)

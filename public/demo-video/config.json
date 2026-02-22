@@ -34,23 +34,11 @@
       "forceCompletion": true,
       "response": []
     },
-    "missingInternal": {
-      "type": "video",
-      "path": "demo-video/assets/london.mp4",
-      "forceCompletion": true,
-      "response": []
-    },
     "external": {
       "type": "video",
       "path": "https://www.youtube.com/watch?v=icPHcK_cCF4",
       "forceCompletion": false,
       "withTimeline": true,
-      "response": []
-    },
-    "missingExternal": {
-      "type": "video",
-      "path": "https://www.youtube.com/watch",
-      "forceCompletion": true,
       "response": []
     }
   },
@@ -59,9 +47,7 @@
     "components": [
       "introduction",
       "internal",
-      "missingInternal",
-      "external",
-      "missingExternal"
+      "external"
     ]
   }
 }

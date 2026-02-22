@@ -9,6 +9,8 @@ The difficulty of the next question will adjust based on your correctness on the
 
 ## Relevant files:
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-dynamic/config.json)
+ * [The React HSL Component](https://github.com/revisit-studies/study/blob/main/src/public/demo-dynamic/assets/HSL.tsx)
+ * [The function determining the dynamic order based on previous responses](https://github.com/revisit-studies/study/blob/main/src/public/demo-dynamic/assets/dynamic.tsx)
 
 ## Relevant documentation:
 
