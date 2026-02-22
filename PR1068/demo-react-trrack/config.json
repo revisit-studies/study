@@ -1,0 +1,84 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "React Stimulus and Provenance Tracking",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-21",
+    "description": "A demo of using dynamic React stimuli and using provenance tracking with the trrack library for data collection.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-react-trrack/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true
+  },
+  "baseComponents": {
+    "trial": {
+      "description": "build a color by adding or removing red, green, and blue counts",
+      "instruction": "Match the target color by building your RGB color record",
+      "type": "react-component",
+      "path": "demo-react-trrack/assets/DemoReactTrrack.tsx",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "colorSelection",
+          "prompt": "Your current RGB record and normalized color",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-react-trrack/assets/introduction.md",
+      "response": []
+    },
+    "trial-crimson": {
+      "baseComponent": "trial",
+      "meta": {
+        "nr-dots": 1
+      },
+      "parameters": {
+        "taskid": "colorSelection",
+        "targetColor": {
+          "red": 220,
+          "green": 70,
+          "blue": 80
+        }
+      }
+    },
+    "trial-azure": {
+      "baseComponent": "trial",
+      "meta": {
+        "nr-dots": 1
+      },
+      "parameters": {
+        "taskid": "colorSelection",
+        "targetColor": {
+          "red": 60,
+          "green": 130,
+          "blue": 230
+        }
+      }
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "trial-crimson",
+      "trial-azure"
+    ]
+  }
+}
