@@ -158,7 +158,7 @@ export function applyHoverStyles(
 ): void {
   svg
     .selectAll('path')
-    .filter(function () {
+    .filter(function filterUnselectedStates() {
       const name = d3.select(this).attr('data-name');
       return !selectedStates.includes(name);
     })

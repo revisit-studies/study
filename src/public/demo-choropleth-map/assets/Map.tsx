@@ -116,7 +116,7 @@ function Map({
     );
 
     drawLegend(svg, colorScale, legendTitle);
-  }, [data, parameters.valueField, parameters.legendTitle, parameters.domain]);
+  }, [data, parameters]);
 
   // Highlight selected states
   useEffect(() => {
