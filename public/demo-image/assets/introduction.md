@@ -38,8 +38,7 @@ you have in your budget at the end of 48 days.
 
 ## Relevant files:
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-image/config.json)
- * [uncertainty-1.png](https://github.com/revisit-studies/study/blob/main/public/demo-image/assets/uncertainty-1.png)
- * [uncertainty-2.png](https://github.com/revisit-studies/study/blob/main/public/demo-image/assets/uncertainty-2.png)
- * [uncertainty-3.png](https://github.com/revisit-studies/study/blob/main/public/demo-image/assets/uncertainty-3.png)
 
 ## Relevant documentation:
+
+ * [Designing Image/Video Stimuli](https://revisit.dev/docs/designing-studies/image-video-stimulus/)

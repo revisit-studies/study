@@ -5,5 +5,7 @@ This example demonstrates how to capture screen recordings for components where 
 ## Relevant files:
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-screen-recording/config.json)
  * [bar-chart.html](https://github.com/revisit-studies/study/blob/main/public/demo-screen-recording/assets/bar-chart.html)
-
+ 
 ## Relevant documentation:
+
+ * [Recording Screen and Audio](https://revisit.dev/docs/designing-studies/record-screen/)

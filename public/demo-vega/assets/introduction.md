@@ -14,5 +14,6 @@ The second demo is a more complex visualization. It uses a movies dataset, parti
 
 ## Relevant files:
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-vega/config.json)
-
 ## Relevant documentation:
+
+ * [Designing a Vega Stimulus](https://revisit.dev/docs/designing-studies/vega-stimulus/)

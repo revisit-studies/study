@@ -6,7 +6,7 @@
     "demo-html",
     "demo-html-input",
     "demo-screen-recording",
-    "demo-survey",
+    "demo-form-elements",
     "demo-training",
     "demo-html-trrack",
     "demo-react-trrack",
@@ -70,8 +70,8 @@
     "demo-html-input": {
       "path": "demo-html-input/config.json"
     },
-    "demo-survey": {
-      "path": "demo-survey/config.json"
+    "demo-form-elements": {
+      "path": "demo-form-elements/config.json"
     },
     "demo-training": {
       "path": "demo-training/config.json"

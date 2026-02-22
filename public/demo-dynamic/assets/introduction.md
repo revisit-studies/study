@@ -11,3 +11,6 @@ The difficulty of the next question will adjust based on your correctness on the
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-dynamic/config.json)
 
 ## Relevant documentation:
+
+ * [Dynamic Blocks](https://revisit.dev/docs/designing-studies/dynamic-blocks/)
+ * [Study Sequences](https://revisit.dev/docs/designing-studies/study-sequences/)

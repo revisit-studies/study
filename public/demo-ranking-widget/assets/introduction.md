@@ -16,5 +16,6 @@ DOI: [10.1145/3290605.3300742](https://dx.doi.org/10.1145/3290605.3300742)
 
 ## Relevant files:
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-ranking-widget/config.json)
-
 ## Relevant documentation:
+
+ * [Designing Forms](https://revisit.dev/docs/designing-studies/forms/)

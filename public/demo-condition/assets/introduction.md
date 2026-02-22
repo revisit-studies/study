@@ -20,3 +20,5 @@ Try these URLs:
  * [size-trial-2.html](https://github.com/revisit-studies/study/blob/main/public/demo-condition/assets/size-trial-2.html)
 
 ## Relevant documentation:
+
+ * [Study Sequences](https://revisit.dev/docs/designing-studies/study-sequences/)
