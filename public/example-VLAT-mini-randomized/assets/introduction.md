@@ -13,10 +13,3 @@ Choose the BEST answer to the questions.
 
 If you don't know the answer, select 'skip'. We suggest maximizing your browser window.
 
-## Relevant files:
- * [The Config](https://github.com/revisit-studies/study/blob/main/public/example-VLAT-mini-randomized/config.json)
- * [consent.md](https://github.com/revisit-studies/study/blob/main/public/example-VLAT-mini-randomized/assets/consent.md)
- * [help.md](https://github.com/revisit-studies/study/blob/main/public/example-VLAT-mini-randomized/assets/help.md)
- * [survey.md](https://github.com/revisit-studies/study/blob/main/public/example-VLAT-mini-randomized/assets/survey.md)
-
-## Relevant documentation:

@@ -17,9 +17,3 @@ visualization (right) and a problem to solve (left). Choose the BEST
 answer to the questions. If you don't know the answer, select
 'skip'. We suggest maximizing your browser window."
 
-## Relevant files:
- * [The Config](https://github.com/revisit-studies/study/blob/main/public/example-VLAT-full-randomized/config.json)
- * [consent.md](https://github.com/revisit-studies/study/blob/main/public/example-VLAT-full-randomized/assets/consent.md)
- * [help.md](https://github.com/revisit-studies/study/blob/main/public/example-VLAT-full-randomized/assets/help.md)
-
-## Relevant documentation:
