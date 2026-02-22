@@ -7,6 +7,7 @@ import { SliderResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import classes from './css/SliderInput.module.css';
 import { InputLabel } from './InputLabel';
+import { generateSliderBreakValues } from './sliderBreaks';
 
 export function SliderInput({
   response,
@@ -40,13 +41,7 @@ export function SliderInput({
   const errorMessage = generateErrorMessage(response, answer);
 
   // Numeric label
-  const labelValues = useMemo(() => {
-    // Calculate spacing - power of 10 if not specified, otherwise use spacing (min 10 unless spacing is specified)
-    const calculatedSpacing = spacing ?? 10 ** Math.max(1, Math.floor(Math.log10((max - min) / 10)));
-    const start = Math.ceil(min / calculatedSpacing) * calculatedSpacing;
-    const count = Math.floor((max - start) / calculatedSpacing) + 1;
-    return Array.from({ length: count }, (_, i) => start + i * calculatedSpacing);
-  }, [min, max, spacing]);
+  const labelValues = useMemo(() => generateSliderBreakValues(min, max, spacing), [min, max, spacing]);
 
   // For smeq style (vertical slider)
   const [val, setVal] = useState((answer as { value?: number }).value ?? (min + max) / 2);

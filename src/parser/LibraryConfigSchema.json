@@ -2801,7 +2801,7 @@
           "type": "boolean"
         },
         "spacing": {
-          "description": "The spacing between the ticks. If not provided, the spacing is calculated as the range of the slider divided by power of 10 (minimum 10).",
+          "description": "The spacing between the ticks. If not provided, the spacing is the largest power of 10 smaller than the slider range.",
           "type": "number"
         },
         "startingValue": {
