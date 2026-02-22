@@ -107,6 +107,26 @@ export function GlobalConfigParser() {
               )}
             />
             <Route
+              path="/analysis"
+              element={<NavigateWithParams to="/analysis/stats/" replace />}
+            />
+            <Route
+              path="/analysis/stats"
+              element={(
+                <>
+                  <PageTitle title="ReVISit | Analysis" />
+                  <AppShell
+                    padding="md"
+                    header={{ height: 70 }}
+                  >
+                    <StudyAnalysisTabs
+                      globalConfig={globalConfig}
+                    />
+                  </AppShell>
+                </>
+              )}
+            />
+            <Route
               path="/analysis/stats/:studyId/:analysisTab/:trialId?"
               element={(
                 <>
