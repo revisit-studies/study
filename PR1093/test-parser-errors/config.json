@@ -10,8 +10,7 @@
     "description": "This is a test for parser errors.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
