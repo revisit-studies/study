@@ -1,12 +1,9 @@
 import {
-  afterEach, beforeEach, describe, expect, test, vi,
+  afterEach, describe, expect, test, vi,
 } from 'vitest';
-import { ParticipantMetadata, StudyConfig } from '../../parser/types';
+import { StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
-import { generateSequenceArray } from '../../utils/handleRandomSequences';
-import { LocalStorageEngine } from '../engines/LocalStorageEngine';
-import { StorageEngine } from '../engines/types';
 import { hash } from '../engines/utils';
 import { buildConfigRows, ConfigInfo } from '../../analysis/individualStudy/config/utils';
 import { downloadConfigFile, downloadConfigFilesZip } from '../../utils/handleDownloadFiles';
@@ -15,12 +12,7 @@ import { ConfigDiffModal } from '../../analysis/individualStudy/config/ConfigDif
 const studyId = 'test-study-analysis-config';
 const configSimple = testConfigSimple as StudyConfig;
 const configSimple2 = testConfigSimple2 as StudyConfig;
-const participantMetadata: ParticipantMetadata = {
-  userAgent: 'test-user-agent',
-  resolution: { width: 1920, height: 1080 },
-  language: 'en-US',
-  ip: '122.122.122.122',
-};
+type VisibleParticipant = Parameters<typeof buildConfigRows>[1][number];
 
 function makeConfigInfo(hashKey: string, version: string): ConfigInfo {
   return {
@@ -38,42 +30,32 @@ function makeConfigInfo(hashKey: string, version: string): ConfigInfo {
   };
 }
 
-describe.each([
-  { TestEngine: LocalStorageEngine },
-])('analysis config tests for $TestEngine', ({ TestEngine }) => {
-  let storageEngine: StorageEngine;
+function makeParticipant(configHash: string): VisibleParticipant {
+  return {
+    participantConfigHash: configHash,
+    answers: {},
+    rejected: false,
+  };
+}
 
-  beforeEach(async () => {
-    storageEngine = new TestEngine(true);
-    await storageEngine.connect();
-    await storageEngine.initializeStudyDb(studyId);
-    const sequenceArray = await generateSequenceArray(configSimple);
-    await storageEngine.setSequenceArray(sequenceArray);
-  });
-
-  afterEach(async () => {
+describe('analysis config tests', () => {
+  afterEach(() => {
     vi.restoreAllMocks();
-    // @ts-expect-error using protected method for testing
-    await storageEngine._testingReset(studyId);
   });
 
-  test('config hash/version/date/participant count are built correctly from configs + participants', async () => {
-    await storageEngine.saveConfig(configSimple);
-    await storageEngine.saveConfig(configSimple2);
-    const sequenceArray = await generateSequenceArray(configSimple);
-    await storageEngine.setSequenceArray(sequenceArray);
-
+  test('config hash/version/date/participant count are built correctly in config rows', async () => {
     const configHash1 = await hash(JSON.stringify(configSimple));
     const configHash2 = await hash(JSON.stringify(configSimple2));
+    const fetchedConfigs = {
+      [configHash1]: configSimple,
+      [configHash2]: configSimple2,
+    };
+    const participants: VisibleParticipant[] = [
+      makeParticipant(configHash1),
+      makeParticipant(configHash2),
+      makeParticipant(configHash2),
+    ];
 
-    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-    await storageEngine.clearCurrentParticipantId();
-    await storageEngine.initializeParticipantSession({}, configSimple2, participantMetadata);
-    await storageEngine.clearCurrentParticipantId();
-    await storageEngine.initializeParticipantSession({}, configSimple2, participantMetadata);
-
-    const participants = await storageEngine.getAllParticipantsData(studyId);
-    const fetchedConfigs = await storageEngine.getAllConfigsFromHash([configHash1, configHash2], studyId);
     const rows = buildConfigRows(fetchedConfigs, participants);
 
     expect(rows).toHaveLength(2);
@@ -97,24 +79,21 @@ describe.each([
   });
 
   test('config filter by hash updates participant counts in config rows', async () => {
-    await storageEngine.saveConfig(configSimple);
-    await storageEngine.saveConfig(configSimple2);
-    const sequenceArray = await generateSequenceArray(configSimple);
-    await storageEngine.setSequenceArray(sequenceArray);
-
     const configHash1 = await hash(JSON.stringify(configSimple));
     const configHash2 = await hash(JSON.stringify(configSimple2));
+    const fetchedConfigs = {
+      [configHash1]: configSimple,
+      [configHash2]: configSimple2,
+    };
+    const participants: VisibleParticipant[] = [
+      makeParticipant(configHash1),
+      makeParticipant(configHash2),
+      makeParticipant(configHash2),
+    ];
 
-    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-    await storageEngine.clearCurrentParticipantId();
-    await storageEngine.initializeParticipantSession({}, configSimple2, participantMetadata);
-    await storageEngine.clearCurrentParticipantId();
-    await storageEngine.initializeParticipantSession({}, configSimple2, participantMetadata);
-
-    const participants = await storageEngine.getAllParticipantsData(studyId);
-    const fetchedConfigs = await storageEngine.getAllConfigsFromHash([configHash1, configHash2], studyId);
-
-    const onlyConfig2Participants = participants.filter((participant) => participant.participantConfigHash === configHash2);
+    const onlyConfig2Participants = participants.filter(
+      (participant) => participant.participantConfigHash === configHash2,
+    );
     const filteredRows = buildConfigRows(fetchedConfigs, onlyConfig2Participants);
 
     const row1 = filteredRows.find((row) => row.hash === configHash1);
