@@ -9,9 +9,68 @@
 <body>
     <svg>
     </svg>
+
+    <!-- controls, response + export UI -->
+    <div id="cmg-controls" style="margin-top:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-family:system-ui, Arial;">
+        <span id="pid" style="padding:4px 8px; border:1px solid #ccc; border-radius:999px; font-size:12px;">PID: -</span>
+
+        <label style="display:flex; align-items:center; gap:8px;">
+            Reported %:
+            <input id="pct" type="range" min="0" max="100" step="1" value="50" style="width:220px;" />
+            <span id="pctVal">50</span>%
+        </label>
+
+        <button id="submit" disabled>Submit</button>
+    </div>
+    
 </body>
 
 <script>
+    // scoring + logging helper functions
+    const STORE_KEY = "cmg_results_v1";
+
+    function clampInt(x, lo = 0, hi = 100) {
+    const n = Math.round(Number(x));
+    if (Number.isNaN(n)) return lo;
+    return Math.max(lo, Math.min(hi, n));
+    }
+
+    function makeId(len = 6) {
+    const chars = "abcdefghijkmnpqrstuvwxyz23456789";
+    const arr = new Uint32Array(len);
+    crypto.getRandomValues(arr);
+    let out = "";
+    for (let i = 0; i < len; i++) out += chars[arr[i] % chars.length];
+    return out;
+    }
+
+    function loadStore() {
+    try {
+        return JSON.parse(localStorage.getItem(STORE_KEY)) || { participantId: null, rows: [] };
+    } catch {
+        return { participantId: null, rows: [] };
+    }
+    }
+    function saveStore(s) {
+    localStorage.setItem(STORE_KEY, JSON.stringify(s));
+    }
+
+    function truePercent(values, iA, iB) {
+    const a = values[iA], b = values[iB];
+    const smaller = Math.min(a, b);
+    const larger = Math.max(a, b);
+    if (!Number.isFinite(smaller) || !Number.isFinite(larger) || larger <= 0) return 0;
+    return clampInt((smaller / larger) * 100, 0, 100);
+    }
+
+    function errors(truePct, reportedPct) {
+    const t = clampInt(truePct, 0, 100);
+    const r = clampInt(reportedPct, 0, 100);
+    const absErr = Math.abs(r - t);
+    const log2Err = absErr === 0 ? 0 : Math.log2(absErr + 1 / 8);
+    return { absErr, log2Err };
+    }
+
     Revisit.onDataReceive((data) => {
     height = 500;
     width = 500;
@@ -23,6 +82,76 @@
     const barData = data['barData']
     const selectedIndices =  data['indices']
     var visible = [];
+
+    // wire UI + compute/log on submit
+    const iA = selectedIndices?.[0];
+    const iB = selectedIndices?.[1];
+
+    // optional labels
+    const trialNum = data["trialNum"] ?? null;
+    const condition = data["condition"] ?? "UNKNOWN";
+
+    // init store + participant id
+    const store = loadStore();
+    if (!store.participantId) {
+    store.participantId = makeId();
+    saveStore(store);
+    }
+
+    // show PID
+    const pidEl = document.getElementById("pid");
+    if (pidEl) pidEl.textContent = `PID: ${store.participantId}`;
+
+    // enable submit only when input is valid
+    const pctEl = document.getElementById("pct");
+    const submitBtn = document.getElementById("submit");
+
+    const pctVal = document.getElementById("pctVal");
+
+    if (pctEl && submitBtn && pctVal) {
+    // initialize label
+    pctVal.textContent = pctEl.value;
+    submitBtn.disabled = false; // since slider always has a value
+
+    pctEl.addEventListener("input", (e) => {
+        const v = e.target.value;
+        pctVal.textContent = v;
+        submitBtn.disabled = false;
+    });
+    }
+
+    let valuesForTruth = barData; // abs value
+
+    const truePct = truePercent(valuesForTruth, iA, iB);
+
+    if (submitBtn) {
+    submitBtn.onclick = () => {
+        const reportedPct = clampInt(pctEl.value, 0, 100);
+        const { absErr, log2Err } = errors(truePct, reportedPct);
+
+        const row = {
+        ParticipantID: store.participantId,
+        TrialNum: trialNum ?? (store.rows.length + 1),
+        Condition: condition,
+        TruePercent: truePct,
+        ReportedPercent: reportedPct,
+        AbsError: absErr,
+        Log2Error: Number.isFinite(log2Err) ? log2Err : "",
+        IndexA: iA,
+        IndexB: iB,
+        Values: barData.join(" "),
+        TimestampISO: new Date().toISOString()
+        };
+
+        Revisit.postAnswers({ 
+            barChart: reportedPct,
+            truePct: truePct,
+            absErr: absErr,
+            log2Err: log2Err
+            });
+        submitBtn.disabled = true; // prevent double submit
+    };
+    }
 
     var dataObj = [];
     for(var i = 0; i < barData.length; i++){
