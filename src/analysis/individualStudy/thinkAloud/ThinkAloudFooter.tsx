@@ -299,6 +299,18 @@ export function ThinkAloudFooter({
     return buildProvenanceLegendEntries(Object.values(answer.provenanceGraph));
   }, [participant, currentTrial]);
 
+  const tasksList = useMemo(() => {
+    if (participant) {
+      const d = getSequenceFlatMap(participant?.sequence);
+
+      return d.map((task, idx) => ({
+        label: task,
+        value: `${task}_${idx}`,
+      }));
+    }
+    return [];
+  }, [participant]);
+
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
       {currentTrial && participant && currentTrialClean === '' && (
@@ -439,7 +451,7 @@ export function ThinkAloudFooter({
               )}
               label="Task"
               style={{ width: '200px' }}
-              value={currentTrialClean}
+              value={currentTrial}
               // this needs to be in a helper or two which we dont currently have
               onChange={(e: string | null) => {
                 if (participant && e) {
@@ -452,7 +464,7 @@ export function ThinkAloudFooter({
                   setSearchParams({ participantId, currentTrial: trial });
                 }
               }}
-              data={participant ? getSequenceFlatMap(participant?.sequence) : []}
+              data={tasksList}
               searchable
             />
             <Stack gap="4">
