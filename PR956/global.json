@@ -19,6 +19,7 @@
     "demo-yaml",
     "demo-ranking-widget",
     "demo-upset",
+    "demo-choropleth-map",
     "example-brush-interactions",
     "example-cleveland",
     "example-mvnv",
@@ -106,6 +107,9 @@
     },
     "demo-ranking-widget": {
       "path": "demo-ranking-widget/config.json"
+    },
+    "demo-choropleth-map": {
+      "path": "demo-choropleth-map/config.json"
     },
     "example-brush-interactions": {
       "path": "example-brush-interactions/config.json"
