@@ -20,7 +20,7 @@ const toCapped = (value: string) => value.toUpperCase();
 function StroopColorTask({ parameters, setAnswer, provenanceState }: StimulusParams<any, StroopState>) {
   const { taskid } = parameters;
   const { displayText = '', textColor = 'black' } = parameters as StroopTrialParams;
-  // Create provanance registry
+  // Create provenance registry
   const reg = Registry.create();
   const setResponseAction = reg.register('setResponse', (state, nextResponse: string) => {
     state.response = nextResponse;
