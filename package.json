@@ -6,6 +6,7 @@
   "scripts": {
     "buildDocs": "typedoc",
     "serve": "vite --host=0.0.0.0 --port=8080",
+    "typecheck": "tsc --noEmit",
     "build": "tsc && vite build",
     "lint": "eslint src",
     "generate-schema:StudyConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/StudyConfigSchema.json --type StudyConfig --no-type-check",
@@ -48,7 +49,7 @@
     "@types/hjson": "^2.4.6",
     "@types/node": "^24.5.2",
     "@visdesignlab/upset2-react": "^1.0.2",
-    "ajv": "^8.17.1",
+    "ajv": "^8.18.0",
     "arquero": "^5.4.0",
     "crypto-js": "^4.2.0",
     "d3": "^7.9.0",

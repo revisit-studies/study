@@ -279,6 +279,19 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     return () => { };
   }, [studyId, globalConfig, storageEngine]);
 
+  if (!studyId) {
+    return (
+      <>
+        <AppHeader studyIds={globalConfig.configsList} />
+        <AppShell.Main style={{ height: '100dvh' }}>
+          <Center style={{ height: '100%' }}>
+            <Text>Select a study from the header menu to view analysis data.</Text>
+          </Center>
+        </AppShell.Main>
+      </>
+    );
+  }
+
   return (
     <>
       <AppHeader studyIds={globalConfig.configsList} />

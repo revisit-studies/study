@@ -125,14 +125,24 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   // Check if we have issues connecting to the database, if so show alert modal
   const { setAlertModal } = useStoreActions();
   const [firstMount, setFirstMount] = useState(true);
-  if (storageEngineFailedToConnect && firstMount) {
-    storeDispatch(setAlertModal({
-      show: true,
-      message: `You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you're taking the study you will not be compensated for your efforts. You are welcome to look around. If you are attempting to participate in the study, please first refresh and if it's still a problem email ${studyConfig.uiConfig.contactEmail} for assistance.`,
-      title: 'Failed to connect to the storage engine',
-    }));
-    setFirstMount(false);
-  }
+
+  useEffect(() => {
+    if (!storageEngineFailedToConnect || !firstMount) {
+      return undefined;
+    }
+
+    // Wait for 5 seconds before showing the storage connection error
+    const timeoutId = window.setTimeout(() => {
+      storeDispatch(setAlertModal({
+        show: true,
+        message: 'You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you\'re taking the study you will not be compensated for your efforts. You are welcome to look around.',
+        title: 'Failed to connect to the storage engine',
+      }));
+      setFirstMount(false);
+    }, 5000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [firstMount, setAlertModal, storageEngineFailedToConnect, storeDispatch]);
 
   return (
     <AppShell.Header className="header" p="md">
@@ -151,7 +161,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
               >
                 {studyConfig?.studyMetadata.title}
               </Title>
-            ) : null }
+            ) : null}
           </Flex>
         </Grid.Col>
 
@@ -164,28 +174,29 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
             {(isAudioRecording || isScreenRecording) && (
-            <Group ml="xl" gap={20} wrap="nowrap">
-              <Text c="red">
-                {((isAudioRecording && !isMuted) || (isScreenRecording)) && 'Recording'}
-                {isScreenRecording && ' screen'}
-                {isScreenRecording && isAudioRecording && !isMuted && ' and'}
-                {isAudioRecording && !isMuted && ' audio'}
-              </Text>
-              {isAudioRecording && !isMuted && <RecordingAudioWaveform />}
-              {clickToRecord ? (
-                <Tooltip label="Press and hold to unmute">
-                  <ActionIcon variant="light" size="md" aria-label="Press and hold to unmute" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
-                    {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
-                  </ActionIcon>
-                </Tooltip>
-              ) : (
-                <Tooltip label={`Press to ${isMuted ? 'unmute' : 'mute'}`}>
-                  <ActionIcon variant="light" size="md" aria-label="Press and hold to unmute" onClick={() => setIsMuted(!isMuted)}>
-                    {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
-                  </ActionIcon>
-                </Tooltip>
-              )}
-            </Group>
+
+              <Group ml="xl" gap={20} wrap="nowrap">
+                <Text c="red">
+                  {((isAudioRecording && !isMuted) || (isScreenRecording)) && 'Recording'}
+                  {isScreenRecording && ' screen'}
+                  {isScreenRecording && isAudioRecording && !isMuted && ' and'}
+                  {isAudioRecording && !isMuted && ' audio'}
+                </Text>
+                {isAudioRecording && !isMuted && <RecordingAudioWaveform />}
+                {clickToRecord ? (
+                  <Tooltip label="Press and hold to unmute">
+                    <ActionIcon variant="light" size="md" aria-label="Press and hold to unmute" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
+                      {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
+                    </ActionIcon>
+                  </Tooltip>
+                ) : (
+                  <Tooltip label={`Press to ${isMuted ? 'unmute' : 'mute'}`}>
+                    <ActionIcon variant="light" size="md" aria-label="Press and hold to unmute" onClick={() => setIsMuted(!isMuted)}>
+                      {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+              </Group>
             )}
             {storageEngineFailedToConnect && <Tooltip multiline withArrow arrowSize={6} w={300} label="Failed to connect to the storage engine. Study data will not be saved. Check your connection or restart the app."><Badge size="lg" color="red">Storage Disconnected</Badge></Tooltip>}
             {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
@@ -222,10 +233,10 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
                 <Menu.Item
                   component="a"
                   href={
-                        studyConfig !== null
-                          ? `mailto:${studyConfig.uiConfig.contactEmail}`
-                          : undefined
-                      }
+                    studyConfig !== null
+                      ? `mailto:${studyConfig.uiConfig.contactEmail}`
+                      : undefined
+                  }
                   leftSection={<IconMail size={14} />}
                 >
                   Contact

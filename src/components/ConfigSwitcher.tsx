@@ -1,5 +1,5 @@
 import {
-  Anchor, AppShell, Badge, Button, Card, Container, CopyButton, Divider, Flex, Image, MultiSelect, rem, Tabs, Text, Tooltip,
+  Anchor, AppShell, Badge, Button, Card, Container, CopyButton, Divider, Flex, Image, MultiSelect, Skeleton, rem, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
   IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconCheck, IconCopy, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
@@ -300,9 +300,18 @@ export function ConfigSwitcher({
 
   const [studyVisibility, setStudyVisibility] = useState<Record<string, boolean>>({});
   const [modesByConfig, setModesByConfig] = useState<Record<string, Record<REVISIT_MODE, boolean> | null>>({});
+  const [isLoadingVisibility, setIsLoadingVisibility] = useState(true);
 
   useEffect(() => {
+    let isCancelled = false;
+
     async function getVisibilitiesAndModes() {
+      if (storageEngine === undefined) {
+        setIsLoadingVisibility(true);
+        return;
+      }
+
+      setIsLoadingVisibility(true);
       const visibility: Record<string, boolean> = {};
       const modesMap: Record<string, Record<REVISIT_MODE, boolean> | null> = {};
       await Promise.all(
@@ -318,13 +327,25 @@ export function ConfigSwitcher({
           }
         }),
       );
-      setStudyVisibility(visibility);
-      setModesByConfig(modesMap);
+      if (!isCancelled) {
+        setStudyVisibility(visibility);
+        setModesByConfig(modesMap);
+        setIsLoadingVisibility(false);
+      }
     }
     getVisibilitiesAndModes();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [configsList, storageEngine]);
 
   const { user } = useAuth();
+  const isLoadingStudyConfigs = useMemo(
+    () => configsList.some((configName) => !(configName in studyConfigs)),
+    [configsList, studyConfigs],
+  );
+  const isLoadingStudies = isLoadingVisibility || isLoadingStudyConfigs;
   const configsFiltered = useMemo(() => configsList.filter((configName) => studyVisibility[configName] || user.isAdmin), [configsList, studyVisibility, user]);
 
   const demos = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('demo-')), [configsFiltered]);
@@ -358,77 +379,126 @@ export function ConfigSwitcher({
           src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`}
           alt="reVISit"
         />
-        <Tabs variant="outline" defaultValue={firstTab} value={tab} onChange={(value) => navigate(`/?tab=${value}`)}>
-          <Tabs.List>
-            {others.length > 0 && (
-              <Tabs.Tab value="Others">Your Studies</Tabs.Tab>
+        {isLoadingStudies && (
+          <>
+            <Tabs variant="outline" value={null} mb="md">
+              <Tabs.List>
+                <Tabs.Tab value="demos" disabled>Demo Studies</Tabs.Tab>
+                <Tabs.Tab value="examples" disabled>Example Studies</Tabs.Tab>
+                <Tabs.Tab value="tutorials" disabled>Tutorials</Tabs.Tab>
+                <Tabs.Tab value="tests" disabled>Tests</Tabs.Tab>
+                <Tabs.Tab value="libraries" disabled>Libraries</Tabs.Tab>
+              </Tabs.List>
+            </Tabs>
+            <Text c="dimmed" ta="center" mt="sm" mb="md">Loading studies...</Text>
+            <Card shadow="sm" radius="md" my="sm" withBorder p="lg">
+              <Skeleton height={28} width="55%" mb="md" />
+              <Skeleton height={16} mb="sm" />
+              <Skeleton height={16} mb="sm" />
+              <Skeleton height={16} width="90%" mb="xl" />
+              <Flex justify="space-between" align="center">
+                <Skeleton height={36} width={190} radius="md" />
+                <Skeleton height={36} width={140} radius="md" />
+              </Flex>
+            </Card>
+            <Card shadow="sm" radius="md" my="sm" withBorder p="lg">
+              <Skeleton height={28} width="45%" mb="md" />
+              <Skeleton height={16} mb="sm" />
+              <Skeleton height={16} mb="sm" />
+              <Skeleton height={16} width="85%" mb="xl" />
+              <Flex justify="space-between" align="center">
+                <Skeleton height={36} width={190} radius="md" />
+                <Skeleton height={36} width={140} radius="md" />
+              </Flex>
+            </Card>
+            <Card shadow="sm" radius="md" my="sm" withBorder p="lg">
+              <Skeleton height={28} width="50%" mb="md" />
+              <Skeleton height={16} mb="sm" />
+              <Skeleton height={16} mb="sm" />
+              <Skeleton height={16} width="88%" mb="xl" />
+              <Flex justify="space-between" align="center">
+                <Skeleton height={36} width={190} radius="md" />
+                <Skeleton height={36} width={140} radius="md" />
+              </Flex>
+            </Card>
+          </>
+        )}
+
+        {!isLoadingStudies && (
+          <>
+            <Tabs variant="outline" defaultValue={firstTab} value={tab} onChange={(value) => navigate(`/?tab=${value}`)}>
+              <Tabs.List>
+                {others.length > 0 && (
+                  <Tabs.Tab value="Others">Your Studies</Tabs.Tab>
+                )}
+                {demos.length > 0 && (
+                  <Tabs.Tab value="Demos">Demo Studies</Tabs.Tab>
+                )}
+                {examples.length > 0 && (
+                  <Tabs.Tab value="Examples">Example Studies</Tabs.Tab>
+                )}
+                {tutorials.length > 0 && (
+                  <Tabs.Tab value="Tutorials">Tutorials</Tabs.Tab>
+                )}
+                {tests.length > 0 && (
+                  <Tabs.Tab value="Tests">Tests</Tabs.Tab>
+                )}
+                {libraries.length > 0 && (
+                  <Tabs.Tab value="Libraries">Libraries</Tabs.Tab>
+                )}
+              </Tabs.List>
+
+              {others.length > 0 && (
+                <Tabs.Panel value="Others">
+                  <StudyCards configNames={others} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+                </Tabs.Panel>
+              )}
+
+              {demos.length > 0 && (
+                <Tabs.Panel value="Demos">
+                  <Text c="dimmed" mt="sm">These studies show off individual features of the reVISit platform.</Text>
+                  <StudyCards configNames={demos} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+                </Tabs.Panel>
+              )}
+
+              {examples.length > 0 && (
+                <Tabs.Panel value="Examples">
+                  <Text c="dimmed" mt="sm">These are full studies that demonstrate the capabilities of the reVISit platform.</Text>
+                  <StudyCards configNames={examples} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+                </Tabs.Panel>
+              )}
+
+              {tutorials.length > 0 && (
+                <Tabs.Panel value="Tutorials">
+                  <Text c="dimmed" mt="sm">These studies are designed to help you learn how to use the reVISit platform.</Text>
+                  <StudyCards configNames={tutorials} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+                </Tabs.Panel>
+              )}
+
+              {tests.length > 0 && (
+                <Tabs.Panel value="Tests">
+                  <Text c="dimmed" mt="sm">These studies exist for testing purposes.</Text>
+                  <StudyCards configNames={tests} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+                </Tabs.Panel>
+              )}
+
+              {libraries.length > 0 && (
+                <Tabs.Panel value="Libraries">
+                  <Text c="dimmed" mt="sm">Here you can see an example of every library that we publish.</Text>
+                  <StudyCards configNames={libraries} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+                </Tabs.Panel>
+              )}
+            </Tabs>
+
+            {configsFiltered.length === 0 && (
+              <Text c="dimmed" ta="center" mt="xl">
+                No studies found. Studies can be added in your
+                {' '}
+                <Text span ff="monospace">global.json</Text>
+                .
+              </Text>
             )}
-            {demos.length > 0 && (
-              <Tabs.Tab value="Demos">Demo Studies</Tabs.Tab>
-            )}
-            {examples.length > 0 && (
-              <Tabs.Tab value="Examples">Example Studies</Tabs.Tab>
-            )}
-            {tutorials.length > 0 && (
-              <Tabs.Tab value="Tutorials">Tutorials</Tabs.Tab>
-            )}
-            {tests.length > 0 && (
-              <Tabs.Tab value="Tests">Tests</Tabs.Tab>
-            )}
-            {libraries.length > 0 && (
-              <Tabs.Tab value="Libraries">Libraries</Tabs.Tab>
-            )}
-          </Tabs.List>
-
-          {others.length > 0 && (
-            <Tabs.Panel value="Others">
-              <StudyCards configNames={others} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-            </Tabs.Panel>
-          )}
-
-          {demos.length > 0 && (
-            <Tabs.Panel value="Demos">
-              <Text c="dimmed" mt="sm">These studies show off individual features of the reVISit platform.</Text>
-              <StudyCards configNames={demos} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-            </Tabs.Panel>
-          )}
-
-          {examples.length > 0 && (
-            <Tabs.Panel value="Examples">
-              <Text c="dimmed" mt="sm">These are full studies that demonstrate the capabilities of the reVISit platform.</Text>
-              <StudyCards configNames={examples} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-            </Tabs.Panel>
-          )}
-
-          {tutorials.length > 0 && (
-            <Tabs.Panel value="Tutorials">
-              <Text c="dimmed" mt="sm">These studies are designed to help you learn how to use the reVISit platform.</Text>
-              <StudyCards configNames={tutorials} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-            </Tabs.Panel>
-          )}
-
-          {tests.length > 0 && (
-            <Tabs.Panel value="Tests">
-              <Text c="dimmed" mt="sm">These studies exist for testing purposes.</Text>
-              <StudyCards configNames={tests} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-            </Tabs.Panel>
-          )}
-
-          {libraries.length > 0 && (
-            <Tabs.Panel value="Libraries">
-              <Text c="dimmed" mt="sm">Here you can see an example of every library that we publish.</Text>
-              <StudyCards configNames={libraries} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-            </Tabs.Panel>
-          )}
-        </Tabs>
-
-        {configsFiltered.length === 0 && (
-          <Text c="dimmed" ta="center" mt="xl">
-            No studies found. Studies can be added in your
-            {' '}
-            <Text span ff="monospace">global.json</Text>
-            .
-          </Text>
+          </>
         )}
       </Container>
     </AppShell.Main>
