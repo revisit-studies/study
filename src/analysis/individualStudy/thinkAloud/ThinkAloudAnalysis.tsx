@@ -1,6 +1,6 @@
 import {
   Center,
-  Group, Stack, Text,
+  Stack, Text,
 } from '@mantine/core';
 import { useParams, useSearchParams } from 'react-router';
 import {
@@ -173,21 +173,19 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
   return (
     <ReplayContext.Provider value={replay}>
 
-      <Group wrap="nowrap" gap={25}>
-        <Stack ref={ref} style={{ width: '100%' }} gap={10}>
+      <Stack ref={ref} style={{ width: '100%', overflow: 'hidden' }} gap={10}>
 
-          {!participantId || !currentTrial ? <Center><Text c="dimmed" size="24">Select a Participant and Trial to Analyze</Text></Center>
-            : !hasAudio || (rawTranscriptStatus === 'success' && rawTranscript === null) ? <Center><Text c="dimmed" size="24">No transcripts found for this task</Text></Center> : (
+        {!participantId || !currentTrial ? <Center><Text c="dimmed" size="24">Select a Participant and Trial to Analyze</Text></Center>
+          : !hasAudio || (rawTranscriptStatus === 'success' && rawTranscript === null) ? <Center><Text c="dimmed" size="24">No transcripts found for this task</Text></Center> : (
 
-              <Stack>
-                <TextEditor onClickLine={changeLine} transcriptList={editedTranscript} setTranscriptList={setEditedTranscript} currentShownTranscription={currentShownTranscription} />
-              </Stack>
-            )}
+            <Stack>
+              <TextEditor onClickLine={changeLine} transcriptList={editedTranscript} setTranscriptList={setEditedTranscript} currentShownTranscription={currentShownTranscription} />
+            </Stack>
+          )}
 
-          <ThinkAloudFooter key={`${participantId}-${currentTrial}`} setHasAudio={setHasAudio} saveProvenance={() => null} studyId={studyId || ''} jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} storageEngine={storageEngine} />
-        </Stack>
+        <ThinkAloudFooter key={`${participantId}-${currentTrial}`} setHasAudio={setHasAudio} saveProvenance={() => null} studyId={studyId || ''} jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} storageEngine={storageEngine} />
+      </Stack>
 
-      </Group>
     </ReplayContext.Provider>
   );
 }

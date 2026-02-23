@@ -36,6 +36,7 @@ import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngi
 import { ConfigView } from './config/ConfigView';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
+const ANALYSIS_FOOTER_HEIGHT = 180; // Height of the tabs header
 
 function sortByStartTime(a: ParticipantData, b: ParticipantData) {
   const aStartTimes = Object.values(a.answers).map((answer) => answer.startTime).filter((startTime) => startTime !== undefined).sort();
@@ -462,7 +463,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               <Tabs.Panel style={{ overflow: 'auto' }} value="stats" pt="xs">
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
               </Tabs.Panel>
-              <Tabs.Panel value="tagging" pt="xs">
+              <Tabs.Panel style={{ overflowY: 'auto', overflowX: 'hidden', height: `calc(100% - ${ANALYSIS_FOOTER_HEIGHT}px - ${TABLE_HEADER_HEIGHT}px)` }} value="tagging" pt="xs">
                 {studyConfig && storageEngine?.getEngine() === 'firebase' ? <ThinkAloudAnalysis visibleParticipants={visibleParticipants} storageEngine={storageEngine as FirebaseStorageEngine} /> : <Center>Think aloud coding is only available when using Firebase.</Center>}
               </Tabs.Panel>
               {storageEngine?.getEngine() === 'firebase' && (

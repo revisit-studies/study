@@ -118,6 +118,7 @@ export function GlobalConfigParser() {
                   <AppShell
                     padding="md"
                     header={{ height: 70 }}
+                    footer={{ height: 180 }}
                   >
                     <StudyAnalysisTabs
                       globalConfig={globalConfig}
