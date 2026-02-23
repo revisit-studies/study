@@ -7,34 +7,36 @@ import {
   waitForStudyEndMessage,
 } from './utils';
 
-test('Test React component with reactive response', async ({ page }) => {
-  const trialLen = 2;
-  await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'React Stimulus and Provenance Tracking');
+test('Test React Stroop component with reactive response', async ({ page }) => {
+  const trials = [
+    { word: 'RED', answer: 'BLUE' },
+    { word: 'GREEN', answer: 'PINK' },
+  ] as const;
 
-  await expect(page.getByText(/pass answers from react component to revisit/i)).toBeVisible();
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'React Stimulus with Trrack library');
+
+  await expect(page.getByText(/Stroop color test/i)).toBeVisible();
   await nextClick(page);
 
-  // Check click accuracy test
-  // eslint-disable-next-line no-plusplus
-  for (let i = 0; i < trialLen; i++) {
-    const questionText = await page.getByText('Task:');
-    await expect(questionText).toBeVisible();
+  for (const { word, answer } of trials) {
+    await expect(page.getByText('Task:')).toBeVisible();
+    await expect(page.getByText(word, { exact: true })).toBeVisible();
 
-    const emptyAnswers = await page.getByRole('listitem');
-    await expect(await emptyAnswers.count()).toEqual(0);
+    const listItems = page.getByRole('listitem');
+    await expect(listItems).toHaveCount(0);
 
-    await page.getByRole('main').getByRole('img').click();
+    const textInput = page.getByRole('textbox');
+    await textInput.fill(answer);
 
-    // Sleep for 100ms to allow the answer to register
     await page.waitForTimeout(100);
 
-    const oneAnswer = await page.getByRole('listitem');
-    await expect(await oneAnswer.count()).toEqual(1);
+    await expect(listItems).toHaveCount(1);
+    await expect(listItems.first()).toHaveText(answer);
 
     await nextClick(page);
     await page.waitForTimeout(100);
   }
-  // Check that the thank you message is displayed
+
   await waitForStudyEndMessage(page);
 });

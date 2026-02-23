@@ -1109,6 +1109,13 @@ export abstract class StorageEngine {
     blob: Blob,
     taskName: string,
   ) {
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+    const modes = await this.getModes(this.studyId);
+    if (!modes.dataCollectionEnabled) {
+      throw new Error('Data collection is disabled for this study');
+    }
     return this.saveAsset('audio', blob, taskName);
   }
 
@@ -1126,6 +1133,13 @@ export abstract class StorageEngine {
     blob: Blob,
     taskName: string,
   ) {
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+    const modes = await this.getModes(this.studyId);
+    if (!modes.dataCollectionEnabled) {
+      throw new Error('Data collection is disabled for this study');
+    }
     return this.saveAsset('screenRecording', blob, taskName);
   }
 

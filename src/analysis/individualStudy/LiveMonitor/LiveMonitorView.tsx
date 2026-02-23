@@ -12,6 +12,49 @@ import { StorageEngine, SequenceAssignment } from '../../../storage/engines/type
 import { ParticipantSection } from './ParticipantSection';
 import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
 
+export interface LiveMonitorParticipantProgress {
+  assignment: SequenceAssignment;
+  progress: number;
+  isCompleted: boolean;
+  isRejected: boolean;
+}
+
+export function getFilteredParticipantProgress(
+  sequenceAssignments: SequenceAssignment[],
+  includedParticipants: string[],
+  selectedStages: string[],
+): LiveMonitorParticipantProgress[] {
+  return sequenceAssignments
+    .map((assignment) => {
+      const progress = assignment.total > 0 ? (assignment.answered.length / assignment.total) * 100 : 0;
+      const isCompleted = assignment.completed !== null;
+      const isRejected = assignment.rejected;
+
+      return {
+        assignment,
+        progress,
+        isCompleted,
+        isRejected,
+      };
+    })
+    .filter(({ isCompleted, isRejected, assignment }) => {
+      const status = isRejected ? 'rejected' : (isCompleted ? 'completed' : 'inprogress');
+      const statusMatch = includedParticipants.includes(status);
+      const stageMatch = selectedStages.includes('ALL') || selectedStages.includes(assignment.stage || '');
+
+      return statusMatch && stageMatch;
+    })
+    .sort((a, b) => b.assignment.createdTime - a.assignment.createdTime);
+}
+
+export function groupParticipantProgress(filteredParticipantProgress: LiveMonitorParticipantProgress[]) {
+  const inProgress = filteredParticipantProgress.filter((participant) => !participant.isCompleted && !participant.isRejected);
+  const completed = filteredParticipantProgress.filter((participant) => participant.isCompleted && !participant.isRejected);
+  const rejected = filteredParticipantProgress.filter((participant) => participant.isRejected);
+
+  return { inProgress, completed, rejected };
+}
+
 // Progress label components
 function InProgressLabel({ assignment, progress }: { assignment: SequenceAssignment; progress: number }) {
   return (
@@ -156,41 +199,16 @@ export function LiveMonitorView({
     };
   }, [firebaseStoreageEngine, studyId, connectionStatus, handleReconnect]);
 
-  const filteredParticipantProgress = useMemo(() => sequenceAssignments
-    .map((assignment) => {
-      const progress = assignment.total > 0 ? (assignment.answered.length / assignment.total) * 100 : 0;
-      const isCompleted = assignment.completed !== null;
-      const isRejected = assignment.rejected;
-
-      return {
-        assignment,
-        progress,
-        isCompleted,
-        isRejected,
-      };
-    })
-    .filter(({ isCompleted, isRejected, assignment }) => {
-      // Determine participant status
-      const status = isRejected ? 'rejected' : (isCompleted ? 'completed' : 'inprogress');
-
-      // Check if this status is included in the filter
-      const statusMatch = includedParticipants.includes(status);
-
-      // Check stage filter - if "ALL" is selected, show all participants
-      const stageMatch = selectedStages.includes('ALL') || selectedStages.includes(assignment.stage || '');
-
-      return statusMatch && stageMatch;
-    })
-    .sort((a, b) => b.assignment.createdTime - a.assignment.createdTime), [sequenceAssignments, includedParticipants, selectedStages]);
+  const filteredParticipantProgress = useMemo(
+    () => getFilteredParticipantProgress(sequenceAssignments, includedParticipants, selectedStages),
+    [sequenceAssignments, includedParticipants, selectedStages],
+  );
 
   // Group participants by status
-  const participantGroups = useMemo(() => {
-    const inProgress = filteredParticipantProgress.filter((p) => !p.isCompleted && !p.isRejected);
-    const completed = filteredParticipantProgress.filter((p) => p.isCompleted && !p.isRejected);
-    const rejected = filteredParticipantProgress.filter((p) => p.isRejected);
-
-    return { inProgress, completed, rejected };
-  }, [filteredParticipantProgress]);
+  const participantGroups = useMemo(
+    () => groupParticipantProgress(filteredParticipantProgress),
+    [filteredParticipantProgress],
+  );
 
   return (
     <Stack gap="sm">

@@ -165,21 +165,27 @@ export function useRecording() {
         const { mimeType } = mediaRecorder;
 
         const blob = new Blob(chunks, { type: mimeType });
-        storageEngine?.saveScreenRecording(blob, trialName);
+        storageEngine?.saveScreenRecording(blob, trialName).catch((error) => {
+          console.error('Error saving screen recording:', error);
+        });
       });
 
       audioRecorder?.addEventListener('stop', () => {
         const { mimeType } = audioRecorder;
 
         const blob = new Blob(audioChunks, { type: mimeType });
-        storageEngine?.saveAudioRecording(blob, trialName);
+        storageEngine?.saveAudioRecording(blob, trialName).catch((error) => {
+          console.error('Error saving audio recording:', error);
+        });
       });
     } else {
       mediaRecorder.addEventListener('stop', () => {
         const { mimeType } = mediaRecorder;
 
         const blob = new Blob(chunks, { type: mimeType });
-        storageEngine?.saveAudioRecording(blob, trialName);
+        storageEngine?.saveAudioRecording(blob, trialName).catch((error) => {
+          console.error('Error saving audio recording:', error);
+        });
       });
     }
 
@@ -252,7 +258,9 @@ export function useRecording() {
       recorder.addEventListener('stop', () => {
         const { mimeType } = recorder;
         const blob = new Blob(chunks, { type: mimeType });
-        storageEngine?.saveAudioRecording(blob, trialName);
+        storageEngine?.saveAudioRecording(blob, trialName).catch((error) => {
+          console.error('Error saving audio recording:', error);
+        });
       });
 
       recorder.start();

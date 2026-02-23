@@ -1,5 +1,5 @@
 import {
-  Box, Flex, Input, Slider, SliderProps,
+  Box, Flex, Input, Slider, SliderProps, Tooltip,
 } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import { useMove } from '@mantine/hooks';
@@ -169,24 +169,9 @@ export function SliderInput({
                   bottom: `calc(${normalizedValue * 100}% - 1px)`,
                 }}
               >
-                {/* Thumb value */}
-                {hovered && (
-                  <Box
-                    style={{
-                      position: 'absolute',
-                      left: 40,
-                      top: -10,
-                      transform: 'translateX(-50%)',
-                      background: 'var(--mantine-color-gray-8)',
-                      color: 'white',
-                      fontSize: 12,
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                    }}
-                  >
-                    {Math.round(val)}
-                  </Box>
-                )}
+                <Tooltip label={Math.round(val)} opened={hovered} position="right" withArrow>
+                  <Box style={{ width: 20, height: 1 }} />
+                </Tooltip>
               </Box>
             </Box>
 
@@ -231,7 +216,8 @@ export function SliderInput({
           {...answer}
           classNames={{ track: tlxStyle ? classes.track : '', bar: classes.fixDisabled }}
           restrictToMarks={snap}
-          label={(value) => (snap ? null : value)}
+          label={(value) => value}
+          showLabelOnHover
           styles={(theme) => ({
             mark: {
               ...(tlxStyle ? {
