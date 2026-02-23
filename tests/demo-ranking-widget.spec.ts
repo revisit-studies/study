@@ -4,7 +4,11 @@ import {
   Page,
   Locator,
 } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import {
+  nextClick,
+  resetClientStudyState,
+  waitForStudyEndMessage,
+} from './utils';
 
 async function getAvailableItemsZone(page: Page) {
   return page.locator('div.mantine-Paper-root[data-with-border="true"]').filter({
@@ -93,6 +97,7 @@ async function settleAfterDrag(page: Page) {
 }
 
 test('Test ranking response(sublist, categorical, pairwise) and validation', async ({ page }) => {
+  await resetClientStudyState(page);
   await page.goto('/demo-ranking-widget');
 
   const nextParticipantButton = page.getByRole('button', { name: 'Next Participant' });
@@ -100,7 +105,7 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
     await nextParticipantButton.click();
   }
 
-  await expect(page.getByText('Welcome to our study. This is an example study to show how to use ranking widget.')).toBeVisible();
+  await expect(page.getByText(/demo study.*ranking widget/i)).toBeVisible();
 
   await nextClick(page);
 

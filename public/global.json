@@ -5,27 +5,24 @@
     "tutorial-replication",
     "demo-html",
     "demo-html-input",
-    "demo-screen-recording",
-    "demo-survey",
+    "demo-form-elements",
     "demo-training",
     "demo-html-trrack",
     "demo-react-trrack",
+    "demo-screen-recording",
     "demo-image",
-    "demo-upset",
     "demo-vega",
-    "demo-video-slider",
     "demo-video",
     "demo-dynamic",
     "demo-condition",
     "demo-style",
     "demo-yaml",
     "demo-ranking-widget",
+    "demo-upset",
     "example-brush-interactions",
     "example-cleveland",
     "example-mvnv",
     "example-VLAT-adaptive",
-    "example-VLAT-full-randomized",
-    "example-VLAT-mini-randomized",
     "library-adaptive-vlat",
     "library-beauvis",
     "library-berlin-num",
@@ -62,9 +59,6 @@
     "tutorial-replication": {
       "path": "tutorial/replication-config.json"
     },
-    "demo-video-slider": {
-      "path": "demo-video-slider/config.json"
-    },
     "demo-html": {
       "path": "demo-html/config.json"
     },
@@ -74,8 +68,8 @@
     "demo-html-input": {
       "path": "demo-html-input/config.json"
     },
-    "demo-survey": {
-      "path": "demo-survey/config.json"
+    "demo-form-elements": {
+      "path": "demo-form-elements/config.json"
     },
     "demo-training": {
       "path": "demo-training/config.json"
@@ -121,12 +115,6 @@
     },
     "example-mvnv": {
       "path": "example-mvnv/config.json"
-    },
-    "example-VLAT-full-randomized": {
-      "path": "example-VLAT-full-randomized/config.json"
-    },
-    "example-VLAT-mini-randomized": {
-      "path": "example-VLAT-mini-randomized/config.json"
     },
     "library-adaptive-vlat": {
       "path": "library-adaptive-vlat/config.json",

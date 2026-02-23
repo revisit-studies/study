@@ -25,7 +25,7 @@ const createExampleConfig = (libraryName) => ({
     authors: ['The reVISit Team'],
     date: new Date().toISOString().split('T')[0],
     description: `Example study using the ${libraryName} library.`,
-    organizations: ['University of Utah', 'WPI', 'University of Toronto'],
+    organizations: ['University of Utah', 'WPI'],
   },
   uiConfig: {
     contactEmail: '',

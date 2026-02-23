@@ -6,7 +6,7 @@ test('Test vega component with reactive response', async ({ page }) => {
   await page.goto('/demo-vega');
 
   await expect(page.getByRole('heading', { name: 'Vega Stimuli Demo' })).toBeVisible();
-  await expect(page.getByText('This is a demo study that uses stimuli built with Vega')).toBeVisible();
+  await expect(page.getByText(/demo study.*stimuli.*vega/i)).toBeVisible();
 
   await nextClick(page);
 

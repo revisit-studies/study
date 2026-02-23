@@ -1,16 +1,22 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "HTML as a Stimulus with Screen Recording",
+    "title": "Screen Recording",
     "version": "pilot",
-    "authors": ["The reVISit Team"],
+    "authors": [
+      "The reVISit Team"
+    ],
     "date": "2023-04-14",
     "description": "A simple demo of using screen recording on stimuli that render an external website, where provenance tracking is difficult to implement.",
-    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-screen-recording/assets/help.md",
+    "helpTextPath": "demo-screen-recording/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -67,6 +73,12 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": ["introduction", "$screen-recording.components.screenRecordingPermission", "external_website_audio", "external_website_audio_screen", "barChart_audio_screen"]
+    "components": [
+      "introduction",
+      "$screen-recording.components.screenRecordingPermission",
+      "external_website_audio",
+      "external_website_audio_screen",
+      "barChart_audio_screen"
+    ]
   }
 }

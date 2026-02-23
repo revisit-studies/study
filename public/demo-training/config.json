@@ -15,13 +15,18 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-training/assets/help.md",
+    "helpTextPath": "demo-training/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "withSidebar": true
   },
   "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-training/assets/introduction.md",
+      "response": []
+    },
     "simple-dropbox": {
       "type": "questionnaire",
       "nextButtonLocation": "sidebar",
@@ -159,6 +164,7 @@
   "sequence": {
     "order": "fixed",
     "components": [
+      "introduction",
       "simple-dropbox",
       "slider-range",
       "multiSelectCheckbox",

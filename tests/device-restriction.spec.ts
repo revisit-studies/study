@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { resetClientStudyState } from './utils';
 
 test.describe('Test device restriction: display, browsers, devices, input', () => {
   test('shows resolution warning when viewport is below minimum', async ({ page }) => {
+    await resetClientStudyState(page);
     await page.setViewportSize({ width: 700, height: 350 });
     await page.goto('/test-device-restriction');
 
@@ -12,11 +14,12 @@ test.describe('Test device restriction: display, browsers, devices, input', () =
   });
 
   test('renders study normally when all rules are satisfied', async ({ page }) => {
+    await resetClientStudyState(page);
     await page.setViewportSize({ width: 1200, height: 800 });
     await page.goto('/test-device-restriction');
 
     await expect(page.getByRole('heading', { name: 'Test device restriction' })).toBeVisible();
-    await expect(page.getByText('Welcome to our study. This is an example study to show how to embed html element')).toBeVisible();
+    await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Screen Resolution Warning' })).not.toBeVisible();
     await expect(page.getByRole('heading', { name: 'Browser or Device Not Supported' })).not.toBeVisible();
   });
@@ -27,6 +30,7 @@ test.describe('Test device restriction: display, browsers, devices, input', () =
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
     });
     const page = await context.newPage();
+    await resetClientStudyState(page);
 
     await page.goto('/test-device-restriction');
 
@@ -45,6 +49,7 @@ test.describe('Test device restriction: display, browsers, devices, input', () =
       deviceScaleFactor: 3,
     });
     const page = await context.newPage();
+    await resetClientStudyState(page);
 
     await page.goto('/test-device-restriction');
 

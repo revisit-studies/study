@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { waitForStudyEndMessage } from './utils';
+import {
+  openStudyFromLanding,
+  resetClientStudyState,
+  waitForStudyEndMessage,
+} from './utils';
 
 test('test', async ({ page }) => {
   await page.setViewportSize({
@@ -7,12 +11,8 @@ test('test', async ({ page }) => {
     height: 800,
   });
 
-  await page.goto('/');
-
-  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'HTML as a Stimulus' })
-    .nth(0)
-    .getByText('Go to Study')
-    .click();
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
 
   const browseComponentsTab = page.getByRole('tab', { name: 'Browse Components' });
   await expect(browseComponentsTab).toBeVisible();
@@ -23,7 +23,7 @@ test('test', async ({ page }) => {
   await expect(iframe).toBeVisible();
 
   await page.getByLabel('Browse Components').locator('a').filter({ hasText: 'introduction' }).click();
-  const introText = page.getByText('Welcome to our study. This is');
+  const introText = page.getByText(/example study.*embed html elements/i);
   await expect(introText).toBeVisible();
 
   const participantViewTab = page.getByRole('tab', { name: 'Participant View' });

@@ -1,16 +1,18 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import {
+  nextClick,
+  openStudyFromLanding,
+  resetClientStudyState,
+  waitForStudyEndMessage,
+} from './utils';
 
 test('Test React component with reactive response', async ({ page }) => {
   const trialLen = 2;
-  await page.goto('/');
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'React Stimulus and Provenance Tracking');
 
-  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'React Stimulus and Provenance Tracking' })
-    .getByText('Go to Study')
-    .click();
-
-  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
+  await expect(page.getByText(/pass answers from react component to revisit/i)).toBeVisible();
   await nextClick(page);
 
   // Check click accuracy test

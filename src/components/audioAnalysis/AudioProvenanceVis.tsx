@@ -22,6 +22,7 @@ import { useEvent } from '../../store/hooks/useEvent';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useUpdateProvenance } from './useUpdateProvenance';
 import { useReplayContext } from '../../store/hooks/useReplay';
+import { syncChannel, syncEmitter } from '../../utils/syncReplay';
 
 const margin = {
   left: 20, top: 0, right: 20, bottom: 0,
@@ -115,44 +116,50 @@ export function AudioProvenanceVis({
 
   useEffect(() => {
     if (taskName) {
-      localStorage.setItem('currentTrial', taskName);
+      syncChannel.postMessage({
+        key: 'currentTrial',
+        value: taskName,
+      });
+
       if (answers[taskName]?.trialOrder) {
-        localStorage.setItem('trialOrder', answers[taskName].trialOrder);
+        syncChannel.postMessage({
+          key: 'trialOrder',
+          value: answers[taskName].trialOrder,
+        });
       }
     }
   }, [answers, taskName]);
 
   useEffect(() => {
-    const listener = (e: StorageEvent) => {
-      if (!e.newValue) {
-        return;
-      }
+    const participantIdListener = (newId: string) => {
+      setSearchParams((params) => {
+        params.set('participantId', newId || '');
+        return params;
+      });
+    };
 
-      if (e.key === 'participantId') {
-        setSearchParams((params) => {
-          params.set('participantId', e.newValue || '');
+    const currentTrialListener = (newCurrentTrial: string) => {
+      setSearchParams((params) => {
+        params.set('currentTrial', newCurrentTrial || '');
+        return params;
+      });
+    };
 
-          return params;
-        });
-      }
-      if (e.key === 'currentTrial') {
-        setSearchParams((params) => {
-          params.set('currentTrial', e.newValue || '');
-
-          return params;
-        });
-      }
-
-      if (e.key === 'trialOrder') {
-        if (context === 'provenanceVis') {
-          navigate(taskName ? `./../${encryptIndex(+e.newValue)}?participantId=${participantId}&currentTrial=${taskName}` : `./${e.newValue}?participantId=${participantId}&currentTrial=${taskName}`);
-        }
+    const trialOrderListener = (newValue: string) => {
+      if (context === 'provenanceVis') {
+        navigate(taskName ? `./../${encryptIndex(+newValue)}?participantId=${participantId}&currentTrial=${taskName}` : `./${newValue}?participantId=${participantId}&currentTrial=${taskName}`);
       }
     };
 
-    window.addEventListener('storage', listener);
+    syncEmitter.on('participantId', participantIdListener);
+    syncEmitter.on('currentTrial', currentTrialListener);
+    syncEmitter.on('trialOrder', trialOrderListener);
 
-    return () => window.removeEventListener('storage', listener);
+    return () => {
+      syncEmitter.off('participantId', participantIdListener);
+      syncEmitter.off('currentTrial', currentTrialListener);
+      syncEmitter.off('trialOrder', trialOrderListener);
+    };
   }, [context, navigate, participantId, setSearchParams, taskName]);
 
   useUpdateProvenance('aboveStimulus', playTime, answers[taskName]?.provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes, saveProvenance);
