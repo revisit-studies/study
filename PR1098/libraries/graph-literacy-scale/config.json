@@ -96,8 +96,13 @@
   "components": {
     "Q1": {
       "baseComponent": "bar-cancer-recovery",
+      "correctAnswer": [
+        {
+          "id": "res-Q1",
+          "answer": 35
+        }
+      ],
       "meta": {
-        "trueAnswer": 35,
         "chartType": "bar"
       },
       "response": [
@@ -113,8 +118,13 @@
     },
     "Q2": {
       "baseComponent": "bar-cancer-recovery",
+      "correctAnswer": [
+        {
+          "id": "res-Q2",
+          "answer": 15
+        }
+      ],
       "meta": {
-        "trueAnswer": 15,
         "chartType": "bar"
       },
       "response": [
@@ -130,8 +140,13 @@
     },
     "Q3": {
       "baseComponent": "pie-cancer",
+      "correctAnswer": [
+        {
+          "id": "res-Q3",
+          "answer": 25
+        }
+      ],
       "meta": {
-        "trueAnswer": 25,
         "chartType": "pie"
       },
       "response": [
@@ -147,8 +162,13 @@
     },
     "Q4": {
       "baseComponent": "pie-cancer",
+      "correctAnswer": [
+        {
+          "id": "res-Q4",
+          "answer": 25
+        }
+      ],
       "meta": {
-        "trueAnswer": 25,
         "chartType": "pie"
       },
       "response": [
@@ -164,8 +184,13 @@
     },
     "Q5": {
       "baseComponent": "line-Adeolitis",
+      "correctAnswer": [
+        {
+          "id": "res-Q5",
+          "answer": 20
+        }
+      ],
       "meta": {
-        "trueAnswer": 20,
         "chartType": "line"
       },
       "response": [
@@ -181,8 +206,13 @@
     },
     "Q6": {
       "baseComponent": "line-Adeolitis",
+      "correctAnswer": [
+        {
+          "id": "res-Q6",
+          "answer": "Increase was the same in both intervals"
+        }
+      ],
       "meta": {
-        "trueAnswer": 3,
         "chartType": "line"
       },
       "response": [
@@ -204,8 +234,13 @@
     },
     "Q7": {
       "baseComponent": "line-Adeolitis",
+      "correctAnswer": [
+        {
+          "id": "res-Q7",
+          "answer": 24
+        }
+      ],
       "meta": {
-        "trueAnswer": 24,
         "chartType": "line"
       },
       "response": [
@@ -221,8 +256,13 @@
     },
     "Q8": {
       "baseComponent": "icon-diseaseX",
+      "correctAnswer": [
+        {
+          "id": "res-Q8",
+          "answer": 40
+        }
+      ],
       "meta": {
-        "trueAnswer": 40,
         "chartType": "icon"
       },
       "response": [
@@ -238,8 +278,13 @@
     },
     "Q9": {
       "baseComponent": "icon-diseaseX",
+      "correctAnswer": [
+        {
+          "id": "res-Q9",
+          "answer": 20
+        }
+      ],
       "meta": {
-        "trueAnswer": 20,
         "chartType": "icon"
       },
       "response": [
@@ -255,8 +300,13 @@
     },
     "Q10": {
       "baseComponent": "bar-treat-heart-disease",
+      "correctAnswer": [
+        {
+          "id": "res-Q10",
+          "answer": "They are equal"
+        }
+      ],
       "meta": {
-        "trueAnswer": 3,
         "chartType": "bar"
       },
       "response": [
@@ -278,8 +328,13 @@
     },
     "Q11": {
       "baseComponent": "line-treat-psoriasis",
+      "correctAnswer": [
+        {
+          "id": "res-Q11",
+          "answer": "Can't say"
+        }
+      ],
       "meta": {
-        "trueAnswer": 4,
         "chartType": "line"
       },
       "response": [
@@ -301,8 +356,13 @@
     },
     "Q12": {
       "baseComponent": "line-Coliosis-Tiosis",
+      "correctAnswer": [
+        {
+          "id": "res-Q12",
+          "answer": "Tiosis"
+        }
+      ],
       "meta": {
-        "trueAnswer": 2,
         "chartType": "line"
       },
       "response": [
@@ -324,8 +384,13 @@
     },
     "Q13": {
       "baseComponent": "bar-cancer-die",
+      "correctAnswer": [
+        {
+          "id": "res-Q13",
+          "answer": 5
+        }
+      ],
       "meta": {
-        "trueAnswer": 5,
         "chartType": "bar"
       },
       "response": [
