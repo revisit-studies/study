@@ -8,7 +8,7 @@ import {
   Group, HoverCard, Popover, SegmentedControl, Select, Stack, Text,
   Tooltip,
 } from '@mantine/core';
-import { useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
@@ -36,6 +36,7 @@ import {
   buildProvenanceLegendEntries,
 } from '../../../components/audioAnalysis/provenanceColors';
 import { revisitPageId, syncChannel } from '../../../utils/syncReplay';
+// import { useStudyId } from '../../../routes/utils';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
@@ -77,6 +78,8 @@ export function ThinkAloudFooter({
   const auth = useAuth();
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
 
@@ -237,17 +240,16 @@ export function ThinkAloudFooter({
       index = Object.values(participant.answers).length - 1;
     }
 
-    const newTrial = Object.values(participant.answers).find((ans) => +ans.trialOrder.split('_')[0] === index);
-    const newTrialName = newTrial ? `${newTrial.componentName}_${newTrial.trialOrder.split('_')[0]}` : '';
+    navigate({
+      pathname: `/${studyId}/${encryptIndex(index)}`,
+      search: location.search,
+    });
 
     syncChannel.postMessage({
       key: 'currentTrial',
-      value: newTrialName,
+      value: index,
     });
-
-    // This isnt actually doing anything without the other analysis tab open
-    setSearchParams({ participantId, currentTrial: newTrialName });
-  }, [currentTrial, participant, participantId, setSearchParams]);
+  }, [currentTrial, location.search, navigate, participant, studyId]);
 
   const setTags = useCallback((_tags: Tag[], type: 'task' | 'participant') => {
     if (storageEngine) {
@@ -455,11 +457,16 @@ export function ThinkAloudFooter({
               // this needs to be in a helper or two which we dont currently have
               onChange={(e: string | null) => {
                 if (participant && e) {
+                  const stepNumber = tasksList.map(({ value }) => value).indexOf(e);
+                  navigate({
+                    pathname: `/${studyId}/${encryptIndex(stepNumber)}`,
+                    search: location.search,
+                  });
+
                   syncChannel.postMessage({
                     key: 'currentTrial',
                     value: e,
                   });
-                  setSearchParams({ participantId, currentTrial: e });
                 }
               }}
               data={tasksList}
