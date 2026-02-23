@@ -17,7 +17,8 @@
     "contactEmail": "",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
-    "withSidebar": false
+    "withSidebar": false,
+    "stylesheetPath": "library-nasa-tlx/assets/layout.css"
   },
   "importedLibraries": [
     "nasa-tlx"
