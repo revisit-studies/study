@@ -12,6 +12,7 @@ interface VirtualChinrestCalibrationProps extends StimulusParams<{ taskid: strin
   fixedCorner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 }
 
+// --- utility functions
 // Calculate height based on width and aspect ratio
 const calculateHeight = (width: number, aspectRatio:number) => Math.round(width * aspectRatio);
 
