@@ -16,6 +16,7 @@ import {
   Firestore,
   Timestamp,
   collection,
+  deleteField,
   doc,
   enableNetwork,
   getDoc,
@@ -231,6 +232,32 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     const toUpload = withServerTimestamp ? { ...sequenceAssignment, timestamp: serverTimestamp() } : sequenceAssignment;
     await setDoc(participantSequenceAssignmentDoc, { ...toUpload, createdTime: serverTimestamp() });
+  }
+
+  protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      participantId,
+    );
+
+    const firebaseUpdatedFields: Record<string, unknown> = { ...updatedFields };
+    if (Object.hasOwn(updatedFields, 'conditions') && updatedFields.conditions === undefined) {
+      firebaseUpdatedFields.conditions = deleteField();
+    }
+    if (Object.keys(firebaseUpdatedFields).length === 0) {
+      return;
+    }
+
+    await updateDoc(participantSequenceAssignmentDoc, firebaseUpdatedFields);
   }
 
   protected async _completeCurrentParticipantRealtime() {

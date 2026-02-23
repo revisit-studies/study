@@ -1,6 +1,6 @@
 import ReactMarkdown, { Components } from 'react-markdown';
 import {
-  Text, Title, Anchor, List, Table, Image,
+  Code, Text, Title, Anchor, List, Table, Image,
 } from '@mantine/core';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
@@ -17,17 +17,18 @@ function isElement(node: unknown): node is Element {
   return !!node && typeof node === 'object' && (node as Element).type === 'element';
 }
 
-const markdownComponents = (option?: boolean): Partial<Components> => ({
-  p({ node: _, ...props }) { return option ? <Text {...props} component="span" size="sm" /> : <Text {...props} pb={8} fw="inherit" ref={undefined} />; },
-  h1({ node: _, ...props }) { return <Title {...props} order={1} pb={option ? undefined : 12} />; },
-  h2({ node: _, ...props }) { return <Title {...props} order={2} pb={option ? undefined : 12} />; },
-  h3({ node: _, ...props }) { return <Title {...props} order={3} pb={option ? undefined : 12} />; },
-  h4({ node: _, ...props }) { return <Title {...props} order={4} pb={option ? undefined : 12} />; },
-  h5({ node: _, ...props }) { return <Title {...props} order={5} pb={option ? undefined : 12} />; },
-  h6({ node: _, ...props }) { return <Title {...props} order={6} pb={option ? undefined : 12} />; },
+const markdownComponents = (inline?: boolean): Partial<Components> => ({
+  p({ node: _, ...props }) { return inline ? <Text {...props} component="span" size="sm" /> : <Text {...props} pb={8} fw="inherit" ref={undefined} />; },
+  h1({ node: _, ...props }) { return <Title {...props} order={1} pb={inline ? undefined : 12} />; },
+  h2({ node: _, ...props }) { return <Title {...props} order={2} pb={inline ? undefined : 12} />; },
+  h3({ node: _, ...props }) { return <Title {...props} order={3} pb={inline ? undefined : 12} />; },
+  h4({ node: _, ...props }) { return <Title {...props} order={4} pb={inline ? undefined : 12} />; },
+  h5({ node: _, ...props }) { return <Title {...props} order={5} pb={inline ? undefined : 12} />; },
+  h6({ node: _, ...props }) { return <Title {...props} order={6} pb={inline ? undefined : 12} />; },
   a({ node: _, ...props }) { return <Anchor {...props} ref={undefined} />; },
-  ul({ node: _, ...props }) { return <List withPadding {...props} pb={option ? undefined : 8} />; },
-  ol({ node: _, type: _type, ...props }) { return <List {...props} type="ordered" withPadding pb={option ? undefined : 8} />; },
+  code({ node: _, ...props }) { return <Code {...props} />; },
+  ul({ node: _, ...props }) { return <List withPadding {...props} pb={inline ? undefined : 8} />; },
+  ol({ node: _, type: _type, ...props }) { return <List {...props} type="ordered" withPadding pb={inline ? undefined : 8} />; },
   table({ node: _, ...props }) { return <Table {...props} mb={12} borderColor="grey" />; },
   thead({ node: _, ...props }) { return <Table.Thead {...props} />; },
   tbody({ node: _, ...props }) { return <Table.Tbody {...props} />; },
@@ -39,8 +40,8 @@ const markdownComponents = (option?: boolean): Partial<Components> => ({
   }) { return <Image {...props} h={height} w={width} src={src?.startsWith('http') ? src : `${PREFIX}${src}`} />; },
 });
 
-export function ReactMarkdownWrapper({ text, required, option }: { text: string; required?: boolean; option?: boolean }) {
-  const componentsToUse = markdownComponents(option);
+export function ReactMarkdownWrapper({ text, required, inline }: { text: string; required?: boolean; inline?: boolean }) {
+  const componentsToUse = markdownComponents(inline);
   const rehypeAsterisk = useCallback(() => (tree: Root) => {
     if (!required) return;
     if (!tree) return;
@@ -86,22 +87,25 @@ export function ReactMarkdownWrapper({ text, required, option }: { text: string;
       };
       // Modify the last child to attach the asterisk to the last word if it's text, or to the node if it's an element
       if (isHastText(lastNode.children.at(-1))) {
-        // Remake the node into an element with the asterisk attached as a span to the last word
+        // Preserve original spacing while attaching the asterisk to the final token.
         const textNode = lastNode.children.at(-1) as HastText;
-        const words = textNode.value.split(' ');
-        const lastWord = words.pop();
-        const newTextValue = words.join(' ');
-        // If newTextValue exists (i.e. we had multiple words), add space before last word
-        const needsSpace = newTextValue.length > 0;
+        const match = textNode.value.match(/^([\s\S]*?)(\S+)(\s*)$/);
+
+        if (!match) {
+          lastNode.children.push(asteriskNode);
+          return;
+        }
+
+        const [, beforeLastWord, lastWord, afterLastWord] = match;
         const newTextNode: Element = {
           type: 'element',
           tagName: 'span',
           properties: {},
           children: [
-            {
-              type: 'text',
-              value: needsSpace ? `${newTextValue} ` : '',
-            },
+            ...(beforeLastWord.length > 0 ? [{
+              type: 'text' as const,
+              value: beforeLastWord,
+            }] : []),
             {
               type: 'element',
               tagName: 'span',
@@ -109,11 +113,15 @@ export function ReactMarkdownWrapper({ text, required, option }: { text: string;
               children: [
                 {
                   type: 'text',
-                  value: `${lastWord}`,
+                  value: lastWord,
                 },
+                asteriskNode,
               ],
             },
-            asteriskNode,
+            ...(afterLastWord.length > 0 ? [{
+              type: 'text' as const,
+              value: afterLastWord,
+            }] : []),
           ],
         };
         // Replace the last text node with the new element node

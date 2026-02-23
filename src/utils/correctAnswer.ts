@@ -4,7 +4,7 @@ import { Answer, IndividualComponent, StoredAnswer } from '../parser/types';
 export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer'][string], responseCorrectAnswer: Answer['answer'], acceptableLow?: number, acceptableHigh?: number) {
   // Handle numeric-string comparison for likert and slider responses
   if ((typeof responseUserAnswer === 'number' || typeof responseUserAnswer === 'string')
-  && (typeof responseCorrectAnswer === 'string' || typeof responseCorrectAnswer === 'number')) {
+    && (typeof responseCorrectAnswer === 'string' || typeof responseCorrectAnswer === 'number')) {
     const userAnswerNumber = Number(responseUserAnswer);
 
     if (userAnswerNumber) {
@@ -29,7 +29,7 @@ export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer
   }
 
   // Handle array of object (e.g. matrix-radio and matrix-checkbox)
-  if (typeof responseUserAnswer === 'object') {
+  if (responseUserAnswer !== null && typeof responseUserAnswer === 'object' && !Array.isArray(responseUserAnswer) && Array.isArray(responseCorrectAnswer)) {
     const userAnswerArray = Object.values(responseUserAnswer);
 
     if (userAnswerArray.length !== responseCorrectAnswer.length) return false;

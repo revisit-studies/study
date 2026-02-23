@@ -16,7 +16,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-video/assets/help.md",
+    "helpTextPath": "demo-video/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -48,6 +48,13 @@
       "withTimeline": true,
       "response": []
     },
+    "vimeoExternal": {
+      "type": "video",
+      "path": "https://vimeo.com/76979871",
+      "forceCompletion": false,
+      "withTimeline": true,
+      "response": []
+    },
     "missingExternal": {
       "type": "video",
       "path": "https://www.youtube.com/watch",
@@ -62,6 +69,7 @@
       "internal",
       "missingInternal",
       "external",
+      "vimeoExternal",
       "missingExternal"
     ]
   }

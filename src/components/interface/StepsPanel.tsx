@@ -14,7 +14,7 @@ import {
   Button,
 } from '@mantine/core';
 import {
-  IconArrowsShuffle, IconBrain, IconCheck, IconChevronUp, IconDice3, IconDice5, IconInfoCircle,
+  IconArrowsShuffle, IconBinaryTree, IconBrain, IconCheck, IconChevronUp, IconDice3, IconDice5, IconInfoCircle,
   IconPackageImport,
   IconX,
 } from '@tabler/icons-react';
@@ -107,6 +107,7 @@ type BlockStepItem = StepItemBase & {
   type: 'block';
   order: Sequence['order'];
   orderPath?: string; // Order path for blocks
+  conditional?: boolean;
   numInterruptions?: number;
   numComponentsInSequence?: number;
   numComponentsInStudySequence?: number;
@@ -369,6 +370,7 @@ export function StepsPanel({
           // Block Attributes
           order: node.order,
           orderPath: node.orderPath,
+          conditional: node.conditional,
           numInterruptions: node.components.filter((comp) => typeof comp === 'string' && blockInterruptions.includes(comp)).length,
           numComponentsInSequence,
           numComponentsInStudySequence,
@@ -684,6 +686,7 @@ export function StepsPanel({
           const {
             order,
             orderPath,
+            conditional,
             numInterruptions,
             numComponentsInSequence,
             numComponentsInStudySequence,
@@ -737,9 +740,9 @@ export function StepsPanel({
                   onClick={() => {
                     if (isComponent && href && !isExcluded) {
                       if (isAnalysis) {
-                        navigate(`/analysis/stats/${studyId}/stats/${encodeURIComponent(String(componentName))}`);
+                        navigate(`/analysis/stats/${studyId}/stats/${encodeURIComponent(String(componentName))}${location.search}`);
                       } else {
-                        navigate(href);
+                        navigate(`${href}${location.search}`);
                       }
                     } else if (!isComponent) {
                       // Both included and excluded blocks can be collapsed/expanded
@@ -771,6 +774,11 @@ export function StepsPanel({
                       {isLibraryImport && (
                         <Tooltip label={importedLibraryName ? `Imported from ${importedLibraryName}` : 'Package import'} position="right" withArrow>
                           <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
+                        </Tooltip>
+                      )}
+                      {!isComponent && conditional && (
+                        <Tooltip label={`Condition: ${label}`} position="right" withArrow>
+                          <IconBinaryTree size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
                         </Tooltip>
                       )}
                       {(component?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
