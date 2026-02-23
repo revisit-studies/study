@@ -1,11 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "React Stroop Demo with Trrack Library",
+    "title": "React Demo with Trrack Library",
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-02-21",
-    "description": "A Stroop color-word demo using a React stimulus with trrack provenance tracking.",
+    "description": "A demo of the stroop test using a React stimulus with provenance tracking.",
     "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
@@ -41,7 +41,7 @@
     },
     "trial-red-blue": {
       "baseComponent": "trial",
-      "meta": {"seq": 1},
+      "meta": { "seq": 1 },
       "parameters": {
         "taskid": "stroopAnswer",
         "displayText": "RED",
@@ -50,7 +50,7 @@
     },
     "trial-green-pink": {
       "baseComponent": "trial",
-      "meta": {"seq": 1},
+      "meta": { "seq": 1 },
       "parameters": {
         "taskid": "stroopAnswer",
         "displayText": "GREEN",
