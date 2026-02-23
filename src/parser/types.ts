@@ -607,7 +607,7 @@ export interface SliderResponse extends BaseResponse {
   snap?: boolean;
   /** The step value of the slider. If not provided (and snap not enabled), the step value is calculated as the range of the slider divided by 100. */
   step?: number;
-  /** The spacing between the ticks. If not provided, the spacing is calculated as the range of the slider divided by power of 10. */
+  /** The spacing between the ticks. If not provided, the spacing is the largest power of 10 smaller than the slider range. */
   spacing?: number;
   /** Whether to render the slider with a bar to the left. Defaults to true. */
   withBar?: boolean;

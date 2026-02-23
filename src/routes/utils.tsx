@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   useEffect, useMemo, useState,
 } from 'react';
@@ -12,6 +12,21 @@ import { findFuncBlock } from '../utils/getSequenceFlatMap';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { getComponent } from '../utils/handleComponentInheritance';
 
+function parseTrialOrder(trialOrder?: string): { step: number | null; funcIndex: number | null } {
+  if (!trialOrder) {
+    return { step: null, funcIndex: null };
+  }
+
+  const [stepRaw, funcIndexRaw] = trialOrder.split('_');
+  const parsedStep = Number.parseInt(stepRaw, 10);
+  const parsedFuncIndex = funcIndexRaw === undefined ? null : Number.parseInt(funcIndexRaw, 10);
+
+  return {
+    step: Number.isFinite(parsedStep) ? parsedStep : null,
+    funcIndex: parsedFuncIndex !== null && Number.isFinite(parsedFuncIndex) ? parsedFuncIndex : null,
+  };
+}
+
 export function useStudyId(): string {
   const { studyId } = useParams();
 
@@ -20,6 +35,7 @@ export function useStudyId(): string {
 
 export function useCurrentStep() {
   const { index } = useParams();
+  const answers = useStoreSelector((state) => state.answers);
 
   const decrypted = useMemo(() => {
     if (index === undefined) {
@@ -33,6 +49,16 @@ export function useCurrentStep() {
     return decryptIndex(index);
   }, [index]);
 
+  const [searchParams] = useSearchParams();
+
+  const currentTrial = searchParams.get('currentTrial') || '';
+  const currentTrialOrder = currentTrial ? answers[currentTrial]?.trialOrder : undefined;
+  const { step: currentTrialStep } = parseTrialOrder(currentTrialOrder);
+
+  if (currentTrial && currentTrialStep !== null) {
+    return currentTrialStep;
+  }
+
   return decrypted;
 }
 
@@ -44,6 +70,7 @@ const modules = import.meta.glob(
 export function useCurrentComponent(): string {
   const { funcIndex } = useParams();
   const _answers = useStoreSelector((state) => state.answers);
+  const [searchParams] = useSearchParams();
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
   const flatSequence = useFlatSequence();
@@ -51,6 +78,9 @@ export function useCurrentComponent(): string {
   const studyId = useStudyId();
   const storeDispatch = useStoreDispatch();
   const { pushToFuncSequence } = useStoreActions();
+  const currentTrial = searchParams.get('currentTrial') || '';
+  const currentTrialOrder = currentTrial ? _answers[currentTrial]?.trialOrder : undefined;
+  const { step: currentTrialStep, funcIndex: currentTrialFuncIndex } = parseTrialOrder(currentTrialOrder);
 
   const [indexWhenSettingComponentName, setIndexWhenSettingComponentName] = useState<number | null>(null);
 
@@ -76,9 +106,25 @@ export function useCurrentComponent(): string {
 
   useEffect(() => {
     if (!funcIndex && nextFunc && typeof currentStep === 'number') {
-      navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(0)}${window.location.search}`);
+      navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(currentTrialStep === currentStep && currentTrialFuncIndex !== null ? currentTrialFuncIndex : 0)}${window.location.search}`);
     }
-  }, [currentStep, funcIndex, navigate, nextFunc, studyId]);
+  }, [currentStep, currentTrialFuncIndex, currentTrialStep, funcIndex, navigate, nextFunc, studyId]);
+
+  useEffect(() => {
+    if (typeof currentStep !== 'number' || currentTrialStep === null || currentTrialStep !== currentStep || !funcIndex) {
+      return;
+    }
+
+    const decryptedFuncIndex = decryptIndex(funcIndex);
+    if (currentTrialFuncIndex === null) {
+      navigate(`/${studyId}/${encryptIndex(currentStep)}${window.location.search}`);
+      return;
+    }
+
+    if (decryptedFuncIndex !== currentTrialFuncIndex) {
+      navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(currentTrialFuncIndex)}${window.location.search}`);
+    }
+  }, [currentStep, currentTrialFuncIndex, currentTrialStep, funcIndex, navigate, studyId]);
 
   useEffect(() => {
     if (typeof currentStep === 'number') {
