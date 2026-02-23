@@ -1,17 +1,19 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import {
+  nextClick,
+  openStudyFromLanding,
+  resetClientStudyState,
+  waitForStudyEndMessage,
+} from './utils';
 
 test('Test dynamic block', async ({ page }) => {
   const trialLen = 10;
-  await page.goto('/');
-
-  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Dynamic Blocks' })
-    .getByText('Go to Study')
-    .click();
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'Dynamic Blocks');
 
   // Check for introduction page
-  const introText = await page.getByRole('heading', { name: 'Introduction' });
+  const introText = page.getByText(/sample study.*dynamic blocks/i);
   await expect(introText).toBeVisible({});
   await nextClick(page);
 

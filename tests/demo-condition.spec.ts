@@ -1,6 +1,10 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect, Page } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import {
+  nextClick,
+  resetClientStudyState,
+  waitForStudyEndMessage,
+} from './utils';
 
 async function answerDropdownTrial(page: Page, instruction: string, answer: string) {
   const questionText = page.getByText(instruction);
@@ -20,6 +24,10 @@ async function expectStudyComplete(page: Page) {
 }
 
 test.describe('Test study condition logic', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetClientStudyState(page);
+  });
+
   test('cannot switch to another condition after reload when development mode is disabled', async ({ page }) => {
     // Disable development mode so condition changes in the URL do not override persisted participant conditions.
     await page.goto('/analysis/stats/demo-condition/manage');
@@ -27,20 +35,36 @@ test.describe('Test study condition logic', () => {
 
     const developmentModeSwitch = page
       .locator('h5:has-text("Development Mode")')
-      .locator('xpath=following::input[@role="switch"][1]');
-    const developmentModeSwitchControl = page
-      .locator('h5:has-text("Development Mode")')
-      .locator('xpath=following::label[.//input[@role="switch"]][1]');
+      .locator('xpath=following::*[@role="switch"][1]');
     await expect(developmentModeSwitch).toHaveCount(1);
-    await expect(developmentModeSwitchControl).toHaveCount(1);
-    if (await developmentModeSwitch.isChecked()) {
-      await developmentModeSwitchControl.click();
+
+    const isDevelopmentModeEnabled = async () => {
+      const ariaChecked = await developmentModeSwitch.getAttribute('aria-checked');
+      if (ariaChecked !== null) {
+        return ariaChecked === 'true';
+      }
+      return developmentModeSwitch.isChecked().catch(() => false);
+    };
+
+    if (await isDevelopmentModeEnabled()) {
+      const switchId = await developmentModeSwitch.getAttribute('id');
+      if (switchId) {
+        // Mantine switch input is visually hidden; click its visible label control instead.
+        await page.locator(`label[for="${switchId}"]`).click();
+      } else {
+        await page
+          .locator('h5:has-text("Development Mode")')
+          .locator('xpath=following::label[.//*[@role="switch"]][1]')
+          .click();
+      }
     }
-    await expect(developmentModeSwitch).not.toBeChecked();
+    await expect.poll(isDevelopmentModeEnabled).toBe(false);
+    await page.reload();
+    await expect.poll(isDevelopmentModeEnabled).toBe(false);
 
     // Start the participant in the color condition.
     await page.goto('/demo-condition?condition=color');
-    await expect(page.getByText('Welcome to this condition-based demo.')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/url query parameter.*condition/i)).toBeVisible({ timeout: 15000 });
     await nextClick(page);
     await expect(page.getByText(/Which color is the (lightest|darkest)\?/)).toBeVisible({ timeout: 15000 });
 
@@ -55,7 +79,7 @@ test.describe('Test study condition logic', () => {
     await page.goto('/demo-condition?condition=color');
 
     // Introduction should be visible (non-conditional component)
-    const introText = page.getByText('Welcome to this condition-based demo.');
+    const introText = page.getByText(/url query parameter.*condition/i);
     await expect(introText).toBeVisible({ timeout: 15000 });
     await nextClick(page);
 
@@ -82,7 +106,7 @@ test.describe('Test study condition logic', () => {
     await page.goto('/demo-condition?condition=size');
 
     // Introduction
-    const introText = page.getByText('Welcome to this condition-based demo.');
+    const introText = page.getByText(/url query parameter.*condition/i);
     await expect(introText).toBeVisible({ timeout: 15000 });
     await nextClick(page);
 
@@ -109,7 +133,7 @@ test.describe('Test study condition logic', () => {
     await page.goto('/demo-condition?condition=shape');
 
     // Introduction
-    const introText = page.getByText('Welcome to this condition-based demo.');
+    const introText = page.getByText(/url query parameter.*condition/i);
     await expect(introText).toBeVisible({ timeout: 15000 });
     await nextClick(page);
 
@@ -125,7 +149,7 @@ test.describe('Test study condition logic', () => {
     await page.goto('/demo-condition?condition=color,shape');
 
     // Introduction
-    const introText = page.getByText('Welcome to this condition-based demo.');
+    const introText = page.getByText(/url query parameter.*condition/i);
     await expect(introText).toBeVisible({ timeout: 15000 });
     await nextClick(page);
 
@@ -154,7 +178,7 @@ test.describe('Test study condition logic', () => {
     await page.goto('/demo-condition');
 
     // Introduction
-    const introText = page.getByText('Welcome to this condition-based demo.');
+    const introText = page.getByText(/url query parameter.*condition/i);
     await expect(introText).toBeVisible({ timeout: 15000 });
     await nextClick(page);
 

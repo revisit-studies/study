@@ -9,7 +9,6 @@ studyMetadata:
   organizations:
     - "University of Utah"
     - "WPI"
-    - "University of Toronto"
 uiConfig:
   contactEmail: "contact@revisit.dev"
   helpTextPath: "demo-yaml/assets/help.md"

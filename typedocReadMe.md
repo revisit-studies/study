@@ -40,7 +40,7 @@ Responses allow study designers to collect responses from participants  Response
 
 ### Form Elements
 
-Responses are provided as form elements. See the [example](https://revisit.dev/study/demo-survey/) and the [example-source](https://github.com/revisit-studies/study/blob/main/public/demo-survey/config.json)
+Responses are provided as form elements. See the [example](https://revisit.dev/study/demo-form-elements/) and the [example-source](https://github.com/revisit-studies/study/blob/main/public/demo-form-elements/config.json)
 
 ReVISit supports the following form elements:
 

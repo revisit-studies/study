@@ -1,5 +1,9 @@
 import { test, expect, Page } from '@playwright/test';
-import { nextClick } from './utils';
+import {
+  nextClick,
+  openStudyFromLanding,
+  resetClientStudyState,
+} from './utils';
 
 async function hasAnswerPersistedInIndexedDb(page: Page, answerIdentifier: string) {
   return page.evaluate(async (identifier) => {
@@ -58,13 +62,10 @@ function getStudyRouteSegments(urlString: string) {
 }
 
 test('syncs dynamic child route index from currentTrial query', async ({ page }) => {
-  await page.goto('/');
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'Dynamic Blocks');
 
-  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Dynamic Blocks' })
-    .getByText('Go to Study')
-    .click();
-
-  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
+  await expect(page.getByText(/sample study.*dynamic blocks/i)).toBeVisible();
   await nextClick(page);
 
   await expect(page.getByRole('heading', { name: 'Dynamic Blocks' })).toBeVisible({ timeout: 15000 });
@@ -106,13 +107,10 @@ test('syncs dynamic child route index from currentTrial query', async ({ page })
 });
 
 test('removes dynamic child route index for non-dynamic currentTrial query', async ({ page }) => {
-  await page.goto('/');
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'Dynamic Blocks');
 
-  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Dynamic Blocks' })
-    .getByText('Go to Study')
-    .click();
-
-  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
+  await expect(page.getByText(/sample study.*dynamic blocks/i)).toBeVisible();
 
   const introPath = new URL(page.url()).pathname;
   const introSegments = introPath.split('/').filter(Boolean);
@@ -137,5 +135,5 @@ test('removes dynamic child route index for non-dynamic currentTrial query', asy
   await page.goto(wrongChildUrl.toString());
 
   await expect.poll(() => new URL(page.url()).pathname).toBe(`/${studySegment}/${introStepSegment}`);
-  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
+  await expect(page.getByText(/sample study.*dynamic blocks/i)).toBeVisible();
 });

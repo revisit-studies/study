@@ -1,15 +1,19 @@
 import { test, expect } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import {
+  nextClick,
+  openStudyFromLanding,
+  resetClientStudyState,
+  waitForStudyEndMessage,
+} from './utils';
 
 test('Test image component', async ({ page }) => {
-  await page.goto('/');
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', [
+    'Images as Stimuli: Decision-Making with Uncertainty Visualizations',
+    'Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations',
+  ]);
 
-  // Click on image-demo
-  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations' })
-    .getByText('Go to Study')
-    .click();
-
-  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
+  await expect(page.getByText(/use images as stimuli/i)).toBeVisible();
 
   // Click on the next button
   await nextClick(page);

@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { checkSavedAnswers } from './checkSavedAnswers';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import {
+  nextClick,
+  openStudyFromLanding,
+  resetClientStudyState,
+  waitForStudyEndMessage,
+} from './utils';
 
 test('Test website component with previous button', async ({ page }) => {
   await page.setViewportSize({
@@ -8,15 +13,10 @@ test('Test website component with previous button', async ({ page }) => {
     height: 800,
   });
 
-  await page.goto('/');
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
 
-  // Click on html-demo
-  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'HTML as a Stimulus' })
-    .nth(0)
-    .getByText('Go to Study')
-    .click();
-
-  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
+  await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
 
   // Click on the next button
   await nextClick(page);

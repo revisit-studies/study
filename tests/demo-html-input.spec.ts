@@ -1,15 +1,16 @@
 import { test, expect } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import {
+  nextClick,
+  openStudyFromLanding,
+  resetClientStudyState,
+  waitForStudyEndMessage,
+} from './utils';
 
 test('Test website component with reactive response', async ({ page }) => {
-  await page.goto('/');
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'Passing Data from reVISit to HTML and back');
 
-  // Click on html-input
-  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Passing Data from reVISit to HTML and back' })
-    .getByText('Go to Study')
-    .click();
-
-  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
+  await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
 
   // Click on the next button
   await nextClick(page);
