@@ -1,0 +1,508 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Dynamic React.js Stimuli: A Graphical Perception Experiment",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-28",
+    "description": "A demo using dynamic React components as stimuli to replicate a Heer/Bostock perception study (doi:10.1145/1753326.1753357) that extends Cleveland & McGill graphical perception task (doi:10.1080/01621459.1984.10478080), with a consent form, brief training, a post study survey. Data is collected via form elements in validated fields.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "example-cleveland/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true
+  },
+  "baseComponents": {
+    "bubbleChart": {
+      "description": "A bubble chart with correct answer of 0.66",
+      "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+      "type": "react-component",
+      "path": "example-cleveland/assets/BubbleChart.tsx",
+      "parameters": {
+        "data": [
+          {
+            "name": "A",
+            "value": "30"
+          },
+          {
+            "name": "B",
+            "value": "40"
+          },
+          {
+            "name": "C",
+            "value": "50"
+          },
+          {
+            "name": "D",
+            "value": "40"
+          },
+          {
+            "name": "E",
+            "value": "60"
+          }
+        ],
+        "selectedIndices": [
+          1,
+          4
+        ]
+      },
+      "response": [
+        {
+          "id": "cm-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "placeholder": "0-100",
+          "max": 100,
+          "min": 0
+        }
+      ],
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar"
+    },
+    "stackedBarChart": {
+      "meta": {
+        "difficulty": 5,
+        "chart": "stacked bar"
+      },
+      "description": "A chart with correct answer of 0.66",
+      "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+      "type": "react-component",
+      "path": "example-cleveland/assets/StackedBarChart.tsx",
+      "parameters": {
+        "data": [
+          {
+            "name": "A",
+            "value": "30"
+          },
+          {
+            "name": "B",
+            "value": "40"
+          },
+          {
+            "name": "C",
+            "value": "50"
+          },
+          {
+            "name": "D",
+            "value": "40"
+          },
+          {
+            "name": "E",
+            "value": "60"
+          }
+        ],
+        "selectedIndices": [
+          1,
+          4
+        ]
+      },
+      "response": [
+        {
+          "id": "cm-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "placeholder": "0-100",
+          "max": 100,
+          "min": 0
+        }
+      ],
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar"
+    },
+    "barChart": {
+      "meta": {
+        "difficulty": 5,
+        "chart": "Bar"
+      },
+      "description": "A chart with correct answer of 0.66",
+      "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+      "type": "react-component",
+      "path": "example-cleveland/assets/BarChart.tsx",
+      "parameters": {
+        "data": [
+          {
+            "name": "A",
+            "value": "30"
+          },
+          {
+            "name": "B",
+            "value": "40"
+          },
+          {
+            "name": "C",
+            "value": "50"
+          },
+          {
+            "name": "D",
+            "value": "40"
+          },
+          {
+            "name": "E",
+            "value": "60"
+          }
+        ],
+        "selectedIndices": [
+          1,
+          4
+        ]
+      },
+      "response": [
+        {
+          "id": "cm-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "placeholder": "0-100",
+          "max": 100,
+          "min": 0
+        }
+      ],
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar"
+    },
+    "pieChart": {
+      "meta": {
+        "difficulty": 5,
+        "chart": "pie"
+      },
+      "description": "Pie chart",
+      "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+      "type": "react-component",
+      "path": "example-cleveland/assets/PieChart.tsx",
+      "parameters": {
+        "data": [
+          {
+            "name": "A",
+            "value": "30"
+          },
+          {
+            "name": "B",
+            "value": "40"
+          },
+          {
+            "name": "C",
+            "value": "50"
+          },
+          {
+            "name": "D",
+            "value": "40"
+          },
+          {
+            "name": "E",
+            "value": "60"
+          }
+        ],
+        "selectedIndices": [
+          1,
+          4
+        ]
+      },
+      "response": [
+        {
+          "id": "cm-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "placeholder": "0-100",
+          "max": 100,
+          "min": 0
+        }
+      ],
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar"
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "example-cleveland/assets/introduction.md",
+      "response": []
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "example-cleveland/assets/consent-cm.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "signature",
+          "prompt": "Your signature",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Please provide your signature"
+        },
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "requiredValue": "Accept",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
+    "training1": {
+      "type": "image",
+      "path": "example-cleveland/assets/cm-training.png",
+      "response": []
+    },
+    "trainingBubbleChart1": {
+      "baseComponent": "bubbleChart",
+      "description": "A bubble chart with correct answer of 0.66",
+      "parameters": {
+        "selectedIndices": [
+          1,
+          4
+        ]
+      },
+      "provideFeedback": true,
+      "allowFailedTraining": false,
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": 66
+        }
+      ]
+    },
+    "trainingStackedBarChart1": {
+      "baseComponent": "stackedBarChart",
+      "parameters": {
+        "selectedIndices": [
+          1,
+          4
+        ]
+      },
+      "provideFeedback": true,
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": 66
+        }
+      ]
+    },
+    "trainingBarChart1": {
+      "baseComponent": "barChart",
+      "parameters": {
+        "selectedIndices": [
+          1,
+          4
+        ]
+      },
+      "provideFeedback": true,
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": 66
+        }
+      ]
+    },
+    "trainingPieChart1": {
+      "baseComponent": "pieChart",
+      "parameters": {
+        "selectedIndices": [
+          1,
+          4
+        ]
+      },
+      "provideFeedback": true,
+      "correctAnswer": [
+        {
+          "id": "cm-response",
+          "answer": 66
+        }
+      ]
+    },
+    "bubbleChart1": {
+      "baseComponent": "bubbleChart",
+      "parameters": {
+        "selectedIndices": [
+          1,
+          4
+        ]
+      }
+    },
+    "stackedBarChart1": {
+      "baseComponent": "stackedBarChart",
+      "parameters": {
+        "selectedIndices": [
+          1,
+          4
+        ]
+      }
+    },
+    "stackedBarChart2": {
+      "baseComponent": "stackedBarChart",
+      "parameters": {
+        "data": [
+          {
+            "name": "A",
+            "value": "10"
+          },
+          {
+            "name": "B",
+            "value": "20"
+          },
+          {
+            "name": "C",
+            "value": "40"
+          },
+          {
+            "name": "D",
+            "value": "50"
+          },
+          {
+            "name": "E",
+            "value": "100"
+          }
+        ],
+        "selectedIndices": [
+          1,
+          4
+        ]
+      }
+    },
+    "barChart1": {
+      "baseComponent": "barChart",
+      "parameters": {
+        "selectedIndices": [
+          1,
+          4
+        ]
+      }
+    },
+    "pieChart1": {
+      "baseComponent": "pieChart",
+      "parameters": {
+        "selectedIndices": [
+          1,
+          4
+        ]
+      }
+    },
+    "bubbleChart2": {
+      "baseComponent": "bubbleChart",
+      "parameters": {
+        "selectedIndices": [
+          0,
+          3
+        ]
+      }
+    },
+    "stackedBarChart3": {
+      "baseComponent": "stackedBarChart",
+      "parameters": {
+        "selectedIndices": [
+          0,
+          3
+        ]
+      }
+    },
+    "stackedBarChart4": {
+      "baseComponent": "stackedBarChart",
+      "parameters": {
+        "selectedIndices": [
+          0,
+          3
+        ]
+      }
+    },
+    "barChart2": {
+      "baseComponent": "barChart",
+      "parameters": {
+        "selectedIndices": [
+          0,
+          3
+        ]
+      }
+    },
+    "pieChart2": {
+      "baseComponent": "pieChart",
+      "parameters": {
+        "selectedIndices": [
+          0,
+          3
+        ]
+      }
+    },
+    "post-study-survey1": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q1",
+          "prompt": "Which chart type you think is the most difficult",
+          "location": "aboveStimulus",
+          "type": "dropdown",
+          "placeholder": "Enter your preference",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar"
+          ]
+        },
+        {
+          "id": "q2",
+          "prompt": "Your age",
+          "location": "aboveStimulus",
+          "type": "numerical",
+          "placeholder": "Enter your age here, range from 0 - 100",
+          "max": 100,
+          "min": 0
+        },
+        {
+          "id": "q3",
+          "prompt": "From scale 1-5 how much do you like this study",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "q5",
+          "prompt": "Any other comments?",
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your comments here"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "consent",
+      "training1",
+      "trainingBubbleChart1",
+      "trainingStackedBarChart1",
+      "trainingBarChart1",
+      "trainingPieChart1",
+      "bubbleChart1",
+      "stackedBarChart1",
+      "stackedBarChart2",
+      "pieChart1",
+      "barChart1",
+      "bubbleChart2",
+      "stackedBarChart3",
+      "stackedBarChart4",
+      "pieChart2",
+      "barChart2",
+      "post-study-survey1"
+    ]
+  }
+}
