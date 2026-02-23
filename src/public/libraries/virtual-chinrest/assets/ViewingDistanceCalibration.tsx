@@ -248,6 +248,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
           <Text fw={700} size="lg">Viewing Distance Results</Text>
           <Text>
             Estimated Viewing Distance:
+            {' '}
             {(viewingDistance / 10).toFixed(1)}
             {' '}
             cm
