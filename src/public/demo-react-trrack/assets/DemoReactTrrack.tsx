@@ -1,47 +1,69 @@
-import { useEffect, useState } from 'react';
+import {
+  useCallback, useEffect, useMemo, useState,
+} from 'react';
 import {
   Box, Center, Stack, Text, TextInput,
 } from '@mantine/core';
 import { initializeTrrack, Registry } from '@trrack/core';
 import { StimulusParams } from '../../../store/types';
 
+/** State shape for provenance tracking (used during replay) */
 interface StroopState {
   response: string;
 }
 
+/** Trial parameters from config: displayText and textColor */
 interface StroopTrialParams {
   displayText?: string;
   textColor?: string;
 }
 
+/** Normalize input to uppercase for consistent answers */
 const toCapped = (value: string) => value.toUpperCase();
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function StroopColorTask({ parameters, setAnswer, provenanceState }: StimulusParams<any, StroopState>) {
   const { taskid } = parameters;
   const { displayText = '', textColor = 'black' } = parameters as StroopTrialParams;
-  // Create provenance registry
-  const reg = Registry.create();
-  const setResponseAction = reg.register('setResponse', (state, nextResponse: string) => {
-    state.response = nextResponse;
-    return state;
-  });
-  // initializing trrack
-  const trrack = initializeTrrack({
-    registry: reg,
-    initialState: {
-      response: toCapped(provenanceState?.response ?? ''),
-    },
-  });
+
+  // Create Trrack instance and actions once (see provenance-tracking docs)
+  const { actions, trrack } = useMemo(() => {
+    const reg = Registry.create();
+    const setResponseAction = reg.register('setResponse', (state, nextResponse: string) => {
+      state.response = nextResponse;
+      return state;
+    });
+    const trrackInst = initializeTrrack({
+      registry: reg,
+      initialState: { response: '' },
+    });
+    return {
+      actions: { setResponseAction },
+      trrack: trrackInst,
+    };
+  }, []);
 
   const [responseText, setResponseText] = useState(toCapped(provenanceState?.response ?? ''));
 
+  // Update local state, record in provenance, and pass to reVISit
+  const updateAnswer = useCallback((value: string) => {
+    setResponseText(value);
+    trrack.apply('Set response', actions.setResponseAction(value));
+    setAnswer({
+      status: value.trim().length > 0,
+      provenanceGraph: trrack.graph.backend,
+      answers: { [taskid]: value },
+    });
+  }, [actions, setAnswer, taskid, trrack]);
+
+  // Replay: sync textbox from provenanceState when replay seeks to a different node
   useEffect(() => {
     setResponseText(toCapped(provenanceState?.response ?? ''));
   }, [provenanceState?.response]);
 
   return (
     <Stack gap="xl" style={{ maxWidth: 520, margin: '0 auto' }}>
+      {/* Display the Stroop word in the configured color */}
       <Center>
         <Box>
           <Text fw={700} size="2rem" style={{ color: textColor }}>
@@ -49,18 +71,13 @@ function StroopColorTask({ parameters, setAnswer, provenanceState }: StimulusPar
           </Text>
         </Box>
       </Center>
+      {/* Text input for participant's color response */}
       <Center>
         <TextInput
           value={responseText}
           onChange={(event) => {
             const value = toCapped(event.currentTarget.value);
-            setResponseText(value);
-            trrack.apply('Set response', setResponseAction(value));
-            setAnswer({
-              status: value.trim().length > 0,
-              provenanceGraph: trrack.graph.backend,
-              answers: { [taskid]: value },
-            });
+            updateAnswer(value);
           }}
         />
       </Center>
