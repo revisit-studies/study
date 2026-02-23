@@ -55,6 +55,11 @@ Main branch
 | Run release workflow on merge
 References are updated and commit is tagged
 
+### Release Follow-Up
+
+- [ ] Verify docs links in the [Study Repository](https://github.com/revisit-studies/study) are up to date and point to the current reVISit documentation pages.
+- [ ] After the release is complete, run the template update process so downstream study templates include the latest release changes.
+
 
 ## QC Checklist
 
