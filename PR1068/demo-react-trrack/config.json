@@ -1,17 +1,12 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "React Stimulus and Provenance Tracking",
+    "title": "React Stroop Demo with Provenance Tracking",
     "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
+    "authors": ["The reVISit Team"],
     "date": "2026-02-21",
-    "description": "A demo of using dynamic React stimuli and using provenance tracking with the trrack library for data collection.",
-    "organizations": [
-      "University of Utah",
-      "WPI"
-    ]
+    "description": "A Stroop color-word demo using a React stimulus with trrack provenance tracking.",
+    "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
@@ -23,15 +18,15 @@
   },
   "baseComponents": {
     "trial": {
-      "description": "build a color by adding or removing red, green, and blue counts",
-      "instruction": "Match the target color by building your RGB color record",
+      "description": "identify the text color in a Stroop trial",
+      "instruction": "In this experiment you are required to type the color of the word, not what the word says. For example, for the blue-colored word-'RED', you should type \"BLUE.\"",
       "type": "react-component",
       "path": "demo-react-trrack/assets/DemoReactTrrack.tsx",
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "colorSelection",
-          "prompt": "Your current RGB record and normalized color",
+          "id": "stroopAnswer",
+          "prompt": "Your typed Stroop color response",
           "location": "sidebar",
           "type": "reactive"
         }
@@ -44,41 +39,27 @@
       "path": "demo-react-trrack/assets/introduction.md",
       "response": []
     },
-    "trial-crimson": {
+    "trial-red-blue": {
       "baseComponent": "trial",
-      "meta": {
-        "nr-dots": 1
-      },
+      "meta": {"seq": 1},
       "parameters": {
-        "taskid": "colorSelection",
-        "targetColor": {
-          "red": 220,
-          "green": 70,
-          "blue": 80
-        }
+        "taskid": "stroopAnswer",
+        "displayText": "RED",
+        "textColor": "blue"
       }
     },
-    "trial-azure": {
+    "trial-green-pink": {
       "baseComponent": "trial",
-      "meta": {
-        "nr-dots": 1
-      },
+      "meta": {"seq": 1},
       "parameters": {
-        "taskid": "colorSelection",
-        "targetColor": {
-          "red": 60,
-          "green": 130,
-          "blue": 230
-        }
+        "taskid": "stroopAnswer",
+        "displayText": "GREEN",
+        "textColor": "pink"
       }
     }
   },
   "sequence": {
     "order": "fixed",
-    "components": [
-      "introduction",
-      "trial-crimson",
-      "trial-azure"
-    ]
+    "components": ["introduction", "trial-red-blue", "trial-green-pink"]
   }
 }
