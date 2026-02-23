@@ -1,9 +1,9 @@
 
-# smeq
+# SMEQ: Subjective Mental Effort Questionnaire
 
 
 
-This is an example study of the library `smeq`.
+This is a demo of the library `smeq`.
 
 The Subjective Mental Effort Questionnaire (SMEQ) is a single-item scale designed to measure perceived mental effort during a task. This library includes a single component, the SMEQ.
 
