@@ -10,4 +10,3 @@ This study is a replication of a graphical perception study by Clevland & McGill
  * [consent-cm.md](https://github.com/revisit-studies/study/blob/main/public/example-cleveland/assets/consent-cm.md)
  * [help.md](https://github.com/revisit-studies/study/blob/main/public/example-cleveland/assets/help.md)
 
-## Relevant documentation:
