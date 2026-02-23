@@ -168,6 +168,11 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
     setIsTracking(false);
     setClickCount(5);
     resetBall();
+    // clear submitted answers
+    setAnswer({
+      status: false,
+      answers: {},
+    });
   };
 
   if (!pixelsPerMM) {
@@ -236,9 +241,9 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
           {5 - ballPositions.length}
         </Text>
         {
-          ballPositions.length === 5 && (
+          ballPositions.length > 0 && (
             <>
-              <Text ta="left"> Messed up (one or more of) the measurements? No worries. You can retake by clicking the &apos;Retake&apos; button.</Text>
+              <Text ta="left"> Not happy with your measurements? You can restart by clicking &quot;Retake&quot;.</Text>
               <Button size="md-compact" w="fit-content" color="indigo" onClick={handleRetake}>Retake</Button>
             </>
           )
@@ -253,10 +258,6 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
             {' '}
             cm
           </Text>
-          {/* <Text>
-            Number of measurements:
-            {ballPositions.length}
-          </Text> */}
         </Stack>
         )}
       </Stack>
