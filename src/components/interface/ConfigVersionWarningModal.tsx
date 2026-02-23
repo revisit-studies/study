@@ -8,12 +8,14 @@ import { useStoreSelector } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStudyId } from '../../routes/utils';
 import { getNewParticipant } from '../../utils/nextParticipant';
+import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 export function ConfigVersionWarningModal() {
   const isStalledConfig = useStoreSelector((state) => state.isStalledConfig);
-  const [opened, setOpened] = useState(isStalledConfig);
+  const isAnalysis = useIsAnalysis();
+  const [opened, setOpened] = useState(false);
 
-  useEffect(() => setOpened(isStalledConfig), [isStalledConfig]);
+  useEffect(() => setOpened(isStalledConfig && !isAnalysis), [isStalledConfig, isAnalysis]);
 
   const { storageEngine } = useStorageEngine();
   const studyId = useStudyId();
