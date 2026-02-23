@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="../../revisitUtilities/revisit-communicate.js"></script>
+    <style>
+        body { font-family: system-ui, Arial, sans-serif; padding: 20px; max-width: 800px; }
+        h2 { margin-bottom: 8px; }
+        p  { color: #555; margin-bottom: 16px; }
+        #csv-box {
+            width: 100%;
+            height: 260px;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 8px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        .btn-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        button {
+            padding: 8px 18px;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            background: #f5f5f5;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover { background: #e0e0e0; }
+        #status { margin-top: 10px; font-size: 13px; color: #333; }
+    </style>
+</head>
+<body>
+    <h2>Your Results</h2>
+    <p>
+        Below is all trial data collected in this browser session.
+        Copy the text or click <strong>Download CSV</strong> to save your results.
+        After downloading, paste this data into your master CSV file.
+    </p>
+    <textarea id="csv-box" readonly></textarea>
+    <div class="btn-row">
+        <button id="btn-copy">Copy to Clipboard</button>
+        <button id="btn-download">Download CSV</button>
+        <button id="btn-clear">Clear Saved Data</button>
+    </div>
+    <div id="status"></div>
+</body>
+<script>
+    const STORE_KEY = "cmg_results_v1";
+
+    function loadStore() {
+        try {
+            return JSON.parse(localStorage.getItem(STORE_KEY)) || { participantId: null, rows: [] };
+        } catch {
+            return { participantId: null, rows: [] };
+        }
+    }
+
+    function rowsToCSV(rows) {
+        if (!rows || rows.length === 0) return "";
+        const headers = Object.keys(rows[0]);
+        const escape = v => {
+            const s = String(v ?? "");
+            return s.includes(",") || s.includes('"') || s.includes("\n")
+                ? `"${s.replace(/"/g, '""')}"` : s;
+        };
+        const lines = [headers.join(","), ...rows.map(r => headers.map(h => escape(r[h])).join(","))];
+        return lines.join("\n");
+    }
+
+    Revisit.onDataReceive(() => {
+        const store = loadStore();
+        const csv = rowsToCSV(store.rows);
+
+        const box = document.getElementById("csv-box");
+        const status = document.getElementById("status");
+
+        if (!csv) {
+            box.value = "(No trial data found. Make sure you completed trials in this browser session.)";
+        } else {
+            box.value = csv;
+            status.textContent = `${store.rows.length} trial(s) found for participant ${store.participantId}.`;
+        }
+
+        // Copy to clipboard
+        document.getElementById("btn-copy").addEventListener("click", () => {
+            if (!csv) return;
+            navigator.clipboard.writeText(csv).then(() => {
+                status.textContent = "Copied to clipboard!";
+            }).catch(() => {
+                box.select();
+                document.execCommand("copy");
+                status.textContent = "Copied (fallback).";
+            });
+        });
+
+        // Download as file
+        document.getElementById("btn-download").addEventListener("click", () => {
+            if (!csv) return;
+            const pid = store.participantId ?? "unknown";
+            const filename = `cmg_results_${pid}.csv`;
+            const blob = new Blob([csv], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            status.textContent = `Downloaded ${filename}.`;
+        });
+
+        // Clear saved data (for starting fresh with a new participant)
+        document.getElementById("btn-clear").addEventListener("click", () => {
+            if (confirm("Clear all saved trial data from this browser? This cannot be undone.")) {
+                localStorage.removeItem(STORE_KEY);
+                box.value = "(Data cleared.)";
+                status.textContent = "Saved data cleared.";
+            }
+        });
+
+        // Signal to ReVISit that this page is done (no answer required)
+        Revisit.postAnswers({});
+    });
+</script>
+</html>

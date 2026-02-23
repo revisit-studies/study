@@ -93,6 +93,41 @@
             ],
             "path": "basic-questionnaire-study/assets/diverging_bar.html",
             "instructionLocation": "aboveStimulus"
+        },
+        "stacked-bar": {
+            "type": "website",
+            "response": [
+            {
+                "id": "barChart",
+                "prompt": "Your selected answer:",
+                "required": true,
+                "location": "belowStimulus",
+                "type": "reactive"
+            },
+            {
+                "id": "truePct",
+                "prompt": "",
+                "required": false,
+                "location": "belowStimulus",
+                "type": "reactive"
+            },
+            {
+                "id": "absErr",
+                "prompt": "",
+                "required": false,
+                "location": "belowStimulus",
+                "type": "reactive"
+            },
+            {
+                "id": "log2Err",
+                "prompt": "",
+                "required": false,
+                "location": "belowStimulus",
+                "type": "reactive"
+            }
+            ],
+            "path": "basic-questionnaire-study/assets/stacked_bar.html",
+            "instructionLocation": "aboveStimulus"
         }
     },
     "components": {
@@ -118,14 +153,37 @@
                 "barData": [0.32, -0.2, -1.2, 1.3, 0.82, -0.4, 0.3],
                 "indices": [2,4]
             }
+        },
+        "bar-chart-3":{
+            "baseComponent": "stacked-bar",
+            "description": "A trial using a stacked bar chart",
+            "instruction": "What percentage of the smaller marked segment is the larger marked segment?",
+            "parameters": {
+                "barData": [0.45, 0.75, 0.30, 0.90, 0.60, 0.50, 0.25],
+                "indices": [1, 3]
+            }
+        },
+        "results": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/results.html",
+            "description": "Export trial results as CSV",
+            "instruction": "",
+            "response": []
         }
     },
     "sequence": {
         "order": "fixed",
         "components": [
             "introduction",
-            "bar-chart-1",
-            "bar-chart-2"
+            {
+                "order": "random",
+                "components": [
+                    "bar-chart-1",
+                    "bar-chart-2",
+                    "bar-chart-3"
+                ]
+            },
+            "results"
         ]
     }
 }

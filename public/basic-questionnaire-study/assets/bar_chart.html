@@ -77,16 +77,17 @@
     svg.attr("width", width + 2 * padding)
         .attr("height", height + 2 * padding);
 
-
-    const barData = data['barData']
-    const selectedIndices =  data['indices']
+    // Generate random data: 5–10 bars with values in (0, 1]
+    const n = Math.floor(Math.random() * 6) + 5; // 5 to 10
+    const barData = Array.from({ length: n }, () => +(Math.random() * 0.95 + 0.05).toFixed(3));
+    // Pick 2 distinct random indices
+    const iA = Math.floor(Math.random() * n);
+    let iB;
+    do { iB = Math.floor(Math.random() * n); } while (iB === iA);
+    const selectedIndices = [iA, iB];
     var visible = [];
 
-    // wire UI + compute/log on submit
-    const iA = selectedIndices?.[0];
-    const iB = selectedIndices?.[1];
-
-    // optional labels 
+    // optional labels
     const trialNum = data["trialNum"] ?? null;
     const condition = data["condition"] ?? "UNKNOWN";
 
@@ -148,6 +149,8 @@
             absErr: absErr,
             log2Err: log2Err
             });
+        store.rows.push(row);
+        saveStore(store);
         submitBtn.disabled = true; // prevent double submit
     };
     }

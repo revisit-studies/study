@@ -79,13 +79,15 @@
     svg.attr("width", width + 2 * padding)
         .attr("height", height + 2 * padding);
 
-    const barData = data['barData']
-    const selectedIndices =  data['indices']
+    // Generate random data: 5–10 positive segments
+    const n = Math.floor(Math.random() * 6) + 5;
+    const barData = Array.from({ length: n }, () => +(Math.random() * 0.95 + 0.05).toFixed(3));
+    // Pick 2 distinct random indices
+    const iA = Math.floor(Math.random() * n);
+    let iB;
+    do { iB = Math.floor(Math.random() * n); } while (iB === iA);
+    const selectedIndices = [iA, iB];
     var visible = [];
-
-    // wire UI + compute/log on submit
-    const iA = selectedIndices?.[0];
-    const iB = selectedIndices?.[1];
 
     // optional labels
     const trialNum = data["trialNum"] ?? null;
@@ -148,67 +150,60 @@
             absErr: absErr,
             log2Err: log2Err
             });
+        store.rows.push(row);
+        saveStore(store);
         submitBtn.disabled = true; // prevent double submit
     };
     }
 
-    var dataObj = [];
-    for(var i = 0; i < barData.length; i++){
-        if (selectedIndices.includes(i)){
-            visible[i] = "visible"
-        } else{
-            visible[i] = "hidden"
-        }
-        dataObj[i] = {bars:barData[i], visible:visible[i]}
-    }
+    // Build segments with cumulative y positions (stacked bottom-to-top)
+    const absValues = barData.map(v => Math.abs(v));
+    const total = d3.sum(absValues);
 
-    let spacing = height / barData.length;
+    let cumulative = 0;
+    const segments = absValues.map((val, i) => {
+        const seg = {
+            value: val,
+            yStart: cumulative,
+            yEnd: cumulative + val,
+            index: i,
+            marked: selectedIndices.includes(i)
+        };
+        cumulative += val;
+        return seg;
+    });
 
-    let min = -2;
-    let max = 2;
+    // Scale: map [0, total] to pixel range (bottom to top)
+    const yScale = d3.scaleLinear()
+        .domain([0, total])
+        .range([height - padding, padding]);
 
-    let yScale = d3.scaleLinear()
-    .domain([min, max])
-    .range([height-padding, padding])
-    .nice();
+    const barWidth = 90;
+    const barX = (width - barWidth) / 2 + padding;
 
-    let color = "white";
-
-    svg.selectAll(".bar")
-        .data(dataObj)
+    // Draw stacked segments
+    svg.selectAll(".segment")
+        .data(segments)
         .join("rect")
-            .classed("bar", true)
-            .attr("transform", "translate(" + padding + "," + padding + ")")
-            .attr("x", (d, i) => i * spacing + 5)
-            .attr("y", d => yScale(Math.max(0,d.bars)))
-            .attr("width", 50)
-            .attr("height", d => Math.abs(yScale(0)-yScale(d.bars)))
-            .style("fill", 'white')
-            .style("stroke", "black");
+            .classed("segment", true)
+            .attr("x", barX)
+            .attr("y", d => yScale(d.yEnd))
+            .attr("width", barWidth)
+            .attr("height", d => yScale(d.yStart) - yScale(d.yEnd))
+            .style("fill", "white")
+            .style("stroke", "black")
+            .style("stroke-width", 1);
 
-    svg.selectAll(".barlabel")
-        .data(dataObj)
+    // Draw dot markers on the two selected segments
+    svg.selectAll(".marker")
+        .data(segments.filter(d => d.marked))
         .join("circle")
-        .classed("barlabel", true)
-        .attr("transform", "translate(" + padding + "," + padding + ")")
-        .attr("cx", (d, i) => (i * spacing + 5)+25)
-        .attr("cy",d => yScale(0.2 * Math.sign(d.bars)))
-        .attr("r", 10)
-        .attr("visibility",d => d.visible)
-        .attr("stroke", "white")
-        .attr("fill", "black");
-
-
-    svg.append("g")
-        .attr("transform", "translate(" + padding + "," + (height + padding) + ")")
-        //.call(xAxis);
-
-    svg.append("line")
-        .attr("x1",padding)
-        .attr("x2",width)
-        .attr("y1",height/2+padding)
-        .attr("y2",height/2+padding)
-        .attr("stroke","black");
+            .classed("marker", true)
+            .attr("cx", barX + barWidth / 2)
+            .attr("cy", d => (yScale(d.yStart) + yScale(d.yEnd)) / 2)
+            .attr("r", 10)
+            .attr("fill", "black")
+            .attr("stroke", "white");
     });
 </script>
 </html>

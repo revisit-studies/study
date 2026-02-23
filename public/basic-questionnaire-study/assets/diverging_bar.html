@@ -79,13 +79,18 @@
     svg.attr("width", width + 2 * padding)
         .attr("height", height + 2 * padding);
 
-    const barData = data['barData']
-    const selectedIndices =  data['indices']
+    // Generate random data: 5–10 bars with values in [-1, -0.05] or [0.05, 1]
+    const n = Math.floor(Math.random() * 6) + 5;
+    const barData = Array.from({ length: n }, () => {
+        const mag = +(Math.random() * 0.95 + 0.05).toFixed(3);
+        return Math.random() < 0.5 ? mag : -mag;
+    });
+    // Pick 2 distinct random indices
+    const iA = Math.floor(Math.random() * n);
+    let iB;
+    do { iB = Math.floor(Math.random() * n); } while (iB === iA);
+    const selectedIndices = [iA, iB];
     var visible = [];
-
-    // wire UI + compute/log on submit
-    const iA = selectedIndices?.[0];
-    const iB = selectedIndices?.[1];
 
     // optional labels
     const trialNum = data["trialNum"] ?? null;
@@ -120,9 +125,10 @@
     });
     }
 
-    let valuesForTruth = barData; // abs value
+    // Use absolute magnitudes so the comparison is sign-independent
+    const absBarData = barData.map(v => Math.abs(v));
 
-    const truePct = truePercent(valuesForTruth, iA, iB);
+    const truePct = truePercent(absBarData, iA, iB);
 
     if (submitBtn) {
     submitBtn.onclick = () => {
@@ -149,6 +155,8 @@
             absErr: absErr,
             log2Err: log2Err
             });
+        store.rows.push(row);
+        saveStore(store);
         submitBtn.disabled = true; // prevent double submit
     };
     }
