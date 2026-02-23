@@ -21,10 +21,8 @@ interface StroopTrialParams {
 /** Normalize input to uppercase for consistent answers */
 const toCapped = (value: string) => value.toUpperCase();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function StroopColorTask({ parameters, setAnswer, provenanceState }: StimulusParams<any, StroopState>) {
-  const { taskid } = parameters;
-  const { displayText = '', textColor = 'black' } = parameters as StroopTrialParams;
+function StroopColorTask({ parameters, setAnswer, provenanceState }: StimulusParams<StroopTrialParams, StroopState>) {
+  const { displayText = '', textColor = 'black' } = parameters;
 
   // Create Trrack instance and actions once (see provenance-tracking docs)
   const { actions, trrack } = useMemo(() => {
@@ -43,7 +41,7 @@ function StroopColorTask({ parameters, setAnswer, provenanceState }: StimulusPar
     };
   }, []);
 
-  const [responseText, setResponseText] = useState(toCapped(provenanceState?.response ?? ''));
+  const [responseText, setResponseText] = useState('');
 
   // Update local state, record in provenance, and pass to reVISit
   const updateAnswer = useCallback((value: string) => {
@@ -52,14 +50,16 @@ function StroopColorTask({ parameters, setAnswer, provenanceState }: StimulusPar
     setAnswer({
       status: value.trim().length > 0,
       provenanceGraph: trrack.graph.backend,
-      answers: { [taskid]: value },
+      answers: { stroopAnswer: value },
     });
-  }, [actions, setAnswer, taskid, trrack]);
+  }, [actions, setAnswer, trrack]);
 
   // Replay: sync textbox from provenanceState when replay seeks to a different node
   useEffect(() => {
-    setResponseText(toCapped(provenanceState?.response ?? ''));
-  }, [provenanceState?.response]);
+    if (provenanceState) {
+      setResponseText(provenanceState.response);
+    }
+  }, [provenanceState]);
 
   return (
     <Stack gap="xl" style={{ maxWidth: 520, margin: '0 auto' }}>
