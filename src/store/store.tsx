@@ -11,7 +11,7 @@ import {
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/types';
-import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import { getComponentName, studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { randomizeOptions, randomizeQuestionOrder, randomizeForm } from '../utils/handleResponseRandomization';
 
 export async function studyStoreCreator(
@@ -30,10 +30,10 @@ export async function studyStoreCreator(
 
   const emptyAnswers: ParticipantData['answers'] = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
     .map((id, idx) => {
-      const componentConfig = studyComponentToIndividualComponent(config.components[id] || {}, config);
-
+      const componentName = getComponentName(id);
+      const componentConfig = studyComponentToIndividualComponent(config.components[componentName] || {}, config);
       // Make sure we dont include dynamic blocks as empty answers
-      if (!config.components[id]) {
+      if (!config.components[componentName]) {
         return null;
       }
 
@@ -43,7 +43,7 @@ export async function studyStoreCreator(
           answer: {},
           identifier: `${id}_${idx}`,
           trialOrder: `${idx}`,
-          componentName: id,
+          componentName,
           incorrectAnswers: {},
           startTime: 0,
           endTime: -1,

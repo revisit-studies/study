@@ -4,7 +4,7 @@ import {
 import { useMemo } from 'react';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
-import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
+import { getComponentName, studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { ResponseVisualization } from './ResponseVisualization';
 
 export function TrialVisualization({
@@ -12,7 +12,8 @@ export function TrialVisualization({
 }: {
   participantData: ParticipantData[]; studyConfig: StudyConfig, trialId?: string;
 }) {
-  const trialConfig = trialId && trialId !== 'end' && studyComponentToIndividualComponent(studyConfig.components[trialId], studyConfig);
+  const componentName = getComponentName(trialId || '');
+  const trialConfig = trialId && trialId !== 'end' && studyComponentToIndividualComponent(studyConfig.components[componentName], studyConfig);
 
   const items = useMemo(() => [
     { id: 'Config and Timing', type: 'metadata' } as { id: 'Config and Timing', type: 'metadata'},

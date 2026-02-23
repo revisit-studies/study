@@ -164,7 +164,7 @@ export function ThinkAloudFooter({
       setSearchParams({ participantId, currentTrial: Object.entries(participant.answers).find(([_, ans]) => +ans.trialOrder.split('_')[0] === 0)?.[0] || '' });
     }
 
-    return participant?.answers[currentTrial]?.componentName ?? '';
+    return participant?.answers[currentTrial]?.identifier.replace(/_[^_]*$/, '') ?? '';
   }, [currentTrial, participant, participantId, setSearchParams]);
 
   const xScale = useMemo(() => {
@@ -429,7 +429,7 @@ export function ThinkAloudFooter({
               // this needs to be in a helper or two which we dont currently have
               onChange={(e: string | null) => {
                 if (participant && e) {
-                  const trial = Object.entries(participant.answers).find(([_key, ans]) => +ans.trialOrder.split('_')[0] === getSequenceFlatMap(participant?.sequence).indexOf(e))?.[0] || '';
+                  const trial = Object.entries(participant.answers).find(([_key, ans]) => +ans.trialOrder.split('_')[0] === getSequenceFlatMap(participant?.sequence, '').indexOf(e))?.[0] || '';
                   localStorage.setItem('currentTrial', trial);
 
                   setSearchParams({ participantId, currentTrial: trial });

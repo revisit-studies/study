@@ -31,7 +31,7 @@ import { findBlockForStep } from '../utils/getSequenceFlatMap';
 import { VegaController, VegaProvState } from './VegaController';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { VideoController } from './VideoController';
-import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import { getComponentName, studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { ScreenRecordingReplay } from '../components/screenRecording/ScreenRecordingReplay';
 import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
@@ -45,7 +45,7 @@ export function ComponentController() {
   const currentComponent = useCurrentComponent();
   const studyId = useStudyId();
 
-  const stepConfig = studyConfig.components[currentComponent];
+  const stepConfig = studyConfig.components[getComponentName(currentComponent)];
   const { storageEngine } = useStorageEngine();
 
   const answers = useStoreSelector((store) => store.answers);

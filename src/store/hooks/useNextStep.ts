@@ -23,9 +23,11 @@ import {
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
 import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
+import { getComponentName } from '../../utils/handleComponentInheritance';
 
 function checkAllAnswersCorrect(answers: StoredAnswer['answer'], componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
-  const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
+  const component = componentId.slice(0, componentId.lastIndexOf('_'));
+  const componentName = getComponentName(component);
 
   // Find the matching component in the study config
   const foundConfigComponent = Object.entries(studyConfig.components).find(([configComponentId]) => configComponentId === componentName);

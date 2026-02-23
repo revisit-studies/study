@@ -10,7 +10,7 @@ import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
 import { JumpFunctionParameters, JumpFunctionReturnVal } from '../store/types';
 import { findFuncBlock } from '../utils/getSequenceFlatMap';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
-import { getComponent } from '../utils/handleComponentInheritance';
+import { getComponent, getComponentName } from '../utils/handleComponentInheritance';
 
 function parseTrialOrder(trialOrder?: string): { step: number | null; funcIndex: number | null } {
   if (!trialOrder) {
@@ -84,7 +84,7 @@ export function useCurrentComponent(): string {
 
   const [indexWhenSettingComponentName, setIndexWhenSettingComponentName] = useState<number | null>(null);
 
-  const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : currentStep.includes('reviewer-') || currentStep.startsWith('__') ? currentStep : null), [currentStep, flatSequence, studyConfig]);
+  const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(getComponentName(flatSequence[currentStep]), studyConfig) : currentStep.includes('reviewer-') || currentStep.startsWith('__') ? currentStep : null), [currentStep, flatSequence, studyConfig]);
 
   const [compName, setCompName] = useState('__dynamicLoading');
 
@@ -128,7 +128,7 @@ export function useCurrentComponent(): string {
 
   useEffect(() => {
     if (typeof currentStep === 'number') {
-      const component = getComponent(flatSequence[currentStep], studyConfig);
+      const component = getComponent(getComponentName(flatSequence[currentStep]), studyConfig);
 
       const funcName = flatSequence[currentStep];
       const decryptedFuncIndex = funcIndex ? decryptIndex(funcIndex) : 0;
