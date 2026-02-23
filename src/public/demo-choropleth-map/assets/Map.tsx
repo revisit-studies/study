@@ -115,7 +115,7 @@ function Map({
       handleSelect,
     );
 
-    drawLegend(svg, colorScale, legendTitle);
+    drawLegend(svg, colorScale, legendTitle, domain);
   }, [data, parameters]);
 
   // Highlight selected states

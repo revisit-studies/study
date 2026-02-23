@@ -41,10 +41,10 @@ export function drawMap(
     .geoIdentity()
     .fitSize([MAP_WIDTH, MAP_HEIGHT], topojson.feature(us, us.objects.states));
   const path = d3.geoPath().projection(projection);
-  const statesFeature = topojson.feature(us, us.objects.states) as FeatureCollection<
-    Geometry,
-    { name: string }
-  >;
+  const statesFeature = topojson.feature(
+    us,
+    us.objects.states,
+  ) as FeatureCollection<Geometry, { name: string }>;
 
   svg
     .append('g')
@@ -77,8 +77,9 @@ export function drawLegend(
   svg: SvgSelection,
   colorScale: d3.ScaleSequential<string>,
   title: string,
+  domain: [number, number],
 ): void {
-  const legendWidth = 300;
+  const legendWidth = MAP_WIDTH * 0.5;
   const legendHeight = 20;
   const legendX = 20;
   const legendY = 20;
@@ -93,7 +94,7 @@ export function drawLegend(
     .attr('y1', '0%')
     .attr('y2', '0%');
 
-  const numStops = 10;
+  const numStops = domain[1] - domain[0];
   d3.range(numStops + 1).forEach((i) => {
     const t = i / numStops;
     linearGradient
@@ -120,7 +121,9 @@ export function drawLegend(
   const legendAxis = d3
     .axisBottom(legendScale)
     .ticks(numStops)
-    .tickSize(legendHeight + 5);
+    .tickSize(0)
+    .tickSizeOuter(0)
+    .tickPadding(legendHeight + 5);
 
   legend
     .append('g')
