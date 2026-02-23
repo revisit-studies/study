@@ -209,7 +209,7 @@
       "correctAnswer": [
         {
           "id": "res-Q6",
-          "answer": 3
+          "answer": "Increase was the same in both intervals"
         }
       ],
       "meta": {
@@ -303,7 +303,7 @@
       "correctAnswer": [
         {
           "id": "res-Q10",
-          "answer": 3
+          "answer": "They are equal"
         }
       ],
       "meta": {
@@ -331,7 +331,7 @@
       "correctAnswer": [
         {
           "id": "res-Q11",
-          "answer": 4
+          "answer": "Can't say"
         }
       ],
       "meta": {
@@ -359,7 +359,7 @@
       "correctAnswer": [
         {
           "id": "res-Q12",
-          "answer": 2
+          "answer": "Tiosis"
         }
       ],
       "meta": {
