@@ -1,4 +1,4 @@
-This is an RGB color task.
-Use the three color controls (red, green, blue) to add color counts to your record, and the remove controls to decrease a count.
-Your normalized selected color is shown in the preview circle and updates in the sidebar.
-You can proceed once at least one color is selected.
+This is a Stroop task.
+Read the word and type the font color in the input box.
+Your typed response updates in the sidebar.
+You can proceed after entering a non-empty response.
