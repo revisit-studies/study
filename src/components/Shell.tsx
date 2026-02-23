@@ -24,7 +24,6 @@ import { ComponentController } from '../controllers/ComponentController';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { LocalStorageEngine } from '../storage/engines/LocalStorageEngine';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig } from '../utils/fetchConfig';
 import { ParticipantMetadata } from '../store/types';
@@ -76,7 +75,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   const [routes, setRoutes] = useState<RouteObject[]>([]);
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
-  const { storageEngine, setStorageEngine } = useStorageEngine();
+  const { storageEngine } = useStorageEngine();
   const [searchParams] = useSearchParams();
 
   const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
@@ -176,24 +175,12 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           modes,
           participantSession.participantId,
           participantSession.completed,
-          storageEngine.getEngine() !== import.meta.env.VITE_STORAGE_ENGINE,
+          false,
           participantSession.participantConfigHash !== activeHash,
         );
         setStore(newStore);
       } catch (error) {
         console.error('Error initializing user store routing:', error);
-
-        if (storageEngine.getEngine() !== 'localStorage') {
-          try {
-            const localStorageEngine = new LocalStorageEngine();
-            await localStorageEngine.connect();
-            setStorageEngine(localStorageEngine);
-            return;
-          } catch (fallbackError) {
-            console.error('Error switching to local storage engine:', fallbackError);
-          }
-        }
-
         // Fallback: initialize the store with empty data
         const generatedSequences = generateSequenceArray(activeConfig);
         const matchingSequence = generatedSequences[0];
@@ -260,7 +247,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       ]);
     }
     initializeUserStoreRouting();
-  }, [storageEngine, setStorageEngine, activeConfig, studyId, searchParams, participantId, studyCondition]);
+  }, [storageEngine, activeConfig, studyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
 
