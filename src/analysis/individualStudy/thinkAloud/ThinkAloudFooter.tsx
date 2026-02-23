@@ -455,13 +455,11 @@ export function ThinkAloudFooter({
               // this needs to be in a helper or two which we dont currently have
               onChange={(e: string | null) => {
                 if (participant && e) {
-                  const trial = Object.entries(participant.answers).find(([_key, ans]) => +ans.trialOrder.split('_')[0] === getSequenceFlatMap(participant?.sequence).indexOf(e))?.[0] || '';
                   syncChannel.postMessage({
                     key: 'currentTrial',
-                    value: trial,
+                    value: e,
                   });
-
-                  setSearchParams({ participantId, currentTrial: trial });
+                  setSearchParams({ participantId, currentTrial: e });
                 }
               }}
               data={tasksList}
