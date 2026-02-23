@@ -36,7 +36,6 @@ import {
   buildProvenanceLegendEntries,
 } from '../../../components/audioAnalysis/provenanceColors';
 import { revisitPageId, syncChannel } from '../../../utils/syncReplay';
-// import { useStudyId } from '../../../routes/utils';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
