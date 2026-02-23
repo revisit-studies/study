@@ -58,7 +58,7 @@ References are updated and commit is tagged
 
 ## QC Checklist
 
-#### [Study Repository](https://github.com/revisit-studies/study)
+### [Study Repository](https://github.com/revisit-studies/study)
 
 **Studies**
 - [ ] Review all studies for any crashes/bugs
@@ -75,7 +75,7 @@ References are updated and commit is tagged
 - [ ] Update comments in `store/types.ts`, `parser/types.ts`, `storage/types.ts`, `storage/engines/types.ts`
 - [ ] Update `typedocReadMe.md`
 
-#### [Documentation Repository](https://github.com/revisit-studies/reVISit-studies.github.io)
+### [Documentation Repository](https://github.com/revisit-studies/reVISit-studies.github.io)
 - [ ] Review docs
 - [ ] Review [library list](https://revisit.dev/docs/designing-studies/plugin-libraries/)
 - [ ] Check for typos / outdated docs
