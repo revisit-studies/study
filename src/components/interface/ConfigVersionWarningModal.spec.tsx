@@ -46,6 +46,14 @@ vi.mock('react-router', () => ({
 }));
 
 describe('ConfigVersionWarningModal', () => {
+  test('does not show warning when stalled config is false', () => {
+    mockedIsStalledConfig = false;
+    mockedIsAnalysis = false;
+
+    const html = renderToStaticMarkup(<ConfigVersionWarningModal />);
+    expect(html).not.toContain('Study Configuration Has Changed');
+  });
+
   test('shows warning when stalled config is detected in participant mode', () => {
     mockedIsStalledConfig = true;
     mockedIsAnalysis = false;
