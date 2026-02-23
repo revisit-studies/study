@@ -9,6 +9,34 @@ import {
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { StageInfo } from '../../../storage/engines/types';
 
+export function validateStageName(stageName: string, allStages: StageInfo[]): string | null {
+  const normalizedStageName = stageName.trim();
+
+  if (!normalizedStageName) {
+    return 'Stage name cannot be empty';
+  }
+
+  const lowerCaseName = normalizedStageName.toLowerCase();
+
+  if (lowerCaseName === 'n/a') {
+    return 'Stage name "N/A" is reserved and cannot be used';
+  }
+
+  if (lowerCaseName === 'all') {
+    return 'Stage name "ALL" is reserved and cannot be used';
+  }
+
+  if (lowerCaseName === 'default') {
+    return 'Stage name "DEFAULT" is reserved and cannot be used';
+  }
+
+  if (allStages.some((stage) => stage.stageName === normalizedStageName)) {
+    return 'A stage with this name already exists';
+  }
+
+  return null;
+}
+
 export function StageManagementItem({ studyId }: { studyId: string }) {
   const { storageEngine } = useStorageEngine();
 
@@ -87,31 +115,10 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
   };
 
   const handleSaveNewStage = async () => {
-    if (!newStageName.trim()) {
-      setNewStageError('Stage name cannot be empty');
-      return;
-    }
-
     const normalizedStageName = newStageName.trim();
-    const lowerCaseName = normalizedStageName.toLowerCase();
-
-    if (lowerCaseName === 'n/a') {
-      setNewStageError('Stage name "N/A" is reserved and cannot be used');
-      return;
-    }
-
-    if (lowerCaseName === 'all') {
-      setNewStageError('Stage name "ALL" is reserved and cannot be used');
-      return;
-    }
-
-    if (lowerCaseName === 'default') {
-      setNewStageError('Stage name "DEFAULT" is reserved and cannot be used');
-      return;
-    }
-
-    if (allStages.some((s) => s.stageName === normalizedStageName)) {
-      setNewStageError('A stage with this name already exists');
+    const stageNameError = validateStageName(normalizedStageName, allStages);
+    if (stageNameError) {
+      setNewStageError(stageNameError);
       return;
     }
 
