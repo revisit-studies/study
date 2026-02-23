@@ -2272,6 +2272,21 @@
   dependencies:
     csstype "^3.0.2"
 
+"@types/topojson-client@^3.1.5":
+  version "3.1.5"
+  resolved "https://registry.yarnpkg.com/@types/topojson-client/-/topojson-client-3.1.5.tgz#3fdbcd52161db8747a071b1d0f635ac700cf599d"
+  integrity sha512-C79rySTyPxnQNNguTZNI1Ct4D7IXgvyAs3p9HPecnl6mNrJ5+UhvGNYcZfpROYV2lMHI48kJPxwR+F9C6c7nmw==
+  dependencies:
+    "@types/geojson" "*"
+    "@types/topojson-specification" "*"
+
+"@types/topojson-specification@*", "@types/topojson-specification@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@types/topojson-specification/-/topojson-specification-1.0.5.tgz#bf0009b2e0debb2d97237b124c00b9ea92570375"
+  integrity sha512-C7KvcQh+C2nr6Y2Ub4YfgvWvWCgP2nOQMtfhlnwsRL4pYmmwzBS7HclGiS87eQfDOU/DLQpX6GEscviaz4yLIQ==
+  dependencies:
+    "@types/geojson" "*"
+
 "@types/unist@*", "@types/unist@^3.0.0":
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/@types/unist/-/unist-3.0.3.tgz#acaab0f919ce69cce629c2d4ed2eb4adc1b6c20c"
