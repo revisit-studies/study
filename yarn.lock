@@ -2337,10 +2337,10 @@
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.3.0.tgz#d06bbb384ebcf6c505fde1c3d0ed4ddffe0aaff8"
   integrity sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==
 
-"@visdesignlab/upset2-core@v1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@visdesignlab/upset2-core/-/upset2-core-1.0.2.tgz#84afb46818836eee952f4809c3d0962faad1f9bc"
-  integrity sha512-Z7upmHCixpWnZcyNAv/eg8s2Er6b8pJn36BC8hFM7c31mSf/nyjDIVFVqKXwoExzPzCnnoCcKjI2GWAczBgFqw==
+"@visdesignlab/upset2-core@v1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@visdesignlab/upset2-core/-/upset2-core-1.1.0.tgz#7f7328072064dba7a316ac93829816774d18bef5"
+  integrity sha512-deJyBilFQy3VOTl49oAwePVIZRnKyKepRSG5k7Ta7HHd1jimALk9nNqiJvAdM3EoocduGgi2LJB/vl/ltduOSw==
   dependencies:
     d3-array "^3.2.4"
     d3-drag "^3.0.0"
@@ -2349,12 +2349,14 @@
     hyperid "^3.0.0"
 
 "@visdesignlab/upset2-react@^1.1.0":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@visdesignlab/upset2-react/-/upset2-react-1.0.2.tgz#f94133915a255c1fc4d7edb0516f8916ebe30e53"
-  integrity sha512-9h9Jy5wsXiJIsV2MGj70XtTlVPOWegNZQtKD0pK/7+NBXErsAx4b4f6qk2g9h/Cy7MWPahF4a+9/nVqiKTXFPw==
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@visdesignlab/upset2-react/-/upset2-react-1.1.0.tgz#4d7bb3355cb46f2235174bda534b56cd1afe96ba"
+  integrity sha512-KIa4vR9DiMn47tTrlgmYVAmpNqlYzNWYcVrYDLpc74FpoKJJHg1HrFoiWqFRmip5fyp77DqY2bL9yxAG3pudCw==
   dependencies:
+    "@dnd-kit/core" "^6.3.1"
+    "@dnd-kit/sortable" "^10.0.0"
     "@fontsource/roboto" "^4.5.1"
-    "@visdesignlab/upset2-core" v1.0.2
+    "@visdesignlab/upset2-core" v1.1.0
     d3-array "^3.2.4"
     d3-drag "^3.0.0"
     d3-scale "^4.0.2"
