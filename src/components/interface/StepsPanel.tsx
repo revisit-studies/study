@@ -740,7 +740,7 @@ export function StepsPanel({
                   onClick={() => {
                     if (isComponent && href && !isExcluded) {
                       if (isAnalysis) {
-                        navigate(`/analysis/stats/${studyId}/stats/${encodeURIComponent(String(componentName))}`);
+                        navigate(`/analysis/stats/${studyId}/stats/${encodeURIComponent(String(componentName))}${location.search}`);
                       } else {
                         navigate(`${href}${location.search}`);
                       }
