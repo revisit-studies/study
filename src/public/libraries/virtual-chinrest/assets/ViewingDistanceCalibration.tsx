@@ -2,7 +2,7 @@ import {
   useState, useRef, useEffect, useCallback,
 } from 'react';
 import {
-  Stack, List, Text, Container,
+  Stack, List, Text, Container, Button,
 } from '@mantine/core';
 import { StimulusParams } from '../../../../store/types';
 import { useStoreSelector } from '../../../../store/store';
@@ -161,6 +161,20 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
     }
   }, []);
 
+  // handle retake
+  const handleRetake = () => {
+    setBallPositions([]);
+    setViewingDistance(null);
+    setIsTracking(false);
+    setClickCount(5);
+    resetBall();
+    // clear submitted answers
+    setAnswer({
+      status: false,
+      answers: {},
+    });
+  };
+
   if (!pixelsPerMM) {
     return <div>Please complete card calibration first.</div>;
   }
@@ -185,7 +199,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
               Press the space bar as soon as the ball disappears.
             </List.Item>
           </List>
-          <Text ta="center">
+          <Text ta="center" fw={600}>
             {ballPositions.length >= 5
               ? 'All measurements completed!'
               : 'Press the space bar when you are ready to begin.'}
@@ -226,19 +240,23 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
           {' '}
           {5 - ballPositions.length}
         </Text>
-
+        {
+          ballPositions.length > 0 && (
+            <>
+              <Text ta="left"> Not happy with your measurements? You can restart by clicking &quot;Retake&quot;.</Text>
+              <Button size="md-compact" w="fit-content" color="indigo" onClick={handleRetake}>Retake</Button>
+            </>
+          )
+        }
         {viewingDistance && (
         <Stack gap="xs">
           <Text fw={700} size="lg">Viewing Distance Results</Text>
           <Text>
             Estimated Viewing Distance:
+            {' '}
             {(viewingDistance / 10).toFixed(1)}
             {' '}
             cm
-          </Text>
-          <Text>
-            Number of measurements:
-            {ballPositions.length}
           </Text>
         </Stack>
         )}
