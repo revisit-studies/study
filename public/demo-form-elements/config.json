@@ -15,7 +15,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-survey/assets/help.md",
+    "helpTextPath": "demo-form-elements/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -25,7 +25,7 @@
   "components": {
     "Introduction": {
       "type": "markdown",
-      "path": "demo-survey/assets/introduction.md",
+      "path": "demo-form-elements/assets/introduction.md",
       "response": []
     },
     "Form Elements": {

@@ -12,6 +12,18 @@ import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 // eslint-disable-next-line import/order
 import { Box, LoadingOverlay } from '@mantine/core';
 
+type VideoProvider = 'youtube' | 'vimeo' | 'html5';
+
+function getVideoProvider(url: string): VideoProvider {
+  if (url.includes('youtube') || url.includes('youtu.be')) {
+    return 'youtube';
+  }
+  if (url.includes('vimeo')) {
+    return 'vimeo';
+  }
+  return 'html5';
+}
+
 function isValidYouTubeUrl(url: string): boolean {
   // Basic check for YouTube video ID in URL
   const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}/;
@@ -33,10 +45,25 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
     const raptorRef = usePlyr(ref, { options, source });
 
     useEffect(() => {
-      const { current } = ref as RefObject<APITypes>;
-      if (current.plyr.source === null) return;
-      current.plyr.on('ended', endedCallback);
-    });
+      const plyr = (ref as RefObject<APITypes>).current?.plyr;
+      if (!plyr || typeof plyr.on !== 'function' || typeof plyr.off !== 'function') return undefined;
+
+      try {
+        // Make registration idempotent across StrictMode mount/unmount cycles.
+        plyr.off('ended', endedCallback);
+        plyr.on('ended', endedCallback);
+      } catch {
+        return undefined;
+      }
+
+      return () => {
+        try {
+          plyr.off('ended', endedCallback);
+        } catch {
+          // Plyr instance can already be disposed during teardown.
+        }
+      };
+    }, [endedCallback, ref, source]);
 
     return (
       <video
@@ -53,47 +80,56 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
     }
     return `${PREFIX}${currentConfig.path}`;
   }, [currentConfig.path]);
+  const provider = useMemo(() => getVideoProvider(url), [url]);
+  const validExternalUrl = useMemo(() => {
+    if (provider === 'youtube') {
+      return isValidYouTubeUrl(url);
+    }
+    if (provider === 'vimeo') {
+      return isValidVimeoUrl(url);
+    }
+    return true;
+  }, [provider, url]);
 
   const [loading, setLoading] = useState(true);
   const [assetFound, setAssetFound] = useState(false);
 
   useEffect(() => {
+    let isCancelled = false;
+
     async function fetchVideo() {
       setLoading(true);
-      if (url.includes('youtube')) {
-      // Try YouTube oEmbed API
-        const oEmbedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
-        try {
-          const res = await fetch(oEmbedUrl);
-          setAssetFound(res.ok);
-        } catch {
-          setAssetFound(false);
+      try {
+        if (provider !== 'html5') {
+          if (!isCancelled) {
+            setAssetFound(validExternalUrl);
+            setLoading(false);
+          }
+          return;
         }
-      } else if (url.includes('vimeo')) {
-      // Try Vimeo oEmbed API
-        const oEmbedUrl = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`;
-        try {
-          const res = await fetch(oEmbedUrl);
-          setAssetFound(res.ok);
-        } catch {
-          setAssetFound(false);
-        }
-      } else {
+
         const asset = await getStaticAssetByPath(url);
-        setAssetFound(!!asset);
+        if (!isCancelled) {
+          setAssetFound(!!asset);
+          setLoading(false);
+        }
+      } catch {
+        if (!isCancelled) {
+          setAssetFound(false);
+          setLoading(false);
+        }
       }
-      setLoading(false);
     }
 
     fetchVideo();
-  }, [url]);
+    return () => {
+      isCancelled = true;
+    };
+  }, [provider, url, validExternalUrl]);
 
   const sources = useMemo<Plyr.Source[]>(() => {
-    if (url.includes('youtube')) {
-      if (!isValidYouTubeUrl(url)) {
-        setAssetFound(false);
-        return [];
-      }
+    if (provider === 'youtube') {
+      if (!validExternalUrl) return [];
       return [
         {
           src: url,
@@ -101,11 +137,8 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
         },
       ];
     }
-    if (url.includes('vimeo')) {
-      if (!isValidVimeoUrl(url)) {
-        setAssetFound(false);
-        return [];
-      }
+    if (provider === 'vimeo') {
+      if (!validExternalUrl) return [];
       return [
         {
           src: url,
@@ -119,7 +152,8 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
         type: 'video/mp4',
       },
     ];
-  }, [url]);
+  }, [provider, url, validExternalUrl]);
+  const playerSource = useMemo<Plyr.SourceInfo>(() => ({ type: 'video', sources }), [sources]);
 
   const options = useMemo<Plyr.Options>(() => ({
     controls: [
@@ -171,7 +205,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
       <Box>
         <CustomPlyrInstance
           ref={ref}
-          source={{ type: 'video', sources }}
+          source={playerSource}
           options={options}
           endedCallback={endedCallback}
         />

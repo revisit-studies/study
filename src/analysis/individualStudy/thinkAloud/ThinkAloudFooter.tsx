@@ -35,6 +35,7 @@ import { useReplayContext } from '../../../store/hooks/useReplay';
 import {
   buildProvenanceLegendEntries,
 } from '../../../components/audioAnalysis/provenanceColors';
+import { revisitPageId, syncChannel } from '../../../utils/syncReplay';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
@@ -214,7 +215,11 @@ export function ThinkAloudFooter({
       index = visibleParticipants.length - 1;
     }
 
-    localStorage.setItem('participantId', visibleParticipants[index]);
+    syncChannel.postMessage({
+      key: 'participantId',
+      value: visibleParticipants[index],
+    });
+
     setSearchParams({ participantId: visibleParticipants[index] || '' });
   }, [participantId, setSearchParams, visibleParticipants]);
 
@@ -235,7 +240,10 @@ export function ThinkAloudFooter({
     const newTrial = Object.values(participant.answers).find((ans) => +ans.trialOrder.split('_')[0] === index);
     const newTrialName = newTrial ? `${newTrial.componentName}_${newTrial.trialOrder.split('_')[0]}` : '';
 
-    localStorage.setItem('currentTrial', newTrialName);
+    syncChannel.postMessage({
+      key: 'currentTrial',
+      value: newTrialName,
+    });
 
     // This isnt actually doing anything without the other analysis tab open
     setSearchParams({ participantId, currentTrial: newTrialName });
@@ -330,7 +338,10 @@ export function ThinkAloudFooter({
                   value={speed.toString()}
                   onChange={(s) => {
                     setSpeed(+s);
-                    localStorage.setItem('currentSpeed', s);
+                    syncChannel.postMessage({
+                      key: 'currentSpeed',
+                      value: s,
+                    });
                   }}
                   orientation="vertical"
                   data={[
@@ -370,7 +381,10 @@ export function ThinkAloudFooter({
               value={participantId}
               onChange={(e: string | null) => {
                 setSearchParams({ currentTrial, participantId: e || '' });
-                localStorage.setItem('participantId', e || '');
+                syncChannel.postMessage({
+                  key: 'participantId',
+                  value: e || '',
+                });
               }}
               data={visibleParticipants.map((part) => part).sort()}
               searchable
@@ -430,7 +444,10 @@ export function ThinkAloudFooter({
               onChange={(e: string | null) => {
                 if (participant && e) {
                   const trial = Object.entries(participant.answers).find(([_key, ans]) => +ans.trialOrder.split('_')[0] === getSequenceFlatMap(participant?.sequence).indexOf(e))?.[0] || '';
-                  localStorage.setItem('currentTrial', trial);
+                  syncChannel.postMessage({
+                    key: 'currentTrial',
+                    value: trial,
+                  });
 
                   setSearchParams({ participantId, currentTrial: trial });
                 }
@@ -470,13 +487,12 @@ export function ThinkAloudFooter({
                 selectedTags={localParticipantTags ? localParticipantTags.taskTags[currentTrial] || [] : []}
               />
             </Stack>
-
           </Group>
           <Button
             mt="lg"
             variant="light"
             component="a"
-            href={isReplay ? `${PREFIX}analysis/stats/${studyId}/tagging?participantId=${participantId}&currentTrial=${currentTrial}` : `${PREFIX}${studyId}/${encryptIndex(participant ? +(participant.answers[currentTrial]?.trialOrder.split('_')[0] || 0) : 0)}?participantId=${participantId}&currentTrial=${currentTrial}`}
+            href={isReplay ? `${PREFIX}analysis/stats/${studyId}/tagging?participantId=${participantId}&currentTrial=${currentTrial}&revisitPageId=${revisitPageId}` : `${PREFIX}${studyId}/${encryptIndex(participant ? +(participant.answers[currentTrial]?.trialOrder.split('_')[0] || 0) : 0)}?participantId=${participantId}&currentTrial=${currentTrial}&revisitPageId=${revisitPageId}`}
             target="_blank"
           >
             {isReplay ? 'Transcript' : 'Replay'}
