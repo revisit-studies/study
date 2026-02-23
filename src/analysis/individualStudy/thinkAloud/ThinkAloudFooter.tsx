@@ -25,7 +25,6 @@ import {
 import { AudioProvenanceVis } from '../../../components/audioAnalysis/AudioProvenanceVis';
 import { TranscriptSegmentsVis } from './TranscriptSegmentsVis';
 import { TagSelector } from './tags/TagSelector';
-import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { PREFIX } from '../../../utils/Prefix';
 import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadFiles';
@@ -162,13 +161,9 @@ export function ThinkAloudFooter({
     if (currentTrial.includes('__dynamicLoading')) {
       return '';
     }
-    // if we find ourselves with a wrong current trial, erase it
-    if (participant && !participant.answers[currentTrial]) {
-      setSearchParams({ participantId, currentTrial: Object.entries(participant.answers).find(([_, ans]) => +ans.trialOrder.split('_')[0] === 0)?.[0] || '' });
-    }
 
     return participant?.answers[currentTrial]?.componentName ?? '';
-  }, [currentTrial, participant, participantId, setSearchParams]);
+  }, [currentTrial, participant]);
 
   const xScale = useMemo(() => {
     if (!participant || !participant.answers[currentTrial]) {
@@ -302,12 +297,28 @@ export function ThinkAloudFooter({
 
   const tasksList = useMemo(() => {
     if (participant) {
-      const d = getSequenceFlatMap(participant?.sequence);
+      const answers = Object.values(participant.answers);
+      answers.sort((answerA, answerB) => {
+        const a = answerA.identifier;
+        const b = answerB.identifier;
+        const partsA = a.split('_').map(Number);
+        const partsB = b.split('_').map(Number);
 
-      return d.map((task, idx) => ({
-        label: task,
-        value: `${task}_${idx}`,
-      }));
+        const maxLength = Math.max(partsA.length, partsB.length);
+
+        for (let i = 0; i < maxLength; i += 1) {
+          const valA = partsA[i] ?? 0;
+          const valB = partsB[i] ?? 0;
+
+          if (valA !== valB) {
+            return valA - valB;
+          }
+        }
+
+        return 0;
+      });
+
+      return answers.map((a) => ({ label: a.componentName, value: a.identifier }));
     }
     return [];
   }, [participant]);
@@ -456,9 +467,10 @@ export function ThinkAloudFooter({
               // this needs to be in a helper or two which we dont currently have
               onChange={(e: string | null) => {
                 if (participant && e) {
-                  const stepNumber = tasksList.map(({ value }) => value).indexOf(e);
+                  const trialPath = participant.answers[e].trialOrder.split('_').map((index) => encryptIndex(+index)).join('/');
+
                   navigate({
-                    pathname: `/${studyId}/${encryptIndex(stepNumber)}`,
+                    pathname: `/${studyId}/${trialPath}`,
                     search: location.search,
                   });
 

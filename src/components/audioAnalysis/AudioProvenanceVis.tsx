@@ -257,10 +257,6 @@ export function AudioProvenanceVis({
     async (waveSurfer: WaveSurferType | null) => {
       wavesurfer.current = waveSurfer;
 
-      if (taskName.includes('__dynamicLoading')) {
-        return;
-      }
-
       audioRef.current = null;
       updateReplayRef();
 
