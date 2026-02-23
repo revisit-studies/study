@@ -1,5 +1,5 @@
 
-# Demo Page
+# Screen Recording
 
 Any stimulus that follows the `screenRecordingPermission` page can be recorded.
 
