@@ -353,22 +353,35 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await updateDoc(participantSequenceAssignmentDoc, { claimed: true });
   }
 
+  async initializeAnonymousAuth() {
+    const auth = getAuth();
+    await auth.authStateReady();
+
+    if (auth.currentUser) {
+      return true;
+    }
+
+    try {
+      await signInAnonymously(auth);
+      return !!auth.currentUser;
+    } catch (error) {
+      const errorMessage = 'Firebase anonymous sign-in failed. Please ensure Anonymous Authentication is enabled in your Firebase Console.';
+      console.error(errorMessage, error);
+      return false;
+    }
+  }
+
+  async checkAuthReadiness() {
+    const isReady = await this.initializeAnonymousAuth();
+    if (!isReady) {
+      this.connected = false;
+      throw new Error('FirebaseAuthError: Login failed with firebase');
+    }
+    this.connected = true;
+  }
+
   async initializeStudyDb(studyId: string) {
     try {
-      const auth = getAuth();
-      await auth.authStateReady();
-
-      if (!auth.currentUser) {
-        try {
-          await signInAnonymously(auth);
-          if (!auth.currentUser) {
-            throw new Error('Login failed with firebase');
-          }
-        } catch (error) {
-          console.error('Firebase anonymous sign-in failed:', error);
-        }
-      }
-
       // Create or retrieve database for study
       this.studyCollection = collection(
         this.firestore,
@@ -383,9 +396,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   async connect() {
     try {
       await enableNetwork(this.firestore);
-
-      this.connected = true;
+      this.connected = await this.initializeAnonymousAuth();
     } catch {
+      this.connected = false;
       console.warn('Failed to connect to Firebase');
     }
   }
