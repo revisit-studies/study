@@ -10,7 +10,8 @@
     "description": "A simple demo of using screen recording on stimuli that render an external website, where provenance tracking is difficult to implement.",
     "organizations": [
       "University of Utah",
-      "WPI"
+      "WPI",
+      "University of Toronto"
     ]
   },
   "uiConfig": {

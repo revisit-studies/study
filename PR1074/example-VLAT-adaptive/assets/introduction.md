@@ -8,10 +8,3 @@ This is an adaptive version of VLAT, developed by [Cui et al.-- A-VLAT](https://
 In the test you will take, each subsequent question is selected based on the test-taker's performance. In this case, only 27 questions are needed to achieve similar measurement precision as the full-length original VLAT.
 
 The questions will begin on the next screen. At the end, you will see a summary page where you can review what you got right / wrong.
-
-## Relevant files:
- * [The Config](https://github.com/revisit-studies/study/blob/main/public/example-VLAT-adaptive/config.json)
- * [consent.md](https://github.com/revisit-studies/study/blob/main/public/example-VLAT-adaptive/assets/consent.md)
- * [help.md](https://github.com/revisit-studies/study/blob/main/public/example-VLAT-adaptive/assets/help.md)
-
-## Relevant documentation:

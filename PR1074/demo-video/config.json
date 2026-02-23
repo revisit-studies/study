@@ -10,7 +10,8 @@
     "description": "A simple demo of using video as a stimulus. Data is collected via a numeric response field.",
     "organizations": [
       "University of Utah",
-      "WPI"
+      "WPI",
+      "University of Toronto"
     ]
   },
   "uiConfig": {
@@ -34,11 +35,30 @@
       "forceCompletion": true,
       "response": []
     },
+    "missingInternal": {
+      "type": "video",
+      "path": "demo-video/assets/london.mp4",
+      "forceCompletion": true,
+      "response": []
+    },
     "external": {
       "type": "video",
       "path": "https://www.youtube.com/watch?v=icPHcK_cCF4",
       "forceCompletion": false,
       "withTimeline": true,
+      "response": []
+    },
+    "vimeoExternal": {
+      "type": "video",
+      "path": "https://vimeo.com/76979871",
+      "forceCompletion": false,
+      "withTimeline": true,
+      "response": []
+    },
+    "missingExternal": {
+      "type": "video",
+      "path": "https://www.youtube.com/watch",
+      "forceCompletion": true,
       "response": []
     }
   },
@@ -47,7 +67,10 @@
     "components": [
       "introduction",
       "internal",
-      "external"
+      "missingInternal",
+      "external",
+      "vimeoExternal",
+      "missingExternal"
     ]
   }
 }
