@@ -4,7 +4,7 @@ This demo introduced how to use images as stimuli in reVISit, and how to collect
 
 This is a replication of a study by Padilla et al., published in Frontiers in Psychology, 2021.
 
-### Instructions
+## Instructions
 
 The following instructions describe the tasks you will see and how to complete them. If you need to refer to these instructions during the experiment, please click on help at the top of the page.
 
@@ -38,5 +38,4 @@ you have in your budget at the end of 48 days.
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-image/config.json)
 
 ## Relevant documentation:
-
  * [Designing Image/Video Stimuli](https://revisit.dev/docs/designing-studies/image-video-stimulus/)

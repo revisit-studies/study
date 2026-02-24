@@ -35,7 +35,7 @@ export interface GlobalConfig {
     "Jane Doe",
     "John Doe"
   ],
-  "date": "2024-04-01",
+  "date": "2026-02-23",
   "description": "This study is meant to test your ability.",
   "organizations": [
     "The reVISit Team",

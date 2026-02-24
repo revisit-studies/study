@@ -3,10 +3,15 @@
   "studyMetadata": {
     "title": "React Stimulus with Trrack library",
     "version": "pilot",
-    "authors": ["The reVISit Team"],
-    "date": "2026-02-21",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
     "description": "A demo of the stroop test using a React stimulus with provenance tracking.",
-    "organizations": ["University of Utah", "WPI"]
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
@@ -41,7 +46,9 @@
     },
     "trial-red-blue": {
       "baseComponent": "trial",
-      "meta": { "seq": 1 },
+      "meta": {
+        "seq": 1
+      },
       "parameters": {
         "taskid": "stroopAnswer",
         "displayText": "RED",
@@ -50,7 +57,9 @@
     },
     "trial-green-pink": {
       "baseComponent": "trial",
-      "meta": { "seq": 1 },
+      "meta": {
+        "seq": 1
+      },
       "parameters": {
         "taskid": "stroopAnswer",
         "displayText": "GREEN",
@@ -60,6 +69,10 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": ["introduction", "trial-red-blue", "trial-green-pink"]
+    "components": [
+      "introduction",
+      "trial-red-blue",
+      "trial-green-pink"
+    ]
   }
 }

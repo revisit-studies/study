@@ -6,7 +6,7 @@ Make sure to review [the documentation for BaseResponse](https://revisit.dev/doc
 
 ## Relevant files:
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-form-elements/config.json)
+ 
 ## Relevant documentation:
-
  * [Designing Forms](https://revisit.dev/docs/designing-studies/forms/)
  * [Setting Up Your First Study](https://revisit.dev/docs/getting-started/your-first-study/)
