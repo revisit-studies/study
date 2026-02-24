@@ -40,6 +40,21 @@ const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
 };
 
+function parseTrialOrder(trialOrder?: string): { step: number | null; funcIndex: number | null } {
+  if (!trialOrder) {
+    return { step: null, funcIndex: null };
+  }
+
+  const [stepRaw, funcIndexRaw] = trialOrder.split('_');
+  const step = Number.parseInt(stepRaw, 10);
+  const parsedFuncIndex = funcIndexRaw === undefined ? null : Number.parseInt(funcIndexRaw, 10);
+
+  return {
+    step: Number.isFinite(step) ? step : null,
+    funcIndex: parsedFuncIndex !== null && Number.isFinite(parsedFuncIndex) ? parsedFuncIndex : null,
+  };
+}
+
 function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
     return storageEngine.getParticipantData(trrackId);
@@ -220,30 +235,81 @@ export function ThinkAloudFooter({
     setSearchParams({ participantId: visibleParticipants[index] || '' });
   }, [participantId, setSearchParams, visibleParticipants]);
 
-  const nextTaskCallback = useCallback((indexChange: number) => {
-    if (!participant || !currentTrial) {
+  const orderedAnswers = useMemo(() => {
+    if (!participant) {
+      return [];
+    }
+
+    const answers = Object.values(participant.answers);
+    answers.sort((answerA, answerB) => {
+      const a = parseTrialOrder(answerA.trialOrder);
+      const b = parseTrialOrder(answerB.trialOrder);
+
+      if (a.step !== b.step) {
+        return (a.step ?? Number.MAX_SAFE_INTEGER) - (b.step ?? Number.MAX_SAFE_INTEGER);
+      }
+
+      if (a.funcIndex !== b.funcIndex) {
+        return (a.funcIndex ?? -1) - (b.funcIndex ?? -1);
+      }
+
+      return answerA.identifier.localeCompare(answerB.identifier);
+    });
+
+    return answers;
+  }, [participant]);
+
+  const navigateToTask = useCallback((answerIdentifier: string) => {
+    if (!participant) {
       return;
     }
 
-    // This doesnt work for dynamic
-    let index = +participant.answers[currentTrial].trialOrder.split('_')[0] + indexChange;
-
-    if (index >= Object.values(participant.answers).length) {
-      index = 0;
-    } else if (index < 0) {
-      index = Object.values(participant.answers).length - 1;
+    const answer = participant.answers[answerIdentifier];
+    if (!answer) {
+      return;
     }
 
+    const { step, funcIndex } = parseTrialOrder(answer.trialOrder);
+    if (step === null) {
+      return;
+    }
+
+    const pathname = funcIndex === null
+      ? `/${studyId}/${encryptIndex(step)}`
+      : `/${studyId}/${encryptIndex(step)}/${encryptIndex(funcIndex)}`;
+
     navigate({
-      pathname: `/${studyId}/${encryptIndex(index)}`,
+      pathname,
       search: location.search,
     });
 
     syncChannel.postMessage({
       key: 'currentTrial',
-      value: index,
+      value: answerIdentifier,
     });
-  }, [currentTrial, location.search, navigate, participant, studyId]);
+  }, [location.search, navigate, participant, studyId]);
+
+  const nextTaskCallback = useCallback((indexChange: number) => {
+    if (!currentTrial || orderedAnswers.length === 0) {
+      return;
+    }
+
+    const currentIndex = orderedAnswers.findIndex((answer) => answer.identifier === currentTrial);
+    if (currentIndex === -1) {
+      const fallbackIndex = indexChange >= 0 ? 0 : orderedAnswers.length - 1;
+      navigateToTask(orderedAnswers[fallbackIndex].identifier);
+      return;
+    }
+
+    let nextIndex = currentIndex + indexChange;
+    if (nextIndex >= orderedAnswers.length) {
+      nextIndex = 0;
+    } else if (nextIndex < 0) {
+      nextIndex = orderedAnswers.length - 1;
+    }
+
+    navigateToTask(orderedAnswers[nextIndex].identifier);
+  }, [currentTrial, navigateToTask, orderedAnswers]);
 
   const setTags = useCallback((_tags: Tag[], type: 'task' | 'participant') => {
     if (storageEngine) {
@@ -295,33 +361,10 @@ export function ThinkAloudFooter({
     return buildProvenanceLegendEntries(Object.values(answer.provenanceGraph));
   }, [participant, currentTrial]);
 
-  const tasksList = useMemo(() => {
-    if (participant) {
-      const answers = Object.values(participant.answers);
-      answers.sort((answerA, answerB) => {
-        const a = answerA.identifier;
-        const b = answerB.identifier;
-        const partsA = a.split('_').map(Number);
-        const partsB = b.split('_').map(Number);
-
-        const maxLength = Math.max(partsA.length, partsB.length);
-
-        for (let i = 0; i < maxLength; i += 1) {
-          const valA = partsA[i] ?? 0;
-          const valB = partsB[i] ?? 0;
-
-          if (valA !== valB) {
-            return valA - valB;
-          }
-        }
-
-        return 0;
-      });
-
-      return answers.map((a) => ({ label: a.componentName, value: a.identifier }));
-    }
-    return [];
-  }, [participant]);
+  const tasksList = useMemo(() => orderedAnswers.map((answer) => ({
+    label: answer.componentName,
+    value: answer.identifier,
+  })), [orderedAnswers]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
@@ -466,18 +509,8 @@ export function ThinkAloudFooter({
               value={currentTrial}
               // this needs to be in a helper or two which we dont currently have
               onChange={(e: string | null) => {
-                if (participant && e) {
-                  const trialPath = participant.answers[e].trialOrder.split('_').map((index) => encryptIndex(+index)).join('/');
-
-                  navigate({
-                    pathname: `/${studyId}/${trialPath}`,
-                    search: location.search,
-                  });
-
-                  syncChannel.postMessage({
-                    key: 'currentTrial',
-                    value: e,
-                  });
+                if (e) {
+                  navigateToTask(e);
                 }
               }}
               data={tasksList}
