@@ -22,6 +22,7 @@
     "demo-choropleth-map",
     "example-brush-interactions",
     "example-cleveland",
+    "example-llm-chatbot",
     "example-mvnv",
     "example-VLAT-adaptive",
     "library-adaptive-vlat",
@@ -111,6 +112,9 @@
     "demo-choropleth-map": {
       "path": "demo-choropleth-map/config.json"
     },
+    "example-llm-chatbot": {
+      "path": "example-llm-chatbot/config.json"
+   
     "example-brush-interactions": {
       "path": "example-brush-interactions/config.json"
     },
