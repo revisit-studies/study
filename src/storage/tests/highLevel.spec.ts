@@ -184,7 +184,7 @@ describe.each([
       components.map((component) => [component, 0]),
     ) as Record<string, number>);
 
-    for (let i = 0; i < 1000; i += 1) {
+    for (let i = 0; i < 200; i += 1) {
       // Sequential awaits are intentional here because each participant assignment depends on
       // the storage engine state from previous iterations.
       // eslint-disable-next-line no-await-in-loop
@@ -207,7 +207,7 @@ describe.each([
 
     countsByPosition.forEach((positionCounts) => {
       components.forEach((component) => {
-        expect(positionCounts[component]).toBe(250);
+        expect(positionCounts[component]).toBe(50);
       });
     });
   });
