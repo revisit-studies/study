@@ -6,7 +6,7 @@
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-26",
+    "date": "2026-02-23",
     "description": "A replication of adjacency matrix tasks in a multi-variate network visualization (MVNV) study by Nobre et al., CHI 2020 (doi:10.1145/3313831.3376381). This is meant to demonstrate complex studies, but is not necessarily suitable as a `learn-by` example.",
     "organizations": [
       "University of Utah",

@@ -9,7 +9,7 @@ You can proceed when you have entered a response.
 
 ## Relevant files:
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-react-trrack/config.json)
+ 
 ## Relevant documentation:
-
  * [Designing a React Stimulus](https://revisit.dev/docs/designing-studies/react-stimulus/)
  * [Provenance Tracking](https://revisit.dev/docs/designing-studies/provenance-tracking/)

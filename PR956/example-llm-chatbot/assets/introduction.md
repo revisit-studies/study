@@ -63,7 +63,6 @@ In `.env`, set `VITE_OPENAI_API_URL`:
 * Local development: `VITE_OPENAI_API_URL="http://localhost:3000"`
 * Production: `VITE_OPENAI_API_URL=https://apps.vdl.sci.utah.edu/openai-proxy`
 
-
 ### Request Payloads (what we send to the API)
 
 The Responses API expects a JSON payload, which is the request body sent in `fetch(..., { body: JSON.stringify({ ... }) })` in `ChatInterface.tsx`. In other words, every field inside that JSON object (such as `model`, `instructions`, `tools`, `input`, and so on) is a payload parameter. In this demo, the payload shape is designed to be easy to reason about and to keep data transfer minimal.
