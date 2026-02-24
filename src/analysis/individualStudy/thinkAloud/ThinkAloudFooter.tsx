@@ -26,6 +26,7 @@ import { AudioProvenanceVis } from '../../../components/audioAnalysis/AudioProve
 import { TranscriptSegmentsVis } from './TranscriptSegmentsVis';
 import { TagSelector } from './tags/TagSelector';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
+import { parseTrialOrder } from '../../../utils/parseTrialOrder';
 import { PREFIX } from '../../../utils/Prefix';
 import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadFiles';
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
@@ -39,21 +40,6 @@ import { revisitPageId, syncChannel } from '../../../utils/syncReplay';
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
 };
-
-function parseTrialOrder(trialOrder?: string): { step: number | null; funcIndex: number | null } {
-  if (!trialOrder) {
-    return { step: null, funcIndex: null };
-  }
-
-  const [stepRaw, funcIndexRaw] = trialOrder.split('_');
-  const step = Number.parseInt(stepRaw, 10);
-  const parsedFuncIndex = funcIndexRaw === undefined ? null : Number.parseInt(funcIndexRaw, 10);
-
-  return {
-    step: Number.isFinite(step) ? step : null,
-    funcIndex: parsedFuncIndex !== null && Number.isFinite(parsedFuncIndex) ? parsedFuncIndex : null,
-  };
-}
 
 function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -232,7 +218,11 @@ export function ThinkAloudFooter({
       value: visibleParticipants[index],
     });
 
-    setSearchParams({ participantId: visibleParticipants[index] || '' });
+    setSearchParams((params) => {
+      params.set('participantId', visibleParticipants[index] || '');
+      params.delete('currentTrial');
+      return params;
+    });
   }, [participantId, setSearchParams, visibleParticipants]);
 
   const orderedAnswers = useMemo(() => {
@@ -274,20 +264,22 @@ export function ThinkAloudFooter({
       return;
     }
 
-    const pathname = funcIndex === null
+    const pathname = isReplay ? (funcIndex === null
       ? `/${studyId}/${encryptIndex(step)}`
-      : `/${studyId}/${encryptIndex(step)}/${encryptIndex(funcIndex)}`;
+      : `/${studyId}/${encryptIndex(step)}/${encryptIndex(funcIndex)}`) : `/analysis/stats/${studyId}/tagging/${encodeURIComponent(answerIdentifier)}`;
 
     navigate({
       pathname,
       search: location.search,
     });
 
-    syncChannel.postMessage({
-      key: 'currentTrial',
-      value: answerIdentifier,
-    });
-  }, [location.search, navigate, participant, studyId]);
+    if (answer.trialOrder) {
+      syncChannel.postMessage({
+        key: 'trialOrder',
+        value: answer.trialOrder,
+      });
+    }
+  }, [isReplay, location.search, navigate, participant, studyId]);
 
   const nextTaskCallback = useCallback((indexChange: number) => {
     if (!currentTrial || orderedAnswers.length === 0) {
@@ -365,6 +357,16 @@ export function ThinkAloudFooter({
     label: answer.componentName,
     value: answer.identifier,
   })), [orderedAnswers]);
+
+  const transcriptHref = useMemo(() => `${PREFIX}analysis/stats/${studyId}/tagging${currentTrial ? `/${encodeURIComponent(currentTrial)}` : ''}?participantId=${participantId}&revisitPageId=${revisitPageId}`, [currentTrial, participantId, studyId]);
+
+  const replayHref = useMemo(() => {
+    const { step, funcIndex } = parseTrialOrder(participant?.answers[currentTrial]?.trialOrder);
+    const currentStep = step ?? 0;
+    const funcPath = funcIndex === null ? '' : `/${encryptIndex(funcIndex)}`;
+
+    return `${PREFIX}${studyId}/${encryptIndex(currentStep)}${funcPath}?participantId=${participantId}&revisitPageId=${revisitPageId}`;
+  }, [currentTrial, participant, participantId, studyId]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
@@ -447,7 +449,11 @@ export function ThinkAloudFooter({
               style={{ width: '200px' }}
               value={participantId}
               onChange={(e: string | null) => {
-                setSearchParams({ currentTrial, participantId: e || '' });
+                setSearchParams((params) => {
+                  params.set('participantId', e || '');
+                  params.delete('currentTrial');
+                  return params;
+                });
                 syncChannel.postMessage({
                   key: 'participantId',
                   value: e || '',
@@ -553,7 +559,7 @@ export function ThinkAloudFooter({
             mt="lg"
             variant="light"
             component="a"
-            href={isReplay ? `${PREFIX}analysis/stats/${studyId}/tagging?participantId=${participantId}&currentTrial=${currentTrial}&revisitPageId=${revisitPageId}` : `${PREFIX}${studyId}/${encryptIndex(participant ? +(participant.answers[currentTrial]?.trialOrder.split('_')[0] || 0) : 0)}?participantId=${participantId}&currentTrial=${currentTrial}&revisitPageId=${revisitPageId}`}
+            href={isReplay ? transcriptHref : replayHref}
             target="_blank"
           >
             {isReplay ? 'Transcript' : 'Replay'}
