@@ -39,6 +39,9 @@ When adding a new feature or modifying code try to maximize unit test coverage. 
 Parser
 When adding new features, sometimes it's required to update the parser and the associated types. The parser is located in src/parser/. The parser is responsible for validating and transforming the study config JSON files into a format that the application can use. When updating the parser, ensure that you also update the corresponding types in src/parser/types.ts to reflect any changes made to the study config schema. Make sure to add unit tests for any new parser functionality to ensure its correctness. Additionally, changes to the parser types will require updates to the generated JSON schema files located in src/schemas/. You can regenerate these schema files by running `yarn generate-schemas`.
 
+Sequence
+The sequence logic is a crucial part of the ReVISit platform, as it defines the flow of tasks and interactions for participants in a study. A participant's sequence is essentially flattened into a list and navigated through by index. The only exception to this is the dynamic blocks, which function as a nested sequence. The nested sequence has its own index and can be navigated through independently of the main sequence.
+
 DO NOT
 - DO NOT add import('...') statements inside src code and test logic. Import at the top of the file only, even for types.
 - DO NOT add new libraries without approval.

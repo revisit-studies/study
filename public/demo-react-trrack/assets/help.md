@@ -1,2 +1,4 @@
-This is a click accuracy test. Try to click on the moving dot, and see how accurate you are. The distance between center of the dot and your click position will be shown on sidebar. 
-You can use the slider to adjust the speed of the dot.
+This is a Stroop task.
+Read the word and type the font color in the input box.
+Your typed response updates in the sidebar.
+You can proceed after entering a non-empty response.

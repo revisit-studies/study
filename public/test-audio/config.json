@@ -1,17 +1,16 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-      "title": "Using audio recording",
-      "version": "pilot",
-      "authors": [
-        "The reVISit Team"
-      ],
-      "date": "2023-04-14",
-      "description": "This is a test for audio",
-      "organizations": [
-        "University of Utah",
-        "WPI",
-        "University of Toronto"
+    "title": "Using audio recording",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "This is a test for audio",
+    "organizations": [
+      "University of Utah",
+      "WPI"
     ]
   },
   "uiConfig": {

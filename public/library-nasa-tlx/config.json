@@ -10,15 +10,15 @@
     "description": "Example study using the nasa-tlx library.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
     "contactEmail": "",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
-    "withSidebar": false
+    "withSidebar": false,
+    "stylesheetPath": "library-nasa-tlx/assets/layout.css"
   },
   "importedLibraries": [
     "nasa-tlx"

@@ -1,21 +1,16 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "React Stimulus and Provenance Tracking",
+    "title": "React Stimulus with Trrack library",
     "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
+    "authors": ["The reVISit Team"],
     "date": "2026-02-21",
-    "description": "A demo of using dynamic React stimuli and using provenance tracking with the trrack library for data collection.",
-    "organizations": [
-      "University of Utah",
-      "WPI"
-    ]
+    "description": "A demo of the stroop test using a React stimulus with provenance tracking.",
+    "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-react-trrack/assets/help.md",
+    "helpTextPath": "demo-react-trrack/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -23,15 +18,15 @@
   },
   "baseComponents": {
     "trial": {
-      "description": "try to click on the center of the moving dot",
-      "instruction": "Click on the moving dot",
+      "description": "identify the text color in a Stroop trial",
+      "instruction": "In this experiment you are required to type the color of the word, not what the word says. For example, for the blue-colored word-'RED', you should type \"BLUE.\"",
       "type": "react-component",
       "path": "demo-react-trrack/assets/DemoReactTrrack.tsx",
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "accuracy",
-          "prompt": "Your click distance to circle center",
+          "id": "stroopAnswer",
+          "prompt": "Your Stroop color response",
           "location": "sidebar",
           "type": "reactive"
         }
@@ -44,33 +39,27 @@
       "path": "demo-react-trrack/assets/introduction.md",
       "response": []
     },
-    "trial1": {
+    "trial-red-blue": {
       "baseComponent": "trial",
-      "meta": {
-        "nr-dots": 1
-      },
+      "meta": { "seq": 1 },
       "parameters": {
-        "speed": 100,
-        "taskid": "accuracy"
+        "taskid": "stroopAnswer",
+        "displayText": "RED",
+        "textColor": "blue"
       }
     },
-    "trial2": {
+    "trial-green-pink": {
       "baseComponent": "trial",
-      "meta": {
-        "nr-dots": 1
-      },
+      "meta": { "seq": 1 },
       "parameters": {
-        "speed": 200,
-        "taskid": "accuracy"
+        "taskid": "stroopAnswer",
+        "displayText": "GREEN",
+        "textColor": "pink"
       }
     }
   },
   "sequence": {
     "order": "fixed",
-    "components": [
-      "introduction",
-      "trial1",
-      "trial2"
-    ]
+    "components": ["introduction", "trial-red-blue", "trial-green-pink"]
   }
 }

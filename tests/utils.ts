@@ -5,6 +5,70 @@ const UPLOADING_MESSAGE = 'Please wait while your answers are uploaded.';
 const DEFAULT_COMPLETED_MESSAGE = 'Thank you for completing the study. You may close this window now.';
 const PROLIFIC_COMPLETED_MESSAGE = /Thank you for completing the study\.\s*You may click this link and return to Prolific/i;
 
+type StudyTitleMatcher = string | RegExp;
+
+export async function resetClientStudyState(page: Page) {
+  await page.goto('/');
+
+  await page.evaluate(async () => {
+    localStorage.clear();
+    sessionStorage.clear();
+
+    const deleteDatabase = async (name: string) => new Promise<void>((resolve) => {
+      try {
+        const request = indexedDB.deleteDatabase(name);
+        request.onsuccess = () => resolve();
+        request.onerror = () => resolve();
+        request.onblocked = () => resolve();
+      } catch {
+        resolve();
+      }
+    });
+
+    const databaseNames = new Set<string>(['revisit']);
+    const idbWithDatabases = indexedDB as IDBFactory & {
+      databases?: () => Promise<Array<{ name?: string }>>;
+    };
+
+    if (typeof idbWithDatabases.databases === 'function') {
+      try {
+        const databases = await idbWithDatabases.databases();
+        databases.forEach((database) => {
+          if (database?.name) {
+            databaseNames.add(database.name);
+          }
+        });
+      } catch {
+        // No-op. Safari/WebKit may not support indexedDB.databases().
+      }
+    }
+
+    await Promise.all(Array.from(databaseNames).map(deleteDatabase));
+  });
+}
+
+export async function openStudyFromLanding(
+  page: Page,
+  sectionLabel: string,
+  cardTitle: StudyTitleMatcher | StudyTitleMatcher[],
+) {
+  await page.goto('/');
+
+  const matchers = Array.isArray(cardTitle) ? cardTitle : [cardTitle];
+  const section = page.getByLabel(sectionLabel);
+  await expect(section).toBeVisible();
+
+  for (const matcher of matchers) {
+    const studyCard = section.locator('div').filter({ hasText: matcher }).first();
+    if (await studyCard.isVisible().catch(() => false)) {
+      await studyCard.getByText('Go to Study').click();
+      return;
+    }
+  }
+
+  throw new Error(`Could not find study card in "${sectionLabel}" for matchers: ${matchers.map(String).join(', ')}`);
+}
+
 export async function nextClick(page: Page, timeout = 10000) {
   const nextButton = page.getByRole('button', { name: 'Next', exact: true });
   const deadline = Date.now() + timeout;

@@ -72,15 +72,19 @@ export function filterSequenceByCondition(sequence: Sequence, condition?: string
 export function getSequenceConditions(sequence: StudyConfig['sequence'] | Sequence): string[] {
   const conditions = new Set<string>();
 
-  const collect = (node: StudyConfig['sequence'] | Sequence) => {
+  const collect = (node: StudyConfig['sequence'] | Sequence | null | undefined) => {
+    if (!node || typeof node !== 'object') {
+      return;
+    }
+
     if (node.conditional && node.id) {
       conditions.add(node.id);
     }
 
     // Get conditions from the nested sequences
-    if ('components' in node) {
+    if ('components' in node && Array.isArray(node.components)) {
       node.components.forEach((component) => {
-        if (typeof component !== 'string') {
+        if (component && typeof component !== 'string') {
           collect(component);
         }
       });

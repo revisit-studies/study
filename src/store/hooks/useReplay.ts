@@ -2,52 +2,8 @@ import {
   createContext, useCallback, useContext, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { useSearchParams } from 'react-router';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Listener<T extends any[] = any[]> = (...args: T) => void;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-class EventEmitter<Events extends Record<string, any[]>> {
-  private listeners: {
-    [K in keyof Events]?: Listener<Events[K]>[];
-  } = {};
-
-  /**
-   * Subscribes a listener function to a specific event.
-   */
-  on<K extends keyof Events>(eventName: K, listener: Listener<Events[K]>): void {
-    if (!this.listeners[eventName]) {
-      this.listeners[eventName] = [];
-    }
-    this.listeners[eventName]!.push(listener);
-  }
-
-  /**
-   * Unsubscribes a specific listener function from an event.
-   * If no listener is provided, all listeners for that event are removed.
-   */
-  off<K extends keyof Events>(eventName: K, listener?: Listener<Events[K]>): void {
-    if (!this.listeners[eventName]) return;
-
-    if (listener) {
-      this.listeners[eventName] = this.listeners[eventName]!.filter(
-        (l) => l !== listener,
-      );
-    } else {
-      delete this.listeners[eventName];
-    }
-  }
-
-  /**
-   * Emits an event with given arguments.
-   */
-  emit<K extends keyof Events>(eventName: K, ...args: Events[K]): void {
-    if (!this.listeners[eventName]) return;
-
-    const currentListeners = [...this.listeners[eventName]!];
-    currentListeners.forEach((listener) => listener(...args));
-  }
-}
+import { syncChannel, syncEmitter } from '../../utils/syncReplay';
+import EventEmitter from '../../utils/EventEmitter';
 
 /**
  * Hook to subscribe to video/audio/provenance timing events for replay
@@ -122,9 +78,14 @@ export function useReplay() {
 
   useEffect(() => {
     if (isMasterPlayer) {
-      localStorage.setItem('replaySync', JSON.stringify({
-        seekTime, isPlaying, speed,
-      }));
+      syncChannel.postMessage({
+        key: 'replaySync',
+        value: {
+          seekTime,
+          isPlaying,
+          speed,
+        },
+      });
     }
   }, [seekTime, isPlaying, speed, isMasterPlayer]);
 
@@ -297,22 +258,21 @@ export function useReplay() {
   }, [isPlaying, setIsPlaying]);
 
   useEffect(() => {
-    const replayStorageListener = (e: StorageEvent) => {
-      if (e.key === 'replaySync') {
-        const {
-          seekTime: __seekTime, isPlaying: __isPlaying, speed: __speed,
-        } = JSON.parse(e.newValue || '{}');
-        setIsMasterPlayer(false);
-        setSpeed(__speed, true);
-        setSeekTime(__seekTime, true);
-        setIsPlaying(__isPlaying, true);
-      }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const replaySyncListener = (newValue: any) => {
+      const {
+        seekTime: __seekTime, isPlaying: __isPlaying, speed: __speed,
+      } = newValue || {};
+      setIsMasterPlayer(false);
+      setSpeed(__speed, true);
+      setSeekTime(__seekTime, true);
+      setIsPlaying(__isPlaying, true);
     };
 
-    window.addEventListener('storage', replayStorageListener);
+    syncEmitter.on('replaySync', replaySyncListener);
 
     return () => {
-      window.removeEventListener('storage', replayStorageListener);
+      syncEmitter.off('replaySync');
     };
   }, [setIsPlaying, setSeekTime, setSpeed]);
 

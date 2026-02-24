@@ -4,6 +4,7 @@ import {
   useEffect, useMemo, useRef,
   useState,
 } from 'react';
+import type { CSSProperties } from 'react';
 import debounce from 'lodash.debounce';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { AppAside } from './interface/AppAside';
@@ -26,6 +27,8 @@ import { RecordingContext, useRecording } from '../store/hooks/useRecording';
 import { ScreenRecordingRejection } from './interface/ScreenRecordingRejection';
 import { ReplayContext, useReplay } from '../store/hooks/useReplay';
 import { DeviceWarning } from './interface/DeviceWarning';
+
+const STUDY_BROWSER_WIDTH = 360;
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -136,6 +139,7 @@ export function StepRenderer() {
   const showTitleBar = useMemo(() => componentConfig.showTitleBar ?? studyConfig.uiConfig.showTitleBar ?? true, [componentConfig, studyConfig]);
 
   const asideOpen = useMemo(() => developmentModeEnabled && showStudyBrowser, [developmentModeEnabled, showStudyBrowser]);
+  const rowMaxWidth = useMemo(() => (asideOpen ? `max(0px, calc(100% - ${STUDY_BROWSER_WIDTH}px))` : '100%'), [asideOpen]);
 
   const [hasAudio, setHasAudio] = useState<boolean>();
 
@@ -146,8 +150,9 @@ export function StepRenderer() {
           <AppShell
             padding="md"
             header={{ height: showTitleBar ? 70 : 0 }}
-            aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
+            aside={{ width: STUDY_BROWSER_WIDTH, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
             footer={{ height: isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0 }}
+            style={{ '--app-shell-aside-offset': '0rem' } as CSSProperties}
           >
             {asideOpen && <AppAside />}
             {showTitleBar && (
@@ -159,10 +164,17 @@ export function StepRenderer() {
             <HelpModal />
             <AlertModal />
             <ConfigVersionWarningModal />
-            <Flex direction="row" gap="xs">
+            <Flex direction="row" gap="xs" style={{ width: '100%', maxWidth: rowMaxWidth }}>
               <AppNavBar width={sidebarWidth} top={showTitleBar ? 70 : 0} sidebarOpen={sidebarOpen} />
               {/* 10px is the gap between the sidebar and the main content */}
-              <AppShell.Main className="main" style={{ display: 'flex', flexDirection: 'column' }} w={sidebarOpen ? `calc(100% - ${sidebarWidth}px - 10px)` : '100%'}>
+              <AppShell.Main
+                className="main"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+                w={sidebarOpen ? `calc(100% - ${sidebarWidth}px - 10px)` : '100%'}
+              >
                 {!showTitleBar && !showStudyBrowser && developmentModeEnabled && (
                 <Button
                   variant="subtle"

@@ -607,7 +607,7 @@ export interface SliderResponse extends BaseResponse {
   snap?: boolean;
   /** The step value of the slider. If not provided (and snap not enabled), the step value is calculated as the range of the slider divided by 100. */
   step?: number;
-  /** The spacing between the ticks. If not provided, the spacing is calculated as the range of the slider divided by power of 10. */
+  /** The spacing between the ticks. If not provided, the spacing is the largest power of 10 smaller than the slider range. */
   spacing?: number;
   /** Whether to render the slider with a bar to the left. Defaults to true. */
   withBar?: boolean;
@@ -857,7 +857,7 @@ export type Response = NumericalResponse | ShortTextResponse | LongTextResponse 
       "location": "belowStimulus",
       "type": "numerical"
     }
-  ]
+  ],
   "correctAnswer": [{
     "id": "response1",
     "answer": 4
@@ -993,11 +993,11 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * So, for example, if I had the following ReactComponent in my config
 ```js
 {
-  type: 'react-component';
-  path: 'my_study/CoolComponent.tsx';
+  type: 'react-component',
+  path: 'my_study/CoolComponent.tsx',
   parameters: {
-    name: 'Zach';
-    age: 26;
+    name: 'Zach',
+    age: 26
   }
 }
 ```
@@ -1156,8 +1156,8 @@ If you are using Vega, you can use signals with `revisitAnswer` to send the user
     }
   ]
 }
-In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.
 ```
+ In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.
 */
 export interface VegaComponentPath extends BaseIndividualComponent {
   type: 'vega';
@@ -1193,8 +1193,8 @@ IIf you are using Vega, you can use signals with `revisitAnswer` to send the use
     }
   ]
 }
-In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response.
 ```
+ In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response.
 */
 export interface VegaComponentConfig extends BaseIndividualComponent {
   type: 'vega';

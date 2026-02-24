@@ -16,6 +16,7 @@ export function ResolutionWarning() {
   const [isRejected, setIsRejected] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [isTimedOut, setIsTimedOut] = useState(false);
+  const [detectedSize, setDetectedSize] = useState({ width: 0, height: 0 });
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { storageEngine } = useStorageEngine();
@@ -24,6 +25,7 @@ export function ResolutionWarning() {
 
   useEffect(() => {
     const handleResize = () => {
+      setDetectedSize({ width: window.innerWidth, height: window.innerHeight });
       if (minWidth === undefined || minHeight === undefined) {
         return;
       }
@@ -108,6 +110,8 @@ export function ResolutionWarning() {
               <br />
               {minWidth !== undefined && ` Width: ${minWidth}px`}
               {minHeight !== undefined && ` Height: ${minHeight}px`}
+              <br />
+              {`Detected: Width: ${detectedSize.width}px Height: ${detectedSize.height}px`}
               <br />
               Please resize your browser window to the minimum required size within
               {' '}
