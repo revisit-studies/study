@@ -1,7 +1,9 @@
 import {
   Box, Group, LoadingOverlay, Stack,
 } from '@mantine/core';
-import { useSearchParams, useNavigate } from 'react-router';
+import {
+  useLocation, useNavigate, useParams, useSearchParams,
+} from 'react-router';
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
@@ -20,6 +22,7 @@ import { youtubeReadableDuration } from '../../utils/humanReadableDuration';
 import { ResponseBlockLocation, StoredAnswer } from '../../parser/types';
 import { useEvent } from '../../store/hooks/useEvent';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { parseTrialOrder } from '../../utils/parseTrialOrder';
 import { useUpdateProvenance } from './useUpdateProvenance';
 import { useReplayContext } from '../../store/hooks/useReplay';
 import { syncChannel, syncEmitter } from '../../utils/syncReplay';
@@ -50,6 +53,8 @@ export function AudioProvenanceVis({
   setHasAudio: (b: boolean) => void;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const routerLocation = useLocation();
+  const { studyId } = useParams();
   const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
 
   const {
@@ -116,11 +121,6 @@ export function AudioProvenanceVis({
 
   useEffect(() => {
     if (taskName) {
-      syncChannel.postMessage({
-        key: 'currentTrial',
-        value: taskName,
-      });
-
       if (answers[taskName]?.trialOrder) {
         syncChannel.postMessage({
           key: 'trialOrder',
@@ -134,33 +134,49 @@ export function AudioProvenanceVis({
     const participantIdListener = (newId: string) => {
       setSearchParams((params) => {
         params.set('participantId', newId || '');
-        return params;
-      });
-    };
-
-    const currentTrialListener = (newCurrentTrial: string) => {
-      setSearchParams((params) => {
-        params.set('currentTrial', newCurrentTrial || '');
+        params.delete('currentTrial');
         return params;
       });
     };
 
     const trialOrderListener = (newValue: string) => {
-      if (context === 'provenanceVis') {
-        navigate(taskName ? `./../${encryptIndex(+newValue)}?participantId=${participantId}&currentTrial=${taskName}` : `./${newValue}?participantId=${participantId}&currentTrial=${taskName}`);
+      const { step, funcIndex } = parseTrialOrder(newValue);
+      if (!studyId || step === null) {
+        return;
       }
+
+      const params = new URLSearchParams(routerLocation.search);
+      params.set('participantId', participantId || '');
+      params.delete('currentTrial');
+      const search = params.toString();
+
+      if (context === 'provenanceVis') {
+        navigate({
+          pathname: funcIndex === null ? `/${studyId}/${encryptIndex(step)}` : `/${studyId}/${encryptIndex(step)}/${encryptIndex(funcIndex)}`,
+          search: search ? `?${search}` : '',
+        });
+        return;
+      }
+
+      const matchingIdentifier = Object.entries(answers).find(([_identifier, answer]) => answer.trialOrder === newValue)?.[0];
+      if (!matchingIdentifier) {
+        return;
+      }
+
+      navigate({
+        pathname: `/analysis/stats/${studyId}/tagging/${encodeURIComponent(matchingIdentifier)}`,
+        search: search ? `?${search}` : '',
+      });
     };
 
     syncEmitter.on('participantId', participantIdListener);
-    syncEmitter.on('currentTrial', currentTrialListener);
     syncEmitter.on('trialOrder', trialOrderListener);
 
     return () => {
       syncEmitter.off('participantId', participantIdListener);
-      syncEmitter.off('currentTrial', currentTrialListener);
       syncEmitter.off('trialOrder', trialOrderListener);
     };
-  }, [context, navigate, participantId, setSearchParams, taskName]);
+  }, [answers, context, navigate, participantId, routerLocation.search, setSearchParams, studyId]);
 
   useUpdateProvenance('aboveStimulus', playTime, answers[taskName]?.provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes, saveProvenance);
 
@@ -256,10 +272,6 @@ export function AudioProvenanceVis({
   const handleWSMount = useEvent(
     async (waveSurfer: WaveSurferType | null) => {
       wavesurfer.current = waveSurfer;
-
-      if (taskName.includes('__dynamicLoading')) {
-        return;
-      }
 
       audioRef.current = null;
       updateReplayRef();

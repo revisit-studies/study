@@ -7,25 +7,11 @@ import {
   useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../store/store';
 import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
+import { parseTrialOrder } from '../utils/parseTrialOrder';
 import { JumpFunctionParameters, JumpFunctionReturnVal } from '../store/types';
 import { findFuncBlock } from '../utils/getSequenceFlatMap';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { getComponent } from '../utils/handleComponentInheritance';
-
-function parseTrialOrder(trialOrder?: string): { step: number | null; funcIndex: number | null } {
-  if (!trialOrder) {
-    return { step: null, funcIndex: null };
-  }
-
-  const [stepRaw, funcIndexRaw] = trialOrder.split('_');
-  const parsedStep = Number.parseInt(stepRaw, 10);
-  const parsedFuncIndex = funcIndexRaw === undefined ? null : Number.parseInt(funcIndexRaw, 10);
-
-  return {
-    step: Number.isFinite(parsedStep) ? parsedStep : null,
-    funcIndex: parsedFuncIndex !== null && Number.isFinite(parsedFuncIndex) ? parsedFuncIndex : null,
-  };
-}
 
 export function useStudyId(): string {
   const { studyId } = useParams();

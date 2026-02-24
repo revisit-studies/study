@@ -8,7 +8,7 @@ import {
   Group, HoverCard, Popover, SegmentedControl, Select, Stack, Text,
   Tooltip,
 } from '@mantine/core';
-import { useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
@@ -25,8 +25,8 @@ import {
 import { AudioProvenanceVis } from '../../../components/audioAnalysis/AudioProvenanceVis';
 import { TranscriptSegmentsVis } from './TranscriptSegmentsVis';
 import { TagSelector } from './tags/TagSelector';
-import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
+import { parseTrialOrder } from '../../../utils/parseTrialOrder';
 import { PREFIX } from '../../../utils/Prefix';
 import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadFiles';
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
@@ -77,6 +77,8 @@ export function ThinkAloudFooter({
   const auth = useAuth();
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
 
@@ -160,13 +162,9 @@ export function ThinkAloudFooter({
     if (currentTrial.includes('__dynamicLoading')) {
       return '';
     }
-    // if we find ourselves with a wrong current trial, erase it
-    if (participant && !participant.answers[currentTrial]) {
-      setSearchParams({ participantId, currentTrial: Object.entries(participant.answers).find(([_, ans]) => +ans.trialOrder.split('_')[0] === 0)?.[0] || '' });
-    }
 
     return participant?.answers[currentTrial]?.componentName ?? '';
-  }, [currentTrial, participant, participantId, setSearchParams]);
+  }, [currentTrial, participant]);
 
   const xScale = useMemo(() => {
     if (!participant || !participant.answers[currentTrial]) {
@@ -220,34 +218,90 @@ export function ThinkAloudFooter({
       value: visibleParticipants[index],
     });
 
-    setSearchParams({ participantId: visibleParticipants[index] || '' });
+    setSearchParams((params) => {
+      params.set('participantId', visibleParticipants[index] || '');
+      params.delete('currentTrial');
+      return params;
+    });
   }, [participantId, setSearchParams, visibleParticipants]);
 
-  const nextTaskCallback = useCallback((indexChange: number) => {
-    if (!participant || !currentTrial) {
+  const orderedAnswers = useMemo(() => {
+    if (!participant) {
+      return [];
+    }
+
+    const answers = Object.values(participant.answers);
+    answers.sort((answerA, answerB) => {
+      const a = parseTrialOrder(answerA.trialOrder);
+      const b = parseTrialOrder(answerB.trialOrder);
+
+      if (a.step !== b.step) {
+        return (a.step ?? Number.MAX_SAFE_INTEGER) - (b.step ?? Number.MAX_SAFE_INTEGER);
+      }
+
+      if (a.funcIndex !== b.funcIndex) {
+        return (a.funcIndex ?? -1) - (b.funcIndex ?? -1);
+      }
+
+      return answerA.identifier.localeCompare(answerB.identifier);
+    });
+
+    return answers;
+  }, [participant]);
+
+  const navigateToTask = useCallback((answerIdentifier: string) => {
+    if (!participant) {
       return;
     }
 
-    // This doesnt work for dynamic
-    let index = +participant.answers[currentTrial].trialOrder.split('_')[0] + indexChange;
-
-    if (index >= Object.values(participant.answers).length) {
-      index = 0;
-    } else if (index < 0) {
-      index = Object.values(participant.answers).length - 1;
+    const answer = participant.answers[answerIdentifier];
+    if (!answer) {
+      return;
     }
 
-    const newTrial = Object.values(participant.answers).find((ans) => +ans.trialOrder.split('_')[0] === index);
-    const newTrialName = newTrial ? `${newTrial.componentName}_${newTrial.trialOrder.split('_')[0]}` : '';
+    const { step, funcIndex } = parseTrialOrder(answer.trialOrder);
+    if (step === null) {
+      return;
+    }
 
-    syncChannel.postMessage({
-      key: 'currentTrial',
-      value: newTrialName,
+    const pathname = isReplay ? (funcIndex === null
+      ? `/${studyId}/${encryptIndex(step)}`
+      : `/${studyId}/${encryptIndex(step)}/${encryptIndex(funcIndex)}`) : `/analysis/stats/${studyId}/tagging/${encodeURIComponent(answerIdentifier)}`;
+
+    navigate({
+      pathname,
+      search: location.search,
     });
 
-    // This isnt actually doing anything without the other analysis tab open
-    setSearchParams({ participantId, currentTrial: newTrialName });
-  }, [currentTrial, participant, participantId, setSearchParams]);
+    if (answer.trialOrder) {
+      syncChannel.postMessage({
+        key: 'trialOrder',
+        value: answer.trialOrder,
+      });
+    }
+  }, [isReplay, location.search, navigate, participant, studyId]);
+
+  const nextTaskCallback = useCallback((indexChange: number) => {
+    if (!currentTrial || orderedAnswers.length === 0) {
+      return;
+    }
+
+    const currentIndex = orderedAnswers.findIndex((answer) => answer.identifier === currentTrial);
+    if (currentIndex === -1) {
+      const fallbackIndex = indexChange >= 0 ? 0 : orderedAnswers.length - 1;
+      navigateToTask(orderedAnswers[fallbackIndex].identifier);
+      return;
+    }
+
+    let nextIndex = currentIndex + indexChange;
+    if (nextIndex >= orderedAnswers.length) {
+      nextIndex = 0;
+    } else if (nextIndex < 0) {
+      nextIndex = orderedAnswers.length - 1;
+    }
+
+    navigateToTask(orderedAnswers[nextIndex].identifier);
+  }, [currentTrial, navigateToTask, orderedAnswers]);
 
   const setTags = useCallback((_tags: Tag[], type: 'task' | 'participant') => {
     if (storageEngine) {
@@ -298,6 +352,21 @@ export function ThinkAloudFooter({
 
     return buildProvenanceLegendEntries(Object.values(answer.provenanceGraph));
   }, [participant, currentTrial]);
+
+  const tasksList = useMemo(() => orderedAnswers.map((answer) => ({
+    label: answer.componentName,
+    value: answer.identifier,
+  })), [orderedAnswers]);
+
+  const transcriptHref = useMemo(() => `${PREFIX}analysis/stats/${studyId}/tagging${currentTrial ? `/${encodeURIComponent(currentTrial)}` : ''}?participantId=${participantId}&revisitPageId=${revisitPageId}`, [currentTrial, participantId, studyId]);
+
+  const replayHref = useMemo(() => {
+    const { step, funcIndex } = parseTrialOrder(participant?.answers[currentTrial]?.trialOrder);
+    const currentStep = step ?? 0;
+    const funcPath = funcIndex === null ? '' : `/${encryptIndex(funcIndex)}`;
+
+    return `${PREFIX}${studyId}/${encryptIndex(currentStep)}${funcPath}?participantId=${participantId}&revisitPageId=${revisitPageId}`;
+  }, [currentTrial, participant, participantId, studyId]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
@@ -380,7 +449,11 @@ export function ThinkAloudFooter({
               style={{ width: '200px' }}
               value={participantId}
               onChange={(e: string | null) => {
-                setSearchParams({ currentTrial, participantId: e || '' });
+                setSearchParams((params) => {
+                  params.set('participantId', e || '');
+                  params.delete('currentTrial');
+                  return params;
+                });
                 syncChannel.postMessage({
                   key: 'participantId',
                   value: e || '',
@@ -439,20 +512,14 @@ export function ThinkAloudFooter({
               )}
               label="Task"
               style={{ width: '200px' }}
-              value={currentTrialClean}
+              value={currentTrial}
               // this needs to be in a helper or two which we dont currently have
               onChange={(e: string | null) => {
-                if (participant && e) {
-                  const trial = Object.entries(participant.answers).find(([_key, ans]) => +ans.trialOrder.split('_')[0] === getSequenceFlatMap(participant?.sequence).indexOf(e))?.[0] || '';
-                  syncChannel.postMessage({
-                    key: 'currentTrial',
-                    value: trial,
-                  });
-
-                  setSearchParams({ participantId, currentTrial: trial });
+                if (e) {
+                  navigateToTask(e);
                 }
               }}
-              data={participant ? getSequenceFlatMap(participant?.sequence) : []}
+              data={tasksList}
               searchable
             />
             <Stack gap="4">
@@ -492,7 +559,7 @@ export function ThinkAloudFooter({
             mt="lg"
             variant="light"
             component="a"
-            href={isReplay ? `${PREFIX}analysis/stats/${studyId}/tagging?participantId=${participantId}&currentTrial=${currentTrial}&revisitPageId=${revisitPageId}` : `${PREFIX}${studyId}/${encryptIndex(participant ? +(participant.answers[currentTrial]?.trialOrder.split('_')[0] || 0) : 0)}?participantId=${participantId}&currentTrial=${currentTrial}&revisitPageId=${revisitPageId}`}
+            href={isReplay ? transcriptHref : replayHref}
             target="_blank"
           >
             {isReplay ? 'Transcript' : 'Replay'}
