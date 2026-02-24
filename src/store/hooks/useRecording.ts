@@ -271,6 +271,13 @@ export function useRecording() {
 
   // For study with just audio recording
   useEffect(() => {
+    // Always stop recording when navigating to a trial without audio recording
+    if (!currentComponentHasAudioRecording && audioMediaRecorder.current) {
+      stopAudioRecording();
+      currentTrialName.current = null;
+      return;
+    }
+
     if (!studyConfig || studyHasScreenRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
