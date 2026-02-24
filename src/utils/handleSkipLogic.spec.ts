@@ -4,7 +4,7 @@ import { StudyConfig } from '../parser/types';
 
 function buildConfig(sequence: StudyConfig['sequence']): StudyConfig {
   return {
-    $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json',
+    $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json',
     studyMetadata: {
       title: 'Skip logic unit test',
       description: 'Unit tests for skip validation',

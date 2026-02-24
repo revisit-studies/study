@@ -25,7 +25,7 @@ const participantMetadata: ParticipantMetadata = {
 };
 
 const conditionalLatinSquareConfig: StudyConfig = {
-  $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json',
+  $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json',
   studyMetadata: {
     title: 'Conditional Latin Square Test',
     version: '1.0.0',
