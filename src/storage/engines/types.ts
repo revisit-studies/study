@@ -1,6 +1,6 @@
 import localforage from 'localforage';
-import { v4 as uuidv4 } from 'uuid';
 import throttle from 'lodash.throttle';
+import { v4 as uuidv4 } from 'uuid';
 import { StudyConfig } from '../../parser/types';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
@@ -126,9 +126,7 @@ export abstract class StorageEngine {
 
   protected connected = false;
 
-  protected localForage = localforage.createInstance({
-    name: 'revisit',
-  });
+  protected abstract participantStore: ReturnType<typeof localforage.createInstance>;
 
   protected collectionPrefix = import.meta.env.DEV ? 'dev-' : 'prod-';
 
@@ -427,50 +425,43 @@ export abstract class StorageEngine {
     return Object.fromEntries(configs);
   }
 
-  // Gets the current participant ID from the URl, localForage, or generates a new one if none exists.
+  // Gets the current participant ID from the URL, local persistence, or generates a new one if none exists.
   async getCurrentParticipantId(urlParticipantId?: string) {
-    // Prioritize urlParticipantId, don't set it in localForage so our currentParticipantId
-    // is not overwritten when we leave analysis mode
+    // Prioritize urlParticipantId and avoid persisting it across pages.
     if (urlParticipantId) {
       this.currentParticipantId = urlParticipantId;
       return urlParticipantId;
     }
 
-    // If we already have a currentParticipantId, return it
     if (this.currentParticipantId) {
       return this.currentParticipantId;
     }
 
-    // Next check localForage for currentParticipantId
     if (!this.studyId) {
       throw new Error('Study ID is not set');
     }
-    const currentParticipantId = await this.localForage.getItem(
-      `${this.collectionPrefix}${this.studyId}/currentParticipantId`,
-    );
-    if (currentParticipantId) {
-      this.currentParticipantId = currentParticipantId as string;
-      return currentParticipantId as string;
+
+    const storageKey = `${this.collectionPrefix}${this.studyId}/currentParticipantId`;
+    const storedParticipantId = await this.participantStore.getItem<string>(storageKey);
+    if (storedParticipantId) {
+      this.currentParticipantId = storedParticipantId;
+      return storedParticipantId;
     }
 
-    // Else, generate new participant id and save it in localForage
     this.currentParticipantId = uuidv4();
-    await this.localForage.setItem(
-      `${this.collectionPrefix}${this.studyId}/currentParticipantId`,
-      this.currentParticipantId,
-    );
-
+    await this.participantStore.setItem(storageKey, this.currentParticipantId);
     return this.currentParticipantId;
   }
 
-  // Clears the current participant ID from localForage and resets the currentParticipantId property.
-  // This is used in the next participant logic and triggers a reload after clearing the participant ID.
+  // Clears the current participant ID from persistence and resets the currentParticipantId property.
   async clearCurrentParticipantId() {
     this.currentParticipantId = undefined;
     if (!this.studyId) {
       throw new Error('Study ID is not set');
     }
-    return await this.localForage.removeItem(`${this.collectionPrefix}${this.studyId}/currentParticipantId`);
+
+    const storageKey = `${this.collectionPrefix}${this.studyId}/currentParticipantId`;
+    await this.participantStore.removeItem(storageKey);
   }
 
   // This function is one of the most critical functions in the storage engine.
@@ -1163,13 +1154,12 @@ export abstract class StorageEngine {
   }
 
   protected async __testingReset() {
-    this.currentParticipantId = undefined;
     this.participantData = undefined;
-
-    this.localForage.setItem(
-      `${this.collectionPrefix}${this.studyId}/currentParticipantId`,
-      undefined,
-    );
+    if (this.studyId) {
+      await this.clearCurrentParticipantId();
+    } else {
+      this.currentParticipantId = undefined;
+    }
   }
 
   /* Snapshots --------------------------------------------------------- */

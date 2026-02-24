@@ -1,4 +1,5 @@
 import { AuthError, createClient } from '@supabase/supabase-js';
+import localforage from 'localforage';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
   CloudStorageEngine, cleanupModes,
@@ -6,6 +7,10 @@ import {
 
 export class SupabaseStorageEngine extends CloudStorageEngine {
   private supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
+
+  protected participantStore = localforage.createInstance({
+    name: 'revisit-supabase',
+  });
 
   constructor(testing: boolean = false) {
     super('supabase', testing);

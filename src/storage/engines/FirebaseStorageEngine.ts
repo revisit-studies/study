@@ -1,4 +1,5 @@
 import { parse as hjsonParse } from 'hjson';
+import localforage from 'localforage';
 import { initializeApp } from 'firebase/app';
 import {
   deleteObject,
@@ -53,6 +54,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   private studyCollection: CollectionReference<DocumentData, DocumentData>;
 
   private storage: FirebaseStorage;
+
+  protected participantStore = localforage.createInstance({
+    name: 'revisit-firebase',
+  });
 
   constructor(testing: boolean = false) {
     super('firebase', testing);
