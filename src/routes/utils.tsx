@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   useEffect, useMemo, useState,
 } from 'react';
@@ -7,6 +7,7 @@ import {
   useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../store/store';
 import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
+import { parseTrialOrder } from '../utils/parseTrialOrder';
 import { JumpFunctionParameters, JumpFunctionReturnVal } from '../store/types';
 import { findFuncBlock } from '../utils/getSequenceFlatMap';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
@@ -20,15 +21,31 @@ export function useStudyId(): string {
 
 export function useCurrentStep() {
   const { index } = useParams();
-  if (index === undefined) {
-    return 0;
+  const answers = useStoreSelector((state) => state.answers);
+
+  const decrypted = useMemo(() => {
+    if (index === undefined) {
+      return 0;
+    }
+
+    if (index.startsWith('reviewer-') || index.startsWith('__')) {
+      return index;
+    }
+
+    return decryptIndex(index);
+  }, [index]);
+
+  const [searchParams] = useSearchParams();
+
+  const currentTrial = searchParams.get('currentTrial') || '';
+  const currentTrialOrder = currentTrial ? answers[currentTrial]?.trialOrder : undefined;
+  const { step: currentTrialStep } = parseTrialOrder(currentTrialOrder);
+
+  if (currentTrial && currentTrialStep !== null) {
+    return currentTrialStep;
   }
 
-  if (index.startsWith('reviewer-') || index.startsWith('__')) {
-    return index;
-  }
-
-  return decryptIndex(index);
+  return decrypted;
 }
 
 const modules = import.meta.glob(
@@ -39,6 +56,7 @@ const modules = import.meta.glob(
 export function useCurrentComponent(): string {
   const { funcIndex } = useParams();
   const _answers = useStoreSelector((state) => state.answers);
+  const [searchParams] = useSearchParams();
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
   const flatSequence = useFlatSequence();
@@ -46,6 +64,9 @@ export function useCurrentComponent(): string {
   const studyId = useStudyId();
   const storeDispatch = useStoreDispatch();
   const { pushToFuncSequence } = useStoreActions();
+  const currentTrial = searchParams.get('currentTrial') || '';
+  const currentTrialOrder = currentTrial ? _answers[currentTrial]?.trialOrder : undefined;
+  const { step: currentTrialStep, funcIndex: currentTrialFuncIndex } = parseTrialOrder(currentTrialOrder);
 
   const [indexWhenSettingComponentName, setIndexWhenSettingComponentName] = useState<number | null>(null);
 
@@ -71,9 +92,25 @@ export function useCurrentComponent(): string {
 
   useEffect(() => {
     if (!funcIndex && nextFunc && typeof currentStep === 'number') {
-      navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(0)}${window.location.search}`);
+      navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(currentTrialStep === currentStep && currentTrialFuncIndex !== null ? currentTrialFuncIndex : 0)}${window.location.search}`);
     }
-  }, [currentStep, funcIndex, navigate, nextFunc, studyId]);
+  }, [currentStep, currentTrialFuncIndex, currentTrialStep, funcIndex, navigate, nextFunc, studyId]);
+
+  useEffect(() => {
+    if (typeof currentStep !== 'number' || currentTrialStep === null || currentTrialStep !== currentStep || !funcIndex) {
+      return;
+    }
+
+    const decryptedFuncIndex = decryptIndex(funcIndex);
+    if (currentTrialFuncIndex === null) {
+      navigate(`/${studyId}/${encryptIndex(currentStep)}${window.location.search}`);
+      return;
+    }
+
+    if (decryptedFuncIndex !== currentTrialFuncIndex) {
+      navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(currentTrialFuncIndex)}${window.location.search}`);
+    }
+  }, [currentStep, currentTrialFuncIndex, currentTrialStep, funcIndex, navigate, studyId]);
 
   useEffect(() => {
     if (typeof currentStep === 'number') {

@@ -61,10 +61,10 @@ export function GlobalConfigParser() {
     fn();
   }, [setStorageEngine, storageEngine]);
 
-  const analysisProtectedCallback = async (studyId:string) => {
+  const analysisProtectedCallback = async (studyId: string) => {
     if (storageEngine && isCloudStorageEngine(storageEngine)) {
       const modes = await storageEngine.getModes(studyId);
-      if (modes.analyticsInterfacePubliclyAccessible) {
+      if (modes.dataSharingEnabled) {
         // If accessible, disable
         return false;
       }
@@ -95,7 +95,7 @@ export function GlobalConfigParser() {
                     />
                   </AppShell>
                 </>
-            )}
+              )}
             />
             <Route
               path="/:studyId/*"
@@ -104,7 +104,27 @@ export function GlobalConfigParser() {
                   <PageTitle title="ReVISit | Study" />
                   <Shell globalConfig={globalConfig} />
                 </>
-                )}
+              )}
+            />
+            <Route
+              path="/analysis"
+              element={<NavigateWithParams to="/analysis/stats/" replace />}
+            />
+            <Route
+              path="/analysis/stats"
+              element={(
+                <>
+                  <PageTitle title="ReVISit | Analysis" />
+                  <AppShell
+                    padding="md"
+                    header={{ height: 70 }}
+                  >
+                    <StudyAnalysisTabs
+                      globalConfig={globalConfig}
+                    />
+                  </AppShell>
+                </>
+              )}
             />
             <Route
               path="/analysis/stats/:studyId/:analysisTab/:trialId?"
@@ -122,7 +142,7 @@ export function GlobalConfigParser() {
                     </AppShell>
                   </ProtectedRoute>
                 </>
-            )}
+              )}
             />
             <Route
               path="/analysis/stats/:studyId"
@@ -143,7 +163,7 @@ export function GlobalConfigParser() {
                     </AppShell.Main>
                   </AppShell>
                 </ProtectedRoute>
-            )}
+              )}
             />
             <Route
               path="/login"
@@ -161,7 +181,7 @@ export function GlobalConfigParser() {
                     </AppShell.Main>
                   </AppShell>
                 </>
-            )}
+              )}
             />
           </Routes>
         </ModalsProvider>

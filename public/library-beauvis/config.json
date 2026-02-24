@@ -6,12 +6,11 @@
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2025-01-20",
+    "date": "2026-02-23",
     "description": "Example study using the beauvis library.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
@@ -34,9 +33,9 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$beauvis.co.5items",
-      "$beauvis.co.4items",
-      "$beauvis.co.3items"
+      "$beauvis.components.5items",
+      "$beauvis.components.4items",
+      "$beauvis.components.3items"
     ]
   }
 }

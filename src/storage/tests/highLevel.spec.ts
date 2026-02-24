@@ -1,6 +1,7 @@
 import {
   expect, test, beforeEach, describe,
   afterEach,
+  vi,
 } from 'vitest';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
@@ -10,6 +11,7 @@ import { hash } from '../engines/utils';
 import { Sequence } from '../../store/types';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { StorageEngine } from '../engines/types';
+import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 // import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
 
 const studyId = 'test-study';
@@ -20,6 +22,59 @@ const participantMetadata: ParticipantMetadata = {
   resolution: { width: 1920, height: 1080 },
   language: 'en-US',
   ip: '122.122.122.122',
+};
+
+const conditionalLatinSquareConfig: StudyConfig = {
+  $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json',
+  studyMetadata: {
+    title: 'Conditional Latin Square Test',
+    version: '1.0.0',
+    authors: ['Test Author'],
+    description: 'A study config for testing conditional latin square balancing.',
+    date: '2026-02-23',
+    organizations: ['Test Organization'],
+  },
+  uiConfig: {
+    contactEmail: 'test@test.com',
+    logoPath: '',
+    withProgressBar: true,
+    withSidebar: true,
+    numSequences: 1000,
+  },
+  components: {
+    intro: {
+      type: 'questionnaire',
+      response: [],
+    },
+    colorA: {
+      type: 'questionnaire',
+      response: [],
+    },
+    colorB: {
+      type: 'questionnaire',
+      response: [],
+    },
+    colorC: {
+      type: 'questionnaire',
+      response: [],
+    },
+    colorD: {
+      type: 'questionnaire',
+      response: [],
+    },
+  },
+  sequence: {
+    order: 'fixed',
+    components: [
+      'intro',
+      {
+        id: 'color',
+        conditional: true,
+        order: 'latinSquare',
+        components: ['colorA', 'colorB', 'colorC', 'colorD'],
+      },
+    ],
+  },
 };
 
 describe.each([
@@ -100,10 +155,137 @@ describe.each([
     expect(participantData!.participantIndex).toEqual(1);
     expect(participantData!.answers).toEqual({});
     expect(participantData!.searchParams).toEqual({});
+    expect(participantData!.conditions).toBeUndefined();
     expect(participantData!.metadata).toEqual(participantMetadata);
     expect(participantData!.completed).toBe(false);
     expect(participantData!.rejected).toBe(false);
     expect(participantData!.participantTags).toEqual([]);
+  });
+
+  test('initializeParticipantSession sets conditions from searchParams condition', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession({ condition: 'color' }, configSimple, participantMetadata);
+
+    const participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData).toBeDefined();
+    expect(participantData!.conditions).toEqual(['color']);
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantSession.participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.conditions).toEqual(['color']);
+  });
+
+  test('initializeParticipantSession balances conditional latin square sequence assignments over 1000 pulls', async () => {
+    const latinSquareSequenceArray = generateSequenceArray(conditionalLatinSquareConfig);
+    await storageEngine.setSequenceArray(latinSquareSequenceArray);
+
+    const components = ['colorA', 'colorB', 'colorC', 'colorD'];
+    const countsByPosition = Array.from({ length: components.length }, () => Object.fromEntries(
+      components.map((component) => [component, 0]),
+    ) as Record<string, number>);
+
+    for (let i = 0; i < 200; i += 1) {
+      // Sequential awaits are intentional here because each participant assignment depends on
+      // the storage engine state from previous iterations.
+      // eslint-disable-next-line no-await-in-loop
+      const participantSession = await storageEngine.initializeParticipantSession(
+        { condition: 'color' },
+        conditionalLatinSquareConfig,
+        participantMetadata,
+      );
+      const filteredSequence = filterSequenceByCondition(participantSession.sequence, 'color');
+      const colorBlock = filteredSequence.components[1] as Sequence;
+      const assignedOrder = colorBlock.components as string[];
+
+      assignedOrder.forEach((component, position) => {
+        countsByPosition[position][component] += 1;
+      });
+
+      // eslint-disable-next-line no-await-in-loop
+      await storageEngine.clearCurrentParticipantId();
+    }
+
+    countsByPosition.forEach((positionCounts) => {
+      components.forEach((component) => {
+        expect(positionCounts[component]).toBe(50);
+      });
+    });
+  });
+
+  test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
+    const createSequenceAssignmentSpy = vi.spyOn(
+      storageEngine as unknown as { _createSequenceAssignment: (...args: unknown[]) => Promise<void> },
+      '_createSequenceAssignment',
+    );
+
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const sequenceAssignmentPayload = createSequenceAssignmentSpy.mock.calls[0][1] as Record<string, unknown>;
+    expect(Object.hasOwn(sequenceAssignmentPayload, 'conditions')).toBe(false);
+  });
+
+  test('updateStudyCondition only updates conditions in development mode', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    expect(participantSession.conditions).toBeUndefined();
+
+    await storageEngine.setMode(studyId, 'developmentModeEnabled', false);
+    await expect(storageEngine.updateStudyCondition('size')).rejects.toThrow(
+      'Cannot update study condition when development mode is disabled',
+    );
+
+    let participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData).toBeDefined();
+    expect(participantData!.conditions).toBeUndefined();
+
+    await storageEngine.setMode(studyId, 'developmentModeEnabled', true);
+
+    await storageEngine.updateStudyCondition('size');
+
+    participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData).toBeDefined();
+    expect(participantData!.conditions).toEqual(['size']);
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantSession.participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.conditions).toEqual(['size']);
+  });
+
+  test('updateStudyCondition clears conditions in sequence assignment when condition is unset', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession(
+      { condition: 'color' },
+      configSimple,
+      participantMetadata,
+    );
+
+    await storageEngine.updateStudyCondition('');
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantSession.participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.conditions).toBeUndefined();
+    expect(Object.hasOwn(sequenceAssignment!, 'conditions')).toBe(false);
+  });
+
+  test('getConditionData includes default when participants have no explicit condition', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    await storageEngine.clearCurrentParticipantId();
+    await storageEngine.initializeParticipantSession({ condition: 'color' }, configSimple, participantMetadata);
+
+    const conditionData = await storageEngine.getConditionData(studyId);
+    expect(conditionData.allConditions).toEqual(['color', 'default']);
+    expect(conditionData.conditionCounts).toEqual({ color: 1, default: 1 });
+  });
+
+  test('getConditionData excludes default when all participants have explicit conditions', async () => {
+    await storageEngine.initializeParticipantSession({ condition: 'color' }, configSimple, participantMetadata);
+    await storageEngine.clearCurrentParticipantId();
+    await storageEngine.initializeParticipantSession({ condition: 'size' }, configSimple, participantMetadata);
+
+    const conditionData = await storageEngine.getConditionData(studyId);
+    expect(conditionData.allConditions).toEqual(['color', 'size']);
+    expect(conditionData.conditionCounts).toEqual({ color: 1, size: 1 });
   });
 
   test('initializeParticipantSession with urlParticipantId', async () => {

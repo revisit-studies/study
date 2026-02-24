@@ -3,10 +3,14 @@
   "studyMetadata": {
     "title": "Test Study",
     "version": "1.0.0",
-    "authors": ["Test Author"],
+    "authors": [
+      "Test Author"
+    ],
     "description": "A test study configuration",
-    "date": "2025-06-02",
-    "organizations": ["Test Organization"]
+    "date": "2026-02-23",
+    "organizations": [
+      "Test Organization"
+    ]
   },
   "uiConfig": {
     "contactEmail": "test@test.com",
@@ -22,6 +26,8 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": ["testComponent2"]
+    "components": [
+      "testComponent2"
+    ]
   }
 }

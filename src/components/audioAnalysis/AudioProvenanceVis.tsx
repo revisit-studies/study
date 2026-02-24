@@ -1,7 +1,9 @@
 import {
   Box, Group, LoadingOverlay, Stack,
 } from '@mantine/core';
-import { useSearchParams, useNavigate } from 'react-router';
+import {
+  useLocation, useNavigate, useParams, useSearchParams,
+} from 'react-router';
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
@@ -13,17 +15,20 @@ import {
 } from '@trrack/core';
 import WaveSurferType from 'wavesurfer.js';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { WithinTaskTimeline } from './WithinTaskTimeline';
+import { TaskProvenanceTimeline } from './TaskProvenanceTimeline';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { Timer } from './Timer';
 import { youtubeReadableDuration } from '../../utils/humanReadableDuration';
 import { ResponseBlockLocation, StoredAnswer } from '../../parser/types';
 import { useEvent } from '../../store/hooks/useEvent';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { parseTrialOrder } from '../../utils/parseTrialOrder';
 import { useUpdateProvenance } from './useUpdateProvenance';
+import { useReplayContext } from '../../store/hooks/useReplay';
+import { syncChannel, syncEmitter } from '../../utils/syncReplay';
 
 const margin = {
-  left: 0, top: 0, right: 0, bottom: 0,
+  left: 20, top: 0, right: 20, bottom: 0,
 };
 
 function safe<T>(p: Promise<T>): Promise<T | null> {
@@ -31,30 +36,30 @@ function safe<T>(p: Promise<T>): Promise<T | null> {
 }
 
 export function AudioProvenanceVis({
-  setTimeString, answers, setTime, taskName, context, saveProvenance, analysisIsPlaying, setAnalysisIsPlaying, speed, jumpedToAudioTime, setHasAudio, setSpeed, isMuted, onProvenanceTimelineChange,
-}: { setTimeString: (time: string) => void; answers: Record<string, StoredAnswer>, setTime: (time: number) => void, taskName: string, context: 'audioAnalysis' | 'provenanceVis', saveProvenance: ((state: unknown) => void), analysisIsPlaying: boolean, setAnalysisIsPlaying: (b: boolean) => void, speed: number, jumpedToAudioTime: number, setHasAudio: (b: boolean) => void, setSpeed: (n: number) => void, isMuted: boolean, onProvenanceTimelineChange?: (n: number) => void }) {
+  setTimeString,
+  answers,
+  setTime,
+  taskName,
+  context,
+  saveProvenance,
+  setHasAudio,
+}: {
+  setTimeString: (time: string) => void;
+  answers: Record<string, StoredAnswer>;
+  setTime: (time: number) => void;
+  taskName: string;
+  context: 'audioAnalysis' | 'provenanceVis';
+  saveProvenance: ((state: unknown) => void);
+  setHasAudio: (b: boolean) => void;
+}) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const routerLocation = useLocation();
+  const { studyId } = useParams();
   const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
 
-  const timestamp = useMemo(() => searchParams.get('t') || '', [searchParams]);
-
-  const replayTimestamp = useMemo(() => {
-    if (!timestamp) {
-      return undefined;
-    }
-
-    // If the timestamp is already in milliseconds, return it
-    if (!Number.isNaN(Number(timestamp))) {
-      return parseInt(timestamp, 10);
-    }
-
-    const hours = parseInt(timestamp.match(/(\d+)h/)?.[1] || '0', 10);
-    const minutes = parseInt(timestamp.match(/(\d+)m/)?.[1] || '0', 10);
-    const seconds = parseInt(timestamp.match(/(\d+)s/)?.[1] || '0', 10);
-
-    const milliseconds = (hours * 3600 + minutes * 60 + seconds) * 1000;
-    return milliseconds;
-  }, [timestamp]);
+  const {
+    audioRef, updateReplayRef, duration, setDuration, seekTime,
+  } = useReplayContext();
 
   const { storageEngine } = useStorageEngine();
 
@@ -79,12 +84,10 @@ export function AudioProvenanceVis({
   });
   const [currentGlobalNode, setCurrentGlobalNode] = useState<{name: string, time: number} | null>(null);
 
-  const [totalAudioLength, setTotalAudioLength] = useState<number>(0);
-
+  // playtime in epoch ms
   const [playTime, setPlayTime] = useState<number>(0);
 
   const wavesurfer = useRef<WaveSurferType | null>(null);
-  const currentTimeRef = useRef<number>(0); // time in seconds
 
   const waveSurferDiv = useRef(null);
 
@@ -105,106 +108,75 @@ export function AudioProvenanceVis({
     setCurrentResponseNodes({ ...currentResponseNodes, [location]: node });
   });
 
-  const _setPlayTime = useThrottledCallback((n: number, percent: number | undefined) => {
-    // if were past the end, pause the timer
-    const audioEndTime = totalAudioLength * 1000 + startTime;
-    if (n > audioEndTime) {
-      setAnalysisIsPlaying(false);
-      setPlayTime(n);
-
-      return;
-    }
-
-    setPlayTime(n);
-
-    if (wavesurfer.current && percent !== undefined && !Number.isNaN(percent)) {
-      setTimeout(() => {
-        wavesurfer.current?.seekTo(percent);
-      });
-    }
-
+  const _setPlayTime = useThrottledCallback((n: number) => {
+    setPlayTime(startTime + n);
     if (setTime) {
-      setTime(n);
+      setTime(startTime + n);
     }
   }, 100); // 100ms throttle
 
-  const setWavesurferTime = useCallback((n: number, percent: number | undefined) => {
-    // if were past the end, pause the timer
-    const audioEndTime = totalAudioLength * 1000 + startTime;
-    if (n > audioEndTime) {
-      setAnalysisIsPlaying(false);
-      setPlayTime(n);
-
-      return;
-    }
-
-    setPlayTime(n);
-    onProvenanceTimelineChange && onProvenanceTimelineChange(n - startTime);
-
-    if (wavesurfer.current && percent !== undefined && !Number.isNaN(percent)) {
-      setTimeout(() => {
-        wavesurfer.current?.seekTo(percent);
-      });
-    }
-
-    if (setTime) {
-      setTime(n);
-    }
-  }, [setAnalysisIsPlaying, setTime, startTime, totalAudioLength, onProvenanceTimelineChange]);
-
   useEffect(() => {
-    _setPlayTime(startTime + jumpedToAudioTime * 1000 + 1, undefined);
-  }, [_setPlayTime, jumpedToAudioTime, startTime, totalAudioLength]);
+    _setPlayTime(seekTime * 1000);
+  }, [seekTime, _setPlayTime]);
 
   useEffect(() => {
     if (taskName) {
-      localStorage.setItem('currentTrial', taskName);
       if (answers[taskName]?.trialOrder) {
-        localStorage.setItem('trialOrder', answers[taskName].trialOrder);
+        syncChannel.postMessage({
+          key: 'trialOrder',
+          value: answers[taskName].trialOrder,
+        });
       }
     }
   }, [answers, taskName]);
 
   useEffect(() => {
-    const listener = (e: StorageEvent) => {
-      if (!e.newValue) {
+    const participantIdListener = (newId: string) => {
+      setSearchParams((params) => {
+        params.set('participantId', newId || '');
+        params.delete('currentTrial');
+        return params;
+      });
+    };
+
+    const trialOrderListener = (newValue: string) => {
+      const { step, funcIndex } = parseTrialOrder(newValue);
+      if (!studyId || step === null) {
         return;
       }
 
-      if (e.key === 'participantId') {
-        setSearchParams((params) => {
-          params.set('participantId', e.newValue || '');
+      const params = new URLSearchParams(routerLocation.search);
+      params.set('participantId', participantId || '');
+      params.delete('currentTrial');
+      const search = params.toString();
 
-          return params;
+      if (context === 'provenanceVis') {
+        navigate({
+          pathname: funcIndex === null ? `/${studyId}/${encryptIndex(step)}` : `/${studyId}/${encryptIndex(step)}/${encryptIndex(funcIndex)}`,
+          search: search ? `?${search}` : '',
         });
-      }
-      if (e.key === 'currentTrial') {
-        setSearchParams((params) => {
-          params.set('currentTrial', e.newValue || '');
-
-          return params;
-        });
+        return;
       }
 
-      if (e.key === 'currentSpeed') {
-        setSpeed(+e.newValue);
+      const matchingIdentifier = Object.entries(answers).find(([_identifier, answer]) => answer.trialOrder === newValue)?.[0];
+      if (!matchingIdentifier) {
+        return;
       }
 
-      if (e.key === 'analysisIsPlaying') {
-        setAnalysisIsPlaying(e.newValue === 'true');
-      }
-
-      if (e.key === 'trialOrder') {
-        if (context === 'provenanceVis') {
-          navigate(taskName ? `./../${encryptIndex(+e.newValue)}?participantId=${participantId}&currentTrial=${taskName}` : `./${e.newValue}?participantId=${participantId}&currentTrial=${taskName}`);
-        }
-      }
+      navigate({
+        pathname: `/analysis/stats/${studyId}/tagging/${encodeURIComponent(matchingIdentifier)}`,
+        search: search ? `?${search}` : '',
+      });
     };
 
-    window.addEventListener('storage', listener);
+    syncEmitter.on('participantId', participantIdListener);
+    syncEmitter.on('trialOrder', trialOrderListener);
 
-    return () => window.removeEventListener('storage', listener);
-  }, [_setPlayTime, context, navigate, participantId, setAnalysisIsPlaying, setSearchParams, setSpeed, setWavesurferTime, taskName]);
+    return () => {
+      syncEmitter.off('participantId', participantIdListener);
+      syncEmitter.off('trialOrder', trialOrderListener);
+    };
+  }, [answers, context, navigate, participantId, routerLocation.search, setSearchParams, studyId]);
 
   useUpdateProvenance('aboveStimulus', playTime, answers[taskName]?.provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes, saveProvenance);
 
@@ -282,25 +254,18 @@ export function AudioProvenanceVis({
   }, [_setCurrentNode, currentNode, participantId, playTime, taskName, answers]);
 
   useEffect(() => {
-    if (startTime) {
-      setPlayTime(startTime + (replayTimestamp || 0));
-      currentTimeRef.current = replayTimestamp || 0;
-    }
-  }, [startTime, replayTimestamp]);
-
-  useEffect(() => {
-    if (totalAudioLength === 0) {
+    if (duration === 0) {
       setTimeString('');
     } else if (playTime !== 0) {
-      setTimeString(`${youtubeReadableDuration(playTime - startTime)}/${youtubeReadableDuration(totalAudioLength * 1000)}`);
+      setTimeString(`${youtubeReadableDuration((playTime - startTime))}/${youtubeReadableDuration(duration * 1000)}`);
     }
-  }, [taskName, playTime, setTimeString, startTime, totalAudioLength]);
+  }, [taskName, playTime, setTimeString, startTime, duration]);
 
   useEffect(() => {
     // eslint-disable-next-line no-unsafe-optional-chaining
     const length = answers[taskName]?.endTime - answers[taskName]?.startTime;
-    setTotalAudioLength(length > -1 ? length / 1000 : 0);
-  }, [analysisHasAudio, answers, taskName]);
+    setDuration(length > -1 ? length / 1000 : 0);
+  }, [analysisHasAudio, answers, taskName, setDuration]);
 
   const isAnalysis = useIsAnalysis();
 
@@ -308,9 +273,8 @@ export function AudioProvenanceVis({
     async (waveSurfer: WaveSurferType | null) => {
       wavesurfer.current = waveSurfer;
 
-      if (taskName.includes('__dynamicLoading')) {
-        return;
-      }
+      audioRef.current = null;
+      updateReplayRef();
 
       if (waveSurfer && isAnalysis && taskName && storageEngine) {
         try {
@@ -323,122 +287,90 @@ export function AudioProvenanceVis({
             safe(storageEngine.getScreenRecording(taskName, participantId)),
           ]);
 
-          // Mute wavesurfer if audio is played from the screen recorded video.
-          wavesurfer.current?.setMuted(!!screenUrl);
-
           const url = screenUrl ?? audioUrl ?? null;
 
           if (!url) {
             setAnalysisHasAudio(false);
             setWaveSurferLoading(false);
             wavesurfer.current?.empty();
+            return;
           }
 
-          await waveSurfer.load(url!, undefined, totalAudioLength);
+          await waveSurfer.load(url!, undefined, duration);
           setWaveSurferLoading(false);
+
+          audioRef.current = waveSurfer.getMediaElement();
+          updateReplayRef();
 
           setWaveSurferWidth(waveSurfer.getWidth());
           setAnalysisHasAudio(true);
-          waveSurfer.setPlaybackRate(speed);
           waveSurfer.seekTo(0);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         } catch (error: unknown) {
           setAnalysisHasAudio(false);
           setWaveSurferLoading(false);
+          audioRef.current = null;
+          updateReplayRef();
           throw new Error(error as string);
         }
       } else {
         setAnalysisHasAudio(false);
         setWaveSurferLoading(false);
-
-        setTotalAudioLength(0);
+        audioRef.current = null;
+        updateReplayRef();
+        setDuration(0);
       }
     },
   );
-
-  useEffect(() => {
-    if (wavesurfer.current) {
-      if (analysisIsPlaying) {
-        wavesurfer.current.play();
-      } else {
-        wavesurfer.current.pause();
-      }
-    }
-  }, [wavesurfer, analysisIsPlaying, totalAudioLength, startTime, setPlayTime]);
-
-  useEffect(() => {
-    wavesurfer.current?.setPlaybackRate(speed);
-  }, [speed]);
-
-  useEffect(() => {
-    wavesurfer.current?.setMuted(isMuted);
-  }, [isMuted]);
 
   const xScale = useMemo(() => {
     if (!answers[taskName]?.startTime || !answers[taskName]?.endTime) {
       return null;
     }
-
-    // eslint-disable-next-line no-unsafe-optional-chaining
-    const endTime = totalAudioLength > 0 ? answers[taskName]?.startTime + totalAudioLength * 1000 : answers[taskName]?.endTime;
-
-    const scale = d3.scaleLinear([margin.left, width + margin.left + margin.right]).domain([answers[taskName]?.startTime, endTime]).clamp(true);
+    const scale = d3.scaleLinear([margin.left, width - margin.right]).domain([0, duration]).clamp(true);
 
     return scale;
-  }, [answers, taskName, totalAudioLength, width]);
-
-  useEffect(() => {
-    setWaveSurferLoading(true);
-    handleWSMount(wavesurfer.current);
-  }, [_setPlayTime, handleWSMount, participantId, wavesurfer, taskName]);
+  }, [answers, taskName, duration, width]);
 
   return (
-    <Group wrap="nowrap" gap={10} mx={10}>
+    <Group wrap="nowrap" gap={0} mx={0}>
       <Stack ref={ref} style={{ width: '100%' }} gap={0}>
         <LoadingOverlay visible={waveSurferLoading} overlayProps={{ blur: 5, backgroundOpacity: 0.35 }} />
 
         {participantId !== undefined && taskName
           ? (
-            <Box
-              ref={waveSurferDiv}
-              style={{
-                overflow: 'hidden', width: '100%', pointerEvents: 'none',
-              }}
-              display={analysisHasAudio ? 'block' : 'none'}
-              id="waveformDiv"
-            >
-
-              <WaveSurfer backend="MediaElement" onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} waveColor="#484848" progressColor="cornflowerblue" barHeight={0} cursorColor="rgba(0, 0, 0, 0)">
-                <WaveForm id="waveform" height={50} />
-              </WaveSurfer>
+            <Box pos="relative" ml={margin.left} mr={margin.right}>
+              <Box
+                ref={waveSurferDiv}
+                style={{
+                  overflow: 'hidden', width: '100%', pointerEvents: 'none',
+                }}
+                display={analysisHasAudio ? 'block' : 'none'}
+                id="waveformDiv"
+              >
+                <WaveSurfer backend="MediaElement" onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} waveColor="#484848" progressColor="cornflowerblue" barHeight={0} cursorColor="rgba(0, 0, 0, 0)">
+                  <WaveForm id="waveform" height={50} />
+                </WaveSurfer>
+              </Box>
             </Box>
           ) : null}
 
         {xScale && taskName && answers[taskName]?.provenanceGraph
           ? (
-            <WithinTaskTimeline
+            <TaskProvenanceTimeline
               xScale={xScale}
               trialName={taskName}
               currentNode={currentGlobalNode?.name || ''}
               answers={answers}
-              width={waveSurferWidth || width}
+              width={waveSurferWidth || (width - margin.left - margin.right)}
               height={25}
+              margin={margin}
+              startTime={answers[taskName]?.startTime}
             />
           ) : null}
 
         {xScale ? (
-          <Timer
-            duration={totalAudioLength * 1000}
-            initialTime={jumpedToAudioTime ? startTime + jumpedToAudioTime * 1000 + 1 : replayTimestamp ? startTime + replayTimestamp : startTime}
-            height={(analysisHasAudio ? 50 : 0) + 25}
-            isPlaying={analysisIsPlaying}
-            speed={speed}
-            startTime={startTime}
-            width={width}
-            xScale={xScale}
-            debounceUpdateTimer={_setPlayTime}
-            directUpdateTimer={setWavesurferTime}
-          />
+          <Timer height={(analysisHasAudio ? 49 : 0) + 25} width={width} xScale={xScale} debounceUpdateTimer={_setPlayTime} />
         ) : null}
       </Stack>
     </Group>

@@ -5,26 +5,26 @@
     "tutorial-replication",
     "demo-html",
     "demo-html-input",
-    "demo-screen-recording",
-    "demo-survey",
+    "demo-form-elements",
     "demo-training",
     "demo-html-trrack",
-    "demo-click-accuracy-test",
+    "demo-react-trrack",
+    "demo-screen-recording",
     "demo-image",
-    "demo-upset",
     "demo-vega",
-    "demo-video-slider",
     "demo-video",
     "demo-dynamic",
+    "demo-condition",
     "demo-style",
     "demo-yaml",
     "demo-ranking-widget",
+    "demo-upset",
+    "demo-choropleth-map",
     "example-brush-interactions",
     "example-cleveland",
+    "example-llm-chatbot",
     "example-mvnv",
     "example-VLAT-adaptive",
-    "example-VLAT-full-randomized",
-    "example-VLAT-mini-randomized",
     "library-adaptive-vlat",
     "library-beauvis",
     "library-berlin-num",
@@ -41,9 +41,12 @@
     "library-screen-recording",
     "library-smeq",
     "library-sus",
+    "library-umux",
+    "library-umux-lite",
     "library-virtual-chinrest",
     "library-vlat",
     "test-audio",
+    "test-device-restriction",
     "test-library",
     "test-likert-matrix",
     "test-parser-errors",
@@ -58,9 +61,6 @@
     "tutorial-replication": {
       "path": "tutorial/replication-config.json"
     },
-    "demo-video-slider": {
-      "path": "demo-video-slider/config.json"
-    },
     "demo-html": {
       "path": "demo-html/config.json"
     },
@@ -70,8 +70,8 @@
     "demo-html-input": {
       "path": "demo-html-input/config.json"
     },
-    "demo-survey": {
-      "path": "demo-survey/config.json"
+    "demo-form-elements": {
+      "path": "demo-form-elements/config.json"
     },
     "demo-training": {
       "path": "demo-training/config.json"
@@ -85,11 +85,14 @@
     "demo-dynamic": {
       "path": "demo-dynamic/config.json"
     },
+    "demo-condition": {
+      "path": "demo-condition/config.json"
+    },
     "demo-html-trrack": {
       "path": "demo-html-trrack/config.json"
     },
-    "demo-click-accuracy-test": {
-      "path": "demo-click-accuracy-test/config.json"
+    "demo-react-trrack": {
+      "path": "demo-react-trrack/config.json"
     },
     "demo-image": {
       "path": "demo-image/config.json"
@@ -106,6 +109,12 @@
     "demo-ranking-widget": {
       "path": "demo-ranking-widget/config.json"
     },
+    "demo-choropleth-map": {
+      "path": "demo-choropleth-map/config.json"
+    },
+    "example-llm-chatbot": {
+      "path": "example-llm-chatbot/config.json"
+    },
     "example-brush-interactions": {
       "path": "example-brush-interactions/config.json"
     },
@@ -114,12 +123,6 @@
     },
     "example-mvnv": {
       "path": "example-mvnv/config.json"
-    },
-    "example-VLAT-full-randomized": {
-      "path": "example-VLAT-full-randomized/config.json"
-    },
-    "example-VLAT-mini-randomized": {
-      "path": "example-VLAT-mini-randomized/config.json"
     },
     "library-adaptive-vlat": {
       "path": "library-adaptive-vlat/config.json",
@@ -193,6 +196,9 @@
       "path": "test-audio/config.json",
       "test": true
     },
+    "test-device-restriction": {
+      "path": "test-device-restriction/config.json"
+    },
     "test-library": {
       "path": "test-library/config.json",
       "test": true
@@ -214,6 +220,14 @@
     },
     "test-step-logic": {
       "path": "test-step-logic/config.json",
+      "test": true
+    },
+    "library-umux": {
+      "path": "library-umux/config.json",
+      "test": true
+    },
+    "library-umux-lite": {
+      "path": "library-umux-lite/config.json",
       "test": true
     },
     "library-virtual-chinrest": {

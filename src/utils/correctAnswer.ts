@@ -1,11 +1,23 @@
 import isEqual from 'lodash.isequal';
 import { Answer, IndividualComponent, StoredAnswer } from '../parser/types';
 
-export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer'][string], responseCorrectAnswer: Answer['answer']) {
+export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer'][string], responseCorrectAnswer: Answer['answer'], acceptableLow?: number, acceptableHigh?: number) {
   // Handle numeric-string comparison for likert and slider responses
   if ((typeof responseUserAnswer === 'number' || typeof responseUserAnswer === 'string')
-  && (typeof responseCorrectAnswer === 'string' || typeof responseCorrectAnswer === 'number')) {
-    return String(responseUserAnswer) === String(responseCorrectAnswer);
+    && (typeof responseCorrectAnswer === 'string' || typeof responseCorrectAnswer === 'number')) {
+    const userAnswerNumber = Number(responseUserAnswer);
+
+    if (userAnswerNumber) {
+      if (acceptableLow && acceptableHigh) {
+        return userAnswerNumber >= acceptableLow && userAnswerNumber <= acceptableHigh;
+      } if (acceptableLow) {
+        return userAnswerNumber >= acceptableLow;
+      } if (acceptableHigh) {
+        return userAnswerNumber <= acceptableHigh;
+      }
+    }
+
+    return String(responseUserAnswer) === String(responseCorrectAnswer) || Number(responseUserAnswer) === Number(responseCorrectAnswer);
   }
 
   // Ignore order for checkbox answers by sorting
@@ -17,7 +29,7 @@ export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer
   }
 
   // Handle array of object (e.g. matrix-radio and matrix-checkbox)
-  if (typeof responseUserAnswer === 'object') {
+  if (responseUserAnswer !== null && typeof responseUserAnswer === 'object' && !Array.isArray(responseUserAnswer) && Array.isArray(responseCorrectAnswer)) {
     const userAnswerArray = Object.values(responseUserAnswer);
 
     if (userAnswerArray.length !== responseCorrectAnswer.length) return false;
@@ -49,7 +61,7 @@ export function componentAnswersAreCorrect(componentUserAnswers: StoredAnswer['a
 
   (componentCorrectAnswers || []).forEach((correctAnswer) => {
     const userAnswer = componentUserAnswers[correctAnswer.id];
-    if (userAnswer === undefined || !responseAnswerIsCorrect(userAnswer, correctAnswer.answer)) {
+    if (userAnswer === undefined || !responseAnswerIsCorrect(userAnswer, correctAnswer.answer, correctAnswer.acceptableLow, correctAnswer.acceptableHigh)) {
       allCorrect = false;
     }
   });

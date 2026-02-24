@@ -1,4 +1,5 @@
 import { parse as hjsonParse } from 'hjson';
+import localforage from 'localforage';
 import { initializeApp } from 'firebase/app';
 import {
   deleteObject,
@@ -16,6 +17,7 @@ import {
   Firestore,
   Timestamp,
   collection,
+  deleteField,
   doc,
   enableNetwork,
   getDoc,
@@ -40,6 +42,7 @@ import {
   SequenceAssignment,
   SnapshotDocContent,
   StoredUser,
+  cleanupModes,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 
@@ -51,6 +54,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   private studyCollection: CollectionReference<DocumentData, DocumentData>;
 
   private storage: FirebaseStorage;
+
+  protected participantStore = localforage.createInstance({
+    name: 'revisit-firebase',
+  });
 
   constructor(testing: boolean = false) {
     super('firebase', testing);
@@ -232,6 +239,32 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await setDoc(participantSequenceAssignmentDoc, { ...toUpload, createdTime: serverTimestamp() });
   }
 
+  protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      participantId,
+    );
+
+    const firebaseUpdatedFields: Record<string, unknown> = { ...updatedFields };
+    if (Object.hasOwn(updatedFields, 'conditions') && updatedFields.conditions === undefined) {
+      firebaseUpdatedFields.conditions = deleteField();
+    }
+    if (Object.keys(firebaseUpdatedFields).length === 0) {
+      return;
+    }
+
+    await updateDoc(participantSequenceAssignmentDoc, firebaseUpdatedFields);
+  }
+
   protected async _completeCurrentParticipantRealtime() {
     await this.verifyStudyDatabase();
     if (!this.currentParticipantId) {
@@ -325,22 +358,35 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await updateDoc(participantSequenceAssignmentDoc, { claimed: true });
   }
 
+  async initializeAnonymousAuth() {
+    const auth = getAuth();
+    await auth.authStateReady();
+
+    if (auth.currentUser) {
+      return true;
+    }
+
+    try {
+      await signInAnonymously(auth);
+      return !!auth.currentUser;
+    } catch (error) {
+      const errorMessage = 'Firebase anonymous sign-in failed. Please ensure Anonymous Authentication is enabled in your Firebase Console.';
+      console.error(errorMessage, error);
+      return false;
+    }
+  }
+
+  async checkAuthReadiness() {
+    const isReady = await this.initializeAnonymousAuth();
+    if (!isReady) {
+      this.connected = false;
+      throw new Error('FirebaseAuthError: Login failed with firebase');
+    }
+    this.connected = true;
+  }
+
   async initializeStudyDb(studyId: string) {
     try {
-      const auth = getAuth();
-      await auth.authStateReady();
-
-      if (!auth.currentUser) {
-        try {
-          await signInAnonymously(auth);
-          if (!auth.currentUser) {
-            throw new Error('Login failed with firebase');
-          }
-        } catch (error) {
-          console.error('Firebase anonymous sign-in failed:', error);
-        }
-      }
-
       // Create or retrieve database for study
       this.studyCollection = collection(
         this.firestore,
@@ -355,9 +401,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   async connect() {
     try {
       await enableNetwork(this.firestore);
-
-      this.connected = true;
+      this.connected = await this.initializeAnonymousAuth();
     } catch {
+      this.connected = false;
       console.warn('Failed to connect to Firebase');
     }
   }
@@ -371,14 +417,23 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const revisitModesData = await getDoc(revisitModesDoc);
 
     if (revisitModesData.exists()) {
-      return revisitModesData.data() as Record<REVISIT_MODE, boolean>;
+      const modes = revisitModesData.data() as Record<string, boolean>;
+      const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
+
+      if (needsUpdate) {
+        const cleanedModes = cleanupModes(modes);
+        await setDoc(revisitModesDoc, cleanedModes);
+        return cleanedModes;
+      }
+
+      return modes;
     }
 
     // Else set to default values
     const defaultModes = {
       dataCollectionEnabled: true,
-      studyNavigatorEnabled: true,
-      analyticsInterfacePubliclyAccessible: true,
+      developmentModeEnabled: true,
+      dataSharingEnabled: true,
     };
     await setDoc(revisitModesDoc, defaultModes);
     return defaultModes;

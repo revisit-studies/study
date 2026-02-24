@@ -2,7 +2,9 @@ import {
   Center,
   Group, Stack, Text,
 } from '@mantine/core';
-import { useParams, useSearchParams } from 'react-router';
+import {
+  useLocation, useNavigate, useParams, useSearchParams,
+} from 'react-router';
 import {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
@@ -19,6 +21,8 @@ import { TextEditor } from './TextEditor';
 import { ThinkAloudFooter } from './ThinkAloudFooter';
 import { useEvent } from '../../../store/hooks/useEvent';
 import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
+import { ReplayContext, useReplay } from '../../../store/hooks/useReplay';
+import { parseTrialOrder } from '../../../utils/parseTrialOrder';
 
 async function getTranscript(storageEngine: FirebaseStorageEngine, partId: string | undefined, trialName: string | undefined, authEmail: string | null | undefined) {
   if (storageEngine && partId && trialName && authEmail) {
@@ -56,20 +60,46 @@ function getRawTranscript(storageEngine: FirebaseStorageEngine, currentTrial: st
   return null;
 }
 
+function getFirstTrialIdentifier(participant: ParticipantData | null | undefined): string {
+  if (!participant) {
+    return '';
+  }
+
+  const orderedAnswers = Object.values(participant.answers).sort((answerA, answerB) => {
+    const a = parseTrialOrder(answerA.trialOrder);
+    const b = parseTrialOrder(answerB.trialOrder);
+
+    if (a.step !== b.step) {
+      return (a.step ?? Number.MAX_SAFE_INTEGER) - (b.step ?? Number.MAX_SAFE_INTEGER);
+    }
+
+    if (a.funcIndex !== b.funcIndex) {
+      return (a.funcIndex ?? -1) - (b.funcIndex ?? -1);
+    }
+
+    return answerA.identifier.localeCompare(answerB.identifier);
+  });
+
+  return orderedAnswers[0]?.identifier || '';
+}
+
 export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { visibleParticipants: ParticipantData[], storageEngine: FirebaseStorageEngine }) {
   const auth = useAuth();
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [jumpedToLine, setJumpedToLine] = useState<number>(0);
 
-  const currentTrial = useMemo(() => searchParams.get('currentTrial') || '', [searchParams]);
-
   const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
+  const { studyId, trialId } = useParams();
+  const currentTrial = useMemo(() => trialId || '', [trialId]);
 
   const [currentShownTranscription, setCurrentShownTranscription] = useState(0);
 
   const { value: participant } = useAsync(getParticipantData, [participantId, storageEngine]);
-  const { studyId } = useParams();
+
+  const replay = useReplay();
 
   const [hasAudio, setHasAudio] = useState<boolean>();
 
@@ -88,12 +118,33 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
   }, [currentTrial, auth.user.user?.email, storageEngine, participantId]);
 
   useEffect(() => {
-    if (!currentTrial && !participantId && visibleParticipants.length > 0) {
-      setSearchParams({ participantId: visibleParticipants[0].participantId, currentTrial: Object.entries(visibleParticipants[0].answers).find(([_, ans]) => +ans.trialOrder.split('_')[0] === 0)?.[0] || '' });
+    if (!participantId && visibleParticipants.length > 0) {
+      setSearchParams((params) => {
+        params.set('participantId', visibleParticipants[0].participantId);
+        params.delete('currentTrial');
+        return params;
+      });
     }
     // I really only want to do this on mount, so leaving this empty
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!studyId || !participant) {
+      return;
+    }
+
+    if (currentTrial && participant.answers[currentTrial]) {
+      return;
+    }
+
+    const firstTrialIdentifier = getFirstTrialIdentifier(participant);
+    if (!firstTrialIdentifier) {
+      return;
+    }
+
+    navigate(`/analysis/stats/${studyId}/tagging/${encodeURIComponent(firstTrialIdentifier)}${location.search}`, { replace: true });
+  }, [currentTrial, location.search, navigate, participant, studyId]);
 
   const setEditedTranscript = useCallback((editedText: EditedText[]) => {
     _setEditedTranscript(editedText);
@@ -117,6 +168,11 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
       const startTime = (currentTrial ? participant.answers[currentTrial].startTime : participant.answers.audioTest.startTime);
 
       const timeInSeconds = Math.abs(playTime - startTime) / 1000;
+
+      if (!rawTranscript.results[tempCurrentShownTranscription]) {
+        setCurrentShownTranscription(0);
+        return;
+      }
 
       if (timeInSeconds > (rawTranscript.results[tempCurrentShownTranscription].resultEndTime as number)) {
         while (timeInSeconds > (rawTranscript.results[tempCurrentShownTranscription].resultEndTime as number)) {
@@ -154,7 +210,6 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
 
   const changeLine = useCallback((focusedLine: number) => {
     const currentLine = editedTranscript[focusedLine].transcriptMappingStart;
-
     setJumpedToLine(currentLine);
   }, [editedTranscript]);
 
@@ -164,20 +219,23 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
   }, [participantId, currentTrial]);
 
   return (
-    <Group wrap="nowrap" gap={25}>
-      <Stack ref={ref} style={{ width: '100%' }} gap={10}>
+    <ReplayContext.Provider value={replay}>
 
-        {!participantId || !currentTrial ? <Center><Text c="dimmed" size="24">Select a Participant and Trial to Analyze</Text></Center>
-          : !hasAudio || (rawTranscriptStatus === 'success' && rawTranscript === null) ? <Center><Text c="dimmed" size="24">No transcripts found for this task</Text></Center> : (
+      <Group wrap="nowrap" gap={25}>
+        <Stack ref={ref} style={{ width: '100%' }} gap={10}>
 
-            <Stack>
-              <TextEditor onClickLine={changeLine} transcriptList={editedTranscript} setTranscriptList={setEditedTranscript} currentShownTranscription={currentShownTranscription} />
-            </Stack>
-          )}
+          {!participantId || !currentTrial ? <Center><Text c="dimmed" size="24">Select a Participant and Trial to Analyze</Text></Center>
+            : !hasAudio || (rawTranscriptStatus === 'success' && rawTranscript === null) ? <Center><Text c="dimmed" size="24">No transcripts found for this task</Text></Center> : (
 
-        <ThinkAloudFooter setHasAudio={setHasAudio} saveProvenance={() => null} studyId={studyId || ''} jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} storageEngine={storageEngine} />
-      </Stack>
+              <Stack>
+                <TextEditor onClickLine={changeLine} transcriptList={editedTranscript} setTranscriptList={setEditedTranscript} currentShownTranscription={currentShownTranscription} />
+              </Stack>
+            )}
 
-    </Group>
+          <ThinkAloudFooter key={`${participantId}-${currentTrial}`} setHasAudio={setHasAudio} saveProvenance={() => null} studyId={studyId || ''} jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} storageEngine={storageEngine} />
+        </Stack>
+
+      </Group>
+    </ReplayContext.Provider>
   );
 }
