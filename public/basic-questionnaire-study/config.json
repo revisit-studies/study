@@ -1,17 +1,12 @@
-{
+﻿{
     "$schema": "https://raw.githubusercontent.com/revisit-studies/study/main/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
         "title": "Basic Questionnaire Study",
         "version": "pilot",
-        "authors": [
-            "The reVISit Team"
-        ],
+        "authors": ["The reVISit Team"],
         "date": "2024-03-19",
         "description": "A simple questionnaire study",
-        "organizations": [
-            "University of Utah",
-            "WPI"
-        ]
+        "organizations": ["University of Utah", "WPI"]
     },
     "uiConfig": {
         "contactEmail": "contact@revisit.dev",
@@ -24,110 +19,36 @@
     "baseComponents": {
         "bar-chart": {
             "type": "website",
-            "response": [
-            {
-                "id": "barChart",
-                "prompt": "Your selected answer:",
-                "required": true,
-                "location": "belowStimulus",
-                "type": "reactive"
-            },
-            {
-                "id": "truePct",
-                "prompt": "",
-                "required": false,
-                "location": "belowStimulus",
-                "type": "reactive"
-            },
-            {
-                "id": "absErr",
-                "prompt": "",
-                "required": false,
-                "location": "belowStimulus",
-                "type": "reactive"
-            },
-            {
-                "id": "log2Err",
-                "prompt": "",
-                "required": false,
-                "location": "belowStimulus",
-                "type": "reactive"
-            }
-            
-            ],
             "path": "basic-questionnaire-study/assets/bar_chart.html",
-            "instructionLocation": "aboveStimulus"
+            "instructionLocation": "aboveStimulus",
+            "response": [
+                { "id": "barChart", "prompt": "Your selected answer:", "required": true,  "location": "belowStimulus", "type": "reactive" },
+                { "id": "truePct",  "prompt": "", "required": false, "location": "belowStimulus", "type": "reactive" },
+                { "id": "absErr",   "prompt": "", "required": false, "location": "belowStimulus", "type": "reactive" },
+                { "id": "log2Err",  "prompt": "", "required": false, "location": "belowStimulus", "type": "reactive" }
+            ]
         },
         "diverging_bar": {
             "type": "website",
-            "response": [
-            {
-                "id": "barChart",
-                "prompt": "Your selected answer:",
-                "required": true,
-                "location": "belowStimulus",
-                "type": "reactive"
-            },
-            {
-                "id": "truePct",
-                "prompt": "",
-                "required": false,
-                "location": "belowStimulus",
-                "type": "reactive"
-            },
-            {
-                "id": "absErr",
-                "prompt": "",
-                "required": false,
-                "location": "belowStimulus",
-                "type": "reactive"
-            },
-            {
-                "id": "log2Err",
-                "prompt": "",
-                "required": false,
-                "location": "belowStimulus",
-                "type": "reactive"
-            }
-
-            ],
             "path": "basic-questionnaire-study/assets/diverging_bar.html",
-            "instructionLocation": "aboveStimulus"
+            "instructionLocation": "aboveStimulus",
+            "response": [
+                { "id": "barChart", "prompt": "Your selected answer:", "required": true,  "location": "belowStimulus", "type": "reactive" },
+                { "id": "truePct",  "prompt": "", "required": false, "location": "belowStimulus", "type": "reactive" },
+                { "id": "absErr",   "prompt": "", "required": false, "location": "belowStimulus", "type": "reactive" },
+                { "id": "log2Err",  "prompt": "", "required": false, "location": "belowStimulus", "type": "reactive" }
+            ]
         },
         "stacked-bar": {
             "type": "website",
-            "response": [
-            {
-                "id": "barChart",
-                "prompt": "Your selected answer:",
-                "required": true,
-                "location": "belowStimulus",
-                "type": "reactive"
-            },
-            {
-                "id": "truePct",
-                "prompt": "",
-                "required": false,
-                "location": "belowStimulus",
-                "type": "reactive"
-            },
-            {
-                "id": "absErr",
-                "prompt": "",
-                "required": false,
-                "location": "belowStimulus",
-                "type": "reactive"
-            },
-            {
-                "id": "log2Err",
-                "prompt": "",
-                "required": false,
-                "location": "belowStimulus",
-                "type": "reactive"
-            }
-            ],
             "path": "basic-questionnaire-study/assets/stacked_bar.html",
-            "instructionLocation": "aboveStimulus"
+            "instructionLocation": "aboveStimulus",
+            "response": [
+                { "id": "barChart", "prompt": "Your selected answer:", "required": true,  "location": "belowStimulus", "type": "reactive" },
+                { "id": "truePct",  "prompt": "", "required": false, "location": "belowStimulus", "type": "reactive" },
+                { "id": "absErr",   "prompt": "", "required": false, "location": "belowStimulus", "type": "reactive" },
+                { "id": "log2Err",  "prompt": "", "required": false, "location": "belowStimulus", "type": "reactive" }
+            ]
         }
     },
     "components": {
@@ -136,33 +57,66 @@
             "path": "basic-questionnaire-study/assets/introduction.md",
             "response": []
         },
-        "bar-chart-1":{
-            "baseComponent": "bar-chart",
-            "description": "A trial for the user to click the largest bar",
-            "instruction": "What percentage of the smaller bar is the larger bar?",
-            "parameters": {
-                "barData": [0.32, 0.2, 1.2, 1.3, 0.82, 0.4, 0.3],
-                "indices": [2,4]
-            }
-        },
-        "bar-chart-2":{
-            "baseComponent": "diverging_bar",
-            "description": "A trial for the user to click the largest bar",
-            "instruction": "What percentage of the smaller bar is the larger bar?",
-            "parameters": {
-                "barData": [0.32, -0.2, -1.2, 1.3, 0.82, -0.4, 0.3],
-                "indices": [2,4]
-            }
-        },
-        "bar-chart-3":{
-            "baseComponent": "stacked-bar",
-            "description": "A trial using a stacked bar chart",
-            "instruction": "What percentage of the smaller marked segment is the larger marked segment?",
-            "parameters": {
-                "barData": [0.45, 0.75, 0.30, 0.90, 0.60, 0.50, 0.25],
-                "indices": [1, 3]
-            }
-        },
+        "bar-chart-1": { "baseComponent": "bar-chart", "description": "Bar chart trial 1", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-2": { "baseComponent": "bar-chart", "description": "Bar chart trial 2", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-3": { "baseComponent": "bar-chart", "description": "Bar chart trial 3", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-4": { "baseComponent": "bar-chart", "description": "Bar chart trial 4", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-5": { "baseComponent": "bar-chart", "description": "Bar chart trial 5", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-6": { "baseComponent": "bar-chart", "description": "Bar chart trial 6", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-7": { "baseComponent": "bar-chart", "description": "Bar chart trial 7", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-8": { "baseComponent": "bar-chart", "description": "Bar chart trial 8", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-9": { "baseComponent": "bar-chart", "description": "Bar chart trial 9", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-10": { "baseComponent": "bar-chart", "description": "Bar chart trial 10", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-11": { "baseComponent": "bar-chart", "description": "Bar chart trial 11", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-12": { "baseComponent": "bar-chart", "description": "Bar chart trial 12", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-13": { "baseComponent": "bar-chart", "description": "Bar chart trial 13", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-14": { "baseComponent": "bar-chart", "description": "Bar chart trial 14", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-15": { "baseComponent": "bar-chart", "description": "Bar chart trial 15", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-16": { "baseComponent": "bar-chart", "description": "Bar chart trial 16", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-17": { "baseComponent": "bar-chart", "description": "Bar chart trial 17", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-18": { "baseComponent": "bar-chart", "description": "Bar chart trial 18", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-19": { "baseComponent": "bar-chart", "description": "Bar chart trial 19", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "bar-chart-20": { "baseComponent": "bar-chart", "description": "Bar chart trial 20", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-1": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 1", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-2": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 2", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-3": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 3", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-4": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 4", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-5": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 5", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-6": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 6", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-7": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 7", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-8": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 8", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-9": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 9", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-10": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 10", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-11": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 11", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-12": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 12", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-13": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 13", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-14": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 14", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-15": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 15", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-16": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 16", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-17": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 17", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-18": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 18", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-19": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 19", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "diverging-20": { "baseComponent": "diverging_bar", "description": "Diverging bar trial 20", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-1": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 1", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-2": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 2", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-3": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 3", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-4": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 4", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-5": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 5", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-6": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 6", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-7": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 7", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-8": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 8", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-9": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 9", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-10": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 10", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-11": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 11", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-12": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 12", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-13": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 13", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-14": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 14", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-15": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 15", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-16": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 16", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-17": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 17", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-18": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 18", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-19": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 19", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
+        "stacked-20": { "baseComponent": "stacked-bar", "description": "Stacked bar trial 20", "instruction": "What percentage is the smaller of the larger?", "parameters": { "barData": [0.5], "indices": [0,1] } },
         "results": {
             "type": "website",
             "path": "basic-questionnaire-study/assets/results.html",
@@ -180,7 +134,64 @@
                 "components": [
                     "bar-chart-1",
                     "bar-chart-2",
-                    "bar-chart-3"
+                    "bar-chart-3",
+                    "bar-chart-4",
+                    "bar-chart-5",
+                    "bar-chart-6",
+                    "bar-chart-7",
+                    "bar-chart-8",
+                    "bar-chart-9",
+                    "bar-chart-10",
+                    "bar-chart-11",
+                    "bar-chart-12",
+                    "bar-chart-13",
+                    "bar-chart-14",
+                    "bar-chart-15",
+                    "bar-chart-16",
+                    "bar-chart-17",
+                    "bar-chart-18",
+                    "bar-chart-19",
+                    "bar-chart-20",
+                    "diverging-1",
+                    "diverging-2",
+                    "diverging-3",
+                    "diverging-4",
+                    "diverging-5",
+                    "diverging-6",
+                    "diverging-7",
+                    "diverging-8",
+                    "diverging-9",
+                    "diverging-10",
+                    "diverging-11",
+                    "diverging-12",
+                    "diverging-13",
+                    "diverging-14",
+                    "diverging-15",
+                    "diverging-16",
+                    "diverging-17",
+                    "diverging-18",
+                    "diverging-19",
+                    "diverging-20",
+                    "stacked-1",
+                    "stacked-2",
+                    "stacked-3",
+                    "stacked-4",
+                    "stacked-5",
+                    "stacked-6",
+                    "stacked-7",
+                    "stacked-8",
+                    "stacked-9",
+                    "stacked-10",
+                    "stacked-11",
+                    "stacked-12",
+                    "stacked-13",
+                    "stacked-14",
+                    "stacked-15",
+                    "stacked-16",
+                    "stacked-17",
+                    "stacked-18",
+                    "stacked-19",
+                    "stacked-20"
                 ]
             },
             "results"
