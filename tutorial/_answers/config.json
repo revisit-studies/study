@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "A tutorial that you will build with us",
     "version": "development",
@@ -8,12 +8,11 @@
       "The reVISit Community",
       "You :)"
     ],
-    "date": "2025-02-05",
+    "date": "2026-02-23",
     "description": "This tutorial will teach you how to create a reVISit study and use all of the features that reVISit has to offer.",
     "organizations": [
       "University of Utah",
       "WPI",
-      "University of Toronto",
       "You :)"
     ]
   },
@@ -400,7 +399,7 @@
     "components": [
       "welcome",
       "consent",
-      "$mic-check.co.audioTest",
+      "$mic-check.components.audioTest",
       "demographics",
       "trainingWithFeedback",
       "coinImage",

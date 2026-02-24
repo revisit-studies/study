@@ -1,22 +1,21 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Styling Demo Study",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2025-07-09",
+    "date": "2026-02-23",
     "description": "A comprehensive demo of styled components and responses.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-style/assets/help.md",
+    "helpTextPath": "demo-style/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -32,13 +31,12 @@
     "markdown-component": {
       "type": "markdown",
       "path": "demo-style/assets/markdownComponent.md",
-      "response": [
-      ],
+      "response": [],
       "style": {
         "width": "800px",
         "margin": "20px auto",
         "padding": "30px",
-        "fontFamily": "Georgia, serif", 
+        "fontFamily": "Georgia, serif",
         "lineHeight": "2",
         "backgroundColor": "#deeff5",
         "fontSize": "16px",
@@ -48,7 +46,7 @@
     },
     "react-component": {
       "type": "react-component",
-      "path": "demo-click-accuracy-test/assets/ClickAccuracyTest.tsx",
+      "path": "demo-react-trrack/assets/DemoReactTrrack.tsx",
       "parameters": {
         "speed": 100
       },
@@ -56,14 +54,14 @@
         "width": "900px",
         "margin": "20px auto",
         "padding": "20px",
-        "backgroundColor": "#ffe7c7", 
+        "backgroundColor": "#ffe7c7",
         "borderRadius": "10px"
       },
       "response": [
         {
           "id": "react-component-style",
           "prompt": "This is a react component with the following style: <br> `width: 900px` <br> `margin: 20px auto` <br> `padding: 20px`  <br>  `backgroundColor: #ffe7c7` <br> `borderRadius: 10px`",
-          "type": "textOnly", 
+          "type": "textOnly",
           "location": "aboveStimulus"
         }
       ]
@@ -195,7 +193,7 @@
           "id": "long-text-response-style",
           "type": "longText",
           "prompt": "What makes a website design effective and visually appealing?",
-          "secondaryText": "width: 700px; margin: 25px auto; padding: 15px; border: 3px dashed #dc3545; border-radius: 10px; background-color: #fff5f5; color: #721c24; fontStyle: italic; fontWeight: 600; textTransform: lowercase", 
+          "secondaryText": "width: 700px; margin: 25px auto; padding: 15px; border: 3px dashed #dc3545; border-radius: 10px; background-color: #fff5f5; color: #721c24; fontStyle: italic; fontWeight: 600; textTransform: lowercase",
           "location": "belowStimulus",
           "placeholder": "Enter your answer",
           "required": false,
@@ -237,8 +235,17 @@
           "secondaryText": "width: 700px; margin: 15px auto; border: 3px solid #ffc107; borderRadius: 8px; padding: 15px; backgroundColor: #fff8e1; color: #856404; fontSize: 14px; fontWeight: 500; top: 10px; left: 10px",
           "type": "matrix-radio",
           "location": "belowStimulus",
-          "answerOptions": ["Needs improvement", "Fair", "Good", "Excellent"],
-          "questionOptions": ["Backgrounds", "Fonts", "Colors"],
+          "answerOptions": [
+            "Needs improvement",
+            "Fair",
+            "Good",
+            "Excellent"
+          ],
+          "questionOptions": [
+            "Backgrounds",
+            "Fonts",
+            "Colors"
+          ],
           "required": false,
           "style": {
             "width": "700px",
@@ -260,7 +267,12 @@
           "secondaryText": "width: 700px; margin: 25px auto; padding: 25px; border: 4px ridge #20c997; borderRadius: 30px; backgroundColor: #e8f8f5; color: #0f5132; textAlign: right; transform: rotate(-1deg); bottom: 8px",
           "type": "buttons",
           "location": "belowStimulus",
-          "options": ["Never", "Probably not", "Maybe", "Definitely"],
+          "options": [
+            "Never",
+            "Probably not",
+            "Maybe",
+            "Definitely"
+          ],
           "required": false,
           "style": {
             "width": "700px",
@@ -281,8 +293,7 @@
       "type": "markdown",
       "path": "demo-style/assets/componentStylesheet.md",
       "stylesheetPath": "demo-style/assets/style/componentStylesheet.css",
-      "response": [
-      ]
+      "response": []
     },
     "interactive-responses": {
       "type": "markdown",
@@ -331,11 +342,15 @@
         },
         {
           "id": "form-gender",
-          "required": false,  
+          "required": false,
           "prompt": "What is your gender?",
           "type": "radio",
           "location": "belowStimulus",
-          "options": ["Male", "Female", "Other"]
+          "options": [
+            "Male",
+            "Female",
+            "Other"
+          ]
         },
         {
           "id": "form-age",
@@ -343,7 +358,16 @@
           "prompt": "How old are you?",
           "type": "radio",
           "location": "belowStimulus",
-          "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
+          "options": [
+            "18-25",
+            "26-35",
+            "36-45",
+            "46-55",
+            "56-65",
+            "66-75",
+            "76-85",
+            "86-95"
+          ]
         },
         {
           "id": "form-education",
@@ -351,7 +375,12 @@
           "prompt": "What is your highest level of education?",
           "type": "radio",
           "location": "belowStimulus",
-          "options": ["High School", "Bachelor's", "Master's", "Doctorate"]
+          "options": [
+            "High School",
+            "Bachelor's",
+            "Master's",
+            "Doctorate"
+          ]
         },
         {
           "id": "form-occupation",
@@ -386,7 +415,16 @@
           "type": "radio",
           "horizontal": true,
           "location": "belowStimulus",
-          "options": ["18-25", "26-35", "36-45", "46-55", "56-65", "66-75", "76-85", "86-95"]
+          "options": [
+            "18-25",
+            "26-35",
+            "36-45",
+            "46-55",
+            "56-65",
+            "66-75",
+            "76-85",
+            "86-95"
+          ]
         },
         {
           "id": "large-text-readability",
@@ -395,7 +433,13 @@
           "type": "radio",
           "horizontal": true,
           "location": "belowStimulus",
-          "options": ["Very difficult", "Difficult", "Neutral", "Easy", "Very easy"]
+          "options": [
+            "Very difficult",
+            "Difficult",
+            "Neutral",
+            "Easy",
+            "Very easy"
+          ]
         },
         {
           "id": "large-text-fit",
@@ -403,7 +447,11 @@
           "prompt": "Did the text fit well on your screen?",
           "type": "radio",
           "horizontal": true,
-          "options": ["Yes", "Mostly", "No"]
+          "options": [
+            "Yes",
+            "Mostly",
+            "No"
+          ]
         },
         {
           "id": "large-text-comment",
@@ -449,7 +497,10 @@
           "prompt": "Do you enjoy interactive web elements?",
           "type": "radio",
           "location": "belowStimulus",
-          "options": ["Yes", "No"]
+          "options": [
+            "Yes",
+            "No"
+          ]
         },
         {
           "id": "layout-website-design",
@@ -465,7 +516,12 @@
           "prompt": "Would you use this styling approach in your own projects?",
           "type": "buttons",
           "location": "belowStimulus",
-          "options": ["Never", "Probably not", "Maybe", "Definitely"]
+          "options": [
+            "Never",
+            "Probably not",
+            "Maybe",
+            "Definitely"
+          ]
         },
         {
           "id": "layout-opinion",
@@ -473,8 +529,17 @@
           "prompt": "What is your overall opinion on the use of the following CSS styles?",
           "type": "matrix-radio",
           "location": "belowStimulus",
-          "answerOptions": ["Needs improvement", "Fair", "Good", "Excellent"],
-          "questionOptions": ["Backgrounds", "Fonts", "Colors"]
+          "answerOptions": [
+            "Needs improvement",
+            "Fair",
+            "Good",
+            "Excellent"
+          ],
+          "questionOptions": [
+            "Backgrounds",
+            "Fonts",
+            "Colors"
+          ]
         }
       ]
     }

@@ -1,22 +1,21 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Passing Data from reVISit to HTML and back",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-14",
+    "date": "2026-02-23",
     "description": "A demo of how to pass visualization data from reVISit to HTML and send user answers from HTML back to the reVISit.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-html-input/assets/help.md",
+    "helpTextPath": "demo-html-input/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,

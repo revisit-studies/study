@@ -1,21 +1,20 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-      "title": "Using audio recording",
-      "version": "pilot",
-      "authors": [
-        "The reVISit Team"
-      ],
-      "date": "2023-04-14",
-      "description": "This is a test for audio",
-      "organizations": [
-        "University of Utah",
-        "WPI",
-        "University of Toronto"
+    "title": "Using audio recording",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "This is a test for audio",
+    "organizations": [
+      "University of Utah",
+      "WPI"
     ]
   },
   "uiConfig": {
-    "contactEmail": "cnobre@cs.toronto.edu",
+    "contactEmail": "contact@revisit.dev",
     "helpTextPath": "example-brush-interactions/assets/tutorial.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,

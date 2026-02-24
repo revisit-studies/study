@@ -1,17 +1,16 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Test for parser errors",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-14",
+    "date": "2026-02-23",
     "description": "This is a test for parser errors.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
@@ -20,10 +19,13 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "withSidebar": true,
+    "withSidebar": false,
     "windowEventDebounceTime": 200
   },
-  "importedLibraries": ["test", "test-missing"],
+  "importedLibraries": [
+    "test",
+    "test-missing"
+  ],
   "baseComponents": {
     "testBaseComponent": {
       "type": "markdown",
@@ -46,14 +48,27 @@
       "baseComponent": "missingBaseComponent"
     },
     "workingBaseComponentFromLibrary": {
-      "baseComponent": "$test.co.test-md"
+      "baseComponent": "$test.components.test-md"
     },
     "missingComponentFromLibrary": {
-      "baseComponent": "$test.co.test-missing"
+      "baseComponent": "$test.components.test-missing"
     },
     "testComponent": {
       "type": "markdown",
       "path": "test-parser-errors/assets/md1.md",
+      "response": []
+    },
+    "sidebarComponent": {
+      "type": "markdown",
+      "path": "test-parser-errors/assets/md1.md",
+      "instructionLocation": "sidebar",
+      "withSidebar": false,
+      "response": []
+    },
+    "sidebarUiConfig": {
+      "type": "markdown",
+      "path": "test-parser-errors/assets/md1.md",
+      "instructionLocation": "sidebar",
       "response": []
     }
   },
@@ -63,6 +78,8 @@
       "md1",
       "missingComponent",
       "testBaseComponent",
+      "sidebarComponent",
+      "sidebarUiConfig",
       {
         "order": "fixed",
         "components": [
@@ -91,12 +108,17 @@
           }
         ]
       },
+      {
+        "order": "fixed",
+        "components": []
+      },
       "md2",
       "$test.sequences.small",
-      "$test.se.long",
+      "$test.sequences.long",
       "$test.components.test-md",
-      "$test.co.test-react",
+      "$test.components.test-react",
       "$test.components.test-missing",
+      "$test.sequences.missingSequence",
       "missingBaseComponent",
       "workingBaseComponentFromLibrary",
       "missingComponentFromLibrary"

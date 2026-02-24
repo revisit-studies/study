@@ -1,17 +1,16 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "A-VLAT: Adaptive Visualization Literacy Assessment Test)",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2025-04-21",
+    "date": "2026-02-23",
     "description": "A replication of the adaptive VLAT questionnaire by Cui et al.,",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
@@ -24,7 +23,9 @@
     "studyEndMsg": "Thank you for completing the study. You may close this window",
     "urlParticipantIdParam": "PROLIFIC_ID"
   },
-  "importedLibraries": ["adaptive-vlat"],
+  "importedLibraries": [
+    "adaptive-vlat"
+  ],
   "components": {
     "introduction": {
       "type": "markdown",
@@ -44,7 +45,7 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$adaptive-vlat.se.adaptive-vlat",
+      "$adaptive-vlat.sequences.adaptive-vlat",
       "feedback"
     ]
   }

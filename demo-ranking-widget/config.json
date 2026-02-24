@@ -1,22 +1,21 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Ranking Widget Demo",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2025-09-25",
+    "date": "2026-02-23",
     "description": "A demo of ranking widget, based on the study design by Kuhlman et al., 2019 (doi:10.1145/3290605.3300742).",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-ranking-widget/assets/help.md",
+    "helpTextPath": "demo-ranking-widget/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,

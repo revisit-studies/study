@@ -1,16 +1,21 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "HTML as a Stimulus with Screen Recording",
+    "title": "Screen Recording",
     "version": "pilot",
-    "authors": ["The reVISit Team"],
-    "date": "2023-04-14",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
     "description": "A simple demo of using screen recording on stimuli that render an external website, where provenance tracking is difficult to implement.",
-    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-screen-recording/assets/help.md",
+    "helpTextPath": "demo-screen-recording/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -29,23 +34,21 @@
       "path": "demo-screen-recording/assets/introduction.md",
       "response": []
     },
-    "external_website": {
+    "external_website_audio": {
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
-      "previousButton": true,
       "recordAudio": true,
       "recordScreen": false
     },
-    "external_website2": {
+    "external_website_audio_screen": {
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
-      "previousButton": true,
       "recordAudio": true,
       "recordScreen": true
     },
-    "barChart": {
+    "barChart_audio_screen": {
       "type": "website",
       "nextButtonLocation": "sidebar",
       "meta": {
@@ -69,6 +72,12 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": ["introduction", "$screen-recording.co.screenRecordingPermission", "external_website", "external_website2", "barChart"]
+    "components": [
+      "introduction",
+      "$screen-recording.components.screenRecordingPermission",
+      "external_website_audio",
+      "external_website_audio_screen",
+      "barChart_audio_screen"
+    ]
   }
 }

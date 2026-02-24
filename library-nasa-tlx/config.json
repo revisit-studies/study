@@ -1,24 +1,24 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "NASA-TLX: NASA Task Load Index",
     "version": "1.0.0",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2025-04-03",
+    "date": "2026-02-23",
     "description": "Example study using the nasa-tlx library.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
     "contactEmail": "",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
-    "withSidebar": false
+    "withSidebar": false,
+    "stylesheetPath": "library-nasa-tlx/assets/layout.css"
   },
   "importedLibraries": [
     "nasa-tlx"
@@ -34,8 +34,8 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$nasa-tlx.se.nasa-tlx-with-source-of-load-evaluation",
-      "$nasa-tlx.co.nasa-tlx"
+      "$nasa-tlx.sequences.nasa-tlx-with-source-of-load-evaluation",
+      "$nasa-tlx.components.nasa-tlx"
     ]
   }
 }

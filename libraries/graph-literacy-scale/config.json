@@ -1,6 +1,6 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
-  "description": "The Graph Literacy Scale is a 13-item instrument that measures people’s ability to understand common graphical formats, with a focus on health-related graphs. This library contains 13 components, each corresponding to a question of the Graph Literacy Scale. It also includes a sequence of all 13 components (the full Graph Literacy Scale).",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/LibraryConfigSchema.json",
+  "description": "The Graph Literacy Scale is a 13-item instrument that measures people's ability to understand common graphical formats, with a focus on health-related graphs. This library contains 13 components, each corresponding to a question of the Graph Literacy Scale. It also includes a sequence of all 13 components (the full Graph Literacy Scale).",
   "reference": "Galesic M, Garcia-Retamero R. Graph literacy: a cross-cultural comparison. Med Decis Making. 2011 May-Jun;31(3):444-57.",
   "doi": "10.1177/0272989X10373805",
   "baseComponents": {
@@ -12,7 +12,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "pie-cancer": {
       "type": "image",
@@ -22,7 +23,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "line-Adeolitis": {
       "type": "image",
@@ -32,7 +34,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "icon-diseaseX": {
       "type": "image",
@@ -42,7 +45,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "bar-treat-heart-disease": {
       "type": "image",
@@ -52,7 +56,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "line-treat-psoriasis": {
       "type": "image",
@@ -62,7 +67,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "line-Coliosis-Tiosis": {
       "type": "image",
@@ -72,7 +78,8 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     },
     "bar-cancer-die": {
       "type": "image",
@@ -82,14 +89,20 @@
       "style": {
         "width": "400px"
       },
-      "nextButtonLocation": "sidebar"
+      "nextButtonLocation": "sidebar",
+      "withSidebar": true
     }
   },
   "components": {
     "Q1": {
       "baseComponent": "bar-cancer-recovery",
+      "correctAnswer": [
+        {
+          "id": "res-Q1",
+          "answer": 35
+        }
+      ],
       "meta": {
-        "trueAnswer": 35,
         "chartType": "bar"
       },
       "response": [
@@ -100,12 +113,18 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q2": {
       "baseComponent": "bar-cancer-recovery",
+      "correctAnswer": [
+        {
+          "id": "res-Q2",
+          "answer": 15
+        }
+      ],
       "meta": {
-        "trueAnswer": 15,
         "chartType": "bar"
       },
       "response": [
@@ -116,12 +135,18 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q3": {
       "baseComponent": "pie-cancer",
+      "correctAnswer": [
+        {
+          "id": "res-Q3",
+          "answer": 25
+        }
+      ],
       "meta": {
-        "trueAnswer": 25,
         "chartType": "pie"
       },
       "response": [
@@ -132,12 +157,18 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q4": {
       "baseComponent": "pie-cancer",
+      "correctAnswer": [
+        {
+          "id": "res-Q4",
+          "answer": 25
+        }
+      ],
       "meta": {
-        "trueAnswer": 25,
         "chartType": "pie"
       },
       "response": [
@@ -148,12 +179,18 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q5": {
       "baseComponent": "line-Adeolitis",
+      "correctAnswer": [
+        {
+          "id": "res-Q5",
+          "answer": 20
+        }
+      ],
       "meta": {
-        "trueAnswer": 20,
         "chartType": "line"
       },
       "response": [
@@ -164,12 +201,18 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q6": {
       "baseComponent": "line-Adeolitis",
+      "correctAnswer": [
+        {
+          "id": "res-Q6",
+          "answer": "Increase was the same in both intervals"
+        }
+      ],
       "meta": {
-        "trueAnswer": 3,
         "chartType": "line"
       },
       "response": [
@@ -181,17 +224,23 @@
           "type": "radio",
           "options": [
             "From 1975 to 1980",
-            "From 2000 to 2005", 
+            "From 2000 to 2005",
             "Increase was the same in both intervals",
             "Don't know"
           ]
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q7": {
       "baseComponent": "line-Adeolitis",
+      "correctAnswer": [
+        {
+          "id": "res-Q7",
+          "answer": 24
+        }
+      ],
       "meta": {
-        "trueAnswer": 24,
         "chartType": "line"
       },
       "response": [
@@ -202,12 +251,18 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q8": {
       "baseComponent": "icon-diseaseX",
+      "correctAnswer": [
+        {
+          "id": "res-Q8",
+          "answer": 40
+        }
+      ],
       "meta": {
-        "trueAnswer": 40,
         "chartType": "icon"
       },
       "response": [
@@ -218,12 +273,18 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q9": {
       "baseComponent": "icon-diseaseX",
+      "correctAnswer": [
+        {
+          "id": "res-Q9",
+          "answer": 20
+        }
+      ],
       "meta": {
-        "trueAnswer": 20,
         "chartType": "icon"
       },
       "response": [
@@ -234,12 +295,18 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q10": {
       "baseComponent": "bar-treat-heart-disease",
+      "correctAnswer": [
+        {
+          "id": "res-Q10",
+          "answer": "They are equal"
+        }
+      ],
       "meta": {
-        "trueAnswer": 3,
         "chartType": "bar"
       },
       "response": [
@@ -251,17 +318,23 @@
           "type": "radio",
           "options": [
             "Crosicol",
-            "Hertinol", 
+            "Hertinol",
             "They are equal",
             "Can't say"
           ]
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q11": {
       "baseComponent": "line-treat-psoriasis",
+      "correctAnswer": [
+        {
+          "id": "res-Q11",
+          "answer": "Can't say"
+        }
+      ],
       "meta": {
-        "trueAnswer": 4,
         "chartType": "line"
       },
       "response": [
@@ -274,16 +347,22 @@
           "options": [
             "Apsoriatin",
             "Nopsorian",
-            "They are equal", 
+            "They are equal",
             "Can't say"
           ]
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q12": {
       "baseComponent": "line-Coliosis-Tiosis",
+      "correctAnswer": [
+        {
+          "id": "res-Q12",
+          "answer": "Tiosis"
+        }
+      ],
       "meta": {
-        "trueAnswer": 2,
         "chartType": "line"
       },
       "response": [
@@ -300,12 +379,18 @@
             "Can't say"
           ]
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "Q13": {
       "baseComponent": "bar-cancer-die",
+      "correctAnswer": [
+        {
+          "id": "res-Q13",
+          "answer": 5
+        }
+      ],
       "meta": {
-        "trueAnswer": 5,
         "chartType": "bar"
       },
       "response": [
@@ -316,7 +401,8 @@
           "location": "sidebar",
           "type": "numerical"
         }
-      ]
+      ],
+      "withSidebar": true
     }
   },
   "sequences": {

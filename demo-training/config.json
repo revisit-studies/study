@@ -1,12 +1,12 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "How To Do Training Demo",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2025-01-10",
+    "date": "2026-02-23",
     "description": "A demo of how to do training.",
     "organizations": [
       "University of Utah",
@@ -15,13 +15,18 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-training/assets/help.md",
+    "helpTextPath": "demo-training/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "withSidebar": true
   },
   "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-training/assets/introduction.md",
+      "response": []
+    },
     "simple-dropbox": {
       "type": "questionnaire",
       "nextButtonLocation": "sidebar",
@@ -109,7 +114,11 @@
       "correctAnswer": [
         {
           "id": "quiz",
-          "answer": ["A","D","F"]
+          "answer": [
+            "A",
+            "D",
+            "F"
+          ]
         }
       ],
       "provideFeedback": true,
@@ -121,30 +130,30 @@
       "nextButtonLocation": "belowStimulus",
       "response": [
         {
-          "id": "vowel-question",
-          "prompt": "Respond with a vowel",
-          "secondaryText": "Just one! Right now, only a works.",
+          "id": "aardvark-question",
+          "prompt": "Respond with the word 'Aardvark'",
+          "secondaryText": "Only perfect matches work.",
           "location": "belowStimulus",
           "type": "shortText",
-          "placeholder": "Enter a single vowel."
+          "placeholder": "Enter Aardvark"
         },
         {
-          "id": "consonant-question",
-          "prompt": "Respond with a consonant",
-          "secondaryText": "Just one! Right now, only s works.",
+          "id": "number-question",
+          "prompt": "Respond with number 13",
+          "secondaryText": "Only 13 works",
           "location": "belowStimulus",
-          "type": "shortText",
-          "placeholder": "Enter a single consonant."
+          "type": "numerical",
+          "placeholder": "Enter a number"
         }
       ],
       "correctAnswer": [
         {
-          "id": "vowel-question",
-          "answer": "a"
+          "id": "aardvark-question",
+          "answer": "Aardvark"
         },
         {
-          "id": "consonant-question",
-          "answer": "s"
+          "id": "number-question",
+          "answer": "13"
         }
       ],
       "provideFeedback": true,
@@ -155,6 +164,7 @@
   "sequence": {
     "order": "fixed",
     "components": [
+      "introduction",
       "simple-dropbox",
       "slider-range",
       "multiSelectCheckbox",

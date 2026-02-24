@@ -1,9 +1,9 @@
 
-# sam
+# SAM: Self-Assessment Manikin
 
 
 
-This is an example study of the library `sam`.
+This is a demo of the library `sam`.
 
 The Self-Assessment Manikin (SAM) is a non-verbal pictorial assessment technique that directly measures the pleasure, arousal, and dominance associated with a person's affective reaction to a wide variety of stimuli. This library includes three components, one for each individual dimension, as well as a sequence containing all dimensions.
 

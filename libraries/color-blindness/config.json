@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/LibraryConfigSchema.json",
   "description": "This library is the Ishihara color blindness test. Each component contains an image of an Ishihara plate. The meta attribute of each plate describe what normal vision people, red color blind people, green color blind people, and total color blind people see from this plate. The user is asked to identify the number or pattern in the image. The library also contains two sequences: a short test and a full test. The short test contains 4 components and the full test contains all 24 components.",
   "externalLink": "https://www.colour-blindness.com/colour-blindness-tests/ishihara-colour-test-plates/",
   "components": {
@@ -35,7 +35,8 @@
           "id": "plate1-response",
           "answer": 12
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate2": {
       "meta": {
@@ -69,7 +70,8 @@
           "id": "plate2-response",
           "answer": 8
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate3": {
       "meta": {
@@ -103,7 +105,8 @@
           "id": "plate3-response",
           "answer": 29
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate4": {
       "meta": {
@@ -137,7 +140,8 @@
           "id": "plate4-response",
           "answer": 5
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate5": {
       "meta": {
@@ -169,9 +173,10 @@
       "correctAnswer": [
         {
           "id": "plate5-response",
-          "answer": 5
+          "answer": 3
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate6": {
       "meta": {
@@ -205,7 +210,8 @@
           "id": "plate6-response",
           "answer": 15
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate7": {
       "meta": {
@@ -239,7 +245,8 @@
           "id": "plate7-response",
           "answer": 74
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate8": {
       "meta": {
@@ -273,7 +280,8 @@
           "id": "plate8-response",
           "answer": 6
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate9": {
       "meta": {
@@ -307,7 +315,8 @@
           "id": "plate9-response",
           "answer": 45
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate10": {
       "meta": {
@@ -341,7 +350,8 @@
           "id": "plate10-response",
           "answer": 5
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate11": {
       "meta": {
@@ -375,7 +385,8 @@
           "id": "plate11-response",
           "answer": 7
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate12": {
       "meta": {
@@ -409,7 +420,8 @@
           "id": "plate12-response",
           "answer": 16
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate13": {
       "meta": {
@@ -443,7 +455,8 @@
           "id": "plate13-response",
           "answer": 73
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate14": {
       "meta": {
@@ -472,7 +485,8 @@
           "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate15": {
       "meta": {
@@ -501,7 +515,8 @@
           "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate16": {
       "meta": {
@@ -535,7 +550,8 @@
           "id": "plate16-response",
           "answer": 26
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate17": {
       "meta": {
@@ -569,7 +585,8 @@
           "id": "plate17-response",
           "answer": 42
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate18": {
       "meta": {
@@ -597,7 +614,8 @@
           "type": "shortText"
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate19": {
       "meta": {
@@ -625,7 +643,8 @@
           "type": "shortText"
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate20": {
       "meta": {
@@ -654,7 +673,8 @@
           "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate21": {
       "meta": {
@@ -682,7 +702,8 @@
           "type": "shortText"
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate22": {
       "meta": {
@@ -710,7 +731,8 @@
           "type": "shortText"
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate23": {
       "meta": {
@@ -739,7 +761,8 @@
           "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate24": {
       "meta": {
@@ -767,7 +790,8 @@
           "type": "shortText"
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     }
   },
   "sequences": {

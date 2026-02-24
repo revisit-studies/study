@@ -1,15 +1,14 @@
-$schema: "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json"
+$schema: "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json"
 studyMetadata:
   title: "HTML stimulus loaded from YAML config"
   version: "pilot"
   authors:
     - "The reVISit Team"
-  date: "2023-04-14"
+  date: "2026-02-23"
   description: "A copy of the demo-html study, but using a YAML config file instead of JSON."
   organizations:
     - "University of Utah"
     - "WPI"
-    - "University of Toronto"
 uiConfig:
   contactEmail: "contact@revisit.dev"
   helpTextPath: "demo-yaml/assets/help.md"

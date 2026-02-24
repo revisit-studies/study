@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/LibraryConfigSchema.json",
   "description": "Mini-VLAT is a short and effective measure of visualization literacy. Mini-VLAT has 12 questions and participants should answer each question within 25 seconds. This library contains 12 components. Each component contains one question of the Mini-VLAT. This library also contains a sequence of all 12 components (the full Mini-VLAT).",
   "reference": "S. Pandey and A. Ottley, “Mini‐VLAT: A Short and Effective Measure of Visualization Literacy,” Computer Graphics Forum, vol. 42, no. 3, pp. 1–11, Jun. 2023",
   "doi": "10.1111/cgf.14809",
@@ -37,7 +37,8 @@
           "id": "res-treemap",
           "answer": "False"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "stackedBar100": {
       "meta": {
@@ -74,7 +75,8 @@
           "id": "res-stackedBar100",
           "answer": "Great Britain"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "histogram": {
       "meta": {
@@ -111,7 +113,8 @@
           "id": "res3",
           "answer": "30-40km"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "choropleth": {
       "meta": {
@@ -146,7 +149,8 @@
           "id": "res-choropleth",
           "answer": "True"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "piechart": {
       "meta": {
@@ -183,7 +187,8 @@
           "id": "res-piechart",
           "answer": "17.6%"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "bubblechart": {
       "meta": {
@@ -220,7 +225,8 @@
           "id": "res-bubblechart",
           "answer": "Shanghai"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "stackedbar": {
       "meta": {
@@ -257,7 +263,8 @@
           "id": "res-stackedbar",
           "answer": "$6.1"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "linechart": {
       "meta": {
@@ -294,7 +301,8 @@
           "id": "res-linechart",
           "answer": "$50.54"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "barchart": {
       "meta": {
@@ -331,7 +339,8 @@
           "id": "res-barchart",
           "answer": "40.51 Mbps"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "areachar": {
       "meta": {
@@ -368,7 +377,8 @@
           "id": "res-areachar",
           "answer": "0.71"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "stackedarea": {
       "meta": {
@@ -405,7 +415,8 @@
           "id": "res-stackedarea",
           "answer": "1 to 2"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "scatterplot": {
       "meta": {
@@ -440,7 +451,8 @@
           "id": "res-scatterplot",
           "answer": "False"
         }
-      ]
+      ],
+      "withSidebar": true
     }
   },
   "sequences": {

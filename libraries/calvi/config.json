@@ -1,8 +1,8 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/LibraryConfigSchema.json",
   "description": "The Critical Thinking Assessment for Literacy in Visualizations (CALVI) library is a collection of visualizations and questions designed to assess the ability to interpret data visualizations. The library includes a variety of visualizations, such as line graphs, bar charts, and pie charts, along with corresponding questions that test the user's understanding of the data presented. The questions are designed to be challenging and require critical thinking skills to answer correctly.",
   "doi": "10.1145/3544548.3581406",
-  "reference": "Lily W. Ge, Yuan Cui, and Matthew Kay. 2023. CALVI: Critical Thinking Assessment for Literacy in Visualizations. In Proceedings of the 2023 CHI Conference on Human Factors in Computing Systems (CHI '23). Association for Computing Machinery, New York, NY, USA, Article 815, 1–18.",
+  "reference": "Lily W. Ge, Yuan Cui, and Matthew Kay. 2023. CALVI: Critical Thinking Assessment for Literacy in Visualizations. In Proceedings of the 2023 CHI Conference on Human Factors in Computing Systems (CHI '23). Association for Computing Machinery, New York, NY, USA, Article 815, 1-18.",
   "components": {
     "N1": {
       "description": "Audio test",
@@ -42,7 +42,8 @@
           "id": "q1",
           "answer": "50"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "N2": {
       "description": "Traffic Accidents Trend",
@@ -82,7 +83,8 @@
           "id": "q1",
           "answer": "B"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "N3": {
       "description": "Customers at Three Bike Shops",
@@ -122,9 +124,9 @@
           "id": "q1",
           "answer": "b_more_than_a_c"
         }
-      ]
+      ],
+      "withSidebar": true
     },
-
     "N4": {
       "description": "Advertising Expense Breakdown",
       "type": "image",
@@ -163,7 +165,8 @@
           "id": "q1",
           "answer": "less_direct_mail"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "N5": {
       "description": "Perfume Brand Market Share",
@@ -203,7 +206,8 @@
           "id": "q1",
           "answer": "b_largest_2013"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "N6": {
       "description": "Monthly Number of New Clients",
@@ -243,7 +247,8 @@
           "id": "q1",
           "answer": "b_sep_dec_increase"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "N7": {
       "description": "Restaurant Openings in 2000",
@@ -279,7 +284,8 @@
           "id": "q1",
           "answer": "inc_then_dec"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "N8": {
       "description": "Beers Consumed in 2005",
@@ -315,7 +321,8 @@
           "id": "q1",
           "answer": "yes"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "N9": {
       "description": "Store C\u2019s Sales vs Store B",
@@ -355,7 +362,8 @@
           "id": "q1",
           "answer": "100"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "N10": {
       "description": "SAT Score vs. Income",
@@ -391,7 +399,8 @@
           "id": "q1",
           "answer": "yes"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "N11": {
       "description": "Sleep vs. Time Outdoors",
@@ -431,7 +440,8 @@
           "id": "q1",
           "answer": "y_positive"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "N12": {
       "description": "Grocery Store Market Share",
@@ -471,7 +481,8 @@
           "id": "q1",
           "answer": "b_second"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "N13": {
       "description": "Education Level of Residents",
@@ -511,7 +522,8 @@
           "id": "q1",
           "answer": "more_than_60"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "N14": {
       "description": "Lego ownership by state",
@@ -527,9 +539,18 @@
           "location": "sidebar",
           "prompt": "Which of the following states has the highest number of Lego owners?",
           "options": [
-            { "label": "AZ", "value": "AZ" },
-            { "label": "NV", "value": "NV" },
-            { "label": "TN", "value": "TN" },
+            {
+              "label": "AZ",
+              "value": "AZ"
+            },
+            {
+              "label": "NV",
+              "value": "NV"
+            },
+            {
+              "label": "TN",
+              "value": "TN"
+            },
             {
               "label": "Cannot be inferred / inadequate information",
               "value": "X"
@@ -537,7 +558,13 @@
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "AZ" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "AZ"
+        }
+      ],
+      "withSidebar": true
     },
     "N15": {
       "description": "Restaurant R popularity worldwide",
@@ -572,7 +599,13 @@
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "B" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "B"
+        }
+      ],
+      "withSidebar": true
     },
     "T1": {
       "description": "Sunny Days in Summer vs Winter",
@@ -608,7 +641,8 @@
           "id": "q1",
           "answer": "inadequate"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T2": {
       "description": "Windy Days in Summer vs Winter",
@@ -644,7 +678,8 @@
           "id": "q1",
           "answer": "inadequate"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T3": {
       "description": "Concert Ticket Sales",
@@ -684,7 +719,8 @@
           "id": "q1",
           "answer": "80"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T4": {
       "description": "Water Bottle Price Comparison",
@@ -724,7 +760,8 @@
           "id": "q1",
           "answer": "90"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T5": {
       "description": "Visitors at Train Stations",
@@ -764,7 +801,8 @@
           "id": "q1",
           "answer": "33"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T6": {
       "description": "Bacteria Trend 1970\u20132020",
@@ -804,7 +842,8 @@
           "id": "q1",
           "answer": "inadequate"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T8": {
       "description": "Visitors at Amusement Parks",
@@ -844,7 +883,8 @@
           "id": "q1",
           "answer": "33"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T9": {
       "description": "Brand C Sales vs B",
@@ -884,7 +924,8 @@
           "id": "q1",
           "answer": "60"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T10": {
       "description": "Species Prevalence by State",
@@ -920,7 +961,8 @@
           "id": "q1",
           "answer": "false"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T11": {
       "description": "Risk of Bacteria Z in WY vs ND",
@@ -956,7 +998,8 @@
           "id": "q1",
           "answer": "true"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T12": {
       "description": "Tree Planting Trend 1960\u20131980",
@@ -992,7 +1035,8 @@
           "id": "q1",
           "answer": "false"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T13": {
       "description": "Bookstore Trend 2000\u20132020",
@@ -1028,7 +1072,8 @@
           "id": "q1",
           "answer": "increasing"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T14": {
       "description": "Movie Release Trend",
@@ -1068,7 +1113,8 @@
           "id": "q1",
           "answer": "1992_1994"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T15": {
       "description": "Sales Trend for Item X (Apr to Jul)",
@@ -1104,7 +1150,8 @@
           "id": "q1",
           "answer": "inc_dec"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T16": {
       "description": "Apple Harvest Trend",
@@ -1140,7 +1187,8 @@
           "id": "q1",
           "answer": "dec_inc"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T17": {
       "description": "Sunlight vs Growth for Plant P",
@@ -1180,7 +1228,8 @@
           "id": "q1",
           "answer": "decreases"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T18": {
       "description": "Vacation Days vs Satisfaction",
@@ -1220,7 +1269,8 @@
           "id": "q1",
           "answer": "vac_D_gt_A"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T19": {
       "description": "Weight vs Survival Rate for Z",
@@ -1260,7 +1310,8 @@
           "id": "q1",
           "answer": "increases"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T20": {
       "description": "Prevalence of Plant Y Globally",
@@ -1300,9 +1351,9 @@
           "id": "q1",
           "answer": "C_lt_D"
         }
-      ]
+      ],
+      "withSidebar": true
     },
-
     "T21": {
       "description": "Bar chart of rainfall over 14 days",
       "type": "image",
@@ -1341,7 +1392,8 @@
           "id": "q21",
           "answer": "beginning_more"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T22": {
       "description": "Line chart of airport visitors from 2000 to 2005",
@@ -1377,7 +1429,8 @@
           "id": "q22",
           "answer": "false"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T23": {
       "description": "Area chart of monthly shirt sales in 2021",
@@ -1413,7 +1466,8 @@
           "id": "q23",
           "answer": "no"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T25": {
       "description": "Market share of shampoo brands",
@@ -1453,7 +1507,8 @@
           "id": "q1",
           "answer": "higher_2001"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T26": {
       "description": "Votes for candidates",
@@ -1493,7 +1548,8 @@
           "id": "q1",
           "answer": "80"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T27": {
       "description": "GDP growth trend",
@@ -1529,7 +1585,8 @@
           "id": "q1",
           "answer": "true"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T28": {
       "description": "Cell phone brand market share",
@@ -1565,7 +1622,8 @@
           "id": "q1",
           "answer": "cannot"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T29": {
       "description": "Household car ownership",
@@ -1601,7 +1659,8 @@
           "id": "q1",
           "answer": "cannot"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T30": {
       "description": "Precipitation comparison",
@@ -1637,7 +1696,8 @@
           "id": "q1",
           "answer": "cannot"
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "T34": {
       "description": "Board game sales trend analysis",
@@ -1653,7 +1713,10 @@
           "location": "sidebar",
           "prompt": "Company A sells a board game. Assuming today is Jun 01, 2022, which of the following statements is true?",
           "options": [
-            { "label": "2004 has more copies sold than 2003.", "value": "A" },
+            {
+              "label": "2004 has more copies sold than 2003.",
+              "value": "A"
+            },
             {
               "label": "Copies sold per year fell sharply in 2022.",
               "value": "B"
@@ -1662,11 +1725,20 @@
               "label": "Copies sold per year has been strictly increasing since 2003.",
               "value": "C"
             },
-            { "label": "None of the above.", "value": "D" }
+            {
+              "label": "None of the above.",
+              "value": "D"
+            }
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "D"
+        }
+      ],
+      "withSidebar": true
     },
     "T35": {
       "description": "Vegetable planting trends by three farms",
@@ -1694,11 +1766,20 @@
               "label": "All three farms planted about the same amount of vegetables in 2022 as they did in the previous years.",
               "value": "C"
             },
-            { "label": "None of the above.", "value": "D" }
+            {
+              "label": "None of the above.",
+              "value": "D"
+            }
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "D"
+        }
+      ],
+      "withSidebar": true
     },
     "T36": {
       "description": "Car counts in parking lots",
@@ -1714,8 +1795,14 @@
           "location": "sidebar",
           "prompt": "Assuming today is Apr 10, 2022, did the total number of cars parked in the three parking lots fall sharply in 2022?",
           "options": [
-            { "label": "Yes", "value": "A" },
-            { "label": "No", "value": "B" },
+            {
+              "label": "Yes",
+              "value": "A"
+            },
+            {
+              "label": "No",
+              "value": "B"
+            },
             {
               "label": "Cannot be inferred / inadequate information",
               "value": "C"
@@ -1723,7 +1810,13 @@
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "C" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "C"
+        }
+      ],
+      "withSidebar": true
     },
     "T37": {
       "description": "Hiring trend in company Z",
@@ -1751,11 +1844,20 @@
               "label": "The total number of employees in company Z decreased in 2022.",
               "value": "C"
             },
-            { "label": "None of the above.", "value": "D" }
+            {
+              "label": "None of the above.",
+              "value": "D"
+            }
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "D"
+        }
+      ],
+      "withSidebar": true
     },
     "T38": {
       "description": "Work hours and happiness correlation",
@@ -1771,8 +1873,14 @@
           "location": "sidebar",
           "prompt": "True or False: Within each town, is there a negative relationship between average daily working hours and happiness score?",
           "options": [
-            { "label": "True", "value": "A" },
-            { "label": "False", "value": "B" },
+            {
+              "label": "True",
+              "value": "A"
+            },
+            {
+              "label": "False",
+              "value": "B"
+            },
             {
               "label": "Cannot be inferred / inadequate information",
               "value": "C"
@@ -1780,7 +1888,13 @@
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "B" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "B"
+        }
+      ],
+      "withSidebar": true
     },
     "T39": {
       "description": "Work hours and salary correlation",
@@ -1796,8 +1910,14 @@
           "location": "sidebar",
           "prompt": "Within each city, is there a positive relationship between salary and average daily working hours?",
           "options": [
-            { "label": "Yes", "value": "A" },
-            { "label": "No", "value": "B" },
+            {
+              "label": "Yes",
+              "value": "A"
+            },
+            {
+              "label": "No",
+              "value": "B"
+            },
             {
               "label": "Cannot be inferred / inadequate information",
               "value": "C"
@@ -1805,7 +1925,13 @@
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "C" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "C"
+        }
+      ],
+      "withSidebar": true
     },
     "T40": {
       "description": "Weight analysis of species C",
@@ -1821,8 +1947,14 @@
           "location": "sidebar",
           "prompt": "Does any members of species C weigh more than 5 lbs?",
           "options": [
-            { "label": "Yes", "value": "A" },
-            { "label": "No", "value": "B" },
+            {
+              "label": "Yes",
+              "value": "A"
+            },
+            {
+              "label": "No",
+              "value": "B"
+            },
             {
               "label": "Cannot be inferred / inadequate information",
               "value": "C"
@@ -1830,7 +1962,13 @@
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "C" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "C"
+        }
+      ],
+      "withSidebar": true
     },
     "T42": {
       "description": "Infection rates per 1,000",
@@ -1846,9 +1984,18 @@
           "location": "sidebar",
           "prompt": "Which region had the highest number of confirmed cases per 1,000 people?",
           "options": [
-            { "label": "A", "value": "A" },
-            { "label": "B", "value": "B" },
-            { "label": "C", "value": "C" },
+            {
+              "label": "A",
+              "value": "A"
+            },
+            {
+              "label": "B",
+              "value": "B"
+            },
+            {
+              "label": "C",
+              "value": "C"
+            },
             {
               "label": "Cannot be inferred / inadequate information",
               "value": "D"
@@ -1856,7 +2003,13 @@
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "D"
+        }
+      ],
+      "withSidebar": true
     },
     "T43": {
       "description": "Sales trend for gift shop A",
@@ -1872,9 +2025,18 @@
           "location": "sidebar",
           "prompt": "What is the trend of sales in gift shop A from Jan to Dec?",
           "options": [
-            { "label": "Generally increasing", "value": "A" },
-            { "label": "Generally decreasing", "value": "B" },
-            { "label": "Generally constant", "value": "C" },
+            {
+              "label": "Generally increasing",
+              "value": "A"
+            },
+            {
+              "label": "Generally decreasing",
+              "value": "B"
+            },
+            {
+              "label": "Generally constant",
+              "value": "C"
+            },
             {
               "label": "Cannot be inferred / inadequate information",
               "value": "D"
@@ -1882,7 +2044,13 @@
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "D"
+        }
+      ],
+      "withSidebar": true
     },
     "T44": {
       "description": "Book price trend in City Z",
@@ -1898,9 +2066,18 @@
           "location": "sidebar",
           "prompt": "What is the trend of the average price of books from 1960 to 2020 in city Z?",
           "options": [
-            { "label": "Generally increasing", "value": "A" },
-            { "label": "Generally decreasing", "value": "B" },
-            { "label": "Generally constant", "value": "C" },
+            {
+              "label": "Generally increasing",
+              "value": "A"
+            },
+            {
+              "label": "Generally decreasing",
+              "value": "B"
+            },
+            {
+              "label": "Generally constant",
+              "value": "C"
+            },
             {
               "label": "Cannot be inferred / inadequate information",
               "value": "D"
@@ -1908,7 +2085,13 @@
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "D"
+        }
+      ],
+      "withSidebar": true
     },
     "T45": {
       "description": "Ice cream brand voting across states",
@@ -1936,11 +2119,20 @@
               "label": "C will be the most popular brand of ice cream.",
               "value": "C"
             },
-            { "label": "Too early to say.", "value": "D" }
+            {
+              "label": "Too early to say.",
+              "value": "D"
+            }
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "D"
+        }
+      ],
+      "withSidebar": true
     },
     "T46": {
       "description": "Water sales vs temperature",
@@ -1954,10 +2146,16 @@
           "type": "radio",
           "required": true,
           "location": "sidebar",
-          "prompt": "True or False: If the temperature gets higher than 100°F, then the bottles of water sold must be greater than 750.",
+          "prompt": "True or False: If the temperature gets higher than 100\u00b0F, then the bottles of water sold must be greater than 750.",
           "options": [
-            { "label": "True", "value": "A" },
-            { "label": "False", "value": "B" },
+            {
+              "label": "True",
+              "value": "A"
+            },
+            {
+              "label": "False",
+              "value": "B"
+            },
             {
               "label": "Cannot be inferred / inadequate information",
               "value": "C"
@@ -1965,7 +2163,13 @@
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "B" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "B"
+        }
+      ],
+      "withSidebar": true
     },
     "T47": {
       "description": "Reading preferences by time of day",
@@ -1981,8 +2185,14 @@
           "location": "sidebar",
           "prompt": "True or False: More than half of the people in county Z prefer reading at night.",
           "options": [
-            { "label": "True", "value": "A" },
-            { "label": "False", "value": "B" },
+            {
+              "label": "True",
+              "value": "A"
+            },
+            {
+              "label": "False",
+              "value": "B"
+            },
             {
               "label": "Cannot be inferred / inadequate information",
               "value": "C"
@@ -1990,7 +2200,13 @@
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "B" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "B"
+        }
+      ],
+      "withSidebar": true
     },
     "T48": {
       "description": "Voting on hiking trails",
@@ -2018,11 +2234,20 @@
               "label": "Hiking trail C will be voted as the favorite trail.",
               "value": "C"
             },
-            { "label": "Too early to say.", "value": "D" }
+            {
+              "label": "Too early to say.",
+              "value": "D"
+            }
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "D" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "D"
+        }
+      ],
+      "withSidebar": true
     },
     "T49": {
       "description": "Average mall customers in Town X",
@@ -2038,14 +2263,32 @@
           "location": "sidebar",
           "prompt": "In town X, what is the approximate average number of customers at mall A from Jan to Mar?",
           "options": [
-            { "label": "200", "value": "A" },
-            { "label": "300", "value": "B" },
-            { "label": "400", "value": "C" },
-            { "label": "500", "value": "D" }
+            {
+              "label": "200",
+              "value": "A"
+            },
+            {
+              "label": "300",
+              "value": "B"
+            },
+            {
+              "label": "400",
+              "value": "C"
+            },
+            {
+              "label": "500",
+              "value": "D"
+            }
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "C" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "C"
+        }
+      ],
+      "withSidebar": true
     },
     "T50": {
       "description": "Average new buildings in City Z",
@@ -2061,14 +2304,32 @@
           "location": "sidebar",
           "prompt": "In city Z, what is the approximate average number of new buildings built from 1950 to 1952?",
           "options": [
-            { "label": "20", "value": "A" },
-            { "label": "30", "value": "B" },
-            { "label": "40", "value": "C" },
-            { "label": "50", "value": "D" }
+            {
+              "label": "20",
+              "value": "A"
+            },
+            {
+              "label": "30",
+              "value": "B"
+            },
+            {
+              "label": "40",
+              "value": "C"
+            },
+            {
+              "label": "50",
+              "value": "D"
+            }
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "C" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "C"
+        }
+      ],
+      "withSidebar": true
     },
     "T52": {
       "description": "Monthly sales trend for store B",
@@ -2084,8 +2345,14 @@
           "location": "sidebar",
           "prompt": "True or False: Monthly sales for store B is increasing from Jan to Dec.",
           "options": [
-            { "label": "True", "value": "A" },
-            { "label": "False", "value": "B" },
+            {
+              "label": "True",
+              "value": "A"
+            },
+            {
+              "label": "False",
+              "value": "B"
+            },
             {
               "label": "Cannot be inferred / inadequate information",
               "value": "C"
@@ -2093,10 +2360,15 @@
           ]
         }
       ],
-      "correctAnswer": [{ "id": "q1", "answer": "B" }]
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "B"
+        }
+      ],
+      "withSidebar": true
     }
   },
-
   "sequences": {
     "full": {
       "id": "calviAllQuestions",

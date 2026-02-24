@@ -1,22 +1,21 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Video as a Stimulus",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-14",
+    "date": "2026-02-23",
     "description": "A simple demo of using video as a stimulus. Data is collected via a numeric response field.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-video/assets/help.md",
+    "helpTextPath": "demo-video/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -48,6 +47,13 @@
       "withTimeline": true,
       "response": []
     },
+    "vimeoExternal": {
+      "type": "video",
+      "path": "https://vimeo.com/76979871",
+      "forceCompletion": false,
+      "withTimeline": true,
+      "response": []
+    },
     "missingExternal": {
       "type": "video",
       "path": "https://www.youtube.com/watch",
@@ -62,6 +68,7 @@
       "internal",
       "missingInternal",
       "external",
+      "vimeoExternal",
       "missingExternal"
     ]
   }
