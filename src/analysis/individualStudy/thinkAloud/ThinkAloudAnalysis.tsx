@@ -93,7 +93,7 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
 
   const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
   const { studyId, trialId } = useParams();
-  const currentTrial = useMemo(() => (trialId ? decodeURIComponent(trialId) : ''), [trialId]);
+  const currentTrial = useMemo(() => trialId || '', [trialId]);
 
   const [currentShownTranscription, setCurrentShownTranscription] = useState(0);
 
