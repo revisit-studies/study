@@ -5,5 +5,4 @@ This is an example study to show how to embed html elements into the study page.
  * [bar-chart.html](https://github.com/revisit-studies/study/blob/main/public/demo-html/assets/bar-chart.html)
 
 ## Relevant documentation:
-
  * [Designing HTML Stimuli](https://revisit.dev/docs/designing-studies/html-stimulus/)

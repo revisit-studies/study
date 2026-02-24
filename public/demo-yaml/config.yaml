@@ -4,7 +4,7 @@ studyMetadata:
   version: "pilot"
   authors:
     - "The reVISit Team"
-  date: "2023-04-14"
+  date: "2026-02-23"
   description: "A copy of the demo-html study, but using a YAML config file instead of JSON."
   organizations:
     - "University of Utah"

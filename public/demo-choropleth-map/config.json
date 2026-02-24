@@ -6,12 +6,11 @@
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-14",
+    "date": "2026-02-23",
     "description": "An example study that implements provenance tracking with Trrack on a choropleth map.",
     "organizations": [
       "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "WPI"
     ]
   },
   "uiConfig": {

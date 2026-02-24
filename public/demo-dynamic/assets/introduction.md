@@ -11,6 +11,5 @@ The difficulty of the next question will adjust based on your correctness on the
  * [The function determining the dynamic order based on previous responses](https://github.com/revisit-studies/study/blob/main/src/public/demo-dynamic/assets/dynamic.tsx)
 
 ## Relevant documentation:
-
  * [Dynamic Blocks](https://revisit.dev/docs/designing-studies/dynamic-blocks/)
  * [Study Sequences](https://revisit.dev/docs/designing-studies/study-sequences/)

@@ -6,7 +6,7 @@
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-14",
+    "date": "2026-02-23",
     "description": "This is a test for audio",
     "organizations": [
       "University of Utah",
@@ -14,7 +14,7 @@
     ]
   },
   "uiConfig": {
-    "contactEmail": "cnobre@cs.toronto.edu",
+    "contactEmail": "contact@revisit.dev",
     "helpTextPath": "example-brush-interactions/assets/tutorial.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,

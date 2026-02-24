@@ -6,5 +6,4 @@ In this example, the HTML stimulus communicates with the reVISit study framework
  * [bar-chart-interaction.html](https://github.com/revisit-studies/study/blob/main/public/demo-html-input/assets/bar-chart-interaction.html)
 
 ## Relevant documentation:
-
  * [Designing HTML Stimuli](https://revisit.dev/docs/designing-studies/html-stimulus/)
