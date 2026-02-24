@@ -2,13 +2,22 @@
 
 This demo study shows how to use an LLM-based chatbot in a reVISit study. Participants can ask questions about a clustered heatmap, and the chatbot responds with streaming text. When a question needs exact data values or visual details, the chatbot can request the dataset or the chart image through tools.
 
+All of the input and output is tracked by trrack, so you can analyze how participants interact with the chatbot and what information they request. You could also combine this with audio or screen capture to run a remote unmoderated study.
+
 Below we describe what makes the chatbot good for studies, the core features, and how to customize it.
+
+## Relevant Files:
+
+https://github.com/revisit-studies/study/blob/main/public/example-llm-chatbot/config.json
+
+* [The Config](https://github.com/revisit-studies/study/blob/main/public/example-llm-chatbot/config.json)
+* [The React Files](https://github.com/revisit-studies/study/tree/main/src/public/example-llm-chatbot)
 
 ## Features
 
 This study uses the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses).
 
-### Conversation memory
+### Conversation Memory
 
 Conversation memory is how the model stays aware of prior turns. In the Responses API, you can link turns by sending `previous_response_id`.
 
@@ -16,7 +25,7 @@ In this chatbot, each request includes `previous_response_id` from the prior res
 
 Learn more: [Conversation state](https://developers.openai.com/api/docs/guides/conversation-state/)
 
-### Streaming responses
+### Streaming Responses
 
 Streaming returns the reply in small chunks as it is generated. This reduces perceived latency and makes the interface feel responsive.
 
@@ -24,7 +33,7 @@ To enable this, we set `stream: true` for the main answer request and render tok
 
 Learn more: [Streaming API responses](https://developers.openai.com/api/docs/guides/streaming-responses/)
 
-### Tool calls: Send the chart image and dataset only when needed
+### Tool Calls: Send the chart image and dataset only when needed
 
 Tool calling lets the model ask the app to run functions (tools) and then use the results in its answer.
 
@@ -36,14 +45,14 @@ To call tools, we use a two-step request flow. A short planning call asks whethe
 
 Learn more: [Function calling](https://platform.openai.com/docs/guides/function-calling)
 
-### Provenance and results are recorded
+### Provenance and Results are Recorded
 
 * Interaction provenance is tracked by Trrack and visible in the participant reply interface.
 * You can download the full chat history as JSON or CSV.
 
 ## Usage / Customization
 
-### Set up the API key
+### Set up the API Key
 
 We use a proxy server to keep API keys off the client. Use the provided proxy:
 [https://github.com/visdesignlab/openai-api-proxy](https://github.com/visdesignlab/openai-api-proxy)
@@ -55,7 +64,7 @@ In `.env`, set `VITE_OPENAI_API_URL`:
 * Production: `VITE_OPENAI_API_URL=https://apps.vdl.sci.utah.edu/openai-proxy`
 
 
-### Request payloads (what we send to the API)
+### Request Payloads (what we send to the API)
 
 The Responses API expects a JSON payload, which is the request body sent in `fetch(..., { body: JSON.stringify({ ... }) })` in `ChatInterface.tsx`. In other words, every field inside that JSON object (such as `model`, `instructions`, `tools`, `input`, and so on) is a payload parameter. In this demo, the payload shape is designed to be easy to reason about and to keep data transfer minimal.
 
@@ -82,7 +91,7 @@ There are two requests in this chatbot: a small tool-selection call and a stream
 
 This layout keeps the payload explicit and predictable: user text is always `input_text`, tool results are always `function_call_output`, and images are passed as `input_image` only when needed.
 
-### Customize the chatbot
+### Customize the Chatbot
 
 All key settings live in `ChatInterface.tsx`. These are the most relevant parameters:
 

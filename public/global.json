@@ -20,9 +20,9 @@
     "demo-style",
     "demo-yaml",
     "demo-ranking-widget",
-    "demo-llm-chatbot",
     "example-brush-interactions",
     "example-cleveland",
+    "example-llm-chatbot",
     "example-mvnv",
     "example-VLAT-adaptive",
     "example-VLAT-full-randomized",
@@ -114,8 +114,8 @@
     "demo-ranking-widget": {
       "path": "demo-ranking-widget/config.json"
     },
-    "demo-llm-chatbot": {
-      "path": "demo-llm-chatbot/config.json"
+    "example-llm-chatbot": {
+      "path": "example-llm-chatbot/config.json"
     },
     "example-brush-interactions": {
       "path": "example-brush-interactions/config.json"

@@ -26,12 +26,12 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "demo-llm-chatbot/assets/introduction.md",
+      "path": "example-llm-chatbot/assets/introduction.md",
       "response": []
     },
     "chatbot": {
       "type": "react-component",
-      "path": "demo-llm-chatbot/assets/LLMInterface.tsx",
+      "path": "example-llm-chatbot/assets/LLMInterface.tsx",
       "response": []
     }
   },
