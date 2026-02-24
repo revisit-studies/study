@@ -114,7 +114,7 @@
     },
     "example-llm-chatbot": {
       "path": "example-llm-chatbot/config.json"
-   
+    },
     "example-brush-interactions": {
       "path": "example-brush-interactions/config.json"
     },
