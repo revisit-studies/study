@@ -8,6 +8,8 @@ export class LocalStorageEngine extends StorageEngine {
     name: 'revisit',
   });
 
+  protected participantStore = this.studyDatabase;
+
   constructor(testing: boolean = false) {
     super('localStorage', testing);
   }

@@ -11,6 +11,7 @@ import { hash } from '../engines/utils';
 import { Sequence } from '../../store/types';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { StorageEngine } from '../engines/types';
+import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 // import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
 
 const studyId = 'test-study';
@@ -21,6 +22,59 @@ const participantMetadata: ParticipantMetadata = {
   resolution: { width: 1920, height: 1080 },
   language: 'en-US',
   ip: '122.122.122.122',
+};
+
+const conditionalLatinSquareConfig: StudyConfig = {
+  $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.3.2/src/parser/StudyConfigSchema.json',
+  studyMetadata: {
+    title: 'Conditional Latin Square Test',
+    version: '1.0.0',
+    authors: ['Test Author'],
+    description: 'A study config for testing conditional latin square balancing.',
+    date: '2026-02-23',
+    organizations: ['Test Organization'],
+  },
+  uiConfig: {
+    contactEmail: 'test@test.com',
+    logoPath: '',
+    withProgressBar: true,
+    withSidebar: true,
+    numSequences: 1000,
+  },
+  components: {
+    intro: {
+      type: 'questionnaire',
+      response: [],
+    },
+    colorA: {
+      type: 'questionnaire',
+      response: [],
+    },
+    colorB: {
+      type: 'questionnaire',
+      response: [],
+    },
+    colorC: {
+      type: 'questionnaire',
+      response: [],
+    },
+    colorD: {
+      type: 'questionnaire',
+      response: [],
+    },
+  },
+  sequence: {
+    order: 'fixed',
+    components: [
+      'intro',
+      {
+        id: 'color',
+        conditional: true,
+        order: 'latinSquare',
+        components: ['colorA', 'colorB', 'colorC', 'colorD'],
+      },
+    ],
+  },
 };
 
 describe.each([
@@ -119,6 +173,43 @@ describe.each([
     const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantSession.participantId);
     expect(sequenceAssignment).toBeDefined();
     expect(sequenceAssignment!.conditions).toEqual(['color']);
+  });
+
+  test('initializeParticipantSession balances conditional latin square sequence assignments over 1000 pulls', async () => {
+    const latinSquareSequenceArray = generateSequenceArray(conditionalLatinSquareConfig);
+    await storageEngine.setSequenceArray(latinSquareSequenceArray);
+
+    const components = ['colorA', 'colorB', 'colorC', 'colorD'];
+    const countsByPosition = Array.from({ length: components.length }, () => Object.fromEntries(
+      components.map((component) => [component, 0]),
+    ) as Record<string, number>);
+
+    for (let i = 0; i < 200; i += 1) {
+      // Sequential awaits are intentional here because each participant assignment depends on
+      // the storage engine state from previous iterations.
+      // eslint-disable-next-line no-await-in-loop
+      const participantSession = await storageEngine.initializeParticipantSession(
+        { condition: 'color' },
+        conditionalLatinSquareConfig,
+        participantMetadata,
+      );
+      const filteredSequence = filterSequenceByCondition(participantSession.sequence, 'color');
+      const colorBlock = filteredSequence.components[1] as Sequence;
+      const assignedOrder = colorBlock.components as string[];
+
+      assignedOrder.forEach((component, position) => {
+        countsByPosition[position][component] += 1;
+      });
+
+      // eslint-disable-next-line no-await-in-loop
+      await storageEngine.clearCurrentParticipantId();
+    }
+
+    countsByPosition.forEach((positionCounts) => {
+      components.forEach((component) => {
+        expect(positionCounts[component]).toBe(50);
+      });
+    });
   });
 
   test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
