@@ -10,7 +10,9 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 
 export function ResolutionWarning() {
   const studyConfig = useStudyConfig();
-  const { minWidth, minHeight } = studyConfig.studyRules?.display ?? {};
+  const {
+    minWidth, minHeight, maxWidth, maxHeight,
+  } = studyConfig.studyRules?.display ?? {};
 
   const [showWarning, setShowWarning] = useState(false);
   const [isRejected, setIsRejected] = useState(false);
@@ -25,14 +27,18 @@ export function ResolutionWarning() {
 
   useEffect(() => {
     const handleResize = () => {
-      setDetectedSize({ width: window.innerWidth, height: window.innerHeight });
+      const currentWidth = window.innerWidth;
+      const currentHeight = window.innerHeight;
+      setDetectedSize({ width: currentWidth, height: currentHeight });
       if (minWidth === undefined || minHeight === undefined) {
         return;
       }
 
-      const widthTooSmall = window.innerWidth < minWidth;
-      const heightTooSmall = window.innerHeight < minHeight;
-      const needsResize = widthTooSmall || heightTooSmall;
+      const widthTooSmall = currentWidth < minWidth;
+      const heightTooSmall = currentHeight < minHeight;
+      const widthTooLarge = maxWidth !== undefined && currentWidth > maxWidth;
+      const heightTooLarge = maxHeight !== undefined && currentHeight > maxHeight;
+      const needsResize = widthTooSmall || heightTooSmall || widthTooLarge || heightTooLarge;
 
       const startCountdown = () => {
         setTimeLeft(60);
@@ -52,7 +58,7 @@ export function ResolutionWarning() {
               if (storageEngine && !isRejected) {
                 setIsRejected(true);
                 setIsTimedOut(true);
-                storageEngine.rejectCurrentParticipant('Screen resolution too small')
+                storageEngine.rejectCurrentParticipant('Screen resolution requirements not met')
                   .catch(() => {
                     console.error('Failed to reject participant who failed training');
                   });
@@ -86,7 +92,7 @@ export function ResolutionWarning() {
         clearInterval(countdownIntervalRef.current);
       }
     };
-  }, [minWidth, minHeight, storageEngine, studyId, navigate, isRejected]);
+  }, [minWidth, minHeight, maxWidth, maxHeight, storageEngine, studyId, navigate, isRejected]);
 
   if (!showWarning) {
     return null;
@@ -106,14 +112,19 @@ export function ResolutionWarning() {
             </>
           ) : (
             <>
-              Your screen resolution is below the minimum requirement:
+              Your screen resolution is outside the allowed range:
               <br />
-              {minWidth !== undefined && ` Width: ${minWidth}px`}
-              {minHeight !== undefined && ` Height: ${minHeight}px`}
+              <br />
+              {minWidth !== undefined && ` Minimum Width: ${minWidth}px`}
+              {minHeight !== undefined && ` Minimum Height: ${minHeight}px`}
+              <br />
+              {maxWidth !== undefined && ` Maximum Width: ${maxWidth}px`}
+              {maxHeight !== undefined && ` Maximum Height: ${maxHeight}px`}
               <br />
               {`Detected: Width: ${detectedSize.width}px Height: ${detectedSize.height}px`}
               <br />
-              Please resize your browser window to the minimum required size within
+              <br />
+              Please resize your browser window to the allowed range within
               {' '}
               {timeLeft}
               {' '}
