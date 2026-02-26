@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "UMUX-Lite: Usability Metric for User Experience (Short Version, 2 Items)",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "Example study using the umux-lite library.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": true
+  },
+  "importedLibraries": [
+    "umux-lite"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-umux-lite/assets/umux-lite.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$umux-lite.components.umux-lite"
+    ]
+  }
+}

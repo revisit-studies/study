@@ -1,0 +1,78 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "React Stimulus with Trrack library",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "A demo of the stroop test using a React stimulus with provenance tracking.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-react-trrack/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true
+  },
+  "baseComponents": {
+    "trial": {
+      "description": "identify the text color in a Stroop trial",
+      "instruction": "In this experiment you are required to type the color of the word, not what the word says. For example, for the blue-colored word-'RED', you should type \"BLUE.\"",
+      "type": "react-component",
+      "path": "demo-react-trrack/assets/DemoReactTrrack.tsx",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "stroopAnswer",
+          "prompt": "Your Stroop color response",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-react-trrack/assets/introduction.md",
+      "response": []
+    },
+    "trial-red-blue": {
+      "baseComponent": "trial",
+      "meta": {
+        "seq": 1
+      },
+      "parameters": {
+        "taskid": "stroopAnswer",
+        "displayText": "RED",
+        "textColor": "blue"
+      }
+    },
+    "trial-green-pink": {
+      "baseComponent": "trial",
+      "meta": {
+        "seq": 1
+      },
+      "parameters": {
+        "taskid": "stroopAnswer",
+        "displayText": "GREEN",
+        "textColor": "pink"
+      }
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "trial-red-blue",
+      "trial-green-pink"
+    ]
+  }
+}
