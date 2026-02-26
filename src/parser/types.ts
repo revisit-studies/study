@@ -6,9 +6,9 @@ export type { StoredAnswer, ParticipantMetadata } from '../store/types';
  * This list is displayed on the landing page when running the app.
 */
 export interface GlobalConfig {
-  /** A required json schema property. This should point to the github link for the version of the schema you would like. See examples in the public folder for more information */
+  /** A required json schema property. This should point to the GitHub link for the version of the schema you would like. See examples in the public folder for more information. */
   $schema: string;
-  /** A required property that specifies the options for the configList property.   */
+  /** A required property that specifies the options for the configList property. */
   configs: {
     /** The key is used to identify the study config file. This key is used in the configList property. */
     [key: string]: {
@@ -26,23 +26,22 @@ export interface GlobalConfig {
  * The StudyMetadata is used to describe certain properties of a study.
  * Some of this data is displayed on the landing page when running the app, such as the title and description.
  * Below is an example of a StudyMetadata entry in your study configuration file:
-
-```js
-"studyMetadata" : {
-  "title": "My New Study",
-  "version": "pilot",
-  "authors": [
-    "Jane Doe",
-    "John Doe"
-  ],
-  "date": "2026-02-23",
-  "description": "This study is meant to test your ability.",
-  "organizations": [
-    "The reVISit Team",
-    "The Other Team"
-  ]
-}
-```
+ * ```json
+ * "studyMetadata" : {
+ *   "title": "My New Study",
+ *   "version": "pilot",
+ *   "authors": [
+ *     "Jane Doe",
+ *     "John Doe"
+ *   ],
+ *   "date": "2026-02-23",
+ *   "description": "This study is meant to test your ability.",
+ *   "organizations": [
+ *     "The reVISit Team",
+ *     "The Other Team"
+ *   ]
+ * }
+ * ```
 */
 export interface StudyMetadata {
   /** The title of your study, shown on the landing page. */
@@ -66,7 +65,7 @@ export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus
 export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
 
 /**
- * UserBrowser is used to define a mininum browser requirement for the study to run.
+ * UserBrowser is used to define a minimum browser requirement for the study to run.
  */
 export type UserBrowser = {
   /** Name of the browser. e.g. chrome, firefox, safari. */
@@ -79,7 +78,7 @@ export type UserBrowser = {
 export type BrowserRules = {
   /** List of browser types and their minimum version to support. */
   allowed: UserBrowser[];
-  /** Optional message to be displayed when browser criterias are not met. */
+  /** Optional message to be displayed when browser criteria are not met. */
   blockedMessage?: string;
 };
 
@@ -89,7 +88,7 @@ export type UserDevice = 'desktop' | 'tablet' | 'mobile';
 export type DeviceRules = {
   /** List of device types to support. */
   allowed: UserDevice[];
-  /** Optional message to be displayed when device criterias are not met. */
+  /** Optional message to be displayed when device criteria are not met. */
   blockedMessage?: string;
 }
 
@@ -99,7 +98,7 @@ export type UserInput = 'mouse' | 'touch'
 export type InputRules = {
   /** List of inputs to support. */
   allowed: UserInput[];
-  /** Optional message to be displayed when input criterias are not met. */
+  /** Optional message to be displayed when input criteria are not met. */
   blockedMessage?: string;
 }
 
@@ -115,42 +114,39 @@ export type DisplayRules = {
  * The StudyRules are used to define a study's constraints to determine whether a participant can take the study.
  * If the criteria are not met, a warning message will be displayed.
  * Below is an example of a StudyRules entry in your study configuration file:
-
-```js
-{
-  "studyRules": {
-    "display": {
-      "minHeight": 400,
-      "minWidth": 800
-    },
-    "browsers": {
-      "allowed": [
-        {
-          "name": "chrome",
-          "minVersion": 100
-        },
-        {
-          "name": "firefox",
-          "minVersion": 100
-        },
-        {
-          "name": "safari",
-          "minVersion": 10
-        }
-      ],
-      "blockedMessage": "This study can only run in chrome, firefox, or safari. (<-- if blockedMesage is not set, a default message is displayed)"
-    },
-    "devices": {
-      "allowed": ["tablet", "desktop", "mobile"],
-      "blockedMessage": "... (<-- if blockedMesage is not set, a default message is displayed)"
-    },
-    "inputs": {
-      "allowed": ["touch", "mouse"],
-      "blockedMessage": "... (<-- if blockedMesage is not set, a default message is displayed)"
-    }
-  }
-}
-```
+ * ```json
+ * {
+ *   "studyRules": {
+ *     "display": {
+ *       "minHeight": 400,
+ *       "minWidth": 800
+ *     },
+ *     "browsers": {
+ *       "allowed": [
+ *         {
+ *           "name": "chrome",
+ *           "minVersion": 100
+ *         },
+ *         {
+ *           "name": "firefox",
+ *           "minVersion": 100
+ *         },
+ *         {
+ *           "name": "safari",
+ *           "minVersion": 10
+ *         }
+ *       ],
+ *       "blockedMessage": "This study can only run in chrome, firefox, or safari."
+ *     },
+ *     "devices": {
+ *       "allowed": ["tablet", "desktop", "mobile"]
+ *     },
+ *     "inputs": {
+ *       "allowed": ["touch", "mouse"]
+ *     }
+ *   }
+ * }
+ * ```
  */
 export interface StudyRules {
   /** Display size constraints */
@@ -218,23 +214,23 @@ export type Styles = {
 /**
  * The UIConfig is used to configure the UI of the app.
  * This includes the logo, contact email, and whether to show a progress bar.
- * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration (note, there are optional fields that are not shown here):
-```js
-uiConfig:{
-  "contactEmail": "contact@revisit.dev",
-  "helpTextPath": "<study-name>/assets/help.md",
-  "logoPath": "<study-name>/assets/logo.jpg",
-  "withProgressBar": true,
-  "autoDownloadStudy": true
-  "autoDownloadTime": 5000,
-  "studyEndMsg": "Thank you for completing this study. You're the best!",
-  "withSidebar": true,
-  "windowEventDebounceTime": 500,
-  "urlParticipantIdParam": "PROLIFIC_ID",
-  "numSequences": 500
-}
-```
-In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)
+ * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the `uiConfig` would look in your study configuration (note, there are optional fields that are not shown here):
+ * ```json
+ * uiConfig:{
+ *   "logoPath": "<study-name>/assets/logo.jpg",
+ *   "contactEmail": "contact@revisit.dev",
+ *   "withProgressBar": true,
+ *   "withSidebar": true,
+ *   "helpTextPath": "<study-name>/assets/help.md",
+ *   "autoDownloadStudy": true,
+ *   "autoDownloadTime": 5000,
+ *   "studyEndMsg": "Thank you for completing this study. You're the best!",
+ *   "windowEventDebounceTime": 500,
+ *   "urlParticipantIdParam": "PROLIFIC_ID",
+ *   "numSequences": 500
+ * }
+ * ```
+ * In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)
  */
 export interface UIConfig {
   // Required fields
@@ -302,7 +298,7 @@ export interface UIConfig {
   numSequences?: number;
   /** If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers. */
   urlParticipantIdParam?: string;
-  /** The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId' */
+  /** The default name field for a participant. Directs reVISit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId' */
   participantNameField?: string;
   /** The path to the external stylesheet file. */
   stylesheetPath?: string;
@@ -320,7 +316,7 @@ export interface NumberOption {
 }
 
 /**
- * The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response.
+ * The StringOption interface is used to define the options for a dropdown, radio, buttons, checkbox, matrix, and ranking response.
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
  */
 export interface StringOption {
@@ -328,7 +324,7 @@ export interface StringOption {
   label: string;
   /** The value stored in the participant's data. Defaults to label. */
   value?: string;
-  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. Applies to responses that use StringOption, including DropdownResponse, RadioResponse, CheckboxResponse, ButtonsResponse, RankingResponse, and MatrixResponse. */
+  /** The description that is displayed when the participant hovers over the option. This does not accept markdown. */
   infoText?: string;
 }
 
@@ -359,11 +355,11 @@ export interface BaseResponse {
   requiredValue?: unknown;
   /** You can provide a required label, which makes it so a participant has to answer with a response that matches label. */
   requiredLabel?: string;
-  /** Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID. */
+  /** Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID. */
   paramCapture?: string;
   /** Controls whether the response is hidden. */
   hidden?: boolean;
-  /** Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig. */
+  /** Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`. */
   withDivider?: boolean;
   /** Renders the response with an option for "I don't know". This counts as a completed answer for the validation. */
   withDontKnow?: boolean;
@@ -371,26 +367,24 @@ export interface BaseResponse {
   stylesheetPath?: string;
   /** You can set styles here, using React CSSProperties, for example: `{"width": 100}` or `{"width": "50%"}` */
   style?: Styles;
-  /** Exclude response from randomization. If present, will override the responseOrder randomization setting in the components. Defaults to false. */
+  /** Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false. */
   excludeFromRandomization?: boolean;
 }
 
 /**
  * The NumericalResponse interface is used to define the properties of a numerical response.
  * NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.
- *
- * Example:
-```js
-{
-  "id": "q-numerical",
-  "prompt": "Numerical example",
-  "location": "aboveStimulus",
-  "type": "numerical",
-  "placeholder": "Enter your age, range from 0 - 120",
-  "max": 120,
-  "min": 0
-}
-```
+ * ```json
+ * {
+ *   "id": "q-numerical",
+ *   "prompt": "Numerical example",
+ *   "location": "aboveStimulus",
+ *   "type": "numerical",
+ *   "placeholder": "Enter your age, range from 0 - 120",
+ *   "max": 120,
+ *   "min": 0
+ * }
+ * ```
  */
 export interface NumericalResponse extends BaseResponse {
   type: 'numerical';
@@ -405,16 +399,15 @@ export interface NumericalResponse extends BaseResponse {
 /**
  * The ShortTextResponse interface is used to define the properties of a short text response.
  * ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.
- *
-```js
-{
-  "id": "q-short-text",
-  "prompt": "Short text example",
-  "location": "aboveStimulus",
-  "type": "shortText",
-  "placeholder": "Enter your answer here"
-}
-```
+ * ```json
+ * {
+ *   "id": "q-short-text",
+ *   "prompt": "Short text example",
+ *   "location": "aboveStimulus",
+ *   "type": "shortText",
+ *   "placeholder": "Enter your answer here"
+ * }
+ * ```
  *
  */
 export interface ShortTextResponse extends BaseResponse {
@@ -426,15 +419,15 @@ export interface ShortTextResponse extends BaseResponse {
 /**
  * The LongTextResponse interface is used to define the properties of a long text response.
  * LongTextResponses render as a text area that accepts any text and can optionally have a placeholder.
-```js
-{
-  "id": "q-name",
-  "prompt": "What is your first name?",
-  "location": "aboveStimulus",
-  "type": "longText",
-  "placeholder": "Please enter your first name"
-}
-```
+ * ```json
+ * {
+ *   "id": "q-name",
+ *   "prompt": "What is your first name?",
+ *   "location": "aboveStimulus",
+ *   "type": "longText",
+ *   "placeholder": "Please enter your first name"
+ * }
+ * ```
  *
  */
 export interface LongTextResponse extends BaseResponse {
@@ -445,26 +438,25 @@ export interface LongTextResponse extends BaseResponse {
 
 /**
  * The LikertResponse interface is used to define the properties of a likert response.
- * LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons.
+ * LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, `"numItems": 5` will render 5 radio buttons, and `"numItems": 7` will render 7 radio buttons.
  * LikertResponses can also have a description, and left and right labels.
  * The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.
  *
  * Example for a five-point Likert Scale:
- *
-```js
-{
-  "id": "q-satisfaction",
-  "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).",
-  "location": "aboveStimulus",
-  "type": "likert",
-  "leftLabel": "Not Enjoyable",
-  "rightLabel": "Very Enjoyable",
-  "labelLocation": "inline",
-  "numItems": 5,
-  "start": 1,
-  "spacing": 1
-}
-```
+ * ```json
+ * {
+ *   "id": "q-satisfaction",
+ *   "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).",
+ *   "location": "aboveStimulus",
+ *   "type": "likert",
+ *   "leftLabel": "Not Enjoyable",
+ *   "rightLabel": "Very Enjoyable",
+ *   "labelLocation": "inline",
+ *   "numItems": 5,
+ *   "start": 1,
+ *   "spacing": 1
+ * }
+ * ```
  */
 export interface LikertResponse extends BaseResponse {
   type: 'likert';
@@ -488,45 +480,44 @@ export interface LikertResponse extends BaseResponse {
  * Answer options are rendered as column headers of the matrix. These can be customized by passing in the custom strings into the answer options. Alternatively, `answerOptions` can be set to one of the following custom strings: 'satisfaction5','satisfaction7', 'likely5', 'likely7'. This will automatically generate the appropriate headers for the matrix.
  *
  * Example for a 5-scale satisfaction matrix with three questions:
+ * ```json
+ * {
+ *   "id": "multi-satisfaction",
+ *   "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.",
+ *   "location": "aboveStimulus",
+ *   "type": "matrix-radio",
+ *   "answerOptions": "satisfaction5",
+ *   "questionOptions": [
+ *     "The tool we created",
+ *     "The technique we developed",
+ *     "The authors of the tools"
+ *   ],
+ *   "questionOrder": "random"
+ * }
+ * ```
  *
-```js
-{
-  "id": "multi-satisfaction",
-  "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.",
-  "location": "aboveStimulus",
-  "type": "matrix-radio",
-  "answerOptions": "satisfaction5",
-  "questionOptions": [
-    "The tool we created",
-    "The technique we developed",
-    "The authors of the tools"
-  ]
-}
-```
+ * Here's an example using custom columns (`answerOptions`):
+ * ```json
+ * {
+ *   "id": "multi-custom",
+ *   "prompt": "Which categories do the following items belong to?",
+ *   "location": "aboveStimulus",
+ *   "type": "matrix-checkbox",
+ *   "answerOptions": [
+ *     "Has Legs",
+ *     "Has Wings",
+ *     "Can Swim"
+ *   ],
+ *   "questionOptions": [
+ *     "Dog",
+ *     "Snake",
+ *     "Eagle",
+ *     "Salmon",
+ *     "Platypus"
+ *   ]
 
-Here's an example using custom columns (answerOptions):
-
-```js
-{
-  "id": "multi-custom",
-  "prompt": "Which categories do the following items belong to?",
-  "location": "aboveStimulus",
-  "type": "matrix-checkbox",
-  "answerOptions": [
-    "Has Legs",
-    "Has Wings",
-    "Can Swim"
-  ],
-  "questionOptions": [
-    "Dog",
-    "Snake",
-    "Eagle",
-    "Salmon",
-    "Platypus"
-  ]
-
-}
-```
+ * }
+ * ```
  */
 export interface MatrixResponse extends BaseResponse {
   type: 'matrix-radio' | 'matrix-checkbox';
@@ -541,20 +532,31 @@ export interface MatrixResponse extends BaseResponse {
 /**
  * The DropdownResponse interface is used to define the properties of a dropdown response.
  * DropdownResponses render as a select input with user specified options.
+ * ```json
+ * {
+ *   "id": "q-color",
+ *   "prompt": "What is your favorite color?",
+ *   "location": "aboveStimulus",
+ *   "type": "dropdown",
+ *   "placeholder": "Please choose your favorite color",
+ *   "options": ["Red", "Blue"]
+ * }
+ * ```
  *
- * Example:
-```js
-{
-  "id": "q-color",
-  "prompt": "What is your favorite color?",
-  "location": "aboveStimulus",
-  "type": "dropdown",
-  "placeholder": "Please choose your favorite color",
-  "options": ["Red", "Blue"]
-}
-  ```
+ * Here's an example of a multiselect dropdown with minimum and maximum selections:
  *
- *
+ * ```json
+ * {
+ *   "id": "q-multiselect-dropdown",
+ *   "prompt": "Select the fruits you like.",
+ *   "location": "aboveStimulus",
+ *   "type": "dropdown",
+ *   "placeholder": "Select your favorite fruits",
+ *   "options": ["Apple", "Banana", "Cherry", "Grape", "Orange", "Strawberry", "Watermelon", "Pineapple"],
+ *   "minSelections": 2,
+ *   "maxSelections": 4
+ * }
+ * ```
  */
 export interface DropdownResponse extends BaseResponse {
   type: 'dropdown';
@@ -571,31 +573,28 @@ export interface DropdownResponse extends BaseResponse {
 /**
  * The SliderResponse interface is used to define the properties of a slider response.
  * SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.
- *
- * Example:
-```js
-{
-  "id": "q-slider",
-  "prompt": "How are you feeling?",
-  "location": "aboveStimulus",
-  "type": "slider",
-  "options": [
-    {
-      "label": "Bad",
-      "value": 0
-    },
-    {
-      "label": "OK",
-      "value": 50
-    },
-    {
-      "label": "Good",
-      "value": 100
-    }
-  ]
-}
-```
- *
+ * ```json
+ * {
+ *   "id": "q-slider",
+ *   "prompt": "How are you feeling?",
+ *   "location": "aboveStimulus",
+ *   "type": "slider",
+ *   "options": [
+ *     {
+ *       "label": "Bad",
+ *       "value": 0
+ *     },
+ *     {
+ *       "label": "OK",
+ *       "value": 50
+ *     },
+ *     {
+ *       "label": "Good",
+ *       "value": 100
+ *     }
+ *   ]
+ * }
+ * ```
  */
 export interface SliderResponse extends BaseResponse {
   type: 'slider';
@@ -620,24 +619,21 @@ export interface SliderResponse extends BaseResponse {
 /**
  * The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection.
  * RadioResponses render as a radio input with user specified options, and optionally left and right labels.
- *
- * Example:
-```js
-{
-  "id": "q-radio",
-  "prompt": "Radio button example",
-  "location": "aboveStimulus",
-  "type": "radio",
-  "options": ["Option 1", "Option 2, Option 3"],
-  "optionOrder": "random",
-  "leftLabel": "Left",
-  "rightLabel": "Right",
-  "labelLocation": "inline",
-  "horizontal": true,
-  "withOther": true
-}
-```
- *
+ * ```json
+ * {
+ *   "id": "q-radio",
+ *   "prompt": "Radio button example",
+ *   "location": "aboveStimulus",
+ *   "type": "radio",
+ *   "options": ["Option 1", "Option 2", "Option 3"],
+ *   "optionOrder": "random",
+ *   "leftLabel": "Left",
+ *   "rightLabel": "Right",
+ *   "labelLocation": "inline",
+ *   "horizontal": true,
+ *   "withOther": true
+ * }
+ * ```
  */
 export interface RadioResponse extends BaseResponse {
   type: 'radio';
@@ -660,16 +656,15 @@ export interface RadioResponse extends BaseResponse {
 /**
  * The CheckboxResponse interface is used to define the properties of a checkbox response.
  * CheckboxResponses render as a checkbox input with user specified options.
- *
-```js
-{
-  "id": "q7",
-  "prompt": "Checkbox example (not required)",
-  "location": "aboveStimulus",
-  "type": "checkbox",
-  "options": ["Option 1", "Option 2", "Option 3"]
-}
-```
+ * ```json
+ * {
+ *   "id": "q7",
+ *   "prompt": "Checkbox example (not required)",
+ *   "location": "aboveStimulus",
+ *   "type": "checkbox",
+ *   "options": ["Option 1", "Option 2", "Option 3"]
+ * }
+ * ```
  */
 export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
@@ -696,30 +691,30 @@ export interface CheckboxResponse extends BaseResponse {
  * Ranking Categorical: The participant is asked to rank items within categories: HIGH, MEDIUM, and LOW.
  * Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.
  *
- ```js
-{
-  "id": "ranking-sublist",
-  "type": "ranking-sublist",
-  "prompt": "Rank your top 2 favorite fruits from the list below",
-  "location": "belowStimulus",
-  "options": ["Apple", "Banana", "Orange", "Strawberry", "Grapes"],
-  "numItems": 2
-},
-{
-  "id": "ranking-categorical",
-  "type": "ranking-categorical",
-  "prompt": "Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.",
-  "location": "belowStimulus",
-  "options": ["Drawing", "Singing", "Hiking", "Dancing", "Photography"]
-},
-{
-  "id": "ranking-pairwise",
-  "type": "ranking-pairwise",
-  "prompt": "Which meal would you prefer",
-  "location": "belowStimulus",
-  "options": ["Pizza", "Sushi", "Burger", "Pasta", "Salad", "Tacos"]
-}
-```
+ * ```json
+ * {
+ *   "id": "ranking-sublist",
+ *   "type": "ranking-sublist",
+ *   "prompt": "Rank your top 2 favorite fruits from the list below",
+ *   "location": "belowStimulus",
+ *   "options": ["Apple", "Banana", "Orange", "Strawberry", "Grapes"],
+ *   "numItems": 2
+ * },
+ * {
+ *   "id": "ranking-categorical",
+ *   "type": "ranking-categorical",
+ *   "prompt": "Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.",
+ *   "location": "belowStimulus",
+ *   "options": ["Drawing", "Singing", "Hiking", "Dancing", "Photography"]
+ * },
+ * {
+ *   "id": "ranking-pairwise",
+ *   "type": "ranking-pairwise",
+ *   "prompt": "Which meal would you prefer",
+ *   "location": "belowStimulus",
+ *   "options": ["Pizza", "Sushi", "Burger", "Pasta", "Salad", "Tacos"]
+ * }
+ * ```
 */
 export interface RankingResponse extends BaseResponse {
   type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise';
@@ -732,15 +727,14 @@ export interface RankingResponse extends BaseResponse {
 /**
  * The ReactiveResponse interface is used to define the properties of a reactive response.
  * ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list.
- *
-```js
-{
-  "id": "reactiveResponse",
-  "prompt": "Answer clicked in the stimulus",
-  "location": "aboveStimulus",
-  "type": "reactive"
-}
-```
+ * ```json
+ * {
+ *   "id": "reactiveResponse",
+ *   "prompt": "Answer clicked in the stimulus",
+ *   "location": "aboveStimulus",
+ *   "type": "reactive"
+ * }
+ * ```
  */
 export interface ReactiveResponse extends BaseResponse {
   type: 'reactive';
@@ -750,9 +744,7 @@ export interface ReactiveResponse extends BaseResponse {
  * The ButtonsResponse interface is used to define the properties of a buttons response.
  * ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file.
  * Participants can cycle through the options using the arrow keys.
- *
- * Example:
- * ```js
+ * ```json
  * {
  *   "id": "buttonsResponse",
  *   "type": "buttons",
@@ -778,9 +770,7 @@ export interface ButtonsResponse extends BaseResponse {
  * The TextOnlyResponse interface is used to define the properties of a text only response.
  * TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information.
  * It does not accept any input from the user.
- *
- * Example:
- * ```js
+ * ```json
  * {
  *   "id": "textOnlyResponse",
  *   "type": "textOnly",
@@ -811,9 +801,7 @@ export interface TextOnlyResponse extends Omit<BaseResponse, 'secondaryText' | '
 /*
  * The DividerResponse interface is used to define the properties of a divider response.
  * DividerResponses render as a divider between responses.
- *
- * Example:
- * ```js
+ * ```json
  * {
  *   "id": "dividerResponse",
  *   "type": "divider",
@@ -846,24 +834,24 @@ export type Response = NumericalResponse | ShortTextResponse | LongTextResponse 
  *
  * Here's an example of how to use the Answer interface to define the correct answer to a question:
  *
-```js
-{
-  "type": "markdown",
-  "path": "<study-name>/assets/question.md",
-  "response": [
-    {
-      "id": "response1",
-      "prompt": "What is 2 + 2?",
-      "location": "belowStimulus",
-      "type": "numerical"
-    }
-  ],
-  "correctAnswer": [{
-    "id": "response1",
-    "answer": 4
-  }]
-}
-```
+ * ```json
+ * {
+ *   "type": "markdown",
+ *   "path": "<study-name>/assets/question.md",
+ *   "response": [
+ *     {
+ *       "id": "response1",
+ *       "prompt": "What is 2 + 2?",
+ *       "location": "belowStimulus",
+ *       "type": "numerical"
+ *     }
+ *   ],
+ *   "correctAnswer": [{
+ *       "id": "response1",
+ *       "answer": 4
+ *     }]
+ *   }
+ * ```
  *
  * In this example, the correct answer to the question "What is 2 + 2?" is 4. If the participant answers 4, they will be considered correct. If they answer anything other than 4, they will be considered incorrect.
  */
@@ -957,13 +945,13 @@ export interface BaseIndividualComponent {
 /**
  * The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text. Markdown components can have responses (e.g. in a consent form), or no responses (e.g. in a help text file). Here's an example with no responses for a simple help text file:
  *
-```js
-{
-  "type": "markdown",
-  "path": "<study-name>/assets/help.md",
-  "response": []
-}
-```
+ * ```json
+ * {
+ *   "type": "markdown",
+ *   "path": "<study-name>/assets/help.md",
+ *   "response": []
+ * }
+ * ```
  */
 export interface MarkdownComponent extends BaseIndividualComponent {
   type: 'markdown';
@@ -980,35 +968,35 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  *
  * React components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.
  *
-```ts
-{
-  parameters: T;
-  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
-}
-```
+ * ```ts
+ * {
+ *   parameters: T;
+ *   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
+ * }
+ * ```
  *
- * parameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component.
- * setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.
+ * `parameters` is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component.
+ * `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.
  *
- * So, for example, if I had the following ReactComponent in my config
-```js
-{
-  type: 'react-component',
-  path: 'my_study/CoolComponent.tsx',
-  parameters: {
-    name: 'Zach',
-    age: 26
-  }
-}
-```
+ * So, for example, if I had the following ReactComponent in my config:
+ * ```json
+ * {
+ *   type: 'react-component',
+ *   path: 'my_study/CoolComponent.tsx',
+ *   parameters: {
+ *     name: 'Zach',
+ *     age: 26
+ *   }
+ * }
+ * ```
  *
- * My react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this
+ * My react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this:
  *
-```ts
-export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) {
-  // render something
-}
-```
+ * ```ts
+ * export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) {
+ *   // render something
+ * }
+ * ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
  * https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.0/src/public/demo-react-trrack/assets)
@@ -1026,15 +1014,15 @@ export interface ReactComponent extends BaseIndividualComponent {
  * The ImageComponent interface is used to define the properties of an image component. This component is used to render an image with optional styling.
  *
  * For example, to render an image with a path of `path/to/study/assets/image.jpg` and a max width of 50%, you would use the following snippet:
-```js
-{
-  "type": "image",
-  "path": "<study-name>/assets/image.jpg",
-  "style": {
-  "maxWidth": "50%"
-  }
-}
-```
+ * ```json
+ * {
+ *   "type": "image",
+ *   "path": "<study-name>/assets/image.jpg",
+ *   "style": {
+ *     "maxWidth": "50%"
+ *   }
+ * }
+ * ```
  */
 export interface ImageComponent extends BaseIndividualComponent {
   type: 'image';
@@ -1044,59 +1032,58 @@ export interface ImageComponent extends BaseIndividualComponent {
 
 /**
  * The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.
-
-```js
-{
-  "type": "website",
-  "path": "<study-name>/assets/website.html",
-}
-```
-
+ * ```json
+ * {
+ *   "type": "website",
+ *   "path": "<study-name>/assets/website.html",
+ * }
+ * ```
+ *
  * To pass a data from the config to the website, you can use the `parameters` field as below:
-
-```js
-{
-  "type": "website",
-  "path": "<study-name>/website.html",
-  "parameters": {
-    "barData": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]
-  },
-  "response": [
-    {
-      "id": "barChart",
-      "prompt": "Your selected answer:",
-      "location": "belowStimulus",
-      "type": "reactive"
-    }
-  ]
-}
-```
+ *
+ * ```json
+ * {
+ *   "type": "website",
+ *   "path": "<study-name>/website.html",
+ *   "parameters": {
+ *     "barData": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]
+ *   },
+ *   "response": [
+ *     {
+ *       "id": "barChart",
+ *       "prompt": "Your selected answer:",
+ *       "location": "belowStimulus",
+ *       "type": "reactive"
+ *     }
+ *   ]
+ * }
+ * ```
  * In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:
+ *
+ * ```html
+ * <script src="../../revisitUtilities/revisit-communicate.js"></script>
+ * <script>
+ * Revisit.onDataReceive((data) => {
+ *     const barData = data['barData'];
+ *     ...
+ *   });
 
-```html
-<script src="../../revisitUtilities/revisit-communicate.js"></script>
-<script>
-  Revisit.onDataReceive((data) => {
-    const barData = data['barData'];
-    ...
-  });
-
-  // Call out that 'barChart' needs to match ID in 'response' object
-  Revisit.postAnswers({ barChart: userAnswer });
-</script>
-```
-
-  * If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenance` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.
-
-```js
-const trrack = initializeTrrack({
-  initialState,
-  registry
-});
-
-...
-Revisit.postProvenance(trrack.graph.backend);
-```
+ *   // Call out that 'barChart' needs to match ID in 'response' object
+ *   Revisit.postAnswers({ barChart: userAnswer });
+ *   </script>
+ * ```
+ *
+ * If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenance` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.
+ *
+ * ```ts
+ * const trrack = initializeTrrack({
+ *     initialState,
+ *     registry
+ *   });
+ *
+ *   ...
+ *   Revisit.postProvenance(trrack.graph.backend);
+ * ```
 
  */
 export interface WebsiteComponent extends BaseIndividualComponent {
@@ -1110,20 +1097,20 @@ export interface WebsiteComponent extends BaseIndividualComponent {
 /**
  * A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:
  *
-```js
-{
-  "type": "questionnaire",
-  "response": [
-    {
-      "id": "gender",
-      "prompt": "Gender:",
-      "location": "belowStimulus",
-      "type": "checkbox",
-      "options": ["Man", "Woman", "Genderqueer", "Third-gender", ...]
-    }
-  ]
-}
-```
+ * ```json
+ * {
+ *   "type": "questionnaire",
+ *   "response": [
+ *     {
+ *       "id": "gender",
+ *       "prompt": "Gender:",
+ *       "location": "belowStimulus",
+ *       "type": "checkbox",
+ *       "options": ["Man", "Woman", "Genderqueer", "Third-gender", ...]
+ *     }
+ *   ]
+ * }
+ * ```
  */
 export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
@@ -1133,31 +1120,31 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
  * The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.
  *
  * For example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet:
-```js
-{
-  "type": "vega",
-  "path": "<study-name>/assets/vega.spec.json",
-}
-```
-
-If you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section:
-```js
-{
-  "signals": [
-    {
-      "name": "revisitAnswer",
-      "value": {},
-      "on": [
-        {
-          "events": "rect:click",
-          "update": "{responseId: 'vegaDemoResponse1', response: datum.category}"
-        }
-      ]
-    }
-  ]
-}
-```
- In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.
+ * ```json
+ * {
+ *   "type": "vega",
+ *   "path": "<study-name>/assets/vega.spec.json",
+ * }
+ * ```
+ *
+ * If you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section:
+ * ```json
+ * {
+ *   "signals": [
+ *     {
+ *       "name": "revisitAnswer",
+ *       "value": {},
+ *       "on": [
+ *         {
+ *           "events": "rect:click",
+ *           "update": "{responseId: 'vegaDemoResponse1', response: datum.category}"
+ *         }
+ *       ]
+ *     }
+ *   ]
+ * }
+ * ```
+  * In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.
 */
 export interface VegaComponentPath extends BaseIndividualComponent {
   type: 'vega';
@@ -1171,30 +1158,30 @@ export interface VegaComponentPath extends BaseIndividualComponent {
  * The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component by adding Vega/Vega-Lite specs within the reVISit config itself.
  *
  * To do this, would use the following snippet:
-```js
-{
-  "type": "vega",
-  "config": { ... vega specs here ...},
-}
+ * ```json
+ * {
+ *   "type": "vega",
+ *   "config": { ... vega specs here ...},
+ * }
 
-IIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section:
-```js
-{
-  "signals": [
-    {
-      "name": "revisitAnswer",
-      "value": {},
-      "on": [
-        {
-          "events": "rect:click",
-          "update": "{responseId: 'vegaDemoResponse1', response: datum.category}"
-        }
-      ]
-    }
-  ]
-}
-```
- In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response.
+ * If you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section:
+ * ```json
+ * {
+   * "signals": [
+     * {
+       * "name": "revisitAnswer",
+       * "value": {},
+       * "on": [
+         * {
+           * "events": "rect:click",
+           * "update": "{responseId: 'vegaDemoResponse1', response: datum.category}"
+         * }
+       * ]
+     * }
+   * ]
+ * }
+ * ```
+ * In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response.
 */
 export interface VegaComponentConfig extends BaseIndividualComponent {
   type: 'vega';
@@ -1214,13 +1201,13 @@ export type VegaComponent = VegaComponentPath | VegaComponentConfig;
  * As such, the `forceCompletion` field is set to true by default, and the `withTimeline` field is set to false by default.
  *
  * For example, to render a training video with a path of `<study-name>/assets/video.mp4`, you would use the following snippet:
- * ```js
+ * ```json
  * {
  *   "type": "video",
  *   "path": "<study-name>/assets/video.mp4",
  * }
  * ```
- * */
+ */
 
 export interface VideoComponent extends BaseIndividualComponent {
   type: 'video';
@@ -1242,40 +1229,40 @@ export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComp
  *
  * Here's an example of how to use the DeterministicInterruption:
  *
-```js
-{
-  "order": "fixed",
-  "components": [
-    "component1",
-    "component2",
-    "component3",
-    "component4",
-    "component5",
-    "component6"
-  ],
-  "interruptions": [
-    {
-      "firstLocation": 2,
-      "spacing": 3,
-      "components": [
-        "interruption1",
-        "interruption2"
-      ]
-    }
-  ]
-}
-```
+ * ```json
+ * {
+ *   "order": "fixed",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3",
+ *     "component4",
+ *     "component5",
+ *     "component6"
+ *   ],
+ *   "interruptions": [
+ *     {
+ *       "firstLocation": 2,
+ *       "spacing": 3,
+ *       "components": [
+ *         "interruption1",
+ *         "interruption2"
+ *       ]
+ *     }
+ *   ]
+ * }
+ * ```
  *
  * The resulting sequence array could be:
  *
-```js
-[
-  ["component1", "component2", "interruption1", "component3", "component4", "component5", "interruption2", "component6"],
-  ["component1", "component2", "interruption1", "component3", "component4", "component5", "interruption2", "component6"],
-  ["component1", "component2", "interruption1", "component3", "component4", "component5", "interruption2", "component6"],
-  ...
-]
-```
+ * ```json
+ * [
+ *   ["component1", "component2", "interruption1", "component3", "component4", "component5", "interruption2", "component6"],
+ *   ["component1", "component2", "interruption1", "component3", "component4", "component5", "interruption2", "component6"],
+ *   ["component1", "component2", "interruption1", "component3", "component4", "component5", "interruption2", "component6"],
+ *   ...
+ * ]
+ * ```
 */
 export interface DeterministicInterruption {
   /** The Location of the first instance of the interruption. If this is set to 2, the interruption will be shown after the second component (inserted at index 2). */
@@ -1294,40 +1281,40 @@ export interface DeterministicInterruption {
  *
  * Here's an example of how to use the RandomInterruption:
  *
-```js
-{
-  "order": "fixed",
-  "components": [
-    "component1",
-    "component2",
-    "component3",
-    "component4",
-    "component5",
-    "component6"
-  ],
-  "interruptions": [
-    {
-      "spacing": "random",
-      "numInterruptions": 3,
-      "components": [
-        "interruption1",
-        "interruption2"
-      ]
-    }
-  ]
-}
-```
+ * ```json
+ * {
+ *   "order": "fixed",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3",
+ *     "component4",
+ *     "component5",
+ *     "component6"
+ *   ],
+ *   "interruptions": [
+ *     {
+ *       "spacing": "random",
+ *       "numInterruptions": 3,
+ *       "components": [
+ *         "interruption1",
+ *         "interruption2"
+ *       ]
+ *     }
+ *   ]
+ * }
+ * ```
  *
  * The resulting sequence array could be:
  *
-```js
-[
-  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "component5", "interruption1", "interruption2", "component6"],
-  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "interruption1", "interruption2", "component5", "component6"],
-  ["component1", "component2" "interruption1", "interruption2", "component3", "interruption1", "interruption2", "component4", "component5", "interruption1", "interruption2", "component6"],
-  ...
-]
-```
+ * ```json
+ * [
+ *   ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "component5", "interruption1", "interruption2", "component6"],
+ *   ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "interruption1", "interruption2", "component5", "component6"],
+ *   ["component1", "component2" "interruption1", "interruption2", "component3", "interruption1", "interruption2", "component4", "component5", "interruption1", "interruption2", "component6"],
+ *   ...
+ * ]
+ * ```
 */
 export interface RandomInterruption {
   /** If spacing is set to random, reVISit will add interruptions randomly. These interruptions will not ever be displayed as the first component in the block. */
@@ -1344,29 +1331,27 @@ export type InterruptionBlock = DeterministicInterruption | RandomInterruption;
 /** The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. The skip logic will be checked for every component in the block that has the specified name.
  *
  * :::info
- *
  * If you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition.
- *
  * :::
  *
  * For example, if you want to skip to a different component based on a response to a specific component, you would use the IndividualComponentSingleResponseCondition. Here's an example of how to use the IndividualComponentSingleResponseCondition:
  *
-```js
-{
-  ...
-  "skip": [
-    {
-      "name": "attentionCheck",
-      "check": "response",
-      "responseId": "attentionCheckResponse",
-      "value": "the right answer",
-      "comparison": "equal",
-      "to": "end"
-    }
-  ]
-  ...
-}
-```
+ * ```json
+ * {
+ *   ...
+ *   "skip": [
+ *     {
+ *       "name": "attentionCheck",
+ *       "check": "response",
+ *       "responseId": "attentionCheckResponse",
+ *       "value": "the right answer",
+ *       "comparison": "equal",
+ *       "to": "end"
+ *     }
+ *   ]
+ *   ...
+ * }
+ * ```
  *
  * In this example, we assign our skip logic to the component whose ID is "attentionCheck". If the answer given to the response "attentionCheckResponse" is equal to "the right answer", then the user will be redirected to the end of the study. If the response is _not_ equal to "the right answer", then the participant will continue to the next component in the sequence.
 */
@@ -1388,27 +1373,24 @@ export interface IndividualComponentSingleResponseCondition {
 /** The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on all answers to a specific component. The skip logic will be checked for every component in the block that has the specified name.
  *
  * :::info
- *
  * If you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition.
- *
  * :::
- *
  *
  * Here's an example of how to use the IndividualComponentAllResponsesCondition:
  *
-```js
-{
-  ...
-  "skip": [
-    {
-      "name": "attentionCheck",
-      "check": "responses",
-      "to": "end"
-    }
-  ]
-  ...
-}
-```
+ * ```json
+ * {
+ *   ...
+ *   "skip": [
+ *     {
+ *       "name": "attentionCheck",
+ *       "check": "responses",
+ *       "to": "end"
+ *     }
+ *   ]
+ *   ...
+ * }
+ * ```
  *
  * In this example, if all responses to the component with the ID "attentionCheck" are correct, the participant will be redirected to the end of the study. If any response is incorrect, the participant will continue to the next component in the sequence.
  */
@@ -1427,20 +1409,20 @@ export interface IndividualComponentAllResponsesCondition {
  *
  * You might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:
  *
-```js
-{
-  ...
-  "skip": [
-    {
-      "check": "block",
-      "condition": "numIncorrect",
-      "value": 2,
-      "to": "end"
-    }
-  ]
-  ...
-}
-```
+ * ```json
+ * {
+ *   ...
+ *   "skip": [
+ *     {
+ *       "check": "block",
+ *       "condition": "numIncorrect",
+ *       "value": 2,
+ *       "to": "end"
+ *     }
+ *   ]
+ *   ...
+ * }
+ * ```
  *
  * In this example, when the number of components with incorrect responses in the block is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.
  *
@@ -1461,21 +1443,21 @@ export interface ComponentBlockCondition {
  *
  * Here's an example of how to use the RepeatedComponentBlockCondition:
  *
-```js
-{
-  ...
-  "skip": [
-    {
-      "name": "attentionCheck",
-      "check": "repeatedComponent",
-      "condition": "numIncorrect",
-      "value": 2,
-      "to": "end"
-    }
-  ]
-  ...
-}
-```
+ * ```json
+ * {
+ *   ...
+ *   "skip": [
+ *     {
+ *       "name": "attentionCheck",
+ *       "check": "repeatedComponent",
+ *       "condition": "numIncorrect",
+ *       "value": 2,
+ *       "to": "end"
+ *     }
+ *   ]
+ *   ...
+ * }
+ * ```
  *
  * In this example, when the number of incorrect responses to the repeated component with the name "attentionCheck" is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.
 */
@@ -1509,7 +1491,7 @@ export type SkipConditions = (IndividualComponentSingleResponseCondition | Indiv
  *
  * Here's an example of how to use the DynamicBlock:
  *
- * ```js
+ * ```json
  * {
  *   "id": "funcBlock",
  *   "order": "dynamic",
@@ -1538,101 +1520,101 @@ export interface DynamicBlock {
  *
  * The pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.
  *
- Here's a snippet that shows how to use the random order:
+ * Here's a snippet that shows how to use the random order:
  *
-```js
-{
-  "order": "random",
-  "components": [
-    "component1",
-    "component2",
-    "component3"
-  ]
-}
-```
+ * ```json
+ * {
+ *   "order": "random",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3"
+ *   ]
+ * }
+ * ```
  * This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :
  *
-```js
-[
-  ["component2", "component3", "component1"],
-  ["component1", "component3", "component2"],
-  ["component3", "component1", "component2"],
-  ...
-]
-```
+ * ```json
+ * [
+ *   ["component2", "component3", "component1"],
+ *   ["component1", "component3", "component2"],
+ *   ["component3", "component1", "component2"],
+ *   ...
+ * ]
+ * ```
  *
  * The latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:
  *
-```js
-{
-  "order": "latinSquare",
-  "components": [
-    "component1",
-    "component2",
-    "component3"
-  ]
-}
-```
+ * ```json
+ * {
+ *   "order": "latinSquare",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3"
+ *   ]
+ * }
+ * ```
  *
  * This snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:
  *
-```js
-[
-  ["component1", "component2", "component3"],
-  ["component2", "component3", "component1"],
-  ["component3", "component1", "component2"],
-  ...
-]
-```
+ * ```json
+ * [
+ *   ["component1", "component2", "component3"],
+ *   ["component2", "component3", "component1"],
+ *   ["component3", "component1", "component2"],
+ *   ...
+ * ]
+ * ```
  *
  * The fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:
  *
-```js
-{
-  "order": "fixed",
-  "components": [
-    "component1",
-    "component2",
-    "component3"
-  ]
-}
-```
+ * ```json
+ * {
+ *   "order": "fixed",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3"
+ *   ]
+ * }
+ * ```
  *
  * This snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:
  *
-```js
-[
-  ["component1", "component2", "component3"],
-  ["component1", "component2", "component3"],
-  ["component1", "component2", "component3"],
-  ...
-]
-```
+ * ```json
+ * [
+ *   ["component1", "component2", "component3"],
+ *   ["component1", "component2", "component3"],
+ *   ["component1", "component2", "component3"],
+ *   ...
+ * ]
+ * ```
  *
  * In addition to the order property, the ComponentBlock interface also includes the `"numSamples"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `"numSamples"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:
  *
-```js
-{
-  "order": "latinSquare",
-  "components": [
-    "component1",
-    "component2",
-    "component3"
-  ],
-  "numSamples": 2
-}
-```
+ * ```json
+ * {
+ *   "order": "latinSquare",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3"
+ *   ],
+ *   "numSamples": 2
+ * }
+ * ```
  *
  * This snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:
  *
-```js
-[
-  ["component1", "component2"],
-  ["component2", "component3"],
-  ["component3", "component1"],
-  ...
-]
-```
+ * ```json
+ * [
+ *   ["component1", "component2"],
+ *   ["component2", "component3"],
+ *   ["component3", "component1"],
+ *   ...
+ * ]
+ * ```
  *
  * The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.
  *
@@ -1662,74 +1644,72 @@ export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent
 
    * Using baseComponents:
 
-```js
-"baseComponents": {
-  "my-image-component": {
-    "instructionLocation": "sidebar",
-    "nextButtonLocation": "sidebar",
-    "path": "<study-name>/assets/my-image.jpg",
-    "response": [
-      {
-        "id": "my-image-id",
-        "options": ["Europe", "Japan", "USA"],
-        "prompt": "Your Selected Answer:",
-        "type": "dropdown"
-      }
-    ],
-    "type": "image"
-  }
-}
-```
-In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `"baseComponent":"my-image-component"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below:
-```js
-"components": {
-  "q1": {
-    "baseComponent": "my-image-component",
-    "description": "Choosing section with largest GDP",
-    "instruction": "Which region has the largest GDP?"
-  },
-"q2": {
-  "baseComponent": "my-image-component",
-  "description": "Choosing section with lowest GDP",
-  "instruction": "Which region has the lowest GDP?"
-},
-"q3": {
-  "baseComponent": "my-image-component",
-  "description": "Choosing section with highest exports of Wheat",
-  "instruction": "Which region had the most Wheat exported in 2022?"
-}
-}
-```
+ * ```json
+ * "baseComponents": {
+ *   "my-image-component": {
+ *     "instructionLocation": "sidebar",
+ *     "nextButtonLocation": "sidebar",
+ *     "path": "<study-name>/assets/my-image.jpg",
+ *     "response": [
+ *       {
+ *         "id": "my-image-id",
+ *         "options": ["Europe", "Japan", "USA"],
+ *         "prompt": "Your Selected Answer:",
+ *         "type": "dropdown"
+ *       }
+ *     ],
+ *     "type": "image"
+ *   }
+ * }
+ * ```
+ * In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `"baseComponent":"my-image-component"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below:
+ * ```json
+ * "components": {
+ *   "q1": {
+ *     "baseComponent": "my-image-component",
+ *     "description": "Choosing section with largest GDP",
+ *     "instruction": "Which region has the largest GDP?"
+ *   },
+ *   "q2": {
+ *     "baseComponent": "my-image-component",
+ *     "description": "Choosing section with lowest GDP",
+ *     "instruction": "Which region has the lowest GDP?"
+ *   },
+ *   "q3": {
+ *     "baseComponent": "my-image-component",
+ *     "description": "Choosing section with highest exports of Wheat",
+ *     "instruction": "Which region had the most Wheat exported in 2022?"
+ *   }
+ * }
+ * ```
   */
 export type BaseComponents = Record<string, Partial<IndividualComponent>>;
 
 /**
  * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
+ * ```json
+ * {
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
+ *   "studyMetadata": {
+ *     ...
+ *   },
+ *   "uiConfig": {
+ *     ...
+ *   },
+ *   "components": {
+ *     ...
+ *   },
+ *   "sequence": {
+ *     ...
+ *   }
+ * }
+ * ```
 
-```js
-{
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
-  "studyMetadata": {
-    ...
-  },
-  "uiConfig": {
-    ...
-  },
-  "components": {
-    ...
-  },
-  "sequence": {
-    ...
-  }
-}
-```
-
-:::info
-For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
-:::
-<br/>
-
-The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
+ * :::info
+ * For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
+ * :::
+ *
+ * The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
  */
 export interface StudyConfig {
   /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
@@ -1754,7 +1734,7 @@ export interface StudyConfig {
  *
  * Below is the general template that should be followed when constructing a Library configuration file.
  *
- * ```js
+ * ```json
  * {
  *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/LibraryConfigSchema.json",
  *   "baseComponents": {
@@ -1764,7 +1744,7 @@ export interface StudyConfig {
  *     // Components here are defined exactly as is in the StudyConfig
  *   },
  *   "sequences": {
- *    // Sequences here are defined as "key": "value" pairs where the key is the name of the sequence and the value is a ComponentBlock, just like in the StudyConfig
+ *     // Sequences here are defined as "key": "value" pairs where the key is the name of the sequence and the value is a ComponentBlock, just like in the StudyConfig
  *   }
  * }
  * ```
