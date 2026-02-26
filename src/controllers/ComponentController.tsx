@@ -36,6 +36,7 @@ import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { ScreenRecordingReplay } from '../components/screenRecording/ScreenRecordingReplay';
 import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
 import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
+import { getComponentContainerStyle } from '../utils/componentStyle';
 
 // current active stimuli presented to the user
 export function ComponentController() {
@@ -211,6 +212,7 @@ export function ComponentController() {
   const instruction = currentConfig?.instruction || '';
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
+  const componentContainerStyle = getComponentContainerStyle(currentConfig.type, currentConfig.style);
 
   if (studyHasScreenRecording && isAnalysis && analysisCanPlayScreenRecording) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
 
@@ -226,13 +228,7 @@ export function ComponentController() {
       <Box
         id={currentComponent}
         className={currentConfig.type}
-        style={{
-          width: '100%',
-          display: 'flex',
-          flexGrow: currentConfig.type === 'website' ? 1 : undefined,
-          flexDirection: 'column',
-          ...currentConfig.style,
-        }}
+        style={componentContainerStyle}
       >
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
           <>
