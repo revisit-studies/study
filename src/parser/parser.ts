@@ -110,6 +110,20 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
 
   verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
 
+  // Warn if the default contact email is left in the config and the study is not hosted on a known ReVISit domain
+  const DEFAULT_CONTACT_EMAIL = 'contact@revisit.dev';
+  const REVISIT_DOMAINS = ['revisit.dev', 'vdl.sci.utah.edu'];
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isRevisitDomain = REVISIT_DOMAINS.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+  if (studyConfig.uiConfig.contactEmail === DEFAULT_CONTACT_EMAIL && !isRevisitDomain) {
+    warnings.push({
+      message: `The contact email is set to the default value \`${DEFAULT_CONTACT_EMAIL}\`. Please update it to your own email address.`,
+      instancePath: '/uiConfig/contactEmail',
+      params: { action: 'Update the contactEmail field in uiConfig to your own email address' },
+      category: 'default-contact-email',
+    });
+  }
+
   // Verify components are well defined
   Object.entries(studyConfig.components)
     .forEach(([componentName, component]) => {
