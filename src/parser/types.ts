@@ -981,11 +981,11 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * So, for example, if I had the following ReactComponent in my config:
  * ```json
  * {
- *   type: 'react-component',
- *   path: 'my_study/CoolComponent.tsx',
- *   parameters: {
- *     name: 'Zach',
- *     age: 26
+ *   "type": "react-component",
+ *   "path": "my_study/CoolComponent.tsx",
+ *   "parameters": {
+ *     "name": "Zach",
+ *     "age": 26
  *   }
  * }
  * ```
