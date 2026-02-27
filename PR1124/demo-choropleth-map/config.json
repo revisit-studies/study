@@ -1,0 +1,56 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Choropleth Map with Provenance Tracking",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "An example study that implements provenance tracking with Trrack on a choropleth map.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": false,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "nextOnEnter": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-choropleth-map/assets/introduction.md",
+      "response": []
+    },
+    "mapComponent": {
+      "description": "Choropleth map colored by unemployment rate.",
+      "instruction": "Select top 3 states with highest unemployment rates.",
+      "type": "react-component",
+      "path": "demo-choropleth-map/assets/Map.tsx",
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar",
+      "parameters": {
+        "dataset": "unemployment2020",
+        "valueField": "rate",
+        "legendTitle": "Unemployment Rate (%)",
+        "domain": [
+          0,
+          14
+        ]
+      },
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "mapComponent"
+    ]
+  }
+}
