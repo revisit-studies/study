@@ -1,9 +1,9 @@
 import { ParticipantMetadata, Sequence, StoredAnswer } from '../store/types';
 
 /**
- * The ParticipantData is a JSON object that contains all of the data for all of the participants in your study. It is structured as a list. Each element refers to a participant's data or a configuration. While in many cases there is only one configuration per study, the study creator is allowed to change the configuration file after the study has already been completed by other participants. The data for each participant will have a `participantConfigHash` which refers to a particular configuration which is also in this list.
+ * The ParticipantData is a JSON object that contains all of the data for a single participant in your study. In storage, participant records and configuration records are often collected together in a list, where each element refers either to a participant's data or to a configuration. While in many cases there is only one configuration per study, the study creator is allowed to change the configuration file after the study has already been completed by other participants. The data for each participant will have a `participantConfigHash` which refers to a particular configuration that is also stored in this list.
  *
- * Below we have an example of a participant's data.
+ * Below we have an example of a single participant's data record.
  * ```json
  * {
  *   "participantId": <UUID4>,
