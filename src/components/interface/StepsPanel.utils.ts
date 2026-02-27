@@ -11,6 +11,6 @@ export function getDynamicComponentsForBlock(
   }
 
   return Object.entries(participantAnswers)
-    .filter(([key]) => key.startsWith(`${node.id}_${index}`))
+    .filter(([key]) => key.startsWith(`${node.id}_${index}_`))
     .map(([_, value]) => value.componentName);
 }

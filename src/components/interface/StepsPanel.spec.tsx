@@ -45,4 +45,26 @@ describe('StepsPanel tree walking', () => {
 
     expect(getDynamicComponentsForBlock(block, participantAnswers, 2)).toEqual(['generatedA', 'generatedB']);
   });
+
+  test('does not include answers from similarly prefixed indices', () => {
+    const block: Sequence = {
+      id: 'dynamicDrawing',
+      order: 'dynamic',
+      orderPath: 'root-0',
+      components: [],
+      skip: [],
+      interruptions: [],
+    };
+
+    const participantAnswers = {
+      dynamicDrawing_2_generatedA_0: {
+        componentName: 'generatedA',
+      } as StoredAnswer,
+      dynamicDrawing_20_generatedWrong_0: {
+        componentName: 'generatedWrong',
+      } as StoredAnswer,
+    };
+
+    expect(getDynamicComponentsForBlock(block, participantAnswers, 2)).toEqual(['generatedA']);
+  });
 });
