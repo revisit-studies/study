@@ -10,6 +10,6 @@ export function getComponentContainerStyle(componentType: IndividualComponent['t
     flexGrow: componentType === 'website' ? 1 : undefined,
     flexDirection: 'column',
     ...configuredStyle,
-    ...(configuredStyle.width && configuredStyle.maxWidth === undefined ? { maxWidth: '100%' } : {}),
+    ...((configuredStyle.width !== undefined && configuredStyle.maxWidth === undefined) ? { maxWidth: '100%' } : {}),
   };
 }
