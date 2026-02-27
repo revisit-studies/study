@@ -14,7 +14,7 @@ import { ParticipantMetadata, Sequence, StoredAnswer } from '../store/types';
  *   "answers": {
  *       ...
  *   },
- *   "searchParameters": {
+ *   "searchParams": {
  *       ...
  *   }
  * }
