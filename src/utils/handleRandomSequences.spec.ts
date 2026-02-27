@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
 import { QuestionnaireComponent, StudyConfig } from '../parser/types';
 import { generateSequenceArray } from './handleRandomSequences';
 import { getSequenceFlatMap } from './getSequenceFlatMap';
@@ -32,13 +33,8 @@ const config: StudyConfig = {
 
 const trialGroupA = Array.from({ length: 10 }, (_, idx) => `trial${idx + 1}`);
 const trialGroupB = Array.from({ length: 10 }, (_, idx) => `trial${idx + 11}`);
-let testRandomizationConfig: StudyConfig | null = null;
-try {
-  testRandomizationConfig = (await import('../../public/test-randomization/config.json')).default as StudyConfig;
-} catch {
-  testRandomizationConfig = null;
-}
-const randomizationDistributionTest = testRandomizationConfig ? test : test.skip;
+const testRandomizationConfigUrl = new URL('../../public/test-randomization/config.json', import.meta.url);
+const randomizationDistributionTest = existsSync(testRandomizationConfigUrl) ? test : test.skip;
 
 describe('Generating sequences works as expected', () => {
   test('generateSequenceArray defaults to 1000 sequences when numSequences is omitted', () => {
@@ -162,9 +158,7 @@ describe('Generating sequences works as expected', () => {
   });
 
   randomizationDistributionTest('generateSequenceArray matches expected distribution for test-randomization study', () => {
-    if (!testRandomizationConfig) {
-      return;
-    }
+    const testRandomizationConfig = JSON.parse(readFileSync(testRandomizationConfigUrl, 'utf-8')) as StudyConfig;
     const randomizationConfig = {
       ...testRandomizationConfig,
       uiConfig: {
