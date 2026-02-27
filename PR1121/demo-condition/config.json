@@ -1,0 +1,225 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Conditional Blocks Demo",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "A demo of using conditional blocks in the study sequence.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-condition/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 200
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-condition/assets/introduction.md",
+      "response": []
+    },
+    "color-trial-1": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "instruction": "Which color is the lightest?",
+      "path": "demo-condition/assets/color-trial-1.html",
+      "response": [
+        {
+          "id": "color-trial-1-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "placeholder": "Select an option"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "color-trial-1-response",
+          "answer": "A"
+        }
+      ]
+    },
+    "color-trial-2": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "instruction": "Which color is the darkest?",
+      "path": "demo-condition/assets/color-trial-2.html",
+      "response": [
+        {
+          "id": "color-trial-2-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "placeholder": "Select an option"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "color-trial-2-response",
+          "answer": "A"
+        }
+      ]
+    },
+    "size-trial-1": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "instruction": "Which shape is the largest?",
+      "path": "demo-condition/assets/size-trial-1.html",
+      "response": [
+        {
+          "id": "size-trial-1-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "Square",
+            "Triangle",
+            "Circle"
+          ],
+          "placeholder": "Select an option"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "size-trial-1-response",
+          "answer": "Square"
+        }
+      ]
+    },
+    "size-trial-2": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "instruction": "Which shape is the smallest?",
+      "path": "demo-condition/assets/size-trial-2.html",
+      "response": [
+        {
+          "id": "size-trial-2-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "Square",
+            "Triangle",
+            "Circle"
+          ],
+          "placeholder": "Select an option"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "size-trial-2-response",
+          "answer": "Triangle"
+        }
+      ]
+    },
+    "shape-trial-1": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "instruction": "Which option represents a square?",
+      "path": "demo-condition/assets/shape-trial-1.html",
+      "response": [
+        {
+          "id": "shape-trial-1-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "placeholder": "Select an option"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "shape-trial-1-response",
+          "answer": "B"
+        }
+      ]
+    },
+    "shape-trial-2": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "instruction": "Which option represents a circle?",
+      "path": "demo-condition/assets/shape-trial-2.html",
+      "response": [
+        {
+          "id": "shape-trial-2-response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "dropdown",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E"
+          ],
+          "placeholder": "Select an option"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "shape-trial-2-response",
+          "answer": "A"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "id": "color",
+        "conditional": true,
+        "components": [
+          "color-trial-1",
+          "color-trial-2"
+        ],
+        "order": "random"
+      },
+      {
+        "id": "size",
+        "conditional": true,
+        "components": [
+          "size-trial-1",
+          "size-trial-2"
+        ],
+        "order": "random"
+      },
+      {
+        "id": "shape",
+        "conditional": true,
+        "components": [
+          "shape-trial-1",
+          "shape-trial-2"
+        ],
+        "order": "fixed"
+      }
+    ]
+  }
+}
