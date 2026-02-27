@@ -4,10 +4,14 @@ import {
 import { handleBeforeUnload, shouldConfirmTabClose } from './closeTabConfirmation';
 
 describe('closeTabConfirmation', () => {
-  test('shouldConfirmTabClose returns true only for participant non-end components', () => {
-    expect(shouldConfirmTabClose(false, 'trial')).toBe(true);
-    expect(shouldConfirmTabClose(false, 'end')).toBe(false);
-    expect(shouldConfirmTabClose(true, 'trial')).toBe(false);
+  test('shouldConfirmTabClose handles trial and end states based on completion and modes', () => {
+    expect(shouldConfirmTabClose(false, 'trial', false, false, true)).toBe(true);
+    expect(shouldConfirmTabClose(false, 'trial', true, false, true)).toBe(false);
+    expect(shouldConfirmTabClose(true, 'trial', false, false, true)).toBe(false);
+
+    expect(shouldConfirmTabClose(false, 'end', false, false, true)).toBe(true);
+    expect(shouldConfirmTabClose(false, 'end', false, true, true)).toBe(false);
+    expect(shouldConfirmTabClose(false, 'end', false, false, false)).toBe(false);
   });
 
   test('handleBeforeUnload sets browser confirmation fields', () => {
