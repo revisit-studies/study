@@ -27,6 +27,7 @@ import { RecordingContext, useRecording } from '../store/hooks/useRecording';
 import { ScreenRecordingRejection } from './interface/ScreenRecordingRejection';
 import { ReplayContext, useReplay } from '../store/hooks/useReplay';
 import { DeviceWarning } from './interface/DeviceWarning';
+import { handleBeforeUnload, shouldConfirmTabClose } from '../utils/closeTabConfirmation';
 
 const STUDY_BROWSER_WIDTH = 360;
 
@@ -47,6 +48,7 @@ export function StepRenderer() {
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
   const modes = useStoreSelector((state) => state.modes);
+  const isCompleted = useStoreSelector((state) => state.completed);
 
   const screenRecording = useRecording();
   const replay = useReplay();
@@ -140,8 +142,33 @@ export function StepRenderer() {
 
   const asideOpen = useMemo(() => developmentModeEnabled && showStudyBrowser, [developmentModeEnabled, showStudyBrowser]);
   const rowMaxWidth = useMemo(() => (asideOpen ? `max(0px, calc(100% - ${STUDY_BROWSER_WIDTH}px))` : '100%'), [asideOpen]);
+  const shouldConfirmClose = useMemo(
+    () => shouldConfirmTabClose(
+      isAnalysis,
+      currentComponent,
+      developmentModeEnabled,
+      isCompleted,
+      dataCollectionEnabled,
+    ),
+    [isAnalysis, currentComponent, developmentModeEnabled, isCompleted, dataCollectionEnabled],
+  );
 
   const [hasAudio, setHasAudio] = useState<boolean>();
+
+  useEffect(() => {
+    if (!shouldConfirmClose) {
+      return undefined;
+    }
+
+    const beforeUnloadListener = (event: BeforeUnloadEvent) => {
+      handleBeforeUnload(event);
+    };
+
+    window.addEventListener('beforeunload', beforeUnloadListener);
+    return () => {
+      window.removeEventListener('beforeunload', beforeUnloadListener);
+    };
+  }, [shouldConfirmClose]);
 
   return (
     <WindowEventsContext.Provider value={windowEvents}>
