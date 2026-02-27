@@ -1107,4 +1107,91 @@ describe('Parser Warnings', () => {
     );
     expect(inheritedSidebarWarnings).toHaveLength(1);
   });
+
+  function buildContactEmailStudyConfig(contactEmail: string) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail,
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      components: {
+        testComponent: {
+          type: 'markdown',
+          path: 'test.md',
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['testComponent'],
+      },
+    };
+  }
+
+  test('adds default-contact-email warning when contactEmail is contact@revisit.dev and not on a ReVISit domain', async () => {
+    vi.stubGlobal('window', { location: { hostname: 'example.com' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('contact@revisit.dev')));
+    vi.unstubAllGlobals();
+
+    const contactEmailWarning = result.warnings.find(
+      (warning) => warning.category === 'default-contact-email',
+    );
+
+    expect(contactEmailWarning).toBeDefined();
+    expect(contactEmailWarning?.instancePath).toBe('/uiConfig/contactEmail');
+    expect((contactEmailWarning?.params as { action: string }).action).toBe('Update the contactEmail field in uiConfig to your own email address');
+  });
+
+  test('does not add default-contact-email warning when contactEmail is contact@revisit.dev and hosted on revisit.dev', async () => {
+    vi.stubGlobal('window', { location: { hostname: 'revisit.dev' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('contact@revisit.dev')));
+    vi.unstubAllGlobals();
+
+    const contactEmailWarning = result.warnings.find(
+      (warning) => warning.category === 'default-contact-email',
+    );
+
+    expect(contactEmailWarning).toBeUndefined();
+  });
+
+  test('does not add default-contact-email warning when contactEmail is contact@revisit.dev and hosted on vdl.sci.utah.edu', async () => {
+    vi.stubGlobal('window', { location: { hostname: 'vdl.sci.utah.edu' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('contact@revisit.dev')));
+    vi.unstubAllGlobals();
+
+    const contactEmailWarning = result.warnings.find(
+      (warning) => warning.category === 'default-contact-email',
+    );
+
+    expect(contactEmailWarning).toBeUndefined();
+  });
+
+  test('does not add default-contact-email warning when a custom email is used', async () => {
+    vi.stubGlobal('window', { location: { hostname: 'example.com' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+    vi.unstubAllGlobals();
+
+    const contactEmailWarning = result.warnings.find(
+      (warning) => warning.category === 'default-contact-email',
+    );
+
+    expect(contactEmailWarning).toBeUndefined();
+  });
 });
