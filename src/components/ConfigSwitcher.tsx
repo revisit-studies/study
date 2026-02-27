@@ -496,6 +496,14 @@ export function ConfigSwitcher({
                 {' '}
                 <Text span ff="monospace">global.json</Text>
                 .
+                <br />
+                Please refer to the
+                {' '}
+                <Anchor href="https://revisit.dev/docs/getting-started/your-first-study/" target="_blank">
+                  getting started guide
+                </Anchor>
+                {' '}
+                for more details.
               </Text>
             )}
           </>
