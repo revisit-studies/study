@@ -20,6 +20,13 @@ import { useAuth } from '../store/hooks/useAuth';
 import { isCloudStorageEngine } from '../storage/engines/utils';
 import { getSequenceConditions } from '../utils/handleConditionLogic';
 
+export function resolveHomeTab(requestedTab: string | null, availableTabs: string[], fallbackTab: string) {
+  if (requestedTab && availableTabs.includes(requestedTab)) {
+    return requestedTab;
+  }
+  return fallbackTab;
+}
+
 function StudyCard({
   configName,
   config,
@@ -365,7 +372,21 @@ export function ConfigSwitcher({
     if (libraries.length > 0) return 'Libraries';
     return 'Demos';
   }, [others, demos, examples, tutorials, tests, libraries]);
-  const tab = useMemo(() => searchParams.get('tab') || firstTab, [firstTab, searchParams]);
+  const availableTabs = useMemo(
+    () => [
+      ...(others.length > 0 ? ['Others'] : []),
+      ...(demos.length > 0 ? ['Demos'] : []),
+      ...(examples.length > 0 ? ['Examples'] : []),
+      ...(tutorials.length > 0 ? ['Tutorials'] : []),
+      ...(tests.length > 0 ? ['Tests'] : []),
+      ...(libraries.length > 0 ? ['Libraries'] : []),
+    ],
+    [others.length, demos.length, examples.length, tutorials.length, tests.length, libraries.length],
+  );
+  const tab = useMemo(
+    () => resolveHomeTab(searchParams.get('tab'), availableTabs, firstTab),
+    [availableTabs, firstTab, searchParams],
+  );
   const navigate = useNavigate();
 
   return (
