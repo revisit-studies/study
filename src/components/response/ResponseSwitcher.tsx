@@ -110,6 +110,15 @@ export function ResponseSwitcher({
     if (response.paramCapture) {
       return searchParams.get(response.paramCapture) || '';
     }
+    const responseDefault = (response as Response & { default?: string | number | string[] | Record<string, string | string[]> }).default;
+    if (responseDefault !== undefined) {
+      if (response.type === 'matrix-checkbox' || response.type === 'matrix-radio') {
+        return Object.fromEntries(
+          Object.entries(responseDefault as Record<string, string | string[]>).map(([questionKey, value]) => [questionKey, Array.isArray(value) ? value.join('|') : value]),
+        );
+      }
+      return responseDefault;
+    }
 
     if (response.type === 'reactive' || response.type === 'checkbox') {
       return [];

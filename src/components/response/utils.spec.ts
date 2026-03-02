@@ -1,7 +1,7 @@
 import {
   afterEach, beforeEach, describe, expect, it,
 } from 'vitest';
-import type { MatrixResponse } from '../../parser/types';
+import type { MatrixResponse, Response } from '../../parser/types';
 import { generateInitFields, mergeReactiveAnswers } from './utils';
 
 describe('generateInitFields', () => {
@@ -47,6 +47,46 @@ describe('generateInitFields', () => {
       'matrix-question-fallback': {
         'Question without value': '',
         'question-2': '',
+      },
+    });
+  });
+
+  it('uses response defaults when no stored answer exists', () => {
+    const responses: Response[] = [
+      {
+        id: 'short-default',
+        prompt: 'Short text',
+        type: 'shortText',
+        default: 'prefilled',
+      },
+      {
+        id: 'checkbox-default',
+        prompt: 'Checkbox',
+        type: 'checkbox',
+        options: ['A', 'B'],
+        default: ['A'],
+      },
+      {
+        id: 'matrix-default',
+        prompt: 'Matrix',
+        type: 'matrix-checkbox',
+        answerOptions: ['A', 'B'],
+        questionOptions: ['Q1', 'Q2'],
+        default: {
+          Q1: ['A', 'B'],
+          Q2: 'A',
+        },
+      },
+    ];
+
+    const initialFields = generateInitFields(responses, {});
+
+    expect(initialFields).toEqual({
+      'short-default': 'prefilled',
+      'checkbox-default': ['A'],
+      'matrix-default': {
+        Q1: 'A|B',
+        Q2: 'A',
       },
     });
   });

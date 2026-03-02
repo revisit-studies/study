@@ -71,6 +71,22 @@ const getQueryParameters = () => {
   return new URLSearchParams(window.location.search);
 };
 
+const getDefaultFieldValue = (response: Response) => {
+  const responseDefault = (response as Response & { default?: string | number | string[] | Record<string, string | string[]> }).default;
+  if (!Object.prototype.hasOwnProperty.call(response, 'default') || responseDefault === undefined) {
+    return null;
+  }
+
+  if (response.type === 'matrix-checkbox' || response.type === 'matrix-radio') {
+    const matrixDefault = responseDefault as Record<string, string | string[]>;
+    return Object.fromEntries(
+      Object.entries(matrixDefault).map(([questionKey, value]) => [questionKey, Array.isArray(value) ? value.join('|') : value]),
+    );
+  }
+
+  return responseDefault;
+};
+
 export const generateInitFields = (responses: Response[], storedAnswer: StoredAnswer['answer']) => {
   let initObj = {};
   const queryParameters = getQueryParameters();
@@ -93,8 +109,11 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
       };
     } else {
       let initField: string | string[] | number | object | null = '';
+      const defaultFieldValue = getDefaultFieldValue(response);
       if (response.paramCapture) {
         initField = queryParameters.get(response.paramCapture);
+      } else if (defaultFieldValue !== null) {
+        initField = defaultFieldValue;
       } else if (response.type === 'reactive' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
         initField = [];
       } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {

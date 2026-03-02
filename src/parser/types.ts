@@ -396,6 +396,8 @@ export interface NumericalResponse extends BaseResponse {
   type: 'numerical';
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
+  /** The default value of the response. */
+  default?: number;
   /** The minimum value that is accepted in the input. */
   min?: number;
   /** The maximum value that is accepted in the input. */
@@ -420,6 +422,8 @@ export interface ShortTextResponse extends BaseResponse {
   type: 'shortText';
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
+  /** The default value of the response. */
+  default?: string;
 }
 
 /**
@@ -440,6 +444,8 @@ export interface LongTextResponse extends BaseResponse {
   type: 'longText';
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
+  /** The default value of the response. */
+  default?: string;
 }
 
 /**
@@ -468,6 +474,8 @@ export interface LikertResponse extends BaseResponse {
   type: 'likert';
   /** The number of options to render. */
   numItems: number;
+  /** The default value of the response. */
+  default?: string | number;
   /** The starting value of the likert scale. Defaults to 1. */
   start?: number;
   /** The spacing between the options. Defaults to 1. */
@@ -531,6 +539,8 @@ export interface MatrixResponse extends BaseResponse {
   answerOptions: (StringOption | string)[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
   /** The question options (rows) are the prompts for each response you'd like to record. */
   questionOptions: (StringOption | string)[];
+  /** The default value of the response by question key. Matrix checkbox responses also support arrays for each row. */
+  default?: Record<string, string | string[]>;
   /** The order in which the questions are displayed. Defaults to fixed. */
   questionOrder?: 'fixed' | 'random';
 }
@@ -568,6 +578,8 @@ export interface DropdownResponse extends BaseResponse {
   type: 'dropdown';
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
+  /** The default value of the response. */
+  default?: string | string[];
   /** The options that are displayed in the dropdown. */
   options: (StringOption | string)[];
   /** The minimum number of selections that are required. This will make the dropdown a multiselect dropdown. */
@@ -606,6 +618,8 @@ export interface SliderResponse extends BaseResponse {
   type: 'slider';
   /** This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value. */
   options: NumberOption[];
+  /** The default value of the response. */
+  default?: number;
   /** The starting value of the slider. Defaults to the minimum value. */
   startingValue?: number;
   /** Whether the slider should snap between values. Defaults to false. Slider snapping disables the label above the handle. */
@@ -645,6 +659,8 @@ export interface RadioResponse extends BaseResponse {
   type: 'radio';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
+  /** The default value of the response. */
+  default?: string;
   /** The order in which the radio buttons are displayed. Defaults to fixed. */
   optionOrder?: 'fixed' | 'random';
   /** The left label of the radio group. Used in Likert scales for example */
@@ -676,6 +692,8 @@ export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
+  /** The default value of the response. */
+  default?: string[];
   /** The order in which the checkboxes are displayed. Defaults to fixed. */
   optionOrder?: 'fixed' | 'random';
   /** The minimum number of selections that are required. */
@@ -726,6 +744,8 @@ export interface RankingResponse extends BaseResponse {
   type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise';
   /** The options that are displayed as ranking options, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
+  /** The default value of the response. */
+  default?: Record<string, string>;
   /** The number of items to rank. Applies only to sublist and categorical ranking widgets. */
   numItems?: number;
 }
@@ -768,6 +788,8 @@ export interface ReactiveResponse extends BaseResponse {
 export interface ButtonsResponse extends BaseResponse {
   type: 'buttons';
   options: (StringOption | string)[];
+  /** The default value of the response. */
+  default?: string;
   /** The order in which the buttons are displayed. Defaults to fixed. */
   optionOrder?: 'fixed' | 'random';
 }

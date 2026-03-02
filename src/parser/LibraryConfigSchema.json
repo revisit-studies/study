@@ -249,6 +249,10 @@
       "additionalProperties": false,
       "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys. ```json {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
       "properties": {
+        "default": {
+          "description": "The default value of the response.",
+          "type": "string"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -346,6 +350,13 @@
       "additionalProperties": false,
       "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options. ```json {   \"id\": \"q7\",   \"prompt\": \"Checkbox example (not required)\",   \"location\": \"aboveStimulus\",   \"type\": \"checkbox\",   \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -654,6 +665,20 @@
       "additionalProperties": false,
       "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options. ```json {   \"id\": \"q-color\",   \"prompt\": \"What is your favorite color?\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"placeholder\": \"Please choose your favorite color\",   \"options\": [\"Red\", \"Blue\"] } ```\n\nHere's an example of a multiselect dropdown with minimum and maximum selections:\n\n```json {   \"id\": \"q-multiselect-dropdown\",   \"prompt\": \"Select the fruits you like.\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"placeholder\": \"Select your favorite fruits\",   \"options\": [\"Apple\", \"Banana\", \"Cherry\", \"Grape\", \"Orange\", \"Strawberry\", \"Watermelon\", \"Pineapple\"],   \"minSelections\": 2,   \"maxSelections\": 4 } ```",
       "properties": {
+        "default": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The default value of the response."
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -1343,6 +1368,13 @@
       "additionalProperties": false,
       "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, `\"numItems\": 5` will render 5 radio buttons, and `\"numItems\": 7` will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale: ```json {   \"id\": \"q-satisfaction\",   \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\",   \"location\": \"aboveStimulus\",   \"type\": \"likert\",   \"leftLabel\": \"Not Enjoyable\",   \"rightLabel\": \"Very Enjoyable\",   \"labelLocation\": \"inline\",   \"numItems\": 5,   \"start\": 1,   \"spacing\": 1 } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response.",
+          "type": [
+            "string",
+            "number"
+          ]
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -1448,6 +1480,10 @@
       "additionalProperties": false,
       "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-name\",   \"prompt\": \"What is your first name?\",   \"location\": \"aboveStimulus\",   \"type\": \"longText\",   \"placeholder\": \"Please enter your first name\" } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response.",
+          "type": "string"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -1716,6 +1752,23 @@
           ],
           "description": "The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from."
         },
+        "default": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "The default value of the response by question key. Matrix checkbox responses also support arrays for each row.",
+          "type": "object"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -1837,6 +1890,10 @@
       "additionalProperties": false,
       "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder. ```json {   \"id\": \"q-numerical\",   \"prompt\": \"Numerical example\",   \"location\": \"aboveStimulus\",   \"type\": \"numerical\",   \"placeholder\": \"Enter your age, range from 0 - 120\",   \"max\": 120,   \"min\": 0 } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -2074,6 +2131,10 @@
       "additionalProperties": false,
       "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels. ```json {   \"id\": \"q-radio\",   \"prompt\": \"Radio button example\",   \"location\": \"aboveStimulus\",   \"type\": \"radio\",   \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"],   \"optionOrder\": \"random\",   \"leftLabel\": \"Left\",   \"rightLabel\": \"Right\",   \"labelLocation\": \"inline\",   \"horizontal\": true,   \"withOther\": true } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response.",
+          "type": "string"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -2225,6 +2286,13 @@
       "additionalProperties": false,
       "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options.\n\nThere are three types of ranking widgets: Ranking Sublist: The participant is asked to rank a subset of items from a larger list. Ranking Categorical: The participant is asked to rank items within categories: HIGH, MEDIUM, and LOW. Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.\n\n```json {   \"id\": \"ranking-sublist\",   \"type\": \"ranking-sublist\",   \"prompt\": \"Rank your top 2 favorite fruits from the list below\",   \"location\": \"belowStimulus\",   \"options\": [\"Apple\", \"Banana\", \"Orange\", \"Strawberry\", \"Grapes\"],   \"numItems\": 2 }, {   \"id\": \"ranking-categorical\",   \"type\": \"ranking-categorical\",   \"prompt\": \"Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.\",   \"location\": \"belowStimulus\",   \"options\": [\"Drawing\", \"Singing\", \"Hiking\", \"Dancing\", \"Photography\"] }, {   \"id\": \"ranking-pairwise\",   \"type\": \"ranking-pairwise\",   \"prompt\": \"Which meal would you prefer\",   \"location\": \"belowStimulus\",   \"options\": [\"Pizza\", \"Sushi\", \"Burger\", \"Pasta\", \"Salad\", \"Tacos\"] } ```",
       "properties": {
+        "default": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The default value of the response.",
+          "type": "object"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -2643,6 +2711,10 @@
       "additionalProperties": false,
       "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"placeholder\": \"Enter your answer here\" } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response.",
+          "type": "string"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -2742,6 +2814,10 @@
       "additionalProperties": false,
       "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100. ```json {   \"id\": \"q-slider\",   \"prompt\": \"How are you feeling?\",   \"location\": \"aboveStimulus\",   \"type\": \"slider\",   \"options\": [     {       \"label\": \"Bad\",       \"value\": 0     },     {       \"label\": \"OK\",       \"value\": 50     },     {       \"label\": \"Good\",       \"value\": 100     }   ] } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
