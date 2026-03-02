@@ -21,7 +21,6 @@ import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { useCurrentComponent } from '../routes/utils';
-import { ResolutionWarning } from './interface/ResolutionWarning';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { RecordingContext, useRecording } from '../store/hooks/useRecording';
 import { ScreenRecordingRejection } from './interface/ScreenRecordingRejection';
@@ -159,7 +158,6 @@ export function StepRenderer() {
             <AppHeader developmentModeEnabled={developmentModeEnabled} dataCollectionEnabled={dataCollectionEnabled} />
             )}
             <DeviceWarning />
-            <ResolutionWarning />
             {isScreenRecordingUserRejected && <ScreenRecordingRejection />}
             <HelpModal />
             <AlertModal />
