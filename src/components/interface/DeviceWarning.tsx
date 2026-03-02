@@ -108,7 +108,7 @@ export function DeviceWarning() {
     <Modal opened onClose={() => {}} fullScreen withCloseButton={false}>
       <Stack align="center" justify="center">
         <IconAlertTriangle size={64} color="orange" />
-        <Title order={3}> Browser, Device, or Display Is Not Compatible </Title>
+        <Title order={3}> Browser, Device, Input, or Display Is Not Compatible </Title>
         {isRejected && (
           <Text size="md" ta="center" c="red">
             You have been rejected because your display size stayed outside
