@@ -54,17 +54,36 @@ function detectDisplay() {
   };
 }
 
+const DEFAULT_BROWSER = { name: 'unknown', version: 0 };
+const DEFAULT_DEVICE: 'desktop' | 'tablet' | 'mobile' = 'desktop';
+const DEFAULT_INPUTS: ('mouse' | 'touch')[] = [];
+const DEFAULT_DISPLAY = { width: 0, height: 0 };
+
 export function useDeviceRules(studyRules?: StudyRules) {
   const [isBrowserAllowed, setIsBrowserAllowed] = useState(true);
   const [isDeviceAllowed, setIsDeviceAllowed] = useState(true);
   const [isInputAllowed, setIsInputAllowed] = useState(true);
   const [isDisplayAllowed, setIsDisplayAllowed] = useState(true);
-  const [currentBrowser, setCurrentBrowser] = useState(() => detectBrowser());
-  const [currentDevice, setCurrentDevice] = useState(() => detectDeviceType());
-  const [currentInputs, setCurrentInputs] = useState(() => detectInputTypes());
-  const [currentDisplay, setCurrentDisplay] = useState(() => detectDisplay());
+  const [currentBrowser, setCurrentBrowser] = useState(() => (
+    typeof navigator === 'undefined' ? DEFAULT_BROWSER : detectBrowser()
+  ));
+  const [currentDevice, setCurrentDevice] = useState(() => (
+    typeof navigator === 'undefined' ? DEFAULT_DEVICE : detectDeviceType()
+  ));
+  const [currentInputs, setCurrentInputs] = useState(() => (
+    typeof window === 'undefined' || typeof navigator === 'undefined'
+      ? DEFAULT_INPUTS
+      : detectInputTypes()
+  ));
+  const [currentDisplay, setCurrentDisplay] = useState(() => (
+    typeof window === 'undefined' ? DEFAULT_DISPLAY : detectDisplay()
+  ));
 
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return () => {};
+    }
+
     const evaluateRules = () => {
       const browser = detectBrowser();
       const device = detectDeviceType();
