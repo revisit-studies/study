@@ -6,6 +6,9 @@ import {
 import { StoredAnswer } from '../../store/types';
 import { parseStringOptionValue } from '../../utils/stringOptions';
 
+type ResponseDefault = string | number | string[] | Record<string, string | string[]>;
+type ResponseWithDefault = Response & { default?: ResponseDefault };
+
 function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
   // Check max and min selections
   const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
@@ -71,9 +74,9 @@ const getQueryParameters = () => {
   return new URLSearchParams(window.location.search);
 };
 
-const getDefaultFieldValue = (response: Response) => {
-  const responseDefault = (response as Response & { default?: string | number | string[] | Record<string, string | string[]> }).default;
-  if (!Object.prototype.hasOwnProperty.call(response, 'default') || responseDefault === undefined) {
+export const getDefaultFieldValue = (response: Response) => {
+  const responseDefault = (response as ResponseWithDefault).default;
+  if (!Object.hasOwn(response, 'default') || responseDefault === undefined) {
     return null;
   }
 
