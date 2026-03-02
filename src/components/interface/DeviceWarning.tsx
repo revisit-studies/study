@@ -24,11 +24,11 @@ export function DeviceWarning() {
     browsers, devices, inputs, display,
   } = studyConfig.studyRules ?? {};
   const displayRules = [
-    display?.minWidth ? `Minimum width: ${display.minWidth}px` : undefined,
-    display?.minHeight ? `Minimum height: ${display.minHeight}px` : undefined,
-    display?.maxWidth ? `Maximum width: ${display.maxWidth}px` : undefined,
-    display?.maxHeight ? `Maximum height: ${display.maxHeight}px` : undefined,
-  ].filter(Boolean) as string[];
+    display?.minWidth !== undefined ? `Minimum width: ${display.minWidth}px` : undefined,
+    display?.minHeight !== undefined ? `Minimum height: ${display.minHeight}px` : undefined,
+    display?.maxWidth !== undefined ? `Maximum width: ${display.maxWidth}px` : undefined,
+    display?.maxHeight !== undefined ? `Maximum height: ${display.maxHeight}px` : undefined,
+  ].filter((rule): rule is string => rule !== undefined);
 
   const {
     isBrowserAllowed,
