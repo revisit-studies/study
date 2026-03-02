@@ -24,11 +24,11 @@ export function DeviceWarning() {
     browsers, devices, inputs, display,
   } = studyConfig.studyRules ?? {};
   const displayRules = [
-    display?.minWidth ? `Minimum width: ${display.minWidth}px` : undefined,
-    display?.minHeight ? `Minimum height: ${display.minHeight}px` : undefined,
-    display?.maxWidth ? `Maximum width: ${display.maxWidth}px` : undefined,
-    display?.maxHeight ? `Maximum height: ${display.maxHeight}px` : undefined,
-  ].filter(Boolean) as string[];
+    display?.minWidth !== undefined ? `Minimum width: ${display.minWidth}px` : undefined,
+    display?.minHeight !== undefined ? `Minimum height: ${display.minHeight}px` : undefined,
+    display?.maxWidth !== undefined ? `Maximum width: ${display.maxWidth}px` : undefined,
+    display?.maxHeight !== undefined ? `Maximum height: ${display.maxHeight}px` : undefined,
+  ].filter((rule): rule is string => rule !== undefined);
 
   const {
     isBrowserAllowed,
@@ -108,7 +108,7 @@ export function DeviceWarning() {
     <Modal opened onClose={() => {}} fullScreen withCloseButton={false}>
       <Stack align="center" justify="center">
         <IconAlertTriangle size={64} color="orange" />
-        <Title order={3}> Browser, Device, or Display Is Not Compatible </Title>
+        <Title order={3}> Browser, Device, Input, or Display Is Not Compatible </Title>
         {isRejected && (
           <Text size="md" ta="center" c="red">
             You have been rejected because your display size stayed outside
