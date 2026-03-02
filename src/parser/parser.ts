@@ -104,7 +104,7 @@ function verifyStudySkip(
 }
 
 function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
-  if (sequence.conditional) {
+  if (sequence.conditional === true) {
     return true;
   }
 
@@ -119,7 +119,7 @@ function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
 }
 
 function hasNonFixedOrderBlock(sequence: StudyConfig['sequence']): boolean {
-  if (sequence.order !== 'fixed') {
+  if ((sequence.order ?? 'fixed') !== 'fixed') {
     return true;
   }
 
