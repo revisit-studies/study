@@ -103,12 +103,51 @@ function verifyStudySkip(
   }
 }
 
+function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
+  if (sequence.conditional) {
+    return true;
+  }
+
+  if (isDynamicBlock(sequence)) {
+    return false;
+  }
+
+  return sequence.components.some((component) => (
+    typeof component !== 'string'
+    && hasConditionalBlock(component)
+  ));
+}
+
+function hasNonFixedOrderBlock(sequence: StudyConfig['sequence']): boolean {
+  if (sequence.order !== 'fixed') {
+    return true;
+  }
+
+  if (isDynamicBlock(sequence)) {
+    return false;
+  }
+
+  return sequence.components.some((component) => (
+    typeof component !== 'string'
+    && hasNonFixedOrderBlock(component)
+  ));
+}
+
 // This function verifies the study config file satisfies conditions that are not covered by the schema
 function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Record<string, LibraryConfig>) {
   const errors: ParsedConfig<StudyConfig>['errors'] = [];
   const warnings: ParsedConfig<StudyConfig>['warnings'] = [];
 
   verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
+
+  if (hasConditionalBlock(studyConfig.sequence) && hasNonFixedOrderBlock(studyConfig.sequence)) {
+    errors.push({
+      message: 'Conditional URL parameter assignment cannot be combined with random or latinSquare sequence ordering',
+      instancePath: '/sequence/',
+      params: { action: 'Use fixed ordering when using conditional blocks, or remove conditional blocks' },
+      category: 'sequence-validation',
+    });
+  }
 
   // Warn if the default contact email is left in the config and the study is not hosted on a known ReVISit domain
   const DEFAULT_CONTACT_EMAIL = 'contact@revisit.dev';
