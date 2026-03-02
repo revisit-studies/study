@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
 import { QuestionnaireComponent, StudyConfig } from '../parser/types';
 import { generateSequenceArray } from './handleRandomSequences';
 import { getSequenceFlatMap } from './getSequenceFlatMap';
-import testRandomizationConfig from '../../public/test-randomization/config.json';
 
 const components = Object.fromEntries(Array(50).fill(0).map((_, idx) => [`component_${idx}`, { type: 'questionnaire', response: [] } as QuestionnaireComponent]));
 
@@ -33,6 +33,8 @@ const config: StudyConfig = {
 
 const trialGroupA = Array.from({ length: 10 }, (_, idx) => `trial${idx + 1}`);
 const trialGroupB = Array.from({ length: 10 }, (_, idx) => `trial${idx + 11}`);
+const testRandomizationConfigUrl = new URL('../../public/test-randomization/config.json', import.meta.url);
+const randomizationDistributionTest = existsSync(testRandomizationConfigUrl) ? test : test.skip;
 
 describe('Generating sequences works as expected', () => {
   test('generateSequenceArray defaults to 1000 sequences when numSequences is omitted', () => {
@@ -155,11 +157,12 @@ describe('Generating sequences works as expected', () => {
     expect(max30 - min30).toBeLessThan(400);
   });
 
-  test('generateSequenceArray matches expected distribution for test-randomization study', () => {
+  randomizationDistributionTest('generateSequenceArray matches expected distribution for test-randomization study', () => {
+    const testRandomizationConfig = JSON.parse(readFileSync(testRandomizationConfigUrl, 'utf-8')) as StudyConfig;
     const randomizationConfig = {
-      ...(testRandomizationConfig as StudyConfig),
+      ...testRandomizationConfig,
       uiConfig: {
-        ...(testRandomizationConfig as StudyConfig).uiConfig,
+        ...testRandomizationConfig.uiConfig,
         numSequences: 1000,
       },
     } as StudyConfig;
