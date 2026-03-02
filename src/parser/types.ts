@@ -113,6 +113,8 @@ export type DisplayRules = {
   maxHeight?: number;
   /** The maximum screen width size for the study */
   maxWidth?: number;
+  /** Optional message to be displayed when display criteria are not met. */
+  blockedMessage?: string;
 };
 
 /**

@@ -631,6 +631,10 @@
       "additionalProperties": false,
       "description": "Rules specifying which minimum screen dimensions for the study.",
       "properties": {
+        "blockedMessage": {
+          "description": "Optional message to be displayed when display criterias are not met.",
+          "type": "string"
+        },
         "maxHeight": {
           "description": "The maximum screen height size for the study",
           "type": "number"
