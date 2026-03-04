@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Form Elements Demo",
     "version": "pilot",
@@ -300,6 +300,257 @@
             },
             "Platypus"
           ]
+        }
+      ]
+    },
+    "Default Values": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "default-values-title",
+          "type": "textOnly",
+          "prompt": "# Default Values Demo\n\nThis page is a local test for response defaults. Every input below should render prefilled without participant interaction.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "default-numerical",
+          "type": "numerical",
+          "prompt": "Numerical default",
+          "min": 0,
+          "max": 100,
+          "default": 42
+        },
+        {
+          "id": "default-short-text",
+          "type": "shortText",
+          "prompt": "Short text default",
+          "default": "Prefilled short text"
+        },
+        {
+          "id": "default-long-text",
+          "type": "longText",
+          "prompt": "Long text default",
+          "default": "Prefilled long text value for local testing."
+        },
+        {
+          "id": "default-likert",
+          "type": "likert",
+          "prompt": "Likert default (numeric)",
+          "numItems": 7,
+          "leftLabel": "Disagree",
+          "rightLabel": "Agree",
+          "default": 4
+        },
+        {
+          "id": "default-slider",
+          "type": "slider",
+          "prompt": "Slider default",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "Middle",
+              "value": 50
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ],
+          "default": 75
+        },
+        {
+          "id": "default-dropdown-single",
+          "type": "dropdown",
+          "prompt": "Single dropdown default",
+          "options": [
+            {
+              "label": "Bar",
+              "value": "bar"
+            },
+            {
+              "label": "Pie",
+              "value": "pie"
+            },
+            {
+              "label": "Line",
+              "value": "line"
+            }
+          ],
+          "default": "pie"
+        },
+        {
+          "id": "default-dropdown-multiselect",
+          "type": "dropdown",
+          "prompt": "Multiselect dropdown default (string input normalized to array)",
+          "options": [
+            "Bar",
+            "Pie",
+            "Line",
+            "Scatter"
+          ],
+          "minSelections": 1,
+          "maxSelections": 3,
+          "default": ["Line", "test"]
+        },
+        {
+          "id": "default-radio",
+          "type": "radio",
+          "prompt": "Radio default",
+          "options": [
+            {
+              "label": "Option A",
+              "value": "option-a"
+            },
+            {
+              "label": "Option B",
+              "value": "option-b"
+            }
+          ],
+          "default": "option-b"
+        },
+        {
+          "id": "default-checkbox",
+          "type": "checkbox",
+          "prompt": "Checkbox default",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "default": [
+            "Option 1",
+            "Option 3"
+          ]
+        },
+        {
+          "id": "default-checkbox-with-dont-know",
+          "type": "checkbox",
+          "prompt": "Checkbox default with Don't know option",
+          "secondaryText": "This includes the I don't know checkbox for local testing.",
+          "options": [
+            "Option A",
+            "Option B",
+            "Option C"
+          ],
+          "withDontKnow": true,
+          "default": [
+            "Option B",
+            "I don't know"
+          ]
+        },
+        {
+          "id": "default-buttons",
+          "type": "buttons",
+          "prompt": "Buttons default",
+          "options": [
+            {
+              "label": "Primary",
+              "value": "primary"
+            },
+            {
+              "label": "Secondary",
+              "value": "secondary"
+            }
+          ],
+          "default": "secondary"
+        },
+        {
+          "id": "default-matrix-radio",
+          "type": "matrix-radio",
+          "prompt": "Matrix radio default",
+          "answerOptions": [
+            {
+              "label": "Low",
+              "value": "low"
+            },
+            {
+              "label": "Medium",
+              "value": "medium"
+            },
+            {
+              "label": "High",
+              "value": "high"
+            }
+          ],
+          "questionOptions": [
+            "Clarity",
+            "Speed"
+          ],
+          "default": {
+            "Clarity": "high",
+            "Speed": "medium"
+          }
+        },
+        {
+          "id": "default-matrix-checkbox",
+          "type": "matrix-checkbox",
+          "prompt": "Matrix checkbox default",
+          "answerOptions": [
+            "Has Legs",
+            "Has Wings",
+            "Can Swim"
+          ],
+          "questionOptions": [
+            "Dog",
+            "Eagle"
+          ],
+          "default": {
+            "Dog": [
+              "Has Legs",
+              "Can Swim"
+            ],
+            "Eagle": [
+              "Has Wings"
+            ]
+          }
+        },
+        {
+          "id": "default-ranking-sublist",
+          "type": "ranking-sublist",
+          "prompt": "Ranking sublist default",
+          "options": [
+            "Apple",
+            "Banana",
+            "Orange",
+            "Grape"
+          ],
+          "numItems": 2,
+          "default": {
+            "Orange": "0",
+            "Apple": "1"
+          }
+        },
+        {
+          "id": "default-ranking-categorical",
+          "type": "ranking-categorical",
+          "prompt": "Ranking categorical default",
+          "options": [
+            "Drawing",
+            "Singing",
+            "Hiking"
+          ],
+          "default": {
+            "Drawing": "HIGH",
+            "Hiking": "MEDIUM",
+            "Singing": "LOW"
+          }
+        },
+        {
+          "id": "default-ranking-pairwise",
+          "type": "ranking-pairwise",
+          "prompt": "Ranking pairwise default",
+          "options": [
+            "Pizza",
+            "Sushi",
+            "Burger"
+          ],
+          "default": {
+            "Pizza": "pair-0-high",
+            "Sushi": "pair-0-low"
+          }
         }
       ]
     },
@@ -718,6 +969,7 @@
     "components": [
       "Introduction",
       "Form Elements",
+      "Default Values",
       "Randomizing Options",
       "Randomizing Questions",
       "Ranking Widgets",
