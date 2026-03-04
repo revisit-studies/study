@@ -6,6 +6,9 @@ import {
 import { StoredAnswer } from '../../store/types';
 import { parseStringOptionValue } from '../../utils/stringOptions';
 
+type ResponseDefault = string | number | string[] | Record<string, string | string[]>;
+type ResponseWithDefault = Response & { default?: ResponseDefault };
+
 function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
   // Check max and min selections
   const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
@@ -71,6 +74,48 @@ const getQueryParameters = () => {
   return new URLSearchParams(window.location.search);
 };
 
+export const getDefaultFieldValue = (response: Response) => {
+  const responseDefault = (response as ResponseWithDefault).default;
+  if (!Object.hasOwn(response, 'default') || responseDefault === undefined) {
+    return null;
+  }
+
+  if (response.type === 'matrix-checkbox') {
+    const matrixDefault = responseDefault as Record<string, string[] | string>;
+    return Object.fromEntries(
+      Object.entries(matrixDefault).map(([questionKey, value]) => [questionKey, (Array.isArray(value) ? value : [value]).join('|')]),
+    );
+  }
+
+  if (response.type === 'matrix-radio') {
+    return responseDefault as Record<string, string>;
+  }
+
+  if (response.type === 'checkbox') {
+    return Array.isArray(responseDefault) ? responseDefault : [responseDefault.toString()];
+  }
+
+  if (response.type === 'likert') {
+    return responseDefault.toString();
+  }
+
+  if (response.type === 'dropdown') {
+    const dropdownDefault = responseDefault as string | string[];
+    const isMultiselect = (
+      (response.minSelections && response.minSelections >= 1)
+      || (response.maxSelections && response.maxSelections > 1)
+    );
+
+    if (isMultiselect) {
+      return Array.isArray(dropdownDefault) ? dropdownDefault : [dropdownDefault];
+    }
+
+    return Array.isArray(dropdownDefault) ? dropdownDefault[0] ?? '' : dropdownDefault;
+  }
+
+  return responseDefault;
+};
+
 export const generateInitFields = (responses: Response[], storedAnswer: StoredAnswer['answer']) => {
   let initObj = {};
   const queryParameters = getQueryParameters();
@@ -93,8 +138,11 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
       };
     } else {
       let initField: string | string[] | number | object | null = '';
+      const defaultFieldValue = getDefaultFieldValue(response);
       if (response.paramCapture) {
         initField = queryParameters.get(response.paramCapture);
+      } else if (defaultFieldValue !== null) {
+        initField = defaultFieldValue;
       } else if (response.type === 'reactive' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
         initField = [];
       } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
@@ -222,11 +270,14 @@ export function generateErrorMessage(
   const { requiredValue, requiredLabel } = response;
 
   let error: string | null = '';
+  const checkboxValues = Array.isArray(answer.checked)
+    ? answer.checked
+    : (Array.isArray(answer.value) ? answer.value : undefined);
 
-  if (answer.checked && Array.isArray(requiredValue)) {
-    error = requiredValue && [...requiredValue].sort().toString() !== [...answer.checked].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
-  } else if (answer.checked && response.required && response.type === 'checkbox') {
-    error = checkCheckboxResponse(response, answer.checked);
+  if (checkboxValues && Array.isArray(requiredValue)) {
+    error = requiredValue && [...requiredValue].sort().toString() !== [...checkboxValues].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
+  } else if (checkboxValues && response.required && response.type === 'checkbox') {
+    error = checkCheckboxResponse(response, checkboxValues);
   } else if (answer.value && response.type === 'dropdown') {
     error = checkDropdownResponse(response, answer.value as string[]);
   } else if (answer.value && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalResponse(response, answer.value)) {

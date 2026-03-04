@@ -1,7 +1,7 @@
 import {
   Box, Checkbox, Input,
 } from '@mantine/core';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CheckboxResponse, ParsedStringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { HorizontalHandler } from './HorizontalHandler';
@@ -12,6 +12,8 @@ import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
 
+const DONT_KNOW_DEFAULT_VALUE = "I don't know";
+
 export function CheckBoxInput({
   response,
   disabled,
@@ -19,13 +21,15 @@ export function CheckBoxInput({
   index,
   enumerateQuestions,
   otherValue,
+  dontKnowCheckbox,
 }: {
   response: CheckboxResponse;
   disabled: boolean;
-  answer: object;
+  answer: { value?: string[]; onChange?: (value: string[]) => void };
   index: number;
   enumerateQuestions: boolean;
   otherValue?: object;
+  dontKnowCheckbox?: { checked?: boolean; onChange?: (value: boolean) => void };
 }) {
   const {
     prompt,
@@ -48,6 +52,27 @@ export function CheckBoxInput({
   const [otherSelected, setOtherSelected] = useState(false);
 
   const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
+  const selectedValues = Array.isArray(answer.value) ? answer.value : [];
+
+  useEffect(() => {
+    if (!response.withDontKnow || selectedValues.length === 0) {
+      return;
+    }
+
+    const containsDontKnowDefault = selectedValues.includes(DONT_KNOW_DEFAULT_VALUE);
+    if (!containsDontKnowDefault) {
+      return;
+    }
+
+    const filteredValues = selectedValues.filter((value) => value !== DONT_KNOW_DEFAULT_VALUE);
+    if (filteredValues.length !== selectedValues.length) {
+      answer.onChange?.(filteredValues);
+    }
+
+    if (!dontKnowCheckbox?.checked) {
+      dontKnowCheckbox?.onChange?.(true);
+    }
+  }, [response.withDontKnow, selectedValues, answer, dontKnowCheckbox]);
 
   return (
     <Checkbox.Group
