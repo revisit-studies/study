@@ -45,23 +45,39 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
     const raptorRef = usePlyr(ref, { options, source });
 
     useEffect(() => {
-      const plyr = (ref as RefObject<APITypes>).current?.plyr;
-      if (!plyr || typeof plyr.on !== 'function' || typeof plyr.off !== 'function') return undefined;
+      let animationFrameId: number | undefined;
+      let cleanup = () => {};
 
-      try {
-        // Make registration idempotent across StrictMode mount/unmount cycles.
-        plyr.off('ended', endedCallback);
-        plyr.on('ended', endedCallback);
-      } catch {
-        return undefined;
-      }
+      const registerEndedHandler = () => {
+        const plyr = (ref as RefObject<APITypes>).current?.plyr;
+        if (!plyr || typeof plyr.on !== 'function' || typeof plyr.off !== 'function') {
+          animationFrameId = window.requestAnimationFrame(registerEndedHandler);
+          return;
+        }
+
+        try {
+          // Make registration idempotent across StrictMode mount/unmount cycles.
+          plyr.off('ended', endedCallback);
+          plyr.on('ended', endedCallback);
+          cleanup = () => {
+            try {
+              plyr.off('ended', endedCallback);
+            } catch {
+              // Plyr instance can already be disposed during teardown.
+            }
+          };
+        } catch {
+          cleanup = () => {};
+        }
+      };
+
+      registerEndedHandler();
 
       return () => {
-        try {
-          plyr.off('ended', endedCallback);
-        } catch {
-          // Plyr instance can already be disposed during teardown.
+        if (animationFrameId !== undefined) {
+          window.cancelAnimationFrame(animationFrameId);
         }
+        cleanup();
       };
     }, [endedCallback, ref, source]);
 
@@ -69,6 +85,8 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
       <video
         ref={raptorRef}
         className="plyr-react plyr"
+        // Ensure HTML5 videos still trigger completion even if Plyr event wiring fails.
+        onEnded={endedCallback}
       />
     );
   });
