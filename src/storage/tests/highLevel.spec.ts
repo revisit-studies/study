@@ -77,6 +77,19 @@ const conditionalLatinSquareConfig: StudyConfig = {
   },
 };
 
+function getConditionalBlockOrder(sequence: Sequence, condition: string): string[] {
+  const filteredSequence = filterSequenceByCondition(sequence, condition);
+  const conditionalBlock = filteredSequence.components.find(
+    (component): component is Sequence => typeof component !== 'string' && component.id === condition,
+  );
+
+  if (!conditionalBlock) {
+    throw new Error(`Conditional block "${condition}" not found in sequence`);
+  }
+
+  return conditionalBlock.components as string[];
+}
+
 describe.each([
   { TestEngine: LocalStorageEngine },
   // { TestEngine: SupabaseStorageEngine }, // Uncomment to test with Supabase
@@ -193,9 +206,7 @@ describe.each([
         conditionalLatinSquareConfig,
         participantMetadata,
       );
-      const filteredSequence = filterSequenceByCondition(participantSession.sequence, 'color');
-      const colorBlock = filteredSequence.components[1] as Sequence;
-      const assignedOrder = colorBlock.components as string[];
+      const assignedOrder = getConditionalBlockOrder(participantSession.sequence, 'color');
 
       assignedOrder.forEach((component, position) => {
         countsByPosition[position][component] += 1;
@@ -210,6 +221,29 @@ describe.each([
         expect(positionCounts[component]).toBe(50);
       });
     });
+  });
+
+  test('initializeParticipantSession assigns conditional latin square rows in queue order', async () => {
+    const latinSquareSequenceArray = generateSequenceArray(conditionalLatinSquareConfig);
+    await storageEngine.setSequenceArray(latinSquareSequenceArray);
+
+    for (let i = 0; i < 20; i += 1) {
+      // Sequential awaits are intentional here because each participant assignment depends on
+      // the storage engine state from previous iterations.
+      // eslint-disable-next-line no-await-in-loop
+      const participantSession = await storageEngine.initializeParticipantSession(
+        { condition: 'color' },
+        conditionalLatinSquareConfig,
+        participantMetadata,
+      );
+
+      const expectedOrder = getConditionalBlockOrder(latinSquareSequenceArray[i], 'color');
+      const assignedOrder = getConditionalBlockOrder(participantSession.sequence, 'color');
+      expect(assignedOrder).toEqual(expectedOrder);
+
+      // eslint-disable-next-line no-await-in-loop
+      await storageEngine.clearCurrentParticipantId();
+    }
   });
 
   test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {

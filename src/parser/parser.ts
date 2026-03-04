@@ -103,12 +103,67 @@ function verifyStudySkip(
   }
 }
 
+function isUrlConditionalBlock(sequence: StudyConfig['sequence']): boolean {
+  return sequence.conditional === true && Boolean(sequence.id);
+}
+
+function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
+  if (isUrlConditionalBlock(sequence)) {
+    return true;
+  }
+
+  if (isDynamicBlock(sequence)) {
+    return false;
+  }
+
+  return sequence.components.some((component) => (
+    typeof component !== 'string'
+    && hasConditionalBlock(component)
+  ));
+}
+
+function hasConditionalBlockInsideRestrictedOrderAncestor(
+  sequence: StudyConfig['sequence'],
+  hasRestrictedOrderAncestor = false,
+): boolean {
+  if (hasRestrictedOrderAncestor && isUrlConditionalBlock(sequence)) {
+    return true;
+  }
+
+  if (isDynamicBlock(sequence)) {
+    return false;
+  }
+
+  const childHasRestrictedOrderAncestor = hasRestrictedOrderAncestor
+    || sequence.order === 'random'
+    || sequence.order === 'latinSquare';
+
+  return sequence.components.some((component) => (
+    typeof component !== 'string'
+    && hasConditionalBlockInsideRestrictedOrderAncestor(component, childHasRestrictedOrderAncestor)
+  ));
+}
+
 // This function verifies the study config file satisfies conditions that are not covered by the schema
 function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Record<string, LibraryConfig>) {
   const errors: ParsedConfig<StudyConfig>['errors'] = [];
   const warnings: ParsedConfig<StudyConfig>['warnings'] = [];
 
   verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
+
+  const hasConditional = hasConditionalBlock(studyConfig.sequence);
+  const hasConditionalInsideRestrictedOrderAncestor = hasConditionalBlockInsideRestrictedOrderAncestor(
+    studyConfig.sequence,
+  );
+
+  if (hasConditional && hasConditionalInsideRestrictedOrderAncestor) {
+    errors.push({
+      message: 'Conditional URL parameter assignment cannot be combined with random or latinSquare sequence ordering',
+      instancePath: '/sequence/',
+      params: { action: 'Use fixed ordering when using conditional blocks, or remove conditional blocks' },
+      category: 'sequence-validation',
+    });
+  }
 
   // Warn if the default contact email is left in the config and the study is not hosted on a known ReVISit domain
   const DEFAULT_CONTACT_EMAIL = 'contact@revisit.dev';
