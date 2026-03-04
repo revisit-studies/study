@@ -251,7 +251,7 @@ export function ResponseSwitcher({
       {response.type === 'textOnly' && (
       <TextOnlyInput response={response} />
       )}
-      {response.withDontKnow && (
+      {response.withDontKnow && (response.type !== 'matrix-radio' && response.type !== 'matrix-checkbox') && (
       <Checkbox
         mt="xs"
         disabled={isDisabled}

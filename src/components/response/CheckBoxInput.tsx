@@ -52,7 +52,7 @@ export function CheckBoxInput({
   const [otherSelected, setOtherSelected] = useState(false);
 
   const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
-  const selectedValues = Array.isArray(answer.value) ? answer.value : [];
+  const selectedValues = useMemo(() => (Array.isArray(answer.value) ? answer.value : []), [answer.value]);
 
   useEffect(() => {
     if (!response.withDontKnow || selectedValues.length === 0) {

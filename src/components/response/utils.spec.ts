@@ -132,7 +132,7 @@ describe('mergeReactiveAnswers', () => {
   });
 });
 
-describe('generateErrorMessage', () => {
+describe('generateErrorMessage checkbox', () => {
   it('validates checkbox selections when checkbox group value is an array', () => {
     const checkboxResponse: Response = {
       id: 'checkbox-response',
@@ -146,5 +146,32 @@ describe('generateErrorMessage', () => {
     const error = generateErrorMessage(checkboxResponse, { value: ['Option 1'] });
 
     expect(error).toBe('Please select at least 2 options');
+  });
+});
+
+describe('generateErrorMessage matrix', () => {
+  const matrixResponse: MatrixResponse = {
+    id: 'matrix-validation',
+    prompt: 'Matrix prompt',
+    type: 'matrix-radio',
+    required: true,
+    answerOptions: ['0', '1'],
+    questionOptions: ['q1', 'q2'],
+  };
+
+  it('does not show matrix incomplete message when untouched', () => {
+    const error = generateErrorMessage(matrixResponse, {
+      value: { q1: '', q2: '' },
+    });
+
+    expect(error).toBeNull();
+  });
+
+  it('shows matrix incomplete message after at least one answer is selected', () => {
+    const error = generateErrorMessage(matrixResponse, {
+      value: { q1: '0', q2: '' },
+    });
+
+    expect(error).toBe('Please answer all questions in the matrix to continue.');
   });
 });
