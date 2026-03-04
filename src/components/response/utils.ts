@@ -58,8 +58,9 @@ function checkNumericalResponse(response: NumericalResponse, value: number) {
 
 function checkMatrixResponse(response: MatrixResponse, value: Record<string, string>) {
   const unanswered = Object.values(value).some((val) => val === '');
+  const hasAnsweredAtLeastOne = Object.values(value).some((val) => val !== '');
 
-  if (unanswered) {
+  if (unanswered && hasAnsweredAtLeastOne) {
     return 'Please answer all questions in the matrix to continue.';
   }
 
