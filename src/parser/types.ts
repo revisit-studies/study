@@ -386,6 +386,7 @@ export interface BaseResponse {
  *   "prompt": "Numerical example",
  *   "location": "aboveStimulus",
  *   "type": "numerical",
+ *   "default": 25,
  *   "placeholder": "Enter your age, range from 0 - 120",
  *   "max": 120,
  *   "min": 0
@@ -396,7 +397,7 @@ export interface NumericalResponse extends BaseResponse {
   type: 'numerical';
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
-  /** The default value of the response. */
+  /** The default value of the response. Specify a numeric value such as `25` or `3.14`. */
   default?: number;
   /** The minimum value that is accepted in the input. */
   min?: number;
@@ -413,6 +414,7 @@ export interface NumericalResponse extends BaseResponse {
  *   "prompt": "Short text example",
  *   "location": "aboveStimulus",
  *   "type": "shortText",
+ *   "default": "Jane Doe",
  *   "placeholder": "Enter your answer here"
  * }
  * ```
@@ -422,7 +424,7 @@ export interface ShortTextResponse extends BaseResponse {
   type: 'shortText';
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
-  /** The default value of the response. */
+  /** The default value of the response. Specify a string such as `"Jane Doe"`. */
   default?: string;
 }
 
@@ -435,6 +437,7 @@ export interface ShortTextResponse extends BaseResponse {
  *   "prompt": "What is your first name?",
  *   "location": "aboveStimulus",
  *   "type": "longText",
+ *   "default": "I enjoyed this study because...",
  *   "placeholder": "Please enter your first name"
  * }
  * ```
@@ -444,7 +447,7 @@ export interface LongTextResponse extends BaseResponse {
   type: 'longText';
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
-  /** The default value of the response. */
+  /** The default value of the response. Specify a string such as `"I enjoyed this study because..."`. */
   default?: string;
 }
 
@@ -465,6 +468,7 @@ export interface LongTextResponse extends BaseResponse {
  *   "rightLabel": "Very Enjoyable",
  *   "labelLocation": "inline",
  *   "numItems": 5,
+ *   "default": 4,
  *   "start": 1,
  *   "spacing": 1
  * }
@@ -474,7 +478,7 @@ export interface LikertResponse extends BaseResponse {
   type: 'likert';
   /** The number of options to render. */
   numItems: number;
-  /** The default value of the response. */
+  /** The default value of the response. Specify a rendered option value as a number or string (for example `4` or `"4"`). */
   default?: string | number;
   /** The starting value of the likert scale. Defaults to 1. */
   start?: number;
@@ -488,12 +492,21 @@ export interface LikertResponse extends BaseResponse {
   labelLocation?: 'above' | 'inline' | 'below';
 }
 
+interface BaseMatrixResponse extends BaseResponse {
+  /** The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from. */
+  answerOptions: (StringOption | string)[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
+  /** The question options (rows) are the prompts for each response you'd like to record. */
+  questionOptions: (StringOption | string)[];
+  /** The order in which the questions are displayed. Defaults to fixed. */
+  questionOrder?: 'fixed' | 'random';
+}
+
 /**
- * The MatrixResponse interface is used to define the properties of a matrix radio or matrix checkbox response.
- * Question options are rendered as rows of the matrix, each row containing its own radio/checkbox group.
- * Answer options are rendered as column headers of the matrix. These can be customized by passing in the custom strings into the answer options. Alternatively, `answerOptions` can be set to one of the following custom strings: 'satisfaction5','satisfaction7', 'likely5', 'likely7'. This will automatically generate the appropriate headers for the matrix.
+ * The MatrixRadioResponse interface defines a matrix where each row accepts exactly one selected option.
+ * `questionOptions` are rendered as rows, and `answerOptions` are rendered as columns.
+ * `answerOptions` can be custom labels/values or one of the built-in shortcuts: `satisfaction5`, `satisfaction7`, `likely5`, `likely7`.
  *
- * Example for a 5-scale satisfaction matrix with three questions:
+ * Example:
  * ```json
  * {
  *   "id": "multi-satisfaction",
@@ -506,11 +519,27 @@ export interface LikertResponse extends BaseResponse {
  *     "The technique we developed",
  *     "The authors of the tools"
  *   ],
+ *   "default": {
+ *     "The tool we created": "Highly Satisfied",
+ *     "The technique we developed": "Satisfied",
+ *     "The authors of the tools": "Neutral"
+ *   },
  *   "questionOrder": "random"
  * }
  * ```
+ */
+export interface MatrixRadioResponse extends BaseMatrixResponse {
+  type: 'matrix-radio';
+  /** The default value of the response by question key. Provide an object where each key is a question value and each value is one answer option value. */
+  default?: Record<string, string>;
+}
+
+/**
+ * The MatrixCheckboxResponse interface defines a matrix where each row can select multiple options.
+ * `questionOptions` are rendered as rows, and `answerOptions` are rendered as columns.
+ * Defaults are specified per-row as arrays of selected answer option values.
  *
- * Here's an example using custom columns (`answerOptions`):
+ * Example using custom columns (`answerOptions`):
  * ```json
  * {
  *   "id": "multi-custom",
@@ -528,22 +557,24 @@ export interface LikertResponse extends BaseResponse {
  *     "Eagle",
  *     "Salmon",
  *     "Platypus"
- *   ]
-
+ *   ],
+ *   "default": {
+ *     "Dog": ["Has Legs"],
+ *     "Snake": [],
+ *     "Eagle": ["Has Wings"],
+ *     "Salmon": ["Can Swim"],
+ *     "Platypus": ["Has Legs", "Can Swim"]
+ *   }
  * }
  * ```
  */
-export interface MatrixResponse extends BaseResponse {
-  type: 'matrix-radio' | 'matrix-checkbox';
-  /** The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from. */
-  answerOptions: (StringOption | string)[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
-  /** The question options (rows) are the prompts for each response you'd like to record. */
-  questionOptions: (StringOption | string)[];
-  /** The default value of the response by question key. Matrix checkbox responses also support arrays for each row. */
-  default?: Record<string, string | string[]>;
-  /** The order in which the questions are displayed. Defaults to fixed. */
-  questionOrder?: 'fixed' | 'random';
+export interface MatrixCheckboxResponse extends BaseMatrixResponse {
+  type: 'matrix-checkbox';
+  /** The default value of the response by question key. Provide an object where each key is a question value and each value is an array of selected answer option values. */
+  default?: Record<string, string[]>;
 }
+
+export type MatrixResponse = MatrixRadioResponse | MatrixCheckboxResponse;
 
 /**
  * The DropdownResponse interface is used to define the properties of a dropdown response.
@@ -554,6 +585,7 @@ export interface MatrixResponse extends BaseResponse {
  *   "prompt": "What is your favorite color?",
  *   "location": "aboveStimulus",
  *   "type": "dropdown",
+ *   "default": "Blue",
  *   "placeholder": "Please choose your favorite color",
  *   "options": ["Red", "Blue"]
  * }
@@ -567,6 +599,7 @@ export interface MatrixResponse extends BaseResponse {
  *   "prompt": "Select the fruits you like.",
  *   "location": "aboveStimulus",
  *   "type": "dropdown",
+ *   "default": ["Banana", "Orange"],
  *   "placeholder": "Select your favorite fruits",
  *   "options": ["Apple", "Banana", "Cherry", "Grape", "Orange", "Strawberry", "Watermelon", "Pineapple"],
  *   "minSelections": 2,
@@ -578,7 +611,7 @@ export interface DropdownResponse extends BaseResponse {
   type: 'dropdown';
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
-  /** The default value of the response. */
+  /** The default value of the response. Use a string for single-select dropdowns and a string array for multiselect dropdowns. */
   default?: string | string[];
   /** The options that are displayed in the dropdown. */
   options: (StringOption | string)[];
@@ -597,6 +630,7 @@ export interface DropdownResponse extends BaseResponse {
  *   "prompt": "How are you feeling?",
  *   "location": "aboveStimulus",
  *   "type": "slider",
+ *   "default": 50,
  *   "options": [
  *     {
  *       "label": "Bad",
@@ -618,7 +652,7 @@ export interface SliderResponse extends BaseResponse {
   type: 'slider';
   /** This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value. */
   options: NumberOption[];
-  /** The default value of the response. */
+  /** The default value of the response. Specify a numeric value that falls within the slider range. */
   default?: number;
   /** The starting value of the slider. Defaults to the minimum value. */
   startingValue?: number;
@@ -646,6 +680,7 @@ export interface SliderResponse extends BaseResponse {
  *   "location": "aboveStimulus",
  *   "type": "radio",
  *   "options": ["Option 1", "Option 2", "Option 3"],
+ *   "default": "Option 2",
  *   "optionOrder": "random",
  *   "leftLabel": "Left",
  *   "rightLabel": "Right",
@@ -659,7 +694,7 @@ export interface RadioResponse extends BaseResponse {
   type: 'radio';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
-  /** The default value of the response. */
+  /** The default value of the response. Specify one option value as a string. */
   default?: string;
   /** The order in which the radio buttons are displayed. Defaults to fixed. */
   optionOrder?: 'fixed' | 'random';
@@ -684,7 +719,9 @@ export interface RadioResponse extends BaseResponse {
  *   "prompt": "Checkbox example (not required)",
  *   "location": "aboveStimulus",
  *   "type": "checkbox",
- *   "options": ["Option 1", "Option 2", "Option 3"]
+ *   "options": ["Option 1", "Option 2", "Option 3"],
+ *   "withDontKnow": true,
+ *   "default": ["Option 1", "I don't know"]
  * }
  * ```
  */
@@ -692,7 +729,7 @@ export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
-  /** The default value of the response. */
+  /** The default value of the response. Specify an array of option values. To preselect the "I don't know" checkbox, include `"I don't know"`. */
   default?: string[];
   /** The order in which the checkboxes are displayed. Defaults to fixed. */
   optionOrder?: 'fixed' | 'random';
@@ -722,6 +759,7 @@ export interface CheckboxResponse extends BaseResponse {
  *   "prompt": "Rank your top 2 favorite fruits from the list below",
  *   "location": "belowStimulus",
  *   "options": ["Apple", "Banana", "Orange", "Strawberry", "Grapes"],
+ *   "default": {"Orange": "0", "Apple": "1"},
  *   "numItems": 2
  * },
  * {
@@ -729,14 +767,16 @@ export interface CheckboxResponse extends BaseResponse {
  *   "type": "ranking-categorical",
  *   "prompt": "Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.",
  *   "location": "belowStimulus",
- *   "options": ["Drawing", "Singing", "Hiking", "Dancing", "Photography"]
+ *   "options": ["Drawing", "Singing", "Hiking", "Dancing", "Photography"],
+ *   "default": {"Drawing": "HIGH", "Hiking": "MEDIUM", "Singing": "LOW"}
  * },
  * {
  *   "id": "ranking-pairwise",
  *   "type": "ranking-pairwise",
  *   "prompt": "Which meal would you prefer",
  *   "location": "belowStimulus",
- *   "options": ["Pizza", "Sushi", "Burger", "Pasta", "Salad", "Tacos"]
+ *   "options": ["Pizza", "Sushi", "Burger", "Pasta", "Salad", "Tacos"],
+ *   "default": {"Pizza": "pair-0-high", "Sushi": "pair-0-low"}
  * }
  * ```
 */
@@ -744,7 +784,7 @@ export interface RankingResponse extends BaseResponse {
   type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise';
   /** The options that are displayed as ranking options, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
-  /** The default value of the response. */
+  /** The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `"0"`), category labels for categorical (`"HIGH"`, `"MEDIUM"`, `"LOW"`), and pairwise slots (`"pair-<n>-high"` / `"pair-<n>-low"`). */
   default?: Record<string, string>;
   /** The number of items to rank. Applies only to sublist and categorical ranking widgets. */
   numItems?: number;
@@ -776,6 +816,7 @@ export interface ReactiveResponse extends BaseResponse {
  *   "type": "buttons",
  *   "prompt": "Click a button",
  *   "location": "belowStimulus",
+ *   "default": "Option 2",
  *   "options": [
  *     "Option 1",
  *     "Option 2",
@@ -788,7 +829,7 @@ export interface ReactiveResponse extends BaseResponse {
 export interface ButtonsResponse extends BaseResponse {
   type: 'buttons';
   options: (StringOption | string)[];
-  /** The default value of the response. */
+  /** The default value of the response. Specify one option value as a string. */
   default?: string;
   /** The order in which the buttons are displayed. Defaults to fixed. */
   optionOrder?: 'fixed' | 'random';
