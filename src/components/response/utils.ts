@@ -80,11 +80,37 @@ export const getDefaultFieldValue = (response: Response) => {
     return null;
   }
 
-  if (response.type === 'matrix-checkbox' || response.type === 'matrix-radio') {
-    const matrixDefault = responseDefault as Record<string, string | string[]>;
+  if (response.type === 'matrix-checkbox') {
+    const matrixDefault = responseDefault as Record<string, string[] | string>;
     return Object.fromEntries(
-      Object.entries(matrixDefault).map(([questionKey, value]) => [questionKey, Array.isArray(value) ? value.join('|') : value]),
+      Object.entries(matrixDefault).map(([questionKey, value]) => [questionKey, (Array.isArray(value) ? value : [value]).join('|')]),
     );
+  }
+
+  if (response.type === 'matrix-radio') {
+    return responseDefault as Record<string, string>;
+  }
+
+  if (response.type === 'checkbox') {
+    return Array.isArray(responseDefault) ? responseDefault : [responseDefault.toString()];
+  }
+
+  if (response.type === 'likert') {
+    return responseDefault.toString();
+  }
+
+  if (response.type === 'dropdown') {
+    const dropdownDefault = responseDefault as string | string[];
+    const isMultiselect = (
+      (response.minSelections && response.minSelections >= 1)
+      || (response.maxSelections && response.maxSelections > 1)
+    );
+
+    if (isMultiselect) {
+      return Array.isArray(dropdownDefault) ? dropdownDefault : [dropdownDefault];
+    }
+
+    return Array.isArray(dropdownDefault) ? dropdownDefault[0] ?? '' : dropdownDefault;
   }
 
   return responseDefault;
@@ -244,11 +270,14 @@ export function generateErrorMessage(
   const { requiredValue, requiredLabel } = response;
 
   let error: string | null = '';
+  const checkboxValues = Array.isArray(answer.checked)
+    ? answer.checked
+    : (Array.isArray(answer.value) ? answer.value : undefined);
 
-  if (answer.checked && Array.isArray(requiredValue)) {
-    error = requiredValue && [...requiredValue].sort().toString() !== [...answer.checked].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
-  } else if (answer.checked && response.required && response.type === 'checkbox') {
-    error = checkCheckboxResponse(response, answer.checked);
+  if (checkboxValues && Array.isArray(requiredValue)) {
+    error = requiredValue && [...requiredValue].sort().toString() !== [...checkboxValues].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
+  } else if (checkboxValues && response.required && response.type === 'checkbox') {
+    error = checkCheckboxResponse(response, checkboxValues);
   } else if (answer.value && response.type === 'dropdown') {
     error = checkDropdownResponse(response, answer.value as string[]);
   } else if (answer.value && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalResponse(response, answer.value)) {

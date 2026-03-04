@@ -210,6 +210,7 @@ export function ResponseSwitcher({
         index={index}
         enumerateQuestions={enumerateQuestions}
         otherValue={otherValue}
+        dontKnowCheckbox={dontKnowCheckbox as { checked?: boolean; onChange?: (value: boolean) => void }}
       />
       )}
       {(response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') && (

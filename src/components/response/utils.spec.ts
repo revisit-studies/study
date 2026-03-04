@@ -2,7 +2,7 @@ import {
   afterEach, beforeEach, describe, expect, it,
 } from 'vitest';
 import type { MatrixResponse, Response } from '../../parser/types';
-import { generateInitFields, mergeReactiveAnswers } from './utils';
+import { generateErrorMessage, generateInitFields, mergeReactiveAnswers } from './utils';
 
 describe('generateInitFields', () => {
   const originalWindow = globalThis.window;
@@ -74,8 +74,23 @@ describe('generateInitFields', () => {
         questionOptions: ['Q1', 'Q2'],
         default: {
           Q1: ['A', 'B'],
-          Q2: 'A',
+          Q2: ['A'],
         },
+      },
+      {
+        id: 'likert-default',
+        prompt: 'Likert',
+        type: 'likert',
+        numItems: 5,
+        default: 3,
+      },
+      {
+        id: 'multiselect-dropdown-default',
+        prompt: 'Dropdown',
+        type: 'dropdown',
+        options: ['A', 'B', 'C'],
+        minSelections: 1,
+        default: 'B',
       },
     ];
 
@@ -88,6 +103,8 @@ describe('generateInitFields', () => {
         Q1: 'A|B',
         Q2: 'A',
       },
+      'likert-default': '3',
+      'multiselect-dropdown-default': ['B'],
     });
   });
 });
@@ -112,5 +129,22 @@ describe('mergeReactiveAnswers', () => {
     );
 
     expect(mergedValues).toEqual({ answer1: 1, answer2: 2, other: 'keep-me' });
+  });
+});
+
+describe('generateErrorMessage', () => {
+  it('validates checkbox selections when checkbox group value is an array', () => {
+    const checkboxResponse: Response = {
+      id: 'checkbox-response',
+      prompt: 'Checkbox response',
+      type: 'checkbox',
+      required: true,
+      minSelections: 2,
+      options: ['Option 1', 'Option 2', 'Option 3'],
+    };
+
+    const error = generateErrorMessage(checkboxResponse, { value: ['Option 1'] });
+
+    expect(error).toBe('Please select at least 2 options');
   });
 });
