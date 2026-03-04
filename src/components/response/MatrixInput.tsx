@@ -21,10 +21,10 @@ const CHOICE_STRING_TO_COLUMNS: Record<string, string[]> = {
   satisfaction7: ['Highly Unsatisfied', 'Unsatisfied', 'Slightly Unsatisfied', 'Neutral', 'Slightly Satisfied', 'Satisfied', 'Highly Satisfied'],
 };
 
-  const DONT_KNOW = {
-    label: "I don't know",
-    value: "I don't know",
-  };
+const DONT_KNOW = {
+  label: "I don't know",
+  value: "I don't know",
+};
 
 function CheckboxComponent({
   _choices,
@@ -140,8 +140,6 @@ export function MatrixInput({
     infoText,
   } = response;
 
-
-
   const _choices = useMemo<ParsedStringOption[]>(
     () => {
       const choices = typeof answerOptions === 'string'
@@ -154,7 +152,7 @@ export function MatrixInput({
 
       return choices;
     },
-    [answerOptions, response.type, response.withDontKnow],
+    [answerOptions, response.withDontKnow],
   );
 
   const questions = useMemo(
