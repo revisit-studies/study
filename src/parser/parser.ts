@@ -103,8 +103,12 @@ function verifyStudySkip(
   }
 }
 
+function isUrlConditionalBlock(sequence: StudyConfig['sequence']): boolean {
+  return sequence.conditional === true && Boolean(sequence.id);
+}
+
 function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
-  if (sequence.conditional === true) {
+  if (isUrlConditionalBlock(sequence)) {
     return true;
   }
 
@@ -122,7 +126,7 @@ function hasConditionalBlockInsideRestrictedOrderAncestor(
   sequence: StudyConfig['sequence'],
   hasRestrictedOrderAncestor = false,
 ): boolean {
-  if (hasRestrictedOrderAncestor && sequence.conditional === true) {
+  if (hasRestrictedOrderAncestor && isUrlConditionalBlock(sequence)) {
     return true;
   }
 
