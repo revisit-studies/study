@@ -1465,6 +1465,19 @@ describe('Parser Warnings', () => {
     expect(contactEmailWarning).toBeUndefined();
   });
 
+  test('does not add default-contact-email warning when contactEmail is contact@revisit.dev on localhost', async () => {
+    vi.stubGlobal('window', { location: { hostname: 'localhost' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('contact@revisit.dev')));
+    vi.unstubAllGlobals();
+
+    const contactEmailWarning = result.warnings.find(
+      (warning) => warning.category === 'default-contact-email',
+    );
+
+    expect(contactEmailWarning).toBeUndefined();
+  });
+
   test('does not add default-contact-email warning when a custom email is used', async () => {
     vi.stubGlobal('window', { location: { hostname: 'example.com' } });
 

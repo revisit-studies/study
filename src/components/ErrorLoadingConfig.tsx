@@ -25,6 +25,7 @@ export function ErrorLoadingConfig({
     // warning
     'unused-component',
     'disabled-sidebar',
+    'default-contact-email',
   ];
 
   // Format category labels by capitalizing each word and replacing hyphens with spaces
@@ -193,8 +194,10 @@ export function ErrorLoadingConfig({
       }
     });
 
-    return categoryOrder
-      .filter((category) => categoryMap.has(category))
+    const orderedCategories = categoryOrder.filter((category) => categoryMap.has(category));
+    const unorderedCategories = Array.from(categoryMap.keys()).filter((category) => !categoryOrder.includes(category));
+
+    return [...orderedCategories, ...unorderedCategories]
       .map((category) => ({
         category,
         entries: Array.from(categoryMap.get(category)!.values()),
