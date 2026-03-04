@@ -118,26 +118,11 @@ function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
   ));
 }
 
-function hasRandomOrderBlock(sequence: StudyConfig['sequence']): boolean {
-  if (sequence.order === 'random') {
-    return true;
-  }
-
-  if (isDynamicBlock(sequence)) {
-    return false;
-  }
-
-  return sequence.components.some((component) => (
-    typeof component !== 'string'
-    && hasRandomOrderBlock(component)
-  ));
-}
-
-function hasConditionalBlockInsideLatinSquare(
+function hasConditionalBlockInsideRestrictedOrderAncestor(
   sequence: StudyConfig['sequence'],
-  hasLatinSquareAncestor = false,
+  hasRestrictedOrderAncestor = false,
 ): boolean {
-  if (hasLatinSquareAncestor && sequence.conditional === true) {
+  if (hasRestrictedOrderAncestor && sequence.conditional === true) {
     return true;
   }
 
@@ -145,10 +130,13 @@ function hasConditionalBlockInsideLatinSquare(
     return false;
   }
 
-  const childHasLatinSquareAncestor = hasLatinSquareAncestor || sequence.order === 'latinSquare';
+  const childHasRestrictedOrderAncestor = hasRestrictedOrderAncestor
+    || sequence.order === 'random'
+    || sequence.order === 'latinSquare';
+
   return sequence.components.some((component) => (
     typeof component !== 'string'
-    && hasConditionalBlockInsideLatinSquare(component, childHasLatinSquareAncestor)
+    && hasConditionalBlockInsideRestrictedOrderAncestor(component, childHasRestrictedOrderAncestor)
   ));
 }
 
@@ -160,10 +148,11 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
 
   const hasConditional = hasConditionalBlock(studyConfig.sequence);
-  const hasRandomOrder = hasRandomOrderBlock(studyConfig.sequence);
-  const hasConditionalInsideLatinSquare = hasConditionalBlockInsideLatinSquare(studyConfig.sequence);
+  const hasConditionalInsideRestrictedOrderAncestor = hasConditionalBlockInsideRestrictedOrderAncestor(
+    studyConfig.sequence,
+  );
 
-  if ((hasConditional && hasRandomOrder) || hasConditionalInsideLatinSquare) {
+  if (hasConditional && hasConditionalInsideRestrictedOrderAncestor) {
     errors.push({
       message: 'Conditional URL parameter assignment cannot be combined with random or latinSquare sequence ordering',
       instancePath: '/sequence/',
