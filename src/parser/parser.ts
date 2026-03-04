@@ -168,9 +168,11 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   // Warn if the default contact email is left in the config and the study is not hosted on a known ReVISit domain
   const DEFAULT_CONTACT_EMAIL = 'contact@revisit.dev';
   const REVISIT_DOMAINS = ['revisit.dev', 'vdl.sci.utah.edu'];
+  const LOCAL_DEVELOPMENT_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]']);
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isRevisitDomain = REVISIT_DOMAINS.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
-  if (studyConfig.uiConfig.contactEmail === DEFAULT_CONTACT_EMAIL && !isRevisitDomain) {
+  const isLocalDevelopment = LOCAL_DEVELOPMENT_HOSTNAMES.has(hostname);
+  if (studyConfig.uiConfig.contactEmail === DEFAULT_CONTACT_EMAIL && !isRevisitDomain && !isLocalDevelopment) {
     warnings.push({
       message: `The contact email is set to the default value \`${DEFAULT_CONTACT_EMAIL}\`. Please update it to your own email address.`,
       instancePath: '/uiConfig/contactEmail',
