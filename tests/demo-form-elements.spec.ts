@@ -2,6 +2,32 @@
 import { test, expect, Page } from '@playwright/test';
 import { nextClick, waitForStudyEndMessage } from './utils';
 
+async function answerMatrixRadioRows(page: Page, responseId: string, rowCount: number) {
+  for (let row = 0; row < rowCount; row += 1) {
+    const rowRadios = page.locator(`input[type="radio"][name="radioInput${responseId}-${row}"]`);
+    await expect(rowRadios.first()).toBeVisible();
+    await rowRadios.first().click();
+  }
+}
+
+async function answerMatrixCheckboxRows(
+  page: Page,
+  responseId: string,
+  rowCount: number,
+  columnCount: number,
+  selectedColumns: number[] = [0],
+) {
+  const checkboxes = page.locator(`#${responseId} input[type="checkbox"]`);
+  await expect(checkboxes).toHaveCount(rowCount * columnCount);
+
+  for (let row = 0; row < rowCount; row += 1) {
+    for (let i = 0; i < selectedColumns.length; i += 1) {
+      const column = selectedColumns[i];
+      await checkboxes.nth((row * columnCount) + column).click();
+    }
+  }
+}
+
 async function advanceToSidebarFormElements(page: Page) {
   const sidebarAgeInput = page.locator('input[placeholder="Enter your age here, range from 0 - 100"]:visible').first();
 
@@ -92,37 +118,26 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByRole('radio', { name: '5' }).nth(0).click();
 
   // Matrix radio
-  const radios1 = await page.locator('input[value="Highly Unsatisfied"]');
-  for (let i = 0; i < await radios1.count(); i += 1) {
-    await radios1.nth(i).click();
-  }
+  await answerMatrixRadioRows(page, 'q-multi-satisfaction', 3);
 
   // Matrix checkbox
-  const checkboxes1 = await page.locator('input[value="Has Legs"]');
-  const checkboxes2 = await page.locator('input[value="Has Wings"]');
-  for (let i = 0; i < await checkboxes1.count(); i += 1) {
-    await checkboxes1.nth(i).click();
-  }
-  for (let i = 0; i < 2; i += 1) {
-    await checkboxes2.nth(i).click();
-  }
+  await answerMatrixCheckboxRows(page, 'multi-custom', 5, 3);
 
   // Go to the next page
+  await nextClick(page);
+
+  // Default Values should be fully answerable via defaults
+  await expect(page.getByText('Default Values Demo')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
 
   // Fill the survey: Randomizing Options
 
   // Matrix radio
-  const radios2 = await page.locator('input[value="Highly Unsatisfied"]');
-  for (let i = 0; i < await radios2.count(); i += 1) {
-    await radios2.nth(i).click();
-  }
+  await answerMatrixRadioRows(page, 'q-multi-satisfaction', 3);
 
   // Matrix checkbox
-  const checkboxes3 = await page.locator('input[value="Answer 1"]');
-  for (let i = 0; i < await checkboxes3.count(); i += 1) {
-    await checkboxes3.nth(i).click();
-  }
+  await answerMatrixCheckboxRows(page, 'multi-custom', 3, 3);
 
   // Vertical Checkbox
   await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();
