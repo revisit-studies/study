@@ -1,0 +1,15 @@
+.markdown {
+  background-color: #f1f1f1;
+  padding: 30px;
+  border-radius: 10px;
+}
+
+#markdown-styling h2 {
+  font-family: "Gill Sans", sans-serif;
+  font-weight: 700;
+  text-align: center;
+}
+
+#markdown-styling code {
+  color: #0079cd;
+}
