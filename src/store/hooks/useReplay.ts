@@ -4,6 +4,7 @@ import {
 import { useSearchParams } from 'react-router';
 import { syncChannel, syncEmitter } from '../../utils/syncReplay';
 import EventEmitter from '../../utils/EventEmitter';
+import { getNextSyntheticReplayTime } from './replayTimer';
 
 /**
  * Hook to subscribe to video/audio/provenance timing events for replay
@@ -52,6 +53,7 @@ export function useReplay() {
     internalSpeed.current = newSpeed;
     _setSpeed(newSpeed);
     _setSeekTime(replayRef.current?.currentTime || timerValue.current);
+    playTimeStamp.current = Date.now();
   }, []);
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -242,10 +244,16 @@ export function useReplay() {
     // setup timer to emit events if both video and audio aren't present.
     if (!audioRef.current && !videoRef.current) {
       if (isPlaying) {
-        const startTime = Date.now();
-        const timerStartValue = timerValue.current;
+        let lastTickTime = Date.now();
         timer.current = setInterval(() => {
-          timerValue.current = timerStartValue + ((Date.now() - startTime) * internalSpeed.current) / 1000;
+          const now = Date.now();
+          timerValue.current = getNextSyntheticReplayTime(
+            timerValue.current,
+            lastTickTime,
+            now,
+            internalSpeed.current,
+          );
+          lastTickTime = now;
           emitterRef.current.emit('timeupdate', timerValue.current);
           if (timerValue.current >= internalDuration.current) {
             setIsPlaying(false);
