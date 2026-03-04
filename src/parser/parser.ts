@@ -118,8 +118,8 @@ function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
   ));
 }
 
-function hasNonFixedOrderBlock(sequence: StudyConfig['sequence']): boolean {
-  if (sequence.order === 'random' || sequence.order === 'latinSquare') {
+function hasRandomOrderBlock(sequence: StudyConfig['sequence']): boolean {
+  if (sequence.order === 'random') {
     return true;
   }
 
@@ -129,7 +129,26 @@ function hasNonFixedOrderBlock(sequence: StudyConfig['sequence']): boolean {
 
   return sequence.components.some((component) => (
     typeof component !== 'string'
-    && hasNonFixedOrderBlock(component)
+    && hasRandomOrderBlock(component)
+  ));
+}
+
+function hasConditionalBlockInsideLatinSquare(
+  sequence: StudyConfig['sequence'],
+  hasLatinSquareAncestor = false,
+): boolean {
+  if (hasLatinSquareAncestor && sequence.conditional === true) {
+    return true;
+  }
+
+  if (isDynamicBlock(sequence)) {
+    return false;
+  }
+
+  const childHasLatinSquareAncestor = hasLatinSquareAncestor || sequence.order === 'latinSquare';
+  return sequence.components.some((component) => (
+    typeof component !== 'string'
+    && hasConditionalBlockInsideLatinSquare(component, childHasLatinSquareAncestor)
   ));
 }
 
@@ -140,7 +159,11 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
 
   verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
 
-  if (hasConditionalBlock(studyConfig.sequence) && hasNonFixedOrderBlock(studyConfig.sequence)) {
+  const hasConditional = hasConditionalBlock(studyConfig.sequence);
+  const hasRandomOrder = hasRandomOrderBlock(studyConfig.sequence);
+  const hasConditionalInsideLatinSquare = hasConditionalBlockInsideLatinSquare(studyConfig.sequence);
+
+  if ((hasConditional && hasRandomOrder) || hasConditionalInsideLatinSquare) {
     errors.push({
       message: 'Conditional URL parameter assignment cannot be combined with random or latinSquare sequence ordering',
       instancePath: '/sequence/',
