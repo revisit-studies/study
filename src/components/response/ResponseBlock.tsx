@@ -134,11 +134,16 @@ export function ResponseBlock({
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
+  const allowProceedAfterFailedTraining = hasCorrectAnswerFeedback
+    && allowFailedTraining
+    && usedAllAttempts
+    && !hasCorrectAnswer;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
   const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
   const identifier = useCurrentIdentifier();
 
   const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
+  const responseBlockIsValid = Boolean(answerValidator.isValid() || allowProceedAfterFailedTraining);
   useEffect(() => {
     if (storedAnswer) {
       answerValidator.setInitialValues(generateInitFields(responses, storedAnswer));
@@ -146,7 +151,7 @@ export function ResponseBlock({
       updateResponseBlockValidation({
         location,
         identifier,
-        status: answerValidator.isValid(),
+        status: responseBlockIsValid,
         values: structuredClone(answerValidator.values),
         provenanceGraph: trrack.graph.backend,
       });
@@ -200,13 +205,13 @@ export function ResponseBlock({
       updateResponseBlockValidation({
         location,
         identifier,
-        status: answerValidator.isValid(),
+        status: responseBlockIsValid,
         values: structuredClone(answerValidator.values),
         provenanceGraph: trrack.graph.backend,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values, identifier, location, storeDispatch, updateResponseBlockValidation]);
+  }, [answerValidator.values, responseBlockIsValid, identifier, location, storeDispatch, updateResponseBlockValidation]);
   const [alertConfig, setAlertConfig] = useState(Object.fromEntries(allResponsesWithDefaults.map((response) => ([response.id, {
     visible: false,
     title: 'Correct Answer',
@@ -381,7 +386,7 @@ export function ResponseBlock({
 
       {showBtnsInLocation && (
       <NextButton
-        disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
+        disabled={(hasCorrectAnswerFeedback && !enableNextButton) || (!allowProceedAfterFailedTraining && !answerValidator.isValid())}
         label={nextButtonText}
         config={config}
         location={location}

@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { nextClick } from './utils';
+import { nextClick, openStudyFromLanding } from './utils';
 
 async function goToTraining(page: Page) {
   await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
@@ -80,4 +80,21 @@ test('test', async ({ page }) => {
   // First non-training trial should not require Check Answer.
   await expect(page.getByPlaceholder('0-100')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Check Answer' })).toBeHidden();
+});
+
+test('allowFailedTraining true enables next after max failed attempts', async ({ page }) => {
+  await openStudyFromLanding(page, 'Demo Studies', 'How To Do Training Demo');
+
+  await nextClick(page);
+
+  await page.getByPlaceholder('Choose mark').click();
+  await page.getByRole('option', { name: 'Bubble', exact: true }).click();
+
+  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await page.getByRole('button', { name: 'Check Answer' }).click();
+
+  await expect(page.getByText('You didn\'t answer this question correctly after 4 attempts. You can continue to the next question.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
 });
