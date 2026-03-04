@@ -7,10 +7,10 @@ test.describe('Test device restriction: display, browsers, devices, input', () =
     await page.setViewportSize({ width: 700, height: 350 });
     await page.goto('/test-device-restriction');
 
-    await expect(page.getByRole('heading', { name: 'Screen Resolution Warning' })).toBeVisible();
-    await expect(page.getByText('Your screen resolution is below the minimum requirement:')).toBeVisible();
-    await expect(page.getByText('Width: 800px')).toBeVisible();
-    await expect(page.getByText('Height: 400px')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Browser, Device, Input, or Display Is Not Compatible' })).toBeVisible();
+    await expect(page.getByText('Current display:')).toBeVisible();
+    await expect(page.getByText('Minimum width: 800px')).toBeVisible();
+    await expect(page.getByText('Minimum height: 400px')).toBeVisible();
   });
 
   test('renders study normally when all rules are satisfied', async ({ page }) => {
@@ -34,7 +34,7 @@ test.describe('Test device restriction: display, browsers, devices, input', () =
 
     await page.goto('/test-device-restriction');
 
-    await expect(page.getByRole('heading', { name: 'Browser or Device Not Supported' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Browser, Device, Input, or Display Is Not Compatible' })).toBeVisible();
     await expect(page.getByText('You must be on a relatively modern browser, Chrome > 100, Firefox > 100, Safari > 10.')).toBeVisible();
 
     await context.close();
@@ -53,7 +53,7 @@ test.describe('Test device restriction: display, browsers, devices, input', () =
 
     await page.goto('/test-device-restriction');
 
-    await expect(page.getByRole('heading', { name: 'Browser or Device Not Supported' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Browser, Device, Input, or Display Is Not Compatible' })).toBeVisible();
     await expect(page.getByText('This study only works on desktop devices.')).toBeVisible();
     await expect(page.getByText('This study only works with mouse input.')).toBeVisible();
 

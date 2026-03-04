@@ -27,7 +27,7 @@ function detectDeviceType() {
   const ua = navigator.userAgent.toLowerCase();
 
   // Detect iPadOS 13+ (spoofs desktop Safari)
-  const isModernIpad = navigator.platform === 'MacIntel'
+  const isModernIpad = ua.includes('macintosh')
     && navigator.maxTouchPoints > 1;
 
   const isMobile = /iphone|ipod|android.*mobile|windows phone|blackberry|opera mini/.test(ua);
@@ -47,49 +47,94 @@ function detectInputTypes() {
   return types;
 }
 
+function detectDisplay() {
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  };
+}
+
+const DEFAULT_BROWSER = { name: 'unknown', version: 0 };
+const DEFAULT_DEVICE: 'desktop' | 'tablet' | 'mobile' = 'desktop';
+const DEFAULT_INPUTS: ('mouse' | 'touch')[] = [];
+const DEFAULT_DISPLAY = { width: 0, height: 0 };
+
 export function useDeviceRules(studyRules?: StudyRules) {
   const [isBrowserAllowed, setIsBrowserAllowed] = useState(true);
   const [isDeviceAllowed, setIsDeviceAllowed] = useState(true);
   const [isInputAllowed, setIsInputAllowed] = useState(true);
+  const [isDisplayAllowed, setIsDisplayAllowed] = useState(true);
+  const [currentBrowser, setCurrentBrowser] = useState(() => (
+    typeof navigator === 'undefined' ? DEFAULT_BROWSER : detectBrowser()
+  ));
+  const [currentDevice, setCurrentDevice] = useState(() => (
+    typeof navigator === 'undefined' ? DEFAULT_DEVICE : detectDeviceType()
+  ));
+  const [currentInputs, setCurrentInputs] = useState(() => (
+    typeof window === 'undefined' || typeof navigator === 'undefined'
+      ? DEFAULT_INPUTS
+      : detectInputTypes()
+  ));
+  const [currentDisplay, setCurrentDisplay] = useState(() => (
+    typeof window === 'undefined' ? DEFAULT_DISPLAY : detectDisplay()
+  ));
 
   useEffect(() => {
-    const browser = detectBrowser();
-    const device = detectDeviceType();
-    const inputs = detectInputTypes();
-    if (!studyRules) {
-      return;
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return () => {};
     }
 
-    // Browser check
-    if (studyRules.browsers?.allowed?.length) {
-      const ok = studyRules.browsers.allowed.some(
-        (b) => b.name === browser.name
-          && browser.version >= (b.minVersion ?? 0),
+    const evaluateRules = () => {
+      const browser = detectBrowser();
+      const device = detectDeviceType();
+      const inputs = detectInputTypes();
+      const display = detectDisplay();
+      setCurrentBrowser(browser);
+      setCurrentDevice(device);
+      setCurrentInputs(inputs);
+      setCurrentDisplay(display);
+
+      const browserOk = !studyRules?.browsers?.allowed?.length
+        || studyRules.browsers.allowed.some(
+          (b) => b.name === browser.name
+            && browser.version >= (b.minVersion ?? 0),
+        );
+      const deviceOk = !studyRules?.devices?.allowed?.length
+        || studyRules.devices.allowed.includes(device);
+      const inputOk = !studyRules?.inputs?.allowed?.length
+        || inputs.some((i) => studyRules.inputs?.allowed?.includes(i));
+      const {
+        minWidth, minHeight, maxWidth, maxHeight,
+      } = studyRules?.display ?? {};
+      const displayOk = !studyRules?.display || (
+        (minWidth === undefined || display.width >= minWidth)
+        && (minHeight === undefined || display.height >= minHeight)
+        && (maxWidth === undefined || display.width <= maxWidth)
+        && (maxHeight === undefined || display.height <= maxHeight)
       );
-      if (!ok) {
-        setIsBrowserAllowed(false);
-      }
-    }
 
-    // Device check
-    if (studyRules.devices?.allowed?.length) {
-      if (!studyRules.devices.allowed.includes(device)) {
-        setIsDeviceAllowed(false);
-      }
-    }
+      setIsBrowserAllowed(browserOk);
+      setIsDeviceAllowed(deviceOk);
+      setIsInputAllowed(inputOk);
+      setIsDisplayAllowed(displayOk);
+    };
 
-    // Input type check
-    if (studyRules.inputs?.allowed?.length) {
-      const hasAllowedInput = inputs.some((i) => studyRules.inputs!.allowed.includes(i));
-      if (!hasAllowedInput) {
-        setIsInputAllowed(false);
-      }
-    }
+    evaluateRules();
+    window.addEventListener('resize', evaluateRules);
+
+    return () => {
+      window.removeEventListener('resize', evaluateRules);
+    };
   }, [studyRules]);
 
   return {
     isBrowserAllowed,
     isDeviceAllowed,
     isInputAllowed,
+    isDisplayAllowed,
+    currentBrowser,
+    currentDevice,
+    currentInputs,
+    currentDisplay,
   };
 }

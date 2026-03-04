@@ -104,10 +104,16 @@ export type InputRules = {
 
 /** Rules specifying which minimum screen dimensions for the study. */
 export type DisplayRules = {
-  /** The minimum screen width size for the study */
-  minHeight: number;
   /** The minimum screen height size for the study */
+  minHeight: number;
+  /** The minimum screen width size for the study */
   minWidth: number;
+  /** The maximum screen height size for the study */
+  maxHeight?: number;
+  /** The maximum screen width size for the study */
+  maxWidth?: number;
+  /** Optional message to be displayed when display criteria are not met. */
+  blockedMessage?: string;
 };
 
 /**
