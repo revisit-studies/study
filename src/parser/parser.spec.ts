@@ -732,6 +732,55 @@ describe('Parser Warnings', () => {
     expect(conditionalOrderError).toBeDefined();
   });
 
+  test('does not add sequence-validation error when conditional blocks are combined with dynamic ordering', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      components: {
+        intro: {
+          type: 'markdown',
+          path: 'intro.md',
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          'intro',
+          {
+            id: 'conditionA',
+            conditional: true,
+            order: 'dynamic',
+            functionPath: 'dynamic-function.js',
+          },
+        ],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const conditionalOrderError = result.errors.find(
+      (error) => error.category === 'sequence-validation'
+        && error.message.includes('Conditional URL parameter assignment cannot be combined with random or latinSquare sequence ordering'),
+    );
+    expect(conditionalOrderError).toBeUndefined();
+  });
+
   test('adds sequence-validation warning for empty components block', async () => {
     const studyConfig = {
       $schema: '',

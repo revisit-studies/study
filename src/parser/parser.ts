@@ -119,7 +119,7 @@ function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
 }
 
 function hasNonFixedOrderBlock(sequence: StudyConfig['sequence']): boolean {
-  if ((sequence.order ?? 'fixed') !== 'fixed') {
+  if (sequence.order === 'random' || sequence.order === 'latinSquare') {
     return true;
   }
 
