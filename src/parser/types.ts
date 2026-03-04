@@ -1068,8 +1068,8 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.0/src/public/demo-react-trrack/assets)
- * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.4.0/src/public/example-brush-interactions/assets)
+ * https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.1/src/public/demo-react-trrack/assets)
+ * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.4.1/src/public/example-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -1759,7 +1759,7 @@ export type BaseComponents = Record<string, Partial<IndividualComponent>>;
  * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
  * ```json
  * {
- *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/StudyConfigSchema.json",
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
  *   "studyMetadata": {
  *     ...
  *   },
@@ -1806,7 +1806,7 @@ export interface StudyConfig {
  *
  * ```json
  * {
- *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.0/src/parser/LibraryConfigSchema.json",
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/LibraryConfigSchema.json",
  *   "baseComponents": {
  *     // BaseComponents here are defined exactly as is in the StudyConfig
  *   },
