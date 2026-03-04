@@ -1,5 +1,6 @@
+/* eslint-disable no-await-in-loop */
 import { test, expect, Page } from '@playwright/test';
-import { nextClick } from './utils';
+import { nextClick, openStudyFromLanding, resetClientStudyState } from './utils';
 
 async function goToTraining(page: Page) {
   await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
@@ -35,6 +36,66 @@ async function answerTrainingTrialCorrectly(page: Page) {
   await expect(nextButton).toBeEnabled();
   await nextClick(page);
 }
+
+async function answerSimpleDropboxIncorrectly(page: Page) {
+  await page.getByPlaceholder('Choose mark').click();
+  await page.getByRole('option', { name: 'Bubble', exact: true }).click();
+  await page.getByRole('button', { name: 'Check Answer' }).click();
+}
+
+async function exhaustSimpleDropboxAttemptsWithoutAnswer(page: Page, attempts: number) {
+  const checkAnswerButton = page.getByRole('button', { name: 'Check Answer' });
+  for (let i = 0; i < attempts; i += 1) {
+    await checkAnswerButton.click();
+  }
+}
+
+test('allowFailedTraining=true enables Next after max failed attempts', async ({ page }) => {
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'How To Do Training Demo');
+
+  // Move from intro to first training component.
+  await nextClick(page);
+  await expect(page.getByPlaceholder('Choose mark')).toBeVisible();
+
+  const nextButton = page.getByRole('button', { name: 'Next', exact: true });
+  const checkAnswerButton = page.getByRole('button', { name: 'Check Answer' });
+
+  await expect(nextButton).toBeDisabled();
+
+  await answerSimpleDropboxIncorrectly(page);
+  await answerSimpleDropboxIncorrectly(page);
+  await answerSimpleDropboxIncorrectly(page);
+  await answerSimpleDropboxIncorrectly(page);
+
+  await expect(page.getByText('You didn\'t answer this question correctly after 4 attempts. You can continue to the next question.')).toBeVisible();
+  await expect(page.getByText('The correct answer was: Bar.')).toBeVisible();
+  await expect(nextButton).toBeEnabled();
+  await expect(checkAnswerButton).toBeDisabled();
+  await expect(page.getByPlaceholder('Choose mark')).toBeDisabled();
+});
+
+test('allowFailedTraining=true enables Next after max failed invalid attempts', async ({ page }) => {
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'How To Do Training Demo');
+
+  // Move from intro to first training component.
+  await nextClick(page);
+  await expect(page.getByPlaceholder('Choose mark')).toBeVisible();
+
+  const nextButton = page.getByRole('button', { name: 'Next', exact: true });
+  const checkAnswerButton = page.getByRole('button', { name: 'Check Answer' });
+
+  await expect(nextButton).toBeDisabled();
+
+  // Leave the required dropdown unanswered and consume all attempts.
+  await exhaustSimpleDropboxAttemptsWithoutAnswer(page, 4);
+
+  await expect(page.getByText('You didn\'t answer this question correctly after 4 attempts. You can continue to the next question.')).toBeVisible();
+  await expect(page.getByText('The correct answer was: Bar.')).toBeVisible();
+  await expect(nextButton).toBeEnabled();
+  await expect(checkAnswerButton).toBeDisabled();
+});
 
 test('test', async ({ page }) => {
   await page.goto('/');

@@ -26,6 +26,7 @@ import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue } from '../../utils/stringOptions';
+import { getDefaultFieldValue } from './utils';
 
 export function ResponseSwitcher({
   response,
@@ -109,6 +110,11 @@ export function ResponseSwitcher({
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {
       return searchParams.get(response.paramCapture) || '';
+    }
+
+    const defaultFieldValue = getDefaultFieldValue(response);
+    if (defaultFieldValue !== null) {
+      return defaultFieldValue;
     }
 
     if (response.type === 'reactive' || response.type === 'checkbox') {
@@ -204,6 +210,7 @@ export function ResponseSwitcher({
         index={index}
         enumerateQuestions={enumerateQuestions}
         otherValue={otherValue}
+        dontKnowCheckbox={dontKnowCheckbox as { checked?: boolean; onChange?: (value: boolean) => void }}
       />
       )}
       {(response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') && (

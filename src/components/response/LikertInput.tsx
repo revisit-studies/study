@@ -30,6 +30,7 @@ export function LikertInput({
     type: 'radio',
     options,
     horizontal: true,
+    default: response.default !== undefined ? response.default.toString() : undefined,
   };
 
   return (

@@ -19,13 +19,14 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router';
-import { ParticipantData, Response, StudyConfig } from '../../parser/types';
-import { Sequence, StoredAnswer } from '../../store/types';
+import type { ParticipantData, Response, StudyConfig } from '../../parser/types';
+import type { Sequence, StoredAnswer } from '../../store/types';
 import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
 import { useStudyId } from '../../routes/utils';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { isDynamicBlock } from '../../parser/utils';
 import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
+import { getDynamicComponentsForBlock } from './StepsPanel.utils';
 
 function hasRandomization(responses: Response[]) {
   return responses.some((response) => {
@@ -384,7 +385,7 @@ export function StepsPanel({
         }
 
         // Loop through components, including any dynamic components added via participantAnswers
-        const dynamicComponents = Object.entries(participantAnswers).filter(([key, _]) => key.startsWith(`${node.id}_${idx}`)).map(([_, value]) => value.componentName);
+        const dynamicComponents = getDynamicComponentsForBlock(node, participantAnswers, idx);
         const blockComponents = [...node.components, ...dynamicComponents];
         if (blockComponents.length > 0) {
           blockComponents.forEach((child) => {

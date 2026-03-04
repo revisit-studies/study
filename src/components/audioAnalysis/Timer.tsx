@@ -3,6 +3,7 @@ import {
   useCallback, useEffect, useRef,
 } from 'react';
 import { useReplayContext } from '../../store/hooks/useReplay';
+import { getSeekTimeFromSvgPosition } from './timerPosition';
 
 export function Timer({
   width,
@@ -41,7 +42,8 @@ export function Timer({
 
   const clickOnSvg = useCallback(
     (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
-      setSeekTime(xScale.invert(e.clientX) - xScale.domain()[0]);
+      const svgLeftOffset = e.currentTarget.getBoundingClientRect().left;
+      setSeekTime(getSeekTimeFromSvgPosition(e.clientX, svgLeftOffset, xScale));
     },
     [xScale, setSeekTime],
   );

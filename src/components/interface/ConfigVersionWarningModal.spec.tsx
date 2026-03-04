@@ -9,7 +9,7 @@ let mockedIsStalledConfig = false;
 let mockedIsAnalysis = false;
 
 vi.mock('@mantine/core', () => ({
-  Modal: ({ opened, children }: { opened: boolean; children: ReactNode }) => (opened ? <div>{children}</div> : null),
+  Affix: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Alert: ({ title, children }: { title: string; children: ReactNode }) => (
     <div>
       <h2>{title}</h2>
@@ -22,7 +22,9 @@ vi.mock('@mantine/core', () => ({
 }));
 
 vi.mock('../../store/store', () => ({
-  useStoreSelector: (selector: (state: { isStalledConfig: boolean }) => boolean) => selector({ isStalledConfig: mockedIsStalledConfig }),
+  useStoreSelector: (
+    selector: (state: { isStalledConfig: boolean; modes: { developmentModeEnabled: boolean } }) => boolean,
+  ) => selector({ isStalledConfig: mockedIsStalledConfig, modes: { developmentModeEnabled: true } }),
 }));
 
 vi.mock('../../store/hooks/useIsAnalysis', () => ({

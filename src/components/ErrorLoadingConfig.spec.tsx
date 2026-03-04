@@ -82,4 +82,27 @@ describe('ErrorLoadingConfig', () => {
     expect(textOnly).not.toMatch(/Missing required property\s+baseComponent/);
     expect(textOnly).not.toContain('must match a schema in anyOf');
   });
+
+  test('renders default-contact-email warning category and message', () => {
+    const issues: ParsedConfig<StudyConfig>['errors'] = [
+      {
+        category: 'default-contact-email',
+        instancePath: '/uiConfig/contactEmail',
+        message: 'The contact email is set to the default value `contact@revisit.dev`. Please update it to your own email address.',
+        params: {
+          action: 'Update the contactEmail field in uiConfig to your own email address',
+        },
+      },
+    ];
+
+    const html = renderToStaticMarkup(
+      <MantineProvider>
+        <ErrorLoadingConfig issues={issues} type="error" />
+      </MantineProvider>,
+    );
+    const textOnly = html.replace(/<[^>]*>/g, ' ');
+
+    expect(textOnly).toContain('Default Contact Email');
+    expect(textOnly).toContain('contact@revisit.dev');
+  });
 });

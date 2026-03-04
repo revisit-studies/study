@@ -2,6 +2,24 @@ import { StudyConfig } from '../parser/types';
 import { ParticipantData } from '../storage/types';
 import { Sequence } from '../store/types';
 
+function assertConditionalBlocksHaveIds(sequence: StudyConfig['sequence'] | Sequence): void {
+  const validateNode = (node: StudyConfig['sequence'] | Sequence) => {
+    if (node.conditional && !node.id) {
+      throw new Error('Invalid sequence: blocks with `conditional: true` must define an `id`.');
+    }
+
+    if ('components' in node && Array.isArray(node.components)) {
+      node.components.forEach((component) => {
+        if (component && typeof component !== 'string') {
+          validateNode(component);
+        }
+      });
+    }
+  };
+
+  validateNode(sequence);
+}
+
 export function parseConditionParam(condition?: string | string[] | null): string[] {
   if (!condition) {
     return [];
@@ -35,6 +53,8 @@ export function resolveParticipantConditions({
 }
 
 export function filterSequenceByCondition(sequence: Sequence, condition?: string | string[] | null): Sequence {
+  assertConditionalBlocksHaveIds(sequence);
+
   const conditions = parseConditionParam(condition);
 
   if (conditions.length === 0) {
@@ -70,6 +90,8 @@ export function filterSequenceByCondition(sequence: Sequence, condition?: string
 }
 
 export function getSequenceConditions(sequence: StudyConfig['sequence'] | Sequence): string[] {
+  assertConditionalBlocksHaveIds(sequence);
+
   const conditions = new Set<string>();
 
   const collect = (node: StudyConfig['sequence'] | Sequence | null | undefined) => {

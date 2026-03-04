@@ -622,6 +622,289 @@ describe('BaseComponent Macro Expansion', () => {
 });
 
 describe('Parser Warnings', () => {
+  test('adds sequence-validation error when conditional blocks are combined with random ordering', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      components: {
+        intro: {
+          type: 'markdown',
+          path: 'intro.md',
+          response: [],
+        },
+        conditionalComponent: {
+          type: 'markdown',
+          path: 'conditional.md',
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'random',
+        components: [{
+          id: 'conditionA',
+          conditional: true,
+          order: 'fixed',
+          components: ['conditionalComponent'],
+        }, 'intro'],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const conditionalOrderError = result.errors.find(
+      (error) => error.category === 'sequence-validation'
+        && error.message.includes('Conditional URL parameter assignment cannot be combined with random or latinSquare sequence ordering'),
+    );
+    expect(conditionalOrderError).toBeDefined();
+  });
+
+  test('does not add sequence-validation error when a latinSquare block is conditional', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      components: {
+        intro: {
+          type: 'markdown',
+          path: 'intro.md',
+          response: [],
+        },
+        conditionalA: {
+          type: 'markdown',
+          path: 'a.md',
+          response: [],
+        },
+        conditionalB: {
+          type: 'markdown',
+          path: 'b.md',
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          'intro',
+          {
+            id: 'conditionA',
+            conditional: true,
+            order: 'latinSquare',
+            components: ['conditionalA', 'conditionalB'],
+          },
+        ],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const conditionalOrderError = result.errors.find(
+      (error) => error.category === 'sequence-validation'
+        && error.message.includes('Conditional URL parameter assignment cannot be combined with random or latinSquare sequence ordering'),
+    );
+    expect(conditionalOrderError).toBeUndefined();
+  });
+
+  test('does not add sequence-validation error when a random block is conditional', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      components: {
+        intro: {
+          type: 'markdown',
+          path: 'intro.md',
+          response: [],
+        },
+        conditionalA: {
+          type: 'markdown',
+          path: 'a.md',
+          response: [],
+        },
+        conditionalB: {
+          type: 'markdown',
+          path: 'b.md',
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          'intro',
+          {
+            id: 'conditionA',
+            conditional: true,
+            order: 'random',
+            components: ['conditionalA', 'conditionalB'],
+          },
+        ],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const conditionalOrderError = result.errors.find(
+      (error) => error.category === 'sequence-validation'
+        && error.message.includes('Conditional URL parameter assignment cannot be combined with random or latinSquare sequence ordering'),
+    );
+    expect(conditionalOrderError).toBeUndefined();
+  });
+
+  test('adds sequence-validation error when a conditional block is inside a latinSquare block', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      components: {
+        intro: {
+          type: 'markdown',
+          path: 'intro.md',
+          response: [],
+        },
+        conditionalA: {
+          type: 'markdown',
+          path: 'a.md',
+          response: [],
+        },
+        conditionalB: {
+          type: 'markdown',
+          path: 'b.md',
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          'intro',
+          {
+            order: 'latinSquare',
+            components: [
+              'conditionalA',
+              {
+                id: 'conditionA',
+                conditional: true,
+                order: 'fixed',
+                components: ['conditionalB'],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const conditionalOrderError = result.errors.find(
+      (error) => error.category === 'sequence-validation'
+        && error.message.includes('Conditional URL parameter assignment cannot be combined with random or latinSquare sequence ordering'),
+    );
+    expect(conditionalOrderError).toBeDefined();
+  });
+
+  test('does not add sequence-validation error when conditional blocks are combined with dynamic ordering', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      components: {
+        intro: {
+          type: 'markdown',
+          path: 'intro.md',
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          'intro',
+          {
+            id: 'conditionA',
+            conditional: true,
+            order: 'dynamic',
+            functionPath: 'dynamic-function.js',
+          },
+        ],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const conditionalOrderError = result.errors.find(
+      (error) => error.category === 'sequence-validation'
+        && error.message.includes('Conditional URL parameter assignment cannot be combined with random or latinSquare sequence ordering'),
+    );
+    expect(conditionalOrderError).toBeUndefined();
+  });
+
   test('adds sequence-validation warning for empty components block', async () => {
     const studyConfig = {
       $schema: '',
@@ -1106,5 +1389,105 @@ describe('Parser Warnings', () => {
         && warning.instancePath === '/importedLibraries/testLib/baseComponents/',
     );
     expect(inheritedSidebarWarnings).toHaveLength(1);
+  });
+
+  function buildContactEmailStudyConfig(contactEmail: string) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail,
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      components: {
+        testComponent: {
+          type: 'markdown',
+          path: 'test.md',
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['testComponent'],
+      },
+    };
+  }
+
+  test('adds default-contact-email warning when contactEmail is contact@revisit.dev and not on a ReVISit domain', async () => {
+    vi.stubGlobal('window', { location: { hostname: 'example.com' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('contact@revisit.dev')));
+    vi.unstubAllGlobals();
+
+    const contactEmailWarning = result.warnings.find(
+      (warning) => warning.category === 'default-contact-email',
+    );
+
+    expect(contactEmailWarning).toBeDefined();
+    expect(contactEmailWarning?.instancePath).toBe('/uiConfig/contactEmail');
+    expect((contactEmailWarning?.params as { action: string }).action).toBe('Update the contactEmail field in uiConfig to your own email address');
+  });
+
+  test('does not add default-contact-email warning when contactEmail is contact@revisit.dev and hosted on revisit.dev', async () => {
+    vi.stubGlobal('window', { location: { hostname: 'revisit.dev' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('contact@revisit.dev')));
+    vi.unstubAllGlobals();
+
+    const contactEmailWarning = result.warnings.find(
+      (warning) => warning.category === 'default-contact-email',
+    );
+
+    expect(contactEmailWarning).toBeUndefined();
+  });
+
+  test('does not add default-contact-email warning when contactEmail is contact@revisit.dev and hosted on vdl.sci.utah.edu', async () => {
+    vi.stubGlobal('window', { location: { hostname: 'vdl.sci.utah.edu' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('contact@revisit.dev')));
+    vi.unstubAllGlobals();
+
+    const contactEmailWarning = result.warnings.find(
+      (warning) => warning.category === 'default-contact-email',
+    );
+
+    expect(contactEmailWarning).toBeUndefined();
+  });
+
+  test('does not add default-contact-email warning when contactEmail is contact@revisit.dev on localhost', async () => {
+    vi.stubGlobal('window', { location: { hostname: 'localhost' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('contact@revisit.dev')));
+    vi.unstubAllGlobals();
+
+    const contactEmailWarning = result.warnings.find(
+      (warning) => warning.category === 'default-contact-email',
+    );
+
+    expect(contactEmailWarning).toBeUndefined();
+  });
+
+  test('does not add default-contact-email warning when a custom email is used', async () => {
+    vi.stubGlobal('window', { location: { hostname: 'example.com' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+    vi.unstubAllGlobals();
+
+    const contactEmailWarning = result.warnings.find(
+      (warning) => warning.category === 'default-contact-email',
+    );
+
+    expect(contactEmailWarning).toBeUndefined();
   });
 });

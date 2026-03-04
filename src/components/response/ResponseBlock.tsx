@@ -127,13 +127,14 @@ export function ResponseBlock({
   const studyConfig = useStudyConfig();
 
   const provideFeedback = useMemo(() => config?.provideFeedback ?? studyConfig.uiConfig.provideFeedback, [config, studyConfig]);
-  const hasCorrectAnswerFeedback = provideFeedback && ((config?.correctAnswer?.length || 0) > 0);
+  const hasCorrectAnswerFeedback = !!provideFeedback && ((config?.correctAnswer?.length || 0) > 0);
   const allowFailedTraining = useMemo(() => config?.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [config, studyConfig]);
   const [attemptsUsed, setAttemptsUsed] = useState(0);
   const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
+  const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
   const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
   const identifier = useCurrentIdentifier();
@@ -200,13 +201,13 @@ export function ResponseBlock({
       updateResponseBlockValidation({
         location,
         identifier,
-        status: answerValidator.isValid(),
+        status: answerValidator.isValid() || bypassValidationForFailedTraining,
         values: structuredClone(answerValidator.values),
         provenanceGraph: trrack.graph.backend,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values, identifier, location, storeDispatch, updateResponseBlockValidation]);
+  }, [answerValidator.values, bypassValidationForFailedTraining, identifier, location, storeDispatch, updateResponseBlockValidation]);
   const [alertConfig, setAlertConfig] = useState(Object.fromEntries(allResponsesWithDefaults.map((response) => ([response.id, {
     visible: false,
     title: 'Correct Answer',
@@ -339,9 +340,7 @@ export function ResponseBlock({
                     <ResponseSwitcher
                       storedAnswer={storedAnswer}
                       form={{
-                        ...answerValidator.getInputProps(response.id, {
-                          type: response.type === 'checkbox' ? 'checkbox' : 'input',
-                        }),
+                        ...answerValidator.getInputProps(response.id),
                       }}
                       dontKnowCheckbox={{
                         ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
@@ -381,7 +380,8 @@ export function ResponseBlock({
 
       {showBtnsInLocation && (
       <NextButton
-        disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
+        disabled={(hasCorrectAnswerFeedback && !enableNextButton)
+          || (!bypassValidationForFailedTraining && !answerValidator.isValid())}
         label={nextButtonText}
         config={config}
         location={location}

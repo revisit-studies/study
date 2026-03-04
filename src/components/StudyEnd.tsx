@@ -32,9 +32,6 @@ export function StudyEnd() {
   useEffect(() => {
     // Don't save to the storage engine in analysis
     if (!isAnalysis) {
-      // Set completed in the store
-      dispatch(setParticipantCompleted(true));
-
       let cancelled = false;
       let timeoutId: NodeJS.Timeout | null = null;
       const verifyLoop = async () => {
@@ -54,6 +51,7 @@ export function StudyEnd() {
           const isComplete = await engine.verifyCompletion();
           if (isComplete) {
             setCompleted(true);
+            dispatch(setParticipantCompleted(true));
             return;
           }
         } catch (error) {
@@ -79,6 +77,7 @@ export function StudyEnd() {
     }
 
     setCompleted(true);
+    dispatch(setParticipantCompleted(true));
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -233,6 +233,26 @@ describe('filterSequenceByCondition', () => {
     expect(result.components[0]).toBe('intro');
     expect(result.components[1]).toBe('outro');
   });
+
+  it('should throw when a conditional block is missing id', () => {
+    const sequence: Sequence = {
+      order: 'fixed',
+      orderPath: '',
+      components: [
+        {
+          order: 'fixed',
+          orderPath: '',
+          conditional: true,
+          components: ['trial-1'],
+          skip: [],
+        },
+      ],
+      skip: [],
+    };
+
+    expect(() => filterSequenceByCondition(sequence, 'color'))
+      .toThrow('blocks with `conditional: true` must define an `id`');
+  });
 });
 
 describe('resolveParticipantConditions', () => {
@@ -352,6 +372,26 @@ describe('getSequenceConditions', () => {
 
     const conditions = getSequenceConditions(sequence);
     expect(conditions).toEqual(['color']);
+  });
+
+  it('should throw when a conditional block is missing id', () => {
+    const sequence: Sequence = {
+      order: 'fixed',
+      orderPath: '',
+      components: [
+        {
+          order: 'fixed',
+          orderPath: '',
+          conditional: true,
+          components: ['trial-1'],
+          skip: [],
+        },
+      ],
+      skip: [],
+    };
+
+    expect(() => getSequenceConditions(sequence))
+      .toThrow('blocks with `conditional: true` must define an `id`');
   });
 });
 
