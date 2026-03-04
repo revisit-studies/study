@@ -1,0 +1,94 @@
+/* Creates a 6-column grid layout for responses
+ * ┌─────────────────────────────────────────┐
+ * │                  TITLE                  │
+ * │               (full width)              │  ← Row 1
+ * ├─────────────┬─────────────┬─────────────┤
+ * │   2 cols    │   2 cols    │   2 cols    │  ← Row 2
+ * ├─────────────────────┬───────────────────┤
+ * │      3 cols         │      3 cols       │  ← Row 3
+ * ├─────────────────────────────────────────┤
+ * │                full width               │  ← Row 4
+ * └─────────────────────────────────────────┘
+*/
+.responseBlock {
+  display: grid;
+  /* Creates 6 columns of equal width */
+  grid-template-columns: repeat(6, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* Positions the title across the full width at the top */
+#layout-title {
+  grid-row: 1;
+  /* Span across all 6 columns */
+  grid-column: span 6;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  /* Centers the title content */
+  display: flex;
+  justify-content: center;
+}
+
+/* Makes the title text large and bold */
+#layout-title p {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Positions the color response in the first 2 columns of row 2 */
+#layout-color {
+  /* Places the color response in row 2 */
+  grid-row: 2;
+  /* Spans across 2 columns */
+  grid-column: span 2;
+}
+
+/* Positions the website response in columns 3-4 of row 2 */
+#layout-website {
+  grid-row: 2;
+  grid-column: span 2;
+}
+
+/* Positions the web enjoyment response in columns 5-6 of row 2 */
+#layout-web-enjoyment {
+  grid-row: 2;
+  grid-column: span 2;
+}
+
+/* Positions the website design response in the first 3 columns of row 3 */
+#layout-website-design {
+  grid-row: 3;
+  grid-column: span 3;
+}
+
+/* Positions the preference response in columns 4-6 of row 3 */
+#layout-preference {
+  grid-row: 3;
+  grid-column: span 3;
+}
+
+/* Positions the opinion response across the full width in row 4 */
+#layout-opinion {
+  grid-row: 4;
+  grid-column: span 6;
+}
+
+/* Styles each response component with borders and hover effects */
+.response {
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 15px;
+  margin: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Transition for hover effects */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Adds a lift effect when hovering over responses */
+.response:hover {
+  /* Moves the response up by 2 pixels */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
