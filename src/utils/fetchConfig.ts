@@ -8,10 +8,28 @@ async function fetchStudyConfig(configLocation: string) {
   return await parseStudyConfig(config);
 }
 
+function sanitizeStringForUrlLegacy(fileName: string) {
+  const groups = fileName.split('/') || [];
+  const last = groups[groups.length - 1];
+  return last
+    .replace(/\.[^.]+$/, '')
+    .replace('.', '_')
+    .replace(' ', '_')
+    .replace('/', '_');
+}
+
+export function resolveConfigKey(studyId: string, globalConfig: GlobalConfig): string | null {
+  if (Object.prototype.hasOwnProperty.call(globalConfig.configs, studyId)) {
+    return studyId;
+  }
+
+  return globalConfig.configsList.find(
+    (configName) => sanitizeStringForUrl(configName) === studyId || sanitizeStringForUrlLegacy(configName) === studyId,
+  ) || null;
+}
+
 export async function getStudyConfig(studyId: string, globalConfig: GlobalConfig) {
-  const configKey = globalConfig.configsList.find(
-    (c) => sanitizeStringForUrl(c) === studyId,
-  );
+  const configKey = resolveConfigKey(studyId, globalConfig);
   if (configKey) {
     const configJSON = globalConfig.configs[configKey];
     return await fetchStudyConfig(`${configJSON.path}`);
