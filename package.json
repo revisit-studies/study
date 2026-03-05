@@ -17,6 +17,7 @@
     "generate-library-examples": "node libraryExampleStudyGenerator.cjs",
     "test": "playwright test",
     "unittest": "vitest",
+    "unittest-coverage": "vitest run --coverage --coverage.reporter=text --run",
     "find-revisit-users": "bash scripts/find-revisit-users.sh",
     "preinstall": "node -e \"if(!/yarn\\.js$/.test(process.env.npm_execpath))throw new Error('Use yarn')\"",
     "postinstall": "husky"
@@ -104,6 +105,7 @@
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.44.0",
     "@vitejs/plugin-react-swc": "^4.1.0",
+    "@vitest/coverage-v8": "3.2.4",
     "eslint": "^9.36.0",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
