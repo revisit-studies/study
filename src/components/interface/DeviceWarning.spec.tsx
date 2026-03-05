@@ -51,6 +51,12 @@ let mockedDeviceRules: DeviceRulesMock = {
 };
 
 vi.mock('@mantine/core', () => ({
+  Alert: ({ children, title }: { children: ReactNode; title?: ReactNode }) => (
+    <div>
+      {title && <h4>{title}</h4>}
+      {children}
+    </div>
+  ),
   Modal: ({ opened, children }: { opened: boolean; children: ReactNode }) => (opened ? <div>{children}</div> : null),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
@@ -80,7 +86,7 @@ vi.mock('../../store/hooks/useStudyConfig', () => ({
   }),
 }));
 
-vi.mock('../../store/hooks/useDeviceRules', () => ({
+vi.mock('../../utils/useDeviceRules', () => ({
   useDeviceRules: () => mockedDeviceRules,
 }));
 
@@ -181,5 +187,22 @@ describe('DeviceWarning', () => {
     expect(html).toContain('touch');
     expect(html).toContain('Current display:');
     expect(html).toContain('900 x 700px');
+  });
+
+  test('renders nothing in debug mode when requirements are not met', () => {
+    mockedStudyRules = {
+      display: {
+        minWidth: 1200,
+        minHeight: 800,
+      },
+    };
+    mockedDeviceRules = {
+      ...mockedDeviceRules,
+      isDisplayAllowed: false,
+      currentDisplay: { width: 1000, height: 700 },
+    };
+
+    const html = renderToStaticMarkup(<DeviceWarning developmentModeEnabled />);
+    expect(html).toBe('');
   });
 });
