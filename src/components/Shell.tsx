@@ -25,7 +25,7 @@ import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
-import { getStudyConfig } from '../utils/fetchConfig';
+import { getStudyConfig, resolveConfigKey } from '../utils/fetchConfig';
 import { ParticipantMetadata } from '../store/types';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ResourceNotFound } from '../ResourceNotFound';
@@ -42,7 +42,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
   const studyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
-  const isValidStudyId = globalConfig.configsList.includes(studyId) || studyId === '__revisit-widget';
+  const isValidStudyId = studyId === '__revisit-widget' || resolveConfigKey(studyId, globalConfig) !== null;
 
   useEffect(() => {
     if (studyId !== '__revisit-widget') {
