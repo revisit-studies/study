@@ -184,7 +184,7 @@ export function StepRenderer() {
             {showTitleBar && (
             <AppHeader developmentModeEnabled={developmentModeEnabled} dataCollectionEnabled={dataCollectionEnabled} />
             )}
-            <DeviceWarning />
+            <DeviceWarning developmentModeEnabled={developmentModeEnabled} />
             {isScreenRecordingUserRejected && <ScreenRecordingRejection />}
             <HelpModal />
             <AlertModal />

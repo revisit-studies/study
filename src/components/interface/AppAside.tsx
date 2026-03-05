@@ -11,7 +11,7 @@ import {
 } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import {
-  IconBrandFirebase, IconBrandSupabase, IconDatabase, IconGraph, IconGraphOff, IconInfoCircle, IconSettingsShare, IconUserPlus,
+  IconBan, IconBrandFirebase, IconBrandSupabase, IconDatabase, IconDeviceDesktop, IconGraph, IconGraphOff, IconInfoCircle, IconMicrophone, IconSettingsShare, IconUserPlus,
 } from '@tabler/icons-react';
 import { useHref } from 'react-router';
 import { StepsPanel } from './StepsPanel';
@@ -23,6 +23,9 @@ import { useStudyId } from '../../routes/utils';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { useStudyRecordings } from '../../utils/useStudyRecordings';
+import { useDeviceRules } from '../../utils/useDeviceRules';
+import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './DeviceWarning';
 
 function InfoHover({ text }: { text: string }) {
   return (
@@ -52,6 +55,25 @@ export function AppAside() {
   const nextParticipantDisabled = useMemo(() => activeTab === 'allTrials' || isAnalysis, [activeTab, isAnalysis]);
 
   const modes = useStoreSelector((state) => state.modes);
+  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
+  const {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  } = useDeviceRules(studyConfig.studyRules);
+  const unmetRestrictions = useMemo(() => getUnmetDeviceRestrictionLines(studyConfig.studyRules, {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  }), [isBrowserAllowed, isDeviceAllowed, isDisplayAllowed, isInputAllowed, studyConfig.studyRules]);
+  const restrictionsTooltip = useMemo(() => getUnmetDeviceRestrictionTooltip(studyConfig.studyRules, {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  }), [isBrowserAllowed, isDeviceAllowed, isDisplayAllowed, isInputAllowed, studyConfig.studyRules]);
 
   return (
     <AppShell.Aside className="studyBrowser" data-testid="app-aside" p="0">
@@ -107,6 +129,21 @@ export function AppAside() {
                 : storageEngine?.getEngine() === 'supabase'
                   ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
                   : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
+            {hasAudioRecording && (
+              <Tooltip label="Audio recording enabled" withinPortal position="bottom">
+                <IconMicrophone size={16} color="orange" />
+              </Tooltip>
+            )}
+            {hasScreenRecording && (
+              <Tooltip label="Screen recording enabled" withinPortal position="bottom">
+                <IconDeviceDesktop size={16} color="orange" />
+              </Tooltip>
+            )}
+            {unmetRestrictions.length > 0 && (
+              <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
+                <IconBan size={16} color="red" />
+              </Tooltip>
+            )}
           </Flex>
         </Flex>
       </AppShell.Section>

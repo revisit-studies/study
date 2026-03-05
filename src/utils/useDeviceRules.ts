@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StudyRules } from '../../parser/types';
+import { StudyRules } from '../parser/types';
 
 function detectBrowser() {
   const ua = navigator.userAgent.toLowerCase();
