@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { sanitizeStringForUrl } from './sanitizeStringForUrl';
 
 describe('sanitizeStringForUrl', () => {
-  it('keeps semantic version dots as part of the slug', () => {
+  it('keeps semantic version suffix in the slug while normalizing dots to underscores', () => {
     expect(sanitizeStringForUrl('screening-gpt-5.2')).toBe('screening-gpt-5_2');
   });
 
