@@ -38,6 +38,7 @@ import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { useRecordingContext } from '../../store/hooks/useRecording';
+import { hideNotification, showNotification } from '../../utils/notifications';
 
 export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
@@ -85,9 +86,20 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   const [isTruncated, setIsTruncated] = useState(false);
   const lastProgressRef = useRef<number>(0);
 
+  const speakingWhileMutedNotification = useRef<string>(undefined);
+
   const {
-    isScreenRecording, isAudioRecording, setIsMuted, isMuted, clickToRecord,
+    isScreenRecording, isAudioRecording, setIsMuted, isMuted, clickToRecord, isSpeakingWhileMuted,
   } = useRecordingContext();
+
+  useEffect(() => {
+    if (isMuted && isSpeakingWhileMuted) {
+      speakingWhileMutedNotification.current = showNotification({ title: 'You are muted', message: 'Your microphone is muted. Click the microphone icon to unmute.', color: 'red' });
+    } else {
+      speakingWhileMutedNotification.current && hideNotification(speakingWhileMutedNotification.current);
+      speakingWhileMutedNotification.current = undefined;
+    }
+  }, [isMuted, isSpeakingWhileMuted]);
 
   const { funcIndex } = useParams();
 
