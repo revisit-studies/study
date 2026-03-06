@@ -111,6 +111,15 @@ export function DeviceWarning({
     currentDisplay,
   } = useDeviceRules(studyConfig.studyRules);
   const hasAnyViolation = !isBrowserAllowed || !isDeviceAllowed || !isInputAllowed || !isDisplayAllowed;
+  const violatedSettings = [
+    !isBrowserAllowed ? 'Browser' : null,
+    !isDeviceAllowed ? 'Device' : null,
+    !isInputAllowed ? 'Input' : null,
+    !isDisplayAllowed ? 'Display' : null,
+  ].filter((setting): setting is string => setting !== null);
+  const warningTitle = violatedSettings.length > 0
+    ? `${violatedSettings.join(', ')} Requirement${violatedSettings.length > 1 ? 's' : ''} Not Met`
+    : 'Device Requirement Not Met';
   const isDisplayRequirementNotMet = !isDisplayAllowed && (
     (display?.minWidth !== undefined && currentDisplay.width < display.minWidth)
     || (display?.minHeight !== undefined && currentDisplay.height < display.minHeight)
@@ -180,7 +189,7 @@ export function DeviceWarning({
     <Modal opened onClose={() => {}} fullScreen withCloseButton={false}>
       <Stack align="center" justify="center">
         <IconAlertTriangle size={64} color="orange" />
-        <Title order={3}> Browser, Device, Input, or Display Is Not Compatible </Title>
+        <Title order={3}>{warningTitle}</Title>
         {isRejected && (
           <Text size="md" ta="center" c="red">
             You have been rejected because your display size stayed outside
@@ -345,7 +354,7 @@ export function DeviceWarning({
           )}
         </Flex>
         <Text size="md" ta="center">
-          Please reopen the study link with a supported browser/device, input type, and display size.
+          Please reopen the study link with a supported device.
           <br />
           Thank you for your understanding!
         </Text>
