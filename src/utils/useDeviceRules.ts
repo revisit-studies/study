@@ -1,5 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { StudyRules } from '../parser/types';
+
+type DeviceType = 'desktop' | 'tablet' | 'mobile';
+type InputType = 'mouse' | 'touch';
+
+type CurrentDeviceInfo = {
+  browser: { name: string; version: number };
+  device: DeviceType;
+  inputs: InputType[];
+  display: { width: number; height: number };
+};
+
+const DEFAULT_DEVICE_INFO: CurrentDeviceInfo = {
+  browser: { name: 'unknown', version: 0 },
+  device: 'desktop',
+  inputs: [],
+  display: { width: 0, height: 0 },
+};
 
 function detectBrowser() {
   const ua = navigator.userAgent.toLowerCase();
@@ -23,7 +40,7 @@ function detectBrowser() {
   return { name, version };
 }
 
-function detectDeviceType() {
+function detectDeviceType(): DeviceType {
   const ua = navigator.userAgent.toLowerCase();
 
   // Detect iPadOS 13+ (spoofs desktop Safari)
@@ -40,8 +57,8 @@ function detectDeviceType() {
   return 'desktop';
 }
 
-function detectInputTypes() {
-  const types: ('mouse' | 'touch')[] = [];
+function detectInputTypes(): InputType[] {
+  const types: InputType[] = [];
   if (window.matchMedia('(pointer:fine)').matches) types.push('mouse');
   if ('ontouchstart' in window || navigator.maxTouchPoints > 0) types.push('touch');
   return types;
@@ -54,87 +71,123 @@ function detectDisplay() {
   };
 }
 
-const DEFAULT_BROWSER = { name: 'unknown', version: 0 };
-const DEFAULT_DEVICE: 'desktop' | 'tablet' | 'mobile' = 'desktop';
-const DEFAULT_INPUTS: ('mouse' | 'touch')[] = [];
-const DEFAULT_DISPLAY = { width: 0, height: 0 };
+function readCurrentDeviceInfo(): CurrentDeviceInfo {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+    return DEFAULT_DEVICE_INFO;
+  }
+
+  return {
+    browser: detectBrowser(),
+    device: detectDeviceType(),
+    inputs: detectInputTypes(),
+    display: detectDisplay(),
+  };
+}
+
+function sameDeviceInfo(a: CurrentDeviceInfo, b: CurrentDeviceInfo) {
+  return a.browser.name === b.browser.name
+    && a.browser.version === b.browser.version
+    && a.device === b.device
+    && a.display.width === b.display.width
+    && a.display.height === b.display.height
+    && a.inputs.length === b.inputs.length
+    && a.inputs.every((input, idx) => input === b.inputs[idx]);
+}
+
+let snapshot = readCurrentDeviceInfo();
+const listeners = new Set<() => void>();
+
+function notifyListeners() {
+  listeners.forEach((listener) => listener());
+}
+
+function refreshSnapshot() {
+  const next = readCurrentDeviceInfo();
+  if (!sameDeviceInfo(snapshot, next)) {
+    snapshot = next;
+    notifyListeners();
+  }
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+
+  if (listeners.size === 1 && typeof window !== 'undefined') {
+    snapshot = readCurrentDeviceInfo();
+    window.addEventListener('resize', refreshSnapshot);
+  }
+
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0 && typeof window !== 'undefined') {
+      window.removeEventListener('resize', refreshSnapshot);
+    }
+  };
+}
+
+function getSnapshot() {
+  return snapshot;
+}
+
+function getServerSnapshot() {
+  return DEFAULT_DEVICE_INFO;
+}
 
 export function useDeviceRules(studyRules?: StudyRules) {
-  const [isBrowserAllowed, setIsBrowserAllowed] = useState(true);
-  const [isDeviceAllowed, setIsDeviceAllowed] = useState(true);
-  const [isInputAllowed, setIsInputAllowed] = useState(true);
-  const [isDisplayAllowed, setIsDisplayAllowed] = useState(true);
-  const [currentBrowser, setCurrentBrowser] = useState(() => (
-    typeof navigator === 'undefined' ? DEFAULT_BROWSER : detectBrowser()
-  ));
-  const [currentDevice, setCurrentDevice] = useState(() => (
-    typeof navigator === 'undefined' ? DEFAULT_DEVICE : detectDeviceType()
-  ));
-  const [currentInputs, setCurrentInputs] = useState(() => (
-    typeof window === 'undefined' || typeof navigator === 'undefined'
-      ? DEFAULT_INPUTS
-      : detectInputTypes()
-  ));
-  const [currentDisplay, setCurrentDisplay] = useState(() => (
-    typeof window === 'undefined' ? DEFAULT_DISPLAY : detectDisplay()
-  ));
+  const currentDeviceInfo = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
-      return () => {};
-    }
+  const {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  } = useMemo(() => {
+    const {
+      browser,
+      device,
+      inputs,
+      display,
+    } = currentDeviceInfo;
 
-    const evaluateRules = () => {
-      const browser = detectBrowser();
-      const device = detectDeviceType();
-      const inputs = detectInputTypes();
-      const display = detectDisplay();
-      setCurrentBrowser(browser);
-      setCurrentDevice(device);
-      setCurrentInputs(inputs);
-      setCurrentDisplay(display);
-
-      const browserOk = !studyRules?.browsers?.allowed?.length
-        || studyRules.browsers.allowed.some(
-          (b) => b.name === browser.name
-            && browser.version >= (b.minVersion ?? 0),
-        );
-      const deviceOk = !studyRules?.devices?.allowed?.length
-        || studyRules.devices.allowed.includes(device);
-      const inputOk = !studyRules?.inputs?.allowed?.length
-        || inputs.some((i) => studyRules.inputs?.allowed?.includes(i));
-      const {
-        minWidth, minHeight, maxWidth, maxHeight,
-      } = studyRules?.display ?? {};
-      const displayOk = !studyRules?.display || (
-        (minWidth === undefined || display.width >= minWidth)
-        && (minHeight === undefined || display.height >= minHeight)
-        && (maxWidth === undefined || display.width <= maxWidth)
-        && (maxHeight === undefined || display.height <= maxHeight)
+    const browserOk = !studyRules?.browsers?.allowed?.length
+      || studyRules.browsers.allowed.some(
+        (allowedBrowser) => allowedBrowser.name === browser.name
+          && browser.version >= (allowedBrowser.minVersion ?? 0),
       );
+    const deviceOk = !studyRules?.devices?.allowed?.length
+      || studyRules.devices.allowed.includes(device);
+    const inputOk = !studyRules?.inputs?.allowed?.length
+      || inputs.some((input) => studyRules.inputs?.allowed?.includes(input));
+    const {
+      minWidth, minHeight, maxWidth, maxHeight,
+    } = studyRules?.display ?? {};
+    const displayOk = !studyRules?.display || (
+      (minWidth === undefined || display.width >= minWidth)
+      && (minHeight === undefined || display.height >= minHeight)
+      && (maxWidth === undefined || display.width <= maxWidth)
+      && (maxHeight === undefined || display.height <= maxHeight)
+    );
 
-      setIsBrowserAllowed(browserOk);
-      setIsDeviceAllowed(deviceOk);
-      setIsInputAllowed(inputOk);
-      setIsDisplayAllowed(displayOk);
+    return {
+      isBrowserAllowed: browserOk,
+      isDeviceAllowed: deviceOk,
+      isInputAllowed: inputOk,
+      isDisplayAllowed: displayOk,
     };
-
-    evaluateRules();
-    window.addEventListener('resize', evaluateRules);
-
-    return () => {
-      window.removeEventListener('resize', evaluateRules);
-    };
-  }, [studyRules]);
+  }, [currentDeviceInfo, studyRules]);
 
   return {
     isBrowserAllowed,
     isDeviceAllowed,
     isInputAllowed,
     isDisplayAllowed,
-    currentBrowser,
-    currentDevice,
-    currentInputs,
-    currentDisplay,
+    currentBrowser: currentDeviceInfo.browser,
+    currentDevice: currentDeviceInfo.device,
+    currentInputs: currentDeviceInfo.inputs,
+    currentDisplay: currentDeviceInfo.display,
   };
 }

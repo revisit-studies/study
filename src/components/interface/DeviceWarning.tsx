@@ -8,75 +8,9 @@ import { useNavigate } from 'react-router';
 import {
   IconAlertTriangle, IconBrowser, IconDevices, IconHandClick, IconDeviceDesktop,
 } from '@tabler/icons-react';
-import { StudyRules } from '../../parser/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useDeviceRules } from '../../utils/useDeviceRules';
-
-type DeviceRuleStatus = {
-  isBrowserAllowed: boolean;
-  isDeviceAllowed: boolean;
-  isInputAllowed: boolean;
-  isDisplayAllowed: boolean;
-};
-
-const toTitleCase = (value: string) => `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
-
-export function getUnmetDeviceRestrictionLines(
-  studyRules: StudyRules | undefined,
-  {
-    isBrowserAllowed,
-    isDeviceAllowed,
-    isInputAllowed,
-    isDisplayAllowed,
-  }: DeviceRuleStatus,
-) {
-  const unmet: string[] = [];
-
-  if (studyRules?.browsers?.allowed?.length && !isBrowserAllowed) {
-    const browserText = studyRules.browsers.allowed
-      .map((browser) => `${browser.name}${browser.minVersion !== undefined ? ` >= ${browser.minVersion}` : ''}`)
-      .join(', ');
-    unmet.push(`Browser: ${browserText}`);
-  }
-
-  if (studyRules?.devices?.allowed?.length && !isDeviceAllowed) {
-    unmet.push(`Device: ${studyRules.devices.allowed.map((device) => toTitleCase(device)).join(', ')}`);
-  }
-
-  if (studyRules?.inputs?.allowed?.length && !isInputAllowed) {
-    unmet.push(`Input: ${studyRules.inputs.allowed.map((input) => toTitleCase(input)).join(', ')}`);
-  }
-
-  if (studyRules?.display && !isDisplayAllowed) {
-    const {
-      minWidth,
-      minHeight,
-      maxWidth,
-      maxHeight,
-    } = studyRules.display;
-
-    if (minWidth !== undefined || minHeight !== undefined) {
-      unmet.push(`Display (min): ${String(minWidth)} x ${String(minHeight)} px`);
-    }
-    if (maxWidth !== undefined || maxHeight !== undefined) {
-      unmet.push(`Display (max): ${String(maxWidth)} x ${String(maxHeight)} px`);
-    }
-  }
-
-  return unmet;
-}
-
-export function getUnmetDeviceRestrictionTooltip(
-  studyRules: StudyRules | undefined,
-  status: DeviceRuleStatus,
-) {
-  const unmetLines = getUnmetDeviceRestrictionLines(studyRules, status);
-  if (unmetLines.length === 0) {
-    return '';
-  }
-  return `Device Requirement\n${unmetLines.join('\n')}`;
-}
 
 export function DeviceWarning({
   developmentModeEnabled,
@@ -89,6 +23,15 @@ export function DeviceWarning({
   const [timeLeft, setTimeLeft] = useState(60);
   const [isRejected, setIsRejected] = useState(false);
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const storageEngineRef = useRef(storageEngine);
+  const navigateRef = useRef(navigate);
+
+  useEffect(() => {
+    storageEngineRef.current = storageEngine;
+  }, [storageEngine]);
+  useEffect(() => {
+    navigateRef.current = navigate;
+  }, [navigate]);
 
   const {
     browsers, devices, inputs, display,
@@ -124,14 +67,10 @@ export function DeviceWarning({
     (display?.minWidth !== undefined && currentDisplay.width < display.minWidth)
     || (display?.minHeight !== undefined && currentDisplay.height < display.minHeight)
   );
+  const shouldRunDisplayCountdown = !developmentModeEnabled && !isRejected && isDisplayRequirementNotMet;
 
   useEffect(() => {
-    // In development mode, do not show the warning
-    if (isRejected || developmentModeEnabled) {
-      return () => {};
-    }
-
-    if (isDisplayRequirementNotMet) {
+    if (shouldRunDisplayCountdown) {
       setTimeLeft(60);
       if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current);
@@ -145,18 +84,18 @@ export function DeviceWarning({
               countdownIntervalRef.current = null;
             }
 
-            if (storageEngine) {
+            if (storageEngineRef.current) {
               setIsRejected(true);
-              storageEngine.rejectCurrentParticipant('Screen resolution requirements not met')
+              storageEngineRef.current.rejectCurrentParticipant('Screen resolution requirements not met')
                 .catch(() => {
                   console.error('Failed to reject participant who failed display requirements');
                 })
                 .finally(() => {
-                  navigate(`./../__trainingFailed${window.location.search}`);
+                  navigateRef.current(`./../__trainingFailed${window.location.search}`);
                 });
             } else {
               setIsRejected(true);
-              navigate(`./../__trainingFailed${window.location.search}`);
+              navigateRef.current(`./../__trainingFailed${window.location.search}`);
             }
 
             return 0;
@@ -179,9 +118,9 @@ export function DeviceWarning({
         countdownIntervalRef.current = null;
       }
     };
-  }, [developmentModeEnabled, isDisplayRequirementNotMet, isRejected, navigate, storageEngine]);
+  }, [shouldRunDisplayCountdown]);
 
-  if (!isRejected && (developmentModeEnabled || !hasAnyViolation)) {
+  if (developmentModeEnabled || (!isRejected && !hasAnyViolation)) {
     return null;
   }
 
@@ -196,7 +135,7 @@ export function DeviceWarning({
             the minimum requirements for 60 seconds.
           </Text>
         )}
-        {!isRejected && isDisplayRequirementNotMet && (
+        {shouldRunDisplayCountdown && (
           <Text size="md" ta="center" c="red">
             Please resize your browser window to the allowed range within
             {' '}

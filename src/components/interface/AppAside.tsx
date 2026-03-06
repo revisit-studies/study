@@ -25,7 +25,7 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import { useDeviceRules } from '../../utils/useDeviceRules';
-import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './DeviceWarning';
+import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './DeviceRestrictionString';
 
 function InfoHover({ text }: { text: string }) {
   return (

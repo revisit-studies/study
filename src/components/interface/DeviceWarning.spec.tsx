@@ -132,7 +132,7 @@ describe('DeviceWarning', () => {
     const html = renderToStaticMarkup(<DeviceWarning />);
     expect(html).toContain('Please resize your browser window to the allowed range within');
     expect(html).toContain('60');
-    expect(html).toContain('seconds or you will be rejected.');
+    expect(html).toContain('seconds or you will not be able to continue the study.');
   });
 
   test('does not show countdown warning when display violation is only above max', () => {
