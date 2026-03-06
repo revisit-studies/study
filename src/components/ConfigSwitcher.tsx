@@ -2,7 +2,7 @@ import {
   Anchor, AppShell, Badge, Button, Card, Container, CopyButton, Divider, Flex, Image, MultiSelect, Skeleton, rem, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
-  IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconCheck, IconCopy, IconDatabase, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
+  IconBan, IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconCheck, IconCopy, IconDatabase, IconDeviceDesktop, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconMicrophone, IconSchema, IconSchemaOff,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -19,6 +19,9 @@ import { REVISIT_MODE } from '../storage/engines/types';
 import { useAuth } from '../store/hooks/useAuth';
 import { isCloudStorageEngine } from '../storage/engines/utils';
 import { getSequenceConditions } from '../utils/handleConditionLogic';
+import { useStudyRecordings } from '../utils/useStudyRecordings';
+import { useDeviceRules } from '../utils/useDeviceRules';
+import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './interface/DeviceRestrictionString';
 
 function StudyCard({
   configName,
@@ -70,6 +73,25 @@ function StudyCard({
     }
     return 'Data Collection Disabled';
   }, [modes, studyStatusAndTiming]);
+  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(config);
+  const {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  } = useDeviceRules(config.studyRules);
+  const unmetRestrictions = useMemo(() => getUnmetDeviceRestrictionLines(config.studyRules, {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  }), [config.studyRules, isBrowserAllowed, isDeviceAllowed, isDisplayAllowed, isInputAllowed]);
+  const restrictionsTooltip = useMemo(() => getUnmetDeviceRestrictionTooltip(config.studyRules, {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  }), [config.studyRules, isBrowserAllowed, isDeviceAllowed, isDisplayAllowed, isInputAllowed]);
 
   const conditions = useMemo(() => getSequenceConditions(config.sequence), [config.sequence]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>(['default']);
@@ -166,12 +188,22 @@ function StudyCard({
               {studyStatusAndTiming
                 && <ParticipantStatusBadges completed={studyStatusAndTiming.completed} inProgress={studyStatusAndTiming.inProgress} rejected={studyStatusAndTiming.rejected} />}
               <Flex ml="auto" gap="sm" opacity={0.7}>
+                {hasAudioRecording && (
+                  <Tooltip label="Audio recording enabled" withinPortal position="bottom">
+                    <IconMicrophone size={16} color="orange" />
+                  </Tooltip>
+                )}
+                {hasScreenRecording && (
+                  <Tooltip label="Screen recording enabled" withinPortal position="bottom">
+                    <IconDeviceDesktop size={16} color="orange" />
+                  </Tooltip>
+                )}
                 {modes?.developmentModeEnabled
-                  ? <Tooltip label="Development mode enabled" withinPortal><IconSchema size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Development mode disabled" withinPortal><IconSchemaOff size={16} color="red" /></Tooltip>}
+                  ? <Tooltip label="Development mode enabled" withinPortal position="bottom"><IconSchema size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Development mode disabled" withinPortal position="bottom"><IconSchemaOff size={16} color="red" /></Tooltip>}
                 {modes?.dataSharingEnabled
-                  ? <Tooltip label="Data sharing enabled" withinPortal><IconGraph size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Data sharing disabled" withinPortal><IconGraphOff size={16} color="red" /></Tooltip>}
+                  ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
                 {storageEngine?.getEngine() === 'localStorage'
                   ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
                   : storageEngine?.getEngine() === 'firebase'
@@ -179,6 +211,11 @@ function StudyCard({
                     : storageEngine?.getEngine() === 'supabase'
                       ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
                       : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
+                {unmetRestrictions.length > 0 && (
+                <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
+                  <IconBan size={16} color="red" />
+                </Tooltip>
+                )}
               </Flex>
             </Flex>
 

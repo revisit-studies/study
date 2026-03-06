@@ -11,7 +11,7 @@ import {
 } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import {
-  IconBrandFirebase, IconBrandSupabase, IconDatabase, IconGraph, IconGraphOff, IconInfoCircle, IconSettingsShare, IconUserPlus,
+  IconBan, IconBrandFirebase, IconBrandSupabase, IconDatabase, IconDeviceDesktop, IconGraph, IconGraphOff, IconInfoCircle, IconMicrophone, IconSettingsShare, IconUserPlus,
 } from '@tabler/icons-react';
 import { useHref } from 'react-router';
 import { StepsPanel } from './StepsPanel';
@@ -23,6 +23,9 @@ import { useStudyId } from '../../routes/utils';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { useStudyRecordings } from '../../utils/useStudyRecordings';
+import { useDeviceRules } from '../../utils/useDeviceRules';
+import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './DeviceRestrictionString';
 
 function InfoHover({ text }: { text: string }) {
   return (
@@ -52,6 +55,25 @@ export function AppAside() {
   const nextParticipantDisabled = useMemo(() => activeTab === 'allTrials' || isAnalysis, [activeTab, isAnalysis]);
 
   const modes = useStoreSelector((state) => state.modes);
+  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
+  const {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  } = useDeviceRules(studyConfig.studyRules);
+  const unmetRestrictions = useMemo(() => getUnmetDeviceRestrictionLines(studyConfig.studyRules, {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  }), [isBrowserAllowed, isDeviceAllowed, isDisplayAllowed, isInputAllowed, studyConfig.studyRules]);
+  const restrictionsTooltip = useMemo(() => getUnmetDeviceRestrictionTooltip(studyConfig.studyRules, {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  }), [isBrowserAllowed, isDeviceAllowed, isDisplayAllowed, isInputAllowed, studyConfig.studyRules]);
 
   return (
     <AppShell.Aside className="studyBrowser" data-testid="app-aside" p="0">
@@ -97,9 +119,19 @@ export function AppAside() {
                 <IconSettingsShare style={{ width: '70%', height: '70%' }} stroke={1.5} size={16} />
               </ActionIcon>
             </Tooltip>
+            {hasAudioRecording && (
+              <Tooltip label="Audio recording enabled" withinPortal position="bottom">
+                <IconMicrophone size={16} color="orange" />
+              </Tooltip>
+            )}
+            {hasScreenRecording && (
+              <Tooltip label="Screen recording enabled" withinPortal position="bottom">
+                <IconDeviceDesktop size={16} color="orange" />
+              </Tooltip>
+            )}
             {modes?.dataSharingEnabled
-              ? <Tooltip label="Data sharing enabled" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
-              : <Tooltip label="Data sharing disabled" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
+              ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
+              : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
             {storageEngine?.getEngine() === 'localStorage'
               ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
               : storageEngine?.getEngine() === 'firebase'
@@ -107,6 +139,11 @@ export function AppAside() {
                 : storageEngine?.getEngine() === 'supabase'
                   ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
                   : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
+            {unmetRestrictions.length > 0 && (
+              <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
+                <IconBan size={16} color="red" />
+              </Tooltip>
+            )}
           </Flex>
         </Flex>
       </AppShell.Section>
