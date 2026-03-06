@@ -32,6 +32,7 @@ export function useRecording() {
   const analysisAudioStream = useRef<MediaStream | null>(null);
   const [isSpeakingWhileMuted, setIsSpeakingWhileMuted] = useState(false);
   const [analysisStreamReady, setAnalysisStreamReady] = useState(false);
+  const [showMutedWarning, setShowMutedWarning] = useState(false);
 
   // currentMediaStream and recorder can be just screen, just audio, or screen and audio combined.
   const currentMediaStream = useRef<MediaStream>(null);
@@ -402,6 +403,17 @@ export function useRecording() {
     audioMediaStream.current?.getAudioTracks().forEach((track) => {
       track.enabled = !isMuted;
     });
+    let t = <NodeJS.Timeout | null>null;
+    if (isMuted) {
+      t = setTimeout(() => {
+        setShowMutedWarning(true);
+      }, 5000);
+    } else {
+      setShowMutedWarning(false);
+    }
+    return () => {
+      t && clearTimeout(t);
+    };
   }, [isMuted]);
 
   useEffect(() => {
@@ -460,6 +472,7 @@ export function useRecording() {
     clickToRecord: currentComponentHasClickToRecord,
     isRejected,
     isSpeakingWhileMuted,
+    showMutedWarning,
   };
 }
 
