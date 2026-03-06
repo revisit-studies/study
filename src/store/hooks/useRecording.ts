@@ -29,6 +29,10 @@ export function useRecording() {
   const [isMediaCapturing, setIsMediaCapturing] = useState(false);
   const [isRejected, setIsRejected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const analysisAudioStream = useRef<MediaStream | null>(null);
+  const [isSpeakingWhileMuted, setIsSpeakingWhileMuted] = useState(false);
+  const [analysisStreamReady, setAnalysisStreamReady] = useState(false);
+  const [showMutedWarning, setShowMutedWarning] = useState(false);
 
   // currentMediaStream and recorder can be just screen, just audio, or screen and audio combined.
   const currentMediaStream = useRef<MediaStream>(null);
@@ -83,6 +87,10 @@ export function useRecording() {
       });
       audioMediaStream.current = null;
     }
+
+    analysisAudioStream.current?.getTracks().forEach((t) => t.stop());
+    analysisAudioStream.current = null;
+    setAnalysisStreamReady(false);
 
     if (screenMediaStream.current) {
       screenMediaStream.current.getTracks().forEach((track) => {
@@ -221,6 +229,9 @@ export function useRecording() {
       audioMediaRecorder.current.stop();
       audioMediaRecorder.current = null;
     }
+    analysisAudioStream.current?.getTracks().forEach((t) => t.stop());
+    analysisAudioStream.current = null;
+    setAnalysisStreamReady(false);
   }, []);
 
   useEffect(() => {
@@ -235,6 +246,12 @@ export function useRecording() {
     }).then((s) => {
       audioMediaStream.current = s;
       currentMediaStream.current = s;
+
+      const analysisTrack = s.getAudioTracks()[0]?.clone();
+      if (analysisTrack) {
+        analysisAudioStream.current = new MediaStream([analysisTrack]);
+        setAnalysisStreamReady(true);
+      }
 
       s.getAudioTracks().forEach((track) => {
         track.enabled = !isMuted;
@@ -342,6 +359,12 @@ export function useRecording() {
 
         audioMediaStream.current = micStream;
 
+        const analysisTrack = micStream?.getAudioTracks()[0]?.clone();
+        if (analysisTrack) {
+          analysisAudioStream.current = new MediaStream([analysisTrack]);
+          setAnalysisStreamReady(true);
+        }
+
         const combinedStream = new MediaStream([
           ...screenStream?.getVideoTracks() || [],
           ...(micStream?.getAudioTracks() ?? []),
@@ -380,7 +403,52 @@ export function useRecording() {
     audioMediaStream.current?.getAudioTracks().forEach((track) => {
       track.enabled = !isMuted;
     });
+    let t = <NodeJS.Timeout | null>null;
+    if (isMuted) {
+      t = setTimeout(() => {
+        setShowMutedWarning(true);
+      }, 5000);
+    } else {
+      setShowMutedWarning(false);
+    }
+    return () => {
+      t && clearTimeout(t);
+    };
   }, [isMuted]);
+
+  useEffect(() => {
+    if (!isMuted || !analysisStreamReady || !analysisAudioStream.current) return undefined;
+
+    const stream = analysisAudioStream.current;
+    const audioContext = new AudioContext();
+    const analyser = audioContext.createAnalyser();
+    analyser.minDecibels = -45;
+    const source = audioContext.createMediaStreamSource(stream);
+    source.connect(analyser);
+    const domainData = new Uint8Array(analyser.frequencyBinCount);
+
+    let animFrameId: number;
+    let speakingTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const checkAudio = () => {
+      analyser.getByteFrequencyData(domainData);
+      const speaking = domainData.some((v) => v > 0);
+      if (speaking) {
+        setIsSpeakingWhileMuted(true);
+        if (speakingTimeout) clearTimeout(speakingTimeout);
+        speakingTimeout = setTimeout(() => setIsSpeakingWhileMuted(false), 3000);
+      }
+      animFrameId = requestAnimationFrame(checkAudio);
+    };
+    animFrameId = requestAnimationFrame(checkAudio);
+
+    return () => {
+      cancelAnimationFrame(animFrameId);
+      if (speakingTimeout) clearTimeout(speakingTimeout);
+      audioContext.close();
+      setIsSpeakingWhileMuted(false);
+    };
+  }, [isMuted, analysisStreamReady]);
 
   return {
     recordVideoRef,
@@ -403,6 +471,8 @@ export function useRecording() {
     screenWithAudioRecording,
     clickToRecord: currentComponentHasClickToRecord,
     isRejected,
+    isSpeakingWhileMuted,
+    showMutedWarning,
   };
 }
 

@@ -38,6 +38,8 @@ import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { useRecordingContext } from '../../store/hooks/useRecording';
+import { hideNotification, showNotification } from '../../utils/notifications';
+import classes from './AppHeader.module.css';
 
 export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
@@ -85,9 +87,20 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   const [isTruncated, setIsTruncated] = useState(false);
   const lastProgressRef = useRef<number>(0);
 
+  const speakingWhileMutedNotification = useRef<string>(undefined);
+
   const {
-    isScreenRecording, isAudioRecording, setIsMuted, isMuted, clickToRecord,
+    isScreenRecording, isAudioRecording, setIsMuted, isMuted, clickToRecord, isSpeakingWhileMuted, showMutedWarning,
   } = useRecordingContext();
+
+  useEffect(() => {
+    if (isMuted && isSpeakingWhileMuted) {
+      speakingWhileMutedNotification.current = showNotification({ title: 'You are muted', message: 'Your microphone is muted. Click the microphone icon to unmute.', color: 'red' });
+    } else {
+      speakingWhileMutedNotification.current && hideNotification(speakingWhileMutedNotification.current);
+      speakingWhileMutedNotification.current = undefined;
+    }
+  }, [isMuted, isSpeakingWhileMuted]);
 
   const { funcIndex } = useParams();
 
@@ -184,14 +197,14 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
                 </Text>
                 {isAudioRecording && !isMuted && <RecordingAudioWaveform />}
                 {clickToRecord ? (
-                  <Tooltip label="Press and hold to unmute">
-                    <ActionIcon variant="light" size="md" aria-label="Press and hold to unmute" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
+                  <Tooltip label={showMutedWarning ? 'You are still muted. Press and hold to unmute.' : 'Press and hold to unmute.'} opened={showMutedWarning || undefined}>
+                    <ActionIcon className={showMutedWarning ? classes.micBlink : undefined} variant="light" size="md" aria-label="Press and hold to unmute" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
                       {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
                     </ActionIcon>
                   </Tooltip>
                 ) : (
-                  <Tooltip label={`Press to ${isMuted ? 'unmute' : 'mute'}`}>
-                    <ActionIcon variant="light" size="md" aria-label="Press and hold to unmute" onClick={() => setIsMuted(!isMuted)}>
+                  <Tooltip label={showMutedWarning ? 'You are still muted. Press to unmute.' : `Press to ${isMuted ? 'unmute' : 'mute'}`} opened={showMutedWarning || undefined}>
+                    <ActionIcon className={showMutedWarning ? classes.micBlink : undefined} variant="light" size="md" aria-label="Press and hold to unmute" onClick={() => setIsMuted(!isMuted)}>
                       {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
                     </ActionIcon>
                   </Tooltip>
