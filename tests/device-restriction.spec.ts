@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { resetClientStudyState } from './utils';
 
 test.describe('Test device restriction: display, browsers, devices, input', () => {
-  test.skip(({ browserName }) => browserName === 'webkit', 'WebKit runtime dependencies are not available in this Windows environment.');
+  test.skip(({ browserName }) => process.platform === 'win32' && browserName === 'webkit', 'WebKit runtime dependencies are not available in this Windows environment.');
 
   test('shows resolution warning when viewport is below minimum', async ({ page }) => {
     await resetClientStudyState(page);
