@@ -51,12 +51,6 @@ let mockedDeviceRules: DeviceRulesMock = {
 };
 
 vi.mock('@mantine/core', () => ({
-  Alert: ({ children, title }: { children: ReactNode; title?: ReactNode }) => (
-    <div>
-      {title && <h4>{title}</h4>}
-      {children}
-    </div>
-  ),
   Modal: ({ opened, children }: { opened: boolean; children: ReactNode }) => (opened ? <div>{children}</div> : null),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
