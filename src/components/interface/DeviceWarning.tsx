@@ -152,13 +152,17 @@ export function DeviceWarning({
             </Card.Section>
             {browsers?.blockedMessage
               ? (
-                <Text size="md" c="red" mb="xs">
-                  {browsers.blockedMessage}
-                  Current browser:
-                  {' '}
-                  {currentBrowser.name}
-                  {currentBrowser.version ? ` v${currentBrowser.version}` : ''}
-                </Text>
+                <>
+                  <Text size="md" c="red" mb="xs">
+                    {browsers.blockedMessage}
+                  </Text>
+                  <Text size="md" c="red" mb="xs">
+                    Current browser:
+                    {' '}
+                    {currentBrowser.name}
+                    {currentBrowser.version ? ` v${currentBrowser.version}` : ''}
+                  </Text>
+                </>
               ) : (
                 <>
                   <Text size="md" c="red" mb="xs">
@@ -191,12 +195,16 @@ export function DeviceWarning({
             </Card.Section>
             {devices?.blockedMessage
               ? (
-                <Text size="md" c="red" mb="xs">
-                  {devices.blockedMessage}
-                  Current device:
-                  {' '}
-                  {currentDevice}
-                </Text>
+                <>
+                  <Text size="md" c="red" mb="xs">
+                    {devices.blockedMessage}
+                  </Text>
+                  <Text size="md" c="red" mb="xs">
+                    Current device:
+                    {' '}
+                    {currentDevice}
+                  </Text>
+                </>
               ) : (
                 <>
                   <Text size="md" c="red" mb="xs">
@@ -227,12 +235,16 @@ export function DeviceWarning({
             </Card.Section>
             {inputs?.blockedMessage
               ? (
-                <Text size="md" c="red" mb="xs">
-                  {inputs.blockedMessage}
-                  Current input:
-                  {' '}
-                  {currentInputs.length ? currentInputs.join(', ') : 'none detected'}
-                </Text>
+                <>
+                  <Text size="md" c="red" mb="xs">
+                    {inputs.blockedMessage}
+                  </Text>
+                  <Text size="md" c="red" mb="xs">
+                    Current input:
+                    {' '}
+                    {currentInputs.length ? currentInputs.join(', ') : 'none detected'}
+                  </Text>
+                </>
               ) : (
                 <>
                   <Text size="md" c="red" mb="xs">
@@ -263,12 +275,16 @@ export function DeviceWarning({
               </Card.Section>
               {display?.blockedMessage
                 ? (
-                  <Text size="md" c="red" mb="xs">
-                    {display.blockedMessage}
-                    Current display:
-                    {' '}
-                    {`${currentDisplay.width} x ${currentDisplay.height}px`}
-                  </Text>
+                  <>
+                    <Text size="md" c="red" mb="xs">
+                      {display.blockedMessage}
+                    </Text>
+                    <Text size="md" c="red" mb="xs">
+                      Current display:
+                      {' '}
+                      {`${currentDisplay.width} x ${currentDisplay.height}px`}
+                    </Text>
+                  </>
                 ) : (
                   <>
                     <Text size="md" c="red" mb="xs">
