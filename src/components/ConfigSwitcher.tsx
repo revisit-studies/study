@@ -198,17 +198,12 @@ function StudyCard({
                     <IconDeviceDesktop size={16} color="orange" />
                   </Tooltip>
                 )}
-                {unmetRestrictions.length > 0 && (
-                  <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
-                    <IconBan size={16} color="red" />
-                  </Tooltip>
-                )}
                 {modes?.developmentModeEnabled
-                  ? <Tooltip label="Development mode enabled" withinPortal><IconSchema size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Development mode disabled" withinPortal><IconSchemaOff size={16} color="red" /></Tooltip>}
+                  ? <Tooltip label="Development mode enabled" withinPortal position="bottom"><IconSchema size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Development mode disabled" withinPortal position="bottom"><IconSchemaOff size={16} color="red" /></Tooltip>}
                 {modes?.dataSharingEnabled
-                  ? <Tooltip label="Data sharing enabled" withinPortal><IconGraph size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Data sharing disabled" withinPortal><IconGraphOff size={16} color="red" /></Tooltip>}
+                  ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
                 {storageEngine?.getEngine() === 'localStorage'
                   ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
                   : storageEngine?.getEngine() === 'firebase'
@@ -216,6 +211,11 @@ function StudyCard({
                     : storageEngine?.getEngine() === 'supabase'
                       ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
                       : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
+                {unmetRestrictions.length > 0 && (
+                <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
+                  <IconBan size={16} color="red" />
+                </Tooltip>
+                )}
               </Flex>
             </Flex>
 

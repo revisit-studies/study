@@ -119,16 +119,6 @@ export function AppAside() {
                 <IconSettingsShare style={{ width: '70%', height: '70%' }} stroke={1.5} size={16} />
               </ActionIcon>
             </Tooltip>
-            {modes?.dataSharingEnabled
-              ? <Tooltip label="Data sharing enabled" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
-              : <Tooltip label="Data sharing disabled" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
-            {storageEngine?.getEngine() === 'localStorage'
-              ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
-              : storageEngine?.getEngine() === 'firebase'
-                ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="green" /></Tooltip>
-                : storageEngine?.getEngine() === 'supabase'
-                  ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
             {hasAudioRecording && (
               <Tooltip label="Audio recording enabled" withinPortal position="bottom">
                 <IconMicrophone size={16} color="orange" />
@@ -139,6 +129,16 @@ export function AppAside() {
                 <IconDeviceDesktop size={16} color="orange" />
               </Tooltip>
             )}
+            {modes?.dataSharingEnabled
+              ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
+              : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
+            {storageEngine?.getEngine() === 'localStorage'
+              ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
+              : storageEngine?.getEngine() === 'firebase'
+                ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="green" /></Tooltip>
+                : storageEngine?.getEngine() === 'supabase'
+                  ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
             {unmetRestrictions.length > 0 && (
               <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
                 <IconBan size={16} color="red" />

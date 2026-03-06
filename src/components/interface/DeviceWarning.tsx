@@ -75,7 +75,7 @@ export function getUnmetDeviceRestrictionTooltip(
   if (unmetLines.length === 0) {
     return '';
   }
-  return `Device Restriction\n${unmetLines.join('\n')}`;
+  return `Device Requirement\n${unmetLines.join('\n')}`;
 }
 
 export function DeviceWarning({
@@ -117,16 +117,8 @@ export function DeviceWarning({
   );
 
   useEffect(() => {
-    if (developmentModeEnabled) {
-      setTimeLeft(60);
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-        countdownIntervalRef.current = null;
-      }
-      return () => {};
-    }
-
-    if (isRejected) {
+    // In development mode, do not show the warning
+    if (isRejected || developmentModeEnabled) {
       return () => {};
     }
 
@@ -180,11 +172,7 @@ export function DeviceWarning({
     };
   }, [developmentModeEnabled, isDisplayRequirementNotMet, isRejected, navigate, storageEngine]);
 
-  if (developmentModeEnabled && hasAnyViolation && !isRejected) {
-    return null;
-  }
-
-  if (isBrowserAllowed && isDeviceAllowed && isInputAllowed && isDisplayAllowed && !isRejected) {
+  if (!isRejected && (developmentModeEnabled || !hasAnyViolation)) {
     return null;
   }
 
@@ -205,7 +193,7 @@ export function DeviceWarning({
             {' '}
             {timeLeft}
             {' '}
-            seconds or you will be rejected.
+            seconds or you will not be able to continue the study.
           </Text>
         )}
         <Flex wrap="wrap" justify="center">
@@ -214,19 +202,24 @@ export function DeviceWarning({
             <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
               <IconBrowser size={48} color="gray" />
             </Card.Section>
-            <Text size="sm" c="dimmed" mb="sm">
-              Current browser:
-              {' '}
-              {currentBrowser.name}
-              {currentBrowser.version ? ` v${currentBrowser.version}` : ''}
-            </Text>
             {browsers?.blockedMessage
               ? (
-                <Text size="md">
+                <Text size="md" c="red" mb="xs">
                   {browsers.blockedMessage}
+                  Current browser:
+                  {' '}
+                  {currentBrowser.name}
+                  {currentBrowser.version ? ` v${currentBrowser.version}` : ''}
                 </Text>
               ) : (
                 <>
+                  <Text size="md" c="red" mb="xs">
+                    Your browser is not compatible with the study.
+                    Current browser:
+                    {' '}
+                    {currentBrowser.name}
+                    {currentBrowser.version ? ` v${currentBrowser.version}` : ''}
+                  </Text>
                   <Text size="md">
                     This study only works in the following browser(s):
                   </Text>
@@ -248,18 +241,22 @@ export function DeviceWarning({
             <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
               <IconDevices size={48} color="gray" />
             </Card.Section>
-            <Text size="sm" c="dimmed" mb="sm">
-              Current device:
-              {' '}
-              {currentDevice}
-            </Text>
             {devices?.blockedMessage
               ? (
-                <Text size="md">
+                <Text size="md" c="red" mb="xs">
                   {devices.blockedMessage}
+                  Current device:
+                  {' '}
+                  {currentDevice}
                 </Text>
               ) : (
                 <>
+                  <Text size="md" c="red" mb="xs">
+                    Your device is not compatible with the study.
+                    Current device:
+                    {' '}
+                    {currentDevice}
+                  </Text>
                   <Text size="md">
                     This study only works in the following device(s):
                   </Text>
@@ -280,18 +277,22 @@ export function DeviceWarning({
             <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
               <IconHandClick size={48} color="gray" />
             </Card.Section>
-            <Text size="sm" c="dimmed" mb="sm">
-              Current input:
-              {' '}
-              {currentInputs.length ? currentInputs.join(', ') : 'none detected'}
-            </Text>
             {inputs?.blockedMessage
               ? (
-                <Text size="md">
+                <Text size="md" c="red" mb="xs">
                   {inputs.blockedMessage}
+                  Current input:
+                  {' '}
+                  {currentInputs.length ? currentInputs.join(', ') : 'none detected'}
                 </Text>
               ) : (
                 <>
+                  <Text size="md" c="red" mb="xs">
+                    Your input type is not compatible with the study.
+                    Current input:
+                    {' '}
+                    {currentInputs.length ? currentInputs.join(', ') : 'none detected'}
+                  </Text>
                   <Text size="md">
                     This study only works on devices that support following input type(s):
                   </Text>
@@ -312,18 +313,22 @@ export function DeviceWarning({
               <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
                 <IconDeviceDesktop size={48} color="gray" />
               </Card.Section>
-              <Text size="sm" c="dimmed" mb="sm">
-                Current display:
-                {' '}
-                {`${currentDisplay.width} x ${currentDisplay.height}px`}
-              </Text>
               {display?.blockedMessage
                 ? (
-                  <Text size="md">
+                  <Text size="md" c="red" mb="xs">
                     {display.blockedMessage}
+                    Current display:
+                    {' '}
+                    {`${currentDisplay.width} x ${currentDisplay.height}px`}
                   </Text>
                 ) : (
                   <>
+                    <Text size="md" c="red" mb="xs">
+                      Your screen size is not compatible with the study.
+                      Current display:
+                      {' '}
+                      {`${currentDisplay.width} x ${currentDisplay.height}px`}
+                    </Text>
                     <Text size="md">
                       This study only works on devices that support following display size(s):
                     </Text>
