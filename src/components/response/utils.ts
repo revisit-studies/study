@@ -57,14 +57,26 @@ function checkNumericalResponse(response: NumericalResponse, value: number) {
 }
 
 function checkMatrixResponse(response: MatrixResponse, value: Record<string, string>) {
-  const unanswered = Object.values(value).some((val) => val === '');
-  const hasAnsweredAtLeastOne = Object.values(value).some((val) => val !== '');
+  const expectedQuestionKeys = response.questionOptions.map((entry) => parseStringOptionValue(entry));
+  const unanswered = expectedQuestionKeys.some((questionKey) => {
+    const rowValue = value[questionKey];
+    return rowValue === undefined || rowValue === '';
+  });
 
-  if (unanswered && hasAnsweredAtLeastOne) {
+  if (unanswered) {
     return 'Please answer all questions in the matrix to continue.';
   }
 
   return null;
+}
+
+function checkMatrixResponseForMessage(response: MatrixResponse, value: Record<string, string>) {
+  const hasAnsweredAtLeastOne = Object.values(value).some((val) => val !== '');
+  if (!hasAnsweredAtLeastOne) {
+    return null;
+  }
+
+  return checkMatrixResponse(response, value);
 }
 
 const getQueryParameters = () => {
@@ -284,7 +296,7 @@ export function generateErrorMessage(
   } else if (answer.value && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalResponse(response, answer.value)) {
     error = checkNumericalResponse(response, answer.value);
   } else if (answer.value && typeof answer.value === 'object' && !Array.isArray(answer.value) && (response.type === 'matrix-radio' || response.type === 'matrix-checkbox')) {
-    return checkMatrixResponse(response, answer.value);
+    return checkMatrixResponseForMessage(response, answer.value);
   } else {
     error = answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.` : null;
   }

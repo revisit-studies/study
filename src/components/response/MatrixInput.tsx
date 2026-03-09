@@ -180,21 +180,36 @@ export function MatrixInput({
 
   const onChangeCheckbox = (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: ParsedStringOption) => {
     const isChecked = event.target.checked;
-    const payload = {
+    const currentValues = (answer.value[questionKey] || '').split('|').filter((entry) => entry !== '');
+    const dispatchCheckboxUpdate = (value: string, checked: boolean) => storeDispatch(setMatrixAnswersCheckbox({
       questionKey,
       responseId: response.id,
-      value: option.value,
-      label: option.label,
-      isChecked,
+      value,
+      label: _choices.find((choice) => choice.value === value)?.label || value,
+      isChecked: checked,
       choiceOptions: _choices,
-    };
-    storeDispatch(setMatrixAnswersCheckbox(payload));
+    }));
+
+    if (response.withDontKnow && option.value === DONT_KNOW.value && isChecked) {
+      currentValues
+        .filter((entry) => entry !== DONT_KNOW.value)
+        .forEach((value) => dispatchCheckboxUpdate(value, false));
+    } else if (response.withDontKnow && option.value !== DONT_KNOW.value && isChecked && currentValues.includes(DONT_KNOW.value)) {
+      dispatchCheckboxUpdate(DONT_KNOW.value, false);
+    }
+
+    dispatchCheckboxUpdate(option.value, isChecked);
   };
 
   const error = generateErrorMessage(response, answer);
 
   const _n = _choices.length;
   const _m = orderedQuestions.length;
+  const dontKnowIndex = _choices.findIndex(
+    (choice) => choice.value.toLowerCase() === DONT_KNOW.value.toLowerCase()
+      || choice.label.toLowerCase() === DONT_KNOW.label.toLowerCase(),
+  );
+  const separatorAfterIndex = dontKnowIndex > 0 ? dontKnowIndex - 1 : -1;
   return (
     <>
       {prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
@@ -222,23 +237,51 @@ export function MatrixInput({
             height: '100%',
             display: 'grid',
             gridTemplateColumns: `repeat(${_n}, 1fr)`,
-            alignItems: 'center',
-            justifyItems: 'center',
+            alignItems: 'stretch',
+            justifyItems: 'stretch',
             borderBottom: '1px solid var(--mantine-color-dark-0)',
+            position: 'relative',
           }}
         >
+          {separatorAfterIndex >= 0 && (
+            <div
+              style={{
+                position: 'absolute',
+                left: `${((separatorAfterIndex + 1) / _n) * 100}%`,
+                top: 0,
+                bottom: 0,
+                width: '1px',
+                backgroundColor: 'var(--mantine-color-dark-0)',
+                pointerEvents: 'none',
+              }}
+            />
+          )}
           {_choices.map((entry, idx) => (
             <Box
               key={`choice-${idx}-label`}
               style={{
+                width: '100%',
+                minWidth: 0,
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 textAlign: 'center',
                 fontSize: '0.8em',
+                overflow: 'hidden',
+                overflowWrap: 'anywhere',
               }}
-              mb="sm"
-              ml="xs"
-              mr="xs"
+              px={4}
             >
-              <OptionLabel label={entry.label} infoText={entry.infoText} />
+              <OptionLabel
+                label={
+                  (entry.value.toLowerCase() === DONT_KNOW.value.toLowerCase()
+                    || entry.label.toLowerCase() === DONT_KNOW.label.toLowerCase())
+                    ? "I don't  \nknow"
+                    : entry.label
+                }
+                infoText={entry.infoText}
+              />
             </Box>
           ))}
         </div>
@@ -278,8 +321,23 @@ export function MatrixInput({
             height: '100%',
             display: 'grid',
             gridTemplateRows: `repeat(${_m},1fr)`,
+            position: 'relative',
           }}
         >
+          {separatorAfterIndex >= 0 && (
+            <div
+              style={{
+                position: 'absolute',
+                left: `${((separatorAfterIndex + 1) / _n) * 100}%`,
+                top: 0,
+                bottom: 0,
+                width: '1px',
+                backgroundColor: 'var(--mantine-color-dark-0)',
+                pointerEvents: 'none',
+                zIndex: 1,
+              }}
+            />
+          )}
           {orderedQuestions.map((questionKey, idx) => (
             <div
               key={`question-${idx}`}
