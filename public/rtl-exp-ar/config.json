@@ -593,13 +593,19 @@
                     "type": "shortText"
                 }
             ]
+        },
+        "introduction": {
+            "type": "markdown",
+            "path": "rtl-exp-ar/assets/introduction.md",
+            "response": []
         }
     },
     "sequence": {
         "order": "fixed",
         "components": [
             "consent",
-            "demographics"
+            "demographics",
+            "introduction"
         ]
     }
 }
