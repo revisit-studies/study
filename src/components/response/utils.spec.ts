@@ -174,4 +174,12 @@ describe('generateErrorMessage matrix', () => {
 
     expect(error).toBe('Please answer all questions in the matrix to continue.');
   });
+
+  it('does not show matrix incomplete message when all rows are answered', () => {
+    const error = generateErrorMessage(matrixResponse, {
+      value: { q1: '0', q2: '1' },
+    });
+
+    expect(error).toBeNull();
+  });
 });
