@@ -54,40 +54,53 @@ import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLink
   />` : ''}
 `;
 
-const librariesPath = path.join(__dirname, './public/libraries');
-const docsLibrariesPath = path.join(__dirname, './docsLibraries');
-
-const libraries = fs.readdirSync(librariesPath)
+const getLibraries = (librariesPath) => fs.readdirSync(librariesPath)
   .filter((library) => !library.startsWith('.') && !library.endsWith('.DS_Store'));
 
-if (!fs.existsSync(docsLibrariesPath)) {
-  fs.mkdirSync(docsLibrariesPath);
-}
+const generateLibraryDocs = (baseDir = __dirname) => {
+  const librariesPath = path.join(baseDir, './public/libraries');
+  const docsLibrariesPath = path.join(baseDir, './docsLibraries');
+  const libraries = getLibraries(librariesPath);
 
-libraries.forEach((library) => {
-  const libraryPath = path.join(librariesPath, library, 'config.json');
-  const libraryConfig = JSON.parse(fs.readFileSync(libraryPath, 'utf8'));
-
-  const docsMd = generateMd(library, libraryConfig, true);
-  const exampleMd = generateMd(library, libraryConfig, false);
-
-  // Save to docsLibraries folder
-  const docsLibraryPath = path.join(docsLibrariesPath, `${library}.md`);
-  fs.writeFileSync(docsLibraryPath, docsMd);
-  // eslint-disable-next-line no-console
-  console.log(`Documentation saved to ${docsLibraryPath}`);
-
-  // Save to example study assets folder if assets folder exists
-  // Add a prefix to baseMarkdown when saving to example assets
-  const exampleAssetsPath = path.join(__dirname, 'public', `library-${library}`, 'assets');
-  if (fs.existsSync(exampleAssetsPath)) {
-    const exampleDocsPath = path.join(exampleAssetsPath, `${library}.md`);
-    fs.writeFileSync(exampleDocsPath, exampleMd);
-
-    // eslint-disable-next-line no-console
-    console.log(`Documentation saved to ${exampleDocsPath}`);
+  if (!fs.existsSync(docsLibrariesPath)) {
+    fs.mkdirSync(docsLibrariesPath);
   }
-});
 
-// eslint-disable-next-line no-console
-console.log('Library documentation generated');
+  libraries.forEach((library) => {
+    const libraryPath = path.join(librariesPath, library, 'config.json');
+    const libraryConfig = JSON.parse(fs.readFileSync(libraryPath, 'utf8'));
+
+    const docsMd = generateMd(library, libraryConfig, true);
+    const exampleMd = generateMd(library, libraryConfig, false);
+
+    // Save to docsLibraries folder
+    const docsLibraryPath = path.join(docsLibrariesPath, `${library}.md`);
+    fs.writeFileSync(docsLibraryPath, docsMd);
+    // eslint-disable-next-line no-console
+    console.log(`Documentation saved to ${docsLibraryPath}`);
+
+    // Save to example study assets folder if assets folder exists
+    // Add a prefix to baseMarkdown when saving to example assets
+    const exampleAssetsPath = path.join(baseDir, 'public', `library-${library}`, 'assets');
+    if (fs.existsSync(exampleAssetsPath)) {
+      const exampleDocsPath = path.join(exampleAssetsPath, `${library}.md`);
+      fs.writeFileSync(exampleDocsPath, exampleMd);
+
+      // eslint-disable-next-line no-console
+      console.log(`Documentation saved to ${exampleDocsPath}`);
+    }
+  });
+
+  // eslint-disable-next-line no-console
+  console.log('Library documentation generated');
+};
+
+module.exports = {
+  generateMd,
+  generateLibraryDocs,
+  getLibraries,
+};
+
+if (require.main === module) {
+  generateLibraryDocs();
+}

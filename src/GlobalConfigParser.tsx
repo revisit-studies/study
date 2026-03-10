@@ -22,7 +22,7 @@ import { useStorageEngine } from './storage/storageEngineHooks';
 import { PageTitle } from './utils/PageTitle';
 import { isCloudStorageEngine } from './storage/engines/utils';
 
-async function fetchGlobalConfigArray() {
+export async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
   const configs = await globalFile.text();
   return parseGlobalConfig(configs);

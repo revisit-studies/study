@@ -23,6 +23,19 @@ export default defineConfig(({ command, mode }) => {
       fileParallelism: true,
       maxWorkers: '100%',
       minWorkers: 1,
+      coverage: {
+        provider: 'v8',
+        all: true,
+        exclude: [
+          'public/**',
+          'src/public/**',
+          'dist/**',
+          'eslint.config.js',
+          'vite.config.ts',
+          'playwright.config.ts',
+          'vite-env.d.ts',
+        ],
+      },
     },
   };
 });
