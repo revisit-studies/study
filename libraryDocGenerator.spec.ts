@@ -1,13 +1,13 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { createRequire } from 'module';
 import {
   afterEach,
   describe,
   expect,
   it,
 } from 'vitest';
-import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 const { generateMd, generateLibraryDocs, getLibraries } = require('./libraryDocGenerator.cjs');
@@ -45,6 +45,40 @@ describe('libraryDocGenerator', () => {
     expect(md).toContain('## Reference');
     expect(md).toContain('https://dx.doi.org/10.1000/xyz');
     expect(md).toContain('## Additional Description');
+  });
+
+  it('generateMd handles example reference text and external-link-only docs links', () => {
+    const exampleMd = generateMd('demo-lib', {
+      description: 'Demo description',
+      reference: 'Some reference',
+      components: {},
+      sequences: {},
+    }, false);
+
+    expect(exampleMd).toContain('This is an example study of the library `demo-lib`.');
+    expect(exampleMd).toContain('Some reference');
+    expect(exampleMd).not.toContain(':::note[Reference]');
+
+    const docsMd = generateMd('demo-lib', {
+      description: 'Demo description',
+      externalLink: 'https://example.com',
+      components: {},
+      sequences: {},
+    }, true);
+
+    expect(docsMd).toContain('referenceLinks={[');
+    expect(docsMd).toContain('{name: "demo-lib", url: "https://example.com"}');
+    expect(docsMd).not.toContain('{name: "DOI"');
+
+    const docsWithDoiOnly = generateMd('demo-lib', {
+      description: 'Demo description',
+      doi: '10.1000/xyz',
+      components: {},
+      sequences: {},
+    }, true);
+
+    expect(docsWithDoiOnly).toContain('{name: "DOI", url: "https://dx.doi.org/10.1000/xyz"}');
+    expect(docsWithDoiOnly).not.toContain('{name: "demo-lib", url:');
   });
 
   it('getLibraries filters hidden entries and .DS_Store entries', () => {
