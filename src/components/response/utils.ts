@@ -87,6 +87,11 @@ const getQueryParameters = () => {
   return new URLSearchParams(window.location.search);
 };
 
+// Matrix questions with "Don't know" option require a separate field to properly handle the "Don't know" state
+export const usesStandaloneDontKnowField = (response: Response) => !!response.withDontKnow
+  && response.type !== 'matrix-radio'
+  && response.type !== 'matrix-checkbox';
+
 export const getDefaultFieldValue = (response: Response) => {
   const responseDefault = (response as ResponseWithDefault).default;
   if (!Object.hasOwn(response, 'default') || responseDefault === undefined) {
@@ -135,9 +140,13 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
 
   responses.forEach((response) => {
     const answer = storedAnswer ? storedAnswer[response.id] : {};
-
-    const dontKnowAnswer = storedAnswer && storedAnswer[`${response.id}-dontKnow`] !== undefined ? storedAnswer[`${response.id}-dontKnow`] : false;
-    const dontKnowObj = response.withDontKnow ? { [`${response.id}-dontKnow`]: dontKnowAnswer } : {};
+    const dontKnowObj = usesStandaloneDontKnowField(response)
+      ? {
+        [`${response.id}-dontKnow`]: storedAnswer && storedAnswer[`${response.id}-dontKnow`] !== undefined
+          ? storedAnswer[`${response.id}-dontKnow`]
+          : false,
+      }
+      : {};
 
     const otherAnswer = storedAnswer && storedAnswer[`${response.id}-other`] !== undefined ? storedAnswer[`${response.id}-other`] : '';
     const otherObj = (response as RadioResponse | CheckboxResponse).withOther ? { [`${response.id}-other`]: otherAnswer } : {};

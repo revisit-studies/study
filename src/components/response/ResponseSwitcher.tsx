@@ -26,7 +26,7 @@ import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue } from '../../utils/stringOptions';
-import { getDefaultFieldValue } from './utils';
+import { getDefaultFieldValue, usesStandaloneDontKnowField } from './utils';
 
 export function ResponseSwitcher({
   response,
@@ -57,12 +57,16 @@ export function ResponseSwitcher({
   const nextConfig = useMemo(() => (nextComponent ? studyConfig.components[nextComponent] : undefined), [nextComponent, studyConfig]);
 
   const completed = useStoreSelector((state) => state.completed);
+  const usesStandaloneDontKnow = usesStandaloneDontKnowField(response);
 
   // Don't update if we're in analysis mode
   const ans = useMemo(() => (isAnalysis || (Object.keys(storedAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed ? { value: storedAnswer![response.id] } : form) || { value: undefined }, [isAnalysis, storedAnswer, response.id, form, nextConfig?.previousButton, completed]);
-  const dontKnowValue = (Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined };
+  const dontKnowValue = usesStandaloneDontKnow
+    ? ((Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined })
+    : { checked: undefined };
+  const dontKnowChecked = !!dontKnowValue.checked;
   const otherValue = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
-  const inputDisabled = Object.keys(storedAnswer || {}).length > 0 || disabled || completed;
+  const inputDisabled = !!(Object.keys(storedAnswer || {}).length > 0 || disabled || completed);
 
   const [searchParams] = useSearchParams();
 
@@ -104,8 +108,8 @@ export function ResponseSwitcher({
       const responseParam = searchParams.get(response.paramCapture);
       return inputDisabled || !!responseParam;
     }
-    return inputDisabled || disabled;
-  }, [completed, currentStep, flatSequence, response.paramCapture, inputDisabled, disabled, sequence.components, nextConfig?.previousButton, searchParams]);
+    return inputDisabled;
+  }, [completed, currentStep, flatSequence, response.paramCapture, inputDisabled, sequence.components, nextConfig?.previousButton, searchParams]);
 
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {
@@ -141,7 +145,7 @@ export function ResponseSwitcher({
       {response.type === 'numerical' && (
       <NumericInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: number }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -150,7 +154,7 @@ export function ResponseSwitcher({
       {response.type === 'shortText' && (
       <StringInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -159,7 +163,7 @@ export function ResponseSwitcher({
       {response.type === 'longText' && (
       <TextAreaInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -168,7 +172,7 @@ export function ResponseSwitcher({
       {response.type === 'likert' && (
       <LikertInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -177,7 +181,7 @@ export function ResponseSwitcher({
       {response.type === 'dropdown' && (
       <DropdownInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -186,7 +190,7 @@ export function ResponseSwitcher({
       {response.type === 'slider' && (
       <SliderInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: number }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -195,7 +199,7 @@ export function ResponseSwitcher({
       {response.type === 'radio' && (
       <RadioInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -205,7 +209,7 @@ export function ResponseSwitcher({
       {response.type === 'checkbox' && (
       <CheckBoxInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string[] }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -216,7 +220,7 @@ export function ResponseSwitcher({
       {(response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') && (
       <RankingInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: Record<string, string> }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -232,7 +236,7 @@ export function ResponseSwitcher({
       )}
       {(response.type === 'matrix-radio' || response.type === 'matrix-checkbox') && (
       <MatrixInput
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled}
         response={response}
         answer={ans as { value: Record<string, string> }}
         index={index}
@@ -242,7 +246,7 @@ export function ResponseSwitcher({
       {response.type === 'buttons' && (
       <ButtonsInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -251,7 +255,7 @@ export function ResponseSwitcher({
       {response.type === 'textOnly' && (
       <TextOnlyInput response={response} />
       )}
-      {response.withDontKnow && (response.type !== 'matrix-radio' && response.type !== 'matrix-checkbox') && (
+      {usesStandaloneDontKnow && (
       <Checkbox
         mt="xs"
         disabled={isDisabled}
