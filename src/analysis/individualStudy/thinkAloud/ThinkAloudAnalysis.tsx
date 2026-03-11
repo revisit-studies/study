@@ -24,7 +24,7 @@ import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageE
 import { ReplayContext, useReplay } from '../../../store/hooks/useReplay';
 import { parseTrialOrder } from '../../../utils/parseTrialOrder';
 
-async function getTranscript(storageEngine: FirebaseStorageEngine, partId: string | undefined, trialName: string | undefined, authEmail: string | null | undefined) {
+export async function getTranscript(storageEngine: FirebaseStorageEngine, partId: string | undefined, trialName: string | undefined, authEmail: string | null | undefined) {
   if (storageEngine && partId && trialName && authEmail) {
     return await storageEngine.getEditedTranscript(partId, authEmail, trialName);
   }
@@ -32,7 +32,7 @@ async function getTranscript(storageEngine: FirebaseStorageEngine, partId: strin
   return null;
 }
 
-function getParticipantData(trrackId: string | undefined, storageEngine: FirebaseStorageEngine) {
+export function getParticipantData(trrackId: string | undefined, storageEngine: FirebaseStorageEngine) {
   if (storageEngine) {
     return storageEngine.getParticipantData(trrackId);
   }
@@ -40,7 +40,7 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Firebas
   return null;
 }
 
-function getRawTranscript(storageEngine: FirebaseStorageEngine, currentTrial: string, participantId: string, studyId: string | undefined) {
+export function getRawTranscript(storageEngine: FirebaseStorageEngine, currentTrial: string, participantId: string, studyId: string | undefined) {
   if (storageEngine && studyId) {
     return storageEngine.getTranscription(currentTrial, participantId).then((data) => {
       if (!data || !data.results) {
@@ -60,7 +60,7 @@ function getRawTranscript(storageEngine: FirebaseStorageEngine, currentTrial: st
   return null;
 }
 
-function getFirstTrialIdentifier(participant: ParticipantData | null | undefined): string {
+export function getFirstTrialIdentifier(participant: ParticipantData | null | undefined): string {
   if (!participant) {
     return '';
   }

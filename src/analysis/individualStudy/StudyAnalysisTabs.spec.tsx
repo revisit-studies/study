@@ -10,6 +10,7 @@ import { StudyAnalysisTabs } from './StudyAnalysisTabs';
 let mockedParams: Record<string, string | undefined> = { studyId: undefined, analysisTab: 'summary' };
 let mockedAsyncStatus: 'pending' | 'success' = 'pending';
 let mockedIsAdmin = false;
+const mockStorageEngine = { getEngine: () => 'firebase' };
 
 vi.mock('@mantine/core', async () => {
   const actual = await vi.importActual<typeof import('@mantine/core')>('@mantine/core');
@@ -72,7 +73,7 @@ vi.mock('../../store/hooks/useAuth', () => ({
   useAuth: () => ({ user: { isAdmin: mockedIsAdmin } }),
 }));
 vi.mock('../../storage/storageEngineHooks', () => ({
-  useStorageEngine: () => ({ storageEngine: undefined }),
+  useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 vi.mock('../../store/hooks/useAsync', () => ({
   useAsync: () => ({ value: {}, execute: vi.fn(), status: mockedAsyncStatus }),
