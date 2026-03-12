@@ -238,10 +238,15 @@ export function ResponseBlock({
     }, {}) : {}) as StoredAnswer['answer'];
 
     const correctAnswers = Object.fromEntries(allResponsesWithDefaults.map((response) => {
-      const configCorrectAnswer = config?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+      const configCorrectAnswer = config?.correctAnswer?.find((answer) => answer.id === response.id);
       const suppliedAnswer = allAnswers[response.id];
 
-      return [response.id, responseAnswerIsCorrect(suppliedAnswer, configCorrectAnswer)];
+      return [response.id, responseAnswerIsCorrect(
+        suppliedAnswer,
+        configCorrectAnswer?.answer,
+        configCorrectAnswer?.acceptableLow,
+        configCorrectAnswer?.acceptableHigh,
+      )];
     }));
 
     if (hasCorrectAnswerFeedback) {
