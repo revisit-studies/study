@@ -592,19 +592,13 @@
                     "type": "shortText"
                 }
             ]
-        },
-        "introduction": {
-            "type": "markdown",
-            "path": "rtl-exp-en/assets/introduction.md",
-            "response": []
         }
     },
     "sequence": {
         "order": "fixed",
         "components": [
             "consent",
-            "demographics",
-            "introduction"
+            "demographics"
         ]
     }
 }
