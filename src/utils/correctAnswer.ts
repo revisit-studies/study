@@ -7,12 +7,12 @@ export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer
     && (typeof responseCorrectAnswer === 'string' || typeof responseCorrectAnswer === 'number')) {
     const userAnswerNumber = Number(responseUserAnswer);
 
-    if (userAnswerNumber) {
-      if (acceptableLow && acceptableHigh) {
+    if (!Number.isNaN(userAnswerNumber)) {
+      if (acceptableLow !== undefined && acceptableHigh !== undefined) {
         return userAnswerNumber >= acceptableLow && userAnswerNumber <= acceptableHigh;
-      } if (acceptableLow) {
+      } if (acceptableLow !== undefined) {
         return userAnswerNumber >= acceptableLow;
-      } if (acceptableHigh) {
+      } if (acceptableHigh !== undefined) {
         return userAnswerNumber <= acceptableHigh;
       }
     }

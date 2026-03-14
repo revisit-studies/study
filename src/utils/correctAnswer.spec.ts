@@ -32,6 +32,16 @@ describe('correctAnswer utilities', () => {
       expect(responseAnswerIsCorrect(6, 0, undefined, 5)).toBe(false);
     });
 
+    test('supports zero-value acceptable bounds', () => {
+      expect(responseAnswerIsCorrect(0, 5, 0, 2)).toBe(true);
+      expect(responseAnswerIsCorrect(2, 5, 0, 2)).toBe(true);
+      expect(responseAnswerIsCorrect(3, 5, 0, 2)).toBe(false);
+      expect(responseAnswerIsCorrect(0, 5, 0)).toBe(true);
+      expect(responseAnswerIsCorrect(-1, 5, 0)).toBe(false);
+      expect(responseAnswerIsCorrect(0, 5, undefined, 0)).toBe(true);
+      expect(responseAnswerIsCorrect(1, 5, undefined, 0)).toBe(false);
+    });
+
     test('treats numeric strings consistently with acceptable bounds', () => {
       expect(responseAnswerIsCorrect('8', 0, 7, 10)).toBe(true);
       expect(responseAnswerIsCorrect('6', 0, 7, 10)).toBe(false);
