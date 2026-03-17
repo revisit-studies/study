@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>RRNL with Gradient</title>
+</head>
+<body>
+   <div id="container"></div>
+   <script type="module">
+
+
+       import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+
+
+       const container = document.getElementById("container");
+
+
+       //get svg from same folder
+       const svg = await d3.xml("creatinine_slightly_gradient_svg.svg");
+       const rrnl = svg.documentElement;
+
+
+       //retrieve the svg creating the number line
+       const itemString = rrnl.innerHTML;
+       const parser = new DOMParser();
+       const doc = parser.parseFromString(itemString, "image/svg+xml");
+
+
+       const bars = d3.select(rrnl).select("g.mark-rect.role-mark");
+
+
+       let colors = []
+       let positions = []
+       let firstPosition;
+       let lastPosition;
+       const defs = rrnl.appendChild(
+           doc.createElementNS("http://www.w3.org/2000/svg", "defs")
+       );
+
+
+       // Add the gradient definition to <defs>
+       const gradient = defs.appendChild(doc.createElementNS("http://www.w3.org/2000/svg", "linearGradient"));
+       gradient.setAttribute("id", "rrnlGradient");
+       gradient.setAttribute("x1", "0%");
+       gradient.setAttribute("y1", "0%");
+       gradient.setAttribute("x2", "100%");
+       gradient.setAttribute("y2", "0%");
+
+
+       //save color and position of every bar
+       bars.selectAll("path").each(function(d, i, nodes) {
+           if (i === 0) {
+               firstPosition = d3.select(this).attr("d");
+           }
+           if (i === nodes.length - 1) {
+               lastPosition = d3.select(this).attr("d");
+           }
+           colors.push(d3.select(this).attr("fill"))
+           positions.push(d3.select(this).attr("d"))
+       });
+
+
+       //get the values of d for first and last bars in
+       const firstPositionValues = firstPosition.match(/-?\d*\.?\d+/g).map(Number);
+       const lastPositionValues = lastPosition.match(/-?\d*\.?\d+/g).map(Number);
+
+
+       //calculate where the gradient bar is drawn
+       const startValue = firstPositionValues[0];
+       const startHeight = firstPositionValues[1];
+       const endValue = lastPositionValues[0] + lastPositionValues[2];
+       const endHeight = lastPositionValues[3];
+
+
+       let gradientBar = "M" + startValue + "," + startHeight + "h" + endValue + "v" + endHeight + "h-" + endValue + "Z"
+
+
+       //create gradient
+       let width = endValue;
+       bars.selectAll("path").each(function(d, i) {
+
+
+           let position = d3.select(this).attr("d");
+           let positionValues = position.match(/-?\d*\.?\d+/g).map(Number);
+           let sectionStart = positionValues[0];
+           let sectionEnd = positionValues[0] + positionValues[2];
+
+
+           let firstStop = (sectionStart / width) * 100;
+           let secondStop = (sectionEnd / width) * 100;
+           let middleStop = (firstStop + secondStop) / 2;
+
+
+           let stop = doc.createElementNS("http://www.w3.org/2000/svg", "stop");
+           stop.setAttribute("offset", middleStop + "%");
+           stop.setAttribute("stop-color", d3.select(this).attr("fill"));
+           gradient.appendChild(stop);
+       });
+
+
+       //add the bar's position and gradient to a path
+       const newPath = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+       newPath.setAttribute("d", gradientBar);
+       newPath.setAttribute("fill", "url(#rrnlGradient)");
+
+
+       //remove previous bars and append the newly created bar in its place
+       bars.selectAll("path").remove();
+       bars.node().appendChild(newPath);
+
+
+       container.append(rrnl);
+
+
+   </script>
+</body>
+</html>

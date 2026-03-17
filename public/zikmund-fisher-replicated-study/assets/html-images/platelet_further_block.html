@@ -1,0 +1,343 @@
+
+<!doctype html>
+<html>
+<head>
+    <title>Vega</title>
+    <script src="https://cdn.jsdelivr.net/npm/vega@6.2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@7.1.0"></script>
+</head>
+<body>
+<div id="vis0"></div>
+<script type="text/javascript">
+const vegaspec0 = {
+    "width": 300,
+    "height": 30,
+    "padding": 10,
+    "title": {
+        "text": "Platelet Count (Plt) Test Result",
+        "align": "center",
+        "font": "Arial",
+        "fontSize": 13,
+        "color": "black"
+    },
+    "data": [
+        {
+            "name": "table",
+            "values": [
+                {
+                    "name": "Very Low",
+                    "end": 20,
+                    "color": "red",
+                    "order": 0
+                },
+                {
+                    "name": "Low",
+                    "end": 80,
+                    "color": "orange",
+                    "order": 1
+                },
+                {
+                    "name": "Borderline Low",
+                    "end": 50,
+                    "color": "yellow",
+                    "order": 2
+                },
+                {
+                    "name": "Standard Range",
+                    "end": 250,
+                    "color": "green",
+                    "order": 3
+                },
+                {
+                    "name": "Borderline High",
+                    "end": 50,
+                    "color": "yellow",
+                    "order": 4
+                },
+                {
+                    "name": "High",
+                    "end": 50,
+                    "color": "orange",
+                    "order": 5
+                }
+            ]
+        },
+        {
+            "name": "stacked",
+            "source": "table",
+            "transform": [
+                {
+                    "type": "stack",
+                    "field": "end",
+                    "sort": {
+                        "field": "order"
+                    },
+                    "as": [
+                        "x0",
+                        "x1"
+                    ]
+                },
+                {
+                    "type": "formula",
+                    "as": "x0",
+                    "expr": "datum.order === 0 ? datum.x0 + 0 : datum.x0"
+                }
+            ]
+        },
+        {
+            "name": "separators",
+            "source": "stacked",
+            "transform": [
+                {
+                    "type": "filter",
+                    "expr": "datum.x1 < data('stacked')[data('stacked').length - 1].x1"
+                }
+            ]
+        }
+    ],
+    "scales": [
+        {
+            "name": "xscale",
+            "domain": {
+                "data": "stacked",
+                "field": "x1"
+            },
+            "range": "width",
+            "domainMin": 0,
+            "zero": false
+        }
+    ],
+    "axes": [
+        {
+            "orient": "top",
+            "scale": "xscale",
+            "offset": 0,
+            "tickCount": 7,
+            "values": [0,20,100,150,400,450,500]
+        }
+    ],
+    "marks": [
+        {
+            "type": "rect",
+            "from": {
+                "data": "stacked"
+            },
+            "encode": {
+                "enter": {
+                    "height": {
+                        "value": 30
+                    },
+                    "x": {
+                        "scale": "xscale",
+                        "field": "x0"
+                    },
+                    "x2": {
+                        "scale": "xscale",
+                        "field": "x1"
+                    },
+                    "y": {
+                        "signal": "0"
+                    },
+                    "fill": {
+                        "field": "color"
+                    }
+                }
+            }
+        },
+        {
+            "type": "text",
+            "from": {
+                "data": "stacked"
+            },
+            "encode": {
+                "enter": {
+                    "height": {
+                        "value": 30
+                    },
+                    "y": {
+                        "signal": "height + 10"
+                    },
+                    "dy": {
+                        "signal": "(indexof(datum.name, ' ') >= 0) && false ? -6 : 0"
+                    },
+                    "align": {
+                        "value": "center"
+                    },
+                    "baseline": {
+                        "value": "middle"
+                    },
+                    "fill": {
+                        "value": "black"
+                    },
+                    "fontSize": {
+                        "value": 9
+                    },
+                    "text": {
+                        "field": "name"
+                    },
+                    "lineBreak": {
+                        "value": " "
+                    }
+                },
+                "update": {
+                    "x": {
+                        "signal": "scale('xscale', (datum.x0 + datum.x1) / 2)"
+                    }
+                }
+            }
+        },
+        {
+            "type": "rule",
+            "from": {
+                "data": "separators"
+            },
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "field": "x1"
+                    },
+                    "y": {
+                        "signal": "0"
+                    },
+                    "y2": {
+                        "signal": "height + 0"
+                    },
+                    "stroke": {
+                        "value": "white"
+                    },
+                    "strokeWidth": {
+                        "value": 1
+                    }
+                }
+            }
+        },
+        {
+            "type": "rule",
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "value": 25
+                    },
+                    "y": {
+                        "signal": "height + 25 + 0 + 15 - 150"
+                    },
+                    "y2": {
+                        "signal": "height + 70 + 0 + 15 - 150"
+                    },
+                    "stroke": {
+                        "value": "black"
+                    },
+                    "strokeWidth": {
+                        "value": 3
+                    }
+                }
+            }
+        },
+        {
+            "type": "symbol",
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "value": 25
+                    },
+                    "y": {
+                        "signal": "height + 25 + 0 + 15 - 100"
+                    },
+                    "shape": {
+                        "value": "triangle-down"
+                    },
+                    "fill": {
+                        "value": "black"
+                    },
+                    "size": {
+                        "value": 150
+                    }
+                }
+            }
+        },
+        {
+            "type": "text",
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "value": 25
+                    },
+                    "y": {
+                        "signal": "height + 85 + 0 + 15 - 250"
+                    },
+                    "text": {
+                        "value": "Your result"
+                    },
+                    "align": {
+                        "value": "center"
+                    },
+                    "fill": {
+                        "value": "black"
+                    },
+                    "fontSize": {
+                        "value": 14
+                    }
+                }
+            }
+        },
+        {
+            "type": "text",
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "value": 25
+                    },
+                    "y": {
+                        "signal": "height + 115 + 0 + 15 - 250"
+                    },
+                    "text": {
+                        "value": "25 x 10^9/L"
+                    },
+                    "align": {
+                        "value": "center"
+                    },
+                    "fill": {
+                        "value": "black"
+                    },
+                    "fontSize": {
+                        "value": 30
+                    }
+                }
+            }
+        },
+        {
+            "type": "rule",
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "value": 25
+                    },
+                    "y": {
+                        "signal": "0"
+                    },
+                    "y2": {
+                        "signal": "height + 0"
+                    },
+                    "stroke": {
+                        "value": "black"
+                    },
+                    "strokeWidth": {
+                        "value": 3
+                    }
+                }
+            }
+        }
+    ]
+};
+vegaEmbed('#vis0', vegaspec0);
+
+</script>
+</body>
+</html>
