@@ -1352,12 +1352,13 @@
                 ]
             },
 
+            "final-questions",
+
             "demographic-questions",
             "subjective-numeracy-scale",
             "chews-screening-question",
             "familiarity-question",
 
-            "final-questions",
             "$graph-literacy-scale.components.Q5",
             "$graph-literacy-scale.components.Q6",
             "$graph-literacy-scale.components.Q7",
