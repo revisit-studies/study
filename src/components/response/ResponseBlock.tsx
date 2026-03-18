@@ -19,7 +19,9 @@ import {
 } from '../../store/store';
 
 import { NextButton } from '../NextButton';
-import { generateInitFields, mergeReactiveAnswers, useAnswerField } from './utils';
+import {
+  generateInitFields, mergeReactiveAnswers, useAnswerField, usesStandaloneDontKnowField,
+} from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
 import { FormElementProvenance, StoredAnswer, ValidationStatus } from '../../store/types';
@@ -347,9 +349,11 @@ export function ResponseBlock({
                       form={{
                         ...answerValidator.getInputProps(response.id),
                       }}
-                      dontKnowCheckbox={{
-                        ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
-                      }}
+                      dontKnowCheckbox={usesStandaloneDontKnowField(response)
+                        ? {
+                          ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
+                        }
+                        : undefined}
                       otherInput={{
                         ...answerValidator.getInputProps(`${response.id}-other`),
                       }}

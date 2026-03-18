@@ -9,6 +9,12 @@ import { parseStringOptionValue } from '../../utils/stringOptions';
 type ResponseDefault = string | number | string[] | Record<string, string | string[]>;
 type ResponseWithDefault = Response & { default?: ResponseDefault };
 
+export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
+
+export function normalizeCheckboxDontKnowValue(value: string[]) {
+  return value.includes(DONT_KNOW_DEFAULT_VALUE) ? [] : value;
+}
+
 function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
   // Check max and min selections
   const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
@@ -39,6 +45,18 @@ function checkCheckboxResponse(response: CheckboxResponse, value: string[]) {
   return null;
 }
 
+export function checkCheckboxResponseForValidation(
+  response: CheckboxResponse,
+  value: string[],
+  dontKnowChecked = false,
+) {
+  if (response.withDontKnow && dontKnowChecked) {
+    return null;
+  }
+
+  return checkCheckboxResponse(response, value);
+}
+
 function checkNumericalResponse(response: NumericalResponse, value: number) {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
 
@@ -57,13 +75,26 @@ function checkNumericalResponse(response: NumericalResponse, value: number) {
 }
 
 function checkMatrixResponse(response: MatrixResponse, value: Record<string, string>) {
-  const unanswered = Object.values(value).some((val) => val === '');
+  const expectedQuestionKeys = response.questionOptions.map((entry) => parseStringOptionValue(entry));
+  const unanswered = expectedQuestionKeys.some((questionKey) => {
+    const rowValue = value[questionKey];
+    return rowValue === undefined || rowValue === '';
+  });
 
   if (unanswered) {
     return 'Please answer all questions in the matrix to continue.';
   }
 
   return null;
+}
+
+function checkMatrixResponseForMessage(response: MatrixResponse, value: Record<string, string>) {
+  const hasAnsweredAtLeastOne = Object.values(value).some((val) => val !== '');
+  if (!hasAnsweredAtLeastOne) {
+    return null;
+  }
+
+  return checkMatrixResponse(response, value);
 }
 
 const getQueryParameters = () => {
@@ -73,6 +104,15 @@ const getQueryParameters = () => {
 
   return new URLSearchParams(window.location.search);
 };
+
+// Matrix questions with "Don't know" option require a separate field to properly handle the "Don't know" state
+export const usesStandaloneDontKnowField = (response: Response) => !!response.withDontKnow
+  && response.type !== 'matrix-radio'
+  && response.type !== 'matrix-checkbox';
+
+export const shouldBypassValidationForStandaloneDontKnow = (response: Response, dontKnowChecked: boolean) => (
+  usesStandaloneDontKnowField(response) && dontKnowChecked
+);
 
 export const getDefaultFieldValue = (response: Response) => {
   const responseDefault = (response as ResponseWithDefault).default;
@@ -122,9 +162,13 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
 
   responses.forEach((response) => {
     const answer = storedAnswer ? storedAnswer[response.id] : {};
-
-    const dontKnowAnswer = storedAnswer && storedAnswer[`${response.id}-dontKnow`] !== undefined ? storedAnswer[`${response.id}-dontKnow`] : false;
-    const dontKnowObj = response.withDontKnow ? { [`${response.id}-dontKnow`]: dontKnowAnswer } : {};
+    const dontKnowObj = usesStandaloneDontKnowField(response)
+      ? {
+        [`${response.id}-dontKnow`]: storedAnswer && storedAnswer[`${response.id}-dontKnow`] !== undefined
+          ? storedAnswer[`${response.id}-dontKnow`]
+          : false,
+      }
+      : {};
 
     const otherAnswer = storedAnswer && storedAnswer[`${response.id}-other`] !== undefined ? storedAnswer[`${response.id}-other`] : '';
     const otherObj = (response as RadioResponse | CheckboxResponse).withOther ? { [`${response.id}-other`]: otherAnswer } : {};
@@ -192,6 +236,10 @@ const generateValidation = (responses: Response[]) => {
       validateObj = {
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
+          if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
+            return null;
+          }
+
           if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
             if (response.type === 'matrix-checkbox' || response.type === 'matrix-radio') {
               return checkMatrixResponse(response, value);
@@ -215,7 +263,7 @@ const generateValidation = (responses: Response[]) => {
               return sortedReq.every((val, index) => val === sortedVal[index]) ? null : 'Incorrect input';
             }
             if (response.type === 'checkbox') {
-              return checkCheckboxResponse(response, value);
+              return checkCheckboxResponseForValidation(response, value, !!values[`${response.id}-dontKnow`]);
             }
             if (response.type === 'dropdown') {
               return checkDropdownResponse(response, value);
@@ -264,10 +312,14 @@ export function useAnswerField(responses: Response[], currentStep: string | numb
 
 export function generateErrorMessage(
   response: Response,
-  answer: { value?: number | string | string[] | Record<string, string>; checked?: string[] },
+  answer: { value?: number | string | string[] | Record<string, string>; checked?: string[]; dontKnowChecked?: boolean },
   options?: (StringOption | NumberOption)[],
 ) {
   const { requiredValue, requiredLabel } = response;
+
+  if (shouldBypassValidationForStandaloneDontKnow(response, !!answer.dontKnowChecked)) {
+    return null;
+  }
 
   let error: string | null = '';
   const checkboxValues = Array.isArray(answer.checked)
@@ -277,13 +329,13 @@ export function generateErrorMessage(
   if (checkboxValues && Array.isArray(requiredValue)) {
     error = requiredValue && [...requiredValue].sort().toString() !== [...checkboxValues].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
   } else if (checkboxValues && response.required && response.type === 'checkbox') {
-    error = checkCheckboxResponse(response, checkboxValues);
+    error = checkCheckboxResponseForValidation(response, checkboxValues, !!answer.dontKnowChecked);
   } else if (answer.value && response.type === 'dropdown') {
     error = checkDropdownResponse(response, answer.value as string[]);
   } else if (answer.value && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalResponse(response, answer.value)) {
     error = checkNumericalResponse(response, answer.value);
   } else if (answer.value && typeof answer.value === 'object' && !Array.isArray(answer.value) && (response.type === 'matrix-radio' || response.type === 'matrix-checkbox')) {
-    return checkMatrixResponse(response, answer.value);
+    return checkMatrixResponseForMessage(response, answer.value);
   } else {
     error = answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.` : null;
   }
