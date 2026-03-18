@@ -4,6 +4,16 @@ Create your own interactive, web-based data visualization user studies by clonin
 
 ReVISit introduces reVISit.spec, a DSL for specifying study setups (consent forms, training, trials, etc.) for interactive web based studies. You describe your experimental setup in reVISit.spec, add your stimuli as images, forms, HTML pages, or React components, build and deploy — and you're ready to run your study. For tutorials and documentation, see the [reVISit website](https://revisit.dev).
 
+## Paper
+
+If you are using reVISit for a paper, please cite:
+
+> Zach Cutler, Jack Wilburn, Hilson Shrestha, Yiren Ding, Brian Bollen, Khandaker Abrar Nadib, Tingying He, Andrew McNutt, Lane Harrison, Alexander Lex. [ReVISit 2: A Full Experiment Life Cycle User Study Framework](https://www.visdesignlab.net/publications/2025_vis_revisit/). IEEE Transactions on Visualization and Computer Graphics (VIS), 32(1): 13-23, [doi:10.1109/TVCG.2025.3633896](https://dx.doi.org/10.1109/TVCG.2025.3633896), 2026.
+
+**IEEE VIS 2025 Best Paper Award**
+
+GitHub citation metadata for this repository is available in [CITATION.cff](./CITATION.cff).
+
 ## Build Instructions
 
 To run this demo experiment locally, you will need to install Node.js on your computer.

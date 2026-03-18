@@ -2030,6 +2030,28 @@ describe('utils.tsx', () => {
         expect(result[0].options).toBe('Questions: Q1, Q2 \n Answers: satisfaction5');
       });
 
+      it('should include synthetic dont-know in matrix response options', () => {
+        const studyConfig = {
+          components: {
+            matrix: {
+              response: [
+                {
+                  type: 'matrix-radio',
+                  prompt: 'Rate these',
+                  questionOptions: ['Q1', 'Q2'],
+                  answerOptions: ['0', '1'],
+                  withDontKnow: true,
+                },
+              ],
+            },
+          },
+        } as unknown as StudyConfig;
+
+        const result = getResponseStats([], studyConfig);
+
+        expect(result[0].options).toBe("Questions: Q1, Q2 \n Answers: 0, 1, I don't know");
+      });
+
       it('should format matrix response with mixed string and StringOption entries', () => {
         const studyConfig = {
           components: {

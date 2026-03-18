@@ -7,7 +7,15 @@ import { useLocation, useNavigate, useParams } from 'react-router';
 import { IconListCheck, IconSettings } from '@tabler/icons-react';
 import { PREFIX } from '../../utils/Prefix';
 
-export function AppHeader({ studyIds }: { studyIds: string[] }) {
+export function AppHeader({
+  studyIds,
+  selectedStudyId,
+  studyHref,
+}: {
+  studyIds: string[];
+  selectedStudyId?: string;
+  studyHref?: string;
+}) {
   const navigate = useNavigate();
   const { studyId } = useParams();
   const location = useLocation();
@@ -40,11 +48,11 @@ export function AppHeader({ studyIds }: { studyIds: string[] }) {
                   allowDeselect={false}
                   placeholder="Select Study"
                   data={selectorData}
-                  value={studyId}
+                  value={selectedStudyId ?? studyId}
                   onChange={(value) => navigate(`/analysis/stats/${value}`)}
                   mr={16}
                 />
-                <Button component="a" href={`${PREFIX}${studyId}`} target="_blank" leftSection={<IconListCheck />} mr="sm">
+                <Button component="a" href={studyHref ?? `${PREFIX}${studyId}`} target="_blank" leftSection={<IconListCheck />} mr="sm">
                   Go to Study
                 </Button>
               </>

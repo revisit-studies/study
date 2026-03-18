@@ -14,9 +14,11 @@ export function StatsView(
   {
     studyConfig,
     visibleParticipants,
+    studyId,
   }: {
     studyConfig: StudyConfig;
     visibleParticipants: ParticipantData[];
+    studyId?: string;
   },
 ) {
   const { trialId } = useParams();
@@ -29,7 +31,7 @@ export function StatsView(
   return (
     <>
       {overviewData && (
-        <OverviewStats overviewData={overviewData} />
+        <OverviewStats overviewData={overviewData} studyId={studyId} />
       )}
       <Paper shadow="sm" p="md" mt="md" withBorder>
         {
