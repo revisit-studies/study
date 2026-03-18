@@ -13,18 +13,7 @@ import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import { generateErrorMessage } from './utils';
 import { parseStringOptions } from '../../utils/stringOptions';
-
-const CHOICE_STRING_TO_COLUMNS: Record<string, string[]> = {
-  likely5: ['Highly Unlikely', 'Unlikely', 'Neutral', 'Likely', 'Highly Likely'],
-  likely7: ['Highly Unlikely', 'Unlikely', 'Slightly Unlikely', 'Neutral', 'Slightly Likely', 'Likely', 'Highly Likely'],
-  satisfaction5: ['Highly Unsatisfied', 'Unsatisfied', 'Neutral', 'Satisfied', 'Highly Satisfied'],
-  satisfaction7: ['Highly Unsatisfied', 'Unsatisfied', 'Slightly Unsatisfied', 'Neutral', 'Slightly Satisfied', 'Satisfied', 'Highly Satisfied'],
-};
-
-const DONT_KNOW = {
-  label: "I don't know",
-  value: "I don't know",
-};
+import { getMatrixAnswerOptions, isMatrixDontKnowValue, MATRIX_DONT_KNOW_OPTION } from '../../utils/responseOptions';
 
 function CheckboxComponent({
   _choices,
@@ -133,7 +122,6 @@ export function MatrixInput({
   const storeDispatch = useStoreDispatch();
 
   const {
-    answerOptions,
     prompt,
     secondaryText,
     required,
@@ -141,18 +129,8 @@ export function MatrixInput({
   } = response;
 
   const _choices = useMemo<ParsedStringOption[]>(
-    () => {
-      const choices = typeof answerOptions === 'string'
-        ? parseStringOptions(CHOICE_STRING_TO_COLUMNS[answerOptions])
-        : parseStringOptions(answerOptions);
-
-      if (response.withDontKnow) {
-        return [...choices, DONT_KNOW];
-      }
-
-      return choices;
-    },
-    [answerOptions, response.withDontKnow],
+    () => getMatrixAnswerOptions(response),
+    [response],
   );
 
   const questions = useMemo(
@@ -190,12 +168,12 @@ export function MatrixInput({
       choiceOptions: _choices,
     }));
 
-    if (response.withDontKnow && option.value === DONT_KNOW.value && isChecked) {
+    if (response.withDontKnow && isMatrixDontKnowValue(option.value) && isChecked) {
       currentValues
-        .filter((entry) => entry !== DONT_KNOW.value)
+        .filter((entry) => !isMatrixDontKnowValue(entry))
         .forEach((value) => dispatchCheckboxUpdate(value, false));
-    } else if (response.withDontKnow && option.value !== DONT_KNOW.value && isChecked && currentValues.includes(DONT_KNOW.value)) {
-      dispatchCheckboxUpdate(DONT_KNOW.value, false);
+    } else if (response.withDontKnow && !isMatrixDontKnowValue(option.value) && isChecked && currentValues.some(isMatrixDontKnowValue)) {
+      dispatchCheckboxUpdate(MATRIX_DONT_KNOW_OPTION.value, false);
     }
 
     dispatchCheckboxUpdate(option.value, isChecked);
@@ -206,8 +184,7 @@ export function MatrixInput({
   const _n = _choices.length;
   const _m = orderedQuestions.length;
   const dontKnowIndex = _choices.findIndex(
-    (choice) => choice.value.toLowerCase() === DONT_KNOW.value.toLowerCase()
-      || choice.label.toLowerCase() === DONT_KNOW.label.toLowerCase(),
+    (choice) => isMatrixDontKnowValue(choice.value) || isMatrixDontKnowValue(choice.label),
   );
   const separatorAfterIndex = dontKnowIndex > 0 ? dontKnowIndex - 1 : -1;
   return (
@@ -275,8 +252,7 @@ export function MatrixInput({
             >
               <OptionLabel
                 label={
-                  (entry.value.toLowerCase() === DONT_KNOW.value.toLowerCase()
-                    || entry.label.toLowerCase() === DONT_KNOW.label.toLowerCase())
+                  (isMatrixDontKnowValue(entry.value) || isMatrixDontKnowValue(entry.label))
                     ? "I don't  \nknow"
                     : entry.label
                 }
