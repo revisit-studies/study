@@ -45,6 +45,18 @@ function checkCheckboxResponse(response: CheckboxResponse, value: string[]) {
   return null;
 }
 
+export function checkCheckboxResponseForValidation(
+  response: CheckboxResponse,
+  value: string[],
+  dontKnowChecked = false,
+) {
+  if (response.withDontKnow && dontKnowChecked) {
+    return null;
+  }
+
+  return checkCheckboxResponse(response, value);
+}
+
 function checkNumericalResponse(response: NumericalResponse, value: number) {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
 
@@ -243,7 +255,7 @@ const generateValidation = (responses: Response[]) => {
               return sortedReq.every((val, index) => val === sortedVal[index]) ? null : 'Incorrect input';
             }
             if (response.type === 'checkbox') {
-              return checkCheckboxResponse(response, value);
+              return checkCheckboxResponseForValidation(response, value, !!values[`${response.id}-dontKnow`]);
             }
             if (response.type === 'dropdown') {
               return checkDropdownResponse(response, value);
@@ -292,7 +304,7 @@ export function useAnswerField(responses: Response[], currentStep: string | numb
 
 export function generateErrorMessage(
   response: Response,
-  answer: { value?: number | string | string[] | Record<string, string>; checked?: string[] },
+  answer: { value?: number | string | string[] | Record<string, string>; checked?: string[]; dontKnowChecked?: boolean },
   options?: (StringOption | NumberOption)[],
 ) {
   const { requiredValue, requiredLabel } = response;
@@ -305,7 +317,7 @@ export function generateErrorMessage(
   if (checkboxValues && Array.isArray(requiredValue)) {
     error = requiredValue && [...requiredValue].sort().toString() !== [...checkboxValues].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
   } else if (checkboxValues && response.required && response.type === 'checkbox') {
-    error = checkCheckboxResponse(response, checkboxValues);
+    error = checkCheckboxResponseForValidation(response, checkboxValues, !!answer.dontKnowChecked);
   } else if (answer.value && response.type === 'dropdown') {
     error = checkDropdownResponse(response, answer.value as string[]);
   } else if (answer.value && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalResponse(response, answer.value)) {

@@ -3,6 +3,7 @@ import {
 } from 'vitest';
 import type { MatrixResponse, Response } from '../../parser/types';
 import {
+  checkCheckboxResponseForValidation,
   generateErrorMessage,
   generateInitFields,
   mergeReactiveAnswers,
@@ -151,6 +152,38 @@ describe('generateErrorMessage checkbox', () => {
     const error = generateErrorMessage(checkboxResponse, { value: ['Option 1'] });
 
     expect(error).toBe('Please select at least 2 options');
+  });
+
+  it('suppresses checkbox min/max errors when dont-know is checked', () => {
+    const checkboxResponse: Response = {
+      id: 'checkbox-response',
+      prompt: 'Checkbox response',
+      type: 'checkbox',
+      required: true,
+      minSelections: 2,
+      options: ['Option 1', 'Option 2', 'Option 3'],
+      withDontKnow: true,
+    };
+
+    const error = generateErrorMessage(checkboxResponse, { value: [], dontKnowChecked: true });
+
+    expect(error).toBeNull();
+  });
+});
+
+describe('checkCheckboxResponseForValidation', () => {
+  it('bypasses checkbox selection-count validation when dont-know is checked', () => {
+    const checkboxResponse = {
+      id: 'checkbox-response',
+      prompt: 'Checkbox response',
+      type: 'checkbox',
+      required: true,
+      minSelections: 2,
+      options: ['Option 1', 'Option 2', 'Option 3'],
+      withDontKnow: true,
+    } as const;
+
+    expect(checkCheckboxResponseForValidation(checkboxResponse, [], true)).toBeNull();
   });
 });
 
