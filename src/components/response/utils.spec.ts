@@ -1,8 +1,15 @@
 import {
   afterEach, beforeEach, describe, expect, it,
 } from 'vitest';
-import type { MatrixResponse, Response } from '../../parser/types';
-import { generateErrorMessage, generateInitFields, mergeReactiveAnswers } from './utils';
+import type { CheckboxResponse, MatrixResponse, Response } from '../../parser/types';
+import {
+  checkCheckboxResponseForValidation,
+  generateErrorMessage,
+  generateInitFields,
+  mergeReactiveAnswers,
+  normalizeCheckboxDontKnowValue,
+  shouldBypassValidationForStandaloneDontKnow,
+} from './utils';
 
 describe('generateInitFields', () => {
   const originalWindow = globalThis.window;
@@ -132,7 +139,7 @@ describe('mergeReactiveAnswers', () => {
   });
 });
 
-describe('generateErrorMessage', () => {
+describe('generateErrorMessage checkbox', () => {
   it('validates checkbox selections when checkbox group value is an array', () => {
     const checkboxResponse: Response = {
       id: 'checkbox-response',
@@ -146,5 +153,129 @@ describe('generateErrorMessage', () => {
     const error = generateErrorMessage(checkboxResponse, { value: ['Option 1'] });
 
     expect(error).toBe('Please select at least 2 options');
+  });
+
+  it('suppresses checkbox min/max errors when dont-know is checked', () => {
+    const checkboxResponse: Response = {
+      id: 'checkbox-response',
+      prompt: 'Checkbox response',
+      type: 'checkbox',
+      required: true,
+      minSelections: 2,
+      options: ['Option 1', 'Option 2', 'Option 3'],
+      withDontKnow: true,
+    };
+
+    const error = generateErrorMessage(checkboxResponse, { value: [], dontKnowChecked: true });
+
+    expect(error).toBeNull();
+  });
+});
+
+describe('checkCheckboxResponseForValidation', () => {
+  it('bypasses checkbox selection-count validation when dont-know is checked', () => {
+    const checkboxResponse: CheckboxResponse = {
+      id: 'checkbox-response',
+      prompt: 'Checkbox response',
+      type: 'checkbox',
+      required: true,
+      minSelections: 2,
+      options: ['Option 1', 'Option 2', 'Option 3'],
+      withDontKnow: true,
+    };
+
+    expect(checkCheckboxResponseForValidation(checkboxResponse, [], true)).toBeNull();
+  });
+});
+
+describe('shouldBypassValidationForStandaloneDontKnow', () => {
+  it('returns true for standalone dont-know responses', () => {
+    const response: Response = {
+      id: 'q-numerical',
+      prompt: 'Numerical example',
+      type: 'numerical',
+      withDontKnow: true,
+    };
+
+    expect(shouldBypassValidationForStandaloneDontKnow(response, true)).toBe(true);
+  });
+
+  it('returns false for matrix responses because dont-know is inline', () => {
+    const response: MatrixResponse = {
+      id: 'matrix-validation',
+      prompt: 'Matrix prompt',
+      type: 'matrix-radio',
+      required: true,
+      answerOptions: ['0', '1'],
+      questionOptions: ['q1', 'q2'],
+      withDontKnow: true,
+    };
+
+    expect(shouldBypassValidationForStandaloneDontKnow(response, true)).toBe(false);
+  });
+});
+
+describe('normalizeCheckboxDontKnowValue', () => {
+  it('clears all selections when the legacy dont-know token is present', () => {
+    expect(normalizeCheckboxDontKnowValue(["I don't know", 'Option 1'])).toEqual([]);
+  });
+
+  it('leaves regular checkbox selections unchanged', () => {
+    expect(normalizeCheckboxDontKnowValue(['Option 1'])).toEqual(['Option 1']);
+  });
+});
+
+describe('generateErrorMessage requiredValue with dont-know', () => {
+  it('suppresses required-value errors when standalone dont-know is checked', () => {
+    const numericalResponse: Response = {
+      id: 'required-value-response',
+      prompt: 'Required numerical response',
+      type: 'numerical',
+      required: true,
+      requiredValue: 42,
+      withDontKnow: true,
+    };
+
+    const error = generateErrorMessage(numericalResponse, {
+      value: '',
+      dontKnowChecked: true,
+    });
+
+    expect(error).toBeNull();
+  });
+});
+
+describe('generateErrorMessage matrix', () => {
+  const matrixResponse: MatrixResponse = {
+    id: 'matrix-validation',
+    prompt: 'Matrix prompt',
+    type: 'matrix-radio',
+    required: true,
+    answerOptions: ['0', '1'],
+    questionOptions: ['q1', 'q2'],
+  };
+
+  it('does not show matrix incomplete message when untouched', () => {
+    const error = generateErrorMessage(matrixResponse, {
+      value: { q1: '', q2: '' },
+    });
+
+    expect(error).toBeNull();
+  });
+
+  it('shows matrix incomplete message after at least one answer is selected', () => {
+    const error = generateErrorMessage(matrixResponse, {
+      value: { q1: '0', q2: '' },
+    });
+
+    expect(error).toBe('Please answer all questions in the matrix to continue.');
+  });
+
+  it('does not show matrix incomplete message when all rows are answered', () => {
+    const error = generateErrorMessage(matrixResponse, {
+      value: { q1: '0', q2: '1' },
+    });
+
+    expect(error).toBeNull();
   });
 });

@@ -3,9 +3,10 @@ import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 import {
   ComponentData, OverviewData, ParticipantCounts, ResponseData,
 } from '../../types';
-import { Response, StudyConfig } from '../../../parser/types';
+import { MatrixResponse, Response, StudyConfig } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
+import { getMatrixAnswerOptions } from '../../../utils/responseOptions';
 
 function filterParticipants(visibleParticipants: ParticipantData[], componentName?: string, excludeRejected?: boolean): ParticipantData[] {
   return visibleParticipants.filter((participant) => {
@@ -137,9 +138,11 @@ function getResponseOptions(response: Response): string {
     const questionOptions = response.questionOptions
       .map((option) => (typeof option === 'string' ? option : option.label))
       .join(', ');
-    const answerOptions = Array.isArray(response.answerOptions)
-      ? response.answerOptions.map((option) => (typeof option === 'string' ? option : option.label)).join(', ')
-      : response.answerOptions;
+    const answerOptions = response.withDontKnow
+      ? getMatrixAnswerOptions(response as MatrixResponse).map((option) => option.label).join(', ')
+      : (Array.isArray(response.answerOptions)
+        ? response.answerOptions.map((option) => (typeof option === 'string' ? option : option.label)).join(', ')
+        : response.answerOptions);
     return `Questions: ${questionOptions} \n Answers: ${answerOptions}`;
   }
   // Likert Scale

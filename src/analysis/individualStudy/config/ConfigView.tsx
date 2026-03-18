@@ -5,7 +5,6 @@ import {
 import {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
-import { useParams } from 'react-router';
 import {
   MantineReactTable, MRT_Cell as MrtCell, MRT_ColumnDef as MrtColumnDef, MRT_RowSelectionState as MrtRowSelectionState, useMantineReactTable,
 } from 'mantine-react-table';
@@ -20,10 +19,11 @@ import { ConfigDiffModal } from './ConfigDiffModal';
 
 export function ConfigView({
   visibleParticipants,
+  studyId,
 }: {
   visibleParticipants: ParticipantData[];
+  studyId?: string;
 }) {
-  const { studyId } = useParams();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
   const { storageEngine } = useStorageEngine();
   const [configs, setConfigs] = useState<ConfigInfo[]>([]);

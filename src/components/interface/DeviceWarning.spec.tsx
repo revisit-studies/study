@@ -80,7 +80,7 @@ vi.mock('../../store/hooks/useStudyConfig', () => ({
   }),
 }));
 
-vi.mock('../../store/hooks/useDeviceRules', () => ({
+vi.mock('../../utils/useDeviceRules', () => ({
   useDeviceRules: () => mockedDeviceRules,
 }));
 
@@ -132,7 +132,7 @@ describe('DeviceWarning', () => {
     const html = renderToStaticMarkup(<DeviceWarning />);
     expect(html).toContain('Please resize your browser window to the allowed range within');
     expect(html).toContain('60');
-    expect(html).toContain('seconds or you will be rejected.');
+    expect(html).toContain('seconds or you will not be able to continue the study.');
   });
 
   test('does not show countdown warning when display violation is only above max', () => {
@@ -181,5 +181,22 @@ describe('DeviceWarning', () => {
     expect(html).toContain('touch');
     expect(html).toContain('Current display:');
     expect(html).toContain('900 x 700px');
+  });
+
+  test('renders nothing in debug mode when requirements are not met', () => {
+    mockedStudyRules = {
+      display: {
+        minWidth: 1200,
+        minHeight: 800,
+      },
+    };
+    mockedDeviceRules = {
+      ...mockedDeviceRules,
+      isDisplayAllowed: false,
+      currentDisplay: { width: 1000, height: 700 },
+    };
+
+    const html = renderToStaticMarkup(<DeviceWarning developmentModeEnabled />);
+    expect(html).toBe('');
   });
 });
