@@ -38,6 +38,7 @@ import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { useRecordingContext } from '../../store/hooks/useRecording';
+import { useDeviceRules } from '../../utils/useDeviceRules';
 
 export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
@@ -88,6 +89,14 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   const {
     isScreenRecording, isAudioRecording, setIsMuted, isMuted, clickToRecord,
   } = useRecordingContext();
+  const {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  } = useDeviceRules(studyConfig.studyRules);
+  const hasUnmetDeviceRequirement = developmentModeEnabled
+    && (!isBrowserAllowed || !isDeviceAllowed || !isInputAllowed || !isDisplayAllowed);
 
   const { funcIndex } = useParams();
 
@@ -200,6 +209,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
             )}
             {storageEngineFailedToConnect && <Tooltip multiline withArrow arrowSize={6} w={300} label="Failed to connect to the storage engine. Study data will not be saved. Check your connection or restart the app."><Badge size="lg" color="red">Storage Disconnected</Badge></Tooltip>}
             {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
+            {hasUnmetDeviceRequirement && developmentModeEnabled && <Tooltip multiline withArrow arrowSize={6} w={420} label="Your device does not meet this study's requirements. You are still able to explore this study while in debug mode."><Badge size="lg" color="red">Device Requirement Not Met</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
