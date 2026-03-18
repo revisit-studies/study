@@ -9,6 +9,12 @@ import { parseStringOptionValue } from '../../utils/stringOptions';
 type ResponseDefault = string | number | string[] | Record<string, string | string[]>;
 type ResponseWithDefault = Response & { default?: ResponseDefault };
 
+export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
+
+export function normalizeCheckboxDontKnowValue(value: string[]) {
+  return value.includes(DONT_KNOW_DEFAULT_VALUE) ? [] : value;
+}
+
 function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
   // Check max and min selections
   const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;

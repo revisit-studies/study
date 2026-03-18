@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { CheckboxResponse, ParsedStringOption } from '../../parser/types';
-import { generateErrorMessage } from './utils';
+import { DONT_KNOW_DEFAULT_VALUE, generateErrorMessage, normalizeCheckboxDontKnowValue } from './utils';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Checkbox.module.css';
 import inputClasses from './css/Input.module.css';
@@ -11,8 +11,6 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
-
-const DONT_KNOW_DEFAULT_VALUE = "I don't know";
 
 export function CheckBoxInput({
   response,
@@ -64,9 +62,9 @@ export function CheckBoxInput({
       return;
     }
 
-    const filteredValues = selectedValues.filter((value) => value !== DONT_KNOW_DEFAULT_VALUE);
-    if (filteredValues.length !== selectedValues.length) {
-      answer.onChange?.(filteredValues);
+    const normalizedValues = normalizeCheckboxDontKnowValue(selectedValues);
+    if (normalizedValues !== selectedValues) {
+      answer.onChange?.(normalizedValues);
     }
 
     if (!dontKnowCheckbox?.checked) {

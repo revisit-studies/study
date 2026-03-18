@@ -2,7 +2,12 @@ import {
   afterEach, beforeEach, describe, expect, it,
 } from 'vitest';
 import type { MatrixResponse, Response } from '../../parser/types';
-import { generateErrorMessage, generateInitFields, mergeReactiveAnswers } from './utils';
+import {
+  generateErrorMessage,
+  generateInitFields,
+  mergeReactiveAnswers,
+  normalizeCheckboxDontKnowValue,
+} from './utils';
 
 describe('generateInitFields', () => {
   const originalWindow = globalThis.window;
@@ -146,6 +151,16 @@ describe('generateErrorMessage checkbox', () => {
     const error = generateErrorMessage(checkboxResponse, { value: ['Option 1'] });
 
     expect(error).toBe('Please select at least 2 options');
+  });
+});
+
+describe('normalizeCheckboxDontKnowValue', () => {
+  it('clears all selections when the legacy dont-know token is present', () => {
+    expect(normalizeCheckboxDontKnowValue(["I don't know", 'Option 1'])).toEqual([]);
+  });
+
+  it('leaves regular checkbox selections unchanged', () => {
+    expect(normalizeCheckboxDontKnowValue(['Option 1'])).toEqual(['Option 1']);
   });
 });
 
