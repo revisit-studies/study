@@ -1,0 +1,249 @@
+
+     
+    .links,
+    .textpath,
+    .edgeLegend {
+        fill: none;
+        opacity:.8;
+        /* stroke: rgb(71, 71, 71); */
+        /* filter: url("data:image/svg+xml;utf8,<svg version='1.1' xmlns='http://www.w3.org/2000/svg' height='0'><filter id='greyscale'><feColorMatrix in='SourceGraphic' type='matrix' values='0 0 0 0 0 1 1 1 1 0 0 0 0 0 0 0 0 0 1 0' /></filter></filter></svg>#greyscale"); */
+
+    }
+
+    .textpath {
+        visibility: hidden;
+
+    }
+
+    .axisLine{
+        stroke-width:2px;
+        stroke:black;
+    }
+
+    .sizeCircle{
+        fill:rgb(110, 110, 110);
+        /* stroke:black;
+        stroke-width:2px; */
+
+    }
+
+    .nodeBorder {
+        stroke-width: 7px;
+        stroke:white;
+        fill:none
+    }
+
+    .label{
+        fill:#3a3a3a;
+    }
+    
+
+    .selectBox{
+        stroke:rgb(94, 94, 94);
+        fill:white;
+        stroke-width:2px;
+    }
+
+
+
+    /* .label.selected{
+        fill:rgb(255, 111, 0);
+    } */
+
+    .label, .selectBox, .labelBackground{
+        cursor:pointer;
+    }
+
+
+    .pathLabel>textPath {
+        font-size: 14px;
+    }
+
+    .edgeArrow>textPath{
+        font-size:10px;
+    }
+
+    .legendLabel, .catLegend {
+        font-size: 1em;
+        /* font-weight:bold; */
+    }
+
+    .muted {
+        opacity: .2;
+    }
+
+    .hideLabel {
+        visibility: hidden;
+    }
+
+
+
+    .frame {
+        fill: white;
+        stroke-width: 1px;
+        stroke: black;
+    }
+
+    .barGroup > .bar {
+        stroke-width: 2px;
+        stroke:white;
+        fill:rgb(167, 197, 158);
+
+    }
+
+    .nodeGroup{
+        cursor:pointer;
+    }
+
+    #node-link-svg{
+        display: inline-flex;
+    }
+
+    #disableInteraction{
+        fill:white;
+        opacity:.7;
+    }
+
+    .input {
+        width:60% !important;
+    }
+
+  
+
+    /* #taskArea{
+        width:100%;
+    } */
+
+    /* textPath.mentions {
+        fill: #427d9b;
+        stroke: #427d9b
+    }
+
+    textPath.retweet {
+        fill: #88419d;
+        stroke: #88419d;
+    } */
+
+    /* .node {
+        fill: white
+    } */
+
+
+    /* .node.person {
+        stroke: #68aa73;
+    }
+
+    .node.institution {
+        stroke: #a88e69;
+    } */
+
+    .node {
+        stroke-width: 1px;
+        stroke:rgb(200, 200, 200);
+        /* stroke:white; */
+    }
+
+    .node.clicked{
+        stroke-width: 6px;
+        stroke:#F8CF91;
+    }
+
+    /* .node.selected{
+        stroke-width: 3px;
+        stroke: #ea9b0f;
+    } */
+
+    .selected .labelBackground.nested{
+        fill: #ea9b0f;
+        opacity:.6;
+    }
+
+    #finished, #next, #previous{
+        margin:50px 0px 0px 0px;
+        padding:10px;
+        background-color:rgb(3, 93, 158);
+        color:white;
+        font-size:20px;
+        font-weight:bold;
+    }
+
+
+    .button.clicked{
+        color:rgb(217, 99, 3) !important;    }
+
+    .button.condition{
+        margin:0px 0px 0px 10px;
+        /* padding:10px; */
+        background-color:rgb(192, 192, 192);
+        color:rgb(57, 57, 57);
+        font-weight:bold;
+    }
+
+    .labelBackground.nested{
+        opacity:.2;
+        fill:rgb(112, 112, 112);
+    }
+
+    .labelBackground{
+        opacity:.4;
+        fill:rgb(255, 255, 255);
+    }
+
+    /* #node-link-svg{
+        width:100%;
+        height:100%;
+    } */
+
+    /* #panelControl, #clear-selection{
+        background-color:rgb(78, 78, 78);
+        color:white;
+    } */
+
+    /* #vis{ */
+        /* width:100%; */
+        /* height:100%; */
+    /* } */
+
+    #vis{
+        display:flex;
+    }
+
+  
+
+
+    #panelDiv .button {
+        width:300px;
+        
+    }
+
+    #panelDiv{
+        height:1500px;
+        overflow-y: scroll;
+        margin-top:50px;
+        /* display:none; */
+    }
+
+    
+
+    /* .svg-icon {
+    width: 2em;
+    height: 2em;
+    }
+
+    .svg-icon path,
+    .svg-icon polygon,
+    .svg-icon rect {
+    fill: #4691f6;
+    }
+
+    .svg-icon circle {
+    stroke: #4691f6;
+    stroke-width: 2;
+    } */
+
+    .ticks {
+        font-size: 12px;
+      }
+
+
+      
