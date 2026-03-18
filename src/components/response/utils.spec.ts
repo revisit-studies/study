@@ -8,6 +8,7 @@ import {
   generateInitFields,
   mergeReactiveAnswers,
   normalizeCheckboxDontKnowValue,
+  shouldBypassValidationForStandaloneDontKnow,
 } from './utils';
 
 describe('generateInitFields', () => {
@@ -187,6 +188,33 @@ describe('checkCheckboxResponseForValidation', () => {
   });
 });
 
+describe('shouldBypassValidationForStandaloneDontKnow', () => {
+  it('returns true for standalone dont-know responses', () => {
+    const response: Response = {
+      id: 'q-numerical',
+      prompt: 'Numerical example',
+      type: 'numerical',
+      withDontKnow: true,
+    };
+
+    expect(shouldBypassValidationForStandaloneDontKnow(response, true)).toBe(true);
+  });
+
+  it('returns false for matrix responses because dont-know is inline', () => {
+    const response: MatrixResponse = {
+      id: 'matrix-validation',
+      prompt: 'Matrix prompt',
+      type: 'matrix-radio',
+      required: true,
+      answerOptions: ['0', '1'],
+      questionOptions: ['q1', 'q2'],
+      withDontKnow: true,
+    };
+
+    expect(shouldBypassValidationForStandaloneDontKnow(response, true)).toBe(false);
+  });
+});
+
 describe('normalizeCheckboxDontKnowValue', () => {
   it('clears all selections when the legacy dont-know token is present', () => {
     expect(normalizeCheckboxDontKnowValue(["I don't know", 'Option 1'])).toEqual([]);
@@ -194,6 +222,26 @@ describe('normalizeCheckboxDontKnowValue', () => {
 
   it('leaves regular checkbox selections unchanged', () => {
     expect(normalizeCheckboxDontKnowValue(['Option 1'])).toEqual(['Option 1']);
+  });
+});
+
+describe('generateErrorMessage requiredValue with dont-know', () => {
+  it('suppresses required-value errors when standalone dont-know is checked', () => {
+    const numericalResponse: Response = {
+      id: 'required-value-response',
+      prompt: 'Required numerical response',
+      type: 'numerical',
+      required: true,
+      requiredValue: 42,
+      withDontKnow: true,
+    };
+
+    const error = generateErrorMessage(numericalResponse, {
+      value: '',
+      dontKnowChecked: true,
+    });
+
+    expect(error).toBeNull();
   });
 });
 

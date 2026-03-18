@@ -110,6 +110,10 @@ export const usesStandaloneDontKnowField = (response: Response) => !!response.wi
   && response.type !== 'matrix-radio'
   && response.type !== 'matrix-checkbox';
 
+export const shouldBypassValidationForStandaloneDontKnow = (response: Response, dontKnowChecked: boolean) => (
+  usesStandaloneDontKnowField(response) && dontKnowChecked
+);
+
 export const getDefaultFieldValue = (response: Response) => {
   const responseDefault = (response as ResponseWithDefault).default;
   if (!Object.hasOwn(response, 'default') || responseDefault === undefined) {
@@ -232,6 +236,10 @@ const generateValidation = (responses: Response[]) => {
       validateObj = {
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
+          if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
+            return null;
+          }
+
           if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
             if (response.type === 'matrix-checkbox' || response.type === 'matrix-radio') {
               return checkMatrixResponse(response, value);
@@ -308,6 +316,10 @@ export function generateErrorMessage(
   options?: (StringOption | NumberOption)[],
 ) {
   const { requiredValue, requiredLabel } = response;
+
+  if (shouldBypassValidationForStandaloneDontKnow(response, !!answer.dontKnowChecked)) {
+    return null;
+  }
 
   let error: string | null = '';
   const checkboxValues = Array.isArray(answer.checked)
