@@ -1,7 +1,7 @@
 import {
   afterEach, beforeEach, describe, expect, it,
 } from 'vitest';
-import type { MatrixResponse, Response } from '../../parser/types';
+import type { CheckboxResponse, MatrixResponse, Response } from '../../parser/types';
 import {
   checkCheckboxResponseForValidation,
   generateErrorMessage,
@@ -174,7 +174,7 @@ describe('generateErrorMessage checkbox', () => {
 
 describe('checkCheckboxResponseForValidation', () => {
   it('bypasses checkbox selection-count validation when dont-know is checked', () => {
-    const checkboxResponse = {
+    const checkboxResponse: CheckboxResponse = {
       id: 'checkbox-response',
       prompt: 'Checkbox response',
       type: 'checkbox',
@@ -182,7 +182,7 @@ describe('checkCheckboxResponseForValidation', () => {
       minSelections: 2,
       options: ['Option 1', 'Option 2', 'Option 3'],
       withDontKnow: true,
-    } as const;
+    };
 
     expect(checkCheckboxResponseForValidation(checkboxResponse, [], true)).toBeNull();
   });
