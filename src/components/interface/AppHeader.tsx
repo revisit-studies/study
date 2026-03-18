@@ -207,13 +207,13 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
                 {isAudioRecording && !isMuted && <RecordingAudioWaveform />}
                 {clickToRecord ? (
                   <Tooltip label={showMutedWarning ? 'You are still muted. Press and hold to unmute.' : 'Press and hold to unmute.'} opened={showMutedWarning || undefined}>
-                    <ActionIcon className={showMutedWarning ? classes.micBlink : undefined} variant="light" size="md" aria-label="Press and hold to unmute" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
+                    <ActionIcon className={showMutedWarning ? classes.micBlink : undefined} variant="light" size="md" aria-label="Click and hold to unmute microphone" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
                       {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
                     </ActionIcon>
                   </Tooltip>
                 ) : (
                   <Tooltip label={showMutedWarning ? 'You are still muted. Press to unmute.' : `Press to ${isMuted ? 'unmute' : 'mute'}`} opened={showMutedWarning || undefined}>
-                    <ActionIcon className={showMutedWarning ? classes.micBlink : undefined} variant="light" size="md" aria-label="Press and hold to unmute" onClick={() => setIsMuted(!isMuted)}>
+                    <ActionIcon className={showMutedWarning ? classes.micBlink : undefined} variant="light" size="md" aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'} onClick={() => setIsMuted(!isMuted)}>
                       {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
                     </ActionIcon>
                   </Tooltip>
