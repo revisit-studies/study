@@ -89,8 +89,6 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   const [isTruncated, setIsTruncated] = useState(false);
   const lastProgressRef = useRef<number>(0);
 
-  const speakingWhileMutedNotification = useRef<string>(undefined);
-
   const {
     isScreenRecording, isAudioRecording, setIsMuted, isMuted, clickToRecord, isSpeakingWhileMuted, showMutedWarning,
   } = useRecordingContext();
@@ -104,12 +102,13 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
     && (!isBrowserAllowed || !isDeviceAllowed || !isInputAllowed || !isDisplayAllowed);
 
   useEffect(() => {
-    if (isMuted && isSpeakingWhileMuted) {
-      speakingWhileMutedNotification.current = showNotification({ title: 'You are muted', message: getMutedInstruction(clickToRecord), color: 'red' });
-    } else {
-      speakingWhileMutedNotification.current && hideNotification(speakingWhileMutedNotification.current);
-      speakingWhileMutedNotification.current = undefined;
-    }
+    if (!(isMuted && isSpeakingWhileMuted)) return undefined;
+
+    const notificationId = showNotification({ title: 'You are muted', message: getMutedInstruction(clickToRecord), color: 'red' });
+
+    return () => {
+      hideNotification(notificationId);
+    };
   }, [clickToRecord, isMuted, isSpeakingWhileMuted]);
 
   const { funcIndex } = useParams();

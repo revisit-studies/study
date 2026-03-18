@@ -7,7 +7,12 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useRecordingConfig } from './useRecordingConfig';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useIsAnalysis } from './useIsAnalysis';
-import { shouldMonitorMutedAudio } from '../../utils/recordingWarnings';
+import {
+  getRmsLevel,
+  isSpeakingAtLevel,
+  shouldMonitorMutedAudio,
+  SPEECH_DETECTION_HOLD_MS,
+} from '../../utils/recordingWarnings';
 
 /**
  * Captures and records the screen and audio.
@@ -423,31 +428,55 @@ export function useRecording() {
     const stream = analysisAudioStream.current;
     const audioContext = new AudioContext();
     const analyser = audioContext.createAnalyser();
-    analyser.minDecibels = -45;
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.2;
     const source = audioContext.createMediaStreamSource(stream);
     source.connect(analyser);
-    const domainData = new Uint8Array(analyser.frequencyBinCount);
+    const domainData = new Float32Array(analyser.fftSize);
+    const speechReleaseDelayMs = 3000;
 
-    let animFrameId: number;
-    let speakingTimeout: ReturnType<typeof setTimeout> | null = null;
+    let animFrameId = 0;
+    let wasSpeaking = false;
+    let speechCandidateStart: number | null = null;
+    let lastDetectedSpeechAt: number | null = null;
 
-    const checkAudio = () => {
-      analyser.getByteFrequencyData(domainData);
-      const speaking = domainData.some((v) => v > 0);
+    const clearSpeaking = () => {
+      wasSpeaking = false;
+      speechCandidateStart = null;
+      lastDetectedSpeechAt = null;
+      setIsSpeakingWhileMuted(false);
+    };
+
+    const checkAudio = (timestamp: number) => {
+      analyser.getFloatTimeDomainData(domainData);
+      const rmsLevel = getRmsLevel(domainData);
+      const speaking = isSpeakingAtLevel(rmsLevel, wasSpeaking);
+
       if (speaking) {
-        setIsSpeakingWhileMuted(true);
-        if (speakingTimeout) clearTimeout(speakingTimeout);
-        speakingTimeout = setTimeout(() => setIsSpeakingWhileMuted(false), 3000);
+        speechCandidateStart ??= timestamp;
+        lastDetectedSpeechAt = timestamp;
+
+        if (!wasSpeaking && timestamp - speechCandidateStart >= SPEECH_DETECTION_HOLD_MS) {
+          wasSpeaking = true;
+        }
+      } else {
+        speechCandidateStart = null;
       }
+
+      if (wasSpeaking && lastDetectedSpeechAt !== null && timestamp - lastDetectedSpeechAt >= speechReleaseDelayMs) {
+        clearSpeaking();
+      } else if (wasSpeaking) {
+        setIsSpeakingWhileMuted(true);
+      }
+
       animFrameId = requestAnimationFrame(checkAudio);
     };
     animFrameId = requestAnimationFrame(checkAudio);
 
     return () => {
       cancelAnimationFrame(animFrameId);
-      if (speakingTimeout) clearTimeout(speakingTimeout);
       audioContext.close();
-      setIsSpeakingWhileMuted(false);
+      clearSpeaking();
     };
   }, [currentComponentHasAudioRecording, isMuted, analysisStreamReady]);
 
