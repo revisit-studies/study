@@ -1,0 +1,47 @@
+{
+    "nodeLink": {
+        "drawBars": false,
+        "selectNeighbors": false,
+        "nodeHeight": 40,
+        "nodeWidth":40,
+        "labelSize": 12,
+        "labelAttr": "shortName",
+        "nodeFillAttr": "continent",
+        "nodeSizeAttr": "favourites_count",
+        "edgeWidthAttr": null,
+        "edgeStrokeAttr": "type",
+        "noEdgeColor": "black",
+        "noNodeFill": "white",
+        "noNodeStroke": "#c8c8c8",
+        "quantColors": [
+            "#7b7cb1",
+            "#01a068",
+            "#bf8531",
+            "#5472cf",
+            "#4d8615",
+            "#d63d61",
+            "#ae76ed",
+            "#f26336"
+        ]
+    },
+    "adjMatrix": {
+        "neighborHighlightColor": "",
+        "neighborSelect":true,
+        "edgeBars":true,
+        "sortKey":"favourites_count"
+    },
+    "taskID": "task1",
+    "loadedGraph": "large_undirected_singleEdge",
+    "isDirected": false,
+    "isMultiEdge": false,
+    "graphSize": "large",
+    "nodeAttributes": [
+        "continent",
+        "favourites_count"
+    ],
+    "edgeAttributes": [
+        "type"
+    ],
+    "adjMatrixValues": {},
+    "nodeIsRect": false
+}
