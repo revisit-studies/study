@@ -7,6 +7,7 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useRecordingConfig } from './useRecordingConfig';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useIsAnalysis } from './useIsAnalysis';
+import { shouldMonitorMutedAudio } from '../../utils/recordingWarnings';
 
 /**
  * Captures and records the screen and audio.
@@ -404,7 +405,7 @@ export function useRecording() {
       track.enabled = !isMuted;
     });
     let t = <NodeJS.Timeout | null>null;
-    if (isMuted) {
+    if (shouldMonitorMutedAudio(isMuted, currentComponentHasAudioRecording)) {
       t = setTimeout(() => {
         setShowMutedWarning(true);
       }, 5000);
@@ -414,10 +415,10 @@ export function useRecording() {
     return () => {
       t && clearTimeout(t);
     };
-  }, [isMuted]);
+  }, [currentComponentHasAudioRecording, isMuted]);
 
   useEffect(() => {
-    if (!isMuted || !analysisStreamReady || !analysisAudioStream.current) return undefined;
+    if (!shouldMonitorMutedAudio(isMuted, currentComponentHasAudioRecording) || !analysisStreamReady || !analysisAudioStream.current) return undefined;
 
     const stream = analysisAudioStream.current;
     const audioContext = new AudioContext();
@@ -448,7 +449,7 @@ export function useRecording() {
       audioContext.close();
       setIsSpeakingWhileMuted(false);
     };
-  }, [isMuted, analysisStreamReady]);
+  }, [currentComponentHasAudioRecording, isMuted, analysisStreamReady]);
 
   return {
     recordVideoRef,

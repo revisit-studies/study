@@ -39,6 +39,7 @@ import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { useRecordingContext } from '../../store/hooks/useRecording';
 import { hideNotification, showNotification } from '../../utils/notifications';
+import { getMutedInstruction } from '../../utils/recordingWarnings';
 import classes from './AppHeader.module.css';
 
 export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
@@ -95,12 +96,12 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
 
   useEffect(() => {
     if (isMuted && isSpeakingWhileMuted) {
-      speakingWhileMutedNotification.current = showNotification({ title: 'You are muted', message: 'Your microphone is muted. Click the microphone icon to unmute.', color: 'red' });
+      speakingWhileMutedNotification.current = showNotification({ title: 'You are muted', message: getMutedInstruction(clickToRecord), color: 'red' });
     } else {
       speakingWhileMutedNotification.current && hideNotification(speakingWhileMutedNotification.current);
       speakingWhileMutedNotification.current = undefined;
     }
-  }, [isMuted, isSpeakingWhileMuted]);
+  }, [clickToRecord, isMuted, isSpeakingWhileMuted]);
 
   const { funcIndex } = useParams();
 
