@@ -2,6 +2,7 @@ import {
   describe, expect, it, vi,
 } from 'vitest';
 import { GlobalConfig } from '../parser/types';
+import { StorageEngine } from '../storage/engines/types';
 import { shouldProtectAnalysisRoute } from './analysisRouteAccess';
 
 describe('shouldProtectAnalysisRoute', () => {
@@ -19,7 +20,7 @@ describe('shouldProtectAnalysisRoute', () => {
     const storageEngine = {
       getModes: vi.fn().mockResolvedValue({ dataSharingEnabled: false }),
       isCloudEngine: vi.fn().mockReturnValue(true),
-    };
+    } as unknown as StorageEngine;
 
     const result = await shouldProtectAnalysisRoute('screening-gpt-5_2', globalConfig, storageEngine);
 
@@ -31,7 +32,7 @@ describe('shouldProtectAnalysisRoute', () => {
     const storageEngine = {
       getModes: vi.fn(),
       isCloudEngine: vi.fn().mockReturnValue(true),
-    };
+    } as unknown as StorageEngine;
 
     const result = await shouldProtectAnalysisRoute('missing-study', globalConfig, storageEngine);
 
