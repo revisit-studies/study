@@ -16,7 +16,7 @@ import {
 import { useResizeObserver } from '@mantine/hooks';
 import { AppHeader } from '../interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
-import { getStudyConfig } from '../../utils/fetchConfig';
+import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { LiveMonitorView } from './LiveMonitor/LiveMonitorView';
 import { SummaryView } from './summary/SummaryView';
 import { TableView } from './table/TableView';
@@ -63,7 +63,7 @@ async function getParticipantsData(studyConfig: StudyConfig | undefined, storage
 }
 
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
-  const { studyId } = useParams();
+  const { studyId: routeStudyId } = useParams();
   const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
 
   const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inprogress', 'rejected']);
@@ -84,10 +84,18 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const { analysisTab } = useParams();
   const { user } = useAuth();
   const [ref, { width }] = useResizeObserver();
+  const canonicalStudyId = useMemo(() => {
+    if (!routeStudyId || routeStudyId === '__revisit-widget') {
+      return routeStudyId;
+    }
+
+    return resolveConfigKey(routeStudyId, globalConfig);
+  }, [globalConfig, routeStudyId]);
+  const displayStudyId = canonicalStudyId ?? routeStudyId;
 
   // 0-1 percentage of scroll height
 
-  const { value: expData, execute, status } = useAsync(getParticipantsData, [studyConfig, storageEngine, studyId]);
+  const { value: expData, execute, status } = useAsync(getParticipantsData, [studyConfig, storageEngine, canonicalStudyId ?? undefined]);
 
   const participantCounts = useMemo(() => {
     if (!expData) return { completed: 0, inprogress: 0, rejected: 0 };
@@ -163,10 +171,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   // Load available stages
   const loadStages = useCallback(async () => {
-    if (!studyId || !storageEngine) return;
+    if (!canonicalStudyId || !storageEngine) return;
 
     try {
-      const stageData = await storageEngine.getStageData(studyId);
+      const stageData = await storageEngine.getStageData(canonicalStudyId);
       const stageOptions = stageData.allStages.map((stage) => ({
         value: stage.stageName,
         label: stage.stageName,
@@ -183,11 +191,11 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       setAvailableStages([{ value: 'ALL', label: 'ALL' }]);
       setStageColors({});
     }
-  }, [studyId, storageEngine]);
+  }, [canonicalStudyId, storageEngine]);
 
   // Load available configs
   const loadConfigs = useCallback(async () => {
-    if (!studyId || !storageEngine) return;
+    if (!canonicalStudyId || !storageEngine) return;
 
     try {
       const participantData = expData ? Object.values(expData) : [];
@@ -195,7 +203,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
         participantData.map((participant) => participant.participantConfigHash),
       )];
 
-      const fetchedConfigs = await storageEngine.getAllConfigsFromHash(participantConfig, studyId);
+      const fetchedConfigs = await storageEngine.getAllConfigsFromHash(participantConfig, canonicalStudyId);
 
       const configOptions = Object.entries(fetchedConfigs)
         .map(([hash, config]) => ({
@@ -207,7 +215,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       console.error('Failed to load configs:', error);
       setAvailableConfigs([{ value: 'ALL', label: 'ALL' }]);
     }
-  }, [studyId, storageEngine, expData]);
+  }, [canonicalStudyId, storageEngine, expData]);
 
   const allConditions = useMemo(() => {
     if (!expData) return [];
@@ -255,8 +263,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   }, [allConditions]);
 
   useEffect(() => {
-    if (!studyId) return () => { };
-    if (studyId === '__revisit-widget') {
+    if (!routeStudyId) return () => { };
+    if (routeStudyId === '__revisit-widget') {
       const messageListener = async (event: MessageEvent) => {
         if (event.data.type === 'revisitWidget/CONFIG' && storageEngine) {
           const cf = await parseStudyConfig(event.data.payload);
@@ -270,16 +278,16 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
         window.removeEventListener('message', messageListener);
       };
     }
-    getStudyConfig(studyId, globalConfig).then((cf) => {
+    getStudyConfig(routeStudyId, globalConfig).then((cf) => {
       if (cf) {
         setStudyConfig(cf);
       }
     });
 
     return () => { };
-  }, [studyId, globalConfig, storageEngine]);
+  }, [routeStudyId, globalConfig, storageEngine]);
 
-  if (!studyId) {
+  if (!routeStudyId) {
     return (
       <>
         <AppHeader studyIds={globalConfig.configsList} />
@@ -294,16 +302,16 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   return (
     <>
-      <AppHeader studyIds={globalConfig.configsList} />
+      <AppHeader studyIds={globalConfig.configsList} selectedStudyId={displayStudyId} studyHref={routeStudyId ? `/${routeStudyId}` : undefined} />
       <AppShell.Main style={{ height: '100dvh' }}>
         <Stack ref={ref} style={{ height: '100%', maxHeight: '100dvh', overflow: 'hidden' }} justify="space-between">
           <Flex direction="row" align="center" justify="space-between" p="sm" gap="md">
             <Flex direction="row" align="center" gap="md">
-              <Title order={5}>{studyId}</Title>
-              {studyConfig && (
+              <Title order={5}>{displayStudyId}</Title>
+              {studyConfig && canonicalStudyId && (
                 <DownloadButtons
                   visibleParticipants={selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants}
-                  studyId={studyId || ''}
+                  studyId={canonicalStudyId}
                   gap="10px"
                   hasAudio={hasAudioRecording}
                   hasScreenRecording={hasScreenRecording}
@@ -440,7 +448,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               keepMounted={false}
               variant="outline"
               value={analysisTab}
-              onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)}
+              onChange={(value) => navigate(`/analysis/stats/${routeStudyId}/${value}`)}
             >
               <Tabs.List>
                 <Tabs.Tab value="summary" leftSection={<IconChartPie size={16} />}>Study Summary</Tabs.Tab>
@@ -454,27 +462,27 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
-                {studyConfig && <SummaryView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
+                {studyConfig && <SummaryView studyConfig={studyConfig} visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ height: `calc(100% - ${TABLE_HEADER_HEIGHT}px)` }} value="table" pt="xs">
-                {studyConfig && <TableView width={width} stageColors={stageColors} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, studyId)} selectedParticipants={selectedParticipants} onSelectionChange={setSelectedParticipants} />}
+                {studyConfig && <TableView width={width} stageColors={stageColors} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId ?? undefined)} selectedParticipants={selectedParticipants} onSelectionChange={setSelectedParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="stats" pt="xs">
-                {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
+                {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} />}
               </Tabs.Panel>
               <Tabs.Panel value="tagging" pt="xs">
                 {studyConfig && storageEngine?.getEngine() === 'firebase' ? <ThinkAloudAnalysis visibleParticipants={visibleParticipants} storageEngine={storageEngine as FirebaseStorageEngine} /> : <Center>Think aloud coding is only available when using Firebase.</Center>}
               </Tabs.Panel>
               {storageEngine?.getEngine() === 'firebase' && (
                 <Tabs.Panel style={{ overflow: 'auto' }} value="live-monitor" pt="xs">
-                  {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={studyId} includedParticipants={includedParticipants} selectedStages={selectedStages} />}
+                  {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} includedParticipants={includedParticipants} selectedStages={selectedStages} />}
                 </Tabs.Panel>
               )}
               <Tabs.Panel style={{ overflow: 'auto' }} value="config" pt="xs">
-                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} />}
+                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
-                {studyId && user.isAdmin ? <ManageView studyId={studyId} refresh={() => execute(studyConfig, storageEngine, studyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
+                {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
               </Tabs.Panel>
             </Tabs>
           ) : null}

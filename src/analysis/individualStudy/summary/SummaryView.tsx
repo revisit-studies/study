@@ -10,15 +10,17 @@ import { getOverviewStats } from './utils';
 export function SummaryView({
   visibleParticipants,
   studyConfig,
+  studyId,
 }: {
   visibleParticipants: ParticipantData[];
   studyConfig: StudyConfig;
+  studyId?: string;
 }) {
   const overviewData = useMemo(() => getOverviewStats(visibleParticipants), [visibleParticipants]);
 
   return (
     <Stack gap="md">
-      <OverviewStats overviewData={overviewData} />
+      <OverviewStats overviewData={overviewData} studyId={studyId} />
       <Group align="flex-start" gap="md" grow>
         <ComponentStats visibleParticipants={visibleParticipants} studyConfig={studyConfig} />
         <ResponseStats visibleParticipants={visibleParticipants} studyConfig={studyConfig} />
