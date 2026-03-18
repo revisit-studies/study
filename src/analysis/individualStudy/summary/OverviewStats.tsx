@@ -3,7 +3,6 @@ import {
 } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useMemo } from 'react';
-import { useParams } from 'react-router';
 import { convertNumberToString } from './utils';
 import { OverviewData } from '../../types';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
@@ -17,13 +16,14 @@ async function getStoredParticipantCounts(storageEngine: StorageEngine, studyId:
 
 export function OverviewStats({
   overviewData,
+  studyId,
 }: {
   overviewData: OverviewData;
+  studyId?: string;
 }) {
   // Check if there are participants with invalid clean time (e.g. due to a window events bug)
   const hasExcluded = overviewData && overviewData.participantsWithInvalidCleanTimeCount > 0;
 
-  const { studyId } = useParams();
   const { storageEngine } = useStorageEngine();
 
   // Get the stored participant counts from the storage engine

@@ -40,18 +40,25 @@ import {
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
-  const studyId = useStudyId();
+  const routeStudyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
-  const isValidStudyId = studyId === '__revisit-widget' || resolveConfigKey(studyId, globalConfig) !== null;
+  const canonicalStudyId = useMemo(() => {
+    if (routeStudyId === '__revisit-widget') {
+      return routeStudyId;
+    }
+
+    return resolveConfigKey(routeStudyId, globalConfig);
+  }, [globalConfig, routeStudyId]);
+  const isValidStudyId = routeStudyId === '__revisit-widget' || canonicalStudyId !== null;
 
   useEffect(() => {
-    if (studyId !== '__revisit-widget') {
-      getStudyConfig(studyId, globalConfig).then((config) => {
+    if (routeStudyId !== '__revisit-widget') {
+      getStudyConfig(routeStudyId, globalConfig).then((config) => {
         setActiveConfig(config);
       });
       return () => { };
     }
-    if (globalConfig && studyId) {
+    if (globalConfig && routeStudyId) {
       const messageListener = (event: MessageEvent) => {
         if (event.data.type === 'revisitWidget/CONFIG') {
           parseStudyConfig(event.data.payload).then(async (config) => {
@@ -71,7 +78,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       };
     }
     return () => { };
-  }, [globalConfig, studyId]);
+  }, [globalConfig, routeStudyId]);
 
   const [routes, setRoutes] = useState<RouteObject[]>([]);
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
@@ -84,11 +91,11 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   useEffect(() => {
     async function initializeUserStoreRouting() {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
-      if (!storageEngine || !activeConfig || !studyId) return;
+      if (!storageEngine || !activeConfig || !canonicalStudyId) return;
 
       try {
         // Make sure that we have a study database and that the study database has a sequence array
-        await storageEngine.initializeStudyDb(studyId);
+        await storageEngine.initializeStudyDb(canonicalStudyId);
         await storageEngine.saveConfig(activeConfig);
 
         const sequenceArray = await storageEngine.getSequenceArray();
@@ -98,7 +105,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           );
         }
 
-        const modes = await storageEngine.getModes(studyId);
+        const modes = await storageEngine.getModes(canonicalStudyId);
 
         // Get or generate participant session
         const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
@@ -155,7 +162,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         let participantConfig = activeConfig;
 
         if (participantSession.participantConfigHash !== activeHash) {
-          participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], studyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
+          participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], canonicalStudyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
         }
 
         const effectiveStudyCondition = resolveParticipantConditions({
@@ -167,7 +174,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, effectiveStudyCondition);
         // Initialize the redux stores
         const newStore = await studyStoreCreator(
-          studyId,
+          canonicalStudyId,
           participantConfig,
           filteredParticipantSequence,
           metadata,
@@ -190,7 +197,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         );
 
         const emptyStore = await studyStoreCreator(
-          studyId,
+          canonicalStudyId,
           activeConfig,
           fallbackSequence,
           {
@@ -247,7 +254,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       ]);
     }
     initializeUserStoreRouting();
-  }, [storageEngine, activeConfig, studyId, searchParams, participantId, studyCondition]);
+  }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
 

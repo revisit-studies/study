@@ -60,6 +60,10 @@ describe('fetchConfig', () => {
     expect(resolveConfigKey('screening-gpt-5_2', globalConfig)).toBe('screening-gpt-5.2');
   });
 
+  it('returns null for unknown study ids', () => {
+    expect(resolveConfigKey('missing-study', globalConfig)).toBeNull();
+  });
+
   it('loads a study config for sanitized route ids', async () => {
     const result = await getStudyConfig('screening-gpt-5_2', globalConfig);
 
