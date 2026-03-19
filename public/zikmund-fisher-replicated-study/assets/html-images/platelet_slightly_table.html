@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Platelet Count (PLT)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; display: flex; justify-content: center; padding: 40px; background: #fff; }
+  table { border-collapse: collapse; width: 500px; border: 1px solid #ccc; }
+  thead tr { background: #2e3470; color: #fff; }
+  th { padding: 10px 14px; font-size: 13px; font-weight: bold; text-align: center; border-right: 1px solid rgba(255,255,255,0.2); }
+  th:first-child { text-align: left; }
+  td { padding: 14px; font-size: 13px; text-align: center; border-right: 1px solid #ccc; color: #000; }
+  td:first-child { text-align: left; }
+  tbody tr { border-top: 1px solid #ccc; }
+</style>
+</head>
+<body>
+<div id="container"></div>
+<script>
+const data = [{ test: "Platelet Count (PLT)", result: 25, range: "150 - 400", units: "x10\u2079/L" }];
+
+const table = d3.select("#container").append("table");
+const thead = table.append("thead").append("tr");
+["Test","Your Result","Standard Range","Units"].forEach(h => thead.append("th").text(h));
+
+const tbody = table.append("tbody");
+data.forEach(d => {
+  const tr = tbody.append("tr");
+  tr.append("td").text(d.test);
+  tr.append("td").text(d.result);
+  tr.append("td").text(d.range);
+  tr.append("td").html("x10<sup>9</sup>/L");
+});
+</script>
+</body>
+</html>
