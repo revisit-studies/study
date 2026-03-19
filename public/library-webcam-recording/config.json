@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Screen Recording",
+    "title": "Webcam Recording",
     "version": "1.0.0",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2026-02-23",
-    "description": "Example study using the screen-recording library with screen and webcam capture.",
+    "date": "2026-03-18",
+    "description": "Example study using the webcam-recording library.",
     "organizations": [
       "University of Utah",
       "WPI"
@@ -18,21 +18,20 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "withSidebar": false,
-    "recordScreen": true,
     "recordWebcam": true
   },
   "importedLibraries": [
-    "screen-recording"
+    "webcam-recording"
   ],
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "library-screen-recording/assets/screen-recording-introduction.md",
+      "path": "library-webcam-recording/assets/webcam-recording-introduction.md",
       "response": []
     },
     "demo-recording": {
       "type": "markdown",
-      "path": "library-screen-recording/assets/screen-recording-page.md",
+      "path": "library-webcam-recording/assets/webcam-recording-page.md",
       "response": []
     }
   },
@@ -40,7 +39,7 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$screen-recording.components.screenRecordingPermission",
+      "$webcam-recording.components.webcamRecordingPermission",
       "demo-recording"
     ]
   }

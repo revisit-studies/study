@@ -470,6 +470,17 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     return screenRecording ? URL.createObjectURL(screenRecording) : null;
   }
 
+  protected async _getWebcamRecordingUrl(task: string, participantId?: string) {
+    await this.verifyStudyDatabase();
+    const id = participantId || this.currentParticipantId;
+    if (!id) {
+      throw new Error('Participant not initialized');
+    }
+
+    const webcamRecording = await this._getFromStorage(`/webcamRecording/${id}`, task);
+    return webcamRecording ? URL.createObjectURL(webcamRecording) : null;
+  }
+
   protected async _testingReset(studyId: string) {
     // Delete all rows with studyId matching the studyId
     const { error } = await this.supabase

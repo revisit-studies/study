@@ -488,6 +488,21 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
+  protected async _getWebcamRecordingUrl(
+    task: string,
+    participantId: string,
+  ): Promise<string | null> {
+    const storage = getStorage();
+    const webcamRecordingRef = ref(storage, `${this.collectionPrefix}${this.studyId}/webcamRecording/${participantId}_${task}`);
+
+    try {
+      return await getDownloadURL(webcamRecordingRef);
+    } catch {
+      console.warn(`Webcam recording for task ${task} and participant ${participantId} not found.`);
+      return null;
+    }
+  }
+
   protected async _getTranscriptUrl(
     task: string,
     participantId: string,

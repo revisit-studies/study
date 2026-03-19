@@ -2,24 +2,37 @@ import {
   Button, Group, Tooltip,
 } from '@mantine/core';
 import {
-  IconDatabaseExport, IconDeviceDesktopDown, IconMusicDown, IconTableExport,
+  IconCamera, IconDatabaseExport, IconDeviceDesktopDown, IconMusicDown, IconTableExport,
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { DownloadTidy, download } from './DownloadTidy';
 import { ParticipantData } from '../../storage/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { downloadParticipantsAudioZip, downloadParticipantsScreenRecordingZip } from '../../utils/handleDownloadFiles';
+import {
+  downloadParticipantsAudioZip,
+  downloadParticipantsScreenRecordingZip,
+  downloadParticipantsWebcamRecordingZip,
+} from '../../utils/handleDownloadFiles';
 
 type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData[]>);
 
 export function DownloadButtons({
-  visibleParticipants, studyId, gap, fileName, hasAudio, hasScreenRecording,
-}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null; hasAudio?: boolean; hasScreenRecording?: boolean; }) {
+  visibleParticipants, studyId, gap, fileName, hasAudio, hasScreenRecording, hasWebcamRecording,
+}: {
+  visibleParticipants: ParticipantDataFetcher;
+  studyId: string;
+  gap?: string;
+  fileName?: string | null;
+  hasAudio?: boolean;
+  hasScreenRecording?: boolean;
+  hasWebcamRecording?: boolean;
+}) {
   const [openDownload, { open, close }] = useDisclosure(false);
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [loadingScreenRecording, setLoadingScreenRecording] = useState(false);
+  const [loadingWebcamRecording, setLoadingWebcamRecording] = useState(false);
   const { storageEngine } = useStorageEngine();
 
   const fetchParticipants = async () => {
@@ -73,6 +86,23 @@ export function DownloadButtons({
     }
   };
 
+  const handleDownloadWebcamRecording = async () => {
+    setLoadingWebcamRecording(true);
+
+    try {
+      const currParticipants = await fetchParticipants();
+      if (!storageEngine) return;
+      await downloadParticipantsWebcamRecordingZip({
+        storageEngine,
+        participants: currParticipants,
+        studyId,
+        fileName,
+      });
+    } finally {
+      setLoadingWebcamRecording(false);
+    }
+  };
+
   const tooltipText = typeof visibleParticipants !== 'function' ? `Download ${visibleParticipants.length} participants` : 'Download participants data';
 
   return (
@@ -122,6 +152,20 @@ export function DownloadButtons({
               loading={loadingScreenRecording}
             >
               <IconDeviceDesktopDown />
+            </Button>
+          </Tooltip>
+        )}
+
+        {hasWebcamRecording && (
+          <Tooltip label={`${tooltipText} webcam recordings ZIP`}>
+            <Button
+              variant="light"
+              disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
+              onClick={handleDownloadWebcamRecording}
+              px={4}
+              loading={loadingWebcamRecording}
+            >
+              <IconCamera />
             </Button>
           </Tooltip>
         )}

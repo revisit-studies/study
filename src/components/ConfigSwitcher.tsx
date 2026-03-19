@@ -2,7 +2,7 @@ import {
   Anchor, AppShell, Badge, Button, Card, Container, CopyButton, Divider, Flex, Image, MultiSelect, Skeleton, rem, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
-  IconBan, IconBrandFirebase, IconBrandSupabase, IconChartHistogram, IconCheck, IconCopy, IconDatabase, IconDeviceDesktop, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconMicrophone, IconSchema, IconSchemaOff,
+  IconBan, IconBrandFirebase, IconBrandSupabase, IconCamera, IconChartHistogram, IconCheck, IconCopy, IconDatabase, IconDeviceDesktop, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconMicrophone, IconSchema, IconSchemaOff,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -73,7 +73,7 @@ function StudyCard({
     }
     return 'Data Collection Disabled';
   }, [modes, studyStatusAndTiming]);
-  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(config);
+  const { hasAudioRecording, hasScreenRecording, hasWebcamRecording } = useStudyRecordings(config);
   const {
     isBrowserAllowed,
     isDeviceAllowed,
@@ -196,6 +196,11 @@ function StudyCard({
                 {hasScreenRecording && (
                   <Tooltip label="Screen recording enabled" withinPortal position="bottom">
                     <IconDeviceDesktop size={16} color="orange" />
+                  </Tooltip>
+                )}
+                {hasWebcamRecording && (
+                  <Tooltip label="Webcam recording enabled" withinPortal position="bottom">
+                    <IconCamera size={16} color="orange" />
                   </Tooltip>
                 )}
                 {modes?.developmentModeEnabled

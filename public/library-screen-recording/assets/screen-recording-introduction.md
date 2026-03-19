@@ -1,11 +1,10 @@
 
-# Screen Recording
-
+# Screen And Webcam Recording
 
 
 This is a demo of the library `screen-recording`.
 
-This is a required library for screen recording. It provides a component that request user permission for screen and microphone permissions. Then, it starts screen capture until the end of the study.
+This library provides a component that can request screen, webcam, and microphone permissions together. In this example, screen and webcam capture are both enabled and continue until the end of the study.
 
 
 ## Available Components
@@ -15,5 +14,4 @@ This is a required library for screen recording. It provides a component that re
 ## Available Sequences
 
 None
-
 

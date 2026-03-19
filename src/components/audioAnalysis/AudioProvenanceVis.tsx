@@ -282,12 +282,14 @@ export function AudioProvenanceVis({
             throw new Error('Participant ID is required to load audio');
           }
 
-          const [audioUrl, screenUrl] = await Promise.all([
+          const [audioUrl, screenUrl, webcamUrl] = await Promise.all([
             safe(storageEngine.getAudio(taskName, participantId)),
             safe(storageEngine.getScreenRecording(taskName, participantId)),
+            safe(storageEngine.getWebcamRecording(taskName, participantId)),
           ]);
 
-          const url = screenUrl ?? audioUrl ?? null;
+          const url = screenUrl ?? audioUrl ?? webcamUrl ?? null;
+          const hasAudioSource = !!(screenUrl ?? audioUrl);
 
           if (!url) {
             setAnalysisHasAudio(false);
@@ -303,7 +305,7 @@ export function AudioProvenanceVis({
           updateReplayRef();
 
           setWaveSurferWidth(waveSurfer.getWidth());
-          setAnalysisHasAudio(true);
+          setAnalysisHasAudio(hasAudioSource);
           waveSurfer.seekTo(0);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         } catch (error: unknown) {

@@ -15,7 +15,7 @@ import {
 import * as d3 from 'd3';
 
 import {
-  IconArrowLeft, IconArrowRight, IconDeviceDesktopDown, IconInfoCircle, IconMusicDown, IconPalette, IconPlayerPauseFilled, IconPlayerPlayFilled, IconRestore,
+  IconArrowLeft, IconArrowRight, IconCamera, IconDeviceDesktopDown, IconInfoCircle, IconMusicDown, IconPalette, IconPlayerPauseFilled, IconPlayerPlayFilled, IconRestore,
 } from '@tabler/icons-react';
 import { useAsync } from '../../../store/hooks/useAsync';
 import { useAuth } from '../../../store/hooks/useAuth';
@@ -28,7 +28,11 @@ import { TagSelector } from './tags/TagSelector';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { parseTrialOrder } from '../../../utils/parseTrialOrder';
 import { PREFIX } from '../../../utils/Prefix';
-import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadFiles';
+import {
+  handleTaskAudio,
+  handleTaskScreenRecording,
+  handleTaskWebcamRecording,
+} from '../../../utils/handleDownloadFiles';
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { StorageEngine } from '../../../storage/engines/types';
 import { useReplayContext } from '../../../store/hooks/useReplay';
@@ -94,11 +98,14 @@ export function ThinkAloudFooter({
 
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [screenRecordingUrl, setScreenRecordingUrl] = useState<string | null>(null);
+  const [webcamRecordingUrl, setWebcamRecordingUrl] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchAssetsUrl() {
       if (!storageEngine || !participantId || !currentTrial) {
         setAudioUrl(null);
+        setScreenRecordingUrl(null);
+        setWebcamRecordingUrl(null);
         return;
       }
 
@@ -115,10 +122,17 @@ export function ThinkAloudFooter({
       } catch {
         setScreenRecordingUrl(null);
       }
+
+      try {
+        const url = await storageEngine.getWebcamRecording(currentTrial, participantId);
+        setWebcamRecordingUrl(url);
+      } catch {
+        setWebcamRecordingUrl(null);
+      }
     }
 
     fetchAssetsUrl();
-  }, [storageEngine, participantId, currentTrial]);
+  }, [storageEngine, participantId, currentTrial, screenRecordingUrl]);
 
   const handleDownloadAudio = useCallback(async () => {
     if (!storageEngine || !participantId || !currentTrial) {
@@ -145,6 +159,19 @@ export function ThinkAloudFooter({
       screenRecordingUrl,
     });
   }, [storageEngine, participantId, currentTrial, screenRecordingUrl]);
+
+  const handleDownloadWebcamRecording = useCallback(async () => {
+    if (!storageEngine || !participantId || !currentTrial) {
+      return;
+    }
+
+    await handleTaskWebcamRecording({
+      storageEngine,
+      participantId,
+      identifier: currentTrial,
+      webcamRecordingUrl,
+    });
+  }, [storageEngine, participantId, currentTrial, webcamRecordingUrl]);
 
   const [transcriptLines, setTranscriptLines] = useState<TranscriptLinesWithTimes[] | null>(null);
 
@@ -576,6 +603,13 @@ export function ThinkAloudFooter({
               <Tooltip label="Download screen recording">
                 <ActionIcon variant="filled" size={30} onClick={handleDownloadScreenRecording}>
                   <IconDeviceDesktopDown />
+                </ActionIcon>
+              </Tooltip>
+            )}
+            {webcamRecordingUrl && (
+              <Tooltip label="Download webcam recording">
+                <ActionIcon variant="light" size={30} onClick={handleDownloadWebcamRecording}>
+                  <IconCamera />
                 </ActionIcon>
               </Tooltip>
             )}
