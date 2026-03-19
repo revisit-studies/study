@@ -3,9 +3,10 @@ import { useSearchParams } from 'react-router';
 import { useMemo } from 'react';
 import { GetInputPropsReturnType } from '@mantine/form/lib/types';
 import {
-  IndividualComponent, MatrixResponse, Response, SliderResponse, StoredAnswer,
+  CustomResponse, IndividualComponent, MatrixResponse, Response, SliderResponse, StoredAnswer,
 } from '../../parser/types';
 import { CheckBoxInput } from './CheckBoxInput';
+import { CustomResponseInput } from './CustomResponseInput';
 import { DropdownInput } from './DropdownInput';
 import { ReactiveInput } from './ReactiveInput';
 import { LikertInput } from './LikertInput';
@@ -27,6 +28,7 @@ import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue } from '../../utils/stringOptions';
 import { getDefaultFieldValue, usesStandaloneDontKnowField } from './utils';
+import { CustomResponseField } from '../../store/types';
 
 export function ResponseSwitcher({
   response,
@@ -37,6 +39,7 @@ export function ResponseSwitcher({
   dontKnowCheckbox,
   otherInput,
   disabled,
+  field,
 }: {
   response: Response;
   form: GetInputPropsReturnType;
@@ -46,6 +49,7 @@ export function ResponseSwitcher({
   dontKnowCheckbox?: GetInputPropsReturnType;
   otherInput?: GetInputPropsReturnType;
   disabled?: boolean;
+  field?: CustomResponseField;
 }) {
   const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
@@ -131,6 +135,10 @@ export function ResponseSwitcher({
 
     if (response.type === 'slider' && response.startingValue) {
       return response.startingValue.toString();
+    }
+
+    if (response.type === 'custom-response') {
+      return null;
     }
 
     return '';
@@ -250,6 +258,17 @@ export function ResponseSwitcher({
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
+      />
+      )}
+      {response.type === 'custom-response' && field && (
+      <CustomResponseInput
+        response={response as CustomResponse}
+        disabled={isDisabled || dontKnowChecked}
+        value={(ans.value ?? null) as never}
+        error={form.error}
+        index={index}
+        enumerateQuestions={enumerateQuestions}
+        field={field}
       />
       )}
       {response.type === 'textOnly' && (

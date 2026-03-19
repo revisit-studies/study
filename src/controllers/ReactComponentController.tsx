@@ -1,22 +1,17 @@
 import {
   Suspense, useCallback,
 } from 'react';
-import { ModuleNamespace } from 'vite/types/hot';
+import type { ComponentType } from 'react';
 import { ParticipantData, ReactComponent } from '../parser/types';
 import { StimulusParams } from '../store/types';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentIdentifier } from '../routes/utils';
 import { ErrorBoundary } from './ErrorBoundary';
-
-const modules = import.meta.glob(
-  '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
-  { eager: true },
-);
+import { getPublicModule } from '../utils/publicModules';
 
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
-  const reactPath = `../public/${currentConfig.path}`;
-  const StimulusComponent = reactPath in modules ? (modules[reactPath] as ModuleNamespace).default : null;
+  const StimulusComponent = (getPublicModule(currentConfig.path)?.default || null) as ComponentType<StimulusParams<unknown, unknown>> | null;
   const identifier = useCurrentIdentifier();
 
   const storeDispatch = useStoreDispatch();

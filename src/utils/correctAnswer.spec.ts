@@ -119,6 +119,10 @@ describe('correctAnswer utilities', () => {
       expect(responseAnswerIsCorrect(true, true)).toBe(true);
       expect(responseAnswerIsCorrect(true, false)).toBe(false);
       expect(responseAnswerIsCorrect(
+        asStoredAnswer({ chartType: 'Bar', confidence: 80, rationale: 'Looks good' }),
+        asCorrectAnswer({ chartType: 'Bar', confidence: 80, rationale: 'Looks good' }),
+      )).toBe(true);
+      expect(responseAnswerIsCorrect(
         asStoredAnswer(null),
         asCorrectAnswer(null),
       )).toBe(true);

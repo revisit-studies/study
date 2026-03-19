@@ -1,15 +1,32 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
+import isEqual from 'lodash.isequal';
 import {
-  CheckboxResponse, DropdownResponse, MatrixResponse, NumberOption, NumericalResponse, RadioResponse, Response, StringOption,
+  CheckboxResponse, CustomResponse, DropdownResponse, JsonValue, MatrixResponse, NumberOption, NumericalResponse, RadioResponse, Response, StringOption,
 } from '../../parser/types';
-import { StoredAnswer } from '../../store/types';
+import { CustomResponseValidate, StoredAnswer } from '../../store/types';
 import { parseStringOptionValue } from '../../utils/stringOptions';
 
-type ResponseDefault = string | number | string[] | Record<string, string | string[]>;
+type ResponseDefault = JsonValue;
 type ResponseWithDefault = Response & { default?: ResponseDefault };
 
 export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
+
+function isEmptyCustomResponseValue(value: JsonValue | undefined) {
+  if (value === null || value === undefined || value === '') {
+    return true;
+  }
+
+  if (Array.isArray(value)) {
+    return value.length === 0;
+  }
+
+  if (typeof value === 'object') {
+    return Object.keys(value).length === 0;
+  }
+
+  return false;
+}
 
 export function normalizeCheckboxDontKnowValue(value: string[]) {
   return value.includes(DONT_KNOW_DEFAULT_VALUE) ? [] : value;
@@ -132,11 +149,11 @@ export const getDefaultFieldValue = (response: Response) => {
   }
 
   if (response.type === 'checkbox') {
-    return Array.isArray(responseDefault) ? responseDefault : [responseDefault.toString()];
+    return Array.isArray(responseDefault) ? responseDefault : (responseDefault === null ? [] : [responseDefault.toString()]);
   }
 
   if (response.type === 'likert') {
-    return responseDefault.toString();
+    return responseDefault === null ? '' : responseDefault.toString();
   }
 
   if (response.type === 'dropdown') {
@@ -151,6 +168,10 @@ export const getDefaultFieldValue = (response: Response) => {
     }
 
     return Array.isArray(dropdownDefault) ? dropdownDefault[0] ?? '' : dropdownDefault;
+  }
+
+  if (response.type === 'custom-response') {
+    return responseDefault;
   }
 
   return responseDefault;
@@ -181,7 +202,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         ...otherObj,
       };
     } else {
-      let initField: string | string[] | number | object | null = '';
+      let initField: StoredAnswer['answer'][string] = '';
       const defaultFieldValue = getDefaultFieldValue(response);
       if (response.paramCapture) {
         initField = queryParameters.get(response.paramCapture);
@@ -193,6 +214,8 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         initField = Object.fromEntries(
           response.questionOptions.map((entry) => [parseStringOptionValue(entry), '']),
         );
+      } else if (response.type === 'custom-response') {
+        initField = null;
       } else if (response.type === 'slider' && response.startingValue) {
         initField = response.startingValue.toString();
       }
@@ -229,20 +252,52 @@ export const mergeReactiveAnswers = (
   return mergedValues ?? currentValues;
 };
 
-const generateValidation = (responses: Response[]) => {
-  let validateObj = {};
+function validateCustomResponse(
+  response: CustomResponse,
+  value: StoredAnswer['answer'][string],
+  values: StoredAnswer['answer'],
+  customValidate?: CustomResponseValidate,
+) {
+  if (response.required !== false && isEmptyCustomResponseValue(value)) {
+    return 'Empty input';
+  }
+
+  if (response.requiredValue !== undefined && !isEmptyCustomResponseValue(value) && !isEqual(value, response.requiredValue)) {
+    return 'Incorrect input';
+  }
+
+  if (!customValidate) {
+    return null;
+  }
+
+  if (response.required === false && isEmptyCustomResponseValue(value)) {
+    return null;
+  }
+
+  return customValidate(value, values, response);
+}
+
+export const generateValidation = (
+  responses: Response[],
+  customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
+): Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> => {
+  let validateObj: Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> = {};
   responses.forEach((response) => {
-    if (response.required) {
+    if (response.required || response.type === 'custom-response') {
       validateObj = {
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
+          if (response.type === 'custom-response') {
+            return validateCustomResponse(response, value, values, customResponseValidators[response.id]);
+          }
+
           if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
             return null;
           }
 
           if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
             if (response.type === 'matrix-checkbox' || response.type === 'matrix-radio') {
-              return checkMatrixResponse(response, value);
+              return checkMatrixResponse(response, value as Record<string, string>);
             }
             if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
               return Object.keys(value).length > 0 ? null : 'Empty Input';
@@ -263,10 +318,10 @@ const generateValidation = (responses: Response[]) => {
               return sortedReq.every((val, index) => val === sortedVal[index]) ? null : 'Incorrect input';
             }
             if (response.type === 'checkbox') {
-              return checkCheckboxResponseForValidation(response, value, !!values[`${response.id}-dontKnow`]);
+              return checkCheckboxResponseForValidation(response, value as string[], !!values[`${response.id}-dontKnow`]);
             }
             if (response.type === 'dropdown') {
-              return checkDropdownResponse(response, value);
+              return checkDropdownResponse(response, value as string[]);
             }
             return value.length === 0 ? 'Empty input' : null;
           }
@@ -292,12 +347,17 @@ const generateValidation = (responses: Response[]) => {
   return validateObj;
 };
 
-export function useAnswerField(responses: Response[], currentStep: string | number, storedAnswer: StoredAnswer['answer']) {
+export function useAnswerField(
+  responses: Response[],
+  currentStep: string | number,
+  storedAnswer: StoredAnswer['answer'],
+  customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
+) {
   const [_id, setId] = useState<string | number | null>(null);
 
   const answerField = useForm<StoredAnswer['answer']>({
     initialValues: generateInitFields(responses, storedAnswer),
-    validate: generateValidation(responses),
+    validate: generateValidation(responses, customResponseValidators),
   });
 
   useEffect(() => {

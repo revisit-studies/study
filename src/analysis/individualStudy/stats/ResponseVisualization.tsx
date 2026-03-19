@@ -225,6 +225,7 @@ export function ResponseVisualization({
           {response.type === 'matrix-checkbox' && <IconChartGridDots size={20} />}
           {response.type === 'buttons' && <IconCopyCheck size={20} />}
           {response.type === 'reactive' && <IconHtml size={20} />}
+          {response.type === 'custom-response' && <IconCodePlus size={20} />}
           {response.type === 'textOnly' && <IconLetterCase size={20} />}
           <Title order={5} ml={4}>
             {response.id}
@@ -246,7 +247,7 @@ export function ResponseVisualization({
 
         <SimpleGrid cols={2} h={360}>
           <ScrollArea mih={200}>
-            {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'reactive' && response.type !== 'textOnly' && response.type !== 'ranking-sublist' && response.type !== 'ranking-categorical' && response.type !== 'ranking-pairwise') ? (
+            {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'reactive' && response.type !== 'custom-response' && response.type !== 'textOnly' && response.type !== 'ranking-sublist' && response.type !== 'ranking-categorical' && response.type !== 'ranking-pairwise') ? (
               <VegaLite
                 spec={vegaLiteSpec as VisualizationSpec}
                 actions={false}
@@ -268,7 +269,7 @@ export function ResponseVisualization({
                     ) : (
                       questionData.map((d, idx) => (
                         <Flex key={idx} align="center" gap="xs">
-                          <Text>{d[response.id] as unknown as string}</Text>
+                          <Text>{typeof d[response.id] === 'object' ? JSON.stringify(d[response.id]) : `${d[response.id] ?? ''}`}</Text>
                         </Flex>
                       ))
                     )}

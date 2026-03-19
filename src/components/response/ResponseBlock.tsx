@@ -24,10 +24,13 @@ import {
 } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
-import { FormElementProvenance, StoredAnswer, ValidationStatus } from '../../store/types';
+import {
+  CustomResponseField, CustomResponseValidate, FormElementProvenance, StoredAnswer, ValidationStatus,
+} from '../../store/types';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
+import { getCustomResponseModule } from './customResponseModules';
 
 type Props = {
   status?: StoredAnswer;
@@ -141,7 +144,21 @@ export function ResponseBlock({
   const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
   const identifier = useCurrentIdentifier();
 
-  const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
+  const customResponseValidators = useMemo(() => Object.fromEntries(
+    responsesWithDefaults
+      .filter((response): response is Extract<(typeof responsesWithDefaults)[number], { type: 'custom-response' }> => response.type === 'custom-response')
+      .map((response) => {
+        const customResponseModule = getCustomResponseModule(response);
+
+        if (!customResponseModule?.default) {
+          return [response.id, (() => `Unable to load custom response module at ${response.path}`) as CustomResponseValidate];
+        }
+
+        return [response.id, customResponseModule.validate];
+      }),
+  ) as Record<string, CustomResponseValidate | undefined>, [responsesWithDefaults]);
+
+  const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {}, customResponseValidators);
   useEffect(() => {
     if (storedAnswer) {
       answerValidator.setInitialValues(generateInitFields(responses, storedAnswer));
@@ -357,6 +374,13 @@ export function ResponseBlock({
                       otherInput={{
                         ...answerValidator.getInputProps(`${response.id}-other`),
                       }}
+                      field={response.type === 'custom-response'
+                        ? {
+                          getInputProps: () => answerValidator.getInputProps(response.id),
+                          setValue: (value) => answerValidator.setFieldValue(response.id, value),
+                          onBlur: () => answerValidator.getInputProps(response.id).onBlur?.(),
+                        } as CustomResponseField
+                        : undefined}
                       response={response}
                       index={index}
                       config={config}
