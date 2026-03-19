@@ -231,8 +231,8 @@ export type Styles = {
  *   "autoDownloadStudy": true,
  *   "autoDownloadTime": 5000,
  *   "studyEndMsg": "Thank you for completing this study. You're the best!",
- *   "autoRedirectURL": "https://app.prolific.com/submissions/complete?cc=abc123",
- *   "autoRedirectDelay": 10000,
+ *   "studyEndAutoRedirectURL": "https://app.prolific.com/submissions/complete?cc=abc123",
+ *   "studyEndAutoRedirectDelay": 10000,
  *   "windowEventDebounceTime": 500,
  *   "urlParticipantIdParam": "PROLIFIC_ID",
  *   "numSequences": 500
@@ -298,10 +298,10 @@ export interface UIConfig {
   windowEventDebounceTime?: number;
   /** The message to display when the study ends. */
   studyEndMsg?: string;
-  /** The URL which participants will be auto-redirected to. The default time before redirecting is 10 seconds, but this can be configured with the autoRedirectDelay field. */
-  autoRedirectURL?: string;
-  /** The duration after which participants will auto-redirected to the URL specified in autoRedirectURL. Defaults to 10000 milliseconds (10 seconds). */
-  autoRedirectDelay?: number;
+  /** The URL which participants will be auto-redirected to when the study ends. The default time before redirecting is 10 seconds, but this can be configured with the studyEndAutoRedirectDelay field. */
+  studyEndAutoRedirectURL?: string;
+  /** The duration after which participants will be auto-redirected to the URL specified in studyEndAutoRedirectURL. Defaults to 10000 milliseconds (10 seconds). */
+  studyEndAutoRedirectDelay?: number;
   /** Controls whether the study data is automatically downloaded at the end of the study. */
   autoDownloadStudy?: boolean;
   /** The time in milliseconds to wait before automatically downloading the study data. */

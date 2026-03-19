@@ -156,15 +156,15 @@ export function StudyEnd() {
   }, [studyConfig, participantId]);
 
   useEffect(() => {
-    const { autoRedirectURL, autoRedirectDelay } = studyConfig.uiConfig;
+    const { studyEndAutoRedirectURL, studyEndAutoRedirectDelay } = studyConfig.uiConfig;
 
-    if (isAnalysis || !completed || !autoRedirectURL) {
+    if (isAnalysis || !completed || !studyEndAutoRedirectURL) {
       return undefined;
     }
 
     const timeoutId = setTimeout(() => {
-      window.location.replace(autoRedirectURL);
-    }, autoRedirectDelay ?? 10000);
+      window.location.replace(studyEndAutoRedirectURL);
+    }, studyEndAutoRedirectDelay ?? 10000);
 
     return () => {
       clearTimeout(timeoutId);
