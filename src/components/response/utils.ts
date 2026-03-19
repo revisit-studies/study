@@ -257,7 +257,12 @@ function validateCustomResponse(
   value: StoredAnswer['answer'][string],
   values: StoredAnswer['answer'],
   customValidate?: CustomResponseValidate,
+  loadError?: string,
 ) {
+  if (loadError) {
+    return loadError;
+  }
+
   if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
     return null;
   }
@@ -284,6 +289,7 @@ function validateCustomResponse(
 export const generateValidation = (
   responses: Response[],
   customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
+  customResponseLoadErrors: Record<string, string | undefined> = {},
 ): Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> => {
   let validateObj: Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> = {};
   responses.forEach((response) => {
@@ -292,7 +298,13 @@ export const generateValidation = (
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
           if (response.type === 'custom-response') {
-            return validateCustomResponse(response, value, values, customResponseValidators[response.id]);
+            return validateCustomResponse(
+              response,
+              value,
+              values,
+              customResponseValidators[response.id],
+              customResponseLoadErrors[response.id],
+            );
           }
 
           if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
@@ -356,12 +368,13 @@ export function useAnswerField(
   currentStep: string | number,
   storedAnswer: StoredAnswer['answer'],
   customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
+  customResponseLoadErrors: Record<string, string | undefined> = {},
 ) {
   const [_id, setId] = useState<string | number | null>(null);
 
   const answerField = useForm<StoredAnswer['answer']>({
     initialValues: generateInitFields(responses, storedAnswer),
-    validate: generateValidation(responses, customResponseValidators),
+    validate: generateValidation(responses, customResponseValidators, customResponseLoadErrors),
   });
 
   useEffect(() => {

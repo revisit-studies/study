@@ -23,23 +23,20 @@ import {
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
 import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
-function checkAllAnswersCorrect(answers: StoredAnswer['answer'], componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
-  const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
+function checkAllAnswersCorrect(answers: StoredAnswer['answer'], componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
+  const resolvedComponentConfig = studyComponentToIndividualComponent(componentConfig, studyConfig);
 
-  // Find the matching component in the study config
-  const foundConfigComponent = Object.entries(studyConfig.components).find(([configComponentId]) => configComponentId === componentName);
-  const foundConfigComponentConfig = foundConfigComponent ? foundConfigComponent[1] : null;
-
-  if (!foundConfigComponentConfig) {
-    throw new Error(`Component ${componentName} could not be found in the study components.`);
-  }
-
-  if (!foundConfigComponentConfig.correctAnswer) {
+  if (!resolvedComponentConfig.correctAnswer) {
     return true;
   }
 
-  return componentAnswersAreCorrect(answers, foundConfigComponentConfig.correctAnswer);
+  return componentAnswersAreCorrect(
+    answers,
+    resolvedComponentConfig.correctAnswer,
+    resolvedComponentConfig.response,
+  );
 }
 
 export function useNextStep() {
@@ -180,7 +177,7 @@ export function useNextStep() {
             conditionIsTriggered = condition.comparison === 'equal' ? condition.value === response.answer[condition.responseId] : condition.value !== response.answer[condition.responseId];
           } else {
             // Check that the response is matches the correct answer
-            conditionIsTriggered = !checkAllAnswersCorrect(response.answer, componentId, studyConfig.components[componentId.slice(0, componentId.lastIndexOf('_'))], studyConfig);
+            conditionIsTriggered = !checkAllAnswersCorrect(response.answer, studyConfig.components[componentId.slice(0, componentId.lastIndexOf('_'))], studyConfig);
           }
         } else if (condition.check === 'block' || condition.check === 'repeatedComponent') {
           // If we have less than numCorrect or numIncorrect, there's no point in checking the condition
@@ -189,7 +186,7 @@ export function useNextStep() {
           }
 
           // Check the candidates and count the number of correct and incorrect answers
-          const correctAnswers = componentsToCheck.map(([_componentName, responseObj]) => checkAllAnswersCorrect(responseObj.answer, _componentName, studyConfig.components[componentName.slice(0, componentName.lastIndexOf('_'))], studyConfig));
+          const correctAnswers = componentsToCheck.map(([_componentName, responseObj]) => checkAllAnswersCorrect(responseObj.answer, studyConfig.components[componentName.slice(0, componentName.lastIndexOf('_'))], studyConfig));
           const numCorrect = correctAnswers.filter((correct) => correct).length;
           const numIncorrect = correctAnswers.length - numCorrect;
 

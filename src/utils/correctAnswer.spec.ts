@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { Answer, StoredAnswer } from '../parser/types';
+import {
+  Answer, Response, StoredAnswer,
+} from '../parser/types';
 import { componentAnswersAreCorrect, responseAnswerIsCorrect } from './correctAnswer';
 
 // Test responseAnswerIsCorrect function and componentAnswersAreCorrect function
@@ -51,6 +53,23 @@ describe('correctAnswer utilities', () => {
       expect(responseAnswerIsCorrect(['b', 'a'], ['a', 'b'])).toBe(true);
       expect(responseAnswerIsCorrect(['a'], ['a', 'b'])).toBe(false);
       expect(responseAnswerIsCorrect(['a', 'c'], ['a', 'b'])).toBe(false);
+    });
+
+    test('can preserve array order when requested', () => {
+      expect(responseAnswerIsCorrect(
+        asStoredAnswer(['b', 'a']),
+        asCorrectAnswer(['a', 'b']),
+        undefined,
+        undefined,
+        { ignoreArrayOrder: false },
+      )).toBe(false);
+      expect(responseAnswerIsCorrect(
+        asStoredAnswer(['a', 'b']),
+        asCorrectAnswer(['a', 'b']),
+        undefined,
+        undefined,
+        { ignoreArrayOrder: false },
+      )).toBe(true);
     });
 
     test('handles duplicate checkbox options correctly', () => {
@@ -200,6 +219,20 @@ describe('correctAnswer utilities', () => {
 
       expect(componentAnswersAreCorrect(userAnswers, correctAnswers)).toBe(true);
       expect(componentAnswersAreCorrect({ q1: 'A', slider1: 11 }, correctAnswers)).toBe(false);
+    });
+
+    test('preserves order for custom-response arrays when response definitions are provided', () => {
+      const userAnswers = { customSequence: ['B', 'A'] };
+      const correctAnswers = [{ id: 'customSequence', answer: ['A', 'B'] }];
+      const responses: Response[] = [{
+        id: 'customSequence',
+        prompt: 'Order the items',
+        type: 'custom-response',
+        path: 'demo-form-elements/assets/CustomResponseCard.tsx',
+      }];
+
+      expect(componentAnswersAreCorrect(userAnswers, correctAnswers, responses)).toBe(false);
+      expect(componentAnswersAreCorrect({ customSequence: ['A', 'B'] }, correctAnswers, responses)).toBe(true);
     });
   });
 });

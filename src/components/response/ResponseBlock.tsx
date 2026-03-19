@@ -144,21 +144,33 @@ export function ResponseBlock({
   const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
   const identifier = useCurrentIdentifier();
 
-  const customResponseValidators = useMemo(() => Object.fromEntries(
-    responsesWithDefaults
-      .filter((response): response is Extract<(typeof responsesWithDefaults)[number], { type: 'custom-response' }> => response.type === 'custom-response')
-      .map((response) => {
-        const customResponseModule = getCustomResponseModule(response);
+  const {
+    customResponseValidators,
+    customResponseLoadErrors,
+  } = useMemo(() => responsesWithDefaults
+    .filter((response): response is Extract<(typeof responsesWithDefaults)[number], { type: 'custom-response' }> => response.type === 'custom-response')
+    .reduce((acc, response) => {
+      const customResponseModule = getCustomResponseModule(response);
 
-        if (!customResponseModule?.default) {
-          return [response.id, (() => `Unable to load custom response module at ${response.path}`) as CustomResponseValidate];
-        }
+      if (!customResponseModule?.default) {
+        acc.customResponseLoadErrors[response.id] = `Unable to load custom response module at ${response.path}`;
+        return acc;
+      }
 
-        return [response.id, customResponseModule.validate];
-      }),
-  ) as Record<string, CustomResponseValidate | undefined>, [responsesWithDefaults]);
+      acc.customResponseValidators[response.id] = customResponseModule.validate;
+      return acc;
+    }, {
+      customResponseValidators: {} as Record<string, CustomResponseValidate | undefined>,
+      customResponseLoadErrors: {} as Record<string, string | undefined>,
+    }), [responsesWithDefaults]);
 
-  const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {}, customResponseValidators);
+  const answerValidator = useAnswerField(
+    responsesWithDefaults,
+    currentStep,
+    storedAnswer || {},
+    customResponseValidators,
+    customResponseLoadErrors,
+  );
   useEffect(() => {
     if (storedAnswer) {
       answerValidator.setInitialValues(generateInitFields(responses, storedAnswer));
@@ -265,6 +277,7 @@ export function ResponseBlock({
         configCorrectAnswer?.answer,
         configCorrectAnswer?.acceptableLow,
         configCorrectAnswer?.acceptableHigh,
+        { ignoreArrayOrder: response.type === 'checkbox' || response.type === 'dropdown' },
       )];
     }));
 

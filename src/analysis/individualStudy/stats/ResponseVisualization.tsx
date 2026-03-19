@@ -44,7 +44,13 @@ export function ResponseVisualization({
         const participantAnswer = value.answer[response.id];
         const expectedAnswer = correctAnswer.answer;
 
-        answerData.result = responseAnswerIsCorrect(participantAnswer, expectedAnswer) ? 'correct' : 'incorrect';
+        answerData.result = responseAnswerIsCorrect(
+          participantAnswer,
+          expectedAnswer,
+          undefined,
+          undefined,
+          { ignoreArrayOrder: response.type === 'checkbox' || response.type === 'dropdown' },
+        ) ? 'correct' : 'incorrect';
       }
 
       return answerData;

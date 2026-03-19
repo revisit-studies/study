@@ -702,7 +702,7 @@ export function StepsPanel({
           const correct = correctAnswer
             && componentAnswer
             && Object.keys(componentAnswer.answer).length > 0
-            && componentAnswersAreCorrect(componentAnswer.answer, correctAnswer);
+            && componentAnswersAreCorrect(componentAnswer.answer, correctAnswer, component?.response);
           const correctIncorrectIcon = correctAnswer && componentAnswer && componentAnswer?.endTime > -1
             ? (correct
               ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />

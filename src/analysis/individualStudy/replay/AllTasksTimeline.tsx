@@ -111,7 +111,7 @@ export function AllTasksTimeline({
 
       const component = studyConfig?.components[joinExceptLast];
 
-      const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
+      const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer, component?.response);
       const hasCorrect = !!((component && component.correctAnswer) || answer.correctAnswer.length > 0);
 
       return {

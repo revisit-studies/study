@@ -200,6 +200,22 @@ describe('generateValidation custom-response', () => {
     expect(error).toBeNull();
   });
 
+  it('surfaces module load errors for optional custom responses', () => {
+    const optionalResponse: CustomResponse = {
+      ...response,
+      required: false,
+    };
+
+    const validation = generateValidation(
+      [optionalResponse],
+      {},
+      { [optionalResponse.id]: `Unable to load custom response module at ${optionalResponse.path}` },
+    );
+    const error = validation[optionalResponse.id](null, {});
+
+    expect(error).toBe(`Unable to load custom response module at ${optionalResponse.path}`);
+  });
+
   it('treats standalone dont-know as a completed custom response', () => {
     const validation = generateValidation([{
       ...response,
