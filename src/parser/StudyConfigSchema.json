@@ -3582,6 +3582,14 @@
           "description": "The message to display when the study ends.",
           "type": "string"
         },
+        "autoRedirectURL": {
+          "description": "If not empty, the URL which participants will auto-redirected to",
+          "type": "string"
+        },
+        "autoRedirectDelay": {
+          "description": "The delay after which participants will be auto-redirected",
+          "type": "number"
+        },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"

@@ -155,6 +155,16 @@ export function StudyEnd() {
     return studyEndMsg.replace(/\{PARTICIPANT_ID\}/g, () => participantId);
   }, [studyConfig, participantId]);
 
+  useEffect(() => {
+    const { autoRedirectURL, autoRedirectDelay } = studyConfig.uiConfig;
+
+    if (autoRedirectURL) {
+      setTimeout(() => {
+        window.location.replace(autoRedirectURL);
+      }, autoRedirectDelay ? autoRedirectDelay : 10000)
+    }
+  }, [completed]);
+
   return (
     <Center style={{ height: '100%' }}>
       <Flex direction="column">
