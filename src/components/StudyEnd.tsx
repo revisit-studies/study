@@ -158,12 +158,18 @@ export function StudyEnd() {
   useEffect(() => {
     const { autoRedirectURL, autoRedirectDelay } = studyConfig.uiConfig;
 
-    if (autoRedirectURL) {
-      setTimeout(() => {
-        window.location.replace(autoRedirectURL);
-      }, autoRedirectDelay || 10000);
+    if (isAnalysis || !completed || !autoRedirectURL) {
+      return undefined;
     }
-  }, [completed, studyConfig.uiConfig]);
+
+    const timeoutId = setTimeout(() => {
+      window.location.replace(autoRedirectURL);
+    }, autoRedirectDelay ?? 10000);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [completed, isAnalysis, studyConfig.uiConfig]);
 
   return (
     <Center style={{ height: '100%' }}>
