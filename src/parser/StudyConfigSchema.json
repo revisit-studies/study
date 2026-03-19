@@ -3476,7 +3476,7 @@
     },
     "UIConfig": {
       "additionalProperties": false,
-      "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the `uiConfig` would look in your study configuration (note, there are optional fields that are not shown here): ```json uiConfig:{   \"logoPath\": \"<study-name>/assets/logo.jpg\",   \"contactEmail\": \"contact@revisit.dev\",   \"withProgressBar\": true,   \"withSidebar\": true,   \"helpTextPath\": \"<study-name>/assets/help.md\",   \"autoDownloadStudy\": true,   \"autoDownloadTime\": 5000,   \"studyEndMsg\": \"Thank you for completing this study. You're the best!\",   \"windowEventDebounceTime\": 500,   \"urlParticipantIdParam\": \"PROLIFIC_ID\",   \"numSequences\": 500 } ``` In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)",
+      "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the `uiConfig` would look in your study configuration (note, there are optional fields that are not shown here): ```json uiConfig:{   \"logoPath\": \"<study-name>/assets/logo.jpg\",   \"contactEmail\": \"contact@revisit.dev\",   \"withProgressBar\": true,   \"withSidebar\": true,   \"helpTextPath\": \"<study-name>/assets/help.md\",   \"autoDownloadStudy\": true,   \"autoDownloadTime\": 5000,   \"studyEndMsg\": \"Thank you for completing this study. You're the best!\",   \"autoRedirectURL\": \"https://app.prolific.com/submissions/complete?cc=abc123\",   \"autoRedirectDelay\": 10000,   \"windowEventDebounceTime\": 500,   \"urlParticipantIdParam\": \"PROLIFIC_ID\",   \"numSequences\": 500 } ``` In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. Defaults to true.",
@@ -3489,6 +3489,14 @@
         "autoDownloadTime": {
           "description": "The time in milliseconds to wait before automatically downloading the study data.",
           "type": "number"
+        },
+        "autoRedirectDelay": {
+          "description": "The duration after which participants will auto-redirected to the URL specified in autoRedirectURL. Defaults to 10000 milliseconds (10 seconds).",
+          "type": "number"
+        },
+        "autoRedirectURL": {
+          "description": "The URL which participants will be auto-redirected to. The default time before redirecting is 10 seconds, but this can be configured with the autoRedirectDelay field.",
+          "type": "string"
         },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
@@ -3581,14 +3589,6 @@
         "studyEndMsg": {
           "description": "The message to display when the study ends.",
           "type": "string"
-        },
-        "autoRedirectURL": {
-          "description": "If not empty, the URL which participants will auto-redirected to",
-          "type": "string"
-        },
-        "autoRedirectDelay": {
-          "description": "The delay after which participants will be auto-redirected",
-          "type": "number"
         },
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",

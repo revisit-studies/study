@@ -298,9 +298,9 @@ export interface UIConfig {
   windowEventDebounceTime?: number;
   /** The message to display when the study ends. */
   studyEndMsg?: string;
-  /** The URL which participants will be auto-redirected to after a timeout of n s */
+  /** The URL which participants will be auto-redirected to. The default time before redirecting is 10 seconds, but this can be configured with the autoRedirectDelay field. */
   autoRedirectURL?: string;
-  /** The duration after which participants will auto-redirected to */
+  /** The duration after which participants will auto-redirected to the URL specified in autoRedirectURL. Defaults to 10000 milliseconds (10 seconds). */
   autoRedirectDelay?: number;
   /** Controls whether the study data is automatically downloaded at the end of the study. */
   autoDownloadStudy?: boolean;

@@ -161,9 +161,9 @@ export function StudyEnd() {
     if (autoRedirectURL) {
       setTimeout(() => {
         window.location.replace(autoRedirectURL);
-      }, autoRedirectDelay ? autoRedirectDelay : 10000)
+      }, autoRedirectDelay || 10000);
     }
-  }, [completed]);
+  }, [completed, studyConfig.uiConfig]);
 
   return (
     <Center style={{ height: '100%' }}>
