@@ -199,6 +199,18 @@ describe('generateValidation custom-response', () => {
 
     expect(error).toBeNull();
   });
+
+  it('treats standalone dont-know as a completed custom response', () => {
+    const validation = generateValidation([{
+      ...response,
+      withDontKnow: true,
+    }], { [response.id]: customValidate });
+    const error = validation[response.id](null, {
+      [`${response.id}-dontKnow`]: true,
+    });
+
+    expect(error).toBeNull();
+  });
 });
 
 describe('mergeReactiveAnswers', () => {

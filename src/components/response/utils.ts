@@ -258,6 +258,10 @@ function validateCustomResponse(
   values: StoredAnswer['answer'],
   customValidate?: CustomResponseValidate,
 ) {
+  if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
+    return null;
+  }
+
   if (response.required !== false && isEmptyCustomResponseValue(value)) {
     return 'Empty input';
   }
