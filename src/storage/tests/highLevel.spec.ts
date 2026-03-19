@@ -180,7 +180,7 @@ class DelayedLocalStorageEngine extends LocalStorageEngine {
   ) {
     const isParticipantDataWrite = type === 'participantData' && prefix.startsWith('participants/');
     const isAssetUpload = objectToUpload instanceof Blob
-      && (prefix.startsWith('audio/') || prefix.startsWith('screenRecording/'));
+      && (prefix.startsWith('audio/') || prefix.startsWith('screenRecording/') || prefix.startsWith('webcamRecording/'));
 
     if (isParticipantDataWrite && this.holdParticipantDataWrite) {
       this.holdParticipantDataWrite = false;

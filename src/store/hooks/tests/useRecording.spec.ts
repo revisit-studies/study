@@ -11,8 +11,10 @@ import { useRecording, useRecordingContext } from '../useRecording';
 let mockRecordingConfig = {
   studyHasScreenRecording: false,
   studyHasAudioRecording: false,
+  studyHasWebcamRecording: false,
   currentComponentHasAudioRecording: false,
   currentComponentHasScreenRecording: false,
+  currentComponentHasWebcamRecording: false,
   currentComponentHasClickToRecord: false,
 };
 let mockCurrentComponent = 'intro';
@@ -54,9 +56,15 @@ class MockMediaRecorder {
 
   constructor(s: MockMediaStream) { this.stream = s; }
 
-  start = vi.fn();
+  start = vi.fn(() => {
+    this.state = 'recording';
+    this._listeners.start?.({});
+  });
 
-  stop = vi.fn();
+  stop = vi.fn(() => {
+    this.state = 'inactive';
+    this._listeners.stop?.({});
+  });
 
   addEventListener = vi.fn((event: string, handler: (event: Partial<{ data: Blob }>) => void) => {
     this._listeners[event] = handler;
@@ -71,7 +79,7 @@ class MockMediaRecorder {
 
 vi.mock('../useStudyConfig', () => ({
   useStudyConfig: () => ({
-    uiConfig: { recordScreenFPS: undefined, recordAudio: false },
+    uiConfig: { recordScreenFPS: undefined, recordAudio: false, recordWebcam: false },
     sequence: {
       id: 'root', order: 'fixed', components: ['intro', 'end'], skip: [],
     },
@@ -105,8 +113,10 @@ beforeEach(() => {
   mockRecordingConfig = {
     studyHasScreenRecording: false,
     studyHasAudioRecording: false,
+    studyHasWebcamRecording: false,
     currentComponentHasAudioRecording: false,
     currentComponentHasScreenRecording: false,
+    currentComponentHasWebcamRecording: false,
     currentComponentHasClickToRecord: false,
   };
   mockCurrentComponent = 'intro';
@@ -145,7 +155,9 @@ describe('useRecording', () => {
     const { result } = renderHook(() => useRecording());
     expect(result.current.isScreenRecording).toBe(false);
     expect(result.current.isAudioRecording).toBe(false);
+    expect(result.current.isWebcamRecording).toBe(false);
     expect(result.current.isScreenCapturing).toBe(false);
+    expect(result.current.isWebcamCapturing).toBe(false);
   });
 
   test('initial screenRecordingError is null', () => {
@@ -248,6 +260,22 @@ describe('useRecording startScreenCapture', () => {
       expect(result.current.screenRecordingError).toBe('Recording permission denied');
     });
   });
+
+  test('webcam-only capture does not request display media', async () => {
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasWebcamRecording: true,
+      currentComponentHasWebcamRecording: true,
+    };
+    mockStorageEngine = { saveWebcamRecording: vi.fn(async () => {}) };
+    const { result } = renderHook(() => useRecording());
+
+    act(() => { result.current.startWebcamCapture(); });
+
+    await waitFor(() => expect(result.current.isWebcamCapturing).toBe(true));
+    expect(result.current.isScreenCapturing).toBe(false);
+    expect(navigator.mediaDevices.getDisplayMedia).not.toHaveBeenCalled();
+  });
 });
 
 // ── startScreenRecording tests ─────────────────────────────────────────────────
@@ -294,12 +322,55 @@ describe('useRecording startScreenRecording after startScreenCapture', () => {
       currentComponentHasScreenRecording: true,
       currentComponentHasAudioRecording: false,
     };
-    mockStorageEngine = { saveAudioRecording: vi.fn(async () => {}) };
+    mockStorageEngine = { saveScreenRecording: vi.fn(async () => {}) };
     const { result } = renderHook(() => useRecording());
     act(() => { result.current.startScreenCapture(); });
     await waitFor(() => { expect(result.current.isMediaCapturing).toBe(true); });
     act(() => { result.current.startScreenRecording('trial_0'); });
     expect(result.current.isScreenRecording).toBe(true);
+  });
+
+  test('starts a separate webcam recorder for webcam-only trials', async () => {
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasWebcamRecording: true,
+      currentComponentHasWebcamRecording: true,
+    };
+    mockStorageEngine = { saveWebcamRecording: vi.fn(async () => {}) };
+    const { result } = renderHook(() => useRecording());
+
+    act(() => { result.current.startWebcamCapture(); });
+    await waitFor(() => expect(result.current.isMediaCapturing).toBe(true));
+    await waitFor(() => expect(result.current.isWebcamRecording).toBe(true));
+
+    act(() => { result.current.stopScreenRecording(); });
+    expect(result.current.isWebcamRecording).toBe(false);
+  });
+
+  test('starts screen, webcam, and audio recording together', async () => {
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasScreenRecording: true,
+      studyHasAudioRecording: true,
+      studyHasWebcamRecording: true,
+      currentComponentHasScreenRecording: true,
+      currentComponentHasAudioRecording: true,
+      currentComponentHasWebcamRecording: true,
+    };
+    mockStorageEngine = {
+      saveScreenRecording: vi.fn(async () => {}),
+      saveAudioRecording: vi.fn(async () => {}),
+      saveWebcamRecording: vi.fn(async () => {}),
+    };
+    const { result } = renderHook(() => useRecording());
+
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => expect(result.current.isMediaCapturing).toBe(true));
+    await waitFor(() => {
+      expect(result.current.isScreenRecording).toBe(true);
+      expect(result.current.isWebcamRecording).toBe(true);
+      expect(result.current.isAudioRecording).toBe(true);
+    });
   });
 });
 

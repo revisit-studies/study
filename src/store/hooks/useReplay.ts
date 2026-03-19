@@ -22,6 +22,7 @@ function mediaIncludesTime(media: HTMLMediaElement, time: number) {
  */
 export function useReplay() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const webcamVideoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isMountedRef = useRef(true);
 
@@ -44,6 +45,31 @@ export function useReplay() {
   const [isPlaying, _setIsPlaying] = useState(false);
   const internalIsPlaying = useRef(false);
   const timerValue = useRef<number>(0);
+
+  const getMediaElements = useCallback(() => (
+    [videoRef.current, webcamVideoRef.current, audioRef.current]
+      .filter((media): media is HTMLMediaElement => !!media)
+  ), []);
+
+  const getActiveMediaElements = useCallback(() => (
+    getMediaElements().filter((media) => !!media.src)
+  ), [getMediaElements]);
+
+  const getSecondaryMediaElements = useCallback(() => (
+    getActiveMediaElements().filter((media) => media !== replayRef.current)
+  ), [getActiveMediaElements]);
+
+  const updateMutedState = useCallback(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMasterPlayer || replayRef.current !== videoRef.current;
+    }
+    if (webcamVideoRef.current) {
+      webcamVideoRef.current.muted = true;
+    }
+    if (audioRef.current) {
+      audioRef.current.muted = !isMasterPlayer || replayRef.current === videoRef.current;
+    }
+  }, [isMasterPlayer]);
 
   const updateIsPlaying = useCallback((playing: boolean) => {
     internalIsPlaying.current = playing;
@@ -116,19 +142,14 @@ export function useReplay() {
   }, [seekTime, isPlaying, speed, isMasterPlayer]);
 
   useEffect(() => {
-    const muted = !isMasterPlayer;
-    if (videoRef.current) videoRef.current.muted = muted;
-    if (audioRef.current) audioRef.current.muted = muted;
-  }, [isMasterPlayer]);
+    updateMutedState();
+  }, [updateMutedState]);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.playbackRate = speed;
-    }
-    if (audioRef.current) {
-      audioRef.current.playbackRate = speed;
-    }
-  }, [speed]);
+    getMediaElements().forEach((media) => {
+      media.playbackRate = speed;
+    });
+  }, [getMediaElements, speed]);
 
   const handlePlay = useCallback(() => {
     if (!isMountedRef.current) {
@@ -140,15 +161,11 @@ export function useReplay() {
     const t = replayRef.current?.currentTime || 0;
     emitterRef.current.emit('play', t);
 
-    if (videoRef.current === replayRef.current) {
-      if (audioRef.current) {
-        audioRef.current.muted = true;
-        audioRef.current.play();
-      }
-    } else {
-      videoRef.current?.play();
-    }
-  }, [updateIsPlaying]);
+    updateMutedState();
+    getSecondaryMediaElements().forEach((media) => {
+      media.play().catch(() => undefined);
+    });
+  }, [getSecondaryMediaElements, updateIsPlaying, updateMutedState]);
 
   const handleSeeked = useCallback(() => {
     // Media may clamp a task-level seek to its shorter duration. Keep the task
@@ -160,12 +177,7 @@ export function useReplay() {
     setIsMasterPlayer(!isRemoteTriggered);
     _setSeekTime(time);
     timerValue.current = time;
-    if (videoRef.current) {
-      seekMedia(videoRef.current, time);
-    }
-    if (audioRef.current) {
-      seekMedia(audioRef.current, time);
-    }
+    getMediaElements().forEach((media) => seekMedia(media, time));
     if (
       internalIsPlaying.current
       && replayRef.current?.paused
@@ -175,7 +187,7 @@ export function useReplay() {
     }
     emitterRef.current.emit('timeupdate', time);
     setHasEnded(internalDuration.current > 0 && time >= internalDuration.current);
-  }, [requestReplayPlayback]);
+  }, [getMediaElements, requestReplayPlayback]);
 
   const handlePause = useCallback(() => {
     if (!isMountedRef.current) {
@@ -196,14 +208,8 @@ export function useReplay() {
 
     emitterRef.current.emit('pause', timerValue.current);
 
-    if (videoRef.current === replayRef.current) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-    } else {
-      videoRef.current?.pause();
-    }
-  }, [updateIsPlaying]);
+    getSecondaryMediaElements().forEach((media) => media.pause());
+  }, [getSecondaryMediaElements, updateIsPlaying]);
 
   const handleEnded = useCallback(() => {
     const mediaTime = replayRef.current?.currentTime;
@@ -231,25 +237,21 @@ export function useReplay() {
    */
   const updateReplayRef = useCallback(() => {
     const previousReplay = replayRef.current;
-    const originalVideo = videoRef.current;
-    const originalAudio = audioRef.current;
+    const mediaElements = getMediaElements();
 
     previousReplay?.removeEventListener('play', handlePlay);
     previousReplay?.removeEventListener('pause', handlePause);
     previousReplay?.removeEventListener('seeked', handleSeeked);
     previousReplay?.removeEventListener('ended', handleEnded);
 
-    if (originalVideo) {
-      originalVideo.playbackRate = internalSpeed.current;
-      seekMedia(originalVideo, timerValue.current);
-    }
+    mediaElements.forEach((media) => {
+      media.playbackRate = internalSpeed.current;
+      seekMedia(media, timerValue.current);
+    });
 
-    if (originalAudio) {
-      originalAudio.playbackRate = internalSpeed.current;
-      seekMedia(originalAudio, timerValue.current);
-    }
-
-    replayRef.current = (videoRef.current?.src ? videoRef.current : null) ?? (audioRef.current?.src ? audioRef.current : null);
+    replayRef.current = (videoRef.current?.src ? videoRef.current : null)
+      ?? (webcamVideoRef.current?.src ? webcamVideoRef.current : null)
+      ?? (audioRef.current?.src ? audioRef.current : null);
 
     if (replayRef.current) {
       replayRef.current.addEventListener('play', handlePlay);
@@ -257,8 +259,9 @@ export function useReplay() {
       replayRef.current.addEventListener('seeked', handleSeeked);
       replayRef.current.addEventListener('ended', handleEnded);
     }
+    updateMutedState();
     forceEmitTimeUpdate();
-  }, [handlePlay, handlePause, handleSeeked, handleEnded, forceEmitTimeUpdate]);
+  }, [forceEmitTimeUpdate, getMediaElements, handleEnded, handlePause, handlePlay, handleSeeked, updateMutedState]);
 
   // this should be the only way to start video/audio
   const setIsPlaying = useCallback((playing: boolean, isRemoteTriggered = false) => {
@@ -394,6 +397,8 @@ export function useReplay() {
     () => ({
       replayRef,
       videoRef,
+      screenVideoRef: videoRef,
+      webcamVideoRef,
       audioRef,
       updateReplayRef,
       seekTime,

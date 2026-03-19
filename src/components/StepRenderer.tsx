@@ -66,6 +66,7 @@ export function StepRenderer() {
   const { isRejected: isScreenRecordingUserRejected } = screenRecording;
 
   const analysisHasScreenRecording = useStoreSelector((state) => state.analysisHasScreenRecording);
+  const analysisHasWebcamRecording = useStoreSelector((state) => state.analysisHasWebcamRecording);
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
 
   useEffect(() => {
@@ -161,7 +162,7 @@ export function StepRenderer() {
   const { developmentModeEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
   // No default value for withSidebar since it's a required field in uiConfig
-  const sidebarOpen = useMemo(() => (((analysisHasScreenRecording && analysisCanPlayScreenRecording) || currentComponent === 'end') ? false : (componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar)), [analysisHasScreenRecording, analysisCanPlayScreenRecording, currentComponent, componentConfig.withSidebar, studyConfig.uiConfig.withSidebar]);
+  const sidebarOpen = useMemo(() => ((((analysisHasScreenRecording || analysisHasWebcamRecording) && analysisCanPlayScreenRecording) || currentComponent === 'end') ? false : (componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar)), [analysisHasScreenRecording, analysisHasWebcamRecording, analysisCanPlayScreenRecording, currentComponent, componentConfig.withSidebar, studyConfig.uiConfig.withSidebar]);
   const sidebarWidth = useMemo(() => componentConfig?.sidebarWidth ?? studyConfig.uiConfig.sidebarWidth ?? 300, [componentConfig, studyConfig]);
   const showTitleBar = useMemo(() => componentConfig.showTitleBar ?? studyConfig.uiConfig.showTitleBar ?? true, [componentConfig, studyConfig]);
 

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+  "description": "This library requests webcam and optional microphone permission, then keeps those capture streams active until the end of the study.",
+  "components": {
+    "webcamRecordingPermission": {
+      "description": "Get permission to start webcam recording",
+      "type": "react-component",
+      "path": "libraries/webcam-recording/assets/WebcamRecording.tsx",
+      "nextButtonLocation": "belowStimulus",
+      "nextButtonText": "Continue",
+      "recordAudio": false,
+      "response": [{
+        "hidden": true,
+        "type": "reactive",
+        "id": "webcamRecordingPermission",
+        "prompt": "Webcam recording enabled"
+      }]
+    }
+  },
+  "sequences": {}
+}
