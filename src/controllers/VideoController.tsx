@@ -8,7 +8,6 @@ import { VideoComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
-// eslint-disable-next-line import/no-unresolved, import/extensions -- exported CSS subpath is valid at runtime but not resolved by this ESLint setup
 import 'plyr-react/plyr.css';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';

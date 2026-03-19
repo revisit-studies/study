@@ -2,7 +2,6 @@ import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import react from 'eslint-plugin-react';
 import globals from 'globals';
-// eslint-disable-next-line import/no-unresolved -- This is throwing a false positive
 import tsParser from '@typescript-eslint/parser';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -46,6 +45,9 @@ export default [{
 
   settings: {
     'import/resolver': {
+      typescript: {
+        alwaysTryTypes: true,
+      },
       node: {
         extensions: ['.js', '.jsx', '.ts', '.tsx', '.d.ts'],
       },
@@ -100,7 +102,9 @@ export default [{
     'react/react-in-jsx-scope': 0,
     'max-len': 0,
     'react/jsx-filename-extension': 0,
-    'import/extensions': ['error', 'never'],
+    'import/extensions': ['error', 'never', {
+      json: 'always',
+    }],
     '@typescript-eslint/ban-ts-comment': 'warn',
     'react/destructuring-assignment': 'off',
     'react/jsx-props-no-spreading': 'off',
