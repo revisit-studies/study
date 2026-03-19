@@ -221,13 +221,13 @@ describe('correctAnswer utilities', () => {
       expect(componentAnswersAreCorrect({ q1: 'A', slider1: 11 }, correctAnswers)).toBe(false);
     });
 
-    test('preserves order for custom-response arrays when response definitions are provided', () => {
+    test('preserves order for custom arrays when response definitions are provided', () => {
       const userAnswers = { customSequence: ['B', 'A'] };
       const correctAnswers = [{ id: 'customSequence', answer: ['A', 'B'] }];
       const responses: Response[] = [{
         id: 'customSequence',
         prompt: 'Order the items',
-        type: 'custom-response',
+        type: 'custom',
         path: 'demo-form-elements/assets/CustomResponseCard.tsx',
       }];
 

@@ -571,7 +571,7 @@
     },
     "CustomResponse": {
       "additionalProperties": false,
-      "description": "The CustomResponse interface is used to define the properties of a response rendered by React code in `src/public`. This is useful when built-in response types do not fit the interaction you need, but you still want the response to participate in the standard form, validation, provenance, and answer-saving flow.\n\nUnlike other response assets, the path for a custom response is relative to the `src/public/` folder. Similar to React stimulus components, we suggest creating a folder named `src/public/{studyName}/assets` to house custom response files for a particular study. The React component must be the default export from the file. You may also optionally export a named `validate` function from the same module.\n\nExample: ```json {   \"id\": \"custom-chart-response\",   \"type\": \"custom-response\",   \"prompt\": \"Use the custom response to select a chart and confidence.\",   \"path\": \"my_study/assets/CustomChartResponse.tsx\",   \"parameters\": {     \"chartOptions\": [\"Bar\", \"Line\", \"Scatter\"]   },   \"default\": {     \"chartType\": \"Bar\",     \"confidence\": 70   } } ```",
+      "description": "The CustomResponse interface is used to define the properties of a response rendered by React code in `src/public`. This is useful when built-in response types do not fit the interaction you need, but you still want the response to participate in the standard form, validation, provenance, and answer-saving flow.\n\nUnlike other response assets, the path for a custom response is relative to the `src/public/` folder. Similar to React stimulus components, we suggest creating a folder named `src/public/{studyName}/assets` to house custom response files for a particular study. The React component must be the default export from the file. You may also optionally export a named `validate` function from the same module.\n\nExample: ```json {   \"id\": \"custom-chart-response\",   \"type\": \"custom\",   \"prompt\": \"Use the custom response to select a chart and confidence.\",   \"path\": \"my_study/assets/CustomChartResponse.tsx\",   \"parameters\": {     \"chartOptions\": [\"Bar\", \"Line\", \"Scatter\"]   },   \"default\": {     \"chartType\": \"Bar\",     \"confidence\": 70   } } ```",
       "properties": {
         "default": {
           "$ref": "#/definitions/JsonValue",
@@ -638,7 +638,7 @@
           "type": "string"
         },
         "type": {
-          "const": "custom-response",
+          "const": "custom",
           "type": "string"
         },
         "withDivider": {

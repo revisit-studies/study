@@ -560,12 +560,12 @@
         {
           "id": "custom-response-title",
           "type": "textOnly",
-          "prompt": "# Custom Response\n\nThis page demonstrates a `custom-response` implemented with React code from `src/public`. The widget below writes a structured JSON value into a single response id and contributes its own validation.",
+          "prompt": "# Custom Response\n\nThis page demonstrates a `custom` response implemented with React code from `src/public`. The widget below writes a structured JSON value into a single response id and contributes its own validation.",
           "restartEnumeration": true
         },
         {
           "id": "custom-response-demo",
-          "type": "custom-response",
+          "type": "custom",
           "prompt": "Pick a chart type and set your confidence.",
           "secondaryText": "The answer is stored as an object with `chartType`, `confidence`, and `rationale`.",
           "path": "demo-form-elements/assets/CustomResponseCard.tsx",

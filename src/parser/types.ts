@@ -825,7 +825,7 @@ export interface ReactiveResponse extends BaseResponse {
  * ```json
  * {
  *   "id": "custom-chart-response",
- *   "type": "custom-response",
+ *   "type": "custom",
  *   "prompt": "Use the custom response to select a chart and confidence.",
  *   "path": "my_study/assets/CustomChartResponse.tsx",
  *   "parameters": {
@@ -839,7 +839,7 @@ export interface ReactiveResponse extends BaseResponse {
  * ```
  */
 export interface CustomResponse extends BaseResponse {
-  type: 'custom-response';
+  type: 'custom';
   /** The path to the react component. This should be a relative path from the src/public folder. */
   path: string;
   /** Parameters passed to the custom response component. */

@@ -148,7 +148,7 @@ export function ResponseBlock({
     customResponseValidators,
     customResponseLoadErrors,
   } = useMemo(() => responsesWithDefaults
-    .filter((response): response is Extract<(typeof responsesWithDefaults)[number], { type: 'custom-response' }> => response.type === 'custom-response')
+    .filter((response): response is Extract<(typeof responsesWithDefaults)[number], { type: 'custom' }> => response.type === 'custom')
     .reduce((acc, response) => {
       const customResponseModule = getCustomResponseModule(response);
 
@@ -387,7 +387,7 @@ export function ResponseBlock({
                       otherInput={{
                         ...answerValidator.getInputProps(`${response.id}-other`),
                       }}
-                      field={response.type === 'custom-response'
+                      field={response.type === 'custom'
                         ? {
                           getInputProps: () => answerValidator.getInputProps(response.id),
                           setValue: (value) => answerValidator.setFieldValue(response.id, value),

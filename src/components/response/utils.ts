@@ -170,7 +170,7 @@ export const getDefaultFieldValue = (response: Response) => {
     return Array.isArray(dropdownDefault) ? dropdownDefault[0] ?? '' : dropdownDefault;
   }
 
-  if (response.type === 'custom-response') {
+  if (response.type === 'custom') {
     return responseDefault;
   }
 
@@ -214,7 +214,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         initField = Object.fromEntries(
           response.questionOptions.map((entry) => [parseStringOptionValue(entry), '']),
         );
-      } else if (response.type === 'custom-response') {
+      } else if (response.type === 'custom') {
         initField = null;
       } else if (response.type === 'slider' && response.startingValue) {
         initField = response.startingValue.toString();
@@ -293,11 +293,11 @@ export const generateValidation = (
 ): Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> => {
   let validateObj: Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> = {};
   responses.forEach((response) => {
-    if (response.required || response.type === 'custom-response') {
+    if (response.required || response.type === 'custom') {
       validateObj = {
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
-          if (response.type === 'custom-response') {
+          if (response.type === 'custom') {
             return validateCustomResponse(
               response,
               value,

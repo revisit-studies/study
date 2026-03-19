@@ -29,7 +29,7 @@ function createBaseStudyConfig() {
           {
             id: 'custom-response-demo',
             prompt: 'Custom response prompt',
-            type: 'custom-response',
+            type: 'custom',
             path: 'demo-form-elements/assets/CustomResponseCard.tsx',
             parameters: {
               minimumConfidence: 70,
@@ -49,14 +49,14 @@ function createBaseStudyConfig() {
   };
 }
 
-describe('custom-response parser support', () => {
-  it('accepts custom-response definitions with path, parameters, and defaults', async () => {
+describe('custom parser support', () => {
+  it('accepts custom definitions with path, parameters, and defaults', async () => {
     const parsed = await parseStudyConfig(JSON.stringify(createBaseStudyConfig()));
     const response = parsed.components.customResponsePage.response?.[0];
 
     expect(parsed.errors).toEqual([]);
     expect(response).toMatchObject({
-      type: 'custom-response',
+      type: 'custom',
       path: 'demo-form-elements/assets/CustomResponseCard.tsx',
       parameters: {
         minimumConfidence: 70,
@@ -68,7 +68,7 @@ describe('custom-response parser support', () => {
     });
   });
 
-  it('rejects custom-response definitions without a path', async () => {
+  it('rejects custom definitions without a path', async () => {
     const invalidConfig = createBaseStudyConfig();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (invalidConfig.components.customResponsePage.response[0] as any).path;

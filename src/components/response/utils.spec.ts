@@ -106,7 +106,7 @@ describe('generateInitFields', () => {
       {
         id: 'custom-default',
         prompt: 'Custom response',
-        type: 'custom-response',
+        type: 'custom',
         path: 'demo-form-elements/assets/CustomResponseCard.tsx',
         default: {
           chartType: 'Line',
@@ -136,11 +136,11 @@ describe('generateInitFields', () => {
   });
 });
 
-describe('generateValidation custom-response', () => {
+describe('generateValidation custom', () => {
   const response: CustomResponse = {
     id: 'custom-response-demo',
     prompt: 'Custom response',
-    type: 'custom-response',
+    type: 'custom',
     path: 'custom-response/Example.tsx',
     parameters: {
       minimumConfidence: 70,

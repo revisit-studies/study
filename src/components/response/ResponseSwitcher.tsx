@@ -137,7 +137,7 @@ export function ResponseSwitcher({
       return response.startingValue.toString();
     }
 
-    if (response.type === 'custom-response') {
+    if (response.type === 'custom') {
       return null;
     }
 
@@ -260,7 +260,7 @@ export function ResponseSwitcher({
         enumerateQuestions={enumerateQuestions}
       />
       )}
-      {response.type === 'custom-response' && field && (
+      {response.type === 'custom' && field && (
       <CustomResponseInput
         response={response as CustomResponse}
         disabled={isDisabled || dontKnowChecked}
