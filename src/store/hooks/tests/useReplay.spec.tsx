@@ -289,6 +289,37 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
     expect(result.current.replayRef.current).toBe(audio);
   });
 
+  test('updateReplayRef uses webcam video when no screen recording exists', () => {
+    const { result } = renderHook(() => useReplay());
+    const webcam = makeVideoWithSrc();
+    act(() => {
+      result.current.webcamVideoRef.current = webcam;
+      result.current.updateReplayRef();
+    });
+    expect(result.current.replayRef.current).toBe(webcam);
+    expect(webcam.muted).toBe(true);
+  });
+
+  test('screen playback starts and seeks the webcam recording', () => {
+    const { result } = renderHook(() => useReplay());
+    const screenVideo = makeVideoWithSrc();
+    const webcamVideo = makeVideoWithSrc();
+    webcamVideo.play = vi.fn(async () => {});
+    webcamVideo.pause = vi.fn();
+
+    act(() => {
+      result.current.videoRef.current = screenVideo;
+      result.current.webcamVideoRef.current = webcamVideo;
+      result.current.updateReplayRef();
+      result.current.setSeekTime(4);
+      screenVideo.dispatchEvent(new Event('play'));
+    });
+
+    expect(webcamVideo.currentTime).toBe(4);
+    expect(webcamVideo.play).toHaveBeenCalled();
+    expect(webcamVideo.muted).toBe(true);
+  });
+
   test('updateReplayRef detaches listeners from the previous media element', () => {
     const { result } = renderHook(() => useReplay());
     const originalVideo = makeVideoWithSrc();

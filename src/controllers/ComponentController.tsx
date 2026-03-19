@@ -64,7 +64,7 @@ export function ComponentController() {
 
   const navigate = useNavigate();
 
-  const { studyHasScreenRecording } = useRecordingConfig();
+  const { studyHasScreenRecording, studyHasWebcamRecording } = useRecordingConfig();
 
   const isAnalysis = useIsAnalysis();
 
@@ -297,7 +297,7 @@ export function ComponentController() {
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 
-  if (studyHasScreenRecording && isAnalysis && analysisCanPlayScreenRecording) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
+  if ((studyHasScreenRecording || studyHasWebcamRecording) && isAnalysis && analysisCanPlayScreenRecording) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
 
   return (
     <>

@@ -574,8 +574,10 @@ describe('ComponentController — effect coverage (render-based)', () => {
     vi.mocked(useRecordingConfig).mockReturnValue({
       studyHasScreenRecording: false,
       studyHasAudioRecording: false,
+      studyHasWebcamRecording: false,
       currentComponentHasAudioRecording: false,
       currentComponentHasScreenRecording: false,
+      currentComponentHasWebcamRecording: false,
       currentComponentHasClickToRecord: false,
     });
     vi.mocked(findBlockForStep).mockReturnValue([]);
@@ -708,8 +710,10 @@ describe('ComponentController — effect coverage (render-based)', () => {
     vi.mocked(useRecordingConfig).mockReturnValue({
       studyHasScreenRecording: true,
       studyHasAudioRecording: false,
+      studyHasWebcamRecording: false,
       currentComponentHasAudioRecording: false,
       currentComponentHasScreenRecording: false,
+      currentComponentHasWebcamRecording: false,
       currentComponentHasClickToRecord: false,
     });
     const stableStateCanPlay = makeStableState({ analysisCanPlayScreenRecording: true });

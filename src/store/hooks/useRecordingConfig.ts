@@ -9,11 +9,18 @@ export function useRecordingConfig() {
   const currentComponent = useCurrentComponent();
   const stepConfig = studyConfig.components[currentComponent];
 
-  const { recordScreen, recordAudio, clickToRecord } = studyConfig.uiConfig;
+  const {
+    recordScreen,
+    recordAudio,
+    recordWebcam,
+    clickToRecord,
+  } = studyConfig.uiConfig;
 
   const studyHasScreenRecording = useMemo(() => (recordScreen || participantSequence.some((comp) => studyConfig.components[comp]?.recordScreen)), [participantSequence, studyConfig, recordScreen]);
 
   const studyHasAudioRecording = useMemo(() => (recordAudio || participantSequence.some((comp) => studyConfig.components[comp]?.recordAudio)), [participantSequence, studyConfig, recordAudio]);
+
+  const studyHasWebcamRecording = useMemo(() => (recordWebcam || participantSequence.some((comp) => studyConfig.components[comp]?.recordWebcam)), [participantSequence, studyConfig, recordWebcam]);
 
   const currentComponentHasScreenRecording = useMemo(
     () => stepConfig?.recordScreen ?? !!recordScreen,
@@ -25,6 +32,11 @@ export function useRecordingConfig() {
     [recordAudio, stepConfig],
   );
 
+  const currentComponentHasWebcamRecording = useMemo(
+    () => stepConfig?.recordWebcam ?? !!recordWebcam,
+    [recordWebcam, stepConfig],
+  );
+
   const currentComponentHasClickToRecord = useMemo(
     () => stepConfig?.clickToRecord ?? !!clickToRecord,
     [clickToRecord, stepConfig],
@@ -33,8 +45,10 @@ export function useRecordingConfig() {
   return {
     studyHasAudioRecording,
     studyHasScreenRecording,
+    studyHasWebcamRecording,
     currentComponentHasAudioRecording,
     currentComponentHasScreenRecording,
+    currentComponentHasWebcamRecording,
     currentComponentHasClickToRecord,
   };
 }

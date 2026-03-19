@@ -1094,6 +1094,20 @@ describe.each([
     expect(await storageEngine._getScreenRecordingUrl('missing', 'p1')).toBeNull();
   });
 
+  test('_getWebcamRecordingUrl returns URL when recording exists', async () => {
+    // @ts-expect-error protected
+    const prefix = storageEngine.collectionPrefix;
+    const path = `${prefix}${studyId}/webcamRecording/p1_task2`;
+    storageObjects[path] = 'data';
+    // @ts-expect-error protected
+    expect(await storageEngine._getWebcamRecordingUrl('task2', 'p1')).toContain(path);
+  });
+
+  test('_getWebcamRecordingUrl returns null when recording does not exist', async () => {
+    // @ts-expect-error protected
+    expect(await storageEngine._getWebcamRecordingUrl('missing', 'p1')).toBeNull();
+  });
+
   test('_getTranscriptUrl returns URL when transcript exists', async () => {
     // @ts-expect-error protected
     const prefix = storageEngine.collectionPrefix;

@@ -1,4 +1,6 @@
-import { render, act, cleanup } from '@testing-library/react';
+import {
+  render, act, cleanup, waitFor,
+} from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
@@ -12,7 +14,7 @@ let mockSearchParams = new URLSearchParams();
 let mockUpdateReplayRef = vi.fn();
 let mockIsPlaying = false;
 let mockVideoRef: { current: HTMLVideoElement | null } = { current: null };
-let mockCanPlayScreenRecording = false;
+let mockWebcamVideoRef: { current: HTMLVideoElement | null } = { current: null };
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -22,6 +24,8 @@ vi.mock('react-router', () => ({
 
 vi.mock('@mantine/core', () => ({
   Box: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  Flex: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  Text: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
 }));
 
 vi.mock('../../../storage/storageEngineHooks', () => ({
@@ -30,12 +34,13 @@ vi.mock('../../../storage/storageEngineHooks', () => ({
 
 const mockDispatch = vi.fn();
 const mockSetAnalysisHasScreenRecording = vi.fn();
+const mockSetAnalysisHasWebcamRecording = vi.fn();
 const mockSetAnalysisCanPlayScreenRecording = vi.fn();
 
 vi.mock('../../../store/store', () => ({
-  useStoreSelector: () => mockCanPlayScreenRecording,
   useStoreActions: () => ({
     setAnalysisHasScreenRecording: mockSetAnalysisHasScreenRecording,
+    setAnalysisHasWebcamRecording: mockSetAnalysisHasWebcamRecording,
     setAnalysisCanPlayScreenRecording: mockSetAnalysisCanPlayScreenRecording,
   }),
   useStoreDispatch: () => mockDispatch,
@@ -51,7 +56,8 @@ vi.mock('../../../store/hooks/useIsAnalysis', () => ({
 
 vi.mock('../../../store/hooks/useReplay', () => ({
   useReplayContext: () => ({
-    videoRef: mockVideoRef,
+    screenVideoRef: mockVideoRef,
+    webcamVideoRef: mockWebcamVideoRef,
     updateReplayRef: mockUpdateReplayRef,
     isPlaying: mockIsPlaying,
   }),
@@ -67,7 +73,7 @@ describe('ScreenRecordingReplay', () => {
     mockUpdateReplayRef = vi.fn();
     mockIsPlaying = false;
     mockVideoRef = { current: null };
-    mockCanPlayScreenRecording = false;
+    mockWebcamVideoRef = { current: null };
     mockDispatch.mockClear();
   });
 
@@ -78,9 +84,9 @@ describe('ScreenRecordingReplay', () => {
     expect(container).toBeDefined();
   });
 
-  test('does not render video when analysisCanPlayScreenRecording is false', async () => {
+  test('keeps both video elements mounted for asynchronous URL loading', async () => {
     const { container } = await act(async () => render(<ScreenRecordingReplay />));
-    expect(container.querySelector('video')).toBeNull();
+    expect(container.querySelectorAll('video')).toHaveLength(2);
   });
 
   test('dispatches store actions on mount when not in analysis mode', async () => {
@@ -101,6 +107,7 @@ describe('ScreenRecordingReplay', () => {
     mockIsAnalysis = true;
     mockStorageEngine = {
       getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getWebcamRecording: vi.fn().mockResolvedValue(null),
     };
     mockSearchParams = new URLSearchParams({ participantId: 'p1' });
     await act(async () => { render(<ScreenRecordingReplay />); });
@@ -115,23 +122,29 @@ describe('ScreenRecordingReplay', () => {
     mockIsAnalysis = true;
     mockStorageEngine = {
       getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getWebcamRecording: vi.fn().mockResolvedValue(null),
     };
     mockSearchParams = new URLSearchParams({ participantId: 'p1' });
-    const mockVideo = { preload: '', src: '' } as Pick<HTMLVideoElement, 'preload' | 'src'> as HTMLVideoElement;
-    mockVideoRef = { current: mockVideo };
-    await act(async () => { render(<ScreenRecordingReplay />); });
-    expect(mockVideo.src).toBe('http://example.com/video.mp4');
+    const { container } = await act(async () => render(<ScreenRecordingReplay />));
+    const screenVideo = container.querySelectorAll('video')[0];
+    await waitFor(() => expect(screenVideo.src).toBe('http://example.com/video.mp4'));
     expect(mockUpdateReplayRef).toHaveBeenCalled();
   });
 
-  test('renders video element when analysisCanPlayScreenRecording is true', async () => {
-    mockCanPlayScreenRecording = true;
+  test('loads a webcam recording when no screen recording exists', async () => {
+    mockIsAnalysis = true;
+    mockStorageEngine = {
+      getScreenRecording: vi.fn().mockResolvedValue(null),
+      getWebcamRecording: vi.fn().mockResolvedValue('http://example.com/webcam.webm'),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
     const { container } = await act(async () => render(<ScreenRecordingReplay />));
-    expect(container.querySelector('video')).not.toBeNull();
+    const webcamVideo = container.querySelectorAll('video')[1];
+    await waitFor(() => expect(webcamVideo.src).toBe('http://example.com/webcam.webm'));
+    expect(mockDispatch).toHaveBeenCalledWith(mockSetAnalysisHasWebcamRecording(true));
   });
 
   test('video border is grey when isPlaying is true', async () => {
-    mockCanPlayScreenRecording = true;
     mockIsPlaying = true;
     const { container } = await act(async () => render(<ScreenRecordingReplay />));
     const video = container.querySelector('video');

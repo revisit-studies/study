@@ -232,7 +232,7 @@ vi.mock('lodash.debounce', () => ({ default: (fn: (...args: never[]) => void) =>
 vi.mock('../../../../components/audioAnalysis/AudioProvenanceVis', () => ({ AudioProvenanceVis: () => <div data-testid="audio-provenance-vis" /> }));
 vi.mock('../../../../utils/encryptDecryptIndex', () => ({ encryptIndex: (i: number) => String(i) }));
 vi.mock('../../../../utils/Prefix', () => ({ PREFIX: '/' }));
-vi.mock('../../../../utils/handleDownloadFiles', () => ({ handleTaskAudio: vi.fn(), handleTaskScreenRecording: vi.fn() }));
+vi.mock('../../../../utils/handleDownloadFiles', () => ({ handleTaskAudio: vi.fn(), handleTaskRecordings: vi.fn() }));
 vi.mock('../../ParticipantRejectModal', () => ({ ParticipantRejectModal: () => null }));
 vi.mock('../../../../components/audioAnalysis/provenanceColors', () => ({ buildProvenanceLegendEntries: vi.fn(() => []) }));
 vi.mock('../../../../utils/syncReplay', () => ({ revisitPageId: 'test-page-id', syncChannel: { postMessage: vi.fn() } }));
@@ -547,6 +547,7 @@ const footerDefaultProps = {
 const mockFooterStorageEngine = {
   getAudioUrl: vi.fn().mockResolvedValue('http://test/audio.mp3'),
   getScreenRecording: vi.fn().mockResolvedValue('http://test/video.mp4'),
+  getWebcamRecording: vi.fn().mockResolvedValue(null),
   saveTags: vi.fn().mockResolvedValue(undefined),
   getTags: vi.fn().mockResolvedValue([]),
   getAllParticipantAndTaskTags: vi.fn().mockResolvedValue(null),
