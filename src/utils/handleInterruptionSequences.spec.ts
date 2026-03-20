@@ -87,7 +87,61 @@ describe('handleInterruptionSequences', () => {
         .map(({ index }) => index);
 
       expect(interruptionIndices).toHaveLength(2);
+      expect(sequence.components[0]).not.toBe('brk');
       expect(sequence.components[sequence.components.length - 1]).toBe('end');
+    });
+  });
+
+  test('does not place random interruptions first or back to back across groups', () => {
+    const config: StudyConfig = {
+      ...createBaseConfig(),
+      uiConfig: {
+        ...createBaseConfig().uiConfig,
+        numSequences: 500,
+      },
+      components: {
+        a: { type: 'questionnaire', response: [] },
+        b: { type: 'questionnaire', response: [] },
+        c: { type: 'questionnaire', response: [] },
+        d: { type: 'questionnaire', response: [] },
+        e: { type: 'questionnaire', response: [] },
+        f: { type: 'questionnaire', response: [] },
+        g: { type: 'questionnaire', response: [] },
+        h: { type: 'questionnaire', response: [] },
+        low: { type: 'questionnaire', response: [] },
+        high: { type: 'questionnaire', response: [] },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
+        interruptions: [
+          {
+            spacing: 'random',
+            numInterruptions: 1,
+            components: ['low'],
+          },
+          {
+            spacing: 'random',
+            numInterruptions: 1,
+            components: ['high'],
+          },
+        ],
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(config);
+    sequenceArray.forEach((sequence) => {
+      expect(sequence.components[0]).not.toBe('low');
+      expect(sequence.components[0]).not.toBe('high');
+
+      for (let i = 0; i < sequence.components.length - 1; i += 1) {
+        const current = sequence.components[i];
+        const next = sequence.components[i + 1];
+        const currentIsInterruption = current === 'low' || current === 'high';
+        const nextIsInterruption = next === 'low' || next === 'high';
+
+        expect(currentIsInterruption && nextIsInterruption).toBe(false);
+      }
     });
   });
 
