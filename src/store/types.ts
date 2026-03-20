@@ -161,6 +161,7 @@ export interface Sequence {
 }
 
 export type FormElementProvenance = { form: StoredAnswer['answer'] };
+export type AlertModalState = { show: boolean, message: string, title: string };
 export interface StoreState {
   studyId: string;
   participantId: string;
@@ -169,7 +170,7 @@ export interface StoreState {
   config: StudyConfig;
   showStudyBrowser: boolean;
   showHelpText: boolean;
-  alertModal: { show: boolean, message: string, title: string };
+  alertModal: AlertModalState;
   trialValidation: TrialValidation;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;

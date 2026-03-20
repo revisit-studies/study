@@ -32,11 +32,17 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
 import { hash } from '../storage/engines/utils';
+import { REVISIT_MODE } from '../storage/engines/types';
 import {
   filterSequenceByCondition,
   parseConditionParam,
   resolveParticipantConditions,
 } from '../utils/handleConditionLogic';
+import {
+  getInitialStartupAlert,
+  getScreenOrientationType,
+  isStorageStartupFailure,
+} from './Shell.utils';
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
@@ -93,6 +99,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
       if (!storageEngine || !activeConfig || !canonicalStudyId) return;
 
+      let modes: Record<REVISIT_MODE, boolean> | null = null;
       try {
         // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(canonicalStudyId);
@@ -105,7 +112,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           );
         }
 
-        const modes = await storageEngine.getModes(canonicalStudyId);
+        modes = await storageEngine.getModes(canonicalStudyId);
 
         // Get or generate participant session
         const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
@@ -131,7 +138,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             availHeight: window.screen.availHeight,
             availWidth: window.screen.availWidth,
             colorDepth: window.screen.colorDepth,
-            orientation: window.screen.orientation.type,
+            orientation: getScreenOrientationType(window.screen),
             pixelDepth: window.screen.pixelDepth,
           },
           ip: ip.ip,
@@ -188,6 +195,23 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         setStore(newStore);
       } catch (error) {
         console.error('Error initializing user store routing:', error);
+        const isStorageFailure = isStorageStartupFailure(storageEngine, import.meta.env.VITE_STORAGE_ENGINE);
+        const resolvedModes = modes ?? await storageEngine.getModes(canonicalStudyId).catch(() => null);
+        const developmentModeEnabledForAlert = resolvedModes?.developmentModeEnabled ?? false;
+        const fallbackModes = {
+          developmentModeEnabled: resolvedModes?.developmentModeEnabled ?? true,
+          dataSharingEnabled: resolvedModes?.dataSharingEnabled ?? true,
+          dataCollectionEnabled: false,
+        };
+        const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
+          ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
+          || undefined
+          : undefined;
+        const resumeParticipantId = participantId || urlParticipantId;
+        const initialAlertModal = !isStorageFailure
+          ? getInitialStartupAlert(error, developmentModeEnabledForAlert, resumeParticipantId)
+          : undefined;
+
         // Fallback: initialize the store with empty data
         const generatedSequences = generateSequenceArray(activeConfig);
         const matchingSequence = generatedSequences[0];
@@ -215,10 +239,12 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             ip: '',
           },
           {},
-          { developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: false },
+          fallbackModes,
           '',
           false,
-          true,
+          isStorageFailure,
+          false,
+          initialAlertModal,
         );
         setStore(emptyStore);
       }
