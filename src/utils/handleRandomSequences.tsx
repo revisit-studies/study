@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-unresolved
 import latinSquare from '@quentinroy/latin-square';
 import isEqual from 'lodash.isequal';
 import { ComponentBlock, DynamicBlock, StudyConfig } from '../parser/types';
