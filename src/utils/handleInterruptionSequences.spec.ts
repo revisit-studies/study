@@ -145,6 +145,82 @@ describe('handleInterruptionSequences', () => {
     });
   });
 
+  test('fills every possible random interruption slot across groups when all slots are requested', () => {
+    const config: StudyConfig = {
+      ...createBaseConfig(),
+      components: {
+        a: { type: 'questionnaire', response: [] },
+        b: { type: 'questionnaire', response: [] },
+        c: { type: 'questionnaire', response: [] },
+        d: { type: 'questionnaire', response: [] },
+        low: { type: 'questionnaire', response: [] },
+        high: { type: 'questionnaire', response: [] },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['a', 'b', 'c', 'd'],
+        interruptions: [
+          {
+            spacing: 'random',
+            numInterruptions: 1,
+            components: ['low'],
+          },
+          {
+            spacing: 'random',
+            numInterruptions: 2,
+            components: ['high'],
+          },
+        ],
+      },
+    };
+
+    const [sequence] = generateSequenceArray(config);
+
+    expect(sequence.components).toHaveLength(8);
+    expect(sequence.components[0]).toBe('a');
+    expect(sequence.components[2]).toBe('b');
+    expect(sequence.components[4]).toBe('c');
+    expect(sequence.components[6]).toBe('d');
+    expect(sequence.components[7]).toBe('end');
+    expect(['low', 'high']).toContain(sequence.components[1]);
+    expect(['low', 'high']).toContain(sequence.components[3]);
+    expect(['low', 'high']).toContain(sequence.components[5]);
+    expect(sequence.components.filter((component) => component === 'low')).toHaveLength(1);
+    expect(sequence.components.filter((component) => component === 'high')).toHaveLength(2);
+  });
+
+  test('throws when grouped random interruptions request more slots than available', () => {
+    const config: StudyConfig = {
+      ...createBaseConfig(),
+      components: {
+        a: { type: 'questionnaire', response: [] },
+        b: { type: 'questionnaire', response: [] },
+        c: { type: 'questionnaire', response: [] },
+        d: { type: 'questionnaire', response: [] },
+        low: { type: 'questionnaire', response: [] },
+        high: { type: 'questionnaire', response: [] },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['a', 'b', 'c', 'd'],
+        interruptions: [
+          {
+            spacing: 'random',
+            numInterruptions: 2,
+            components: ['low'],
+          },
+          {
+            spacing: 'random',
+            numInterruptions: 2,
+            components: ['high'],
+          },
+        ],
+      },
+    };
+
+    expect(() => generateSequenceArray(config)).toThrow('Number of interruptions cannot be greater than the number of available interruption slots');
+  });
+
   test('throws when random interruptions exceed allowed maximum', () => {
     const config: StudyConfig = {
       ...createBaseConfig(),
@@ -166,6 +242,6 @@ describe('handleInterruptionSequences', () => {
       },
     };
 
-    expect(() => generateSequenceArray(config)).toThrow('Number of interruptions cannot be greater than the number of components');
+    expect(() => generateSequenceArray(config)).toThrow('Number of interruptions cannot be greater than the number of available interruption slots');
   });
 });

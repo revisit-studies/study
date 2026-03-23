@@ -96,7 +96,7 @@ function insertRandomInterruptions(
     .reduce((count, interruption) => count + interruption.numInterruptions, 0);
 
   if (totalInterruptions > components.length - 1) {
-    throw new Error('Number of interruptions cannot be greater than the number of components');
+    throw new Error('Number of interruptions cannot be greater than the number of available interruption slots');
   }
 
   const availableLocations = Array.from(
@@ -111,7 +111,7 @@ function insertRandomInterruptions(
       const randomLocation = availableLocations.pop();
 
       if (randomLocation === undefined) {
-        throw new Error('Number of interruptions cannot be greater than the number of components');
+        throw new Error('Number of interruptions cannot be greater than the number of available interruption slots');
       }
 
       const interruptionsAtLocation = interruptionsByLocation.get(randomLocation) || [];
