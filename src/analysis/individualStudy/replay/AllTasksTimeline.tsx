@@ -9,6 +9,7 @@ import { SingleTask } from './SingleTask';
 import { StoredAnswer, StudyConfig } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 import { parseConditionParam } from '../../../utils/handleConditionLogic';
+import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
@@ -114,6 +115,10 @@ export function AllTasksTimeline({
       const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
       const hasCorrect = !!((component && component.correctAnswer) || answer.correctAnswer.length > 0);
 
+      const individualComponent = component && studyConfig ? studyComponentToIndividualComponent(component, studyConfig) : null;
+      const globalRecordAudio = studyConfig?.uiConfig.recordAudio ?? false;
+      const hasAudio = individualComponent?.recordAudio ?? globalRecordAudio;
+
       return {
         line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} xScale={scale} scaleStart={scaleStart} />,
         label: (
@@ -141,7 +146,7 @@ export function AllTasksTimeline({
             )}
           >
             <g>
-              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} />
+              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} hasAudio={hasAudio} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} />
             </g>
           </Tooltip>),
       };

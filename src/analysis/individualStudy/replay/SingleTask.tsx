@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 
 import { useResizeObserver } from '@mantine/hooks';
 import {
-  IconCheck, IconProgress, IconX,
+  IconCheck, IconMicrophone, IconProgress, IconX,
 } from '@tabler/icons-react';
 import { useNavigateToTrial } from '../../../utils/useNavigateToTrial';
 
@@ -22,6 +22,7 @@ export function SingleTask({
   labelHeight = 0,
   isCorrect,
   hasCorrect,
+  hasAudio,
   scaleStart,
   scaleEnd,
   incomplete,
@@ -36,6 +37,7 @@ export function SingleTask({
   labelHeight?: number,
   isCorrect: boolean,
   hasCorrect: boolean,
+  hasAudio: boolean,
   scaleStart: number,
   scaleEnd: number,
   incomplete: boolean,
@@ -64,7 +66,7 @@ export function SingleTask({
         rx={3}
         opacity={1}
         x={xScale(scaleStart) - LABEL_MARGIN}
-        width={labelWidth + LABEL_MARGIN * 2 + (hasCorrect ? HAS_CORRECT_MARGIN : 0)}
+        width={labelWidth + LABEL_MARGIN * 2 + (hasCorrect ? HAS_CORRECT_MARGIN : 0) + (hasAudio ? HAS_CORRECT_MARGIN : 0)}
         y={height - TIMELINE_HEIGHT - LABEL_DISTANCE - labelHeight}
         height={LABEL_HEIGHT}
         fill="whitesmoke"
@@ -73,13 +75,13 @@ export function SingleTask({
         stroke="black"
         strokeWidth={1}
         x1={xScale(scaleStart) - LABEL_MARGIN}
-        x2={labelWidth + xScale(scaleStart) + LABEL_MARGIN + (hasCorrect ? HAS_CORRECT_MARGIN : 0)}
+        x2={labelWidth + xScale(scaleStart) + LABEL_MARGIN + (hasCorrect ? HAS_CORRECT_MARGIN : 0) + (hasAudio ? HAS_CORRECT_MARGIN : 0)}
         y1={height - TIMELINE_HEIGHT - LABEL_DISTANCE + LABEL_HEIGHT - labelHeight}
         y2={height - TIMELINE_HEIGHT - LABEL_DISTANCE + LABEL_HEIGHT - labelHeight}
       />
       <foreignObject
         x={xScale(scaleStart)}
-        width={labelWidth + (hasCorrect ? HAS_CORRECT_MARGIN : 0)}
+        width={labelWidth + (hasCorrect ? HAS_CORRECT_MARGIN : 0) + (hasAudio ? HAS_CORRECT_MARGIN : 0)}
         y={height - TIMELINE_HEIGHT - LABEL_DISTANCE - labelHeight}
         height={LABEL_HEIGHT}
       >
@@ -88,6 +90,12 @@ export function SingleTask({
             <Text lineClamp={1} ref={ref} mx={0} style={{ width: 'fit-content', fontWeight: 600 }} size="12px">
               {name}
             </Text>
+            {hasAudio && (
+              <IconMicrophone
+                color="orange"
+                size="14"
+              />
+            )}
             {(incomplete ? (
               <IconProgress
                 color="orange"
