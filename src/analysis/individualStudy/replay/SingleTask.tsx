@@ -13,7 +13,8 @@ const TIMELINE_HEIGHT = 25;
 const LABEL_DISTANCE = 25;
 const LABEL_HEIGHT = 20;
 const TASK_GAP = 1;
-const ICON_MARGIN = 15;
+const ICON_SIZE = 14;
+const ICON_GAP = 2;
 
 export function SingleTask({
   xScale,
@@ -52,7 +53,7 @@ export function SingleTask({
 
   const navigateToTrial = useNavigateToTrial();
   const iconCount = (incomplete || hasCorrect ? 1 : 0) + (hasAudio ? 1 : 0);
-  const iconsWidth = iconCount * ICON_MARGIN;
+  const iconsWidth = iconCount * (ICON_SIZE + ICON_GAP);
 
   return (
     <g onClick={() => navigateToTrial(trialOrder, participantId, studyId, condition)} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)} style={{ cursor: 'pointer' }}>
