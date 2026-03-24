@@ -13,7 +13,7 @@ const TIMELINE_HEIGHT = 25;
 const LABEL_DISTANCE = 25;
 const LABEL_HEIGHT = 20;
 const TASK_GAP = 1;
-const HAS_CORRECT_MARGIN = 15;
+const ICON_MARGIN = 15;
 
 export function SingleTask({
   xScale,
@@ -51,6 +51,8 @@ export function SingleTask({
   const [ref, { width: labelWidth }] = useResizeObserver();
 
   const navigateToTrial = useNavigateToTrial();
+  const iconCount = (incomplete || hasCorrect ? 1 : 0) + (hasAudio ? 1 : 0);
+  const iconsWidth = iconCount * ICON_MARGIN;
 
   return (
     <g onClick={() => navigateToTrial(trialOrder, participantId, studyId, condition)} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)} style={{ cursor: 'pointer' }}>
@@ -66,7 +68,7 @@ export function SingleTask({
         rx={3}
         opacity={1}
         x={xScale(scaleStart) - LABEL_MARGIN}
-        width={labelWidth + LABEL_MARGIN * 2 + (hasCorrect ? HAS_CORRECT_MARGIN : 0) + (hasAudio ? HAS_CORRECT_MARGIN : 0)}
+        width={labelWidth + LABEL_MARGIN * 2 + iconsWidth}
         y={height - TIMELINE_HEIGHT - LABEL_DISTANCE - labelHeight}
         height={LABEL_HEIGHT}
         fill="whitesmoke"
@@ -75,13 +77,13 @@ export function SingleTask({
         stroke="black"
         strokeWidth={1}
         x1={xScale(scaleStart) - LABEL_MARGIN}
-        x2={labelWidth + xScale(scaleStart) + LABEL_MARGIN + (hasCorrect ? HAS_CORRECT_MARGIN : 0) + (hasAudio ? HAS_CORRECT_MARGIN : 0)}
+        x2={labelWidth + xScale(scaleStart) + LABEL_MARGIN + iconsWidth}
         y1={height - TIMELINE_HEIGHT - LABEL_DISTANCE + LABEL_HEIGHT - labelHeight}
         y2={height - TIMELINE_HEIGHT - LABEL_DISTANCE + LABEL_HEIGHT - labelHeight}
       />
       <foreignObject
         x={xScale(scaleStart)}
-        width={labelWidth + (hasCorrect ? HAS_CORRECT_MARGIN : 0) + (hasAudio ? HAS_CORRECT_MARGIN : 0)}
+        width={labelWidth + iconsWidth}
         y={height - TIMELINE_HEIGHT - LABEL_DISTANCE - labelHeight}
         height={LABEL_HEIGHT}
       >
