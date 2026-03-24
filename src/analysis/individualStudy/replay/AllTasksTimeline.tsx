@@ -94,18 +94,19 @@ export function AllTasksTimeline({
     const { participantId, answers } = participantData;
     const taskNames = Object.keys(answers || {});
     if (storageEngine && taskNames.length > 0) {
-      taskNames.forEach(async (taskName) => {
-        try {
-          const url = await storageEngine.getAudioUrl(taskName, participantId);
-          if (!participantUnloaded) {
-            setAudioAvailableMap((prev) => ({ ...prev, [taskName]: url !== null }));
-          }
-        } catch {
-          if (!participantUnloaded) {
-            setAudioAvailableMap((prev) => ({ ...prev, [taskName]: false }));
-          }
-        }
-      });
+      (async () => {
+        const entries = await Promise.all(
+          taskNames.map(async (taskName) => {
+            try {
+              const url = await storageEngine.getAudioUrl(taskName, participantId);
+              return [taskName, url !== null] as const;
+            } catch {
+              return [taskName, false] as const;
+            }
+          }),
+        );
+        if (!participantUnloaded) setAudioAvailableMap(Object.fromEntries(entries));
+      })();
     }
 
     return () => { participantUnloaded = true; };
