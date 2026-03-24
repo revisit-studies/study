@@ -88,21 +88,28 @@ export function AllTasksTimeline({
   useEffect(() => {
     let participantUnloaded = false;
 
-    const taskNames = Object.keys(participantData.answers || {});
+    // Clear any previous participant's audio availability before starting new checks
+    setAudioAvailableMap({});
+
+    const { participantId, answers } = participantData;
+    const taskNames = Object.keys(answers || {});
     if (storageEngine && taskNames.length > 0) {
-      const { participantId } = participantData;
       taskNames.forEach(async (taskName) => {
         try {
           const url = await storageEngine.getAudioUrl(taskName, participantId);
-          if (!participantUnloaded) setAudioAvailableMap((prev) => ({ ...prev, [taskName]: url !== null }));
+          if (!participantUnloaded) {
+            setAudioAvailableMap((prev) => ({ ...prev, [taskName]: url !== null }));
+          }
         } catch {
-          if (!participantUnloaded) setAudioAvailableMap((prev) => ({ ...prev, [taskName]: false }));
+          if (!participantUnloaded) {
+            setAudioAvailableMap((prev) => ({ ...prev, [taskName]: false }));
+          }
         }
       });
     }
 
     return () => { participantUnloaded = true; };
-  }, [storageEngine, participantData]);
+  }, [storageEngine, participantData.participantId, participantData.answers]);
 
   // Creating labels for the tasks
   const tasks: { line: JSX.Element, label: JSX.Element }[] = useMemo(() => {
