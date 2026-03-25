@@ -21,7 +21,7 @@ import {
 
 import { NextButton } from '../NextButton';
 import {
-  generateInitFields, mergeReactiveAnswers, useAnswerField, usesStandaloneDontKnowField,
+  generateInitFields, requiredAnswerIsEmpty, mergeReactiveAnswers, useAnswerField, usesStandaloneDontKnowField,
 } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
@@ -328,11 +328,7 @@ export function ResponseBlock({
       if (!response.required) return false;
       // If the response uses a standalone "Don't Know" field and that field is checked, we consider the question answered
       if (usesStandaloneDontKnowField(response) && answerValidator.values[`${response.id}-dontKnow`]) return false;
-      const value = answerValidator.values[response.id];
-      if (value === null || value === undefined || value === '') return true;
-      if (Array.isArray(value) && value.length === 0) return true;
-      if (typeof value === 'object' && !Array.isArray(value) && Object.values(value as Record<string, unknown>).some((v) => v === '')) return true;
-      return false;
+      return requiredAnswerIsEmpty(answerValidator.values[response.id]);
     }).length;
   }, [showUnanswered, responsesWithDefaults, answerValidator.values]);
 

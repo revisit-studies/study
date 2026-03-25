@@ -11,6 +11,14 @@ type ResponseWithDefault = Response & { default?: ResponseDefault };
 
 export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
 
+// Function for highlighting unanswered required questions
+export function requiredAnswerIsEmpty(value: string | number | boolean | string[] | Record<string, unknown> | null | undefined): boolean {
+  if (value === null || value === undefined || value === '') return true;
+  if (Array.isArray(value) && value.length === 0) return true;
+  if (typeof value === 'object' && !Array.isArray(value) && Object.values(value as Record<string, unknown>).some((v) => v === '')) return true;
+  return false;
+}
+
 export function normalizeCheckboxDontKnowValue(value: string[]) {
   return value.includes(DONT_KNOW_DEFAULT_VALUE) ? [] : value;
 }
@@ -343,10 +351,7 @@ export function generateErrorMessage(
 
   // If no existing error was found and the field is required and unanswered, show a prompt when showUnanswered is true
   if (!error && showUnanswered && response.required) {
-    const isEmpty = answer.value === null || answer.value === undefined || answer.value === ''
-      || (Array.isArray(answer.value) && answer.value.length === 0)
-      || (typeof answer.value === 'object' && !Array.isArray(answer.value) && Object.values(answer.value).some((v) => v === ''));
-    if (isEmpty) {
+    if (requiredAnswerIsEmpty(answer.value)) {
       error = 'Please answer this question to continue.';
     }
   }

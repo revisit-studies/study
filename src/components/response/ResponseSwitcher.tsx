@@ -26,7 +26,7 @@ import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue } from '../../utils/stringOptions';
-import { getDefaultFieldValue, usesStandaloneDontKnowField } from './utils';
+import { getDefaultFieldValue, requiredAnswerIsEmpty, usesStandaloneDontKnowField } from './utils';
 
 export function ResponseSwitcher({
   response,
@@ -145,10 +145,7 @@ export function ResponseSwitcher({
   const isUnansweredRequired = useMemo(() => {
     if (!showUnanswered || !response.required || dontKnowChecked) return false;
     const value = (ans as { value?: StoredAnswer['answer'][string] }).value;
-    if (value === null || value === undefined || value === '') return true;
-    if (Array.isArray(value) && value.length === 0) return true;
-    if (typeof value === 'object' && !Array.isArray(value) && Object.values(value as Record<string, unknown>).some((v) => v === '')) return true;
-    return false;
+    return requiredAnswerIsEmpty(value);
   }, [showUnanswered, response.required, dontKnowChecked, ans]);
 
   const highlightStyle = isUnansweredRequired ? {
