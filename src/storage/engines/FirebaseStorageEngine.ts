@@ -448,6 +448,62 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
+  /**
+   * Lists all mic-user-study audio clips stored under:
+   * `/<prefix><studyId>/audio/<participantId>_*_mic-user-study/<clipName>`
+   *
+   * The console UI shows these as folders under `audio/`, each containing multiple audio clips.
+   */
+  override async getQuestionMicFiles(task: string, participantId: string): Promise<Array<{ name: string; url: string }>> {
+    const storage = getStorage();
+    const otherPrefix = this.collectionPrefix === 'dev-' ? 'prod-' : 'dev-';
+    const prefixes = [this.collectionPrefix, otherPrefix];
+
+    // Normalize for matching across separators/case (e.g. "B0-obscured_1" vs "obscured_1")
+    const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const taskNeedle = normalize(task);
+
+    // Look for the directory under `audio/` that matches this participant + trial + mic-user-study
+    let matchingDirPath: string | null = null;
+    if (!this.studyId) return [];
+    try {
+      const rootAttempts = prefixes.map(async (prefix) => {
+        const audioRoot = ref(storage, `${prefix}${this.studyId}/audio`);
+        const rootListing = await listAll(audioRoot);
+        const match = rootListing.prefixes.find((p) => {
+          const { name } = p;
+          if (!name.includes('mic-user-study')) return false;
+          if (!name.startsWith(participantId)) return false;
+          return normalize(name).includes(taskNeedle);
+        });
+        return match?.fullPath ?? null;
+      });
+      matchingDirPath = await Promise.any(
+        rootAttempts.map((p) => p.then((v) => (v ?? Promise.reject()))),
+      );
+    } catch {
+      matchingDirPath = null;
+    }
+
+    if (!matchingDirPath) {
+      return [];
+    }
+
+    try {
+      const listing = await listAll(ref(storage, matchingDirPath));
+      const audioItems = listing.items
+        .filter((item) => !item.name.endsWith('.wav_transcription.txt'));
+
+      const urls = await Promise.all(
+        audioItems.map(async (item) => ({ name: item.name, url: await getDownloadURL(item) })),
+      );
+
+      return urls.sort((a, b) => a.name.localeCompare(b.name));
+    } catch {
+      return [];
+    }
+  }
+
   protected async _testingReset() {
     throw new Error('Testing reset not implemented for FirebaseStorageEngine');
   }

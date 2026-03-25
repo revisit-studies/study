@@ -85,10 +85,19 @@ export function ThinkAloudFooter({
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [screenRecordingUrl, setScreenRecordingUrl] = useState<string | null>(null);
 
+  // New: question-level mic audio (separate from stimulus/task audio)
+  const [questionMicFiles, setQuestionMicFiles] = useState<Array<{ name: string; url: string }>>([]);
+  const [selectedQuestionMicFileName, setSelectedQuestionMicFileName] = useState<string | null>(null);
+  const [questionMicLoading, setQuestionMicLoading] = useState(false);
+
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchAssetsUrl() {
       if (!storageEngine || !participantId || !currentTrial) {
         setAudioUrl(null);
+        setQuestionMicFiles([]);
+        setSelectedQuestionMicFileName(null);
         return;
       }
 
@@ -97,6 +106,20 @@ export function ThinkAloudFooter({
         setAudioUrl(url);
       } catch {
         setAudioUrl(null);
+      }
+
+      setQuestionMicLoading(true);
+      try {
+        // This matches your Firebase layout: `audio/<participantId>_*_mic-user-study/<clipName>`
+        const files = await storageEngine.getQuestionMicFiles(currentTrial, participantId);
+        if (cancelled) return;
+        setQuestionMicFiles(files);
+        setSelectedQuestionMicFileName((prev) => {
+          if (prev && files.some((f) => f.name === prev)) return prev;
+          return files[0]?.name ?? null;
+        });
+      } finally {
+        if (!cancelled) setQuestionMicLoading(false);
       }
 
       try {
@@ -108,7 +131,12 @@ export function ThinkAloudFooter({
     }
 
     fetchAssetsUrl();
+    return () => { cancelled = true; };
   }, [storageEngine, participantId, currentTrial]);
+
+  const selectedQuestionMicFileUrl = useMemo(() => (
+    questionMicFiles.find((f) => f.name === selectedQuestionMicFileName)?.url ?? null
+  ), [questionMicFiles, selectedQuestionMicFileName]);
 
   const handleDownloadAudio = useCallback(async () => {
     if (!storageEngine || !participantId || !currentTrial) {
@@ -457,6 +485,30 @@ export function ThinkAloudFooter({
               </ActionIcon>
             </Tooltip>
             )}
+            <Stack gap={2} style={{ maxWidth: 260 }}>
+              <Text size="xs" c="dimmed">Question mic clips</Text>
+              {questionMicLoading && <Text size="xs" c="dimmed">Loading…</Text>}
+              {!questionMicLoading && questionMicFiles.length === 0 && (
+                <Text size="xs" c="dimmed">No question mic clips found.</Text>
+              )}
+              {questionMicFiles.length > 0 && (
+                <Select
+                  size="xs"
+                  value={selectedQuestionMicFileName}
+                  onChange={(v) => setSelectedQuestionMicFileName(v)}
+                  data={questionMicFiles.map((f) => ({ value: f.name, label: f.name }))}
+                  searchable
+                />
+              )}
+              {selectedQuestionMicFileUrl && (
+                <audio
+                  controls
+                  src={selectedQuestionMicFileUrl}
+                  controlsList="nodownload"
+                  style={{ width: 240 }}
+                />
+              )}
+            </Stack>
             {screenRecordingUrl && (
             <Tooltip label="Download screen recording">
               <ActionIcon variant="filled" size={30} onClick={handleDownloadScreenRecording}>

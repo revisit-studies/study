@@ -85,6 +85,48 @@ async function downloadZip(zip: JSZip, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
+async function fetchBlobFromUrl(url: string | null | undefined): Promise<Blob | null> {
+  if (!url) return null;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.warn(`Failed to fetch asset from ${url}: ${res.status} ${res.statusText}`);
+    return null;
+  }
+
+  return await res.blob();
+}
+
+export async function getTaskAudioUrl({
+  storageEngine,
+  participantId,
+  identifier,
+  audioUrl,
+}: {
+  storageEngine: StorageEngine;
+  participantId: string;
+  identifier: string;
+  audioUrl?: string | null;
+}): Promise<string | null> {
+  // Prefer explicitly passed URL, otherwise ask the storage engine
+  const finalAudioUrl = audioUrl || await storageEngine.getAudioUrl(identifier, participantId);
+
+  return finalAudioUrl;
+}
+
+export async function getTaskTranscriptBlob({
+  storageEngine,
+  participantId,
+  identifier,
+}: {
+  storageEngine: StorageEngine;
+  participantId: string;
+  identifier: string;
+}): Promise<Blob | null> {
+  const transcriptUrl = await storageEngine.getTranscriptUrl(identifier, participantId);
+  return fetchBlobFromUrl(transcriptUrl);
+}
+
 async function downloadParticipantsAudio({
   storageEngine,
   participantId,

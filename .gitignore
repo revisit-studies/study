@@ -37,3 +37,5 @@ supabase/volumes/*
 !supabase/volumes/db/
 supabase/volumes/db/data
 !supabase/volumes/api/
+
+.env

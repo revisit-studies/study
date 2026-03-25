@@ -8,6 +8,7 @@ import {
   IconChartPie,
   IconTags,
   IconDashboard,
+  IconMusicDown,
 } from '@tabler/icons-react';
 import {
   useCallback, useEffect, useMemo, useState,
@@ -31,6 +32,7 @@ import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import 'mantine-react-table/styles.css';
 import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
+import { QuestionMicAudioPage } from './thinkAloud/QuestionMicAudioPage';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 
@@ -277,6 +279,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Participant View</Tabs.Tab>
                 <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
                 <Tabs.Tab value="tagging" leftSection={<IconTags size={16} />}>Coding</Tabs.Tab>
+                <Tabs.Tab value="question-mic-audio" leftSection={<IconMusicDown size={16} />}>Question Mic Audio</Tabs.Tab>
                 {storageEngine?.getEngine() === 'firebase' && (
                   <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />}>Live Monitor</Tabs.Tab>
                 )}
@@ -293,6 +296,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               </Tabs.Panel>
               <Tabs.Panel value="tagging" pt="xs">
                 {studyConfig && storageEngine?.getEngine() === 'firebase' ? <ThinkAloudAnalysis visibleParticipants={visibleParticipants} storageEngine={storageEngine as FirebaseStorageEngine} /> : <Center>Think aloud coding is only available when using Firebase.</Center>}
+              </Tabs.Panel>
+              <Tabs.Panel style={{ overflow: 'auto' }} value="question-mic-audio" pt="xs">
+                <QuestionMicAudioPage />
               </Tabs.Panel>
               {storageEngine?.getEngine() === 'firebase' && (
                 <Tabs.Panel style={{ overflow: 'auto' }} value="live-monitor" pt="xs">
