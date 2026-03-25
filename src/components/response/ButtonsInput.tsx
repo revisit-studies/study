@@ -16,12 +16,14 @@ export function ButtonsInput({
   answer,
   index,
   enumerateQuestions,
+  showUnanswered,
 }: {
   response: ButtonsResponse;
   disabled: boolean;
   answer: { value?: string };
   index: number;
   enumerateQuestions: boolean;
+  showUnanswered?: boolean;
 }) {
   const {
     prompt,
@@ -39,7 +41,7 @@ export function ButtonsInput({
     [optionOrders, options, response.id],
   );
 
-  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
+  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions, showUnanswered), [response, answer, orderedOptions, showUnanswered]);
 
   return (
     <FocusTrap>

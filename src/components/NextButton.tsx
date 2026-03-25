@@ -1,4 +1,6 @@
-import { Alert, Button, Group } from '@mantine/core';
+import {
+  Alert, Box, Button, Group,
+} from '@mantine/core';
 import {
   JSX, useEffect, useMemo, useState,
 } from 'react';
@@ -15,6 +17,7 @@ type Props = {
   config?: IndividualComponent;
   location?: ResponseBlockLocation;
   checkAnswer: JSX.Element | null;
+  onNextAttempted?: () => void;
 };
 
 export function NextButton({
@@ -23,6 +26,7 @@ export function NextButton({
   config,
   location,
   checkAnswer,
+  onNextAttempted,
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep();
   const studyConfig = useStudyConfig();
@@ -80,7 +84,7 @@ export function NextButton({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-    return () => {};
+    return () => { };
   }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, nextOnEnter]);
 
   const nextButtonDisabled = useMemo(() => disabled || isNextDisabled || !buttonTimerSatisfied, [disabled, isNextDisabled, buttonTimerSatisfied]);
@@ -96,14 +100,23 @@ export function NextButton({
           />
         )}
         {checkAnswer}
-        <Button
-          type="submit"
-          disabled={nextButtonDisabled}
-          onClick={() => goToNextStep()}
-          px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+        <Box
+          onClick={() => {
+            if (nextButtonDisabled) {
+              onNextAttempted?.();
+            } else {
+              goToNextStep();
+            }
+          }}
         >
-          {label}
-        </Button>
+          <Button
+            data-disabled={nextButtonDisabled || undefined}
+            style={{ pointerEvents: 'none' }}
+            px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+          >
+            {label}
+          </Button>
+        </Box>
       </Group>
       {timer !== undefined && (
         <>

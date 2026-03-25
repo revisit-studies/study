@@ -20,6 +20,7 @@ export function RadioInput({
   enumerateQuestions,
   stretch,
   otherValue,
+  showUnanswered,
 }: {
   response: RadioResponse;
   disabled: boolean;
@@ -28,6 +29,7 @@ export function RadioInput({
   enumerateQuestions: boolean;
   stretch?: boolean;
   otherValue?: object;
+  showUnanswered?: boolean;
 }) {
   const {
     prompt,
@@ -52,7 +54,7 @@ export function RadioInput({
 
   const [otherSelected, setOtherSelected] = useState(false);
 
-  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
+  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions, showUnanswered), [response, answer, orderedOptions, showUnanswered]);
   const label = useMemo(() => ((horizontal && labelLocation) ? labelLocation : 'inline'), [labelLocation, horizontal]);
 
   return (

@@ -37,6 +37,7 @@ export function ResponseSwitcher({
   dontKnowCheckbox,
   otherInput,
   disabled,
+  showUnanswered,
 }: {
   response: Response;
   form: GetInputPropsReturnType;
@@ -46,6 +47,7 @@ export function ResponseSwitcher({
   dontKnowCheckbox?: GetInputPropsReturnType;
   otherInput?: GetInputPropsReturnType;
   disabled?: boolean;
+  showUnanswered?: boolean;
 }) {
   const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
@@ -134,137 +136,165 @@ export function ResponseSwitcher({
     }
 
     return '';
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
 
   const responseStyle = response.style || {};
   const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
 
+  const isUnansweredRequired = useMemo(() => {
+    if (!showUnanswered || !response.required || dontKnowChecked) return false;
+    const value = (ans as { value?: StoredAnswer['answer'][string] }).value;
+    if (value === null || value === undefined || value === '') return true;
+    if (Array.isArray(value) && value.length === 0) return true;
+    if (typeof value === 'object' && !Array.isArray(value) && Object.values(value as Record<string, unknown>).some((v) => v === '')) return true;
+    return false;
+  }, [showUnanswered, response.required, dontKnowChecked, ans]);
+
+  const highlightStyle = isUnansweredRequired ? {
+    borderLeft: '3px solid var(--mantine-color-red-5)',
+    padding: 'var(--mantine-spacing-sm)',
+    paddingLeft: 'var(--mantine-spacing-md)',
+    backgroundColor: 'var(--mantine-color-red-0)',
+    borderRadius: 'var(--mantine-radius-sm)',
+  } : {};
+
   return (
-    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseStyle}>
+    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={{ ...responseStyle, ...highlightStyle }}>
       {response.type === 'numerical' && (
-      <NumericInput
-        response={response}
-        disabled={isDisabled || dontKnowChecked}
-        answer={ans as { value: number }}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-      />
+        <NumericInput
+          response={response}
+          disabled={isDisabled || dontKnowChecked}
+          answer={ans as { value: number }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          showUnanswered={showUnanswered}
+        />
       )}
       {response.type === 'shortText' && (
-      <StringInput
-        response={response}
-        disabled={isDisabled || dontKnowChecked}
-        answer={ans as { value: string }}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-      />
+        <StringInput
+          response={response}
+          disabled={isDisabled || dontKnowChecked}
+          answer={ans as { value: string }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          showUnanswered={showUnanswered}
+        />
       )}
       {response.type === 'longText' && (
-      <TextAreaInput
-        response={response}
-        disabled={isDisabled || dontKnowChecked}
-        answer={ans as { value: string }}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-      />
+        <TextAreaInput
+          response={response}
+          disabled={isDisabled || dontKnowChecked}
+          answer={ans as { value: string }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          showUnanswered={showUnanswered}
+        />
       )}
       {response.type === 'likert' && (
-      <LikertInput
-        response={response}
-        disabled={isDisabled || dontKnowChecked}
-        answer={ans as { value: string }}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-      />
+        <LikertInput
+          response={response}
+          disabled={isDisabled || dontKnowChecked}
+          answer={ans as { value: string }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          showUnanswered={showUnanswered}
+        />
       )}
       {response.type === 'dropdown' && (
-      <DropdownInput
-        response={response}
-        disabled={isDisabled || dontKnowChecked}
-        answer={ans as { value: string }}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-      />
+        <DropdownInput
+          response={response}
+          disabled={isDisabled || dontKnowChecked}
+          answer={ans as { value: string }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          showUnanswered={showUnanswered}
+        />
       )}
       {response.type === 'slider' && (
-      <SliderInput
-        response={response}
-        disabled={isDisabled || dontKnowChecked}
-        answer={ans as { value: number }}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-      />
+        <SliderInput
+          response={response}
+          disabled={isDisabled || dontKnowChecked}
+          answer={ans as { value: number }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          showUnanswered={showUnanswered}
+        />
       )}
       {response.type === 'radio' && (
-      <RadioInput
-        response={response}
-        disabled={isDisabled || dontKnowChecked}
-        answer={ans as { value: string }}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-        otherValue={otherValue}
-      />
+        <RadioInput
+          response={response}
+          disabled={isDisabled || dontKnowChecked}
+          answer={ans as { value: string }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          otherValue={otherValue}
+          showUnanswered={showUnanswered}
+        />
       )}
       {response.type === 'checkbox' && (
-      <CheckBoxInput
-        response={response}
-        disabled={isDisabled || dontKnowChecked}
-        answer={ans as { value: string[] }}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-        otherValue={otherValue}
-        dontKnowCheckbox={dontKnowCheckbox as { checked?: boolean; onChange?: (value: boolean) => void }}
-      />
+        <CheckBoxInput
+          response={response}
+          disabled={isDisabled || dontKnowChecked}
+          answer={ans as { value: string[] }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          otherValue={otherValue}
+          dontKnowCheckbox={dontKnowCheckbox as { checked?: boolean; onChange?: (value: boolean) => void }}
+          showUnanswered={showUnanswered}
+        />
       )}
       {(response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') && (
-      <RankingInput
-        response={response}
-        disabled={isDisabled || dontKnowChecked}
-        answer={ans as { value: Record<string, string> }}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-      />
+        <RankingInput
+          response={response}
+          disabled={isDisabled || dontKnowChecked}
+          answer={ans as { value: Record<string, string> }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          showUnanswered={showUnanswered}
+        />
       )}
       {response.type === 'reactive' && (
-      <ReactiveInput
-        response={response}
-        answer={ans as { value: string[] }}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-      />
+        <ReactiveInput
+          response={response}
+          answer={ans as { value: string[] }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+        />
       )}
       {(response.type === 'matrix-radio' || response.type === 'matrix-checkbox') && (
-      <MatrixInput
-        disabled={isDisabled}
-        response={response}
-        answer={ans as { value: Record<string, string> }}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-      />
+        <MatrixInput
+          disabled={isDisabled}
+          response={response}
+          answer={ans as { value: Record<string, string> }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          showUnanswered={showUnanswered}
+        />
       )}
       {response.type === 'buttons' && (
-      <ButtonsInput
-        response={response}
-        disabled={isDisabled || dontKnowChecked}
-        answer={ans as { value: string }}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-      />
+        <ButtonsInput
+          response={response}
+          disabled={isDisabled || dontKnowChecked}
+          answer={ans as { value: string }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          showUnanswered={showUnanswered}
+        />
       )}
       {response.type === 'textOnly' && (
-      <TextOnlyInput response={response} />
+        <TextOnlyInput response={response} />
       )}
       {usesStandaloneDontKnow && (
-      <Checkbox
-        mt="xs"
-        disabled={isDisabled}
-        label="I don't know"
-        classNames={{ input: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
-        {...dontKnowCheckbox}
-        checked={dontKnowValue.checked}
-        onChange={(event) => { dontKnowCheckbox?.onChange(event.currentTarget.checked); form.onChange(fieldInitialValue); }}
-      />
+        <Checkbox
+          mt="xs"
+          disabled={isDisabled}
+          label="I don't know"
+          classNames={{ input: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
+          {...dontKnowCheckbox}
+          checked={dontKnowValue.checked}
+          onChange={(event) => { dontKnowCheckbox?.onChange(event.currentTarget.checked); form.onChange(fieldInitialValue); }}
+        />
       )}
       {(response.type === 'divider' || responseDividers) && <Divider mt="xl" mb="xs" />}
     </Box>

@@ -15,12 +15,14 @@ export function SliderInput({
   answer,
   index,
   enumerateQuestions,
+  showUnanswered,
 }: {
   response: SliderResponse;
   disabled: boolean;
   answer: object;
   index: number;
   enumerateQuestions: boolean;
+  showUnanswered?: boolean;
 }) {
   const {
     prompt,
@@ -38,7 +40,7 @@ export function SliderInput({
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
   const hasLabels = options.some((opt) => opt.label !== '');
-  const errorMessage = generateErrorMessage(response, answer);
+  const errorMessage = generateErrorMessage(response, answer, undefined, showUnanswered);
 
   // Numeric label
   const labelValues = useMemo(() => generateSliderBreakValues(min, max, spacing), [min, max, spacing]);

@@ -1,6 +1,7 @@
 import {
-  Box, Button,
+  Alert, Box, Button,
 } from '@mantine/core';
+import { IconAlertCircle } from '@tabler/icons-react';
 
 import React, {
   useEffect, useMemo, useState, useCallback,
@@ -135,6 +136,7 @@ export function ResponseBlock({
   const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
+  const [showUnanswered, setShowUnanswered] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
@@ -315,10 +317,24 @@ export function ResponseBlock({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-    return () => {};
+    return () => { };
   }, [checkAnswerProvideFeedback, nextOnEnter]);
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
+
+  const unansweredCount = useMemo(() => {
+    if (!showUnanswered) return 0;
+    return responsesWithDefaults.filter((response) => {
+      if (!response.required) return false;
+      // If the response uses a standalone "Don't Know" field and that field is checked, we consider the question answered
+      if (usesStandaloneDontKnowField(response) && answerValidator.values[`${response.id}-dontKnow`]) return false;
+      const value = answerValidator.values[response.id];
+      if (value === null || value === undefined || value === '') return true;
+      if (Array.isArray(value) && value.length === 0) return true;
+      if (typeof value === 'object' && !Array.isArray(value) && Object.values(value as Record<string, unknown>).some((v) => v === '')) return true;
+      return false;
+    }).length;
+  }, [showUnanswered, responsesWithDefaults, answerValidator.values]);
 
   let index = 0;
   return (
@@ -361,6 +377,7 @@ export function ResponseBlock({
                       index={index}
                       config={config}
                       disabled={disabledAttempts}
+                      showUnanswered={showUnanswered}
                     />
                     <FeedbackAlert
                       response={response}
@@ -387,23 +404,33 @@ export function ResponseBlock({
         })}
       </Box>
 
+      {showBtnsInLocation && showUnanswered && unansweredCount > 0 && (
+        <Alert mt="sm" color="red" icon={<IconAlertCircle />}>
+          {`Please answer ${unansweredCount} required ${unansweredCount === 1 ? 'question' : 'questions'} above to continue.`}
+        </Alert>
+      )}
       {showBtnsInLocation && (
-      <NextButton
-        disabled={(hasCorrectAnswerFeedback && !enableNextButton)
-          || (!bypassValidationForFailedTraining && !answerValidator.isValid())}
-        label={nextButtonText}
-        config={config}
-        location={location}
-        checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
-          <Button
-            disabled={hasCorrectAnswer || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
-            onClick={() => checkAnswerProvideFeedback()}
-            px={location === 'sidebar' ? 8 : undefined}
-          >
-            Check Answer
-          </Button>
-        ) : null}
-      />
+        <NextButton
+          disabled={(hasCorrectAnswerFeedback && !enableNextButton)
+            || (!bypassValidationForFailedTraining && !answerValidator.isValid())}
+          label={nextButtonText}
+          config={config}
+          location={location}
+          onNextAttempted={() => {
+            if (!answerValidator.isValid() && !bypassValidationForFailedTraining) {
+              setShowUnanswered(true);
+            }
+          }}
+          checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
+            <Button
+              disabled={hasCorrectAnswer || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
+              onClick={() => checkAnswerProvideFeedback()}
+              px={location === 'sidebar' ? 8 : undefined}
+            >
+              Check Answer
+            </Button>
+          ) : null}
+        />
       )}
     </>
   );

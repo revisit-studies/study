@@ -20,6 +20,7 @@ export function CheckBoxInput({
   enumerateQuestions,
   otherValue,
   dontKnowCheckbox,
+  showUnanswered,
 }: {
   response: CheckboxResponse;
   disabled: boolean;
@@ -28,6 +29,7 @@ export function CheckBoxInput({
   enumerateQuestions: boolean;
   otherValue?: object;
   dontKnowCheckbox?: { checked?: boolean; onChange?: (value: boolean) => void };
+  showUnanswered?: boolean;
 }) {
   const {
     prompt,
@@ -50,8 +52,8 @@ export function CheckBoxInput({
   const [otherSelected, setOtherSelected] = useState(false);
 
   const error = useMemo(
-    () => generateErrorMessage(response, { ...answer, dontKnowChecked: !!dontKnowCheckbox?.checked }, orderedOptions),
-    [response, answer, orderedOptions, dontKnowCheckbox?.checked],
+    () => generateErrorMessage(response, { ...answer, dontKnowChecked: !!dontKnowCheckbox?.checked }, orderedOptions, showUnanswered),
+    [response, answer, orderedOptions, dontKnowCheckbox?.checked, showUnanswered],
   );
   const selectedValues = useMemo(() => (Array.isArray(answer.value) ? answer.value : []), [answer.value]);
 

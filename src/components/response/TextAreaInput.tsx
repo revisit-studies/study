@@ -10,12 +10,14 @@ export function TextAreaInput({
   answer,
   index,
   enumerateQuestions,
+  showUnanswered,
 }: {
   response: LongTextResponse;
   disabled: boolean;
   answer: { value?: string };
   index: number;
   enumerateQuestions: boolean;
+  showUnanswered?: boolean;
 }) {
   const {
     placeholder,
@@ -36,7 +38,7 @@ export function TextAreaInput({
       {...answer}
         // This is necessary so the component doesnt switch from uncontrolled to controlled, which can cause issues.
       value={answer.value || ''}
-      error={generateErrorMessage(response, answer)}
+      error={generateErrorMessage(response, answer, undefined, showUnanswered)}
       withErrorStyles={required}
       errorProps={{ c: required ? 'red' : 'orange' }}
       classNames={{ input: classes.fixDisabled }}

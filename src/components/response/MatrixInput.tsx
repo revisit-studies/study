@@ -111,12 +111,14 @@ export function MatrixInput({
   index,
   disabled,
   enumerateQuestions,
+  showUnanswered,
 }: {
   response: MatrixResponse;
   answer: { value: Record<string, string> };
   index: number;
   disabled: boolean;
   enumerateQuestions: boolean;
+  showUnanswered?: boolean;
 }) {
   const { setMatrixAnswersRadio, setMatrixAnswersCheckbox } = useStoreActions();
   const storeDispatch = useStoreDispatch();
@@ -179,7 +181,7 @@ export function MatrixInput({
     dispatchCheckboxUpdate(option.value, isChecked);
   };
 
-  const error = generateErrorMessage(response, answer);
+  const error = generateErrorMessage(response, answer, undefined, showUnanswered);
 
   const _n = _choices.length;
   const _m = orderedQuestions.length;

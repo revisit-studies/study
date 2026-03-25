@@ -7,12 +7,14 @@ export function LikertInput({
   answer,
   index,
   enumerateQuestions,
+  showUnanswered,
 }: {
   response: LikertResponse;
   disabled: boolean;
   answer: object;
   index: number;
   enumerateQuestions: boolean;
+  showUnanswered?: boolean;
 }) {
   const { numItems, start, spacing } = response;
 
@@ -41,6 +43,7 @@ export function LikertInput({
       index={index}
       enumerateQuestions={enumerateQuestions}
       stretch
+      showUnanswered={showUnanswered}
     />
   );
 }

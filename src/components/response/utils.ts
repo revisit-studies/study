@@ -314,6 +314,7 @@ export function generateErrorMessage(
   response: Response,
   answer: { value?: number | string | string[] | Record<string, string>; checked?: string[]; dontKnowChecked?: boolean },
   options?: (StringOption | NumberOption)[],
+  showUnanswered?: boolean,
 ) {
   const { requiredValue, requiredLabel } = response;
 
@@ -335,9 +336,19 @@ export function generateErrorMessage(
   } else if (answer.value && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalResponse(response, answer.value)) {
     error = checkNumericalResponse(response, answer.value);
   } else if (answer.value && typeof answer.value === 'object' && !Array.isArray(answer.value) && (response.type === 'matrix-radio' || response.type === 'matrix-checkbox')) {
-    return checkMatrixResponseForMessage(response, answer.value);
+    error = checkMatrixResponseForMessage(response, answer.value);
   } else {
     error = answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.` : null;
+  }
+
+  // If no existing error was found and the field is required and unanswered, show a prompt when showUnanswered is true
+  if (!error && showUnanswered && response.required) {
+    const isEmpty = answer.value === null || answer.value === undefined || answer.value === ''
+      || (Array.isArray(answer.value) && answer.value.length === 0)
+      || (typeof answer.value === 'object' && !Array.isArray(answer.value) && Object.values(answer.value).some((v) => v === ''));
+    if (isEmpty) {
+      error = 'Please answer this question to continue.';
+    }
   }
 
   return error;

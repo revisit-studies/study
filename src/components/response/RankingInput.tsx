@@ -543,12 +543,14 @@ export function RankingInput({
   index: idx,
   disabled,
   enumerateQuestions,
+  showUnanswered,
 }: {
   response: RankingResponse;
   answer: { value: Record<string, string> };
   index: number;
   disabled: boolean;
   enumerateQuestions: boolean;
+  showUnanswered?: boolean;
 }) {
   const {
     prompt,
@@ -561,6 +563,10 @@ export function RankingInput({
 
   const [error, setError] = useState<string | null>(null);
 
+  const unansweredError = showUnanswered && required && Object.keys(answer.value || {}).length === 0
+    ? 'Please answer this question to continue.'
+    : null;
+
   const componentProps = {
     disabled, options, answer, responseId: response.id, numItems,
   };
@@ -571,9 +577,9 @@ export function RankingInput({
         <InputLabel prompt={prompt} required={required} index={idx} enumerateQuestions={enumerateQuestions} infoText={infoText} />
       )}
       {secondaryText && <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>}
-      {error && (
+      {(error || unansweredError) && (
         <Text c={required ? 'red' : 'orange'} size="sm" mt="xs">
-          {error}
+          {error || unansweredError}
         </Text>
       )}
       <Box mt="md">

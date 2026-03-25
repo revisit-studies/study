@@ -10,12 +10,14 @@ export function NumericInput({
   answer,
   index,
   enumerateQuestions,
+  showUnanswered,
 }: {
   response: NumericalResponse;
   disabled: boolean;
   answer: object;
   index: number;
   enumerateQuestions: boolean;
+  showUnanswered?: boolean;
 }) {
   const {
     prompt,
@@ -34,7 +36,7 @@ export function NumericInput({
       radius="md"
       size="md"
       {...answer}
-      error={generateErrorMessage(response, answer)}
+      error={generateErrorMessage(response, answer, undefined, showUnanswered)}
       withErrorStyles={required}
       errorProps={{ c: required ? 'red' : 'orange' }}
       classNames={{ input: classes.fixDisabled }}

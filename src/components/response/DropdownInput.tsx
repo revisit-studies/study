@@ -12,12 +12,14 @@ export function DropdownInput({
   answer,
   index,
   enumerateQuestions,
+  showUnanswered,
 }: {
   response: DropdownResponse;
   disabled: boolean;
   answer: { value: string };
   index: number;
   enumerateQuestions: boolean;
+  showUnanswered?: boolean;
 }) {
   const {
     placeholder,
@@ -46,7 +48,7 @@ export function DropdownInput({
         size="md"
         {...answer}
         value={answer.value === '' ? [] : Array.isArray(answer.value) ? answer.value : [answer.value]}
-        error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+        error={generateErrorMessage(response, answer, optionsAsStringOptions, showUnanswered)}
         withErrorStyles={required}
         errorProps={{ c: required ? 'red' : 'orange' }}
         classNames={{ input: classes.fixDisabled }}
@@ -66,7 +68,7 @@ export function DropdownInput({
         size="md"
         {...answer}
         value={answer.value === '' ? null : answer.value}
-        error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+        error={generateErrorMessage(response, answer, optionsAsStringOptions, showUnanswered)}
         withErrorStyles={required}
         errorProps={{ c: required ? 'red' : 'orange' }}
         classNames={{ input: classes.fixDisabled }}
