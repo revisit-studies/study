@@ -106,6 +106,7 @@ export function NextButton({
         {checkAnswer}
         <Button
           aria-disabled={nextButtonDisabled}
+          data-disabled={nextButtonDisabled}
           onClick={() => {
             if (nextButtonDisabled) {
               onNextAttempted?.();
