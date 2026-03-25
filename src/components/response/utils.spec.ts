@@ -8,6 +8,7 @@ import {
   generateInitFields,
   mergeReactiveAnswers,
   normalizeCheckboxDontKnowValue,
+  requiredAnswerIsEmpty,
   shouldBypassValidationForStandaloneDontKnow,
 } from './utils';
 
@@ -277,5 +278,71 @@ describe('generateErrorMessage matrix', () => {
     });
 
     expect(error).toBeNull();
+  });
+});
+
+describe('requiredAnswerIsEmpty', () => {
+  it('returns true for null', () => expect(requiredAnswerIsEmpty(null)).toBe(true));
+  it('returns true for undefined', () => expect(requiredAnswerIsEmpty(undefined)).toBe(true));
+  it('returns true for empty string', () => expect(requiredAnswerIsEmpty('')).toBe(true));
+  it('returns true for empty array', () => expect(requiredAnswerIsEmpty([])).toBe(true));
+  it('returns true for empty object', () => expect(requiredAnswerIsEmpty({})).toBe(true));
+  it('returns true for object with empty-string value', () => expect(requiredAnswerIsEmpty({ q1: '' })).toBe(true));
+  it('returns true for object with null value', () => expect(requiredAnswerIsEmpty({ q1: null })).toBe(true));
+  it('returns true for object with undefined value', () => expect(requiredAnswerIsEmpty({ q1: undefined })).toBe(true));
+  it('returns false for non-empty string', () => expect(requiredAnswerIsEmpty('hello')).toBe(false));
+  it('returns false for non-empty array', () => expect(requiredAnswerIsEmpty(['a'])).toBe(false));
+  it('returns false for object with all values answered', () => expect(requiredAnswerIsEmpty({ q1: '0', q2: '1' })).toBe(false));
+  it('returns false for zero (numeric)', () => expect(requiredAnswerIsEmpty(0)).toBe(false));
+  it('returns false for false (boolean)', () => expect(requiredAnswerIsEmpty(false)).toBe(false));
+});
+
+describe('generateErrorMessage showUnanswered', () => {
+  const shortTextResponse: Response = {
+    id: 'short-text',
+    prompt: 'Short text',
+    type: 'shortText',
+    required: true,
+  };
+
+  const matrixResponse: MatrixResponse = {
+    id: 'matrix-unanswered',
+    prompt: 'Matrix',
+    type: 'matrix-radio',
+    required: true,
+    answerOptions: ['0', '1'],
+    questionOptions: ['q1', 'q2'],
+  };
+
+  it('returns prompt when showUnanswered=true, required, and value is empty string', () => {
+    const error = generateErrorMessage(shortTextResponse, { value: '' }, undefined, true);
+    expect(error).toBe('Please answer this question to continue.');
+  });
+
+  it('returns null when showUnanswered=false even if required and empty', () => {
+    const error = generateErrorMessage(shortTextResponse, { value: '' }, undefined, false);
+    expect(error).toBeNull();
+  });
+
+  it('returns null when showUnanswered=true but response is not required', () => {
+    const optionalResponse: Response = { id: 'opt', prompt: 'Optional', type: 'shortText' };
+    const error = generateErrorMessage(optionalResponse, { value: '' }, undefined, true);
+    expect(error).toBeNull();
+  });
+
+  it('returns prompt for empty object (ranking/matrix initial state) when showUnanswered=true', () => {
+    const error = generateErrorMessage(matrixResponse, { value: {} }, undefined, true);
+    expect(error).toBe('Please answer this question to continue.');
+  });
+
+  it('returns null when matrix is fully answered and showUnanswered=true', () => {
+    const error = generateErrorMessage(matrixResponse, { value: { q1: '0', q2: '1' } }, undefined, true);
+    expect(error).toBeNull();
+  });
+
+  it('does not override existing validation errors with showUnanswered prompt', () => {
+    // Partially answered matrix already returns its own error; showUnanswered should not change the message
+    const error = generateErrorMessage(matrixResponse, { value: { q1: '0', q2: '' } }, undefined, true);
+    expect(error).toBe('Please answer all questions in the matrix to continue.');
   });
 });

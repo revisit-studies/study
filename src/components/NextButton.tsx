@@ -1,5 +1,5 @@
 import {
-  Alert, Box, Button, Group,
+  Alert, Button, Group,
 } from '@mantine/core';
 import {
   JSX, useEffect, useMemo, useState,
@@ -70,11 +70,16 @@ export function NextButton({
   );
 
   const nextOnEnter = useMemo(() => config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter, [config, studyConfig]);
+  const nextButtonDisabled = useMemo(() => disabled || isNextDisabled || !buttonTimerSatisfied, [disabled, isNextDisabled, buttonTimerSatisfied]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter' && !disabled && !isNextDisabled && buttonTimerSatisfied) {
-        goToNextStep();
+      if (event.key === 'Enter') {
+        if (nextButtonDisabled) {
+          onNextAttempted?.();
+        } else {
+          goToNextStep();
+        }
       }
     };
 
@@ -85,9 +90,8 @@ export function NextButton({
       };
     }
     return () => { };
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, nextOnEnter]);
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, nextOnEnter, nextButtonDisabled, onNextAttempted]);
 
-  const nextButtonDisabled = useMemo(() => disabled || isNextDisabled || !buttonTimerSatisfied, [disabled, isNextDisabled, buttonTimerSatisfied]);
   const previousButtonText = useMemo(() => config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous', [config, studyConfig]);
 
   return (
@@ -100,7 +104,8 @@ export function NextButton({
           />
         )}
         {checkAnswer}
-        <Box
+        <Button
+          aria-disabled={nextButtonDisabled}
           onClick={() => {
             if (nextButtonDisabled) {
               onNextAttempted?.();
@@ -108,15 +113,10 @@ export function NextButton({
               goToNextStep();
             }
           }}
+          px={location === 'sidebar' && checkAnswer ? 8 : undefined}
         >
-          <Button
-            data-disabled={nextButtonDisabled || undefined}
-            style={{ pointerEvents: 'none' }}
-            px={location === 'sidebar' && checkAnswer ? 8 : undefined}
-          >
-            {label}
-          </Button>
-        </Box>
+          {label}
+        </Button>
       </Group>
       {timer !== undefined && (
         <>

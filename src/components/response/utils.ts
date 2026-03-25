@@ -15,7 +15,14 @@ export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
 export function requiredAnswerIsEmpty(value: string | number | boolean | string[] | Record<string, unknown> | null | undefined): boolean {
   if (value === null || value === undefined || value === '') return true;
   if (Array.isArray(value) && value.length === 0) return true;
-  if (typeof value === 'object' && !Array.isArray(value) && Object.values(value as Record<string, unknown>).some((v) => v === '')) return true;
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    const obj = value as Record<string, unknown>;
+    // Treat an object with no keys as empty (e.g. initial ranking/matrix state)
+    if (Object.keys(obj).length === 0) return true;
+    // Treat properties with empty-string, null, or undefined values as empty as well
+    if (Object.values(obj).some((v) => v === '' || v === null || v === undefined)) return true;
+  }
+
   return false;
 }
 
@@ -339,11 +346,11 @@ export function generateErrorMessage(
     error = requiredValue && [...requiredValue].sort().toString() !== [...checkboxValues].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
   } else if (checkboxValues && response.required && response.type === 'checkbox') {
     error = checkCheckboxResponseForValidation(response, checkboxValues, !!answer.dontKnowChecked);
-  } else if (answer.value && response.type === 'dropdown') {
+  } else if (answer.value != null && response.type === 'dropdown') {
     error = checkDropdownResponse(response, answer.value as string[]);
-  } else if (answer.value && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalResponse(response, answer.value)) {
+  } else if (answer.value !== null && answer.value !== undefined && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalResponse(response, answer.value)) {
     error = checkNumericalResponse(response, answer.value);
-  } else if (answer.value && typeof answer.value === 'object' && !Array.isArray(answer.value) && (response.type === 'matrix-radio' || response.type === 'matrix-checkbox')) {
+  } else if (answer.value !== null && answer.value !== undefined && typeof answer.value === 'object' && !Array.isArray(answer.value) && (response.type === 'matrix-radio' || response.type === 'matrix-checkbox')) {
     error = checkMatrixResponseForMessage(response, answer.value);
   } else {
     error = answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.` : null;
