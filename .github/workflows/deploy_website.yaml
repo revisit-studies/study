@@ -10,7 +10,7 @@ on:
 jobs:
   deploy-main:
     runs-on: ubuntu-latest
-    environment: github-pages
+    environment: deploy-config
     permissions:
       contents: write
     concurrency:
