@@ -134,6 +134,42 @@ describe('generateInitFields', () => {
       },
     });
   });
+
+  it('preserves stored falsy answers instead of replacing them with defaults', () => {
+    const responses: Response[] = [
+      {
+        id: 'stored-empty-string',
+        prompt: 'Short text',
+        type: 'shortText',
+        default: 'prefilled',
+      },
+      {
+        id: 'stored-zero',
+        prompt: 'Number',
+        type: 'numerical',
+        default: 5,
+      },
+      {
+        id: 'stored-false',
+        prompt: 'Custom response',
+        type: 'custom',
+        path: 'demo-form-elements/assets/CustomResponseCard.tsx',
+        default: true,
+      },
+    ];
+
+    const initialFields = generateInitFields(responses, {
+      'stored-empty-string': '',
+      'stored-zero': 0,
+      'stored-false': false,
+    });
+
+    expect(initialFields).toEqual({
+      'stored-empty-string': '',
+      'stored-zero': 0,
+      'stored-false': false,
+    });
+  });
 });
 
 describe('generateValidation custom', () => {

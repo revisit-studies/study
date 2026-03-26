@@ -183,7 +183,8 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
   const queryParameters = getQueryParameters();
 
   responses.forEach((response) => {
-    const answer = storedAnswer ? storedAnswer[response.id] : {};
+    const hasStoredAnswer = Object.prototype.hasOwnProperty.call(storedAnswer, response.id);
+    const answer = hasStoredAnswer ? storedAnswer[response.id] : undefined;
     const dontKnowObj = usesStandaloneDontKnowField(response)
       ? {
         [`${response.id}-dontKnow`]: storedAnswer && storedAnswer[`${response.id}-dontKnow`] !== undefined
@@ -195,7 +196,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
     const otherAnswer = storedAnswer && storedAnswer[`${response.id}-other`] !== undefined ? storedAnswer[`${response.id}-other`] : '';
     const otherObj = (response as RadioResponse | CheckboxResponse).withOther ? { [`${response.id}-other`]: otherAnswer } : {};
 
-    if (answer) {
+    if (hasStoredAnswer) {
       initObj = {
         ...initObj,
         [response.id]: answer,
