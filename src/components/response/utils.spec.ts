@@ -188,6 +188,30 @@ describe('generateValidation custom', () => {
     expect(error).toBe('Empty input');
   });
 
+  it('treats nested empty string structures as missing required input', () => {
+    const validation = generateValidation([response], { [response.id]: customValidate });
+    const error = validation[response.id]({
+      chartType: '',
+      rationale: '',
+      details: {
+        note: '',
+      },
+      tags: ['', ''],
+    }, {});
+
+    expect(error).toBe('Empty input');
+  });
+
+  it('does not treat 0 or false as empty custom values', () => {
+    const validation = generateValidation([response]);
+    const error = validation[response.id]({
+      confidence: 0,
+      confirmed: false,
+    }, {});
+
+    expect(error).toBeNull();
+  });
+
   it('skips custom validation for optional empty custom responses', () => {
     const optionalResponse: CustomResponse = {
       ...response,

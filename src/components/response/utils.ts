@@ -12,17 +12,18 @@ type ResponseWithDefault = Response & { default?: ResponseDefault };
 
 export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
 
-function isEmptyCustomResponseValue(value: JsonValue | undefined) {
+function isEmptyCustomResponseValue(value: JsonValue | undefined): boolean {
   if (value === null || value === undefined || value === '') {
     return true;
   }
 
   if (Array.isArray(value)) {
-    return value.length === 0;
+    return value.length === 0 || value.every((entry) => isEmptyCustomResponseValue(entry));
   }
 
   if (typeof value === 'object') {
-    return Object.keys(value).length === 0;
+    const objectValues = Object.values(value);
+    return objectValues.length === 0 || objectValues.every((entry) => isEmptyCustomResponseValue(entry));
   }
 
   return false;
