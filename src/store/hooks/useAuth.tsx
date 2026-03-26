@@ -148,7 +148,8 @@ export function AuthProvider({ children } : { children: ReactNode }) {
         try {
           const authInfo = await withTimeout(storageEngine.getUserManagementData('authentication'), 8000);
           if (authInfo?.isEnabled) {
-            storageEngine?.unsubscribe(handleAuthStateChanged);
+            const cleanup = storageEngine.unsubscribe(handleAuthStateChanged);
+            return cleanup;
           }
         } catch {
           // auth check failed or timed out; proceed as non-authenticated
