@@ -147,14 +147,18 @@ export function AuthProvider({ children } : { children: ReactNode }) {
       if (storageEngine && isCloudStorageEngine(storageEngine)) {
         try {
           const authInfo = await withTimeout(storageEngine.getUserManagementData('authentication'), 8000);
-          if (authInfo?.isEnabled) {
+          const authEnabled = authInfo?.isEnabled ?? true;
+          if (authEnabled) {
             const cleanup = storageEngine.unsubscribe(handleAuthStateChanged);
             return cleanup;
           }
+          setUser(nonAuthUser);
+          return () => {};
         } catch {
-          // auth check failed or timed out; proceed as non-authenticated
+          // If auth settings cannot be read, default to requiring authentication.
+          const cleanup = storageEngine.unsubscribe(handleAuthStateChanged);
+          return cleanup;
         }
-        setUser(nonAuthUser);
       } else if (storageEngine) {
         setUser(nonAuthUser);
       }
