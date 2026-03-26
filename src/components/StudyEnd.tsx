@@ -155,6 +155,22 @@ export function StudyEnd() {
     return studyEndMsg.replace(/\{PARTICIPANT_ID\}/g, () => participantId);
   }, [studyConfig, participantId]);
 
+  useEffect(() => {
+    const { studyEndAutoRedirectURL, studyEndAutoRedirectDelay } = studyConfig.uiConfig;
+
+    if (isAnalysis || !completed || !studyEndAutoRedirectURL) {
+      return undefined;
+    }
+
+    const timeoutId = setTimeout(() => {
+      window.location.replace(studyEndAutoRedirectURL);
+    }, studyEndAutoRedirectDelay ?? 10000);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [completed, isAnalysis, studyConfig.uiConfig]);
+
   return (
     <Center style={{ height: '100%' }}>
       <Flex direction="column">
