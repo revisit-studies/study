@@ -18,6 +18,7 @@ import { NavigateWithParams } from './utils/NavigateWithParams';
 import { AppHeader } from './analysis/interface/AppHeader';
 import { fetchStudyConfigs } from './utils/fetchConfig';
 import { initializeStorageEngine } from './storage/initialize';
+import { LocalStorageEngine } from './storage/engines/LocalStorageEngine';
 import { useStorageEngine } from './storage/storageEngineHooks';
 import { PageTitle } from './utils/PageTitle';
 import { isCloudStorageEngine } from './storage/engines/utils';
@@ -65,8 +66,14 @@ export function GlobalConfigParser() {
     if (storageEngine !== undefined) return;
 
     async function fn() {
-      const _storageEngine = await initializeStorageEngine();
-      setStorageEngine(_storageEngine);
+      try {
+        const _storageEngine = await initializeStorageEngine();
+        setStorageEngine(_storageEngine);
+      } catch {
+        const fallback = new LocalStorageEngine();
+        await fallback.connect();
+        setStorageEngine(fallback);
+      }
     }
     fn();
   }, [setStorageEngine, storageEngine]);
