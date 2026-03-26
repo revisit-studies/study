@@ -1,5 +1,5 @@
 import {
-  JSX, useEffect, useMemo, useState,
+  JSX, useMemo,
 } from 'react';
 import * as d3 from 'd3';
 import {
@@ -11,7 +11,6 @@ import { SingleTask } from './SingleTask';
 import { StoredAnswer, StudyConfig } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 import { parseConditionParam } from '../../../utils/handleConditionLogic';
-import { useStorageEngine } from '../../../storage/storageEngineHooks';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
@@ -81,37 +80,6 @@ export function AllTasksTimeline({
     return parsedConditions.length > 0 ? parsedConditions.join(',') : undefined;
   }, [participantData.conditions, participantData.searchParams?.condition]);
 
-  // Check which tasks actually have audio files in storage for this participant
-  const { storageEngine } = useStorageEngine();
-  const [audioAvailableMap, setAudioAvailableMap] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    let participantUnloaded = false;
-
-    // Clear any previous participant's audio availability before starting new checks
-    setAudioAvailableMap({});
-
-    const { participantId, answers } = participantData;
-    const taskNames = Object.keys(answers || {});
-    if (storageEngine && taskNames.length > 0) {
-      (async () => {
-        const entries = await Promise.all(
-          taskNames.map(async (taskName) => {
-            try {
-              const url = await storageEngine.getAudioUrl(taskName, participantId);
-              return [taskName, url !== null] as const;
-            } catch {
-              return [taskName, false] as const;
-            }
-          }),
-        );
-        if (!participantUnloaded) setAudioAvailableMap(Object.fromEntries(entries));
-      })();
-    }
-
-    return () => { participantUnloaded = true; };
-  }, [storageEngine, participantData.participantId, participantData.answers]);
-
   // Creating labels for the tasks
   const tasks: { line: JSX.Element, label: JSX.Element }[] = useMemo(() => {
     let currentHeight = 0;
@@ -147,7 +115,7 @@ export function AllTasksTimeline({
 
       const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
       const hasCorrect = !!((component && component.correctAnswer) || answer.correctAnswer.length > 0);
-      const hasAudio = audioAvailableMap[name] ?? false;
+      const hasAudio = component?.recordAudio ?? studyConfig?.uiConfig?.recordAudio ?? false;
 
       return {
         line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} xScale={scale} scaleStart={scaleStart} />,
@@ -183,7 +151,7 @@ export function AllTasksTimeline({
     });
 
     return allElements;
-  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig?.components, audioAvailableMap, maxHeight, studyId, conditionParam]);
+  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig?.components, studyConfig?.uiConfig?.recordAudio, maxHeight, studyId, conditionParam]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {
