@@ -1,3 +1,1 @@
-export const PREFIX = import.meta.env.PROD
-  ? import.meta.env.VITE_BASE_PATH
-  : '/';
+export const PREFIX = import.meta.env.BASE_URL;
