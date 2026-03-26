@@ -39,6 +39,17 @@ function checkAllAnswersCorrect(answers: StoredAnswer['answer'], componentConfig
   );
 }
 
+export function getSkipConditionCorrectAnswers(
+  componentsToCheck: Array<[string, { answer: StoredAnswer['answer'] }]>,
+  studyConfig: StudyConfig,
+) {
+  return componentsToCheck.map(([candidateComponentName, responseObj]) => checkAllAnswersCorrect(
+    responseObj.answer,
+    studyConfig.components[candidateComponentName.slice(0, candidateComponentName.lastIndexOf('_'))],
+    studyConfig,
+  ));
+}
+
 export function useNextStep() {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();
@@ -91,8 +102,6 @@ export function useNextStep() {
     }, {}) as StoredAnswer['answer'] : {};
     const { provenanceGraph } = trialValidationCopy || {};
     const endTime = Date.now();
-
-    const { componentName } = storedAnswer;
 
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
@@ -186,7 +195,7 @@ export function useNextStep() {
           }
 
           // Check the candidates and count the number of correct and incorrect answers
-          const correctAnswers = componentsToCheck.map(([_componentName, responseObj]) => checkAllAnswersCorrect(responseObj.answer, studyConfig.components[componentName.slice(0, componentName.lastIndexOf('_'))], studyConfig));
+          const correctAnswers = getSkipConditionCorrectAnswers(componentsToCheck, studyConfig);
           const numCorrect = correctAnswers.filter((correct) => correct).length;
           const numIncorrect = correctAnswers.length - numCorrect;
 
