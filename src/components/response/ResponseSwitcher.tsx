@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import { useMemo } from 'react';
 import { GetInputPropsReturnType } from '@mantine/form/lib/types';
 import {
-  CustomResponse, IndividualComponent, MatrixResponse, Response, SliderResponse, StoredAnswer,
+  CustomResponse, IndividualComponent, JsonValue, MatrixResponse, Response, SliderResponse, StoredAnswer,
 } from '../../parser/types';
 import { CheckBoxInput } from './CheckBoxInput';
 import { CustomResponseInput } from './CustomResponseInput';
@@ -147,6 +147,7 @@ export function ResponseSwitcher({
 
   const responseStyle = response.style || {};
   const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
+  const customResponseValue = useMemo<JsonValue | null>(() => (ans.value ?? null) as JsonValue | null, [ans.value]);
 
   return (
     <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseStyle}>
@@ -264,7 +265,7 @@ export function ResponseSwitcher({
       <CustomResponseInput
         response={response as CustomResponse}
         disabled={isDisabled || dontKnowChecked}
-        value={(ans.value ?? null) as never}
+        value={customResponseValue}
         error={form.error}
         index={index}
         enumerateQuestions={enumerateQuestions}
