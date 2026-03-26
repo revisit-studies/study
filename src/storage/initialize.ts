@@ -7,40 +7,31 @@ export async function initializeStorageEngine() {
   let storageEngine: StorageEngine | undefined;
   let fallback = false;
 
-  const rawEngineName = (import.meta.env.VITE_STORAGE_ENGINE || '').trim();
-  const storageEngineName = rawEngineName.replace(/^['"]|['"]$/g, '');
+  const storageEngineName: string = import.meta.env.VITE_STORAGE_ENGINE;
 
   if (storageEngineName === 'supabase') {
-    try {
-      const supabaseStorageEngine = new SupabaseStorageEngine();
-      await supabaseStorageEngine.connect();
+    const supabaseStorageEngine = new SupabaseStorageEngine();
+    await supabaseStorageEngine.connect();
 
-      if (supabaseStorageEngine.isConnected()) {
-        storageEngine = supabaseStorageEngine;
-      } else {
-        fallback = true;
-      }
-    } catch {
+    if (supabaseStorageEngine.isConnected()) {
+      storageEngine = supabaseStorageEngine;
+    } else {
       fallback = true;
     }
   }
 
   if (storageEngineName === 'firebase') {
-    try {
-      const firebaseStorageEngine = new FirebaseStorageEngine();
-      await firebaseStorageEngine.connect();
+    const firebaseStorageEngine = new FirebaseStorageEngine();
+    await firebaseStorageEngine.connect();
 
-      if (firebaseStorageEngine.isConnected()) {
-        storageEngine = firebaseStorageEngine;
-      } else {
-        fallback = true;
-      }
-    } catch {
+    if (firebaseStorageEngine.isConnected()) {
+      storageEngine = firebaseStorageEngine;
+    } else {
       fallback = true;
     }
   }
 
-  if (storageEngineName === 'localStorage' || fallback || !storageEngineName || !storageEngine) {
+  if (storageEngineName === 'localStorage' || fallback) {
     const localStorageEngine = new LocalStorageEngine();
     await localStorageEngine.connect();
 

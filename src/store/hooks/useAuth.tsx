@@ -138,20 +138,11 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     // Determine authentication listener based on storageEngine and authEnabled variable
     const determineAuthentication = async () => {
       if (storageEngine && isCloudStorageEngine(storageEngine)) {
-        try {
-          const authInfo = await storageEngine.getUserManagementData('authentication');
-          if (authInfo?.isEnabled) {
-            // Auth is enabled — register the listener, do NOT set nonAuthUser
-            const cleanup = storageEngine.unsubscribe(handleAuthStateChanged);
-            return cleanup;
-          }
-          // Auth is explicitly disabled
-          setUser(nonAuthUser);
-        } catch {
-          // On failure, default to requiring auth (register listener)
-          const cleanup = storageEngine.unsubscribe(handleAuthStateChanged);
-          return cleanup;
+        const authInfo = await storageEngine?.getUserManagementData('authentication');
+        if (authInfo?.isEnabled) {
+          storageEngine?.unsubscribe(handleAuthStateChanged);
         }
+        setUser(nonAuthUser);
       } else if (storageEngine) {
         setUser(nonAuthUser);
       }

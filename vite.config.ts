@@ -6,29 +6,6 @@ import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import react from '@vitejs/plugin-react-swc';
 
-function normalizeBasePath(path: string): string {
-  if (!path) return '/';
-  const withLeadingSlash = path.startsWith('/') ? path : `/${path}`;
-  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`;
-}
-
-function resolveBasePath(command: string, env: Record<string, string>): string {
-  if (command !== 'build') {
-    return '/';
-  }
-
-  if (env.VITE_BASE_PATH) {
-    return normalizeBasePath(env.VITE_BASE_PATH);
-  }
-
-  const repositoryName = process.env.GITHUB_REPOSITORY?.split('/')[1];
-  if (repositoryName && !repositoryName.endsWith('.github.io')) {
-    return normalizeBasePath(repositoryName);
-  }
-
-  return '/';
-}
-
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -331,7 +308,7 @@ export default defineConfig(({ command, mode }) => {
   });
 
   return {
-    base: resolveBasePath(command, env),
+    base: command === 'build' ? env.VITE_BASE_PATH : '/',
     plugins: [
       react({ devTarget: 'es2022' }),
       openAiPlugin(),

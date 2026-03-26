@@ -43,33 +43,8 @@ import {
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 
-function normalizeEnvValue(value: string | undefined): string {
-  return (value || '').trim().replace(/^['"]|['"]$/g, '');
-}
-
-function parseFirebaseConfig(value: string | undefined): object {
-  const normalized = normalizeEnvValue(value);
-  if (!normalized) {
-    throw new Error('VITE_FIREBASE_CONFIG is empty');
-  }
-
-  const parsed = hjsonParse(normalized);
-  if (parsed && typeof parsed === 'object') {
-    return parsed;
-  }
-
-  if (typeof parsed === 'string') {
-    const nested = hjsonParse(normalizeEnvValue(parsed));
-    if (nested && typeof nested === 'object') {
-      return nested;
-    }
-  }
-
-  throw new Error('VITE_FIREBASE_CONFIG must resolve to an object');
-}
-
 export class FirebaseStorageEngine extends CloudStorageEngine {
-  private RECAPTCHAV3TOKEN = normalizeEnvValue(import.meta.env.VITE_RECAPTCHAV3TOKEN);
+  private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
 
   private firestore: Firestore;
 
@@ -80,7 +55,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   constructor(testing: boolean = false) {
     super('firebase', testing);
 
-    const firebaseConfig = parseFirebaseConfig(import.meta.env.VITE_FIREBASE_CONFIG);
+    const firebaseConfig = hjsonParse(import.meta.env.VITE_FIREBASE_CONFIG);
     const firebaseApp = initializeApp(firebaseConfig);
     this.firestore = initializeFirestore(firebaseApp, {});
     this.studyCollection = collection(
@@ -822,11 +797,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   async login() {
     const provider = new GoogleAuthProvider();
     const auth = getAuth();
-    const result = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
+    signInWithPopup(auth, provider, browserPopupRedirectResolver);
 
     return {
-      email: result.user?.email || null,
-      uid: result.user?.uid || null,
+      email: auth.currentUser?.email || null,
+      uid: auth.currentUser?.uid || null,
     };
   }
 

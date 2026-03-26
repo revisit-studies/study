@@ -18,7 +18,6 @@ import { NavigateWithParams } from './utils/NavigateWithParams';
 import { AppHeader } from './analysis/interface/AppHeader';
 import { fetchStudyConfigs } from './utils/fetchConfig';
 import { initializeStorageEngine } from './storage/initialize';
-import { LocalStorageEngine } from './storage/engines/LocalStorageEngine';
 import { useStorageEngine } from './storage/storageEngineHooks';
 import { PageTitle } from './utils/PageTitle';
 import { isCloudStorageEngine } from './storage/engines/utils';
@@ -26,17 +25,7 @@ import { isCloudStorageEngine } from './storage/engines/utils';
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
   const configs = await globalFile.text();
-  const parsedConfig = parseGlobalConfig(configs);
-
-  // Hide test studies in production to avoid loading intentionally broken test configs.
-  if (!import.meta.env.PROD) {
-    return parsedConfig;
-  }
-
-  return {
-    ...parsedConfig,
-    configsList: parsedConfig.configsList.filter((configId) => !parsedConfig.configs[configId]?.test),
-  };
+  return parseGlobalConfig(configs);
 }
 
 export function GlobalConfigParser() {
@@ -66,19 +55,8 @@ export function GlobalConfigParser() {
     if (storageEngine !== undefined) return;
 
     async function fn() {
-      const fallbackToLocal = async () => {
-        const engine = new LocalStorageEngine();
-        await engine.connect();
-        setStorageEngine(engine);
-      };
-      try {
-        const enginePromise = initializeStorageEngine();
-        const timeoutPromise = new Promise<never>((_, reject) => { setTimeout(() => reject(new Error('timeout')), 10000); });
-        const _storageEngine = await Promise.race([enginePromise, timeoutPromise]);
-        setStorageEngine(_storageEngine);
-      } catch {
-        await fallbackToLocal();
-      }
+      const _storageEngine = await initializeStorageEngine();
+      setStorageEngine(_storageEngine);
     }
     fn();
   }, [setStorageEngine, storageEngine]);
