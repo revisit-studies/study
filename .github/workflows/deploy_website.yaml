@@ -35,9 +35,16 @@ jobs:
       # If on main with env vars, build with github environment variables
       - name: Build with github environment variables
         if: ${{ vars.VITE_STORAGE_ENGINE != '' }}
-        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE yarn build
+        run: yarn build
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
+          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
+          VITE_FIREBASE_CONFIG: ${{ vars.VITE_FIREBASE_CONFIG }}
+          VITE_RECAPTCHAV3TOKEN: ${{ vars.VITE_RECAPTCHAV3TOKEN }}
+          VITE_REPO_URL: ${{ vars.VITE_REPO_URL }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          OPENAI_API_KEY: ${{ vars.OPENAI_API_KEY }}
 
       - uses: peaceiris/actions-gh-pages@v3
         name: Deploy
