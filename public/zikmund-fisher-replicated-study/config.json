@@ -33,7 +33,6 @@
                 "trackTime": true
             }
         },
-
         "Platelet_slightly_table": {
             "type": "website",
             "path": "zikmund-fisher-replicated-study/assets/html-images/platelet_slightly_table.html",
@@ -47,8 +46,33 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Platelet_slightly_table_urgency",
+                    "prompt": "How urgent of an issue is this platelet count result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
@@ -86,8 +110,33 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Platelet_slightly_simple_urgency",
+                    "prompt": "How urgent of an issue is this platelet count result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
@@ -125,8 +174,33 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Platelet_slightly_block_urgency",
+                    "prompt": "How urgent of an issue is this platelet count result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
@@ -147,7 +221,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Platelet_slightly_simple",
+                "taskId": "Platelet_slightly_block",
                 "trackTime": true
             }
         },
@@ -164,8 +238,33 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Platelet_slightly_gradient_urgency",
+                    "prompt": "How urgent of an issue is this platelet count result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
@@ -186,17 +285,16 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Platelet_slightly_simple",
+                "taskId": "Platelet_slightly_gradient",
                 "trackTime": true
             }
         },
-
         "Platelet_further_table": {
             "type": "website",
             "path": "zikmund-fisher-replicated-study/assets/html-images/platelet_further_table.html",
             "response": [
                 {
-                    "id": "Platelet_slightly_table_alarming",
+                    "id": "Platelet_further_table_alarming",
                     "prompt": "How alarming does this platelet count result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -204,12 +302,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "Platelet_slightly_table_action",
+                    "id": "Platelet_further_table_urgency",
+                    "prompt": "How urgent of an issue is this platelet count result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Platelet_further_table_action",
                     "prompt": "Which of the following best describes what you would do in response to your platelet count test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -226,7 +349,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Platelet_slightly_table",
+                "taskId": "Platelet_further_table",
                 "trackTime": true
             }
         },
@@ -235,7 +358,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/platelet_further_simple.html",
             "response": [
                 {
-                    "id": "Platelet_slightly_simple_alarming",
+                    "id": "Platelet_further_simple_alarming",
                     "prompt": "How alarming does this platelet count result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -243,12 +366,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "Platelet_slightly_simple_action",
+                    "id": "Platelet_further_simple_urgency",
+                    "prompt": "How urgent of an issue is this platelet count result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Platelet_further_simple_action",
                     "prompt": "Which of the following best describes what you would do in response to your platelet count test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -265,7 +413,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Platelet_slightly_simple",
+                "taskId": "Platelet_further_simple",
                 "trackTime": true
             }
         },
@@ -274,7 +422,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/platelet_further_block.html",
             "response": [
                 {
-                    "id": "Platelet_slightly_block_alarming",
+                    "id": "Platelet_further_block_alarming",
                     "prompt": "How alarming does this platelet count result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -282,12 +430,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "Platelet_slightly_block_action",
+                    "id": "Platelet_further_block_urgency",
+                    "prompt": "How urgent of an issue is this platelet count result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Platelet_further_block_action",
                     "prompt": "Which of the following best describes what you would do in response to your platelet count test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -304,7 +477,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Platelet_slightly_simple",
+                "taskId": "Platelet_further_block",
                 "trackTime": true
             }
         },
@@ -313,7 +486,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/platelet_further_gradient.html",
             "response": [
                 {
-                    "id": "Platelet_slightly_gradient_alarming",
+                    "id": "Platelet_further_gradient_alarming",
                     "prompt": "How alarming does this platelet count result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -321,12 +494,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "Platelet_slightly_gradient_action",
+                    "id": "Platelet_further_gradient_urgency",
+                    "prompt": "How urgent of an issue is this platelet count result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Platelet_further_gradient_action",
                     "prompt": "Which of the following best describes what you would do in response to your platelet count test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -343,17 +541,16 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Platelet_slightly_simple",
+                "taskId": "Platelet_further_gradient",
                 "trackTime": true
             }
         },
-
         "ALT_slightly_table": {
             "type": "website",
             "path": "zikmund-fisher-replicated-study/assets/html-images/ALT_slightly_table.html",
             "response": [
                 {
-                    "id": "ALT_further_block_alarming",
+                    "id": "ALT_slightly_table_alarming",
                     "prompt": "How alarming does this alanine aminotransferase (ALT) result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -361,12 +558,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "ALT_further_block_action",
+                    "id": "ALT_slightly_table_urgency",
+                    "prompt": "How urgent of an issue is this alanine aminotransferase (ALT) result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "ALT_slightly_table_action",
                     "prompt": "Which of the following best describes what you would do in response to your ALT test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -383,7 +605,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "ALT_further_block",
+                "taskId": "ALT_slightly_table",
                 "trackTime": true
             }
         },
@@ -392,7 +614,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/ALT_slightly_simple.html",
             "response": [
                 {
-                    "id": "ALT_further_block_alarming",
+                    "id": "ALT_slightly_simple_alarming",
                     "prompt": "How alarming does this alanine aminotransferase (ALT) result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -400,12 +622,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "ALT_further_block_action",
+                    "id": "ALT_slightly_simple_urgency",
+                    "prompt": "How urgent of an issue is this alanine aminotransferase (ALT) result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "ALT_slightly_simple_action",
                     "prompt": "Which of the following best describes what you would do in response to your ALT test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -422,7 +669,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "ALT_further_block",
+                "taskId": "ALT_slightly_simple",
                 "trackTime": true
             }
         },
@@ -431,7 +678,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/ALT_slightly_block.html",
             "response": [
                 {
-                    "id": "ALT_further_block_alarming",
+                    "id": "ALT_slightly_block_alarming",
                     "prompt": "How alarming does this alanine aminotransferase (ALT) result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -439,12 +686,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "ALT_further_block_action",
+                    "id": "ALT_slightly_block_urgency",
+                    "prompt": "How urgent of an issue is this alanine aminotransferase (ALT) result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "ALT_slightly_block_action",
                     "prompt": "Which of the following best describes what you would do in response to your ALT test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -461,7 +733,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "ALT_further_block",
+                "taskId": "ALT_slightly_block",
                 "trackTime": true
             }
         },
@@ -470,7 +742,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/ALT_slightly_gradient.html",
             "response": [
                 {
-                    "id": "ALT_further_block_alarming",
+                    "id": "ALT_slightly_gradient_alarming",
                     "prompt": "How alarming does this alanine aminotransferase (ALT) result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -478,12 +750,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "ALT_further_block_action",
+                    "id": "ALT_slightly_gradient_urgency",
+                    "prompt": "How urgent of an issue is this alanine aminotransferase (ALT) result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "ALT_slightly_gradient_action",
                     "prompt": "Which of the following best describes what you would do in response to your ALT test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -500,17 +797,16 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "ALT_further_block",
+                "taskId": "ALT_slightly_gradient",
                 "trackTime": true
             }
         },
-
         "ALT_further_table": {
             "type": "website",
             "path": "zikmund-fisher-replicated-study/assets/html-images/ALT_further_table.html",
             "response": [
                 {
-                    "id": "ALT_further_block_alarming",
+                    "id": "ALT_further_table_alarming",
                     "prompt": "How alarming does this alanine aminotransferase (ALT) result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -518,12 +814,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "ALT_further_block_action",
+                    "id": "ALT_further_table_urgency",
+                    "prompt": "How urgent of an issue is this alanine aminotransferase (ALT) result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "ALT_further_table_action",
                     "prompt": "Which of the following best describes what you would do in response to your ALT test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -540,7 +861,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "ALT_further_block",
+                "taskId": "ALT_further_table",
                 "trackTime": true
             }
         },
@@ -549,7 +870,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/ALT_further_simple.html",
             "response": [
                 {
-                    "id": "ALT_further_block_alarming",
+                    "id": "ALT_further_simple_alarming",
                     "prompt": "How alarming does this alanine aminotransferase (ALT) result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -557,12 +878,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "ALT_further_block_action",
+                    "id": "ALT_further_simple_urgency",
+                    "prompt": "How urgent of an issue is this alanine aminotransferase (ALT) result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "ALT_further_simple_action",
                     "prompt": "Which of the following best describes what you would do in response to your ALT test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -579,7 +925,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "ALT_further_block",
+                "taskId": "ALT_further_simple",
                 "trackTime": true
             }
         },
@@ -596,8 +942,33 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "ALT_further_block_urgency",
+                    "prompt": "How urgent of an issue is this alanine aminotransferase (ALT) result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
@@ -627,7 +998,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/ALT_further_gradient.html",
             "response": [
                 {
-                    "id": "ALT_further_block_alarming",
+                    "id": "ALT_further_gradient_alarming",
                     "prompt": "How alarming does this alanine aminotransferase (ALT) result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -635,12 +1006,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "ALT_further_block_action",
+                    "id": "ALT_further_gradient_urgency",
+                    "prompt": "How urgent of an issue is this alanine aminotransferase (ALT) result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "ALT_further_gradient_action",
                     "prompt": "Which of the following best describes what you would do in response to your ALT test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -657,17 +1053,16 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "ALT_further_block",
+                "taskId": "ALT_further_gradient",
                 "trackTime": true
             }
         },
-
         "Creatinine_slightly_table": {
             "type": "website",
             "path": "zikmund-fisher-replicated-study/assets/html-images/creatinine_slightly_table.html",
             "response": [
                 {
-                    "id": "Creatinine_further_gradient_alarming",
+                    "id": "Creatinine_slightly_table_alarming",
                     "prompt": "How alarming does this serum creatinine result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -675,12 +1070,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "Creatinine_further_gradient_action",
+                    "id": "Creatinine_slightly_table_urgency",
+                    "prompt": "How urgent of an issue is this serum creatinine result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Creatinine_slightly_table_action",
                     "prompt": "Which of the following best describes what you would do in response to your serum creatinine test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -697,7 +1117,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Creatinine_further_gradient",
+                "taskId": "Creatinine_slightly_table",
                 "trackTime": true
             }
         },
@@ -706,7 +1126,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/creatinine_slightly_simple.html",
             "response": [
                 {
-                    "id": "Creatinine_further_gradient_alarming",
+                    "id": "Creatinine_slightly_simple_alarming",
                     "prompt": "How alarming does this serum creatinine result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -714,12 +1134,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "Creatinine_further_gradient_action",
+                    "id": "Creatinine_slightly_simple_urgency",
+                    "prompt": "How urgent of an issue is this serum creatinine result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Creatinine_slightly_simple_action",
                     "prompt": "Which of the following best describes what you would do in response to your serum creatinine test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -736,7 +1181,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Creatinine_further_gradient",
+                "taskId": "Creatinine_slightly_simple",
                 "trackTime": true
             }
         },
@@ -745,7 +1190,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/creatinine_slightly_block.html",
             "response": [
                 {
-                    "id": "Creatinine_further_gradient_alarming",
+                    "id": "Creatinine_slightly_block_alarming",
                     "prompt": "How alarming does this serum creatinine result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -753,12 +1198,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "Creatinine_further_gradient_action",
+                    "id": "Creatinine_slightly_block_urgency",
+                    "prompt": "How urgent of an issue is this serum creatinine result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Creatinine_slightly_block_action",
                     "prompt": "Which of the following best describes what you would do in response to your serum creatinine test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -775,7 +1245,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Creatinine_further_gradient",
+                "taskId": "Creatinine_slightly_block",
                 "trackTime": true
             }
         },
@@ -784,7 +1254,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/creatinine_slightly_gradient.html",
             "response": [
                 {
-                    "id": "Creatinine_further_gradient_alarming",
+                    "id": "Creatinine_slightly_gradient_alarming",
                     "prompt": "How alarming does this serum creatinine result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -792,12 +1262,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "Creatinine_further_gradient_action",
+                    "id": "Creatinine_slightly_gradient_urgency",
+                    "prompt": "How urgent of an issue is this serum creatinine result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Creatinine_slightly_gradient_action",
                     "prompt": "Which of the following best describes what you would do in response to your serum creatinine test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -814,17 +1309,16 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Creatinine_further_gradient",
+                "taskId": "Creatinine_slightly_gradient",
                 "trackTime": true
             }
         },
-
         "Creatinine_further_table": {
             "type": "website",
             "path": "zikmund-fisher-replicated-study/assets/html-images/creatinine_further_table.html",
             "response": [
                 {
-                    "id": "Creatinine_further_gradient_alarming",
+                    "id": "Creatinine_further_table_alarming",
                     "prompt": "How alarming does this serum creatinine result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -832,12 +1326,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "Creatinine_further_gradient_action",
+                    "id": "Creatinine_further_table_urgency",
+                    "prompt": "How urgent of an issue is this serum creatinine result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Creatinine_further_table_action",
                     "prompt": "Which of the following best describes what you would do in response to your serum creatinine test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -854,7 +1373,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Creatinine_further_gradient",
+                "taskId": "Creatinine_further_table",
                 "trackTime": true
             }
         },
@@ -863,7 +1382,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/creatinine_further_simple.html",
             "response": [
                 {
-                    "id": "Creatinine_further_gradient_alarming",
+                    "id": "Creatinine_further_simple_alarming",
                     "prompt": "How alarming does this serum creatinine result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -871,12 +1390,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "Creatinine_further_gradient_action",
+                    "id": "Creatinine_further_simple_urgency",
+                    "prompt": "How urgent of an issue is this serum creatinine result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Creatinine_further_simple_action",
                     "prompt": "Which of the following best describes what you would do in response to your serum creatinine test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -893,7 +1437,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Creatinine_further_gradient",
+                "taskId": "Creatinine_further_simple",
                 "trackTime": true
             }
         },
@@ -902,7 +1446,7 @@
             "path": "zikmund-fisher-replicated-study/assets/html-images/creatinine_further_block.html",
             "response": [
                 {
-                    "id": "Creatinine_further_gradient_alarming",
+                    "id": "Creatinine_further_block_alarming",
                     "prompt": "How alarming does this serum creatinine result feel to you?",
                     "required": true,
                     "location": "belowStimulus",
@@ -910,12 +1454,37 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
-                    "id": "Creatinine_further_gradient_action",
+                    "id": "Creatinine_further_block_urgency",
+                    "prompt": "How urgent of an issue is this serum creatinine result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Creatinine_further_block_action",
                     "prompt": "Which of the following best describes what you would do in response to your serum creatinine test result?",
                     "required": true,
                     "location": "belowStimulus",
@@ -932,7 +1501,7 @@
             ],
             "instructionLocation": "aboveStimulus",
             "meta": {
-                "taskId": "Creatinine_further_gradient",
+                "taskId": "Creatinine_further_block",
                 "trackTime": true
             }
         },
@@ -949,8 +1518,33 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all", "value": 1 },
-                        { "label": "Very", "value": 6 }
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
+                    ]
+                },
+                {
+                    "id": "Creatinine_further_gradient_urgency",
+                    "prompt": "How urgent of an issue is this serum creatinine result?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "slider",
+                    "step": 1,
+                    "spacing": 1,
+                    "options": [
+                        {
+                            "label": "Not at all",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very",
+                            "value": 6
+                        }
                     ]
                 },
                 {
@@ -975,7 +1569,6 @@
                 "trackTime": true
             }
         },
-
         "final-questions": {
             "type": "questionnaire",
             "response": [
@@ -985,7 +1578,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "slider",
-                    "step":  1,
+                    "step": 1,
                     "spacing": 1,
                     "options": [
                         {
@@ -1004,7 +1597,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "slider",
-                    "step":  1,
+                    "step": 1,
                     "spacing": 1,
                     "options": [
                         {
@@ -1023,7 +1616,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "slider",
-                    "step":  1,
+                    "step": 1,
                     "spacing": 1,
                     "options": [
                         {
@@ -1042,7 +1635,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "slider",
-                    "step":  1,
+                    "step": 1,
                     "spacing": 1,
                     "options": [
                         {
@@ -1080,7 +1673,13 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "dropdown",
-                    "options": ["Female", "Male", "Nonbinary", "Other", "Do not wish to answer"]
+                    "options": [
+                        "Female",
+                        "Male",
+                        "Nonbinary",
+                        "Other",
+                        "Do not wish to answer"
+                    ]
                 },
                 {
                     "id": "q3-ethnicity",
@@ -1139,8 +1738,14 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all good", "value": 1 },
-                        { "label": "Extremely good", "value": 5 }
+                        {
+                            "label": "Not at all good",
+                            "value": 1
+                        },
+                        {
+                            "label": "Extremely good",
+                            "value": 5
+                        }
                     ]
                 },
                 {
@@ -1152,8 +1757,14 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all good", "value": 1 },
-                        { "label": "Extremely good", "value": 5 }
+                        {
+                            "label": "Not at all good",
+                            "value": 1
+                        },
+                        {
+                            "label": "Extremely good",
+                            "value": 5
+                        }
                     ]
                 },
                 {
@@ -1165,8 +1776,14 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all good", "value": 1 },
-                        { "label": "Extremely good", "value": 5 }
+                        {
+                            "label": "Not at all good",
+                            "value": 1
+                        },
+                        {
+                            "label": "Extremely good",
+                            "value": 5
+                        }
                     ]
                 },
                 {
@@ -1178,8 +1795,14 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all good", "value": 1 },
-                        { "label": "Extremely good", "value": 5 }
+                        {
+                            "label": "Not at all good",
+                            "value": 1
+                        },
+                        {
+                            "label": "Extremely good",
+                            "value": 5
+                        }
                     ]
                 },
                 {
@@ -1191,8 +1814,14 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all helpful", "value": 1 },
-                        { "label": "Extremely helpful", "value": 5 }
+                        {
+                            "label": "Not at all helpful",
+                            "value": 1
+                        },
+                        {
+                            "label": "Extremely helpful",
+                            "value": 5
+                        }
                     ]
                 },
                 {
@@ -1204,8 +1833,14 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Always prefer words", "value": 1 },
-                        { "label": "Always prefer numbers", "value": 5 }
+                        {
+                            "label": "Always prefer words",
+                            "value": 1
+                        },
+                        {
+                            "label": "Always prefer numbers",
+                            "value": 5
+                        }
                     ]
                 },
                 {
@@ -1217,8 +1852,14 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Always prefer percentages", "value": 1 },
-                        { "label": "Always prefer words", "value": 5 }
+                        {
+                            "label": "Always prefer percentages",
+                            "value": 1
+                        },
+                        {
+                            "label": "Always prefer words",
+                            "value": 5
+                        }
                     ]
                 },
                 {
@@ -1230,8 +1871,14 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Never", "value": 1 },
-                        { "label": "Very often", "value": 5 }
+                        {
+                            "label": "Never",
+                            "value": 1
+                        },
+                        {
+                            "label": "Very often",
+                            "value": 5
+                        }
                     ]
                 }
             ],
@@ -1252,8 +1899,14 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all confident", "value": 1 },
-                        { "label": "Extremely confident", "value": 5 }
+                        {
+                            "label": "Not at all confident",
+                            "value": 1
+                        },
+                        {
+                            "label": "Extremely confident",
+                            "value": 5
+                        }
                     ]
                 }
             ]
@@ -1262,7 +1915,7 @@
             "type": "questionnaire",
             "response": [
                 {
-                    "id": "csq",
+                    "id": "fq",
                     "prompt": "How familiar are you with the medical test results like the ones discussed in the survey?",
                     "required": true,
                     "location": "aboveStimulus",
@@ -1270,13 +1923,18 @@
                     "step": 1,
                     "spacing": 1,
                     "options": [
-                        { "label": "Not at all familiar", "value": 1 },
-                        { "label": "Extremely familiar", "value": 5 }
+                        {
+                            "label": "Not at all familiar",
+                            "value": 1
+                        },
+                        {
+                            "label": "Extremely familiar",
+                            "value": 5
+                        }
                     ]
                 }
             ]
         },
-
         "thanks": {
             "type": "markdown",
             "path": "zikmund-fisher-replicated-study/assets/thanks.md",
@@ -1351,14 +2009,11 @@
                     "Creatinine_further_gradient"
                 ]
             },
-
             "final-questions",
-
             "demographic-questions",
             "subjective-numeracy-scale",
             "chews-screening-question",
             "familiarity-question",
-
             "$graph-literacy-scale.components.Q5",
             "$graph-literacy-scale.components.Q6",
             "$graph-literacy-scale.components.Q7",
@@ -1366,9 +2021,7 @@
             "$graph-literacy-scale.components.Q9",
             "$graph-literacy-scale.components.Q11",
             "$graph-literacy-scale.components.Q13",
-
             "thanks"
         ]
     }
 }
-
