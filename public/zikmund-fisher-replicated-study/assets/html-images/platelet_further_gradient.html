@@ -59,7 +59,6 @@
            positions.push(d3.select(this).attr("d"))
        });
 
-
        //get the values of d for first and last bars in
        const firstPositionValues = firstPosition.match(/-?\d*\.?\d+/g).map(Number);
        const lastPositionValues = lastPosition.match(/-?\d*\.?\d+/g).map(Number);
@@ -74,27 +73,74 @@
 
        let gradientBar = "M" + startValue + "," + startHeight + "h" + endValue + "v" + endHeight + "h-" + endValue + "Z"
 
-
+       console.log(bars.selectAll("path"));
        //create gradient
        let width = endValue;
-       bars.selectAll("path").each(function(d, i) {
+       bars.selectAll("path").each(function(d, i, nodes) {
+
+          if (i === nodes.length - 1) {
+             const redValues = JSON.parse(JSON.stringify(lastPositionValues));
+             const newStop = 50;
+             lastPositionValues[2] = newStop;
+             lastPositionValues[4] = -newStop;
+             redValues[0] += newStop;
+             redValues[2] -= newStop;
+             redValues[4] += newStop;
+             console.log(lastPositionValues);
+             console.log(redValues);
+             lastPosition = d3.select(this).attr("d");
+
+             let newLastPosition = "M" + lastPositionValues[0] + "," + lastPositionValues[1] + "h" + lastPositionValues[2] + "v" + lastPositionValues[3] + "h-" + lastPositionValues[4] + "Z";
+
+             let redPosition = "M" + redValues[0] + "," + redValues[1] + "h" + redValues[2] + "v" + redValues[3] + "h-" + redValues[4] + "Z";
+
+             let positionValues = newLastPosition.match(/-?\d*\.?\d+/g).map(Number);
+             let sectionStart = positionValues[0];
+             let sectionEnd = positionValues[0] + positionValues[2];
 
 
-           let position = d3.select(this).attr("d");
-           let positionValues = position.match(/-?\d*\.?\d+/g).map(Number);
-           let sectionStart = positionValues[0];
-           let sectionEnd = positionValues[0] + positionValues[2];
+             let firstStop = (sectionStart / width) * 100;
+             let secondStop = (sectionEnd / width) * 100;
+             let middleStop = (firstStop + secondStop) / 2;
 
 
-           let firstStop = (sectionStart / width) * 100;
-           let secondStop = (sectionEnd / width) * 100;
-           let middleStop = (firstStop + secondStop) / 2;
+             let stop = doc.createElementNS("http://www.w3.org/2000/svg", "stop");
+             stop.setAttribute("offset", middleStop + "%");
+             stop.setAttribute("stop-color", d3.select(this).attr("fill"));
+             gradient.appendChild(stop);
+
+             let redPositionValues = redPosition.match(/-?\d*\.?\d+/g).map(Number);
+             let redSectionStart = redPositionValues[0];
+             let redSectionEnd = redPositionValues[0] + redPositionValues[2];
 
 
-           let stop = doc.createElementNS("http://www.w3.org/2000/svg", "stop");
-           stop.setAttribute("offset", middleStop + "%");
-           stop.setAttribute("stop-color", d3.select(this).attr("fill"));
-           gradient.appendChild(stop);
+             let redFirstStop = (redSectionStart / width) * 100;
+             let redSecondStop = (redSectionEnd / width) * 100;
+             let redMiddleStop = (redFirstStop + redSecondStop) / 2;
+
+
+             let redStop = doc.createElementNS("http://www.w3.org/2000/svg", "stop");
+             redStop.setAttribute("offset", redMiddleStop + "%");
+             redStop.setAttribute("stop-color", "red");
+             gradient.appendChild(redStop);
+          }
+          else {
+             let position = d3.select(this).attr("d");
+             let positionValues = position.match(/-?\d*\.?\d+/g).map(Number);
+             let sectionStart = positionValues[0];
+             let sectionEnd = positionValues[0] + positionValues[2];
+
+
+             let firstStop = (sectionStart / width) * 100;
+             let secondStop = (sectionEnd / width) * 100;
+             let middleStop = (firstStop + secondStop) / 2;
+
+
+             let stop = doc.createElementNS("http://www.w3.org/2000/svg", "stop");
+             stop.setAttribute("offset", middleStop + "%");
+             stop.setAttribute("stop-color", d3.select(this).attr("fill"));
+             gradient.appendChild(stop);
+          }
        });
 
 

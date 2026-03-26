@@ -11,14 +11,14 @@
 <div id="vis0"></div>
 <script type="text/javascript">
 const vegaspec0 = {
-    "width": 300,
+    "width": 500,
     "height": 30,
     "padding": 10,
     "title": {
         "text": "Serum Creatinine (SCR) Test Result",
         "align": "center",
         "font": "Arial",
-        "fontSize": 13,
+        "fontSize": 18,
         "color": "black"
     },
     "data": [
@@ -100,6 +100,7 @@ const vegaspec0 = {
         {
             "orient": "top",
             "scale": "xscale",
+            "format": ".1f",
             "offset": 0,
             "tickCount": 5,
             "values": [0, 0.7, 1.3, 3.0, 6.0]
@@ -210,7 +211,7 @@ const vegaspec0 = {
                         "value": 2.2
                     },
                     "y": {
-                        "signal": "height + 25 + 0 + 15 - 150"
+                        "signal": "height + 50 + 0 + 15 - 150"
                     },
                     "y2": {
                         "signal": "height + 70 + 0 + 15 - 150"
@@ -242,7 +243,7 @@ const vegaspec0 = {
                         "value": "black"
                     },
                     "size": {
-                        "value": 150
+                        "value": 125
                     }
                 }
             }
@@ -256,7 +257,7 @@ const vegaspec0 = {
                         "value": 2.2
                     },
                     "y": {
-                        "signal": "height + 85 + 0 + 15 - 250"
+                        "signal": "height + 118 + 0 + 15 - 250"
                     },
                     "text": {
                         "value": "Your result"
@@ -268,7 +269,7 @@ const vegaspec0 = {
                         "value": "black"
                     },
                     "fontSize": {
-                        "value": 14
+                        "value": 12
                     }
                 }
             }
@@ -282,7 +283,7 @@ const vegaspec0 = {
                         "value": 2.2
                     },
                     "y": {
-                        "signal": "height + 115 + 0 + 15 - 250"
+                        "signal": "height + 140 + 0 + 15 - 250"
                     },
                     "text": {
                         "value": "2.2 mg/dL"
@@ -294,7 +295,7 @@ const vegaspec0 = {
                         "value": "black"
                     },
                     "fontSize": {
-                        "value": 30
+                        "value": 18
                     }
                 }
             }
@@ -318,6 +319,29 @@ const vegaspec0 = {
                     },
                     "strokeWidth": {
                         "value": 3
+                    }
+                }
+            }
+        },
+        {
+            "type": "symbol",
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "xscale",
+                        "value": 6.11
+                    },
+                    "y": {
+                        "signal": "height - 15"
+                    },
+                    "shape": {
+                        "value": "M -0.5,-1 L 0.5,0 L -0.5,1 Z"
+                    },
+                    "fill": {
+                        "value": "orange"
+                    },
+                    "size": {
+                        "value": 950
                     }
                 }
             }
