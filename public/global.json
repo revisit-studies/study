@@ -225,16 +225,13 @@
       "test": true
     },
     "Mic-User-Study": {
-      "path": "Mic-User-Study/config.json",
-      "test": true
+      "path": "Mic-User-Study/config.json"
     },
     "Custom-Stimuli":{
-      "path": "Custom-Stimuli/config.json",
-      "test": true
+      "path": "Custom-Stimuli/config.json"
     },
     "Microphone-Test":{
-      "path": "Microphone-Test/config.json",
-      "test": true
+      "path": "Microphone-Test/config.json"
     }
   }
 }
