@@ -23,9 +23,21 @@ import { PageTitle } from './utils/PageTitle';
 import { isCloudStorageEngine } from './storage/engines/utils';
 
 async function fetchGlobalConfigArray() {
+  console.warn('[ReVISit][GlobalConfig] Fetching global.json', {
+    url: `${PREFIX}global.json`,
+    prod: import.meta.env.PROD,
+  });
   const globalFile = await fetch(`${PREFIX}global.json`);
+  console.warn('[ReVISit][GlobalConfig] global.json response received', {
+    ok: globalFile.ok,
+    status: globalFile.status,
+    statusText: globalFile.statusText,
+  });
   const configs = await globalFile.text();
   const parsedConfig = parseGlobalConfig(configs);
+  console.warn('[ReVISit][GlobalConfig] Parsed global config', {
+    configCount: parsedConfig.configsList.length,
+  });
 
   // Hide test studies in production to avoid loading intentionally broken test configs.
   if (!import.meta.env.PROD) {
@@ -45,7 +57,11 @@ export function GlobalConfigParser() {
   useEffect(() => {
     async function fetchData() {
       if (globalConfig) {
+        console.warn('[ReVISit][GlobalConfig] Fetching study configs', {
+          studyCount: globalConfig.configsList.length,
+        });
         setStudyConfigs(await fetchStudyConfigs(globalConfig));
+        console.warn('[ReVISit][GlobalConfig] Study configs fetched');
       }
     }
     fetchData();
@@ -54,8 +70,12 @@ export function GlobalConfigParser() {
   useEffect(() => {
     if (globalConfig) return;
 
+    console.warn('[ReVISit][GlobalConfig] Starting initial global config load');
     fetchGlobalConfigArray().then((gc) => {
+      console.warn('[ReVISit][GlobalConfig] Initial global config load complete');
       setGlobalConfig(gc);
+    }).catch((error) => {
+      console.error('[ReVISit][GlobalConfig] Initial global config load failed', error);
     });
   }, [globalConfig]);
 
@@ -65,10 +85,16 @@ export function GlobalConfigParser() {
     if (storageEngine !== undefined) return;
 
     async function fn() {
+      console.warn('[ReVISit][StorageInit] Starting storage engine initialization');
       const _storageEngine = await initializeStorageEngine();
+      console.warn('[ReVISit][StorageInit] Storage engine initialization complete', {
+        engine: _storageEngine?.getEngine?.(),
+      });
       setStorageEngine(_storageEngine);
     }
-    fn();
+    fn().catch((error) => {
+      console.error('[ReVISit][StorageInit] Storage engine initialization failed', error);
+    });
   }, [setStorageEngine, storageEngine]);
 
   const analysisProtectedCallback = async (studyId:string) => {
