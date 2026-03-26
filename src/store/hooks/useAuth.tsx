@@ -136,15 +136,22 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     };
 
     // Determine authentication listener based on storageEngine and authEnabled variable
+    function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+      return Promise.race([
+        p,
+        new Promise<T>((_, reject) => { setTimeout(() => reject(new Error('timeout')), ms); }),
+      ]);
+    }
+
     const determineAuthentication = async () => {
       if (storageEngine && isCloudStorageEngine(storageEngine)) {
         try {
-          const authInfo = await storageEngine?.getUserManagementData('authentication');
+          const authInfo = await withTimeout(storageEngine.getUserManagementData('authentication'), 8000);
           if (authInfo?.isEnabled) {
             storageEngine?.unsubscribe(handleAuthStateChanged);
           }
         } catch {
-          // auth check failed; proceed as non-authenticated
+          // auth check failed or timed out; proceed as non-authenticated
         }
         setUser(nonAuthUser);
       } else if (storageEngine) {

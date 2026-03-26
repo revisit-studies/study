@@ -66,13 +66,18 @@ export function GlobalConfigParser() {
     if (storageEngine !== undefined) return;
 
     async function fn() {
+      const fallbackToLocal = async () => {
+        const engine = new LocalStorageEngine();
+        await engine.connect();
+        setStorageEngine(engine);
+      };
       try {
-        const _storageEngine = await initializeStorageEngine();
+        const enginePromise = initializeStorageEngine();
+        const timeoutPromise = new Promise<never>((_, reject) => { setTimeout(() => reject(new Error('timeout')), 10000); });
+        const _storageEngine = await Promise.race([enginePromise, timeoutPromise]);
         setStorageEngine(_storageEngine);
       } catch {
-        const fallback = new LocalStorageEngine();
-        await fallback.connect();
-        setStorageEngine(fallback);
+        await fallbackToLocal();
       }
     }
     fn();
