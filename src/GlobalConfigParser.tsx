@@ -25,7 +25,17 @@ import { isCloudStorageEngine } from './storage/engines/utils';
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
   const configs = await globalFile.text();
-  return parseGlobalConfig(configs);
+  const parsedConfig = parseGlobalConfig(configs);
+
+  // Hide test studies in production to avoid loading intentionally broken test configs.
+  if (!import.meta.env.PROD) {
+    return parsedConfig;
+  }
+
+  return {
+    ...parsedConfig,
+    configsList: parsedConfig.configsList.filter((configId) => !parsedConfig.configs[configId]?.test),
+  };
 }
 
 export function GlobalConfigParser() {
