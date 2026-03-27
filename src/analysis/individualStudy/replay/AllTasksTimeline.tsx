@@ -1,4 +1,6 @@
-import { JSX, useMemo } from 'react';
+import {
+  JSX, useMemo,
+} from 'react';
 import * as d3 from 'd3';
 import {
   Center, Stack, Tooltip, Text,
@@ -113,6 +115,7 @@ export function AllTasksTimeline({
 
       const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
       const hasCorrect = !!((component && component.correctAnswer) || answer.correctAnswer.length > 0);
+      const hasAudio = component?.recordAudio ?? studyConfig?.uiConfig?.recordAudio ?? false;
 
       return {
         line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} xScale={scale} scaleStart={scaleStart} />,
@@ -141,14 +144,14 @@ export function AllTasksTimeline({
             )}
           >
             <g>
-              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} />
+              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} hasAudio={hasAudio} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} />
             </g>
           </Tooltip>),
       };
     });
 
     return allElements;
-  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig?.components, maxHeight, studyId, conditionParam]);
+  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig?.components, studyConfig?.uiConfig?.recordAudio, maxHeight, studyId, conditionParam]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {
