@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
 import { CustomResponse, JsonValue } from '../../parser/types';
 import { ResourceNotFound } from '../../ResourceNotFound';
 import { CustomResponseField } from '../../store/types';
 import { ErrorBoundary } from '../../controllers/ErrorBoundary';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
-import { getCustomResponseModule } from './customResponseModules';
+import { usePublicModule } from '../../utils/publicModules';
+import type { CustomResponseModule } from './customResponseModules';
 
 export function CustomResponseInput({
   response,
@@ -24,11 +24,15 @@ export function CustomResponseInput({
   field: CustomResponseField;
 }) {
   const isAnalysis = useIsAnalysis();
-  const customResponseModule = useMemo(() => getCustomResponseModule(response), [response]);
-  const ResponseComponent = customResponseModule?.default || null;
+  const { module, loadFailed } = usePublicModule<CustomResponseModule>(response.path);
+  const ResponseComponent = module?.default || null;
+
+  if (loadFailed) {
+    return <ResourceNotFound path={response.path} />;
+  }
 
   if (!ResponseComponent) {
-    return <ResourceNotFound path={response.path} />;
+    return <div>Loading...</div>;
   }
 
   return (

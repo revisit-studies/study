@@ -1,5 +1,5 @@
 import {
-  Suspense, useCallback,
+  useCallback,
 } from 'react';
 import type { ComponentType } from 'react';
 import { ParticipantData, ReactComponent } from '../parser/types';
@@ -8,11 +8,12 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentIdentifier } from '../routes/utils';
 import { ErrorBoundary } from './ErrorBoundary';
-import { getPublicModule } from '../utils/publicModules';
+import { usePublicModule } from '../utils/publicModules';
 
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
-  const StimulusComponent = (getPublicModule(currentConfig.path)?.default || null) as ComponentType<StimulusParams<unknown, unknown>> | null;
   const identifier = useCurrentIdentifier();
+  const { module, loadFailed } = usePublicModule<{ default?: ComponentType<StimulusParams<unknown, unknown>> }>(currentConfig.path);
+  const StimulusComponent = module?.default || null;
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
@@ -28,20 +29,22 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
     storeDispatch(setReactiveAnswers(stimulusAnswers));
   }, [setReactiveAnswers, storeDispatch, updateResponseBlockValidation, identifier]);
 
+  if (loadFailed) {
+    return <ResourceNotFound path={currentConfig.path} />;
+  }
+
+  if (!StimulusComponent) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      {StimulusComponent
-        ? (
-          <ErrorBoundary>
-            <StimulusComponent
-              parameters={currentConfig.parameters}
-              setAnswer={setAnswer}
-              answers={answers}
-              provenanceState={provState}
-            />
-          </ErrorBoundary>
-        )
-        : <ResourceNotFound path={currentConfig.path} />}
-    </Suspense>
+    <ErrorBoundary>
+      <StimulusComponent
+        parameters={currentConfig.parameters}
+        setAnswer={setAnswer}
+        answers={answers}
+        provenanceState={provState}
+      />
+    </ErrorBoundary>
   );
 }
