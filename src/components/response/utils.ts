@@ -288,6 +288,40 @@ function validateCustomResponse(
   return customValidate(value, values, response);
 }
 
+export function generateCustomResponseErrorMessage(
+  response: CustomResponse,
+  value: StoredAnswer['answer'][string],
+  values: StoredAnswer['answer'],
+  customValidate?: CustomResponseValidate,
+  loadError?: string,
+) {
+  if (loadError) {
+    return loadError;
+  }
+
+  if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
+    return null;
+  }
+
+  if (response.required === false && isEmptyCustomResponseValue(value)) {
+    return null;
+  }
+
+  if (isEmptyCustomResponseValue(value)) {
+    return null;
+  }
+
+  if (response.requiredValue !== undefined && !isEqual(value, response.requiredValue)) {
+    return 'Incorrect input';
+  }
+
+  if (!customValidate) {
+    return null;
+  }
+
+  return customValidate(value, values, response);
+}
+
 export const generateValidation = (
   responses: Response[],
   customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},

@@ -7,6 +7,7 @@ import type {
 import type { CustomResponseValidate } from '../../store/types';
 import {
   checkCheckboxResponseForValidation,
+  generateCustomResponseErrorMessage,
   generateErrorMessage,
   generateInitFields,
   generateValidation,
@@ -286,6 +287,50 @@ describe('generateValidation custom', () => {
     });
 
     expect(error).toBeNull();
+  });
+});
+
+describe('generateCustomResponseErrorMessage', () => {
+  const response: CustomResponse = {
+    id: 'custom-response-demo',
+    prompt: 'Custom response',
+    type: 'custom',
+    path: 'custom-response/Example.tsx',
+    parameters: {
+      minimumConfidence: 70,
+    },
+  };
+
+  const customValidate: CustomResponseValidate = (value, _values, customResponse) => {
+    const minimumConfidence = customResponse.parameters?.minimumConfidence as number;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return 'Select a chart type to continue.';
+    }
+    if (typeof value.confidence !== 'number' || value.confidence < minimumConfidence) {
+      return `Set confidence to at least ${minimumConfidence} to continue.`;
+    }
+
+    return null;
+  };
+
+  it('does not show an error for untouched required custom responses', () => {
+    expect(generateCustomResponseErrorMessage(response, null, {}, customValidate)).toBeNull();
+  });
+
+  it('shows validation feedback once the response is partially filled', () => {
+    expect(generateCustomResponseErrorMessage(response, {
+      chartType: 'Bar',
+      confidence: null,
+      rationale: '',
+    }, {}, customValidate)).toBe('Set confidence to at least 70 to continue.');
+  });
+
+  it('shows no feedback once the current value is valid', () => {
+    expect(generateCustomResponseErrorMessage(response, {
+      chartType: 'Bar',
+      confidence: 80,
+      rationale: '',
+    }, {}, customValidate)).toBeNull();
   });
 });
 

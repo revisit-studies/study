@@ -40,6 +40,7 @@ export function ResponseSwitcher({
   otherInput,
   disabled,
   field,
+  customError,
 }: {
   response: Response;
   form: GetInputPropsReturnType;
@@ -50,6 +51,7 @@ export function ResponseSwitcher({
   otherInput?: GetInputPropsReturnType;
   disabled?: boolean;
   field?: CustomResponseField;
+  customError?: string | null;
 }) {
   const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
@@ -266,7 +268,7 @@ export function ResponseSwitcher({
         response={response as CustomResponse}
         disabled={isDisabled || dontKnowChecked}
         value={customResponseValue}
-        error={form.error}
+        error={customError || undefined}
         index={index}
         enumerateQuestions={enumerateQuestions}
         field={field}

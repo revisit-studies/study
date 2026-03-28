@@ -21,6 +21,20 @@ const EMPTY_VALUE: CustomResponseValue = {
   rationale: '',
 };
 
+export function normalizeConfidenceValue(value: string | number): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  const trimmedValue = value.trim();
+  if (trimmedValue.length === 0) {
+    return null;
+  }
+
+  const parsedValue = Number(trimmedValue);
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+}
+
 function getStructuredValue(value: JsonValue | null): CustomResponseValue {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     return {
@@ -102,7 +116,7 @@ export default function CustomResponseCard({
           min={0}
           max={100}
           value={structuredValue.confidence ?? undefined}
-          onChange={(nextValue) => updateValue({ confidence: typeof nextValue === 'number' ? nextValue : null })}
+          onChange={(nextValue) => updateValue({ confidence: normalizeConfidenceValue(nextValue) })}
           onBlur={() => field.onBlur()}
           disabled={disabled}
         />
