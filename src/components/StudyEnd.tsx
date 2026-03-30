@@ -13,6 +13,7 @@ import { download } from './downloader/DownloadTidy';
 import { useStudyId } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { useStoreDispatch, useStoreActions } from '../store/store';
+import { getStudyEndFinalizeState } from './StudyEnd.utils';
 
 export function StudyEnd() {
   const studyConfig = useStudyConfig();
@@ -23,6 +24,7 @@ export function StudyEnd() {
   const isAnalysis = useIsAnalysis();
 
   const [completed, setCompleted] = useState(false);
+  const [finalizeError, setFinalizeError] = useState<string | null>(null);
   const storageEngineRef = useRef(storageEngine);
 
   useEffect(() => {
@@ -48,14 +50,26 @@ export function StudyEnd() {
         }
 
         try {
-          const isComplete = await engine.verifyCompletion();
-          if (isComplete) {
+          const result = await engine.finalizeParticipant();
+
+          const nextFinalizeState = getStudyEndFinalizeState(result);
+          if (nextFinalizeState.completed) {
+            setFinalizeError(null);
             setCompleted(true);
             dispatch(setParticipantCompleted(true));
             return;
           }
+
+          if (!nextFinalizeState.shouldRetry) {
+            setFinalizeError(nextFinalizeState.error);
+            return;
+          }
+
+          setFinalizeError(nextFinalizeState.error);
         } catch (error) {
           console.error('An error occurred while verifying completion', error);
+          setFinalizeError('An error occurred while uploading your answers.');
+          return;
         }
 
         if (!cancelled) {
@@ -180,11 +194,19 @@ export function StudyEnd() {
             : <Text size="xl" display="block">Thank you for completing the study. You may close this window now.</Text>)
           : (
             <>
-              <Text size="xl" display="block">Please wait while your answers are uploaded.</Text>
+              <Text size="xl" display="block">
+                {finalizeError
+                  ? 'We hit an error while uploading your answers.'
+                  : 'Please wait while your answers are uploaded.'}
+              </Text>
               <Space h="lg" />
-              <Center>
-                <Loader color="blue" />
-              </Center>
+              {finalizeError
+                ? <Text c="red" maw={520}>{`${finalizeError} Please keep this page open and contact the study administrator if the issue persists.`}</Text>
+                : (
+                  <Center>
+                    <Loader color="blue" />
+                  </Center>
+                )}
             </>
           )}
       </Flex>
