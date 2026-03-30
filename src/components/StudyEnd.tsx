@@ -197,6 +197,7 @@ export function StudyEnd() {
   const showRetryNotice = failedAttemptCount > 0;
   const downloadUnavailable = !participantId || participantData === null || participantData === undefined;
   const automaticRetryDelaySeconds = retryDelayMs ? Math.ceil(retryDelayMs / 1000) : null;
+  const automaticRetryLabel = `${failedAttemptCount}/3 retries`;
 
   return (
     <Center style={{ height: '100%' }}>
@@ -246,6 +247,7 @@ export function StudyEnd() {
                       <Text c={finalizeError ? 'red' : undefined} maw={560}>
                         {finalizeError || 'The upload confirmation is taking longer than expected.'}
                         {' '}
+                        {`${automaticRetryLabel}. `}
                         {isRetryingAutomatically && automaticRetryDelaySeconds
                           ? `We will retry automatically in about ${automaticRetryDelaySeconds} seconds.`
                           : 'We will retry automatically.'}
