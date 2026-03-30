@@ -147,6 +147,14 @@ describe.each([
     expect(currentParticipantId).toBeDefined();
   });
 
+  test('peekCurrentParticipantId returns persisted IDs without creating a new one', async () => {
+    expect(await storageEngine.peekCurrentParticipantId(studyId)).toBeUndefined();
+
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    expect(await storageEngine.peekCurrentParticipantId(studyId)).toBe(participantSession.participantId);
+  });
+
   // clearCurrentParticipantId tested in rejectParticipant test
 
   // _getSequence tested in rejectParticipant test

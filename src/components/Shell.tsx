@@ -100,27 +100,13 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       if (!storageEngine || !activeConfig || !canonicalStudyId) return;
 
       let modes: Record<REVISIT_MODE, boolean> | null = null;
+      let storageOperationFailed = false;
+      const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
+        ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
+        || undefined
+        : undefined;
       try {
-        // Make sure that we have a study database and that the study database has a sequence array
-        await storageEngine.initializeStudyDb(canonicalStudyId);
-        await storageEngine.saveConfig(activeConfig);
-
-        const sequenceArray = await storageEngine.getSequenceArray();
-        if (!sequenceArray) {
-          await storageEngine.setSequenceArray(
-            await generateSequenceArray(activeConfig),
-          );
-        }
-
-        modes = await storageEngine.getModes(canonicalStudyId);
-
-        // Get or generate participant session
-        const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
-          ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
-          || undefined
-          : undefined;
         const searchParamsObject = Object.fromEntries(searchParams.entries());
-
         const ipTimeoutController = new AbortController();
         const ipTimeoutId = window.setTimeout(() => ipTimeoutController.abort(), 1200);
         const ipRes = await fetch('https://api.ipify.org?format=json', {
@@ -144,32 +130,50 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           ip: ip.ip,
         };
 
-        let participantSession = await storageEngine.initializeParticipantSession(
-          searchParamsObject,
-          activeConfig,
-          metadata,
-          participantId || urlParticipantId,
-        );
-
-        if (studyCondition.length > 0 && modes.developmentModeEnabled) {
-          const updatedSearchParams = {
-            ...participantSession.searchParams,
-            condition: studyCondition.join(','),
-          };
-          await storageEngine.updateParticipantSearchParams(updatedSearchParams);
-          await storageEngine.updateStudyCondition(studyCondition);
-          participantSession = {
-            ...participantSession,
-            searchParams: updatedSearchParams,
-            conditions: studyCondition,
-          };
-        }
         const activeHash = await hash(JSON.stringify(activeConfig));
-
+        let participantSession!: Awaited<ReturnType<typeof storageEngine.initializeParticipantSession>>;
         let participantConfig = activeConfig;
+        try {
+          // Make sure that we have a study database and that the study database has a sequence array
+          await storageEngine.initializeStudyDb(canonicalStudyId);
+          await storageEngine.saveConfig(activeConfig);
 
-        if (participantSession.participantConfigHash !== activeHash) {
-          participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], canonicalStudyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
+          const sequenceArray = await storageEngine.getSequenceArray();
+          if (!sequenceArray) {
+            await storageEngine.setSequenceArray(generateSequenceArray(activeConfig));
+          }
+
+          modes = await storageEngine.getModes(canonicalStudyId);
+          participantSession = await storageEngine.initializeParticipantSession(
+            searchParamsObject,
+            activeConfig,
+            metadata,
+            participantId || urlParticipantId,
+          );
+
+          if (studyCondition.length > 0 && modes.developmentModeEnabled) {
+            const updatedSearchParams = {
+              ...participantSession.searchParams,
+              condition: studyCondition.join(','),
+            };
+            await storageEngine.updateParticipantSearchParams(updatedSearchParams);
+            await storageEngine.updateStudyCondition(studyCondition);
+            participantSession = {
+              ...participantSession,
+              searchParams: updatedSearchParams,
+              conditions: studyCondition,
+            };
+          }
+
+          if (participantSession.participantConfigHash !== activeHash) {
+            participantConfig = (await storageEngine.getAllConfigsFromHash(
+              [participantSession.participantConfigHash],
+              canonicalStudyId,
+            ))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
+          }
+        } catch (storageError) {
+          storageOperationFailed = true;
+          throw storageError;
         }
 
         const effectiveStudyCondition = resolveParticipantConditions({
@@ -195,7 +199,11 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         setStore(newStore);
       } catch (error) {
         console.error('Error initializing user store routing:', error);
-        const isStorageFailure = isStorageStartupFailure(storageEngine, import.meta.env.VITE_STORAGE_ENGINE);
+        const isStorageFailure = isStorageStartupFailure(
+          storageEngine,
+          import.meta.env.VITE_STORAGE_ENGINE,
+          storageOperationFailed,
+        );
         const resolvedModes = modes ?? await storageEngine.getModes(canonicalStudyId).catch(() => null);
         const developmentModeEnabledForAlert = resolvedModes?.developmentModeEnabled ?? false;
         const fallbackModes = {
@@ -203,11 +211,9 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           dataSharingEnabled: resolvedModes?.dataSharingEnabled ?? true,
           dataCollectionEnabled: false,
         };
-        const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
-          ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
-          || undefined
-          : undefined;
-        const resumeParticipantId = participantId || urlParticipantId;
+        const resumeParticipantId = participantId
+          || urlParticipantId
+          || await storageEngine.peekCurrentParticipantId(canonicalStudyId);
         const initialAlertModal = !isStorageFailure
           ? getInitialStartupAlert(error, developmentModeEnabledForAlert, resumeParticipantId)
           : undefined;

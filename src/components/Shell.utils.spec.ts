@@ -33,6 +33,24 @@ describe('Shell utilities', () => {
     expect(isStorageStartupFailure(mockStorageEngine, 'supabase')).toBe(true);
   });
 
+  test('detects cloud storage startup failures from thrown storage operations', () => {
+    const mockStorageEngine = {
+      getEngine: () => 'supabase' as const,
+      isConnected: () => true,
+    };
+
+    expect(isStorageStartupFailure(mockStorageEngine, 'supabase', true)).toBe(true);
+  });
+
+  test('does not treat local storage startup errors as connectivity failures', () => {
+    const mockStorageEngine = {
+      getEngine: () => 'localStorage' as const,
+      isConnected: () => true,
+    };
+
+    expect(isStorageStartupFailure(mockStorageEngine, 'localStorage', true)).toBe(false);
+  });
+
   test('uses the caught error message in development mode', () => {
     expect(getInitialStartupAlert(new Error('Bad startup state'), true, null)).toEqual({
       show: true,

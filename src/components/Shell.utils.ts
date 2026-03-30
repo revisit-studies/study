@@ -13,8 +13,13 @@ export function getScreenOrientationType(screen: Screen) {
 export function isStorageStartupFailure(
   storageEngine: StartupStorageStatus,
   configuredEngine: string,
+  storageOperationFailed: boolean = false,
 ) {
-  return !storageEngine.isConnected() || storageEngine.getEngine() !== configuredEngine;
+  if (!storageEngine.isConnected() || storageEngine.getEngine() !== configuredEngine) {
+    return true;
+  }
+
+  return storageOperationFailed && configuredEngine !== 'localStorage';
 }
 
 export function getStartupErrorMessage(error: unknown) {

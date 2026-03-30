@@ -453,6 +453,17 @@ export abstract class StorageEngine {
     return this.currentParticipantId;
   }
 
+  // Returns the current participant ID if it already exists in memory or persistence without creating a new one.
+  async peekCurrentParticipantId(studyId?: string) {
+    const studyIdToUse = studyId || this.studyId;
+    if (studyIdToUse) {
+      const storageKey = `${this.collectionPrefix}${studyIdToUse}/currentParticipantId`;
+      return await this.participantStore.getItem<string>(storageKey) || undefined;
+    }
+
+    return this.currentParticipantId;
+  }
+
   // Clears the current participant ID from persistence and resets the currentParticipantId property.
   async clearCurrentParticipantId() {
     this.currentParticipantId = undefined;
