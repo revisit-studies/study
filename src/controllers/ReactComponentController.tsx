@@ -1,19 +1,23 @@
 import {
-  useCallback,
+  Suspense, useCallback,
 } from 'react';
-import type { ComponentType } from 'react';
+import { ModuleNamespace } from 'vite/types/hot';
 import { ParticipantData, ReactComponent } from '../parser/types';
 import { StimulusParams } from '../store/types';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentIdentifier } from '../routes/utils';
 import { ErrorBoundary } from './ErrorBoundary';
-import { usePublicModule } from '../utils/publicModules';
+
+const modules = import.meta.glob(
+  '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
+  { eager: true },
+) as Record<string, ModuleNamespace>;
 
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
+  const reactPath = `../public/${currentConfig.path}`;
+  const StimulusComponent = reactPath in modules ? modules[reactPath].default : null;
   const identifier = useCurrentIdentifier();
-  const { module, loadFailed } = usePublicModule<{ default?: ComponentType<StimulusParams<unknown, unknown>> }>(currentConfig.path);
-  const StimulusComponent = module?.default || null;
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
@@ -29,22 +33,20 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
     storeDispatch(setReactiveAnswers(stimulusAnswers));
   }, [setReactiveAnswers, storeDispatch, updateResponseBlockValidation, identifier]);
 
-  if (loadFailed) {
-    return <ResourceNotFound path={currentConfig.path} />;
-  }
-
-  if (!StimulusComponent) {
-    return <div>Loading...</div>;
-  }
-
   return (
-    <ErrorBoundary>
-      <StimulusComponent
-        parameters={currentConfig.parameters}
-        setAnswer={setAnswer}
-        answers={answers}
-        provenanceState={provState}
-      />
-    </ErrorBoundary>
+    <Suspense fallback={<div>Loading...</div>}>
+      {StimulusComponent
+        ? (
+          <ErrorBoundary>
+            <StimulusComponent
+              parameters={currentConfig.parameters}
+              setAnswer={setAnswer}
+              answers={answers}
+              provenanceState={provState}
+            />
+          </ErrorBoundary>
+        )
+        : <ResourceNotFound path={currentConfig.path} />}
+    </Suspense>
   );
 }

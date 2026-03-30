@@ -2,6 +2,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   useEffect, useMemo, useState,
 } from 'react';
+import { ModuleNamespace } from 'vite/types/hot';
 import {
   useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../store/store';
@@ -11,7 +12,6 @@ import { JumpFunctionParameters, JumpFunctionReturnVal } from '../store/types';
 import { findFuncBlock } from '../utils/getSequenceFlatMap';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { getComponent } from '../utils/handleComponentInheritance';
-import { loadPublicModule } from '../utils/publicModules';
 
 export function useStudyId(): string {
   const { studyId } = useParams();
@@ -48,6 +48,11 @@ export function useCurrentStep() {
   return decrypted;
 }
 
+const modules = import.meta.glob(
+  '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
+  { eager: true },
+) as Record<string, ModuleNamespace>;
+
 export function useCurrentComponent(): string {
   const { funcIndex } = useParams();
   const _answers = useStoreSelector((state) => state.answers);
@@ -69,7 +74,7 @@ export function useCurrentComponent(): string {
 
   const [compName, setCompName] = useState('__dynamicLoading');
 
-  const nextFuncLoader = useMemo(() => {
+  const nextFunc:((params: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
     if (typeof currentStep === 'number' && !currentComponent) {
       const block = findFuncBlock(flatSequence[currentStep], studyConfig.sequence);
 
@@ -77,16 +82,19 @@ export function useCurrentComponent(): string {
         return null;
       }
 
-      return block.functionPath;
+      const reactPath = `../public/${block.functionPath}`;
+      const newFunc = reactPath in modules ? modules[reactPath].default : null;
+
+      return newFunc;
     }
     return null;
   }, [currentComponent, currentStep, flatSequence, studyConfig.sequence]);
 
   useEffect(() => {
-    if (!funcIndex && nextFuncLoader && typeof currentStep === 'number') {
+    if (!funcIndex && nextFunc && typeof currentStep === 'number') {
       navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(currentTrialStep === currentStep && currentTrialFuncIndex !== null ? currentTrialFuncIndex : 0)}${window.location.search}`);
     }
-  }, [currentStep, currentTrialFuncIndex, currentTrialStep, funcIndex, navigate, nextFuncLoader, studyId]);
+  }, [currentStep, currentTrialFuncIndex, currentTrialStep, funcIndex, navigate, nextFunc, studyId]);
 
   useEffect(() => {
     if (typeof currentStep !== 'number' || currentTrialStep === null || currentTrialStep !== currentStep || !funcIndex) {
@@ -105,8 +113,6 @@ export function useCurrentComponent(): string {
   }, [currentStep, currentTrialFuncIndex, currentTrialStep, funcIndex, navigate, studyId]);
 
   useEffect(() => {
-    let isMounted = true;
-
     if (typeof currentStep === 'number') {
       const component = getComponent(flatSequence[currentStep], studyConfig);
 
@@ -123,55 +129,38 @@ export function useCurrentComponent(): string {
       }
 
       // in a func component
-      if (!component && nextFuncLoader !== null) {
-        loadPublicModule(nextFuncLoader).then((module) => {
-          if (!isMounted) {
-            return;
-          }
-
-          const loadedModule = module as { default?: (params: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal };
-          if (!loadedModule.default) {
-            setCompName('__dynamicLoading');
-            setIndexWhenSettingComponentName(null);
-            return;
-          }
-
-          const { component: currCompName, parameters: _params, correctAnswer } = loadedModule.default({
-            answers: _answers,
-            customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
-            currentStep,
-            currentBlock: flatSequence[currentStep],
-          });
-
-          if (currCompName !== null) {
-            if (funcIndex) {
-              setCompName(currCompName);
-              setIndexWhenSettingComponentName(decryptedFuncIndex);
-
-              storeDispatch(pushToFuncSequence({
-                component: currCompName,
-                funcName,
-                index: currentStep,
-                funcIndex: decryptedFuncIndex,
-                parameters: _params || undefined,
-                correctAnswer: correctAnswer || undefined,
-              }));
-            }
-          } else {
-            setCompName('__dynamicLoading');
-            setIndexWhenSettingComponentName(null);
-
-            navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
-          }
+      if (!component && nextFunc !== null) {
+        const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
+          answers: _answers,
+          customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
+          currentStep,
+          currentBlock: flatSequence[currentStep],
         });
+
+        if (currCompName !== null) {
+          if (funcIndex) {
+            setCompName(currCompName);
+            setIndexWhenSettingComponentName(decryptedFuncIndex);
+
+            storeDispatch(pushToFuncSequence({
+              component: currCompName,
+              funcName,
+              index: currentStep,
+              funcIndex: decryptedFuncIndex,
+              parameters: _params || undefined,
+              correctAnswer: correctAnswer || undefined,
+            }));
+          }
+        } else {
+          setCompName('__dynamicLoading');
+          setIndexWhenSettingComponentName(null);
+
+          navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
+        }
       }
     }
-
-    return () => {
-      isMounted = false;
-    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, funcIndex, nextFuncLoader]);
+  }, [currentStep, funcIndex]);
 
   if (typeof currentStep === 'number' && flatSequence[currentStep] === 'end') {
     return 'end';

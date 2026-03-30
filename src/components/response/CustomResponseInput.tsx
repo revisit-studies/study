@@ -3,8 +3,7 @@ import { ResourceNotFound } from '../../ResourceNotFound';
 import { CustomResponseField } from '../../store/types';
 import { ErrorBoundary } from '../../controllers/ErrorBoundary';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
-import { usePublicModule } from '../../utils/publicModules';
-import type { CustomResponseModule } from './customResponseModules';
+import { getCustomResponseModule } from './customResponseModules';
 
 export function CustomResponseInput({
   response,
@@ -24,15 +23,10 @@ export function CustomResponseInput({
   field: CustomResponseField;
 }) {
   const isAnalysis = useIsAnalysis();
-  const { module, loadFailed } = usePublicModule<CustomResponseModule>(response.path);
-  const ResponseComponent = module?.default || null;
-
-  if (loadFailed) {
-    return <ResourceNotFound path={response.path} />;
-  }
+  const ResponseComponent = getCustomResponseModule(response)?.default || null;
 
   if (!ResponseComponent) {
-    return <div>Loading...</div>;
+    return <ResourceNotFound path={response.path} />;
   }
 
   return (

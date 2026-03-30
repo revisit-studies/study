@@ -25,12 +25,12 @@ import {
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
 import {
-  CustomResponseField, CustomResponseValidate, FormElementProvenance, StoredAnswer, ValidationStatus,
+  CustomResponseField, FormElementProvenance, StoredAnswer, ValidationStatus,
 } from '../../store/types';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
-import { getCustomResponseModuleLoadError, loadCustomResponseModule } from './customResponseModules';
+import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
 
 type Props = {
   status?: StoredAnswer;
@@ -150,73 +150,40 @@ export function ResponseBlock({
     [responsesWithDefaults],
   );
 
-  const [customResponseModuleState, setCustomResponseModuleState] = useState({
-    customResponseValidators: {} as Record<string, CustomResponseValidate | undefined>,
-    customResponseLoadErrors: {} as Record<string, string | undefined>,
-    loadedCustomResponseIds: [] as string[],
-  });
+  const customResponseModules = useMemo(() => Object.fromEntries(
+    customResponses.map((response) => [response.id, {
+      response,
+      module: getCustomResponseModule(response),
+    }]),
+  ) as Record<string, {
+    response: (typeof customResponses)[number];
+    module: ReturnType<typeof getCustomResponseModule>;
+  }>, [customResponses]);
 
-  useEffect(() => {
-    let isMounted = true;
+  const customResponseValidators = useMemo(
+    () => Object.fromEntries(
+      Object.entries(customResponseModules)
+        .filter(([, customResponseModule]) => !!customResponseModule.module?.default)
+        .map(([responseId, customResponseModule]) => [responseId, customResponseModule.module?.validate]),
+    ),
+    [customResponseModules],
+  );
 
-    if (customResponses.length === 0) {
-      setCustomResponseModuleState({
-        customResponseValidators: {},
-        customResponseLoadErrors: {},
-        loadedCustomResponseIds: [],
-      });
-      return () => {
-        isMounted = false;
-      };
-    }
-
-    setCustomResponseModuleState({
-      customResponseValidators: {},
-      customResponseLoadErrors: {},
-      loadedCustomResponseIds: [],
-    });
-
-    Promise.all(customResponses.map(async (response) => {
-      try {
-        return {
-          response,
-          customResponseModule: await loadCustomResponseModule(response),
-        };
-      } catch {
-        return {
-          response,
-          customResponseModule: null,
-        };
-      }
-    })).then((loadedModules) => {
-      if (!isMounted) {
-        return;
-      }
-
-      setCustomResponseModuleState({
-        customResponseValidators: Object.fromEntries(loadedModules
-          .filter(({ customResponseModule }) => !!customResponseModule?.default)
-          .map(({ response, customResponseModule }) => [response.id, customResponseModule?.validate])),
-        customResponseLoadErrors: Object.fromEntries(loadedModules
-          .filter(({ customResponseModule }) => !customResponseModule?.default)
-          .map(({ response }) => [response.id, getCustomResponseModuleLoadError(response)])),
-        loadedCustomResponseIds: loadedModules.map(({ response }) => response.id),
-      });
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [customResponses]);
-
-  const hasPendingCustomResponseModules = customResponses.some((response) => !customResponseModuleState.loadedCustomResponseIds.includes(response.id));
+  const customResponseLoadErrors = useMemo(
+    () => Object.fromEntries(
+      Object.entries(customResponseModules)
+        .filter(([, customResponseModule]) => !customResponseModule.module?.default)
+        .map(([responseId, customResponseModule]) => [responseId, getCustomResponseModuleLoadError(customResponseModule.response)]),
+    ),
+    [customResponseModules],
+  );
 
   const answerValidator = useAnswerField(
     responsesWithDefaults,
     currentStep,
     storedAnswer || {},
-    customResponseModuleState.customResponseValidators,
-    customResponseModuleState.customResponseLoadErrors,
+    customResponseValidators,
+    customResponseLoadErrors,
   );
   useEffect(() => {
     if (storedAnswer) {
@@ -279,13 +246,13 @@ export function ResponseBlock({
       updateResponseBlockValidation({
         location,
         identifier,
-        status: !hasPendingCustomResponseModules && (answerValidator.isValid() || bypassValidationForFailedTraining),
+        status: answerValidator.isValid() || bypassValidationForFailedTraining,
         values: structuredClone(answerValidator.values),
         provenanceGraph: trrack.graph.backend,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values, bypassValidationForFailedTraining, hasPendingCustomResponseModules, identifier, location, storeDispatch, updateResponseBlockValidation]);
+  }, [answerValidator.values, bypassValidationForFailedTraining, identifier, location, storeDispatch, updateResponseBlockValidation]);
   const [alertConfig, setAlertConfig] = useState(Object.fromEntries(allResponsesWithDefaults.map((response) => ([response.id, {
     visible: false,
     title: 'Correct Answer',
@@ -448,8 +415,8 @@ export function ResponseBlock({
                           response,
                           answerValidator.values[response.id],
                           answerValidator.values,
-                          customResponseModuleState.customResponseValidators[response.id],
-                          customResponseModuleState.customResponseLoadErrors[response.id],
+                          customResponseValidators[response.id],
+                          customResponseLoadErrors[response.id],
                         )
                         : undefined}
                       response={response}
@@ -484,8 +451,7 @@ export function ResponseBlock({
 
       {showBtnsInLocation && (
       <NextButton
-        disabled={hasPendingCustomResponseModules
-          || (hasCorrectAnswerFeedback && !enableNextButton)
+        disabled={(hasCorrectAnswerFeedback && !enableNextButton)
           || (!bypassValidationForFailedTraining && !answerValidator.isValid())}
         label={nextButtonText}
         config={config}

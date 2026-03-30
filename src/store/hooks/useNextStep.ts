@@ -17,38 +17,9 @@ import { useStoredAnswer } from './useStoredAnswer';
 import { useWindowEvents } from './useWindowEvents';
 import { findBlockForStep, findIndexOfBlock } from '../../utils/getSequenceFlatMap';
 import { useStudyConfig } from './useStudyConfig';
-import {
-  IndividualComponent, InheritedComponent, StudyConfig,
-} from '../../parser/types';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
-import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
-import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
-
-function checkAllAnswersCorrect(answers: StoredAnswer['answer'], componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
-  const resolvedComponentConfig = studyComponentToIndividualComponent(componentConfig, studyConfig);
-
-  if (!resolvedComponentConfig.correctAnswer) {
-    return true;
-  }
-
-  return componentAnswersAreCorrect(
-    answers,
-    resolvedComponentConfig.correctAnswer,
-    resolvedComponentConfig.response,
-  );
-}
-
-export function getSkipConditionCorrectAnswers(
-  componentsToCheck: Array<[string, { answer: StoredAnswer['answer'] }]>,
-  studyConfig: StudyConfig,
-) {
-  return componentsToCheck.map(([candidateComponentName, responseObj]) => checkAllAnswersCorrect(
-    responseObj.answer,
-    studyConfig.components[candidateComponentName.slice(0, candidateComponentName.lastIndexOf('_'))],
-    studyConfig,
-  ));
-}
+import { areComponentAnswersCorrect, getSkipConditionCorrectAnswers } from './useNextStep.utils';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
@@ -186,7 +157,7 @@ export function useNextStep() {
             conditionIsTriggered = condition.comparison === 'equal' ? condition.value === response.answer[condition.responseId] : condition.value !== response.answer[condition.responseId];
           } else {
             // Check that the response is matches the correct answer
-            conditionIsTriggered = !checkAllAnswersCorrect(response.answer, studyConfig.components[componentId.slice(0, componentId.lastIndexOf('_'))], studyConfig);
+            conditionIsTriggered = !areComponentAnswersCorrect(response.answer, studyConfig.components[componentId.slice(0, componentId.lastIndexOf('_'))], studyConfig);
           }
         } else if (condition.check === 'block' || condition.check === 'repeatedComponent') {
           // If we have less than numCorrect or numIncorrect, there's no point in checking the condition

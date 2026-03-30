@@ -44,10 +44,8 @@ export default [{
   },
 
   settings: {
+    'import/core-modules': ['@quentinroy/latin-square'],
     'import/resolver': {
-      typescript: {
-        alwaysTryTypes: true,
-      },
       node: {
         extensions: ['.js', '.jsx', '.ts', '.tsx', '.d.ts'],
       },
@@ -117,5 +115,11 @@ export default [{
       contextType: 'static public field',
       displayName: 'static public field',
     }],
+  },
+}, {
+  files: ['eslint.config.js'],
+
+  rules: {
+    'import/no-unresolved': 'off',
   },
 }];

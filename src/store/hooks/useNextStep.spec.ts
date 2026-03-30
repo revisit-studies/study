@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { StudyConfig } from '../../parser/types';
-import { getSkipConditionCorrectAnswers } from './useNextStep';
+import { getSkipConditionCorrectAnswers } from './useNextStep.utils';
 
 function createStudyConfig(): StudyConfig {
   return {
