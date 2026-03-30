@@ -36,6 +36,7 @@ function formatDate(date: Date): string | JSX.Element {
 export function TableView({
   visibleParticipants,
   studyConfig,
+  allConfigs,
   refresh,
   width,
   stageColors,
@@ -44,6 +45,7 @@ export function TableView({
 }: {
   visibleParticipants: ParticipantData[];
   studyConfig: StudyConfig;
+  allConfigs: Record<string, StudyConfig>;
   refresh: () => Promise<Record<number, ParticipantData>>;
   width: number;
   stageColors: Record<string, string>;
@@ -275,7 +277,7 @@ export function TableView({
       }
 
       return (
-        <AllTasksTimeline maxLength={undefined} studyConfig={studyConfig} studyId={studyId || ''} participantData={r} width={width - 60} />
+        <AllTasksTimeline maxLength={undefined} studyConfig={allConfigs[r.participantConfigHash] ?? studyConfig} studyId={studyId || ''} participantData={r} width={width - 60} />
       );
     },
     defaultColumn: {

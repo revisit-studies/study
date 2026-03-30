@@ -74,6 +74,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [selectedParticipants, setSelectedParticipants] = useState<ParticipantData[]>([]);
   const [selectedConfigs, setSelectedConfigs] = useState<string[]>(['ALL']);
   const [availableConfigs, setAvailableConfigs] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
+  const [allConfigs, setAllConfigs] = useState<Record<string, StudyConfig>>({});
   const [selectedConditions, setSelectedConditions] = useState<string[]>(['ALL']);
   const [availableConditions, setAvailableConditions] = useState<{ value: string; label: string }[]>([]);
 
@@ -211,9 +212,11 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
           label: `${config.studyMetadata.version} - ${hash.slice(0, 6)}`,
         }));
       setAvailableConfigs([{ value: 'ALL', label: 'ALL' }, ...configOptions]);
+      setAllConfigs(fetchedConfigs);
     } catch (error) {
       console.error('Failed to load configs:', error);
       setAvailableConfigs([{ value: 'ALL', label: 'ALL' }]);
+      setAllConfigs({});
     }
   }, [canonicalStudyId, storageEngine, expData]);
 
@@ -465,7 +468,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {studyConfig && <SummaryView studyConfig={studyConfig} visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ height: `calc(100% - ${TABLE_HEADER_HEIGHT}px)` }} value="table" pt="xs">
-                {studyConfig && <TableView width={width} stageColors={stageColors} visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId ?? undefined)} selectedParticipants={selectedParticipants} onSelectionChange={setSelectedParticipants} />}
+                {studyConfig && <TableView width={width} stageColors={stageColors} visibleParticipants={visibleParticipants} studyConfig={studyConfig} allConfigs={allConfigs} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId ?? undefined)} selectedParticipants={selectedParticipants} onSelectionChange={setSelectedParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="stats" pt="xs">
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} />}
