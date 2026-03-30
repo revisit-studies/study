@@ -12,7 +12,10 @@ let modules: Record<string, CustomResponseModule> | null = null;
 function getModules() {
   if (modules === null) {
     modules = import.meta.glob(
-      '../../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
+      [
+        '../../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
+        '!../../public/**/*.spec.{mjs,js,mts,ts,jsx,tsx}',
+      ],
       { eager: true },
     ) as Record<string, CustomResponseModule>;
   }

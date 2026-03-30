@@ -49,7 +49,10 @@ export function useCurrentStep() {
 }
 
 const modules = import.meta.glob(
-  '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
+  [
+    '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
+    '!../public/**/*.spec.{mjs,js,mts,ts,jsx,tsx}',
+  ],
   { eager: true },
 ) as Record<string, ModuleNamespace>;
 
