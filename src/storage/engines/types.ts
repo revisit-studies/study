@@ -879,6 +879,14 @@ export abstract class StorageEngine {
     return isParticipantData(participantData) ? participantData : null;
   }
 
+  getCurrentParticipantDataSnapshot() {
+    if (!this.participantData) {
+      return null;
+    }
+
+    return cloneParticipantDataSnapshot(this.participantData);
+  }
+
   // Gets the participant tags for the current participant.
   async getParticipantTags(): Promise<string[]> {
     await this.verifyStudyDatabase();

@@ -9,8 +9,10 @@ import {
 import { StudyEnd } from './StudyEnd';
 
 vi.mock('@mantine/core', () => ({
+  Button: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
   Center: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   Flex: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  Group: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   Loader: () => <div>Loading</div>,
   Space: () => <div />,
   Text: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
