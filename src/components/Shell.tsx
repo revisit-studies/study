@@ -256,7 +256,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         };
         const resumeParticipantId = participantId
           || urlParticipantId
-          || await storageEngine.peekCurrentParticipantId(canonicalStudyId);
+          || await storageEngine.peekCurrentParticipantId(canonicalStudyId).catch(() => undefined);
         const initialAlertModal = !isStorageFailure
           ? getInitialStartupAlert(error, developmentModeEnabledForAlert, resumeParticipantId)
           : undefined;
