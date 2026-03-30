@@ -96,6 +96,17 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
   }
 
+  protected async _getSequenceAssignment(participantId: string) {
+    await this.verifyStudyDatabase();
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+    return sequenceAssignments[participantId] || null;
+  }
+
   protected async _completeCurrentParticipantRealtime() {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
