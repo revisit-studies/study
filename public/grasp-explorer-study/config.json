@@ -1,0 +1,770 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Grasp Explorer: AI-in-the-Loop Visualization Evaluation",
+    "version": "pilot",
+    "authors": ["Surbhi Kapoor", "Lane Harrison"],
+    "date": "2026-03-21",
+    "description": "Three-section evaluation of the Grasp Explorer tool covering the landscape view, AI copilot, and analytics dashboard. Includes screen and audio recording for think-aloud analysis.",
+    "organizations": ["Worcester Polytechnic Institute"]
+  },
+  "uiConfig": {
+    "contactEmail": "skapoor@wpi.edu",
+    "helpTextPath": "grasp-explorer-study/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 200,
+    "recordAudio": true,
+    "recordScreen": true,
+    "recordScreenFPS": 15
+  },
+  "importedLibraries": ["screen-recording"],
+  "studyRules": {
+    "display": { "minHeight": 600, "minWidth": 1000 },
+    "browsers": {
+      "allowed": [
+        { "name": "chrome", "minVersion": 100 },
+        { "name": "firefox", "minVersion": 100 },
+        { "name": "safari", "minVersion": 14 }
+      ]
+    },
+    "devices": { "allowed": ["desktop"] }
+  },
+
+  "components": {
+
+    "introduction": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/introduction.md",
+      "response": []
+    },
+
+    "consent": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/introduction.md",
+      "instruction": "Before we begin, please confirm the following and tell us about your background.",
+      "response": [
+        {
+          "id": "consent-recording",
+          "prompt": "I consent to having my screen and audio recorded during this study.",
+          "type": "checkbox",
+          "options": ["Yes, I consent"],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "role",
+          "prompt": "What best describes your role?",
+          "type": "dropdown",
+          "options": ["Faculty / PI", "Postdoc", "PhD Student", "Masters Student", "Research Engineer", "Industry Researcher", "Other"],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "robotics-experience",
+          "prompt": "Years of experience in robotics research?",
+          "type": "dropdown",
+          "options": ["Less than 1 year", "1-3 years", "3-5 years", "5-10 years", "More than 10 years"],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "grasp-familiarity",
+          "prompt": "How familiar are you with robotic grasp planning?",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "Not at all",
+          "rightLabel": "Expert",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "ai-ml-familiarity",
+          "prompt": "How familiar are you with AI/ML concepts (embeddings, clustering, LLMs)?",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "Not at all",
+          "rightLabel": "Expert",
+          "location": "belowStimulus"
+        }
+      ]
+    },
+
+
+    "section1-intro": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/section1-intro.md",
+      "response": []
+    },
+
+    "section1-explore": {
+      "type": "website",
+      "path": "https://grasp-explorer-explorer-stage.hf.space",
+      "instructionLocation": "sidebar",
+      "instruction": "**Section 1: Explore the scatter plot and clustering.**\n\nDo NOT type a query yet. Just look at the default view:\n- Hover over points to see method names\n- Look at the cluster colors and labels\n- **Click a cluster label in the legend** to highlight only that cluster in the scatter plot and table\n- Click a method to see its details\n\n**Think aloud**: describe what you see and whether the groupings and scatter plot make sense.\n\n**Note:** You won't have access to the tool while answering questions next, so take a good look now.\n\nWhen done, click **Next**.",
+      "nextButtonLocation": "sidebar",
+      "recordAudio": true,
+      "recordScreen": true,
+      "response": []
+    },
+
+    "section1-feedback": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/section1-intro.md",
+      "instruction": "Questions about the scatter plot and clustering.",
+      "response": [
+        {
+          "id": "s1-clustering-meaningful",
+          "prompt": "The clustering of methods into groups was meaningful and made sense to me.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s1-clustering-surprising",
+          "prompt": "The clustering revealed groupings or relationships I had not considered before.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s1-spatial-intuitive",
+          "prompt": "The spatial layout (which methods are near/far) matched my intuition about method similarity.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s1-cluster-labels",
+          "prompt": "The cluster labels (e.g., 'Sampling / Two-finger / Piled') were easy to understand.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s1-unexpected-groupings",
+          "prompt": "Were there any methods grouped together that surprised you, or methods you expected to be grouped that were not?",
+          "type": "longText",
+          "placeholder": "Describe any surprising or missing groupings...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s1-legend-filter-useful",
+          "prompt": "Clicking a cluster label to filter the scatter plot and method table was a useful interaction.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s1-grouping-criteria",
+          "prompt": "What attributes matter most to you for deciding that two grasp planning methods are 'similar'? List the top 2-3.",
+          "type": "longText",
+          "placeholder": "e.g., same gripper type, same sensor input, similar training paradigm, similar benchmark results...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s1-what-would-help",
+          "prompt": "What additional information or interaction would help you understand the scatter plot better?",
+          "type": "longText",
+          "placeholder": "e.g., labels, legends, filters, different color schemes...",
+          "location": "belowStimulus"
+        }
+      ]
+    },
+
+
+    "section2-intro": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/section2-intro.md",
+      "response": []
+    },
+
+    "section2-explore": {
+      "type": "website",
+      "path": "https://grasp-explorer-explorer-stage.hf.space",
+      "instructionLocation": "sidebar",
+      "instruction": "**Section 2: Try the AI Copilot.**\n\nAsk **2-3 questions** using the search bar.\n\nAfter each query:\n- Read the AI insight bullets\n- Check if it cites specific papers\n- Click **View PDF** on any paper in the evidence list to see the source\n- Notice how the scatter plot changes\n\n**Think aloud**: tell us if the insights are accurate or missing something.\n\nWhen done, click **Next**.",
+      "nextButtonLocation": "sidebar",
+      "recordAudio": true,
+      "recordScreen": true,
+      "response": []
+    },
+
+    "section2-feedback-with-tool": {
+      "type": "website",
+      "path": "https://grasp-explorer-explorer-stage.hf.space",
+      "instructionLocation": "sidebar",
+      "instruction": "**Rate the AI Copilot** while looking at the results.\n\nYour last query results are still visible. Scroll through the insights, paper evidence, and charts as you answer these questions in the sidebar.",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "s2-queries-tried",
+          "prompt": "What queries did you ask?",
+          "type": "longText",
+          "placeholder": "List the questions you tried...",
+          "location": "sidebar"
+        },
+        {
+          "id": "s2-insight-relevance",
+          "prompt": "The AI insights were relevant to my queries.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "sidebar"
+        },
+        {
+          "id": "s2-insight-accuracy",
+          "prompt": "The insights contained accurate information.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "sidebar"
+        },
+        {
+          "id": "s2-insight-novelty",
+          "prompt": "The insights told me something new.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "sidebar"
+        },
+        {
+          "id": "s2-paper-citations",
+          "prompt": "Paper citations helped me trust the claims.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "sidebar"
+        },
+        {
+          "id": "s2-scatter-update",
+          "prompt": "I understood why the scatter plot changed.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "sidebar"
+        }
+      ]
+    },
+
+    "section2-feedback-detail": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/section2-intro.md",
+      "instruction": "A few more questions about the AI Copilot.",
+      "response": [
+        {
+          "id": "s2-hallucination",
+          "prompt": "Did you notice any incorrect or fabricated information?",
+          "type": "dropdown",
+          "options": [
+            "No, everything seemed accurate",
+            "Possibly, but I am not sure",
+            "Yes, minor inaccuracies",
+            "Yes, significant errors"
+          ],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s2-hallucination-detail",
+          "prompt": "If you noticed inaccuracies, please describe them.",
+          "type": "longText",
+          "placeholder": "Optional: what was incorrect?",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s2-missing-guardrails",
+          "prompt": "What guardrails would you expect from an AI research tool? (Select all that apply)",
+          "type": "checkbox",
+          "options": [
+            "Showing the exact passage each claim is based on",
+            "Confidence scores for each claim",
+            "Ability to view the source PDF",
+            "Clear labeling when the AI is uncertain",
+            "Showing gaps in coverage (what the AI does not know)",
+            "Human expert review before displaying results",
+            "Ability to flag or correct wrong information"
+          ],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s2-ground-truth-questions",
+          "prompt": "What are 2-3 questions you would genuinely want this tool to answer from these 34 papers — questions where you already know the correct answer and could judge whether the AI got it right?",
+          "type": "longText",
+          "placeholder": "These become our evaluation test cases — we will run the AI on your questions and check its accuracy...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s2-copilot-improvement",
+          "prompt": "What would make the AI Copilot more useful?",
+          "type": "longText",
+          "placeholder": "e.g., better answers, comparison mode, follow-up questions...",
+          "location": "belowStimulus"
+        }
+      ]
+    },
+
+
+    "section3-intro": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/section3-intro.md",
+      "response": []
+    },
+
+    "section3-explore": {
+      "type": "website",
+      "path": "https://grasp-explorer-explorer-stage.hf.space",
+      "instructionLocation": "sidebar",
+      "instruction": "**Section 3: Review the analytics dashboard.**\n\nAfter asking a query, scroll down to see the analytics section. Look at:\n- 'How This View Was Built' explanation\n- Method relevance chart\n- Cited references chart\n- Topic cloud\n- Evidence breakdown bars\n\n**Think aloud**: tell us which charts are useful and which are confusing.\n\n**Note:** You won't have access to the tool while answering questions next, so take a good look now.\n\nWhen done, click **Next**.",
+      "nextButtonLocation": "sidebar",
+      "recordAudio": true,
+      "recordScreen": true,
+      "response": []
+    },
+
+    "section3-feedback": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/section3-intro.md",
+      "instruction": "Questions about the analytics dashboard.",
+      "response": [
+        {
+          "id": "s3-explanation-helpful",
+          "prompt": "'How This View Was Built' helped me understand what the system did.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s3-method-relevance-useful",
+          "prompt": "The 'Query-Method Similarity' chart was useful.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s3-citations-useful",
+          "prompt": "The 'Cited References' and 'Papers Referenced' charts were useful.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s3-topics-useful",
+          "prompt": "The 'Key Topics' cloud helped me understand the evidence.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s3-evidence-breakdown-useful",
+          "prompt": "The 'What Kind of Evidence?' breakdown (theory / implementation / evaluation) was useful.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s3-most-useful-chart",
+          "prompt": "Which analytics chart was most useful to you?",
+          "type": "dropdown",
+          "options": [
+            "How This View Was Built",
+            "Query-Method Similarity",
+            "Cited References",
+            "Papers Referenced",
+            "Key Topics cloud",
+            "Evidence Breakdown (theory/implementation/evaluation)",
+            "None were particularly useful"
+          ],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s3-least-useful-chart",
+          "prompt": "Which analytics chart was least useful or most confusing?",
+          "type": "dropdown",
+          "options": [
+            "How This View Was Built",
+            "Query-Method Similarity",
+            "Cited References",
+            "Papers Referenced",
+            "Key Topics cloud",
+            "Evidence Breakdown (theory/implementation/evaluation)",
+            "All were fine"
+          ],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s3-missing-visualizations",
+          "prompt": "What additional visualizations or views would help you understand the grasp planning landscape?",
+          "type": "longText",
+          "placeholder": "e.g., timeline, citation network, side-by-side comparison, method flowcharts...",
+          "location": "belowStimulus"
+        }
+      ]
+    },
+
+
+    "section4-intro": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/section4-intro.md",
+      "response": []
+    },
+
+    "section4-explore": {
+      "type": "website",
+      "path": "https://grasp-explorer-explorer-stage.hf.space",
+      "instructionLocation": "sidebar",
+      "instruction": "**Section 4: Explore the Knowledge Base.**\n\nClick the **Knowledge Base** tab at the top of the tool.\n\n- Browse the embedding scatter — each dot is a text chunk from a paper\n- Click a paper chip on the right to highlight its chunks\n- Try clicking a content type label (e.g., 'How it works') to filter\n- Read a few chunk passages — are they readable and meaningful?\n\nIf you typed a query in Section 2, check whether the relevant papers are highlighted.\n\n**Think aloud**: tell us whether the chunk view helps you understand the paper evidence.\n\n**Note:** You won't have access to the tool while answering questions next, so take a good look now.\n\nWhen done, click **Next**.",
+      "nextButtonLocation": "sidebar",
+      "recordAudio": true,
+      "recordScreen": true,
+      "response": []
+    },
+
+    "section4-feedback": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/section4-intro.md",
+      "instruction": "Questions about the Knowledge Base page.",
+      "response": [
+        {
+          "id": "s4-chunk-embedding-useful",
+          "prompt": "The scatter plot showing text chunks (each dot = one passage from a paper) was a useful way to explore the evidence.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s4-chunk-quality",
+          "prompt": "The text passages shown were readable and captured meaningful content from the papers.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s4-chunk-types-sensible",
+          "prompt": "The content type labels (How it works / Implementation / Results) accurately described what was in the passages.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s4-chunk-types-alternative",
+          "prompt": "If you would categorize passages differently, how would you label them?",
+          "type": "longText",
+          "placeholder": "e.g., different categories, finer distinctions, or 'the current ones are fine'...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s4-query-filtering-useful",
+          "prompt": "When query results highlighted relevant papers in the Knowledge Base, it helped me trace where the AI's answer came from.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s4-missing-information",
+          "prompt": "What information from a paper is most critical when someone is deciding whether to use a method — and is it captured in the chunks you saw?",
+          "type": "longText",
+          "placeholder": "e.g., success rates, hardware requirements, failure modes, comparison results, code availability...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s4-expert-questions",
+          "prompt": "If you could search across all 34 papers for one thing — something you genuinely want to know — what would you ask?",
+          "type": "longText",
+          "placeholder": "These become ground truth test queries for our RAG system...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s4-paper-coverage",
+          "prompt": "If your own paper is in the knowledge base, did the chunks reflect its key contributions accurately?",
+          "type": "dropdown",
+          "options": [
+            "Yes, the key points were captured",
+            "Partially — some important parts were missing",
+            "No, the chunks missed the main contributions",
+            "My paper is not in the knowledge base",
+            "I did not check my paper"
+          ],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s4-paper-coverage-detail",
+          "prompt": "If your paper's chunks were missing or incorrect, what was the most important thing they missed?",
+          "type": "longText",
+          "placeholder": "Optional: describe what was missing or wrong...",
+          "location": "belowStimulus"
+        }
+      ]
+    },
+
+    "comparison-intro": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/comparison-intro.md",
+      "response": []
+    },
+
+    "comparison-spreadsheet": {
+      "type": "website",
+      "path": "https://www.robot-manipulation.org/software/grasp-planning",
+      "instructionLocation": "sidebar",
+      "instruction": "**This is the current COMPARE spreadsheet** at robot-manipulation.org.\n\nSpend 1-2 minutes browsing it. Try to:\n- Find a method that uses reinforcement learning\n- Compare two methods side by side\n- Get an overview of the field\n\nThink about how this compares to the Grasp Explorer you just used.\n\nWhen done, click **Next**.",
+      "nextButtonLocation": "sidebar",
+      "recordAudio": true,
+      "recordScreen": true,
+      "response": []
+    },
+
+    "comparison-feedback": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/comparison-intro.md",
+      "instruction": "Compare the current spreadsheet with the Grasp Explorer tool you used earlier.",
+      "response": [
+        {
+          "id": "compare-finding",
+          "prompt": "For FINDING a specific method, which is more effective?",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Spreadsheet is much better",
+          "rightLabel": "Grasp Explorer is much better",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "compare-comparing",
+          "prompt": "For COMPARING methods against each other, which is more effective?",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Spreadsheet is much better",
+          "rightLabel": "Grasp Explorer is much better",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "compare-discovering",
+          "prompt": "For DISCOVERING methods you did not know about, which is more effective?",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Spreadsheet is much better",
+          "rightLabel": "Grasp Explorer is much better",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "compare-understanding",
+          "prompt": "For UNDERSTANDING the overall landscape of grasp planning, which is more effective?",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Spreadsheet is much better",
+          "rightLabel": "Grasp Explorer is much better",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "compare-deep-dive",
+          "prompt": "For DIVING DEEP into a specific method's technical details, which is more effective?",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Spreadsheet is much better",
+          "rightLabel": "Grasp Explorer is much better",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "compare-preference",
+          "prompt": "If you could only use one tool for exploring grasp planning methods, which would you choose?",
+          "type": "dropdown",
+          "options": [
+            "The spreadsheet (robot-manipulation.org)",
+            "The Grasp Explorer",
+            "Both together (they serve different needs)",
+            "Neither (I prefer a different approach)"
+          ],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "compare-spreadsheet-advantages",
+          "prompt": "What does the spreadsheet do better than the Grasp Explorer?",
+          "type": "longText",
+          "placeholder": "What would you miss if the spreadsheet were replaced?",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "compare-explorer-advantages",
+          "prompt": "What does the Grasp Explorer do better than the spreadsheet?",
+          "type": "longText",
+          "placeholder": "What can you do with the Explorer that the spreadsheet cannot?",
+          "location": "belowStimulus"
+        }
+      ]
+    },
+
+    "overall": {
+      "type": "markdown",
+      "path": "grasp-explorer-study/assets/introduction.md",
+      "instruction": "Final questions about the overall tool.",
+      "response": [
+        {
+          "id": "overall-usefulness",
+          "prompt": "Overall, how useful would this tool be for your research?",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Not useful at all",
+          "rightLabel": "Extremely useful",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "overall-recommend",
+          "prompt": "How likely are you to recommend this tool to a colleague?",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Very unlikely",
+          "rightLabel": "Very likely",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "current-methods",
+          "prompt": "How do you currently explore and compare grasp planning methods? (Select all that apply)",
+          "type": "checkbox",
+          "options": [
+            "Reading individual papers",
+            "Survey/review papers",
+            "Google Scholar / Semantic Scholar",
+            "Asking colleagues",
+            "GitHub / code repositories",
+            "Conference proceedings browsing",
+            "Spreadsheets or manual comparison",
+            "Other"
+          ],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "most-effective-exploration",
+          "prompt": "In your opinion, what is the most effective way to explore a collection of 56+ research papers?",
+          "type": "longText",
+          "placeholder": "Describe your ideal workflow or tool...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "ideal-interaction",
+          "prompt": "How would you ideally want to interact with and visualize this kind of research data?",
+          "type": "longText",
+          "placeholder": "Describe interactions, views, or features you would want...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "biggest-improvement",
+          "prompt": "What single improvement would make this tool most valuable to you?",
+          "type": "longText",
+          "placeholder": "The one change that would have the biggest impact...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "ai-concerns",
+          "prompt": "What concerns, if any, do you have about using AI-generated insights for research decisions?",
+          "type": "longText",
+          "placeholder": "e.g., accuracy, bias, over-reliance, missing context...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "missing-attributes",
+          "prompt": "What data about grasp planning methods is missing from the current tool that you wish were tracked or searchable?",
+          "type": "longText",
+          "placeholder": "e.g., real-world success rates, hardware cost, inference speed, open-source availability, specific failure modes...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "onboarding-use-case",
+          "prompt": "Imagine a new student joins your lab and needs to choose a grasp planning method. What 3 questions should this tool be able to answer for them?",
+          "type": "longText",
+          "placeholder": "These define the core use cases the tool should handle...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "scaling-next-landscape",
+          "prompt": "The COMPARE ecosystem covers 6 categories: Grasp Planning, Motion Planning, Perception, Learning, Simulation, and Pipelines. Which would you most want this tool for next?",
+          "type": "dropdown",
+          "options": [
+            "Motion Planning",
+            "Perception",
+            "Learning",
+            "Simulation",
+            "Pipelines",
+            "Other"
+          ],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "scaling-same-layout",
+          "prompt": "For the landscape you selected above, would the same layout (scatter + table + AI query + knowledge base) work, or would it need a different view?",
+          "type": "longText",
+          "placeholder": "e.g., same layout works / would need different columns / different chunk types / different clustering attributes...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "free-feedback",
+          "prompt": "Any other feedback, suggestions, or comments?",
+          "type": "longText",
+          "placeholder": "Optional",
+          "location": "belowStimulus"
+        }
+      ]
+    }
+  },
+
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$screen-recording.components.screenRecordingPermission",
+      "consent",
+
+      "section1-intro",
+      "section1-explore",
+      "section1-feedback",
+
+      "section2-intro",
+      "section2-explore",
+      "section2-feedback-with-tool",
+      "section2-feedback-detail",
+
+      "section3-intro",
+      "section3-explore",
+      "section3-feedback",
+
+      "section4-intro",
+      "section4-explore",
+      "section4-feedback",
+
+      "comparison-intro",
+      "comparison-spreadsheet",
+      "comparison-feedback",
+
+      "overall"
+    ]
+  }
+}

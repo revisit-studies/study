@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/GlobalConfigSchema.json",
   "configsList": [
+    "grasp-explorer-study",
     "tutorial",
     "tutorial-replication",
     "demo-html",
@@ -55,6 +56,9 @@
     "test-step-logic"
   ],
   "configs": {
+    "grasp-explorer-study": {
+      "path": "grasp-explorer-study/config.json"
+    },
     "tutorial": {
       "path": "tutorial/config.json"
     },
