@@ -18,7 +18,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-          destination_dir: "PR${{ github.event.number }}"
+          destination_dir: "study/PR${{ github.event.number }}"
 
       - name: Comment on PR
         uses: hasura/comment-progress@v2.2.0
