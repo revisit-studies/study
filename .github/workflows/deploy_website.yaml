@@ -41,6 +41,7 @@ jobs:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
           VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
           VITE_FIREBASE_CONFIG: ${{ vars.VITE_FIREBASE_CONFIG }}
+          VITE_MIC_GROUP_SUMMARY_API_URL: ${{ vars.VITE_MIC_GROUP_SUMMARY_API_URL }}
           VITE_RECAPTCHAV3TOKEN: ${{ vars.VITE_RECAPTCHAV3TOKEN }}
           VITE_REPO_URL: ${{ vars.VITE_REPO_URL }}
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
@@ -120,6 +121,7 @@ jobs:
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
           VITE_BASE_PATH: "/study/PR${{ github.event.number }}/"
+          VITE_MIC_GROUP_SUMMARY_API_URL: ${{ vars.VITE_MIC_GROUP_SUMMARY_API_URL }}
 
       - name: Push PR deploy preview
         uses: peaceiris/actions-gh-pages@v3

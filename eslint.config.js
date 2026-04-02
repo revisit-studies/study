@@ -114,4 +114,9 @@ export default [{
       displayName: 'static public field',
     }],
   },
+}, {
+  files: ['functions/src/**/*.{ts,js}'],
+  rules: {
+    'import/no-unresolved': 'off',
+  },
 }];

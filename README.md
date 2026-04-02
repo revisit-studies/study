@@ -25,3 +25,18 @@ Dev branch
 Main branch
 | Run release workflow on merge
 References are updated and commit is tagged
+
+## Deployed Mic Summaries
+
+The question mic "Summarize responses" flow needs a server-side endpoint because it calls OpenAI with a secret key. Local development uses the Vite dev server route, while deployed GitHub Pages should point at the Firebase HTTPS function in `functions/src/index.ts`.
+
+Setup:
+
+* Install the Firebase CLI: `npm install -g firebase-tools`
+* Log in: `firebase login`
+* Attach this repo to your Firebase project: `firebase use --add`
+* Install function dependencies: `cd functions && npm install`
+* Set the OpenAI secret: `firebase functions:secrets:set OPENAI_API_KEY`
+* Deploy the function: `firebase deploy --only functions`
+
+After deploy, copy the `micGroupSummary` function URL and set it as the GitHub Actions environment variable `VITE_MIC_GROUP_SUMMARY_API_URL`. The GitHub Pages workflow now forwards that variable into the production build.

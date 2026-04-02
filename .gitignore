@@ -39,3 +39,4 @@ supabase/volumes/db/data
 !supabase/volumes/api/
 
 .env
+.firebase/

@@ -13,6 +13,11 @@ import { useParams, useSearchParams } from 'react-router';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { ParticipantData } from '../../../storage/types';
 
+const localSummaryEndpoint = '/api/mic-group-summary';
+const configuredSummaryEndpoint = import.meta.env.VITE_MIC_GROUP_SUMMARY_API_URL?.trim();
+const summaryEndpoint = configuredSummaryEndpoint
+  || (import.meta.env.DEV ? localSummaryEndpoint : '');
+
 type ParticipantClips = {
   participantId: string;
   clips: Array<{ name: string; url: string }>;
@@ -84,6 +89,12 @@ export function QuestionMicAudioPage() {
       .sort((a, b) => a.clipName.localeCompare(b.clipName));
   }, [clipsByParticipant]);
 
+  const summaryUnavailableReason = useMemo(() => {
+    if (summaryEndpoint) return '';
+    if (!import.meta.env.PROD) return 'Summarization endpoint is not configured.';
+    return 'Summarization is not available in this deployment. GitHub Pages is a static host, so configure VITE_MIC_GROUP_SUMMARY_API_URL to point at a server endpoint that can call OpenAI.';
+  }, []);
+
   const summarizeGroup = async (group: { clipName: string; entries: Array<{ participantId: string; url: string }> }) => {
     setSummaryStatusByClip((prev) => ({
       ...prev,
@@ -91,7 +102,11 @@ export function QuestionMicAudioPage() {
     }));
 
     try {
-      const response = await fetch('/api/mic-group-summary', {
+      if (!summaryEndpoint) {
+        throw new Error(summaryUnavailableReason || 'Summarization endpoint is not configured.');
+      }
+
+      const response = await fetch(summaryEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -102,7 +117,17 @@ export function QuestionMicAudioPage() {
       });
 
       const raw = await response.text();
-      const payload = raw ? JSON.parse(raw) : {};
+      const contentType = response.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+      const payload = raw && isJson ? JSON.parse(raw) : {};
+      if (!isJson) {
+        const compactBody = raw.replace(/\s+/g, ' ').slice(0, 120);
+        throw new Error(
+          response.ok
+            ? `Summarization endpoint returned ${contentType || 'non-JSON content'} instead of JSON.`
+            : `Summarization endpoint returned ${response.status} ${response.statusText}${compactBody ? `: ${compactBody}` : ''}`,
+        );
+      }
       if (!response.ok) {
         throw new Error(payload?.error || 'Failed to summarize');
       }
@@ -192,6 +217,11 @@ export function QuestionMicAudioPage() {
                 This page currently requires Firebase storage.
               </Text>
             )}
+            {summaryUnavailableReason && (
+              <Text size="sm" c="orange">
+                {summaryUnavailableReason}
+              </Text>
+            )}
           </Box>
 
           <Select
@@ -245,6 +275,7 @@ export function QuestionMicAudioPage() {
                     size="xs"
                     variant="light"
                     loading={summaryStatusByClip[group.clipName]?.loading}
+                    disabled={Boolean(summaryUnavailableReason)}
                     onClick={() => summarizeGroup(group)}
                   >
                     Summarize responses
