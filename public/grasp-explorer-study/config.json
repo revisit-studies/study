@@ -99,7 +99,7 @@
       "type": "website",
       "path": "https://grasp-explorer-explorer-stage.hf.space",
       "instructionLocation": "sidebar",
-      "instruction": "**Section 1: Explore the scatter plot and clustering.**\n\nDo NOT type a query yet. Just look at the default view:\n- Hover over points to see method names\n- Look at the cluster colors and labels\n- **Click a cluster label in the legend** to highlight only that cluster in the scatter plot and table\n- Click a method to see its details\n\n**Think aloud**: describe what you see and whether the groupings and scatter plot make sense.\n\n**Note:** You won't have access to the tool while answering questions next, so take a good look now.\n\nWhen done, click **Next**.",
+      "instruction": "**Section 1: Explore the scatter plot and clustering.**\n\nDo NOT type a query yet. Just look at the default view:\n- Hover over points to see method names\n- Look at the cluster colors and labels\n- **Click a cluster label in the legend** to filter\n- Try the **Color by** dropdown to see different attributes\n- Try dragging a **weight slider** — watch how the scatter plot reorganizes\n- Click a method to see its details\n\n**Think aloud**: describe what you see and whether the groupings make sense.\n\n**Note:** You won't have access to the tool while answering questions next, so take a good look now.\n\nWhen done, click **Next**.",
       "nextButtonLocation": "sidebar",
       "recordAudio": true,
       "recordScreen": true,
@@ -191,7 +191,7 @@
       "type": "website",
       "path": "https://grasp-explorer-explorer-stage.hf.space",
       "instructionLocation": "sidebar",
-      "instruction": "**Section 2: Try the AI Copilot.**\n\nAsk **2-3 questions** using the search bar.\n\nAfter each query:\n- Read the AI insight bullets\n- Check if it cites specific papers\n- Click **View PDF** on any paper in the evidence list to see the source\n- Notice how the scatter plot changes\n\n**Think aloud**: tell us if the insights are accurate or missing something.\n\nWhen done, click **Next**.",
+      "instruction": "**Section 2: Try the AI Copilot & Controls.**\n\nAsk **2-3 questions** using the search bar.\n\nAfter each query:\n- Read the AI insight bullets\n- Check if it cites specific papers\n- Notice how the scatter plot and **weight sliders** update\n- Try the **Color by** dropdown to see attributes like End-effector or Input Data\n- **Scroll down** to see the analytics charts\n\nAlso try:\n- Drag a **weight slider** to see how the scatter plot reorganizes\n- Click a legend item to filter\n\n**Think aloud**: tell us what's useful and what's confusing.\n\nWhen done, click **Next**.",
       "nextButtonLocation": "sidebar",
       "recordAudio": true,
       "recordScreen": true,
@@ -311,6 +311,54 @@
           "prompt": "What would make the AI Copilot more useful?",
           "type": "longText",
           "placeholder": "e.g., better answers, comparison mode, follow-up questions...",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s2-weight-sliders-useful",
+          "prompt": "The weight sliders helped me explore the data in a way that was meaningful to my research.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s2-color-by-useful",
+          "prompt": "The 'Color by' dropdown helped me see patterns across different attributes.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s2-analytics-useful",
+          "prompt": "The analytics charts below the scatter plot (similarity scores, cited references, evidence breakdown) helped me understand the AI's answer.",
+          "type": "likert",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s2-most-useful-chart",
+          "prompt": "Which analytics chart was most useful to you?",
+          "type": "dropdown",
+          "options": [
+            "Query-Method Similarity",
+            "Cited References",
+            "Papers Referenced",
+            "Key Topics cloud",
+            "Evidence Breakdown (theory/implementation/evaluation)",
+            "None were particularly useful"
+          ],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "s2-missing-features",
+          "prompt": "What additional visualizations, controls, or interactions would help you explore the grasp planning landscape?",
+          "type": "longText",
+          "placeholder": "e.g., timeline, citation network, side-by-side comparison, different weight presets...",
           "location": "belowStimulus"
         }
       ]
@@ -435,7 +483,7 @@
       "type": "website",
       "path": "https://grasp-explorer-explorer-stage.hf.space",
       "instructionLocation": "sidebar",
-      "instruction": "**Section 4: Explore the Knowledge Base.**\n\nClick the **Knowledge Base** tab at the top of the tool.\n\n- Browse the embedding scatter — each dot is a text chunk from a paper\n- Click a paper chip on the right to highlight its chunks\n- Try clicking a content type label (e.g., 'How it works') to filter\n- Read a few chunk passages — are they readable and meaningful?\n\nIf you typed a query in Section 2, check whether the relevant papers are highlighted.\n\n**Think aloud**: tell us whether the chunk view helps you understand the paper evidence.\n\n**Note:** You won't have access to the tool while answering questions next, so take a good look now.\n\nWhen done, click **Next**.",
+      "instruction": "**Section 3: Explore the Knowledge Base.**\n\nClick the **Knowledge Base** tab at the top of the tool.\n\n- Browse the embedding scatter — each dot is a text chunk from a paper\n- Click a paper chip on the right to highlight its chunks\n- Try clicking a content type label (e.g., 'How it works') to filter\n- Read a few chunk passages — are they readable and meaningful?\n\nIf you typed a query in Section 2, check whether the relevant papers are highlighted.\n\n**Think aloud**: tell us whether the chunk view helps you understand the paper evidence.\n\n**Note:** You won't have access to the tool while answering questions next, so take a good look now.\n\nWhen done, click **Next**.",
       "nextButtonLocation": "sidebar",
       "recordAudio": true,
       "recordScreen": true,
@@ -751,10 +799,6 @@
       "section2-explore",
       "section2-feedback-with-tool",
       "section2-feedback-detail",
-
-      "section3-intro",
-      "section3-explore",
-      "section3-feedback",
 
       "section4-intro",
       "section4-explore",

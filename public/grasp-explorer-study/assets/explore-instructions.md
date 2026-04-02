@@ -19,7 +19,7 @@ Below is the live Grasp Explorer dashboard. Please spend **5-10 minutes** explor
 
 2. **Read the AI-generated insight**: Does it cite specific papers? Is the information useful?
 
-3. **Check the Paper Evidence section**: Click "View PDF" to see the actual paper with highlighted keywords
+3. **Check the Paper Evidence section**: Try clicking "View PDF" to see the actual paper (note: highlighting is a work in progress and may not be accurate)
 
 4. **Look at the analytics charts** below the scatter plot: Do they help you understand the results?
 

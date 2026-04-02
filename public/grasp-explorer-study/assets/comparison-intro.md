@@ -1,4 +1,4 @@
-# Section 4: Current Tool vs. Grasp Explorer
+# Current Tool vs. Grasp Explorer
 
 The COMPARE ecosystem currently provides a **Google Spreadsheet** at [robot-manipulation.org](https://www.robot-manipulation.org/software/grasp-planning) for browsing grasp planning methods. It contains the same 56 methods with columns for planning approach, hardware, datasets, and more.
 

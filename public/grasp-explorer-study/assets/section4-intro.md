@@ -1,4 +1,4 @@
-# Section 4: The Knowledge Base
+# Section 3: The Knowledge Base
 
 The **Knowledge Base** page shows the 34 research papers broken into searchable text passages called **chunks**. Each chunk is a meaningful excerpt from a paper, tagged with:
 
