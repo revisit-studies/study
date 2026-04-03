@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trial</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      min-height: 100vh;
+    }
+
+    #stimulus-container {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      justify-content: center;
+    }
+
+    #chart-img {
+      max-width: 720px;
+      width: 100%;
+      height: auto;
+    }
+
+    #countdown-bar-container {
+      width: 100%;
+      max-width: 720px;
+      height: 6px;
+      background: #e9ecef;
+      border-radius: 3px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    #countdown-bar {
+      height: 100%;
+      width: 100%;
+      background: #228be6;
+      border-radius: 3px;
+      transition: width linear;
+    }
+
+    #answer-container {
+      display: none;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      width: 100%;
+      max-width: 500px;
+      margin-top: 20px;
+    }
+
+    #answer-container.visible {
+      display: flex;
+    }
+
+    #note-text {
+      font-size: 14px;
+      color: #555;
+      font-style: italic;
+    }
+
+    #answer-container label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #212529;
+    }
+
+    #numerical-input {
+      width: 180px;
+      padding: 8px 12px;
+      font-size: 16px;
+      border: 2px solid #ced4da;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    #numerical-input:focus {
+      border-color: #228be6;
+    }
+
+    #hidden-msg {
+      display: none;
+      font-size: 14px;
+      color: #868e96;
+      margin-top: 4px;
+    }
+
+    #hidden-msg.visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="stimulus-container">
+    <img id="chart-img" src="" alt="Chart stimulus" />
+  </div>
+  <div id="countdown-bar-container">
+    <div id="countdown-bar"></div>
+  </div>
+  <p id="hidden-msg" class="visible" style="display:none">
+    ⚠️ The chart has been hidden. Please answer from memory.
+  </p>
+
+  <div id="answer-container">
+    <p id="note-text"></p>
+    <label id="answer-label" for="numerical-input">Your answer:</label>
+    <input id="numerical-input" type="number" placeholder="Enter a number" min="0" step="1" />
+  </div>
+
+  <script src="../../revisitUtilities/revisit-communicate.js"></script>
+  <script>
+    const DISPLAY_TIME_MS = 10000;
+
+    let responseId = 'trial-ans';
+    let currentValue = null;
+
+    function setupCountdownBar(durationMs) {
+      const bar = document.getElementById('countdown-bar');
+      // Trigger reflow so the transition starts from 100%
+      bar.style.transition = 'none';
+      bar.style.width = '100%';
+      // Force reflow
+      bar.getBoundingClientRect();
+      bar.style.transition = `width ${durationMs}ms linear`;
+      bar.style.width = '0%';
+    }
+
+    function hideChartAndShowAnswer() {
+      document.getElementById('stimulus-container').style.display = 'none';
+      document.getElementById('countdown-bar-container').style.display = 'none';
+      document.getElementById('hidden-msg').classList.add('visible');
+      document.getElementById('hidden-msg').style.display = 'block';
+      document.getElementById('answer-container').classList.add('visible');
+      document.getElementById('numerical-input').focus();
+    }
+
+    function postCurrentAnswer() {
+      const val = document.getElementById('numerical-input').value;
+      const numVal = val === '' ? null : parseFloat(val);
+      const answers = {};
+      answers[responseId] = numVal;
+      Revisit.postAnswers(answers);
+    }
+
+    Revisit.onDataReceive(function(data) {
+      // Read parameters passed from config
+      const imagePath = data['imagePath'] || '';
+      const prompt = data['prompt'] || 'Your answer:';
+      const note = data['note'] || '';
+      responseId = data['responseId'] || 'trial-ans';
+
+      // Set the chart image
+      document.getElementById('chart-img').src = '/' + imagePath;
+      document.getElementById('answer-label').textContent = prompt;
+
+      if (note) {
+        document.getElementById('note-text').textContent = note;
+        document.getElementById('note-text').style.display = 'block';
+      } else {
+        document.getElementById('note-text').style.display = 'none';
+      }
+
+      // Start the countdown bar and timer
+      setupCountdownBar(DISPLAY_TIME_MS);
+      setTimeout(hideChartAndShowAnswer, DISPLAY_TIME_MS);
+
+      // Tell reVISit we're ready
+      Revisit.postReady();
+    });
+
+    // Post answer whenever input changes
+    document.getElementById('numerical-input').addEventListener('input', postCurrentAnswer);
+  </script>
+</body>
+</html>
