@@ -54,40 +54,50 @@ import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLink
   />` : ''}
 `;
 
-const librariesPath = path.join(__dirname, './public/libraries');
-const docsLibrariesPath = path.join(__dirname, './docsLibraries');
-
-const libraries = fs.readdirSync(librariesPath)
+const getLibraries = (libsPath) => fs.readdirSync(libsPath)
   .filter((library) => !library.startsWith('.') && !library.endsWith('.DS_Store'));
 
-if (!fs.existsSync(docsLibrariesPath)) {
-  fs.mkdirSync(docsLibrariesPath);
+const generateLibraryDocs = (base) => {
+  const librariesPath = path.join(base, 'public', 'libraries');
+  const docsLibrariesPath = path.join(base, 'docsLibraries');
+
+  const libraries = getLibraries(librariesPath);
+
+  if (!fs.existsSync(docsLibrariesPath)) {
+    fs.mkdirSync(docsLibrariesPath);
+  }
+
+  libraries.forEach((library) => {
+    const libraryPath = path.join(librariesPath, library, 'config.json');
+    const libraryConfig = JSON.parse(fs.readFileSync(libraryPath, 'utf8'));
+
+    const docsMd = generateMd(library, libraryConfig, true);
+    const exampleMd = generateMd(library, libraryConfig, false);
+
+    // Save to docsLibraries folder
+    const docsLibraryPath = path.join(docsLibrariesPath, `${library}.md`);
+    fs.writeFileSync(docsLibraryPath, docsMd);
+    // eslint-disable-next-line no-console
+    console.log(`Documentation saved to ${docsLibraryPath}`);
+
+    // Save to example study assets folder if assets folder exists
+    // Add a prefix to baseMarkdown when saving to example assets
+    const exampleAssetsPath = path.join(base, 'public', `library-${library}`, 'assets');
+    if (fs.existsSync(exampleAssetsPath)) {
+      const exampleDocsPath = path.join(exampleAssetsPath, `${library}.md`);
+      fs.writeFileSync(exampleDocsPath, exampleMd);
+
+      // eslint-disable-next-line no-console
+      console.log(`Documentation saved to ${exampleDocsPath}`);
+    }
+  });
+
+  // eslint-disable-next-line no-console
+  console.log('Library documentation generated');
+};
+
+if (require.main === module) {
+  generateLibraryDocs(__dirname);
 }
 
-libraries.forEach((library) => {
-  const libraryPath = path.join(librariesPath, library, 'config.json');
-  const libraryConfig = JSON.parse(fs.readFileSync(libraryPath, 'utf8'));
-
-  const docsMd = generateMd(library, libraryConfig, true);
-  const exampleMd = generateMd(library, libraryConfig, false);
-
-  // Save to docsLibraries folder
-  const docsLibraryPath = path.join(docsLibrariesPath, `${library}.md`);
-  fs.writeFileSync(docsLibraryPath, docsMd);
-  // eslint-disable-next-line no-console
-  console.log(`Documentation saved to ${docsLibraryPath}`);
-
-  // Save to example study assets folder if assets folder exists
-  // Add a prefix to baseMarkdown when saving to example assets
-  const exampleAssetsPath = path.join(__dirname, 'public', `library-${library}`, 'assets');
-  if (fs.existsSync(exampleAssetsPath)) {
-    const exampleDocsPath = path.join(exampleAssetsPath, `${library}.md`);
-    fs.writeFileSync(exampleDocsPath, exampleMd);
-
-    // eslint-disable-next-line no-console
-    console.log(`Documentation saved to ${exampleDocsPath}`);
-  }
-});
-
-// eslint-disable-next-line no-console
-console.log('Library documentation generated');
+module.exports = { generateMd, getLibraries, generateLibraryDocs };
