@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { StudyConfig } from '../../parser/types';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
-import { hash, isParticipantData } from './utils';
+import { hash, isParticipantData } from './utils/storageEngineHelpers';
 import { shouldPreferCachedParticipantData } from './utils/participantDataRecovery';
 import { RevisitNotification } from '../../utils/notifications';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
