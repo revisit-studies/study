@@ -5,7 +5,7 @@ import { StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
 import { hash } from '../engines/utils';
-import { buildConfigRows, ConfigInfo } from '../../analysis/individualStudy/config/utils';
+import { buildConfigRows, ConfigInfo, formatDate } from '../../analysis/individualStudy/config/utils';
 import { downloadConfigFile, downloadConfigFilesZip } from '../../utils/handleDownloadFiles';
 import { ConfigDiffModal } from '../../analysis/individualStudy/config/ConfigDiffModal';
 
@@ -167,5 +167,53 @@ describe('analysis config tests', () => {
     });
 
     expect(view).not.toBeNull();
+  });
+
+  test('formatDate returns a string for a valid date', () => {
+    const result = formatDate(new Date(2024, 0, 15, 10, 30));
+    expect(typeof result).toBe('string');
+  });
+
+  test('formatDate returns a JSX element for epoch (timestamp 0)', () => {
+    const result = formatDate(new Date(0));
+    expect(typeof result).not.toBe('string');
+  });
+
+  test('formatDate returns a JSX element for an invalid (NaN) date', () => {
+    const result = formatDate(new Date(NaN));
+    expect(typeof result).not.toBe('string');
+  });
+
+  test('buildConfigRows computes timeFrame from participant answer timestamps', async () => {
+    const configHash1 = await hash(JSON.stringify(configSimple));
+    const fetchedConfigs = { [configHash1]: configSimple };
+    const participants: VisibleParticipant[] = [
+      {
+        participantConfigHash: configHash1,
+        answers: { task1: { startTime: Date.now() - 10000, endTime: Date.now() } },
+        rejected: false,
+      },
+    ];
+
+    const rows = buildConfigRows(fetchedConfigs, participants);
+    expect(rows[0].timeFrame).not.toBe('N/A');
+    expect(typeof rows[0].timeFrame).toBe('string');
+  });
+
+  test('buildConfigRows falls back to createdTime when answers have no timestamps', async () => {
+    const configHash1 = await hash(JSON.stringify(configSimple));
+    const fetchedConfigs = { [configHash1]: configSimple };
+    const participants: VisibleParticipant[] = [
+      {
+        participantConfigHash: configHash1,
+        answers: {},
+        rejected: false,
+        createdTime: Date.now() - 5000,
+      },
+    ];
+
+    const rows = buildConfigRows(fetchedConfigs, participants);
+    expect(rows[0].timeFrame).not.toBe('N/A');
+    expect(typeof rows[0].timeFrame).toBe('string');
   });
 });

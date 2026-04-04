@@ -18,6 +18,7 @@ export default defineConfig(({ command, mode }) => {
       },
     },
     test: {
+      environment: 'jsdom',
       exclude: ['./tests/**', 'node_modules/**'],
       setupFiles: ['vitest-localstorage-mock'],
       fileParallelism: true,

@@ -1,14 +1,15 @@
 import {
-  expect, test, beforeEach, describe, afterEach,
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { StageInfo, StorageEngine } from '../engines/types';
+import { download } from '../../components/downloader/DownloadTidy';
 import { validateStageName } from '../../analysis/individualStudy/management/StageManagementItem';
 
-const studyId = 'test-study-stage-management';
+const studyId = 'test-study-manage';
 const configSimple = testConfigSimple as StudyConfig;
 const participantMetadata: ParticipantMetadata = {
   userAgent: 'test-user-agent',
@@ -21,25 +22,51 @@ const existingStages: StageInfo[] = [
   { stageName: 'REVIEW', color: '#00AAFF' },
 ];
 
+describe('analysis data management tests', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('download helper supports participant data JSON and tidy CSV filenames', () => {
+    const anchor = {
+      setAttribute: vi.fn(),
+      click: vi.fn(),
+      remove: vi.fn(),
+    } as unknown as HTMLAnchorElement;
+    const createElement = vi.fn().mockReturnValue(anchor);
+    const appendChild = vi.fn().mockReturnValue(anchor as unknown as Node);
+    vi.stubGlobal('document', {
+      createElement,
+      body: {
+        appendChild,
+      },
+    });
+
+    download('{"participantId":"p1"}', `${studyId}_all.json`);
+    expect(anchor.setAttribute).toHaveBeenCalledWith('download', `${studyId}_all.json`);
+    expect(anchor.click).toHaveBeenCalled();
+
+    download('participantId,trialId\np1,t1', `${studyId}_all_tidy.csv`);
+    expect(anchor.setAttribute).toHaveBeenCalledWith('download', `${studyId}_all_tidy.csv`);
+    expect(anchor.click).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('validateStageName', () => {
   test('rejects duplicate names', () => {
-    const result = validateStageName('REVIEW', existingStages);
-    expect(result).toBe('A stage with this name already exists');
+    expect(validateStageName('REVIEW', existingStages)).toBe('A stage with this name already exists');
   });
 
   test('rejects reserved name DEFAULT', () => {
-    const result = validateStageName('DEFAULT', existingStages);
-    expect(result).toBe('Stage name "DEFAULT" is reserved and cannot be used');
+    expect(validateStageName('DEFAULT', existingStages)).toBe('Stage name "DEFAULT" is reserved and cannot be used');
   });
 
   test('rejects reserved name ALL', () => {
-    const result = validateStageName('ALL', existingStages);
-    expect(result).toBe('Stage name "ALL" is reserved and cannot be used');
+    expect(validateStageName('ALL', existingStages)).toBe('Stage name "ALL" is reserved and cannot be used');
   });
 
   test('rejects reserved name N/A', () => {
-    const result = validateStageName('N/A', existingStages);
-    expect(result).toBe('Stage name "N/A" is reserved and cannot be used');
+    expect(validateStageName('N/A', existingStages)).toBe('Stage name "N/A" is reserved and cannot be used');
   });
 
   test('rejects reserved names case-insensitively with whitespace', () => {
@@ -48,9 +75,13 @@ describe('validateStageName', () => {
     expect(validateStageName(' n/A ', existingStages)).toBe('Stage name "N/A" is reserved and cannot be used');
   });
 
+  test('returns error for an empty or whitespace-only name', () => {
+    expect(validateStageName('', existingStages)).toBe('Stage name cannot be empty');
+    expect(validateStageName('   ', existingStages)).toBe('Stage name cannot be empty');
+  });
+
   test('accepts a new non-reserved unique name', () => {
-    const result = validateStageName('ANALYSIS', existingStages);
-    expect(result).toBeNull();
+    expect(validateStageName('ANALYSIS', existingStages)).toBeNull();
   });
 });
 
