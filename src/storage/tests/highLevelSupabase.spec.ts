@@ -9,9 +9,214 @@ import testConfigSimple2 from './testConfigSimple2.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils';
 import { Sequence } from '../../store/types';
-import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { StorageEngine } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
+import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
+
+// ── module-level state (captured by-ref inside vi.mock factories) ─────────────
+// In-memory Supabase DB substitute
+const revisitRows: Array<Record<string, unknown>> = [];
+// In-memory Supabase Storage substitute
+const storageFiles: Record<string, string> = {};
+// In-memory localforage substitute (participant ID persistence)
+const localStore: Record<string, unknown> = {};
+
+// ── mocks ─────────────────────────────────────────────────────────────────────
+vi.mock('@supabase/supabase-js', () => {
+  function matchLike(value: string, pattern: string): boolean {
+    const regexStr = `^${pattern
+      .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+      .replace(/%/g, '.*')
+      .replace(/_/g, '.')}$`;
+    return new RegExp(regexStr).test(value);
+  }
+
+  function getFieldValue(obj: Record<string, unknown>, col: string): unknown {
+    if (col.includes('->')) {
+      const arrowIdx = col.indexOf('->');
+      const parent = col.slice(0, arrowIdx);
+      const child = col.slice(arrowIdx + 2);
+      const parentVal = obj[parent];
+      return parentVal && typeof parentVal === 'object'
+        ? (parentVal as Record<string, unknown>)[child]
+        : undefined;
+    }
+    return obj[col];
+  }
+
+  function applyFilters(
+    rows: Array<Record<string, unknown>>,
+    filters: Array<{ col: string; val: unknown; type: 'eq' | 'like' }>,
+  ): Array<Record<string, unknown>> {
+    return rows.filter((row) => filters.every(({ col, val, type }) => {
+      const colVal = getFieldValue(row, col);
+      if (type === 'eq') return colVal === val;
+      return typeof colVal === 'string' && matchLike(colVal, String(val));
+    }));
+  }
+
+  function makeQueryBuilder(getRows: () => Array<Record<string, unknown>>) {
+    let op: 'select' | 'upsert' | 'update' | 'delete' | null = null;
+    let payload: unknown = null;
+    const filters: Array<{ col: string; val: unknown; type: 'eq' | 'like' }> = [];
+    let isSingle = false;
+
+    const qb = {
+      select(_fields?: string) { op = 'select'; return qb; },
+      upsert(row: unknown) { op = 'upsert'; payload = row; return qb; },
+      update(obj: unknown) { op = 'update'; payload = obj; return qb; },
+      delete() { op = 'delete'; return qb; },
+      eq(col: string, val: unknown) { filters.push({ col, val, type: 'eq' }); return qb; },
+      like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
+      single() { isSingle = true; return qb; },
+      then(
+        resolve: (val: { data: unknown; error: unknown }) => void,
+        reject?: (err: unknown) => void,
+      ) {
+        Promise.resolve().then(() => {
+          const rows = getRows();
+          if (op === 'select') {
+            const matched = applyFilters(rows, filters);
+            // Return deep copies so later mutations to revisitRows don't alias into returned data
+            if (isSingle) {
+              if (matched.length === 0) {
+                resolve({ data: null, error: { message: 'No rows', code: 'PGRST116' } });
+              } else {
+                resolve({ data: JSON.parse(JSON.stringify(matched[0])), error: null });
+              }
+            } else {
+              resolve({ data: JSON.parse(JSON.stringify(matched)), error: null });
+            }
+          } else if (op === 'upsert') {
+            const toUpsert = (Array.isArray(payload)
+              ? payload
+              : [payload]) as Array<Record<string, unknown>>;
+            toUpsert.forEach((row) => {
+              const idx = rows.findIndex(
+                (r) => r.studyId === row.studyId && r.docId === row.docId,
+              );
+              if (idx >= 0) {
+                rows[idx] = {
+                  ...row,
+                  createdAt: (row.createdAt as string | undefined) ?? rows[idx].createdAt,
+                };
+              } else {
+                rows.push({
+                  ...row,
+                  createdAt: (row.createdAt as string | undefined) ?? new Date().toISOString(),
+                });
+              }
+            });
+            resolve({ data: toUpsert, error: null });
+          } else if (op === 'update') {
+            const matched = applyFilters(rows, filters);
+            matched.forEach((row) => Object.assign(row, payload as Record<string, unknown>));
+            resolve({ data: matched, error: null });
+          } else if (op === 'delete') {
+            const matched = applyFilters(rows, filters);
+            matched.forEach((row) => {
+              const idx = rows.indexOf(row);
+              if (idx >= 0) rows.splice(idx, 1);
+            });
+            resolve({ data: matched, error: null });
+          } else {
+            resolve({ data: null, error: null });
+          }
+        }).catch(reject);
+      },
+    };
+    return qb;
+  }
+
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    AuthError: class AuthError extends Error {} as any,
+    createClient: () => ({
+      from: (_table: string) => makeQueryBuilder(() => revisitRows),
+      schema: (schemaName: string) => ({
+        from: (_table: string) => makeQueryBuilder(() => {
+          if (schemaName === 'storage') {
+            return Object.keys(storageFiles).map((name) => ({ name, bucket_id: 'revisit' }));
+          }
+          return revisitRows;
+        }),
+      }),
+      storage: {
+        from: (_bucket: string) => ({
+          download: async (path: string) => {
+            if (path in storageFiles) {
+              // Return raw string — _getFromStorage (testing=true) wraps it in new Blob([string])
+              return { data: storageFiles[path] as unknown as Blob, error: null };
+            }
+            return { data: null, error: { message: 'Object not found' } };
+          },
+          upload: async (path: string, data: unknown, _opts?: unknown) => {
+            let text: string;
+            if (data instanceof Blob) {
+              text = await data.text();
+            } else if (typeof Buffer !== 'undefined' && Buffer.isBuffer(data)) {
+              text = (data as Buffer).toString();
+            } else if (typeof data === 'string') {
+              // Already a string (e.g. re-upload from _cacheStorageObject) — store as-is
+              text = data;
+            } else {
+              text = JSON.stringify(data);
+            }
+            storageFiles[path] = text;
+            return { data: { path }, error: null };
+          },
+          remove: async (paths: string[]) => {
+            paths.forEach((p) => {
+              delete storageFiles[p];
+              // Also cascade-delete files under directory prefix
+              const prefix = `${p}/`;
+              Object.keys(storageFiles)
+                .filter((k) => k.startsWith(prefix))
+                .forEach((k) => { delete storageFiles[k]; });
+            });
+            return { data: paths, error: null };
+          },
+          list: async (path: string, _opts?: unknown) => {
+            const prefix = path.endsWith('/') ? path : `${path}/`;
+            const keys = Object.keys(storageFiles).filter((k) => k.startsWith(prefix));
+            const names = new Set(keys.map((k) => k.slice(prefix.length).split('/')[0]));
+            return { data: [...names].map((name) => ({ name })), error: null };
+          },
+          updateMetadata: async (_path: string, _metadata: unknown) => ({ data: {}, error: null }),
+        }),
+      },
+      auth: {
+        getSession: async () => ({
+          data: { session: { user: { id: 'mock-uid', email: null } } },
+          error: null,
+        }),
+        signInAnonymously: async () => ({ data: { user: { id: 'mock-uid' } }, error: null }),
+        onAuthStateChange: (callback: (event: string, session: unknown) => void) => {
+          callback('SIGNED_IN', { user: { id: 'mock-uid', email: null } });
+          return { data: { subscription: { unsubscribe: () => {} } } };
+        },
+        signOut: async () => ({ error: null }),
+        signInWithOAuth: async () => ({ error: null }),
+      },
+    }),
+  };
+});
+
+vi.mock('localforage', () => ({
+  default: {
+    createInstance: vi.fn(() => ({
+      getItem: vi.fn((key: string) => Promise.resolve(localStore[key] ?? null)),
+      setItem: vi.fn((key: string, value: unknown) => {
+        localStore[key] = value;
+        return Promise.resolve(value);
+      }),
+      removeItem: vi.fn((key: string) => {
+        delete localStore[key];
+        return Promise.resolve();
+      }),
+    })),
+  },
+}));
 
 const studyId = 'test-study';
 const configSimple = testConfigSimple as StudyConfig;
@@ -90,7 +295,7 @@ function getConditionalBlockOrder(sequence: Sequence, condition: string): string
 }
 
 describe.each([
-  { TestEngine: LocalStorageEngine },
+  { TestEngine: SupabaseStorageEngine },
 ])('describe object $TestEngine', ({ TestEngine }) => {
   let storageEngine: StorageEngine;
   let sequenceArray: Sequence[];
@@ -101,7 +306,7 @@ describe.each([
     storageEngine = new TestEngine(true);
     await storageEngine.connect();
     await storageEngine.initializeStudyDb(studyId);
-    sequenceArray = await generateSequenceArray(configSimple);
+    sequenceArray = generateSequenceArray(configSimple);
     await storageEngine.setSequenceArray(
       sequenceArray,
     );
@@ -185,7 +390,7 @@ describe.each([
     expect(sequenceAssignment!.conditions).toEqual(['color']);
   });
 
-  test('initializeParticipantSession balances conditional latin square sequence assignments over 1000 pulls', async () => {
+  test('initializeParticipantSession balances conditional latin square sequence assignments over 200 pulls', async () => {
     const latinSquareSequenceArray = generateSequenceArray(conditionalLatinSquareConfig);
     await storageEngine.setSequenceArray(latinSquareSequenceArray);
 
@@ -506,7 +711,7 @@ describe.each([
   });
 
   test('getSequenceArray returns empty array if no sequences are set', async () => {
-    const emptyStorageEngine = new LocalStorageEngine();
+    const emptyStorageEngine = new SupabaseStorageEngine();
     await emptyStorageEngine.connect();
     await emptyStorageEngine.initializeStudyDb('test-study-empty');
     const sequences = await emptyStorageEngine.getSequenceArray();
@@ -535,7 +740,7 @@ describe.each([
   });
 
   test('setSequenceArray throws error if not connected', async () => {
-    const disconnectedStorageEngine = new LocalStorageEngine();
+    const disconnectedStorageEngine = new SupabaseStorageEngine();
     await expect(disconnectedStorageEngine.setSequenceArray([])).rejects.toThrow('Study database not initialized');
   });
 
