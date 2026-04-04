@@ -5,12 +5,15 @@ import {
 } from 'vitest';
 import * as d3 from 'd3';
 import { useParams, useSearchParams } from 'react-router';
-import { Tag } from './types';
+import { EditedText, Tag } from './types';
 import type { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
 import { TranscriptSegmentsVis } from './TranscriptSegmentsVis';
 import { Pills } from './tags/Pills';
 import { AddTagDropdown } from './tags/AddTagDropdown';
 import { TagEditor } from './tags/TagEditor';
+import { TagSelector } from './tags/TagSelector';
+import { TranscriptLine } from './TranscriptLine';
+import { TextEditor } from './TextEditor';
 import { ThinkAloudAnalysis } from './ThinkAloudAnalysis';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
@@ -31,7 +34,10 @@ vi.mock('@mantine/core', () => ({
     <div title={String(label)}>{children}</div>
   ),
   ColorSwatch: ({ color }: { color: string }) => <div data-color={color} />,
-  Pill: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  Pill: Object.assign(
+    ({ children }: { children: ReactNode }) => <span>{children}</span>,
+    { Group: ({ children }: { children: ReactNode }) => <div>{children}</div> },
+  ),
   Button: ({ children }: { children: ReactNode }) => <button type="button">{children}</button>,
   ColorPicker: ({ value }: { value?: string }) => <div data-colorpicker={value} />,
   TextInput: ({ placeholder, value }: { placeholder?: string; value?: string }) => (
@@ -117,16 +123,12 @@ vi.mock('../../../storage/storageEngineHooks', () => ({
   useStorageEngine: vi.fn(() => ({ storageEngine: undefined })),
 }));
 
-vi.mock('./TextEditor', () => ({
-  TextEditor: () => <div>TextEditor</div>,
-}));
-
 vi.mock('./ThinkAloudFooter', () => ({
   ThinkAloudFooter: () => <div>ThinkAloudFooter</div>,
 }));
 
 vi.mock('../../../storage/engines/FirebaseStorageEngine', () => ({
-  FirebaseStorageEngine: class {},
+  FirebaseStorageEngine: class { },
 }));
 
 vi.mock('../../../utils/parseTrialOrder', () => ({
@@ -361,5 +363,209 @@ describe('ThinkAloudAnalysis', () => {
     // hasAudio is undefined on initial SSR render (useEffect never runs),
     // so the "no audio" branch renders regardless of transcript fetch status
     expect(html).toContain('No transcripts found for this task');
+  });
+});
+
+// ── Pills ───────────────────────────────────────
+
+describe('Pills (branch coverage)', () => {
+  test('renders dark text color on a light tag (lightness > 0.7 branch)', () => {
+    // white has lightness=1, hitting the "color: black" branch in the styles ternary
+    const html = renderToStaticMarkup(<Pills selectedTags={[makeTag({ color: '#ffffff' })]} />);
+    expect(html).toContain('Confusion');
+  });
+
+  test('renders with removeFunc — withRemoveButton is truthy', () => {
+    const html = renderToStaticMarkup(
+      <Pills selectedTags={[makeTag()]} removeFunc={vi.fn()} />,
+    );
+    expect(html).toContain('Confusion');
+  });
+});
+
+// ── TagSelector ───────────────────────────────────────────────────────────────
+
+describe('TagSelector', () => {
+  const baseProps = {
+    tags: [] as Tag[],
+    selectedTags: [] as Tag[],
+    onSelectTags: vi.fn(),
+    tagsEmptyText: 'Add Text Tags',
+    editTagCallback: vi.fn(),
+    createTagCallback: vi.fn(),
+    width: 200,
+  };
+
+  test('shows placeholder text when no tags are selected', () => {
+    const html = renderToStaticMarkup(<TagSelector {...baseProps} />);
+    expect(html).toContain('Add Text Tags');
+  });
+
+  test('shows "No additional tags" when tag list is empty', () => {
+    const html = renderToStaticMarkup(<TagSelector {...baseProps} />);
+    expect(html).toContain('No additional tags');
+  });
+
+  test('renders selected tag name with check icon', () => {
+    const tag = makeTag({ id: 'a', name: 'Focus' });
+    const html = renderToStaticMarkup(
+      <TagSelector {...baseProps} tags={[tag]} selectedTags={[tag]} />,
+    );
+    expect(html).toContain('Focus');
+    expect(html).toContain('check'); // CheckIcon rendered for selected option
+  });
+
+  test('renders unselected tag name in dropdown options', () => {
+    const tag = makeTag({ id: 'b', name: 'Confusion' });
+    const html = renderToStaticMarkup(
+      <TagSelector {...baseProps} tags={[tag]} selectedTags={[]} />,
+    );
+    expect(html).toContain('Confusion');
+  });
+
+  test('renders TagEditor "Create new tag" inside the dropdown', () => {
+    const html = renderToStaticMarkup(<TagSelector {...baseProps} />);
+    expect(html).toContain('Create new tag');
+  });
+
+  test('edit button (IconEdit) appears for each tag', () => {
+    const tag = makeTag({ id: 'c', name: 'Error' });
+    const html = renderToStaticMarkup(
+      <TagSelector {...baseProps} tags={[tag]} selectedTags={[tag]} />,
+    );
+    expect(html).toContain('icon-edit');
+  });
+});
+
+// ── TranscriptLine ────────────────────────────────────────────────────────────
+
+describe('TranscriptLine', () => {
+  const baseProps = {
+    annotation: '',
+    setAnnotation: vi.fn(),
+    start: 0,
+    end: 10,
+    current: 5,
+    text: 'Hello world',
+    tags: [] as Tag[],
+    selectedTags: [] as Tag[],
+    onTextChange: vi.fn(),
+    deleteRowCallback: vi.fn(),
+    addRowCallback: vi.fn(),
+    onSelectTags: vi.fn(),
+    addRef: vi.fn(),
+    index: 0,
+    editTagCallback: vi.fn(),
+    createTagCallback: vi.fn(),
+    onClickLine: vi.fn(),
+  };
+
+  test('renders the transcript text', () => {
+    const html = renderToStaticMarkup(<TranscriptLine {...baseProps} />);
+    expect(html).toContain('Hello world');
+  });
+
+  test('shows "Add Annotation" placeholder for the annotation field', () => {
+    const html = renderToStaticMarkup(<TranscriptLine {...baseProps} />);
+    expect(html).toContain('Add Annotation');
+  });
+
+  test('shows TagSelector placeholder text', () => {
+    const html = renderToStaticMarkup(<TranscriptLine {...baseProps} />);
+    expect(html).toContain('Add Text Tags');
+  });
+
+  test('renders selected tags inside TagSelector', () => {
+    const tag = makeTag({ name: 'Focus' });
+    const html = renderToStaticMarkup(
+      <TranscriptLine {...baseProps} tags={[tag]} selectedTags={[tag]} />,
+    );
+    expect(html).toContain('Focus');
+  });
+});
+
+// ── TextEditor ────────────────────────────────────────────────────────────────
+
+describe('TextEditor', () => {
+  function makeEditedText(overrides: Partial<EditedText> = {}): EditedText {
+    return {
+      transcriptMappingStart: 0,
+      transcriptMappingEnd: 0,
+      text: 'Sample',
+      selectedTags: [],
+      annotation: '',
+      ...overrides,
+    };
+  }
+
+  test('renders Transcripts, Text Tags, and Annotations column headers', () => {
+    const html = renderToStaticMarkup(
+      <TextEditor
+        currentShownTranscription={0}
+        transcriptList={[]}
+        setTranscriptList={vi.fn()}
+        onClickLine={vi.fn()}
+      />,
+    );
+    expect(html).toContain('Transcripts');
+    expect(html).toContain('Text Tags');
+    expect(html).toContain('Annotations');
+  });
+
+  test('renders transcript text for each item in the list', () => {
+    const items = [
+      makeEditedText({ text: 'First line' }),
+      makeEditedText({ text: 'Second line' }),
+    ];
+    const html = renderToStaticMarkup(
+      <TextEditor
+        currentShownTranscription={0}
+        transcriptList={items}
+        setTranscriptList={vi.fn()}
+        onClickLine={vi.fn()}
+      />,
+    );
+    expect(html).toContain('First line');
+    expect(html).toContain('Second line');
+  });
+
+  test('renders selected tags inside transcript lines', () => {
+    const tag = makeTag({ name: 'Focus' });
+    const items = [makeEditedText({ selectedTags: [tag] })];
+    const html = renderToStaticMarkup(
+      <TextEditor
+        currentShownTranscription={0}
+        transcriptList={items}
+        setTranscriptList={vi.fn()}
+        onClickLine={vi.fn()}
+      />,
+    );
+    expect(html).toContain('Focus');
+  });
+
+  test('shows tag placeholder text when no tags are selected for a line', () => {
+    const items = [makeEditedText()];
+    const html = renderToStaticMarkup(
+      <TextEditor
+        currentShownTranscription={0}
+        transcriptList={items}
+        setTranscriptList={vi.fn()}
+        onClickLine={vi.fn()}
+      />,
+    );
+    expect(html).toContain('Add Text Tags');
+  });
+
+  test('shows "Add Annotation" placeholder for each transcript line', () => {
+    const items = [makeEditedText()];
+    const html = renderToStaticMarkup(
+      <TextEditor
+        currentShownTranscription={0}
+        transcriptList={items}
+        setTranscriptList={vi.fn()}
+        onClickLine={vi.fn()}
+      />,
+    );
+    expect(html).toContain('Add Annotation');
   });
 });

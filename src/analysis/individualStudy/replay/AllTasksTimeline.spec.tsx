@@ -326,4 +326,103 @@ describe('AllTasksTimeline', () => {
     );
     expect(html).toContain('<svg');
   });
+
+  test('tooltip shows N/A for null answer values', () => {
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: {
+          componentName: 'trial1',
+          startTime: t0,
+          endTime: t0 + 5_000,
+          answer: { q1: null },
+          correctAnswer: [],
+          trialOrder: '0_0',
+          windowEvents: [],
+        },
+      },
+    });
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={participant}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+      />,
+    );
+    expect(html).toContain('N/A');
+  });
+
+  test('tooltip JSON.stringifies object answer values', () => {
+    // Use an array so JSON.stringify produces no string-quoted keys (avoids HTML entity encoding)
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: {
+          componentName: 'trial1',
+          startTime: t0,
+          endTime: t0 + 5_000,
+          answer: { q1: [1, 2] },
+          correctAnswer: [],
+          trialOrder: '0_0',
+          windowEvents: [],
+        },
+      },
+    });
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={participant}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+      />,
+    );
+    expect(html).toContain('[1,2]');
+  });
+
+  test('sortedTaskNames comparator runs with multiple incomplete answers', () => {
+    // Three incomplete answers: two share trialOrder prefix "0" (hits true branch),
+    // one has prefix "1" (hits false branch of the prefix comparison)
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: {
+          componentName: 'trial1',
+          startTime: 0,
+          endTime: 0,
+          answer: {},
+          correctAnswer: [],
+          trialOrder: '0_0',
+          windowEvents: [],
+        },
+        trial2_0: {
+          componentName: 'trial2',
+          startTime: 0,
+          endTime: 0,
+          answer: {},
+          correctAnswer: [],
+          trialOrder: '0_1',
+          windowEvents: [],
+        },
+        trial3_0: {
+          componentName: 'trial3',
+          startTime: 0,
+          endTime: 0,
+          answer: {},
+          correctAnswer: [],
+          trialOrder: '1_0',
+          windowEvents: [],
+        },
+      },
+    });
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={participant}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+      />,
+    );
+    expect(html).toContain('<svg');
+  });
 });

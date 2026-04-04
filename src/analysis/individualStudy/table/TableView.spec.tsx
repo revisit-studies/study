@@ -276,6 +276,27 @@ describe('TableView', () => {
     expect(html).toContain('Mozilla/5.0');
     expect(html).toContain('1.2.3.4');
   });
+
+  // ── Optional columns ──────────────────────────────────────────────────────
+
+  test('includes Name column when studyConfig has participantNameField', () => {
+    const configWithName = {
+      ...emptyConfig,
+      uiConfig: { participantNameField: 'name' },
+    } as unknown as StudyConfig;
+    renderToStaticMarkup(
+      <TableView {...defaultProps} studyConfig={configWithName} visibleParticipants={[makeParticipant()]} />,
+    );
+    expect(capturedTableOptions!.columns.find((c) => c.header === 'Name')).toBeDefined();
+  });
+
+  test('includes Condition column when any participant has a condition', () => {
+    const participantWithCondition = makeParticipant({ searchParams: { condition: 'condA' } });
+    renderToStaticMarkup(
+      <TableView {...defaultProps} visibleParticipants={[participantWithCondition]} />,
+    );
+    expect(capturedTableOptions!.columns.find((c) => c.header === 'Condition')).toBeDefined();
+  });
 });
 
 // ── MetaCell ─────────────────────────────────────────────────────────────────

@@ -261,6 +261,18 @@ describe('ParticipantSection', () => {
     expect(html).not.toContain('DYNAMIC');
   });
 
+  test('uses "#N" fallback when participantId is empty', () => {
+    const participants = [
+      {
+        assignment: makeAssignment({ participantId: '' }), progress: 50, isCompleted: false, isRejected: false,
+      },
+    ];
+    const html = renderToStaticMarkup(
+      <ParticipantSection {...baseProps} participants={participants} />,
+    );
+    expect(html).toContain('#1');
+  });
+
   test('renders ProgressHeatmap when showProgressHeatmap is true', () => {
     const participants = [
       {
