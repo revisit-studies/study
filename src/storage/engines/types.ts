@@ -231,6 +231,9 @@ export abstract class StorageEngine {
   // Gets the screen recording URL for the given task and participantId. This method is used to fetch the screen recording video file from the storage engine.
   protected abstract _getScreenRecordingUrl(task: string, participantId?: string): Promise<string | null>;
 
+  // Gets the webcam recording URL for the given task and participantId. This method is used to fetch the webcam recording video file from the storage engine.
+  protected abstract _getWebcamRecordingUrl(task: string, participantId?: string): Promise<string | null>;
+
   // Gets the transcript URL for the given task and participantId. (Optional - not all storage engines need to implement this, only if they generate transcripts).
   protected _getTranscriptUrl?(task: string, participantId?: string): Promise<string | null>;
 
@@ -1119,6 +1122,15 @@ export abstract class StorageEngine {
     return this.getAsset(url);
   }
 
+  // Gets the webcam recording for a specific task and participantId.
+  async getWebcamRecording(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getWebcamRecordingUrl(task, participantId);
+    return this.getAsset(url);
+  }
+
   // Saves the video stream to the storage engine. This method is used to save the screen recorded video data from a MediaRecorder stream.
   async saveScreenRecording(
     blob: Blob,
@@ -1132,6 +1144,21 @@ export abstract class StorageEngine {
       throw new Error('Data collection is disabled for this study');
     }
     return this.saveAsset('screenRecording', blob, taskName);
+  }
+
+  // Saves the webcam stream to the storage engine. This method is used to save the webcam recorded video data from a MediaRecorder stream.
+  async saveWebcamRecording(
+    blob: Blob,
+    taskName: string,
+  ) {
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+    const modes = await this.getModes(this.studyId);
+    if (!modes.dataCollectionEnabled) {
+      throw new Error('Data collection is disabled for this study');
+    }
+    return this.saveAsset('webcamRecording', blob, taskName);
   }
 
   // Gets the sequence array from the storage engine.
@@ -1201,6 +1228,7 @@ export abstract class StorageEngine {
       await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
       await this._copyDirectory(`${sourceName}/audio`, `${targetName}/audio`);
       await this._copyDirectory(`${sourceName}/screenRecording`, `${targetName}/screenRecording`);
+      await this._copyDirectory(`${sourceName}/webcamRecording`, `${targetName}/webcamRecording`);
       await this._copyDirectory(sourceName, targetName);
       await this._copyRealtimeData(sourceName, targetName);
     }
@@ -1248,6 +1276,7 @@ export abstract class StorageEngine {
         await this._deleteDirectory(`${deletionTarget}/participants`);
         await this._deleteDirectory(`${deletionTarget}/audio`);
         await this._deleteDirectory(`${deletionTarget}/screenRecording`);
+        await this._deleteDirectory(`${deletionTarget}/webcamRecording`);
         await this._deleteDirectory(deletionTarget);
         await this._deleteRealtimeData(deletionTarget);
       }
@@ -1316,6 +1345,10 @@ export abstract class StorageEngine {
       await this._copyDirectory(
         `${snapshotName}/screenRecording`,
         `${originalName}/screenRecording`,
+      );
+      await this._copyDirectory(
+        `${snapshotName}/webcamRecording`,
+        `${originalName}/webcamRecording`,
       );
       await this._copyDirectory(snapshotName, originalName);
       await this._copyRealtimeData(snapshotName, originalName);

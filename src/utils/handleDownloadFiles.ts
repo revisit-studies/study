@@ -68,6 +68,32 @@ export async function handleTaskScreenRecording({
   }
 }
 
+export async function handleTaskWebcamRecording({
+  storageEngine,
+  participantId,
+  identifier,
+  webcamRecordingUrl,
+}: {
+  storageEngine: StorageEngine;
+  participantId: string;
+  identifier: string;
+  webcamRecordingUrl?: string | null;
+}) {
+  const finalWebcamRecordingUrl = webcamRecordingUrl || await storageEngine.getWebcamRecording(identifier, participantId);
+
+  if (finalWebcamRecordingUrl) {
+    const blob = await (await fetch(finalWebcamRecordingUrl)).blob();
+    const url = URL.createObjectURL(blob);
+
+    Object.assign(document.createElement('a'), {
+      href: url,
+      download: `${participantId}_${identifier}_webcamRecording.webm`,
+    }).click();
+
+    URL.revokeObjectURL(url);
+  }
+}
+
 async function loadAssetToZip(zip: JSZip, fileName: string, assetUrl: string | null) {
   if (assetUrl) {
     const asset = await fetch(assetUrl);
@@ -180,6 +206,33 @@ async function downloadParticipantsScreenRecording({
   }
 }
 
+async function downloadParticipantsWebcamRecording({
+  storageEngine,
+  participantId,
+  identifier,
+  namePrefix,
+  zip,
+}: {
+  storageEngine: StorageEngine;
+  participantId: string;
+  identifier: string;
+  namePrefix: string;
+  zip?: JSZip;
+}) {
+  const webcamRecordingZip = zip || new JSZip();
+
+  try {
+    const webcamRecordingUrl = await storageEngine.getWebcamRecording(identifier, participantId);
+    await loadAssetToZip(webcamRecordingZip, `${namePrefix}_${participantId}_${identifier}.webm`, webcamRecordingUrl);
+
+    if (!zip) {
+      downloadZip(webcamRecordingZip, `${namePrefix}_${participantId}_${identifier}_webcamRecording.zip`);
+    }
+  } catch (error) {
+    console.warn(`Failed to fetch files for ${identifier}:`, error);
+  }
+}
+
 export async function downloadParticipantsScreenRecordingZip({
   storageEngine,
   participants,
@@ -215,6 +268,43 @@ export async function downloadParticipantsScreenRecordingZip({
   await Promise.all(screenRecordingPromises);
 
   await downloadZip(zip, `${namePrefix}_screenRecording.zip`);
+}
+
+export async function downloadParticipantsWebcamRecordingZip({
+  storageEngine,
+  participants,
+  studyId,
+  fileName,
+}: {
+  storageEngine: StorageEngine;
+  participants: Array<{ participantId: string; answers: Record<string, { endTime: number; startTime: number; componentName: string; trialOrder: string }> }>;
+  studyId: string;
+  fileName?: string | null;
+}) {
+  const namePrefix = fileName || studyId;
+  const zip = new JSZip();
+
+  const webcamRecordingPromises = participants.flatMap((participant) => {
+    const entries = Object.values(participant.answers)
+      .filter((ans) => ans.endTime > 0)
+      .sort((a, b) => a.startTime - b.startTime);
+
+    return entries.map(async (ans) => {
+      const identifier = `${ans.componentName}_${ans.trialOrder}`;
+
+      await downloadParticipantsWebcamRecording({
+        storageEngine,
+        participantId: participant.participantId,
+        identifier,
+        namePrefix,
+        zip,
+      });
+    });
+  });
+
+  await Promise.all(webcamRecordingPromises);
+
+  await downloadZip(zip, `${namePrefix}_webcamRecording.zip`);
 }
 
 export async function downloadConfigFile({

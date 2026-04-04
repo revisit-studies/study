@@ -1,21 +1,18 @@
 import {
-  Box, Button, Flex, Title,
+  Box, Button, Title,
 } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { useRecordingContext } from '../../../../store/hooks/useRecording';
 import { StimulusParams } from '../../../../store/types';
 import { RecordingAudioWaveform } from '../../../../components/interface/RecordingAudioWaveform';
 
-function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
+function WebcamRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
   const {
     recordAudio,
-    recordWebcam,
-    recordVideoRef,
     webcamVideoRef,
-    startScreenCapture: startCapture,
-    stopScreenCapture: stopCapture,
-    isScreenCapturing: screenCapturing,
-    isWebcamCapturing: webcamCapturing,
+    startWebcamCapture,
+    stopScreenCapture,
+    isWebcamCapturing,
     screenRecordingError: error,
     audioMediaStream,
   } = useRecordingContext();
@@ -23,35 +20,22 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
   const [audioCapturingSuccess, setAudioCapturingSuccess] = useState(false);
 
   const setupComplete = useMemo(
-    () => screenCapturing && (!recordWebcam || webcamCapturing) && (!recordAudio || audioCapturingSuccess),
-    [audioCapturingSuccess, recordAudio, recordWebcam, screenCapturing, webcamCapturing],
+    () => isWebcamCapturing && (!recordAudio || audioCapturingSuccess),
+    [audioCapturingSuccess, isWebcamCapturing, recordAudio],
   );
-
-  const recordingTargets = useMemo(() => {
-    const targets = ['screen'];
-
-    if (recordWebcam) {
-      targets.push('webcam');
-    }
-    if (recordAudio) {
-      targets.push('audio');
-    }
-
-    return targets;
-  }, [recordAudio, recordWebcam]);
 
   useEffect(() => {
     setAnswer({
       status: setupComplete,
       provenanceGraph: undefined,
       answers: {
-        screenRecordingPermission: screenCapturing,
+        webcamRecordingPermission: isWebcamCapturing,
       },
     });
-  }, [screenCapturing, setAnswer, setupComplete]);
+  }, [isWebcamCapturing, setAnswer, setupComplete]);
 
   useEffect(() => {
-    if (!screenCapturing || !recordAudio) {
+    if (!isWebcamCapturing || !recordAudio) {
       return undefined;
     }
 
@@ -98,14 +82,13 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
       analyser.disconnect();
       audioContext.close().catch(() => undefined);
     };
-  }, [audioMediaStream, recordAudio, screenCapturing]);
+  }, [audioMediaStream, isWebcamCapturing, recordAudio]);
 
   return (
     <Box p="md">
       <Title order={1} size="h2">
-        Screen
-        {recordWebcam && ', Webcam'}
-        {recordAudio && `${recordWebcam ? ',' : ' and'} Audio`}
+        Webcam
+        {recordAudio && ' and Audio'}
         {' '}
         Recording Permission
       </Title>
@@ -113,7 +96,10 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
       <p>
         This study requires recording of your
         {' '}
-        <strong>{recordingTargets.join(', ')}</strong>
+        <strong>
+          webcam
+          {recordAudio ? ' and audio' : ''}
+        </strong>
         . If you&apos;re not comfortable, you may exit and return the study.
       </p>
       <p>Follow the steps below to grant the required permissions.</p>
@@ -122,48 +108,39 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
         <li>
           <strong>Click the button below</strong>
           {' '}
-          to enable the required recording streams.
-          <Button type="button" onClick={screenCapturing ? stopCapture : startCapture} display="block" mt="sm">
-            {screenCapturing ? 'Stop Recording' : 'Start Recording'}
+          to enable webcam recording.
+          <Button type="button" onClick={isWebcamCapturing ? stopScreenCapture : startWebcamCapture} display="block" mt="sm">
+            {isWebcamCapturing ? 'Stop Recording' : 'Start Recording'}
           </Button>
           {error && <p style={{ color: 'red' }}>{error}</p>}
-          <p><i>Note: Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
         </li>
         <li>
-          <strong>Confirm your preview streams</strong>
+          <strong>Confirm your webcam preview</strong>
           {' '}
           before continuing.
-          <Flex mt="sm" gap="md" wrap="wrap">
-            <Box>
-              <p><strong>Screen Preview</strong></p>
-              <video
-                ref={recordVideoRef}
-                autoPlay
-                playsInline
-                muted
-                style={{ width: '400px', border: '1px solid #ccc' }}
-              />
-            </Box>
-            {recordWebcam && (
-              <Box>
-                <p><strong>Webcam Preview</strong></p>
-                <video
-                  ref={webcamVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  style={{ width: '300px', border: '1px solid #ccc', transform: 'scaleX(-1)' }}
-                />
-              </Box>
-            )}
-          </Flex>
+          <video
+            ref={webcamVideoRef}
+            autoPlay
+            playsInline
+            muted
+            style={{
+              width: '320px',
+              border: '1px solid #ccc',
+              marginTop: '1rem',
+              transform: 'scaleX(-1)',
+            }}
+          />
         </li>
         {recordAudio && (
           <li>
             <strong>Speak</strong>
             {' '}
             into your microphone to check if audio is working.
-            {screenCapturing ? <Box h={200} w={400} bd="1px solid #ccc"><RecordingAudioWaveform height={200} width={400} /></Box> : <Box h={200} w={400} bd="1px solid #ccc" />}
+            {isWebcamCapturing ? (
+              <Box h={200} w={400} bd="1px solid #ccc">
+                <RecordingAudioWaveform height={200} width={400} />
+              </Box>
+            ) : <Box h={200} w={400} bd="1px solid #ccc" />}
           </li>
         )}
       </ol>
@@ -178,10 +155,10 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
             button will be enabled.
           </li>
         )}
-        <li>Please do not stop the recording streams until the entire study is completed.</li>
+        <li>Please do not stop the webcam recording stream until the entire study is completed.</li>
       </ul>
     </Box>
   );
 }
 
-export default ScreenRecordingPermission;
+export default WebcamRecordingPermission;

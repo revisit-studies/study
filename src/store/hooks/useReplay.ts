@@ -6,21 +6,24 @@ import { syncChannel, syncEmitter } from '../../utils/syncReplay';
 import EventEmitter from '../../utils/EventEmitter';
 import { getNextSyntheticReplayTime } from './replayTimer';
 
+type ReplayMediaElement = HTMLVideoElement | HTMLAudioElement;
+
 /**
  * Hook to subscribe to video/audio/provenance timing events for replay
  */
 export function useReplay() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const screenVideoRef = useRef<HTMLVideoElement | null>(null);
+  const webcamVideoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // isMasterplayer is true for the window where play button is clicked.
+  // isMasterPlayer is true for the window where play button is clicked.
   // This is set to false when the video / provenance is initiated via different tab/window
   const [isMasterPlayer, setIsMasterPlayer] = useState(true);
 
   const emitterRef = useRef(new EventEmitter());
 
-  // Replay ref points to whichever is active (video preferred)
-  const replayRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
+  // Replay ref points to the preferred active media element (screen, then webcam, then audio).
+  const replayRef = useRef<ReplayMediaElement | null>(null);
 
   const [seekTime, _setSeekTime] = useState(0);
 
@@ -41,6 +44,43 @@ export function useReplay() {
   }, []);
 
   const timerValue = useRef<number>(0);
+
+  const getActiveMediaElements = useCallback((): ReplayMediaElement[] => (
+    [screenVideoRef.current, webcamVideoRef.current, audioRef.current]
+      .filter((element): element is ReplayMediaElement => !!element && !!element.src)
+  ), []);
+
+  const getSecondaryMediaElements = useCallback((): ReplayMediaElement[] => (
+    getActiveMediaElements().filter((element) => element !== replayRef.current)
+  ), [getActiveMediaElements]);
+
+  const syncSecondaryMediaToMaster = useCallback((targetTime?: number) => {
+    const master = replayRef.current;
+    const masterTime = targetTime ?? master?.currentTime ?? timerValue.current;
+
+    getSecondaryMediaElements().forEach((element) => {
+      if (Math.abs(element.currentTime - masterTime) > 0.15) {
+        element.currentTime = masterTime;
+      }
+    });
+  }, [getSecondaryMediaElements]);
+
+  const updateMutedState = useCallback(() => {
+    const master = replayRef.current;
+
+    if (screenVideoRef.current) {
+      screenVideoRef.current.muted = !isMasterPlayer || master !== screenVideoRef.current;
+    }
+
+    if (webcamVideoRef.current) {
+      webcamVideoRef.current.muted = true;
+    }
+
+    if (audioRef.current) {
+      const replayingScreenWithAudio = master === screenVideoRef.current;
+      audioRef.current.muted = !isMasterPlayer || replayingScreenWithAudio;
+    }
+  }, [isMasterPlayer]);
 
   useEffect(() => {
     if (duration > 0 && (timerValue.current >= duration || (replayRef.current && timerValue.current >= replayRef.current.duration))) {
@@ -65,7 +105,6 @@ export function useReplay() {
       return 0;
     }
 
-    // If the searchParamTimestamp is already in milliseconds, return it
     if (!Number.isNaN(Number(searchParamTimestamp))) {
       return parseInt(searchParamTimestamp, 10) / 1000;
     }
@@ -74,8 +113,7 @@ export function useReplay() {
     const minutes = parseInt(searchParamTimestamp.match(/(\d+)m/)?.[1] || '0', 10);
     const seconds = parseInt(searchParamTimestamp.match(/(\d+)s/)?.[1] || '0', 10);
 
-    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-    return totalSeconds;
+    return hours * 3600 + minutes * 60 + seconds;
   }, [searchParamTimestamp]);
 
   useEffect(() => {
@@ -92,56 +130,43 @@ export function useReplay() {
   }, [seekTime, isPlaying, speed, isMasterPlayer]);
 
   useEffect(() => {
-    const muted = !isMasterPlayer;
-    if (videoRef.current) videoRef.current.muted = muted;
-    if (audioRef.current) audioRef.current.muted = muted;
-  }, [isMasterPlayer]);
+    updateMutedState();
+  }, [updateMutedState]);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.playbackRate = speed;
-    }
-    if (audioRef.current) {
-      audioRef.current.playbackRate = speed;
-    }
-  }, [speed]);
+    getActiveMediaElements().forEach((element) => {
+      element.playbackRate = speed;
+    });
+  }, [getActiveMediaElements, speed]);
 
   const handlePlay = useCallback(() => {
     _setIsPlaying(true);
 
     const t = replayRef.current?.currentTime || 0;
     emitterRef.current.emit('play', t);
+    syncSecondaryMediaToMaster(t);
+    updateMutedState();
 
-    if (videoRef.current === replayRef.current) {
-      if (audioRef.current) {
-        audioRef.current.muted = true;
-        audioRef.current.play();
-      }
-    } else {
-      videoRef.current?.play();
-    }
+    getSecondaryMediaElements().forEach((element) => {
+      element.play().catch(() => undefined);
+    });
 
     const elem = replayRef.current;
     if (elem) {
       timer.current = setInterval(() => {
+        syncSecondaryMediaToMaster(elem.currentTime);
         emitterRef.current.emit('timeupdate', elem.currentTime);
       }, 30);
     }
-  }, []);
+  }, [getSecondaryMediaElements, syncSecondaryMediaToMaster, updateMutedState]);
 
   const handleSeeked = useCallback(() => {
     const t = replayRef.current?.currentTime || 0;
     _setSeekTime(t);
 
+    syncSecondaryMediaToMaster(t);
     emitterRef.current.emit('timeupdate', t);
-    if (videoRef.current === replayRef.current) {
-      if (audioRef.current) {
-        audioRef.current.currentTime = t;
-      }
-    } else if (videoRef.current) {
-      videoRef.current.currentTime = t;
-    }
-  }, []);
+  }, [syncSecondaryMediaToMaster]);
 
   const setSeekTime = useCallback((time: number, isRemoteTriggered = false) => {
     setIsMasterPlayer(!isRemoteTriggered);
@@ -150,69 +175,66 @@ export function useReplay() {
     if (replayRef.current) {
       replayRef.current.currentTime = time;
     }
+    syncSecondaryMediaToMaster(time);
     emitterRef.current.emit('timeupdate', time);
     timerValue.current = time;
     setHasEnded(false);
-  }, []);
+  }, [syncSecondaryMediaToMaster]);
 
   const handlePause = useCallback(() => {
     _setIsPlaying(false);
 
-    timer.current && clearInterval(timer.current);
+    if (timer.current) {
+      clearInterval(timer.current);
+    }
     const t = replayRef.current?.currentTime || 0;
     emitterRef.current.emit('pause', t);
     timerValue.current = t;
 
-    if (videoRef.current === replayRef.current) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-    } else {
-      videoRef.current?.pause();
-    }
-  }, []);
+    getSecondaryMediaElements().forEach((element) => {
+      element.pause();
+    });
+  }, [getSecondaryMediaElements]);
 
   const forceEmitTimeUpdate = useCallback(() => {
     emitterRef.current.emit('timeupdate', timerValue.current);
   }, []);
 
-  /**
-   * Whenever either video or audio mounts, update replayRef once.
-   * This avoids re-assigning on every render.
-   */
   const updateReplayRef = useCallback(() => {
-    const originalVideo = videoRef.current;
-    const originalAudio = audioRef.current;
+    const mediaElements = getActiveMediaElements();
 
-    if (originalVideo) {
-      originalVideo.playbackRate = internalSpeed.current;
-      originalVideo.currentTime = initialTimestamp;
+    mediaElements.forEach((element) => {
+      element.playbackRate = internalSpeed.current;
+      element.currentTime = initialTimestamp;
+      element.removeEventListener('play', handlePlay);
+      element.removeEventListener('pause', handlePause);
+      element.removeEventListener('seeked', handleSeeked);
+    });
 
-      originalVideo.removeEventListener('play', handlePlay);
-      originalVideo.removeEventListener('pause', handlePause);
-      originalVideo.removeEventListener('seeked', handleSeeked);
-    }
-
-    if (originalAudio) {
-      originalAudio.playbackRate = internalSpeed.current;
-      originalAudio.currentTime = initialTimestamp;
-
-      originalAudio.removeEventListener('play', handlePlay);
-      originalAudio.removeEventListener('pause', handlePause);
-      originalAudio.removeEventListener('seeked', handleSeeked);
-    }
-
-    replayRef.current = (videoRef.current?.src ? videoRef.current : null) ?? (audioRef.current?.src ? audioRef.current : null);
+    replayRef.current = (screenVideoRef.current?.src ? screenVideoRef.current : null)
+      ?? (webcamVideoRef.current?.src ? webcamVideoRef.current : null)
+      ?? (audioRef.current?.src ? audioRef.current : null);
 
     if (replayRef.current) {
       replayRef.current.addEventListener('play', handlePlay);
       replayRef.current.addEventListener('pause', handlePause);
       replayRef.current.addEventListener('seeked', handleSeeked);
     }
-    forceEmitTimeUpdate();
-  }, [handlePlay, handlePause, handleSeeked, initialTimestamp, forceEmitTimeUpdate]);
 
-  // this should be the only way to start video/audio
+    updateMutedState();
+    syncSecondaryMediaToMaster(initialTimestamp);
+    forceEmitTimeUpdate();
+  }, [
+    forceEmitTimeUpdate,
+    getActiveMediaElements,
+    handlePause,
+    handlePlay,
+    handleSeeked,
+    initialTimestamp,
+    syncSecondaryMediaToMaster,
+    updateMutedState,
+  ]);
+
   const setIsPlaying = useCallback((playing: boolean, isRemoteTriggered = false) => {
     setIsMasterPlayer(!isRemoteTriggered);
     if (hasEnded) {
@@ -221,7 +243,7 @@ export function useReplay() {
     }
     _setIsPlaying(playing);
     if (playing) {
-      replayRef.current?.play();
+      replayRef.current?.play().catch(() => undefined);
     } else {
       replayRef.current?.pause();
     }
@@ -232,17 +254,17 @@ export function useReplay() {
       playTimeStamp.current = Date.now();
     } else {
       _setSeekTime((t) => {
-        const diff = ((Date.now() - playTimeStamp.current) * internalSpeed.current) / 1000; // issue
-        const ctime = diff < 0.5 ? t : t + diff;
+        const diff = ((Date.now() - playTimeStamp.current) * internalSpeed.current) / 1000;
+        const currentTime = diff < 0.5 ? t : t + diff;
         if (replayRef.current) {
-          replayRef.current.currentTime = ctime;
+          replayRef.current.currentTime = currentTime;
         }
-        return ctime;
+        syncSecondaryMediaToMaster(currentTime);
+        return currentTime;
       });
     }
 
-    // setup timer to emit events if both video and audio aren't present.
-    if (!audioRef.current && !videoRef.current) {
+    if (!audioRef.current && !screenVideoRef.current && !webcamVideoRef.current) {
       if (isPlaying) {
         let lastTickTime = Date.now();
         timer.current = setInterval(() => {
@@ -259,22 +281,22 @@ export function useReplay() {
             setIsPlaying(false);
           }
         }, 30);
-      } else {
-        timer.current && clearInterval(timer.current);
+      } else if (timer.current) {
+        clearInterval(timer.current);
       }
     }
-  }, [isPlaying, setIsPlaying]);
+  }, [isPlaying, setIsPlaying, syncSecondaryMediaToMaster]);
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const replaySyncListener = (newValue: any) => {
       const {
-        seekTime: __seekTime, isPlaying: __isPlaying, speed: __speed,
+        seekTime: remoteSeekTime, isPlaying: remoteIsPlaying, speed: remoteSpeed,
       } = newValue || {};
       setIsMasterPlayer(false);
-      setSpeed(__speed, true);
-      setSeekTime(__seekTime, true);
-      setIsPlaying(__isPlaying, true);
+      setSpeed(remoteSpeed, true);
+      setSeekTime(remoteSeekTime, true);
+      setIsPlaying(remoteIsPlaying, true);
     };
 
     syncEmitter.on('replaySync', replaySyncListener);
@@ -293,11 +315,12 @@ export function useReplay() {
     off: emitterRef.current.off.bind(emitterRef.current),
   }), []);
 
-  // Return a memoized object so context value is stable across renders
   const value = useMemo(
     () => ({
       replayRef,
-      videoRef,
+      videoRef: screenVideoRef,
+      screenVideoRef,
+      webcamVideoRef,
       audioRef,
       updateReplayRef,
       seekTime,
@@ -312,7 +335,20 @@ export function useReplay() {
       forceEmitTimeUpdate,
       hasEnded,
     }),
-    [replayEvent, seekTime, setSeekTime, duration, speed, isPlaying, setIsPlaying, updateReplayRef, setSpeed, forceEmitTimeUpdate, setDuration, hasEnded],
+    [
+      replayEvent,
+      seekTime,
+      setSeekTime,
+      duration,
+      speed,
+      isPlaying,
+      setIsPlaying,
+      updateReplayRef,
+      setSpeed,
+      forceEmitTimeUpdate,
+      setDuration,
+      hasEnded,
+    ],
   );
 
   return value;

@@ -288,6 +288,8 @@ export interface UIConfig {
   clickToRecord?: boolean;
   /** Whether or not we want to utilize screen recording feature. If true, will record audio on all components unless deactivated on individual components. This must be set to true if you want to record audio on any component in your study. Defaults to false. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before any component that you want to record the screen on to ensure permissions are granted and screen capture has started. */
   recordScreen?: boolean;
+  /** Whether or not we want to utilize webcam recording. If true, will record webcam video on all components unless deactivated on individual components. Defaults to false. Studies using webcam without screen capture should include the webcam permission component before any recorded component. Studies combining webcam with screen capture should use the screen recording permission component. */
+  recordWebcam?: boolean;
   /** Desired fps for recording screen. If possible, this value will be used, but if it's not possible, the user agent will use the closest possible match. */
   recordScreenFPS?: number;
   /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. */
@@ -1003,6 +1005,8 @@ export interface BaseIndividualComponent {
   clickToRecord?: boolean;
   /** Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started. */
   recordScreen?: boolean;
+  /** Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component. */
+  recordWebcam?: boolean;
   /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig. */
   enumerateQuestions?: boolean;
   /** Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig. */
