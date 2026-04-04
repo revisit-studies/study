@@ -5,6 +5,7 @@ import { StudyConfig } from '../../parser/types';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils';
+import { shouldPreferCachedParticipantData } from './utils/participantDataRecovery';
 import { RevisitNotification } from '../../utils/notifications';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
 import {
@@ -192,7 +193,11 @@ export abstract class StorageEngine {
 
   private pendingAssetUploads = new Map<string, Promise<void>>();
 
+  private pendingAssetOperations = new Set<Promise<unknown>>();
+
   private assetUploadError: Error | null = null;
+
+  private assetUploadActivityVersion = 0;
 
   constructor(engine: typeof this.engine, testing: boolean) {
     this.engine = engine;
@@ -352,6 +357,48 @@ export abstract class StorageEngine {
     return await this.__throttleVerifyStudyDatabase();
   }
 
+  private getParticipantDataSnapshotStorageKey(participantId: string) {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    return `${this.collectionPrefix}${this.studyId}/participants/${participantId}/localParticipantData`;
+  }
+
+  private async cacheParticipantDataSnapshot(snapshot: ParticipantData, participantId?: string) {
+    const targetParticipantId = participantId || this.currentParticipantId;
+    if (!this.studyId || !targetParticipantId) {
+      return;
+    }
+
+    try {
+      await this.participantStore.setItem(
+        this.getParticipantDataSnapshotStorageKey(targetParticipantId),
+        cloneParticipantDataSnapshot(snapshot),
+      );
+    } catch (error) {
+      console.warn('Failed to cache participant data locally:', error);
+    }
+  }
+
+  private async getCachedParticipantDataSnapshot(participantId?: string) {
+    const targetParticipantId = participantId || this.currentParticipantId;
+    if (!this.studyId || !targetParticipantId) {
+      return null;
+    }
+
+    try {
+      const cachedParticipantData = await this.participantStore.getItem<ParticipantData>(
+        this.getParticipantDataSnapshotStorageKey(targetParticipantId),
+      );
+
+      return isParticipantData(cachedParticipantData) ? cachedParticipantData : null;
+    } catch (error) {
+      console.warn('Failed to read cached participant data:', error);
+      return null;
+    }
+  }
+
   private clearPendingParticipantDataWriteTimer() {
     if (this.pendingParticipantDataWriteTimer) {
       clearTimeout(this.pendingParticipantDataWriteTimer);
@@ -438,14 +485,15 @@ export abstract class StorageEngine {
   protected async persistCurrentParticipantData(
     options: { immediate?: boolean; cache?: boolean } = {},
   ) {
-    await this.verifyStudyDatabase();
-
     if (!this.currentParticipantId || this.participantData === undefined) {
       throw new Error('Participant not initialized');
     }
 
     const snapshot = cloneParticipantDataSnapshot(this.participantData);
     const { immediate = false, cache = false } = options;
+
+    await this.cacheParticipantDataSnapshot(snapshot, this.currentParticipantId);
+    await this.verifyStudyDatabase();
 
     if (!immediate) {
       this.scheduleParticipantDataWrite(snapshot, cache);
@@ -486,10 +534,52 @@ export abstract class StorageEngine {
     return this.assetUploadError;
   }
 
+  private noteAssetUploadActivity() {
+    this.assetUploadActivityVersion += 1;
+  }
+
+  private async waitForAssetUploadIdleWindow() {
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0);
+    });
+  }
+
+  private trackAssetOperation<T>(operation: () => Promise<T>) {
+    this.noteAssetUploadActivity();
+
+    const operationPromise = operation()
+      .catch((error) => {
+        this.recordAssetUploadError(error);
+        throw this.getAssetUploadError();
+      })
+      .finally(() => {
+        this.pendingAssetOperations.delete(operationPromise);
+        this.noteAssetUploadActivity();
+      });
+
+    this.pendingAssetOperations.add(operationPromise);
+
+    return operationPromise;
+  }
+
   private async waitForPendingAssetUploads() {
-    const uploadPromises = Array.from(this.pendingAssetUploads.values());
+    const uploadPromises = [
+      ...this.pendingAssetUploads.values(),
+      ...this.pendingAssetOperations,
+    ];
     if (uploadPromises.length === 0) {
-      return this.getAssetUploadError();
+      const activityVersion = this.assetUploadActivityVersion;
+      await this.waitForAssetUploadIdleWindow();
+
+      if (
+        this.pendingAssetUploads.size === 0
+        && this.pendingAssetOperations.size === 0
+        && this.assetUploadActivityVersion === activityVersion
+      ) {
+        return this.getAssetUploadError();
+      }
+
+      return this.waitForPendingAssetUploads();
     }
 
     const results = await Promise.allSettled(uploadPromises);
@@ -499,7 +589,7 @@ export abstract class StorageEngine {
       this.recordAssetUploadError(rejectedUpload.reason);
     }
 
-    return this.getAssetUploadError();
+    return this.waitForPendingAssetUploads();
   }
 
   async getStageData(studyId: string): Promise<StageData> {
@@ -786,6 +876,7 @@ export abstract class StorageEngine {
       `participants/${this.currentParticipantId}`,
       'participantData',
     );
+    const cachedParticipant = await this.getCachedParticipantDataSnapshot(this.currentParticipantId);
 
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
@@ -796,9 +887,18 @@ export abstract class StorageEngine {
     const stageData = await this.getStageData(this.studyId);
     const currentStage = stageData.currentStage.stageName;
 
+    if (
+      cachedParticipant
+      && (!isParticipantData(participant) || shouldPreferCachedParticipantData(cachedParticipant, participant))
+    ) {
+      this.participantData = cachedParticipant;
+      return cachedParticipant;
+    }
+
     if (isParticipantData(participant)) {
       // Participant already initialized
       this.participantData = participant;
+      await this.cacheParticipantDataSnapshot(participant, this.currentParticipantId);
       return participant;
     }
     // Initialize participant
@@ -824,6 +924,8 @@ export abstract class StorageEngine {
 
     if (modes.dataCollectionEnabled) {
       await this.persistCurrentParticipantData({ immediate: true });
+    } else {
+      await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
     }
 
     return this.participantData;
@@ -876,7 +978,30 @@ export abstract class StorageEngine {
       'participantData',
     );
 
-    return isParticipantData(participantData) ? participantData : null;
+    if (isParticipantData(participantData)) {
+      const targetParticipantId = participantId || this.currentParticipantId;
+      const cachedParticipantData = targetParticipantId === this.currentParticipantId
+        ? await this.getCachedParticipantDataSnapshot(targetParticipantId)
+        : null;
+
+      if (
+        cachedParticipantData
+        && shouldPreferCachedParticipantData(cachedParticipantData, participantData)
+      ) {
+        return cachedParticipantData;
+      }
+
+      if (targetParticipantId === this.currentParticipantId) {
+        await this.cacheParticipantDataSnapshot(participantData, targetParticipantId);
+      }
+      return participantData;
+    }
+
+    if (!participantId || participantId === this.currentParticipantId) {
+      return await this.getCachedParticipantDataSnapshot(participantId);
+    }
+
+    return null;
   }
 
   getCurrentParticipantDataSnapshot() {
@@ -1101,6 +1226,7 @@ export abstract class StorageEngine {
       answers,
     };
 
+    await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
     this.scheduleParticipantDataWrite(this.participantData);
   }
 
@@ -1299,14 +1425,16 @@ export abstract class StorageEngine {
     blob: Blob,
     taskName: string,
   ) {
-    if (this.studyId === undefined) {
-      throw new Error('Study ID is not set');
-    }
-    const modes = await this.getModes(this.studyId);
-    if (!modes.dataCollectionEnabled) {
-      throw new Error('Data collection is disabled for this study');
-    }
-    return this.saveAsset('audio', blob, taskName);
+    return this.trackAssetOperation(async () => {
+      if (this.studyId === undefined) {
+        throw new Error('Study ID is not set');
+      }
+      const modes = await this.getModes(this.studyId);
+      if (!modes.dataCollectionEnabled) {
+        throw new Error('Data collection is disabled for this study');
+      }
+      return this.saveAsset('audio', blob, taskName);
+    });
   }
 
   // Gets the screen recording for a specific task and participantId.
@@ -1323,14 +1451,16 @@ export abstract class StorageEngine {
     blob: Blob,
     taskName: string,
   ) {
-    if (this.studyId === undefined) {
-      throw new Error('Study ID is not set');
-    }
-    const modes = await this.getModes(this.studyId);
-    if (!modes.dataCollectionEnabled) {
-      throw new Error('Data collection is disabled for this study');
-    }
-    return this.saveAsset('screenRecording', blob, taskName);
+    return this.trackAssetOperation(async () => {
+      if (this.studyId === undefined) {
+        throw new Error('Study ID is not set');
+      }
+      const modes = await this.getModes(this.studyId);
+      if (!modes.dataCollectionEnabled) {
+        throw new Error('Data collection is disabled for this study');
+      }
+      return this.saveAsset('screenRecording', blob, taskName);
+    });
   }
 
   // Gets the sequence array from the storage engine.
@@ -1358,7 +1488,9 @@ export abstract class StorageEngine {
     this.participantDataWriteChain = Promise.resolve();
     this.participantDataWriteError = null;
     this.pendingAssetUploads.clear();
+    this.pendingAssetOperations.clear();
     this.assetUploadError = null;
+    this.assetUploadActivityVersion = 0;
     this.participantData = undefined;
     if (this.studyId) {
       await this.clearCurrentParticipantId();
