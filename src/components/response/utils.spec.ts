@@ -1,14 +1,18 @@
 import {
-  afterEach, beforeEach, describe, expect, it,
+  afterEach, beforeEach, describe, expect, it, test,
 } from 'vitest';
-import type { CheckboxResponse, MatrixResponse, Response } from '../../parser/types';
+import type {
+  CheckboxResponse, DropdownResponse, MatrixResponse, NumericalResponse, Response,
+} from '../../parser/types';
 import {
   checkCheckboxResponseForValidation,
   generateErrorMessage,
   generateInitFields,
+  getDefaultFieldValue,
   mergeReactiveAnswers,
   normalizeCheckboxDontKnowValue,
   shouldBypassValidationForStandaloneDontKnow,
+  usesStandaloneDontKnowField,
 } from './utils';
 
 describe('generateInitFields', () => {
@@ -277,5 +281,313 @@ describe('generateErrorMessage matrix', () => {
     });
 
     expect(error).toBeNull();
+  });
+});
+
+// ── checkCheckboxResponseForValidation additional branches ───────────────────
+
+describe('checkCheckboxResponseForValidation — both min and max violated', () => {
+  test('returns range error when minSelections > maxSelections and count falls between', () => {
+    // min=5 > max=2 is an edge case; value.length=3 satisfies: 3 < 5 AND 3 > 2
+    const response: CheckboxResponse = {
+      id: 'q1', prompt: '', type: 'checkbox', options: [], minSelections: 5, maxSelections: 2,
+    };
+    const result = checkCheckboxResponseForValidation(response, ['A', 'B', 'C']);
+    expect(result).toContain('between 5 and 2');
+  });
+
+  test('returns maxSelections error only when only max is violated', () => {
+    const response: CheckboxResponse = {
+      id: 'q1', prompt: '', type: 'checkbox', options: [], maxSelections: 1,
+    };
+    const result = checkCheckboxResponseForValidation(response, ['A', 'B']);
+    expect(result).toContain('at most 1');
+  });
+
+  test('returns null when selection is within range', () => {
+    const response: CheckboxResponse = {
+      id: 'q1', prompt: '', type: 'checkbox', options: [], minSelections: 1, maxSelections: 3,
+    };
+    expect(checkCheckboxResponseForValidation(response, ['A', 'B'])).toBeNull();
+  });
+});
+
+// ── generateErrorMessage — dropdown and numerical branches ───────────────────
+
+describe('generateErrorMessage dropdown', () => {
+  test('returns maxSelections error for dropdown with too many selections', () => {
+    const response: DropdownResponse = {
+      id: 'q1', prompt: '', type: 'dropdown', options: [], required: true, maxSelections: 1,
+    };
+    const result = generateErrorMessage(response, { value: ['A', 'B'] });
+    expect(result).toContain('at most 1');
+  });
+
+  test('returns minSelections error for dropdown with too few selections', () => {
+    const response: DropdownResponse = {
+      id: 'q1', prompt: '', type: 'dropdown', options: [], required: true, minSelections: 3,
+    };
+    const result = generateErrorMessage(response, { value: ['A'] });
+    expect(result).toContain('at least 3');
+  });
+
+  test('returns null for valid dropdown selection', () => {
+    const response: DropdownResponse = {
+      id: 'q1', prompt: '', type: 'dropdown', options: [], required: true, minSelections: 1, maxSelections: 3,
+    };
+    expect(generateErrorMessage(response, { value: ['A', 'B'] })).toBeNull();
+  });
+});
+
+describe('generateErrorMessage numerical', () => {
+  test('returns between error when value is outside min and max', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: '', type: 'numerical', required: true, min: 1, max: 10,
+    };
+    expect(generateErrorMessage(response, { value: 50 })).toContain('between 1 and 10');
+  });
+
+  test('returns min error when value is below min only', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: '', type: 'numerical', required: true, min: 5,
+    };
+    expect(generateErrorMessage(response, { value: 2 })).toContain('5 or greater');
+  });
+
+  test('returns max error when value is above max only', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: '', type: 'numerical', required: true, max: 10,
+    };
+    expect(generateErrorMessage(response, { value: 20 })).toContain('10 or less');
+  });
+
+  test('returns null when numerical value is in range', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: '', type: 'numerical', required: true, min: 1, max: 10,
+    };
+    expect(generateErrorMessage(response, { value: 5 })).toBeNull();
+  });
+});
+
+describe('generateErrorMessage else branch — requiredValue mismatch', () => {
+  test('returns error when shortText value does not match requiredValue', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'shortText', required: true, requiredValue: 'correct',
+    };
+    expect(generateErrorMessage(response, { value: 'wrong' })).toContain('correct');
+  });
+
+  test('returns null when shortText value matches requiredValue', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'shortText', required: true, requiredValue: 'correct',
+    };
+    expect(generateErrorMessage(response, { value: 'correct' })).toBeNull();
+  });
+
+  test('returns null when no value and no requiredValue', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'shortText', required: false,
+    };
+    expect(generateErrorMessage(response, { value: 'anything' })).toBeNull();
+  });
+});
+
+// ── usesStandaloneDontKnowField ───────────────────────────────────────────────
+
+describe('usesStandaloneDontKnowField', () => {
+  test('returns true for non-matrix response with withDontKnow', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'shortText', withDontKnow: true,
+    };
+    expect(usesStandaloneDontKnowField(response)).toBe(true);
+  });
+
+  test('returns false for matrix-radio with withDontKnow', () => {
+    const response: MatrixResponse = {
+      id: 'q1', prompt: '', type: 'matrix-radio', answerOptions: [], questionOptions: [], withDontKnow: true,
+    };
+    expect(usesStandaloneDontKnowField(response)).toBe(false);
+  });
+
+  test('returns false for matrix-checkbox with withDontKnow', () => {
+    const response: MatrixResponse = {
+      id: 'q1', prompt: '', type: 'matrix-checkbox', answerOptions: [], questionOptions: [], withDontKnow: true,
+    };
+    expect(usesStandaloneDontKnowField(response)).toBe(false);
+  });
+
+  test('returns false when withDontKnow is not set', () => {
+    const response: Response = { id: 'q1', prompt: '', type: 'shortText' };
+    expect(usesStandaloneDontKnowField(response)).toBe(false);
+  });
+});
+
+// ── getDefaultFieldValue ──────────────────────────────────────────────────────
+
+describe('getDefaultFieldValue', () => {
+  test('returns null when no default property exists', () => {
+    const response: Response = { id: 'q1', prompt: '', type: 'shortText' };
+    expect(getDefaultFieldValue(response)).toBeNull();
+  });
+
+  test('returns null when default is undefined', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'shortText', default: undefined,
+    };
+    expect(getDefaultFieldValue(response)).toBeNull();
+  });
+
+  test('returns string for likert default', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'likert', numItems: 5, default: 3,
+    };
+    expect(getDefaultFieldValue(response)).toBe('3');
+  });
+
+  test('returns array for checkbox default array', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'checkbox', options: [], default: ['A', 'B'],
+    };
+    expect(getDefaultFieldValue(response)).toEqual(['A', 'B']);
+  });
+
+  test('returns matrix-radio default as-is', () => {
+    const response: MatrixResponse = {
+      id: 'q1',
+      prompt: '',
+      type: 'matrix-radio',
+      answerOptions: [],
+      questionOptions: [],
+      default: { Q1: 'Yes' },
+    };
+    expect(getDefaultFieldValue(response as Response)).toEqual({ Q1: 'Yes' });
+  });
+
+  test('converts matrix-checkbox default array values to pipe-joined strings', () => {
+    const response: MatrixResponse = {
+      id: 'q1',
+      prompt: '',
+      type: 'matrix-checkbox',
+      answerOptions: [],
+      questionOptions: [],
+      default: { Q1: ['A', 'B'], Q2: ['C'] },
+    };
+    const result = getDefaultFieldValue(response as Response) as Record<string, string>;
+    expect(result.Q1).toBe('A|B');
+    expect(result.Q2).toBe('C');
+  });
+
+  test('returns single value for single-select dropdown', () => {
+    const response: DropdownResponse = {
+      id: 'q1', prompt: '', type: 'dropdown', options: [], default: 'Red',
+    };
+    expect(getDefaultFieldValue(response as Response)).toBe('Red');
+  });
+
+  test('returns first element for array dropdown default when single-select', () => {
+    const response: DropdownResponse = {
+      id: 'q1', prompt: '', type: 'dropdown', options: [], default: ['Red', 'Blue'],
+    };
+    expect(getDefaultFieldValue(response as Response)).toBe('Red');
+  });
+
+  test('returns array for multiselect dropdown with single string default', () => {
+    const response: DropdownResponse = {
+      id: 'q1', prompt: '', type: 'dropdown', options: [], maxSelections: 2, default: 'Red',
+    };
+    expect(getDefaultFieldValue(response as Response)).toEqual(['Red']);
+  });
+
+  test('returns raw default for other response types', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'shortText', default: 'hello',
+    };
+    expect(getDefaultFieldValue(response)).toBe('hello');
+  });
+});
+
+// ── generateInitFields additional branches ────────────────────────────────────
+
+describe('generateInitFields additional branches', () => {
+  beforeEach(() => {
+    Object.defineProperty(globalThis, 'window', {
+      value: { location: { search: '?color=blue' } },
+      configurable: true,
+    });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(globalThis, 'window', {
+      value: { location: { search: '' } },
+      configurable: true,
+    });
+  });
+
+  test('initializes reactive response to empty array', () => {
+    const response: Response = { id: 'q1', prompt: '', type: 'reactive' };
+    expect(generateInitFields([response], {})).toMatchObject({ q1: [] });
+  });
+
+  test('initializes ranking-categorical to empty array', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'ranking-categorical', options: [],
+    };
+    expect(generateInitFields([response], {})).toMatchObject({ q1: [] });
+  });
+
+  test('initializes ranking-pairwise to empty array', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'ranking-pairwise', options: [],
+    };
+    expect(generateInitFields([response], {})).toMatchObject({ q1: [] });
+  });
+
+  test('initializes slider with startingValue', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'slider', options: [], startingValue: 75,
+    };
+    expect(generateInitFields([response], {})).toMatchObject({ q1: '75' });
+  });
+
+  test('reads paramCapture value from window.location.search', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'shortText', paramCapture: 'color',
+    };
+    const result = generateInitFields([response], {});
+    expect(result).toMatchObject({ q1: 'blue' });
+  });
+
+  test('adds dontKnow field defaulting to false when not in stored answer', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'shortText', withDontKnow: true,
+    };
+    expect(generateInitFields([response], {})).toMatchObject({ 'q1-dontKnow': false });
+  });
+
+  test('uses dontKnow value from stored answer when available', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'shortText', withDontKnow: true,
+    };
+    expect(generateInitFields([response], { q1: 'val', 'q1-dontKnow': true })).toMatchObject({ 'q1-dontKnow': true });
+  });
+
+  test('adds other field when withOther is set', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'radio', options: [], withOther: true,
+    };
+    expect(generateInitFields([response], {})).toMatchObject({ 'q1-other': '' });
+  });
+
+  test('uses stored other value when available', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'radio', options: [], withOther: true,
+    };
+    const result = generateInitFields([response], { q1: 'A', 'q1-other': 'custom' });
+    expect(result).toMatchObject({ 'q1-other': 'custom' });
+  });
+
+  test('uses stored answer value when present', () => {
+    const response: Response = { id: 'q1', prompt: '', type: 'shortText' };
+    expect(generateInitFields([response], { q1: 'saved text' })).toMatchObject({ q1: 'saved text' });
   });
 });
