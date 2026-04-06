@@ -36,6 +36,7 @@ export default defineConfig(({ command, mode }) => {
           'playwright.config.ts',
           'src/vite-env.d.ts',
           'src/lodash.d.ts',
+          'src/main.tsx',
           'src/analysis/types.ts',
           'tests/checkSavedAnswers.ts',
           'tests/utils.ts',

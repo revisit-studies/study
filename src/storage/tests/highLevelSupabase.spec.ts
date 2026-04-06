@@ -834,4 +834,77 @@ describe.each([
     expect(restoreResponse.notifications![1].message).toBe('Successfully restored snapshot to live data.');
     expect(restoreResponse.notifications![1].color).toBe('green');
   });
+
+  // User management tests (covers lines 657-809)
+  test('getUserManagementData returns undefined when no data exists', async () => {
+    // @ts-expect-error accessing CloudStorageEngine method via StorageEngine
+    const authData = await storageEngine.getUserManagementData('authentication');
+    expect(authData).toBeUndefined();
+    // @ts-expect-error accessing CloudStorageEngine method via StorageEngine
+    const adminData = await storageEngine.getUserManagementData('adminUsers');
+    expect(adminData).toBeUndefined();
+  });
+
+  test('changeAuth enables and disables authentication', async () => {
+    // @ts-expect-error accessing CloudStorageEngine method
+    await storageEngine.changeAuth(true);
+    // @ts-expect-error accessing CloudStorageEngine method
+    const authData = await storageEngine.getUserManagementData('authentication');
+    expect(authData).toBeDefined();
+    expect(authData?.isEnabled).toBe(true);
+  });
+
+  test('addAdminUser adds user to admin list', async () => {
+    // @ts-expect-error accessing CloudStorageEngine method
+    await storageEngine.addAdminUser({ email: 'admin@test.com', uid: 'uid-1' });
+    // @ts-expect-error accessing CloudStorageEngine method
+    const adminData = await storageEngine.getUserManagementData('adminUsers');
+    expect(adminData).toBeDefined();
+    expect(adminData?.adminUsersList.length).toBeGreaterThan(0);
+    expect(adminData?.adminUsersList[0].email).toBe('admin@test.com');
+  });
+
+  test('removeAdminUser removes user from admin list', async () => {
+    // @ts-expect-error accessing CloudStorageEngine method
+    await storageEngine.addAdminUser({ email: 'admin@test.com', uid: 'uid-1' });
+    // @ts-expect-error accessing CloudStorageEngine method
+    await storageEngine.removeAdminUser('admin@test.com');
+    // @ts-expect-error accessing CloudStorageEngine method
+    const adminData = await storageEngine.getUserManagementData('adminUsers');
+    expect(adminData?.adminUsersList.length).toBe(0);
+  });
+
+  test('removeAdminUser handles missing adminUsers gracefully (no-op)', async () => {
+    // Should not throw when adminUsers doesn't exist
+    // @ts-expect-error accessing CloudStorageEngine method
+    await storageEngine.removeAdminUser('nonexistent@test.com');
+  });
+
+  test('login returns user from session', async () => {
+    // @ts-expect-error accessing CloudStorageEngine method
+    const user = await storageEngine.login();
+    // The mock signInWithOAuth returns { error: null } and getSession has a user
+    expect(user).toBeDefined();
+  });
+
+  test('logout signs out without error', async () => {
+    // @ts-expect-error accessing CloudStorageEngine method
+    await expect(storageEngine.logout()).resolves.not.toThrow();
+  });
+
+  test('getSession returns current session', async () => {
+    // @ts-expect-error accessing CloudStorageEngine method
+    const session = await storageEngine.getSession();
+    expect(session).toBeDefined();
+  });
+
+  test('unsubscribe registers listener and returns cleanup function', async () => {
+    const callback = vi.fn().mockResolvedValue(undefined);
+    // @ts-expect-error accessing CloudStorageEngine method
+    const cleanup = storageEngine.unsubscribe(callback);
+    expect(typeof cleanup).toBe('function');
+    // callback should have been called since mock fires immediately on SIGNED_IN
+    expect(callback).toHaveBeenCalled();
+    cleanup();
+  });
 });

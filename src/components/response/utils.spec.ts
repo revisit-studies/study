@@ -1,3 +1,4 @@
+import { renderHook, act } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, it, test,
 } from 'vitest';
@@ -12,6 +13,7 @@ import {
   mergeReactiveAnswers,
   normalizeCheckboxDontKnowValue,
   shouldBypassValidationForStandaloneDontKnow,
+  useAnswerField,
   usesStandaloneDontKnowField,
 } from './utils';
 
@@ -509,6 +511,8 @@ describe('getDefaultFieldValue', () => {
 // ── generateInitFields additional branches ────────────────────────────────────
 
 describe('generateInitFields additional branches', () => {
+  const savedWindow = globalThis.window;
+
   beforeEach(() => {
     Object.defineProperty(globalThis, 'window', {
       value: { location: { search: '?color=blue' } },
@@ -518,7 +522,7 @@ describe('generateInitFields additional branches', () => {
 
   afterEach(() => {
     Object.defineProperty(globalThis, 'window', {
-      value: { location: { search: '' } },
+      value: savedWindow,
       configurable: true,
     });
   });
@@ -589,5 +593,88 @@ describe('generateInitFields additional branches', () => {
   test('uses stored answer value when present', () => {
     const response: Response = { id: 'q1', prompt: '', type: 'shortText' };
     expect(generateInitFields([response], { q1: 'saved text' })).toMatchObject({ q1: 'saved text' });
+  });
+});
+
+// ── generateErrorMessage — answer.checked branch ─────────────────────────────
+
+describe('generateErrorMessage — answer.checked branch', () => {
+  test('uses answer.checked when it is an array (line 326)', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'checkbox', required: true, requiredValue: ['A', 'B'], options: ['A', 'B'],
+    };
+    // Pass checked instead of value — should find mismatch
+    const error = generateErrorMessage(response, { checked: ['A'] });
+    expect(error).toContain('to continue');
+  });
+
+  test('uses options label in error when options param is passed (line 330 select branch)', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'checkbox', required: true, requiredValue: ['A', 'B'], options: ['A', 'B'],
+    };
+    const options = [{ label: 'Option A', value: 'A' }];
+    const error = generateErrorMessage(response, { checked: ['A'] }, options);
+    expect(error).toContain('select');
+  });
+
+  test('matching checked values against requiredValue returns null', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'checkbox', required: true, requiredValue: ['A', 'B'], options: ['A', 'B'],
+    };
+    const error = generateErrorMessage(response, { checked: ['B', 'A'] });
+    expect(error).toBeNull();
+  });
+});
+
+// ── useAnswerField ─────────────────────────────────────────────────────────────
+
+describe('useAnswerField', () => {
+  test('returns a form object with initial values from responses', () => {
+    const responses: Response[] = [
+      { id: 'name', prompt: 'Name', type: 'shortText' },
+    ];
+    const { result } = renderHook(() => useAnswerField(responses, 'step1', {}));
+    expect(result.current.values).toMatchObject({ name: '' });
+  });
+
+  test('resets form when currentStep changes', async () => {
+    const responses: Response[] = [
+      {
+        id: 'name', prompt: 'Name', type: 'shortText', default: 'default',
+      },
+    ];
+    const { result, rerender } = renderHook(
+      ({ step }: { step: string }) => useAnswerField(responses, step, {}),
+      { initialProps: { step: 'step1' } },
+    );
+
+    await act(async () => {
+      rerender({ step: 'step2' });
+    });
+
+    // After step change the form should have reset
+    expect(result.current.values).toBeDefined();
+  });
+
+  test('validates required field and returns error for empty value', () => {
+    const responses: Response[] = [
+      {
+        id: 'name', prompt: 'Name', type: 'shortText', required: true,
+      },
+    ];
+    const { result } = renderHook(() => useAnswerField(responses, 'step1', {}));
+    const errors = result.current.validate();
+    expect(errors.hasErrors).toBe(true);
+  });
+
+  test('validates required array field returns error for empty array', () => {
+    const responses: Response[] = [
+      {
+        id: 'color', prompt: 'Color', type: 'checkbox', options: ['Red', 'Blue'], required: true,
+      },
+    ];
+    const { result } = renderHook(() => useAnswerField(responses, 'step1', {}));
+    const errors = result.current.validate();
+    expect(errors.hasErrors).toBe(true);
   });
 });

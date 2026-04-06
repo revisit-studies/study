@@ -1,8 +1,13 @@
 import { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  describe, expect, test, vi,
+  render, act, cleanup,
+} from '@testing-library/react';
+import {
+  afterEach, describe, expect, test, vi,
 } from 'vitest';
+import { useMove } from '@mantine/hooks';
+import { generateSliderBreakValues } from './sliderBreaks';
 import { HorizontalHandler } from './HorizontalHandler';
 import { OptionLabel } from './OptionLabel';
 import { InputLabel } from './InputLabel';
@@ -161,7 +166,7 @@ vi.mock('../ReactMarkdownWrapper', () => ({
 }));
 
 vi.mock('@mantine/hooks', () => ({
-  useMove: () => ({ ref: { current: null } }),
+  useMove: vi.fn(() => ({ ref: { current: null } })),
 }));
 
 vi.mock('./sliderBreaks', () => ({
@@ -732,6 +737,45 @@ describe('SliderInput', () => {
     expect(html).toContain('High');
     // no standard Slider mock rendered
     expect(html).not.toContain('data-slider');
+  });
+
+  test('renders smeq mark elements when generateSliderBreakValues returns non-empty', () => {
+    // Cover lines 123-139: labelValues.map inside smeq block
+    vi.mocked(generateSliderBreakValues).mockReturnValueOnce([25, 50, 75]);
+    const html = renderToStaticMarkup(
+      <SliderInput
+        response={{ ...base, smeqStyle: true } as Parameters<typeof SliderInput>[0]['response']}
+        disabled={false}
+        answer={{}}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+    expect(html).toContain('Low');
+  });
+
+  test('covers useMove callback body when it is invoked during render', async () => {
+    afterEach(() => { cleanup(); });
+    // Override useMove to call the callback synchronously after component mounts
+    let capturedCallback: ((pos: { x: number; y: number }) => void) | null = null;
+    vi.mocked(useMove).mockImplementationOnce((fn: (pos: { x: number; y: number }) => void) => {
+      capturedCallback = fn;
+      return { ref: { current: null }, active: false };
+    });
+    const mockOnChange = vi.fn();
+    await act(async () => render(
+      <SliderInput
+        response={{ ...base, smeqStyle: true, step: 1 } as Parameters<typeof SliderInput>[0]['response']}
+        disabled={false}
+        answer={{ onChange: mockOnChange } as Parameters<typeof SliderInput>[0]['answer']}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    ));
+    // Call the captured callback to cover lines 52-58
+    act(() => { capturedCallback?.({ x: 0, y: 0.5 }); });
+    expect(mockOnChange).toHaveBeenCalled();
+    cleanup();
   });
 });
 

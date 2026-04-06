@@ -300,3 +300,79 @@ describe('Generating sequences works as expected', () => {
     expect(() => generateSequenceArray(invalidInterruptionConfig)).toThrow('Number of interruptions cannot be greater than the number of available interruption slots');
   });
 });
+
+describe('generateSequenceArray ComponentBlock and DynamicBlock coverage', () => {
+  const baseComponents = { a: { type: 'questionnaire' as const, response: [] } };
+  const baseMeta = {
+    $schema: '',
+    studyMetadata: {
+      title: '', version: '', authors: [], date: '', description: '', organizations: [],
+    },
+  };
+  const baseUiConfig = {
+    logoPath: '', contactEmail: '', withProgressBar: false, withSidebar: false, numSequences: 1,
+  };
+
+  test('covers line 52: duplicate ComponentBlock pushes second index into existing entry', () => {
+    const nestedBlock = {
+      id: 'nested', order: 'fixed' as const, components: ['a'], skip: [],
+    };
+    const dupConfig = {
+      ...baseMeta,
+      uiConfig: baseUiConfig,
+      components: baseComponents,
+      sequence: {
+        id: 'root',
+        order: 'fixed' as const,
+        components: [nestedBlock, nestedBlock], // same value → isEqual → line 52
+        skip: [],
+      },
+    } as unknown as StudyConfig;
+    const seqs = generateSequenceArray(dupConfig);
+    expect(seqs).toHaveLength(1);
+  });
+
+  test('covers lines 140-149: DynamicBlock component in sequence becomes Sequence node', () => {
+    const dynamicBlock = {
+      id: 'dyn', order: 'dynamic' as const, functionPath: '/func',
+    };
+    const dynConfig = {
+      ...baseMeta,
+      uiConfig: baseUiConfig,
+      components: baseComponents,
+      sequence: {
+        id: 'root',
+        order: 'fixed' as const,
+        components: ['a', dynamicBlock],
+        skip: [],
+      },
+    } as unknown as StudyConfig;
+    const seqs = generateSequenceArray(dynConfig);
+    expect(seqs).toHaveLength(1);
+    // DynamicBlock becomes a Sequence-like node with order: 'dynamic'
+    const dynComp = seqs[0].components.find(
+      (c) => typeof c !== 'string' && (c as { order: string }).order === 'dynamic',
+    );
+    expect(dynComp).toBeDefined();
+  });
+
+  test('covers lines 171-172: latinSquare with ComponentBlock component maps _componentBlock prefix', () => {
+    const innerBlock = {
+      id: 'inner', order: 'fixed' as const, components: ['a'], skip: [],
+    };
+    const latinConfig = {
+      ...baseMeta,
+      uiConfig: baseUiConfig,
+      components: baseComponents,
+      sequence: {
+        id: 'root',
+        order: 'latinSquare' as const,
+        // ComponentBlock at index 0 → mapped to '_componentBlock0' in latin square options
+        components: [innerBlock, 'a'],
+        skip: [],
+      },
+    } as unknown as StudyConfig;
+    const seqs = generateSequenceArray(latinConfig);
+    expect(seqs).toHaveLength(1);
+  });
+});

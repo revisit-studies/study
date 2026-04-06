@@ -137,11 +137,18 @@ const participantMetadata: ParticipantMetadata = {
   ip: '122.122.122.122',
 };
 
+// ── emulator availability check (top-level await, runs before test collection) ─
+const emulatorAvailable = await fetch('http://localhost:9099/', { signal: AbortSignal.timeout(500) })
+  .then(() => true)
+  .catch(() => false);
+
 // ── test state ────────────────────────────────────────────────────────────────
 let testEnv: RulesTestEnvironment;
 
 // ── lifecycle ─────────────────────────────────────────────────────────────────
 beforeAll(async () => {
+  if (!emulatorAvailable) return;
+
   vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: PROJECT_ID }));
   vi.stubEnv('VITE_RECAPTCHAV3TOKEN', 'fake-recaptcha-token');
 
@@ -182,7 +189,7 @@ afterAll(async () => {
   vi.restoreAllMocks();
 });
 
-describe.each([
+describe.runIf(emulatorAvailable).each([
   { TestEngine: FirebaseStorageEngine },
 ])('describe object $TestEngine', ({ TestEngine }) => {
   let storageEngine: StorageEngine;

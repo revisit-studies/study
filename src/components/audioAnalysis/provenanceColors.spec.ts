@@ -4,9 +4,13 @@ import {
   FORM_UPDATE_COLOR,
   ROOT_COLOR,
   ROOT_KEY,
+  UNKNOWN_COLOR,
+  UNKNOWN_KEY,
   buildProvenanceLegendEntries,
   getColorForKey,
+  getNodeColor,
   getNodeColorKey,
+  getNodeDisplayLabel,
   normalizeActionName,
 } from './provenanceColors';
 
@@ -101,6 +105,116 @@ describe('provenanceColors', () => {
 
   test('different keys generally map to different colors', () => {
     expect(getColorForKey('action 2')).not.toBe(getColorForKey('action 3'));
+  });
+
+  test('getNodeColorKey returns UNKNOWN_KEY when no event, no label, no actionType', () => {
+    const node = {
+      id: 'n1',
+      label: '',
+      createdOn: 1,
+      artifacts: [],
+      meta: { annotation: [], bookmark: [] },
+      children: [],
+      state: { type: 'checkpoint', val: {} },
+      level: 1,
+      event: '',
+      parent: 'root',
+      sideEffects: { do: [], undo: [] },
+    } as TrrackedProvenance['nodes'][string];
+    expect(getNodeColorKey(node)).toBe(UNKNOWN_KEY);
+  });
+
+  test('getColorForKey returns UNKNOWN_COLOR for empty key', () => {
+    expect(getColorForKey('')).toBe(UNKNOWN_COLOR);
+    expect(getColorForKey(UNKNOWN_KEY)).toBe(UNKNOWN_COLOR);
+  });
+
+  test('getNodeColor delegates to getColorForKey(getNodeColorKey(node))', () => {
+    const rootNode = {
+      id: 'root',
+      label: 'Root',
+      createdOn: 0,
+      artifacts: [],
+      meta: { annotation: [], bookmark: [] },
+      children: [],
+      state: { type: 'checkpoint', val: {} },
+      level: 0,
+      event: 'Root',
+    } as TrrackedProvenance['nodes'][string];
+    expect(getNodeColor(rootNode)).toBe(ROOT_COLOR);
+  });
+
+  test('getNodeDisplayLabel returns label when present', () => {
+    const node = {
+      id: 'n1',
+      label: 'My Label',
+      createdOn: 1,
+      artifacts: [],
+      meta: { annotation: [], bookmark: [] },
+      children: [],
+      state: { type: 'checkpoint', val: {} },
+      level: 1,
+      event: '',
+      parent: 'root',
+      sideEffects: { do: [], undo: [] },
+    } as TrrackedProvenance['nodes'][string];
+    expect(getNodeDisplayLabel(node)).toBe('My Label');
+  });
+
+  test('getNodeDisplayLabel returns action type when no label', () => {
+    const node = {
+      id: 'n1',
+      label: '',
+      createdOn: 1,
+      artifacts: [],
+      meta: { annotation: [], bookmark: [] },
+      children: [],
+      state: { type: 'checkpoint', val: {} },
+      level: 1,
+      event: '',
+      parent: 'root',
+      sideEffects: { do: [{ type: 'Signal/SetZoom' }], undo: [] },
+    } as TrrackedProvenance['nodes'][string];
+    expect(getNodeDisplayLabel(node)).toBe('Signal/SetZoom');
+  });
+
+  test('getNodeDisplayLabel returns event name when no label or action type', () => {
+    const node = {
+      id: 'n1',
+      label: '',
+      createdOn: 1,
+      artifacts: [],
+      meta: { annotation: [], bookmark: [] },
+      children: [],
+      state: { type: 'checkpoint', val: {} },
+      level: 1,
+      event: 'BrushSelect',
+      parent: 'root',
+      sideEffects: { do: [], undo: [] },
+    } as TrrackedProvenance['nodes'][string];
+    expect(getNodeDisplayLabel(node)).toBe('BrushSelect');
+  });
+
+  test('getNodeDisplayLabel returns UNKNOWN_KEY when nothing available', () => {
+    const node = {
+      id: 'n1',
+      label: '',
+      createdOn: 1,
+      artifacts: [],
+      meta: { annotation: [], bookmark: [] },
+      children: [],
+      state: { type: 'checkpoint', val: {} },
+      level: 1,
+      event: '',
+      parent: 'root',
+      sideEffects: { do: [], undo: [] },
+    } as TrrackedProvenance['nodes'][string];
+    expect(getNodeDisplayLabel(node)).toBe(UNKNOWN_KEY);
+  });
+
+  test('buildProvenanceLegendEntries handles null/undefined graph gracefully', () => {
+    const entries = buildProvenanceLegendEntries([undefined, null] as never);
+    expect(entries.size).toBe(0);
   });
 
   test('buildProvenanceLegendEntries de-dupes by canonical key across locations', () => {

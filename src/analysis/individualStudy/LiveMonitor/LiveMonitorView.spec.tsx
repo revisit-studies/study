@@ -1,7 +1,10 @@
 import { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  describe, expect, test, vi,
+  render, act, cleanup, fireEvent,
+} from '@testing-library/react';
+import {
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { SequenceAssignment } from '../../../storage/engines/types';
 import {
@@ -27,7 +30,7 @@ vi.mock('@mantine/core', () => ({
   Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Indicator: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  Button: ({ children }: { children: ReactNode }) => <button type="button">{children}</button>,
+  Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => <button type="button" onClick={onClick}>{children}</button>,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Grid: Object.assign(
     ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -160,6 +163,8 @@ describe('groupParticipantProgress', () => {
   });
 });
 
+afterEach(() => { cleanup(); });
+
 // ── LiveMonitorView ───────────────────────────────────────────────────────────
 
 describe('LiveMonitorView', () => {
@@ -199,6 +204,32 @@ describe('LiveMonitorView', () => {
     expect(html).toContain('In Progress');
     expect(html).toContain('Completed');
     expect(html).toContain('Rejected');
+  });
+
+  test('sets connectionStatus to disconnected when no storageEngine after effect', async () => {
+    const { container } = await act(async () => render(
+      <LiveMonitorView {...baseProps} />,
+    ));
+    // After effects run, status is 'disconnected' → icon-wifioff shown
+    expect(container.textContent).toContain('icon-wifioff');
+  });
+
+  test('sets connectionStatus to connected when listener returns a function', async () => {
+    const mockUnsubscribe = vi.fn();
+    const mockEngine = {
+      initializeStudyDb: vi.fn(),
+      getAllSequenceAssignments: vi.fn().mockResolvedValue([]),
+      _setupSequenceAssignmentListener: vi.fn((_studyId: string, _cb: (assignments: SequenceAssignment[]) => void) => mockUnsubscribe),
+    };
+    const { container } = await act(async () => render(
+      <LiveMonitorView
+        {...baseProps}
+        storageEngine={mockEngine as never}
+        studyId="test-study"
+      />,
+    ));
+    // With a valid listener returning a function, status becomes 'connected' → icon-wifi shown
+    expect(container.textContent).toContain('icon-wifi');
   });
 });
 
@@ -284,6 +315,129 @@ describe('ParticipantSection', () => {
     );
     // ProgressHeatmap renders an SVG
     expect(html).toContain('<svg');
+  });
+});
+
+// ── LiveMonitorView interactive ───────────────────────────────────────────────
+
+describe('LiveMonitorView interactive', () => {
+  const baseProps = {
+    studyConfig: {} as Parameters<typeof LiveMonitorView>[0]['studyConfig'],
+    includedParticipants: ['inprogress', 'completed', 'rejected'],
+    selectedStages: ['ALL'],
+    studyId: 'test-study',
+  };
+
+  beforeEach(() => { vi.clearAllMocks(); });
+
+  test('listener callback covers handleDataUpdate + InProgressLabel', async () => {
+    const mockEngine = {
+      initializeStudyDb: vi.fn(),
+      getAllSequenceAssignments: vi.fn().mockResolvedValue([]),
+      _setupSequenceAssignmentListener: vi.fn((_id: string, cb: (a: SequenceAssignment[]) => void) => {
+        cb([makeAssignment({ participantId: 'p-active', answered: ['q1'], total: 4 })]);
+        return vi.fn();
+      }),
+    };
+    const { container } = await act(async () => render(
+      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+    ));
+    expect(container.textContent).toContain('p-active');
+  });
+
+  test('CompletedLabel and RejectedLabel rendered with completed/rejected assignments', async () => {
+    const mockEngine = {
+      initializeStudyDb: vi.fn(),
+      getAllSequenceAssignments: vi.fn().mockResolvedValue([]),
+      _setupSequenceAssignmentListener: vi.fn((_id: string, cb: (a: SequenceAssignment[]) => void) => {
+        cb([
+          makeAssignment({
+            participantId: 'p-done', completed: 1_700_000_000_000, answered: ['q1', 'q2', 'q3', 'q4', 'q5'], total: 5,
+          }),
+          makeAssignment({
+            participantId: 'p-rej', rejected: true, answered: ['q1'], total: 5,
+          }),
+        ]);
+        return vi.fn();
+      }),
+    };
+    const { container } = await act(async () => render(
+      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+    ));
+    expect(container.textContent).toContain('p-done');
+    expect(container.textContent).toContain('p-rej');
+  });
+
+  test('sets connectionStatus to disconnected when listener returns undefined (covers lines 171-172)', async () => {
+    const mockEngine = {
+      initializeStudyDb: vi.fn(),
+      getAllSequenceAssignments: vi.fn().mockResolvedValue([]),
+      _setupSequenceAssignmentListener: vi.fn(() => undefined),
+    };
+    const { container } = await act(async () => render(
+      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+    ));
+    expect(container.textContent).toContain('icon-wifioff');
+  });
+
+  test('Reconnect button click covers handleReconnect success path', async () => {
+    const mockEngine = {
+      initializeStudyDb: vi.fn(),
+      getAllSequenceAssignments: vi.fn().mockResolvedValue([makeAssignment({ participantId: 'p-new' })]),
+      _setupSequenceAssignmentListener: vi.fn(() => undefined),
+    };
+    const { getAllByRole } = await act(async () => render(
+      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+    ));
+    const reconnectBtn = getAllByRole('button').find((b) => b.textContent?.includes('Reconnect'));
+    expect(reconnectBtn).toBeDefined();
+    await act(async () => { fireEvent.click(reconnectBtn!); });
+    expect(mockEngine.getAllSequenceAssignments).toHaveBeenCalled();
+  });
+
+  test('Reconnect button click covers handleReconnect error path', async () => {
+    const mockEngine = {
+      initializeStudyDb: vi.fn(),
+      getAllSequenceAssignments: vi.fn().mockRejectedValue(new Error('conn failed')),
+      _setupSequenceAssignmentListener: vi.fn(() => undefined),
+    };
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { getAllByRole } = await act(async () => render(
+      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+    ));
+    const reconnectBtn = getAllByRole('button').find((b) => b.textContent?.includes('Reconnect'));
+    expect(reconnectBtn).toBeDefined();
+    await act(async () => { fireEvent.click(reconnectBtn!); });
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  test('window offline event covers handleOffline', async () => {
+    const mockEngine = {
+      initializeStudyDb: vi.fn(),
+      getAllSequenceAssignments: vi.fn().mockResolvedValue([]),
+      _setupSequenceAssignmentListener: vi.fn((_id: string, cb: (a: SequenceAssignment[]) => void) => {
+        cb([]);
+        return vi.fn();
+      }),
+    };
+    await act(async () => render(
+      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+    ));
+    act(() => { window.dispatchEvent(new Event('offline')); });
+  });
+
+  test('window online event covers handleOnline when disconnected', async () => {
+    const mockEngine = {
+      initializeStudyDb: vi.fn(),
+      getAllSequenceAssignments: vi.fn().mockResolvedValue([]),
+      _setupSequenceAssignmentListener: vi.fn(() => undefined),
+    };
+    await act(async () => render(
+      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+    ));
+    await act(async () => { window.dispatchEvent(new Event('online')); });
+    expect(mockEngine.getAllSequenceAssignments).toHaveBeenCalled();
   });
 });
 

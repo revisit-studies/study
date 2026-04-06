@@ -23,7 +23,7 @@ import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils';
 import { type Sequence } from '../../store/types';
 import { FirebaseStorageEngine } from '../engines/FirebaseStorageEngine';
-import { type StorageEngine } from '../engines/types';
+import { type StorageEngine, type SequenceAssignment } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 
 // ── module-level state (captured by-ref inside vi.mock factories) ─────────────
@@ -192,11 +192,18 @@ function getConditionalBlockOrder(sequence: Sequence, condition: string): string
   return conditionalBlock.components as string[];
 }
 
+// ── emulator availability check (top-level await, runs before test collection) ─
+const emulatorAvailable = await fetch('http://localhost:9099/', { signal: AbortSignal.timeout(500) })
+  .then(() => true)
+  .catch(() => false);
+
 // ── test state ────────────────────────────────────────────────────────────────
 let testEnv: RulesTestEnvironment;
 
 // ── lifecycle ─────────────────────────────────────────────────────────────────
 beforeAll(async () => {
+  if (!emulatorAvailable) return;
+
   vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: PROJECT_ID }));
   vi.stubEnv('VITE_RECAPTCHAV3TOKEN', 'fake-recaptcha-token');
 
@@ -237,7 +244,7 @@ afterAll(async () => {
   vi.restoreAllMocks();
 });
 
-describe.each([
+describe.runIf(emulatorAvailable).each([
   { TestEngine: FirebaseStorageEngine },
 ])('describe object $TestEngine', ({ TestEngine }) => {
   let storageEngine: StorageEngine;
@@ -746,5 +753,465 @@ describe.each([
     expect(restoreResponse.notifications![1].title).toBe('Success!');
     expect(restoreResponse.notifications![1].message).toBe('Successfully restored snapshot to live data.');
     expect(restoreResponse.notifications![1].color).toBe('green');
+  });
+
+  // ── initializeStudyDb ───────────────────────────────────────────────────────
+  test('initializeStudyDb sets studyId on the engine', async () => {
+    // @ts-expect-error accessing protected property
+    expect(storageEngine.studyId).toBe(studyId);
+  });
+
+  // ── _setupSequenceAssignmentListener ────────────────────────────────────────
+  test('_setupSequenceAssignmentListener invokes callback with assignments and returns unsubscribe', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const cb = vi.fn();
+    const unsub = (storageEngine as FirebaseStorageEngine)._setupSequenceAssignmentListener(studyId, cb);
+    await vi.waitFor(() => expect(cb).toHaveBeenCalled(), { timeout: 3000 });
+    const assignments: SequenceAssignment[] = cb.mock.calls[0][0];
+    expect(assignments.some((a) => a.participantId === session.participantId)).toBe(true);
+    expect(typeof unsub).toBe('function');
+  });
+
+  // ── _createSequenceAssignment ────────────────────────────────────────────────
+  test('_createSequenceAssignment throws when studyId is not set', async () => {
+    const fresh = new FirebaseStorageEngine(true);
+    authState.currentUser = { email: null, uid: 'uid' };
+    await fresh.connect();
+    // @ts-expect-error protected
+    await expect(fresh._createSequenceAssignment('p1', {} as SequenceAssignment, false))
+      .rejects.toThrow('Study ID is not set');
+  });
+
+  test('_createSequenceAssignment creates an assignment doc retrievable via getAllSequenceAssignments', async () => {
+    const assignment = {
+      participantId: 'p-create',
+      timestamp: 100,
+      createdTime: 100,
+      completed: null,
+      rejected: false,
+      claimed: false,
+    } as SequenceAssignment;
+    // @ts-expect-error protected
+    await storageEngine._createSequenceAssignment('p-create', assignment, false);
+    const all = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(all.find((a) => a.participantId === 'p-create')).toBeDefined();
+  });
+
+  // ── _updateSequenceAssignmentFields ─────────────────────────────────────────
+  test('_updateSequenceAssignmentFields throws when studyId is not set', async () => {
+    const fresh = new FirebaseStorageEngine(true);
+    authState.currentUser = { email: null, uid: 'uid' };
+    await fresh.connect();
+    // @ts-expect-error protected
+    await expect(fresh._updateSequenceAssignmentFields('p1', { claimed: true }))
+      .rejects.toThrow('Study ID is not set');
+  });
+
+  test('_updateSequenceAssignmentFields resolves without error when fields object is empty', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    // @ts-expect-error protected
+    await expect(storageEngine._updateSequenceAssignmentFields(session.participantId, {})).resolves.not.toThrow();
+  });
+
+  test('_updateSequenceAssignmentFields clears conditions when value is undefined', async () => {
+    const session = await storageEngine.initializeParticipantSession({ condition: 'color' }, configSimple, participantMetadata);
+    // @ts-expect-error protected
+    await storageEngine._updateSequenceAssignmentFields(session.participantId, { conditions: undefined });
+    const all = await storageEngine.getAllSequenceAssignments(studyId);
+    const updated = all.find((a) => a.participantId === session.participantId);
+    expect(updated).toBeDefined();
+    expect(Object.hasOwn(updated!, 'conditions')).toBe(false);
+  });
+
+  test('_updateSequenceAssignmentFields updates normal fields', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    // @ts-expect-error protected
+    await storageEngine._updateSequenceAssignmentFields(session.participantId, { claimed: true });
+    const all = await storageEngine.getAllSequenceAssignments(studyId);
+    const updated = all.find((a) => a.participantId === session.participantId);
+    expect(updated?.claimed).toBe(true);
+  });
+
+  // ── _completeCurrentParticipantRealtime ──────────────────────────────────────
+  test('_completeCurrentParticipantRealtime throws when currentParticipantId is not set', async () => {
+    const fresh = new FirebaseStorageEngine(true);
+    authState.currentUser = { email: null, uid: 'uid' };
+    await fresh.connect();
+    await fresh.initializeStudyDb(studyId);
+    // @ts-expect-error protected
+    await expect(fresh._completeCurrentParticipantRealtime()).rejects.toThrow('Participant not initialized');
+  });
+
+  // ── _rejectParticipantRealtime ───────────────────────────────────────────────
+  test('_rejectParticipantRealtime throws when studyId is not set', async () => {
+    const fresh = new FirebaseStorageEngine(true);
+    authState.currentUser = { email: null, uid: 'uid' };
+    await fresh.connect();
+    // @ts-expect-error protected
+    await expect(fresh._rejectParticipantRealtime('p1')).rejects.toThrow('Study ID is not set');
+  });
+
+  test('_rejectParticipantRealtime sets rejected=true on the assignment', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    // @ts-expect-error protected
+    await storageEngine._rejectParticipantRealtime(session.participantId);
+    const all = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(all.find((a) => a.participantId === session.participantId)?.rejected).toBe(true);
+  });
+
+  // ── _undoRejectParticipantRealtime ───────────────────────────────────────────
+  test('_undoRejectParticipantRealtime throws when currentParticipantId is not set', async () => {
+    const fresh = new FirebaseStorageEngine(true);
+    authState.currentUser = { email: null, uid: 'uid' };
+    await fresh.connect();
+    await fresh.initializeStudyDb(studyId);
+    // @ts-expect-error protected
+    await expect(fresh._undoRejectParticipantRealtime('p1')).rejects.toThrow('Participant not initialized');
+  });
+
+  test('_undoRejectParticipantRealtime throws when studyId is not set', async () => {
+    const fresh = new FirebaseStorageEngine(true);
+    authState.currentUser = { email: null, uid: 'uid' };
+    await fresh.connect();
+    // @ts-expect-error protected
+    fresh.currentParticipantId = 'p1';
+    // @ts-expect-error protected
+    await expect(fresh._undoRejectParticipantRealtime('p1')).rejects.toThrow('Study ID is not set');
+  });
+
+  test('_undoRejectParticipantRealtime sets rejected=false on the assignment', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    await storageEngine.rejectParticipant(session.participantId, 'test');
+    // @ts-expect-error protected
+    storageEngine.currentParticipantId = session.participantId;
+    // @ts-expect-error protected
+    await storageEngine._undoRejectParticipantRealtime(session.participantId);
+    const all = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(all.find((a) => a.participantId === session.participantId)?.rejected).toBe(false);
+  });
+
+  // ── _claimSequenceAssignment ─────────────────────────────────────────────────
+  test('_claimSequenceAssignment throws when currentParticipantId is not set', async () => {
+    const fresh = new FirebaseStorageEngine(true);
+    authState.currentUser = { email: null, uid: 'uid' };
+    await fresh.connect();
+    await fresh.initializeStudyDb(studyId);
+    // @ts-expect-error protected
+    await expect(fresh._claimSequenceAssignment('p1')).rejects.toThrow('Participant not initialized');
+  });
+
+  test('_claimSequenceAssignment throws when studyId is not set', async () => {
+    const fresh = new FirebaseStorageEngine(true);
+    authState.currentUser = { email: null, uid: 'uid' };
+    await fresh.connect();
+    // @ts-expect-error protected
+    fresh.currentParticipantId = 'p1';
+    // @ts-expect-error protected
+    await expect(fresh._claimSequenceAssignment('p1')).rejects.toThrow('Study ID is not set');
+  });
+
+  test('_claimSequenceAssignment sets claimed=true on the assignment', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    // @ts-expect-error protected
+    storageEngine.currentParticipantId = session.participantId;
+    // @ts-expect-error protected
+    await storageEngine._claimSequenceAssignment(session.participantId);
+    const all = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(all.find((a) => a.participantId === session.participantId)?.claimed).toBe(true);
+  });
+
+  // ── _setModesDocument ────────────────────────────────────────────────────────
+  test('_setModesDocument writes modes to Firestore', async () => {
+    // @ts-expect-error protected
+    await storageEngine._setModesDocument(studyId, { dataCollectionEnabled: false, developmentModeEnabled: false, dataSharingEnabled: false });
+    const modes = await storageEngine.getModes(studyId);
+    expect(modes.dataCollectionEnabled).toBe(false);
+    expect(modes.developmentModeEnabled).toBe(false);
+    expect(modes.dataSharingEnabled).toBe(false);
+  });
+
+  // ── URL getters ──────────────────────────────────────────────────────────────
+  test('_getAudioUrl returns URL when audio exists', async () => {
+    // @ts-expect-error protected
+    const prefix = storageEngine.collectionPrefix;
+    const path = `${prefix}${studyId}/audio/p1_task1`;
+    storageObjects[path] = 'data';
+    // @ts-expect-error protected
+    expect(await storageEngine._getAudioUrl('task1', 'p1')).toContain(path);
+  });
+
+  test('_getAudioUrl returns null when audio does not exist', async () => {
+    // @ts-expect-error protected
+    expect(await storageEngine._getAudioUrl('missing', 'p1')).toBeNull();
+  });
+
+  test('_getScreenRecordingUrl returns URL when recording exists', async () => {
+    // @ts-expect-error protected
+    const prefix = storageEngine.collectionPrefix;
+    const path = `${prefix}${studyId}/screenRecording/p1_task2`;
+    storageObjects[path] = 'data';
+    // @ts-expect-error protected
+    expect(await storageEngine._getScreenRecordingUrl('task2', 'p1')).toContain(path);
+  });
+
+  test('_getScreenRecordingUrl returns null when recording does not exist', async () => {
+    // @ts-expect-error protected
+    expect(await storageEngine._getScreenRecordingUrl('missing', 'p1')).toBeNull();
+  });
+
+  test('_getTranscriptUrl returns URL when transcript exists', async () => {
+    // @ts-expect-error protected
+    const prefix = storageEngine.collectionPrefix;
+    const path = `${prefix}${studyId}/audio/p1_task3.wav_transcription.txt`;
+    storageObjects[path] = 'data';
+    // @ts-expect-error protected
+    expect(await storageEngine._getTranscriptUrl('task3', 'p1')).toContain(path);
+  });
+
+  test('_getTranscriptUrl returns null when transcript does not exist', async () => {
+    // @ts-expect-error protected
+    expect(await storageEngine._getTranscriptUrl('missing', 'p1')).toBeNull();
+  });
+
+  // ── _testingReset ────────────────────────────────────────────────────────────
+  test('_testingReset throws not-implemented error', async () => {
+    const fresh = new FirebaseStorageEngine(true);
+    authState.currentUser = { email: null, uid: 'uid' };
+    await fresh.connect();
+    // @ts-expect-error protected
+    await expect(fresh._testingReset()).rejects.toThrow('Testing reset not implemented');
+  });
+
+  // ── getSnapshots ─────────────────────────────────────────────────────────────
+  test('getSnapshots returns empty object before any snapshot is created', async () => {
+    expect(await storageEngine.getSnapshots(studyId)).toEqual({});
+  });
+
+  test('getSnapshots returns data after a snapshot has been created', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    await storageEngine.createSnapshot(studyId, false);
+    const snaps = await storageEngine.getSnapshots(studyId);
+    expect(Object.keys(snaps).length).toBeGreaterThan(0);
+  });
+
+  // ── getUserManagementData ────────────────────────────────────────────────────
+  test('getUserManagementData returns undefined when key does not exist', async () => {
+    expect(await (storageEngine as FirebaseStorageEngine).getUserManagementData('authentication')).toBeUndefined();
+  });
+
+  test('getUserManagementData returns authentication data when it exists', async () => {
+    await (storageEngine as FirebaseStorageEngine).changeAuth(true);
+    expect(await (storageEngine as FirebaseStorageEngine).getUserManagementData('authentication')).toEqual({ isEnabled: true });
+  });
+
+  test('getUserManagementData returns adminUsers data when it exists', async () => {
+    await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'admin@a.com', uid: 'u1' });
+    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers');
+    expect(result).toBeDefined();
+    expect((result as { adminUsersList: unknown[] }).adminUsersList).toHaveLength(1);
+  });
+
+  test('getUserManagementData uses cached data on second call', async () => {
+    await (storageEngine as FirebaseStorageEngine).changeAuth(false);
+    const first = await (storageEngine as FirebaseStorageEngine).getUserManagementData('authentication');
+    const second = await (storageEngine as FirebaseStorageEngine).getUserManagementData('authentication');
+    expect(first).toEqual(second);
+  });
+
+  // ── _updateAdminUsersList and changeAuth ────────────────────────────────────
+  test('changeAuth writes isEnabled flag to Firestore', async () => {
+    await (storageEngine as FirebaseStorageEngine).changeAuth(true);
+    expect(await (storageEngine as FirebaseStorageEngine).getUserManagementData('authentication')).toEqual({ isEnabled: true });
+  });
+
+  test('_updateAdminUsersList writes admin list to Firestore', async () => {
+    const list = { adminUsersList: [{ email: 'a@b.com', uid: 'u1' }] };
+    // @ts-expect-error protected
+    await storageEngine._updateAdminUsersList(list);
+    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers');
+    expect(result).toEqual(list);
+  });
+
+  // ── addAdminUser ─────────────────────────────────────────────────────────────
+  test('addAdminUser creates new list when no adminUsers doc exists', async () => {
+    await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'new@a.com', uid: 'u1' });
+    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: unknown[] };
+    expect(result.adminUsersList).toHaveLength(1);
+  });
+
+  test('addAdminUser appends user to existing list', async () => {
+    await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'a@a.com', uid: 'u0' });
+    await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'b@b.com', uid: 'u1' });
+    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: unknown[] };
+    expect(result.adminUsersList).toHaveLength(2);
+  });
+
+  test('addAdminUser does not add duplicate user', async () => {
+    await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'a@a.com', uid: 'u0' });
+    await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'a@a.com', uid: 'u0' });
+    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: unknown[] };
+    expect(result.adminUsersList).toHaveLength(1);
+  });
+
+  // ── removeAdminUser ──────────────────────────────────────────────────────────
+  test('removeAdminUser removes user when multiple users exist', async () => {
+    await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'a@a.com', uid: 'u0' });
+    await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'b@b.com', uid: 'u1' });
+    await (storageEngine as FirebaseStorageEngine).removeAdminUser('a@a.com');
+    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: unknown[] };
+    expect(result.adminUsersList).toHaveLength(1);
+  });
+
+  test('removeAdminUser does not remove user when they are the only admin', async () => {
+    await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'a@a.com', uid: 'u0' });
+    await (storageEngine as FirebaseStorageEngine).removeAdminUser('a@a.com');
+    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: unknown[] };
+    expect(result.adminUsersList).toHaveLength(1);
+  });
+
+  // ── login / logout / unsubscribe ─────────────────────────────────────────────
+  test('login returns email and uid from currentUser', async () => {
+    authState.currentUser = { email: 'me@test.com', uid: 'my-uid' };
+    const result = await (storageEngine as FirebaseStorageEngine).login();
+    expect(result.email).toBe('me@test.com');
+    expect(result.uid).toBe('my-uid');
+  });
+
+  test('login returns nulls when no current user', async () => {
+    authState.currentUser = null;
+    const result = await (storageEngine as FirebaseStorageEngine).login();
+    expect(result.email).toBeNull();
+    expect(result.uid).toBeNull();
+  });
+
+  test('logout calls signOut', async () => {
+    const { signOut } = await import('@firebase/auth');
+    await (storageEngine as FirebaseStorageEngine).logout();
+    expect(vi.mocked(signOut)).toHaveBeenCalled();
+  });
+
+  test('unsubscribe returns a callable unsubscribe function', async () => {
+    const unsub = (storageEngine as FirebaseStorageEngine).unsubscribe(vi.fn());
+    expect(typeof unsub).toBe('function');
+    unsub();
+  });
+
+  // ── transcript methods ───────────────────────────────────────────────────────
+  test('getTranscription retrieves stored transcription from storage', async () => {
+    // @ts-expect-error protected
+    const prefix = storageEngine.collectionPrefix;
+    const path = `${prefix}${studyId}/audio/p1_task1.wav_transcription.txt`;
+    storageObjects[path] = JSON.stringify({ text: 'hello' });
+    const result = await (storageEngine as FirebaseStorageEngine).getTranscription('task1', 'p1');
+    expect(result).toEqual({ text: 'hello' });
+  });
+
+  test('saveEditedTranscript filters out undefined tags and stores result', async () => {
+    const lines = [
+      {
+        text: 'line1',
+        selectedTags: [{ id: 't1', name: 'T1', color: 'red' }, undefined as never],
+        annotation: '',
+        transcriptMappingStart: 0,
+        transcriptMappingEnd: 0,
+      },
+    ];
+    await (storageEngine as FirebaseStorageEngine).saveEditedTranscript('p1', 'editor@a.com', 'task1', lines);
+    // @ts-expect-error protected
+    const prefix = storageEngine.collectionPrefix;
+    const path = `${prefix}${studyId}/audio/transcriptAndTags/editor@a.com/p1/task1_editedText`;
+    const stored = JSON.parse(storageObjects[path]);
+    expect(stored[0].selectedTags).toHaveLength(1);
+  });
+
+  test('getEditedTranscript returns [] when stored value is not an array', async () => {
+    // @ts-expect-error protected
+    const prefix = storageEngine.collectionPrefix;
+    const path = `${prefix}${studyId}/audio/transcriptAndTags/editor@a.com/p1/task1_editedText`;
+    storageObjects[path] = JSON.stringify({ not: 'array' });
+    const result = await (storageEngine as FirebaseStorageEngine).getEditedTranscript('p1', 'editor@a.com', 'task1');
+    expect(result).toEqual([]);
+  });
+
+  test('getEditedTranscript returns stored array when value is an array', async () => {
+    // @ts-expect-error protected
+    const prefix = storageEngine.collectionPrefix;
+    const path = `${prefix}${studyId}/audio/transcriptAndTags/editor@a.com/p1/task2_editedText`;
+    const stored = [{
+      text: 'line', selectedTags: [], annotation: '', transcriptMappingStart: 0, transcriptMappingEnd: 0,
+    }];
+    storageObjects[path] = JSON.stringify(stored);
+    const result = await (storageEngine as FirebaseStorageEngine).getEditedTranscript('p1', 'editor@a.com', 'task2');
+    expect(result).toHaveLength(1);
+    expect(result[0].text).toBe('line');
+  });
+});
+
+// ── unit tests (no emulator required) ────────────────────────────────────────
+// Tests for auth, connection, and other methods that only need the vi.mock'ed
+// @firebase/auth and firebase/storage — the Firestore emulator is not needed.
+
+describe('FirebaseStorageEngine auth/connection unit tests', () => {
+  beforeEach(() => {
+    vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: 'demo-unit' }));
+    vi.stubEnv('VITE_RECAPTCHAV3TOKEN', 'fake-token');
+    authState.currentUser = null;
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    authState.currentUser = null;
+  });
+
+  // ── initializeAnonymousAuth ──────────────────────────────────────────────────
+  test('initializeAnonymousAuth returns true immediately when currentUser is already set', async () => {
+    authState.currentUser = { email: 'a@b.com', uid: 'uid-1' };
+    const engine = new FirebaseStorageEngine(true);
+    expect(await engine.initializeAnonymousAuth()).toBe(true);
+  });
+
+  test('initializeAnonymousAuth signs in anonymously and returns true when no current user', async () => {
+    const engine = new FirebaseStorageEngine(true);
+    expect(await engine.initializeAnonymousAuth()).toBe(true);
+    expect(authState.currentUser).not.toBeNull();
+  });
+
+  test('initializeAnonymousAuth returns false when signInAnonymously throws', async () => {
+    const { signInAnonymously } = await import('@firebase/auth');
+    vi.mocked(signInAnonymously).mockRejectedValueOnce(new Error('auth-error'));
+    const engine = new FirebaseStorageEngine(true);
+    expect(await engine.initializeAnonymousAuth()).toBe(false);
+  });
+
+  // ── checkAuthReadiness ───────────────────────────────────────────────────────
+  test('checkAuthReadiness sets connected=true when auth succeeds', async () => {
+    authState.currentUser = { email: null, uid: 'uid' };
+    const engine = new FirebaseStorageEngine(true);
+    await engine.checkAuthReadiness();
+    expect(engine.isConnected()).toBe(true);
+  });
+
+  test('checkAuthReadiness throws and sets connected=false when auth fails', async () => {
+    const { signInAnonymously } = await import('@firebase/auth');
+    vi.mocked(signInAnonymously).mockRejectedValueOnce(new Error('fail'));
+    const engine = new FirebaseStorageEngine(true);
+    await expect(engine.checkAuthReadiness()).rejects.toThrow('FirebaseAuthError');
+    expect(engine.isConnected()).toBe(false);
+  });
+
+  // ── connect ──────────────────────────────────────────────────────────────────
+  test('connect sets connected=true on success', async () => {
+    authState.currentUser = { email: null, uid: 'uid' };
+    const engine = new FirebaseStorageEngine(true);
+    await engine.connect();
+    expect(engine.isConnected()).toBe(true);
+  });
+
+  test('connect sets connected=false when enableNetwork throws', async () => {
+    const { enableNetwork } = await import('firebase/firestore');
+    vi.mocked(enableNetwork).mockRejectedValueOnce(new Error('network'));
+    const engine = new FirebaseStorageEngine(true);
+    await engine.connect();
+    expect(engine.isConnected()).toBe(false);
   });
 });
