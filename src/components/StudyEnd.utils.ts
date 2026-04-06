@@ -60,6 +60,16 @@ export function createStudyEndFinalizeLoop({
     onStateChange(nextState);
   };
 
+  const emitAutomaticRetryState = (retryDelayMs: number) => {
+    emitState({
+      error: null,
+      failedAttemptCount: 0,
+      isRetryingAutomatically: true,
+      manualRetryRequired: false,
+      retryDelayMs,
+    });
+  };
+
   const scheduleRetry = (retryDelayMs: number) => {
     if (cancelled || timeoutId) {
       return;
@@ -97,6 +107,12 @@ export function createStudyEndFinalizeLoop({
     scheduleRetry(retryDelayMs);
   };
 
+  const handleRetryablePendingState = () => {
+    const retryDelayMs = getRetryDelayMs(1);
+    emitAutomaticRetryState(retryDelayMs);
+    scheduleRetry(retryDelayMs);
+  };
+
   verifyLoop = async () => {
     if (cancelled || finalizeRequestInFlight) {
       return;
@@ -118,6 +134,11 @@ export function createStudyEndFinalizeLoop({
       if (result.status === 'complete') {
         emitState(DEFAULT_STUDY_END_FINALIZE_STATE);
         onComplete();
+        return;
+      }
+
+      if (result.status === 'retry') {
+        handleRetryablePendingState();
         return;
       }
 

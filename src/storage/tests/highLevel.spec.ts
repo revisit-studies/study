@@ -801,6 +801,41 @@ describe.each([
     expect(finalizeResult.message).toContain('Asset upload failed');
   });
 
+  test('finalizeParticipant does not mask a failed asset upload after a later successful upload', async () => {
+    storageEngine = new DelayedLocalStorageEngine(true);
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    sequenceArray = await generateSequenceArray(configSimple);
+    await storageEngine.setSequenceArray(sequenceArray);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const delayedStorageEngine = storageEngine as DelayedLocalStorageEngine;
+    const firstIdentifier = 'intro_0';
+    const secondIdentifier = 'intro_1';
+
+    await storageEngine.saveAnswers({
+      [firstIdentifier]: makeStoredAnswer(firstIdentifier, 100),
+    });
+    await storageEngine.flushPendingParticipantData();
+
+    delayedStorageEngine.holdNextAssetUpload({ fail: true });
+    const failedAssetUploadPromise = storageEngine
+      .saveAudioRecording(new Blob(['first-audio'], { type: 'audio/webm' }), firstIdentifier)
+      .catch(() => undefined);
+    await delayedStorageEngine.waitForHeldAssetUpload();
+    delayedStorageEngine.releaseHeldAssetUpload();
+    await failedAssetUploadPromise;
+
+    await storageEngine.saveAudioRecording(
+      new Blob(['second-audio'], { type: 'audio/webm' }),
+      secondIdentifier,
+    );
+
+    const finalizeResult = await storageEngine.finalizeParticipant();
+    expect(finalizeResult.status).toBe('error');
+    expect(finalizeResult.message).toContain('Asset upload failed');
+  });
+
   test('finalizeParticipant succeeds after a transient realtime completion failure', async () => {
     storageEngine = new DelayedLocalStorageEngine(true);
     await storageEngine.connect();

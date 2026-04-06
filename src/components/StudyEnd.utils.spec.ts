@@ -169,4 +169,68 @@ describe('StudyEnd utils', () => {
     });
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
+
+  test('treats retry as a neutral syncing state without consuming the failure budget', async () => {
+    const finalizeParticipant = vi.fn()
+      .mockResolvedValueOnce({ status: 'retry' })
+      .mockResolvedValueOnce({ status: 'retry' })
+      .mockResolvedValueOnce({ status: 'retry' })
+      .mockResolvedValueOnce({ status: 'complete' });
+    const onComplete = vi.fn();
+    const onStateChange = vi.fn();
+
+    const finalizeLoop = createStudyEndFinalizeLoop({
+      getStorageEngine: () => ({ finalizeParticipant } as unknown as StorageEngine),
+      onComplete,
+      onStateChange,
+    });
+
+    finalizeLoop.start();
+    await flushPromises();
+
+    expect(onStateChange).toHaveBeenLastCalledWith({
+      error: null,
+      failedAttemptCount: 0,
+      isRetryingAutomatically: true,
+      manualRetryRequired: false,
+      retryDelayMs: 2000,
+    });
+
+    vi.advanceTimersByTime(2000);
+    await flushPromises();
+
+    expect(finalizeParticipant).toHaveBeenCalledTimes(2);
+    expect(onStateChange).toHaveBeenLastCalledWith({
+      error: null,
+      failedAttemptCount: 0,
+      isRetryingAutomatically: true,
+      manualRetryRequired: false,
+      retryDelayMs: 2000,
+    });
+
+    vi.advanceTimersByTime(2000);
+    await flushPromises();
+
+    expect(finalizeParticipant).toHaveBeenCalledTimes(3);
+    expect(onStateChange).toHaveBeenLastCalledWith({
+      error: null,
+      failedAttemptCount: 0,
+      isRetryingAutomatically: true,
+      manualRetryRequired: false,
+      retryDelayMs: 2000,
+    });
+
+    vi.advanceTimersByTime(2000);
+    await flushPromises();
+
+    expect(finalizeParticipant).toHaveBeenCalledTimes(4);
+    expect(onStateChange).toHaveBeenLastCalledWith({
+      error: null,
+      failedAttemptCount: 0,
+      isRetryingAutomatically: false,
+      manualRetryRequired: false,
+      retryDelayMs: null,
+    });
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
 });

@@ -195,7 +195,7 @@ export abstract class StorageEngine {
 
   private pendingAssetOperations = new Set<Promise<unknown>>();
 
-  private assetUploadError: Error | null = null;
+  private failedAssetUploads = new Map<string, Error>();
 
   private assetUploadActivityVersion = 0;
 
@@ -526,12 +526,16 @@ export abstract class StorageEngine {
     }
   }
 
-  private recordAssetUploadError(error: unknown) {
-    this.assetUploadError = normalizeError(error);
+  private recordAssetUploadError(assetKey: string, error: unknown) {
+    this.failedAssetUploads.set(assetKey, normalizeError(error));
+  }
+
+  private clearAssetUploadError(assetKey: string) {
+    this.failedAssetUploads.delete(assetKey);
   }
 
   private getAssetUploadError() {
-    return this.assetUploadError;
+    return this.failedAssetUploads.values().next().value || null;
   }
 
   private noteAssetUploadActivity() {
@@ -544,13 +548,15 @@ export abstract class StorageEngine {
     });
   }
 
-  private trackAssetOperation<T>(operation: () => Promise<T>) {
+  private trackAssetOperation<T>(assetKey: string, operation: () => Promise<T>) {
     this.noteAssetUploadActivity();
+    this.clearAssetUploadError(assetKey);
 
     const operationPromise = operation()
       .catch((error) => {
-        this.recordAssetUploadError(error);
-        throw this.getAssetUploadError();
+        const normalizedError = normalizeError(error);
+        this.recordAssetUploadError(assetKey, normalizedError);
+        throw normalizedError;
       })
       .finally(() => {
         this.pendingAssetOperations.delete(operationPromise);
@@ -582,12 +588,7 @@ export abstract class StorageEngine {
       return this.waitForPendingAssetUploads();
     }
 
-    const results = await Promise.allSettled(uploadPromises);
-    const rejectedUpload = results.find((result) => result.status === 'rejected');
-
-    if (rejectedUpload?.status === 'rejected') {
-      this.recordAssetUploadError(rejectedUpload.reason);
-    }
+    await Promise.allSettled(uploadPromises);
 
     return this.waitForPendingAssetUploads();
   }
@@ -1404,12 +1405,12 @@ export abstract class StorageEngine {
     const participantKey = `${prefix}/${this.currentParticipantId}`;
     const uploadPromise = (async () => {
       try {
-        this.assetUploadError = null;
         await this._pushToStorage(participantKey, taskName, blob);
         await this._cacheStorageObject(participantKey, taskName);
       } catch (error) {
-        this.recordAssetUploadError(error);
-        throw this.assetUploadError;
+        const normalizedError = normalizeError(error);
+        this.recordAssetUploadError(assetKey, normalizedError);
+        throw normalizedError;
       } finally {
         this.pendingAssetUploads.delete(assetKey);
       }
@@ -1425,7 +1426,7 @@ export abstract class StorageEngine {
     blob: Blob,
     taskName: string,
   ) {
-    return this.trackAssetOperation(async () => {
+    return this.trackAssetOperation(`audio/${taskName}`, async () => {
       if (this.studyId === undefined) {
         throw new Error('Study ID is not set');
       }
@@ -1451,7 +1452,7 @@ export abstract class StorageEngine {
     blob: Blob,
     taskName: string,
   ) {
-    return this.trackAssetOperation(async () => {
+    return this.trackAssetOperation(`screenRecording/${taskName}`, async () => {
       if (this.studyId === undefined) {
         throw new Error('Study ID is not set');
       }
@@ -1489,7 +1490,7 @@ export abstract class StorageEngine {
     this.participantDataWriteError = null;
     this.pendingAssetUploads.clear();
     this.pendingAssetOperations.clear();
-    this.assetUploadError = null;
+    this.failedAssetUploads.clear();
     this.assetUploadActivityVersion = 0;
     this.participantData = undefined;
     if (this.studyId) {
