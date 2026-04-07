@@ -63,22 +63,30 @@ describe('useAuth', () => {
 
 describe('AuthProvider', () => {
   test('renders loading overlay while determining status', async () => {
-    const { getByTestId } = await act(async () => render(
-      <AuthProvider>
-        <div data-testid="child">child</div>
-      </AuthProvider>,
-    ));
+    let renderResult: ReturnType<typeof render>;
+
+    await act(async () => {
+      renderResult = render(
+        <AuthProvider>
+          <div data-testid="child">child</div>
+        </AuthProvider>,
+      );
+    });
     // Since storageEngine is null, it should set non-auth user quickly
-    expect(getByTestId).toBeDefined();
+    expect(renderResult.getByTestId).toBeDefined();
   });
 
   test('renders children when storageEngine is not a cloud engine', async () => {
-    const { container } = await act(async () => render(
-      <AuthProvider>
-        <div data-testid="child-content">Hello</div>
-      </AuthProvider>,
-    ));
-    expect(container).toBeDefined();
+    let renderResult: ReturnType<typeof render>;
+
+    await act(async () => {
+      renderResult = render(
+        <AuthProvider>
+          <div data-testid="child-content">Hello</div>
+        </AuthProvider>,
+      );
+    });
+    expect(renderResult.container).toBeDefined();
   });
 
   test('useAuth returns non-auth user when no cloud storage', async () => {
