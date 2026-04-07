@@ -19,7 +19,7 @@ function makeComp(
     path: '/test.md',
     response: responses,
     responseOrder,
-  } as IndividualComponent;
+  } as unknown as IndividualComponent;
 }
 
 describe('randomizeForm', () => {
