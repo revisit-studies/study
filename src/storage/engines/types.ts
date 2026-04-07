@@ -5,6 +5,10 @@ import { StudyConfig } from '../../parser/types';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { hash, isParticipantData } from './utils/storageEngineHelpers';
+import {
+  answeredParticipantAnswerMetadataMatches,
+  getAnsweredParticipantAnswerMetadata,
+} from './utils/participantAnswerMetadata';
 import { shouldPreferCachedParticipantData } from './utils/participantDataRecovery';
 import { RevisitNotification } from '../../utils/notifications';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
@@ -123,41 +127,12 @@ export type FinalizeParticipantResult = {
   message?: string;
 };
 
-type AnsweredParticipantAnswerMetadata = {
-  key: string;
-  endTime: number;
-};
-
 function normalizeError(error: unknown) {
   return error instanceof Error ? error : new Error(String(error));
 }
 
 function cloneParticipantDataSnapshot(participantData: ParticipantData) {
   return structuredClone(participantData);
-}
-
-function getAnsweredParticipantAnswerMetadata(answers: ParticipantData['answers']): AnsweredParticipantAnswerMetadata[] {
-  return Object.entries(answers)
-    .filter(([, answer]) => answer.endTime > -1)
-    .map(([key, answer]) => ({
-      key,
-      endTime: answer.endTime,
-    }))
-    .sort((a, b) => a.key.localeCompare(b.key));
-}
-
-function answeredParticipantAnswerMetadataMatches(
-  localAnswers: AnsweredParticipantAnswerMetadata[],
-  persistedAnswers: AnsweredParticipantAnswerMetadata[],
-) {
-  if (localAnswers.length !== persistedAnswers.length) {
-    return false;
-  }
-
-  return localAnswers.every(
-    (answer, index) => answer.key === persistedAnswers[index].key
-      && answer.endTime === persistedAnswers[index].endTime,
-  );
 }
 
 export abstract class StorageEngine {
