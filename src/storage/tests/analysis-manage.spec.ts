@@ -25,6 +25,7 @@ const existingStages: StageInfo[] = [
 describe('analysis data management tests', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   test('download helper supports participant data JSON and tidy CSV filenames', () => {
