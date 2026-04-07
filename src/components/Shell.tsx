@@ -26,17 +26,66 @@ import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig, resolveConfigKey } from '../utils/fetchConfig';
-import { ParticipantMetadata } from '../store/types';
+import type { AlertModalState, ParticipantMetadata } from '../store/types';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
 import { hash } from '../storage/engines/utils';
+import type { StorageEngine } from '../storage/engines/types';
+import { REVISIT_MODE } from '../storage/engines/types';
 import {
   filterSequenceByCondition,
   parseConditionParam,
   resolveParticipantConditions,
 } from '../utils/handleConditionLogic';
+
+type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
+
+const GENERIC_STARTUP_ERROR = 'There was a problem loading the study.';
+const RESUME_STARTUP_ERROR = 'This study session could not be resumed.';
+
+export function getScreenOrientationType(screen: Screen) {
+  return screen.orientation?.type ?? '';
+}
+
+export function isStorageStartupFailure(
+  storageEngine: StartupStorageStatus,
+  configuredEngine: string,
+  storageOperationFailed: boolean = false,
+) {
+  if (!storageEngine.isConnected() || storageEngine.getEngine() !== configuredEngine) {
+    return true;
+  }
+
+  return storageOperationFailed && configuredEngine !== 'localStorage';
+}
+
+export function getStartupErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  if (typeof error === 'string' && error.trim().length > 0) {
+    return error;
+  }
+
+  return GENERIC_STARTUP_ERROR;
+}
+
+export function getInitialStartupAlert(
+  error: unknown,
+  developmentModeEnabled: boolean,
+  resumeParticipantId?: string | null,
+): AlertModalState {
+  return {
+    show: true,
+    title: 'Problem loading the study',
+    message: developmentModeEnabled
+      ? getStartupErrorMessage(error)
+      : (resumeParticipantId ? RESUME_STARTUP_ERROR : GENERIC_STARTUP_ERROR),
+  };
+}
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
@@ -93,27 +142,14 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
       if (!storageEngine || !activeConfig || !canonicalStudyId) return;
 
+      let modes: Record<REVISIT_MODE, boolean> | null = null;
+      let storageOperationFailed = false;
+      const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
+        ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
+        || undefined
+        : undefined;
       try {
-        // Make sure that we have a study database and that the study database has a sequence array
-        await storageEngine.initializeStudyDb(canonicalStudyId);
-        await storageEngine.saveConfig(activeConfig);
-
-        const sequenceArray = await storageEngine.getSequenceArray();
-        if (!sequenceArray) {
-          await storageEngine.setSequenceArray(
-            await generateSequenceArray(activeConfig),
-          );
-        }
-
-        const modes = await storageEngine.getModes(canonicalStudyId);
-
-        // Get or generate participant session
-        const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
-          ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
-          || undefined
-          : undefined;
         const searchParamsObject = Object.fromEntries(searchParams.entries());
-
         const ipTimeoutController = new AbortController();
         const ipTimeoutId = window.setTimeout(() => ipTimeoutController.abort(), 1200);
         const ipRes = await fetch('https://api.ipify.org?format=json', {
@@ -131,38 +167,56 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             availHeight: window.screen.availHeight,
             availWidth: window.screen.availWidth,
             colorDepth: window.screen.colorDepth,
-            orientation: window.screen.orientation.type,
+            orientation: getScreenOrientationType(window.screen),
             pixelDepth: window.screen.pixelDepth,
           },
           ip: ip.ip,
         };
 
-        let participantSession = await storageEngine.initializeParticipantSession(
-          searchParamsObject,
-          activeConfig,
-          metadata,
-          participantId || urlParticipantId,
-        );
-
-        if (studyCondition.length > 0 && modes.developmentModeEnabled) {
-          const updatedSearchParams = {
-            ...participantSession.searchParams,
-            condition: studyCondition.join(','),
-          };
-          await storageEngine.updateParticipantSearchParams(updatedSearchParams);
-          await storageEngine.updateStudyCondition(studyCondition);
-          participantSession = {
-            ...participantSession,
-            searchParams: updatedSearchParams,
-            conditions: studyCondition,
-          };
-        }
         const activeHash = await hash(JSON.stringify(activeConfig));
-
+        let participantSession!: Awaited<ReturnType<typeof storageEngine.initializeParticipantSession>>;
         let participantConfig = activeConfig;
+        try {
+          // Make sure that we have a study database and that the study database has a sequence array
+          await storageEngine.initializeStudyDb(canonicalStudyId);
+          await storageEngine.saveConfig(activeConfig);
 
-        if (participantSession.participantConfigHash !== activeHash) {
-          participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], canonicalStudyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
+          const sequenceArray = await storageEngine.getSequenceArray();
+          if (!sequenceArray) {
+            await storageEngine.setSequenceArray(generateSequenceArray(activeConfig));
+          }
+
+          modes = await storageEngine.getModes(canonicalStudyId);
+          participantSession = await storageEngine.initializeParticipantSession(
+            searchParamsObject,
+            activeConfig,
+            metadata,
+            participantId || urlParticipantId,
+          );
+
+          if (studyCondition.length > 0 && modes.developmentModeEnabled) {
+            const updatedSearchParams = {
+              ...participantSession.searchParams,
+              condition: studyCondition.join(','),
+            };
+            await storageEngine.updateParticipantSearchParams(updatedSearchParams);
+            await storageEngine.updateStudyCondition(studyCondition);
+            participantSession = {
+              ...participantSession,
+              searchParams: updatedSearchParams,
+              conditions: studyCondition,
+            };
+          }
+
+          if (participantSession.participantConfigHash !== activeHash) {
+            participantConfig = (await storageEngine.getAllConfigsFromHash(
+              [participantSession.participantConfigHash],
+              canonicalStudyId,
+            ))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
+          }
+        } catch (storageError) {
+          storageOperationFailed = true;
+          throw storageError;
         }
 
         const effectiveStudyCondition = resolveParticipantConditions({
@@ -188,6 +242,25 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         setStore(newStore);
       } catch (error) {
         console.error('Error initializing user store routing:', error);
+        const isStorageFailure = isStorageStartupFailure(
+          storageEngine,
+          import.meta.env.VITE_STORAGE_ENGINE,
+          storageOperationFailed,
+        );
+        const resolvedModes = modes ?? await storageEngine.getModes(canonicalStudyId).catch(() => null);
+        const developmentModeEnabledForAlert = resolvedModes?.developmentModeEnabled ?? false;
+        const fallbackModes = {
+          developmentModeEnabled: resolvedModes?.developmentModeEnabled ?? true,
+          dataSharingEnabled: resolvedModes?.dataSharingEnabled ?? true,
+          dataCollectionEnabled: false,
+        };
+        const resumeParticipantId = participantId
+          || urlParticipantId
+          || await storageEngine.peekCurrentParticipantId(canonicalStudyId).catch(() => undefined);
+        const initialAlertModal = !isStorageFailure
+          ? getInitialStartupAlert(error, developmentModeEnabledForAlert, resumeParticipantId)
+          : undefined;
+
         // Fallback: initialize the store with empty data
         const generatedSequences = generateSequenceArray(activeConfig);
         const matchingSequence = generatedSequences[0];
@@ -215,10 +288,12 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             ip: '',
           },
           {},
-          { developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: false },
+          fallbackModes,
           '',
           false,
-          true,
+          isStorageFailure,
+          false,
+          initialAlertModal,
         );
         setStore(emptyStore);
       }
