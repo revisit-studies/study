@@ -1,21 +1,14 @@
 /**
- * Firebase high-level integration tests — mirrors highLevel.spec.ts for FirebaseStorageEngine.
+ * Firebase high-level tests — mirrors highLevel.spec.ts for FirebaseStorageEngine.
  *
- * Requires the Firebase Emulator Suite:
- *   firebase emulators:start --only firestore
+ * Uses in-memory Firestore mocks (no emulator required).
  *
- * Run with the emulator already started:
  *   yarn vitest run src/storage/tests/highLevelFirebase.spec.ts
  */
 
 import {
   beforeAll, beforeEach, afterAll, afterEach, describe, expect, test, vi,
 } from 'vitest';
-import {
-  initializeTestEnvironment,
-  type RulesTestEnvironment,
-} from '@firebase/rules-unit-testing';
-import { type Firestore } from 'firebase/firestore';
 import { type ParticipantMetadata, type StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
@@ -27,7 +20,11 @@ import { type StorageEngine, type SequenceAssignment } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 
 // ── module-level state (captured by-ref inside vi.mock factories) ─────────────
-let testFirestore: Firestore;
+// In-memory Firestore substitute (keyed by document path)
+const firestoreData: Record<string, Record<string, unknown>> = {};
+// Sentinel values for serverTimestamp() and deleteField()
+const SERVER_TS_SENTINEL = { __sentinel: 'serverTimestamp' };
+const DELETE_FIELD_SENTINEL = { __sentinel: 'deleteField' };
 // In-memory Firebase Storage substitute
 const storageObjects: Record<string, string> = {};
 // In-memory localforage substitute (participant ID persistence)
@@ -117,14 +114,130 @@ vi.mock('localforage', () => ({
   },
 }));
 
-// Spread the real firebase/firestore so doc/setDoc/getDoc etc. stay real.
-// Only initializeFirestore and enableNetwork are replaced.
-vi.mock('firebase/firestore', async (importOriginal) => {
-  const mod = await importOriginal<typeof import('firebase/firestore')>();
+// Complete in-memory Firestore mock — no emulator needed.
+vi.mock('firebase/firestore', () => {
+  function resolveSentinels(data: Record<string, unknown>): Record<string, unknown> {
+    const now = Date.now();
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(data)) {
+      result[k] = v === SERVER_TS_SENTINEL ? now : v;
+    }
+    return result;
+  }
+
+  function mockCollection(parent: unknown, path: string) {
+    if (parent && typeof parent === 'object' && '_path' in (parent as Record<string, unknown>)) {
+      return { _path: `${(parent as { _path: string })._path}/${path}` };
+    }
+    return { _path: path };
+  }
+
+  function mockDoc(...args: unknown[]) {
+    if (args.length === 2) {
+      const [parent, id] = args as [{ _path: string }, string];
+      return { _path: `${parent._path}/${id}`, id };
+    }
+    const [, collPath, docId] = args as [unknown, string, string];
+    return { _path: `${collPath}/${docId}`, id: docId };
+  }
+
+  function mockSetDoc(docRef: { _path: string }, data: Record<string, unknown>, options?: { merge?: boolean }) {
+    const resolved = resolveSentinels(data);
+    if (options?.merge) {
+      firestoreData[docRef._path] = { ...(firestoreData[docRef._path] ?? {}), ...resolved };
+    } else {
+      firestoreData[docRef._path] = resolved;
+    }
+    return Promise.resolve();
+  }
+
+  function mockGetDoc(docRef: { _path: string; id?: string }) {
+    const data = firestoreData[docRef._path];
+    return Promise.resolve({
+      exists: () => data !== undefined,
+      data: () => (data ? { ...data } : undefined),
+      id: docRef.id ?? docRef._path.split('/').pop(),
+    });
+  }
+
+  function getDocsInCollection(collPath: string) {
+    const prefix = `${collPath}/`;
+    const docs: Array<{ id: string; data: () => Record<string, unknown> }> = [];
+    for (const [path, data] of Object.entries(firestoreData)) {
+      if (path.startsWith(prefix)) {
+        const remainder = path.slice(prefix.length);
+        if (!remainder.includes('/')) {
+          const copy = { ...data };
+          docs.push({ id: remainder, data: () => copy });
+        }
+      }
+    }
+    return docs;
+  }
+
+  function mockGetDocs(collRef: { _path: string }) {
+    const docs = getDocsInCollection(collRef._path);
+    return Promise.resolve({
+      docs,
+      forEach: (cb: (d: { id: string; data: () => Record<string, unknown> }) => void) => docs.forEach(cb),
+    });
+  }
+
+  function mockUpdateDoc(docRef: { _path: string }, data: Record<string, unknown>) {
+    const existing = firestoreData[docRef._path];
+    if (!existing) return Promise.reject(new Error(`No document to update: ${docRef._path}`));
+    const now = Date.now();
+    const updated = { ...existing };
+    for (const [key, value] of Object.entries(data)) {
+      if (value === DELETE_FIELD_SENTINEL) delete updated[key];
+      else if (value === SERVER_TS_SENTINEL) updated[key] = now;
+      else updated[key] = value;
+    }
+    firestoreData[docRef._path] = updated;
+    return Promise.resolve();
+  }
+
+  function mockOnSnapshot(
+    collRef: { _path: string },
+    callback: (snapshot: { docs: Array<{ id: string; data: () => Record<string, unknown> }> }) => void,
+  ) {
+    Promise.resolve().then(() => callback({ docs: getDocsInCollection(collRef._path) }));
+    return vi.fn();
+  }
+
+  function mockWriteBatch() {
+    const ops: Array<() => void> = [];
+    return {
+      set: (docRef: { _path: string }, data: Record<string, unknown>) => {
+        ops.push(() => { firestoreData[docRef._path] = resolveSentinels(data); });
+      },
+      delete: (docRef: { _path: string }) => {
+        ops.push(() => { delete firestoreData[docRef._path]; });
+      },
+      commit: () => { ops.forEach((op) => op()); return Promise.resolve(); },
+    };
+  }
+
+  class MockTimestamp {
+    constructor(public seconds: number, public nanoseconds: number) {}
+
+    toMillis() { return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6); }
+  }
+
   return {
-    ...mod,
-    initializeFirestore: vi.fn(() => testFirestore),
+    collection: vi.fn(mockCollection),
+    doc: vi.fn(mockDoc),
+    setDoc: vi.fn(mockSetDoc),
+    getDoc: vi.fn(mockGetDoc),
+    getDocs: vi.fn(mockGetDocs),
+    updateDoc: vi.fn(mockUpdateDoc),
+    onSnapshot: vi.fn(mockOnSnapshot),
+    writeBatch: vi.fn(mockWriteBatch),
+    deleteField: vi.fn(() => DELETE_FIELD_SENTINEL),
+    serverTimestamp: vi.fn(() => SERVER_TS_SENTINEL),
+    initializeFirestore: vi.fn(() => ({})),
     enableNetwork: vi.fn(() => Promise.resolve()),
+    Timestamp: MockTimestamp,
   };
 });
 
@@ -192,41 +305,12 @@ function getConditionalBlockOrder(sequence: Sequence, condition: string): string
   return conditionalBlock.components as string[];
 }
 
-// ── emulator availability check (top-level await, runs before test collection) ─
-const emulatorAvailable = await fetch('http://localhost:9099/', { signal: AbortSignal.timeout(500) })
-  .then(() => true)
-  .catch(() => false);
-
-// ── test state ────────────────────────────────────────────────────────────────
-let testEnv: RulesTestEnvironment;
-
 // ── lifecycle ─────────────────────────────────────────────────────────────────
-beforeAll(async () => {
-  if (!emulatorAvailable) return;
-
+beforeAll(() => {
   vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: PROJECT_ID }));
   vi.stubEnv('VITE_RECAPTCHAV3TOKEN', 'fake-recaptcha-token');
 
-  testEnv = await initializeTestEnvironment({
-    projectId: PROJECT_ID,
-    firestore: {
-      host: 'localhost',
-      port: 9099,
-      rules: `
-        rules_version = '2';
-        service cloud.firestore {
-          match /databases/{database}/documents {
-            match /{document=**} { allow read, write: if true; }
-          }
-        }
-      `,
-    },
-  });
-
-  testFirestore = testEnv.unauthenticatedContext().firestore() as unknown as Firestore;
-
   // Mock fetch so _getFromStorage can retrieve data stored via uploadBytes mock.
-  // Save the real fetch first so emulator REST calls (e.g. clearFirestore) pass through.
   const realFetch = globalThis.fetch.bind(globalThis);
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
     const urlStr = url.toString();
@@ -239,12 +323,11 @@ beforeAll(async () => {
   });
 });
 
-afterAll(async () => {
-  await testEnv?.cleanup();
+afterAll(() => {
   vi.restoreAllMocks();
 });
 
-describe.runIf(emulatorAvailable).each([
+describe.each([
   { TestEngine: FirebaseStorageEngine },
 ])('describe object $TestEngine', ({ TestEngine }) => {
   let storageEngine: StorageEngine;
@@ -259,7 +342,7 @@ describe.runIf(emulatorAvailable).each([
   });
 
   afterEach(async () => {
-    await testEnv.clearFirestore();
+    Object.keys(firestoreData).forEach((k) => delete firestoreData[k]);
     Object.keys(storageObjects).forEach((k) => delete storageObjects[k]);
     Object.keys(localStore).forEach((k) => delete localStore[k]);
     authState.currentUser = null;
