@@ -11,6 +11,7 @@ import { SingleTask } from './SingleTask';
 import { StoredAnswer, StudyConfig } from '../../../parser/types';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 import { parseConditionParam } from '../../../utils/handleConditionLogic';
+import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
@@ -112,10 +113,12 @@ export function AllTasksTimeline({
       const joinExceptLast = split.slice(0, split.length - 1).join('_');
 
       const component = studyConfig?.components[joinExceptLast];
-
-      const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
-      const hasCorrect = !!((component && component.correctAnswer) || answer.correctAnswer.length > 0);
-      const hasAudio = component?.recordAudio ?? studyConfig?.uiConfig?.recordAudio ?? false;
+      const resolvedComponent = component && studyConfig
+        ? studyComponentToIndividualComponent(component, studyConfig)
+        : undefined;
+      const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer, resolvedComponent?.response);
+      const hasCorrect = !!((resolvedComponent && resolvedComponent.correctAnswer) || answer.correctAnswer.length > 0);
+      const hasAudio = resolvedComponent?.recordAudio ?? studyConfig?.uiConfig?.recordAudio ?? false;
 
       return {
         line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} xScale={scale} scaleStart={scaleStart} />,
@@ -131,7 +134,7 @@ export function AllTasksTimeline({
               <Stack gap={0}>
                 {Object.entries(answer.answer).map((a) => {
                   const [id, componentAnswer] = a;
-                  const correctAnswer = component?.correctAnswer?.find((c) => c.id === id)?.answer;
+                  const correctAnswer = resolvedComponent?.correctAnswer?.find((c) => c.id === id)?.answer;
                   const participantAnswer = (componentAnswer === undefined || componentAnswer === null || componentAnswer === '')
                     ? 'N/A'
                     : typeof componentAnswer === 'object'
@@ -151,7 +154,7 @@ export function AllTasksTimeline({
     });
 
     return allElements;
-  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig?.components, studyConfig?.uiConfig?.recordAudio, maxHeight, studyId, conditionParam]);
+  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {

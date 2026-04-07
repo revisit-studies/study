@@ -26,6 +26,7 @@ import { useStudyId } from '../../routes/utils';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { isDynamicBlock } from '../../parser/utils';
 import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { getDynamicComponentsForBlock } from './StepsPanel.utils';
 
 function hasRandomization(responses: Response[]) {
@@ -696,13 +697,16 @@ export function StepsPanel({
           } = (block ?? {}) as Partial<BlockStepItem>;
           const isLibraryImport = isComponent ? isComponentLibraryImport : isBlockLibraryImport;
           const importedLibraryName = isComponent ? componentImportedLibraryName : blockImportedLibraryName;
+          const resolvedComponent = component
+            ? studyComponentToIndividualComponent(component, studyConfig)
+            : undefined;
           const correctAnswer = componentAnswer?.correctAnswer?.length
             ? componentAnswer.correctAnswer
-            : component?.correctAnswer;
+            : resolvedComponent?.correctAnswer;
           const correct = correctAnswer
             && componentAnswer
             && Object.keys(componentAnswer.answer).length > 0
-            && componentAnswersAreCorrect(componentAnswer.answer, correctAnswer);
+            && componentAnswersAreCorrect(componentAnswer.answer, correctAnswer, resolvedComponent?.response);
           const correctIncorrectIcon = correctAnswer && componentAnswer && componentAnswer?.endTime > -1
             ? (correct
               ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
@@ -712,7 +716,7 @@ export function StepsPanel({
           const correctAnswerJSONText = correctAnswer
             ? JSON.stringify(correctAnswer, null, 2)
             : undefined;
-          const responseJSONText = component && JSON.stringify(component.response, null, 2);
+          const responseJSONText = resolvedComponent && JSON.stringify(resolvedComponent.response, null, 2);
           const parameters = componentAnswer && 'parameters' in componentAnswer
             ? componentAnswer.parameters
             : component && 'parameters' in component
@@ -782,7 +786,7 @@ export function StepsPanel({
                           <IconBinaryTree size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
                         </Tooltip>
                       )}
-                      {(component?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
+                      {(resolvedComponent?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
                         <Tooltip label="Random responses" position="right" withArrow>
                           <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
                         </Tooltip>

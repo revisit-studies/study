@@ -16,7 +16,10 @@ export function SummaryView({
   studyConfig: StudyConfig;
   studyId?: string;
 }) {
-  const overviewData = useMemo(() => getOverviewStats(visibleParticipants), [visibleParticipants]);
+  const overviewData = useMemo(
+    () => getOverviewStats(visibleParticipants, undefined, studyConfig),
+    [visibleParticipants, studyConfig],
+  );
 
   return (
     <Stack gap="md">

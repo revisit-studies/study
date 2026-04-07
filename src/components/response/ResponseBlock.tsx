@@ -20,14 +20,17 @@ import {
 
 import { NextButton } from '../NextButton';
 import {
-  generateInitFields, mergeReactiveAnswers, useAnswerField, usesStandaloneDontKnowField,
+  generateCustomResponseErrorMessage, generateInitFields, mergeReactiveAnswers, useAnswerField, usesStandaloneDontKnowField,
 } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
-import { FormElementProvenance, StoredAnswer, ValidationStatus } from '../../store/types';
+import {
+  CustomResponseField, FormElementProvenance, StoredAnswer, ValidationStatus,
+} from '../../store/types';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
+import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
 
 type Props = {
   status?: StoredAnswer;
@@ -141,7 +144,47 @@ export function ResponseBlock({
   const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
   const identifier = useCurrentIdentifier();
 
-  const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
+  const customResponses = useMemo(
+    () => responsesWithDefaults
+      .filter((response): response is Extract<(typeof responsesWithDefaults)[number], { type: 'custom' }> => response.type === 'custom'),
+    [responsesWithDefaults],
+  );
+
+  const customResponseModules = useMemo(() => Object.fromEntries(
+    customResponses.map((response) => [response.id, {
+      response,
+      module: getCustomResponseModule(response),
+    }]),
+  ) as Record<string, {
+    response: (typeof customResponses)[number];
+    module: ReturnType<typeof getCustomResponseModule>;
+  }>, [customResponses]);
+
+  const customResponseValidators = useMemo(
+    () => Object.fromEntries(
+      Object.entries(customResponseModules)
+        .filter(([, customResponseModule]) => !!customResponseModule.module?.default)
+        .map(([responseId, customResponseModule]) => [responseId, customResponseModule.module?.validate]),
+    ),
+    [customResponseModules],
+  );
+
+  const customResponseLoadErrors = useMemo(
+    () => Object.fromEntries(
+      Object.entries(customResponseModules)
+        .filter(([, customResponseModule]) => !customResponseModule.module?.default)
+        .map(([responseId, customResponseModule]) => [responseId, getCustomResponseModuleLoadError(customResponseModule.response)]),
+    ),
+    [customResponseModules],
+  );
+
+  const answerValidator = useAnswerField(
+    responsesWithDefaults,
+    currentStep,
+    storedAnswer || {},
+    customResponseValidators,
+    customResponseLoadErrors,
+  );
   useEffect(() => {
     if (storedAnswer) {
       answerValidator.setInitialValues(generateInitFields(responses, storedAnswer));
@@ -248,6 +291,7 @@ export function ResponseBlock({
         configCorrectAnswer?.answer,
         configCorrectAnswer?.acceptableLow,
         configCorrectAnswer?.acceptableHigh,
+        { ignoreArrayOrder: response.type === 'checkbox' || response.type === 'dropdown' },
       )];
     }));
 
@@ -326,7 +370,9 @@ export function ResponseBlock({
       <Box className={`responseBlock responseBlock-${location}`} style={style}>
         {allResponsesWithDefaults.map((response) => {
           const configCorrectAnswer = config.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
-          const correctAnswer = Array.isArray(configCorrectAnswer) && configCorrectAnswer.length > 0 ? JSON.stringify(configCorrectAnswer) : configCorrectAnswer;
+          const correctAnswer = configCorrectAnswer === undefined
+            ? undefined
+            : (typeof configCorrectAnswer === 'object' ? JSON.stringify(configCorrectAnswer) : `${configCorrectAnswer}`);
           // Check if this response is in the current location
           const isInCurrentLocation = responses.some((r) => r.id === response.id);
 
@@ -357,6 +403,22 @@ export function ResponseBlock({
                       otherInput={{
                         ...answerValidator.getInputProps(`${response.id}-other`),
                       }}
+                      field={response.type === 'custom'
+                        ? {
+                          getInputProps: () => answerValidator.getInputProps(response.id),
+                          setValue: (value) => answerValidator.setFieldValue(response.id, value),
+                          onBlur: () => answerValidator.getInputProps(response.id).onBlur?.(),
+                        } as CustomResponseField
+                        : undefined}
+                      customError={response.type === 'custom'
+                        ? generateCustomResponseErrorMessage(
+                          response,
+                          answerValidator.values[response.id],
+                          answerValidator.values,
+                          customResponseValidators[response.id],
+                          customResponseLoadErrors[response.id],
+                        )
+                        : undefined}
                       response={response}
                       index={index}
                       config={config}

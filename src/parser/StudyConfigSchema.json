@@ -590,6 +590,95 @@
       ],
       "type": "string"
     },
+    "CustomResponse": {
+      "additionalProperties": false,
+      "description": "The CustomResponse interface is used to define the properties of a response rendered by React code in `src/public`. This is useful when built-in response types do not fit the interaction you need, but you still want the response to participate in the standard form, validation, provenance, and answer-saving flow.\n\nUnlike other response assets, the path for a custom response is relative to the `src/public/` folder. Similar to React stimulus components, we suggest creating a folder named `src/public/{studyName}/assets` to house custom response files for a particular study. The React component must be the default export from the file. You may also optionally export a named `validate` function from the same module.\n\nExample: ```json {   \"id\": \"custom-chart-response\",   \"type\": \"custom\",   \"prompt\": \"Use the custom response to select a chart and confidence.\",   \"path\": \"my_study/assets/CustomChartResponse.tsx\",   \"parameters\": {     \"chartOptions\": [\"Bar\", \"Line\", \"Scatter\"]   },   \"default\": {     \"chartType\": \"Bar\",     \"confidence\": 70   } } ```",
+      "properties": {
+        "default": {
+          "$ref": "#/definitions/JsonValue",
+          "description": "The default value of the response. Must be JSON-serializable."
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "Parameters passed to the custom response component.",
+          "type": "object"
+        },
+        "path": {
+          "description": "The path to the react component. This should be a relative path from the src/public folder.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "custom",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
     "DeterministicInterruption": {
       "additionalProperties": false,
       "description": "The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.\n\nFor example, if you want to show an interruption after the second component in the block, you would set firstLocation to 2. If you want to show an interruption after every 3 components, you would set spacing to 3. If you want to show an interruption after the second component and then every 3 components, you would set firstLocation to 2 and spacing to 3.\n\nThe components property is an array of the components that will be inserted at the location specified by firstLocation and spacing. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the DeterministicInterruption:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\",    \"component4\",    \"component5\",    \"component6\"  ],  \"interruptions\": [    {      \"firstLocation\": 2,      \"spacing\": 3,      \"components\": [        \"interruption1\",        \"interruption2\"      ]    }  ] } ```\n\nThe resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"],  [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"],  [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"],  ... ] ```",
@@ -1387,6 +1476,39 @@
         }
       ],
       "description": "The InterruptionBlock interface is used to define interruptions in a block. These can be used for breaks or attention checks. Interruptions can be deterministic or random."
+    },
+    "JsonArray": {
+      "items": {
+        "$ref": "#/definitions/JsonValue"
+      },
+      "type": "array"
+    },
+    "JsonObject": {
+      "additionalProperties": {
+        "$ref": "#/definitions/JsonValue"
+      },
+      "type": "object"
+    },
+    "JsonPrimitive": {
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/JsonPrimitive"
+        },
+        {
+          "$ref": "#/definitions/JsonObject"
+        },
+        {
+          "$ref": "#/definitions/JsonArray"
+        }
+      ]
     },
     "LikertResponse": {
       "additionalProperties": false,
@@ -2856,6 +2978,9 @@
         },
         {
           "$ref": "#/definitions/ReactiveResponse"
+        },
+        {
+          "$ref": "#/definitions/CustomResponse"
         },
         {
           "$ref": "#/definitions/MatrixResponse"

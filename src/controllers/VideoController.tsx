@@ -2,7 +2,7 @@ import {
   forwardRef, RefObject, useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import {
-  APITypes, PlyrProps, usePlyr, PlyrSource, PlyrOptions,
+  APITypes, PlyrOptions, PlyrProps, PlyrSource, usePlyr,
 } from 'plyr-react';
 import { VideoComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
@@ -147,7 +147,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
     };
   }, [provider, url, validExternalUrl]);
 
-  const sources = useMemo<PlyrSource[]>(() => {
+  const sources = useMemo<PlyrSource['sources']>(() => {
     if (provider === 'youtube') {
       if (!validExternalUrl) return [];
       return [
