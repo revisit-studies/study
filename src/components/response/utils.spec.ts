@@ -3,7 +3,7 @@ import {
   afterEach, beforeEach, describe, expect, it, test,
 } from 'vitest';
 import type {
-  CheckboxResponse, DropdownResponse, MatrixResponse, NumericalResponse, Response,
+  CheckboxResponse, CustomResponse, DropdownResponse, MatrixResponse, NumericalResponse, Response,
 } from '../../parser/types';
 import type { CustomResponseValidate } from '../../store/types';
 import {
