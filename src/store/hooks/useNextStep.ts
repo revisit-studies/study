@@ -17,30 +17,9 @@ import { useStoredAnswer } from './useStoredAnswer';
 import { useWindowEvents } from './useWindowEvents';
 import { findBlockForStep, findIndexOfBlock } from '../../utils/getSequenceFlatMap';
 import { useStudyConfig } from './useStudyConfig';
-import {
-  IndividualComponent, InheritedComponent, StudyConfig,
-} from '../../parser/types';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
-import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
-
-function checkAllAnswersCorrect(answers: StoredAnswer['answer'], componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
-  const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
-
-  // Find the matching component in the study config
-  const foundConfigComponent = Object.entries(studyConfig.components).find(([configComponentId]) => configComponentId === componentName);
-  const foundConfigComponentConfig = foundConfigComponent ? foundConfigComponent[1] : null;
-
-  if (!foundConfigComponentConfig) {
-    throw new Error(`Component ${componentName} could not be found in the study components.`);
-  }
-
-  if (!foundConfigComponentConfig.correctAnswer) {
-    return true;
-  }
-
-  return componentAnswersAreCorrect(answers, foundConfigComponentConfig.correctAnswer);
-}
+import { areComponentAnswersCorrect, getSkipConditionCorrectAnswers } from './useNextStep.utils';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
@@ -94,8 +73,6 @@ export function useNextStep() {
     }, {}) as StoredAnswer['answer'] : {};
     const { provenanceGraph } = trialValidationCopy || {};
     const endTime = Date.now();
-
-    const { componentName } = storedAnswer;
 
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
@@ -180,7 +157,7 @@ export function useNextStep() {
             conditionIsTriggered = condition.comparison === 'equal' ? condition.value === response.answer[condition.responseId] : condition.value !== response.answer[condition.responseId];
           } else {
             // Check that the response is matches the correct answer
-            conditionIsTriggered = !checkAllAnswersCorrect(response.answer, componentId, studyConfig.components[componentId.slice(0, componentId.lastIndexOf('_'))], studyConfig);
+            conditionIsTriggered = !areComponentAnswersCorrect(response.answer, studyConfig.components[componentId.slice(0, componentId.lastIndexOf('_'))], studyConfig);
           }
         } else if (condition.check === 'block' || condition.check === 'repeatedComponent') {
           // If we have less than numCorrect or numIncorrect, there's no point in checking the condition
@@ -189,7 +166,7 @@ export function useNextStep() {
           }
 
           // Check the candidates and count the number of correct and incorrect answers
-          const correctAnswers = componentsToCheck.map(([_componentName, responseObj]) => checkAllAnswersCorrect(responseObj.answer, _componentName, studyConfig.components[componentName.slice(0, componentName.lastIndexOf('_'))], studyConfig));
+          const correctAnswers = getSkipConditionCorrectAnswers(componentsToCheck, studyConfig);
           const numCorrect = correctAnswers.filter((correct) => correct).length;
           const numIncorrect = correctAnswers.length - numCorrect;
 
