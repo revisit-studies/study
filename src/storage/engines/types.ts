@@ -568,7 +568,7 @@ export abstract class StorageEngine {
     return operationPromise;
   }
 
-  private async waitForPendingAssetUploads() {
+  private async waitForPendingAssetUploads(): Promise<Error | null> {
     const uploadPromises = [
       ...this.pendingAssetUploads.values(),
       ...this.pendingAssetOperations,
