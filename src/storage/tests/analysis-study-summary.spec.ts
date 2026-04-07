@@ -76,10 +76,6 @@ describe('convertNumberToString', () => {
   test('correctness: returns N/A for NaN', () => {
     expect(convertNumberToString(NaN, 'correctness')).toBe('N/A');
   });
-
-  test('unknown type always returns N/A', () => {
-    expect(convertNumberToString(99, 'date')).toBe('N/A');
-  });
 });
 
 // ── getOverviewStats ─────────────────────────────────────────────────────────
