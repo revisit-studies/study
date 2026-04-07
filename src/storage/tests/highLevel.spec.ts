@@ -751,20 +751,20 @@ describe.each([
     expect(sequenceAssignment!.answered).toEqual(['intro', 'late-progress']);
   });
 
-  test('finalizeParticipant returns retry when there are no answered questions', async () => {
+  test('finalizeParticipant completes when there are no answered questions', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
     const finalizeResult = await storageEngine.finalizeParticipant();
-    expect(finalizeResult.status).toBe('retry');
+    expect(finalizeResult.status).toBe('complete');
 
     const participantData = await storageEngine.getParticipantData(participantSession.participantId);
     expect(participantData).toBeDefined();
-    expect(participantData!.completed).toBe(false);
+    expect(participantData!.completed).toBe(true);
 
     const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantSession.participantId);
     expect(sequenceAssignment).toBeDefined();
-    expect(sequenceAssignment!.completed).toBeNull();
+    expect(sequenceAssignment!.completed).not.toBeNull();
   });
 
   test('finalizeParticipant waits for pending asset uploads and returns an error when an upload fails', async () => {

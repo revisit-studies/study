@@ -1276,6 +1276,29 @@ export abstract class StorageEngine {
     const localAnsweredAnswers = getAnsweredParticipantAnswerMetadata(this.participantData.answers);
     const persistedAnsweredAnswers = getAnsweredParticipantAnswerMetadata(persistedParticipantData.answers);
 
+    if (localAnsweredAnswers.length === 0 && persistedAnsweredAnswers.length === 0) {
+      this.participantData.completed = true;
+
+      try {
+        await this.persistCurrentParticipantData({ immediate: true, cache: true });
+        await this._completeCurrentParticipantRealtime();
+      } catch (error) {
+        return {
+          status: 'error',
+          message: normalizeError(error).message,
+        };
+      }
+
+      const completedParticipantData = await this.getParticipantData();
+      const sequenceAssignment = await this._getSequenceAssignment(this.currentParticipantId);
+
+      if (completedParticipantData?.completed && sequenceAssignment?.completed) {
+        return { status: 'complete' };
+      }
+
+      return { status: 'retry' };
+    }
+
     if (localAnsweredAnswers.length === 0 || persistedAnsweredAnswers.length === 0) {
       return { status: 'retry' };
     }
