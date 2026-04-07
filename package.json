@@ -17,7 +17,7 @@
     "generate-library-examples": "node libraryExampleStudyGenerator.cjs",
     "test": "playwright test",
     "unittest": "vitest",
-    "unittest-coverage": "vitest run --coverage --coverage.reporter=text --run",
+    "unittest-coverage": "vitest run --coverage --coverage.reporter=text",
     "find-revisit-users": "bash scripts/find-revisit-users.sh",
     "preinstall": "node -e \"if(!/yarn\\.js$/.test(process.env.npm_execpath))throw new Error('Use yarn')\"",
     "postinstall": "husky"
