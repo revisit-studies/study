@@ -5,6 +5,7 @@ export type StudyEndFinalizeLoopState = {
   failedAttemptCount: number;
   isRetryingAutomatically: boolean;
   manualRetryRequired: boolean;
+  retryAllowed: boolean;
   retryDelayMs: number | null;
 };
 
@@ -24,8 +25,11 @@ export const DEFAULT_STUDY_END_FINALIZE_STATE: StudyEndFinalizeLoopState = {
   failedAttemptCount: 0,
   isRetryingAutomatically: false,
   manualRetryRequired: false,
+  retryAllowed: true,
   retryDelayMs: null,
 };
+
+const DEFAULT_FINALIZE_ERROR_MESSAGE = 'An error occurred while uploading your answers.';
 
 export function getStudyEndRetryDelayMs(failedAttemptCount: number) {
   if (failedAttemptCount <= 1) {
@@ -66,6 +70,7 @@ export function createStudyEndFinalizeLoop({
       failedAttemptCount: 0,
       isRetryingAutomatically: true,
       manualRetryRequired: false,
+      retryAllowed: true,
       retryDelayMs,
     });
   };
@@ -90,6 +95,7 @@ export function createStudyEndFinalizeLoop({
         failedAttemptCount,
         isRetryingAutomatically: false,
         manualRetryRequired: true,
+        retryAllowed: true,
         retryDelayMs: null,
       });
       return;
@@ -101,10 +107,22 @@ export function createStudyEndFinalizeLoop({
       failedAttemptCount,
       isRetryingAutomatically: true,
       manualRetryRequired: false,
+      retryAllowed: true,
       retryDelayMs,
     });
 
     scheduleRetry(retryDelayMs);
+  };
+
+  const handleTerminalFailure = (error: string | null) => {
+    emitState({
+      error,
+      failedAttemptCount: 1,
+      isRetryingAutomatically: false,
+      manualRetryRequired: true,
+      retryAllowed: false,
+      retryDelayMs: null,
+    });
   };
 
   const handleRetryablePendingState = () => {
@@ -142,14 +160,19 @@ export function createStudyEndFinalizeLoop({
         return;
       }
 
-      handleRetryableFailure(result.message || 'An error occurred while uploading your answers.');
+      if (result.retryable === false) {
+        handleTerminalFailure(result.message || DEFAULT_FINALIZE_ERROR_MESSAGE);
+        return;
+      }
+
+      handleRetryableFailure(result.message || DEFAULT_FINALIZE_ERROR_MESSAGE);
     } catch (error) {
       if (cancelled) {
         return;
       }
 
       onUnexpectedError?.(error);
-      handleRetryableFailure('An error occurred while uploading your answers.');
+      handleRetryableFailure(DEFAULT_FINALIZE_ERROR_MESSAGE);
     } finally {
       finalizeRequestInFlight = false;
     }

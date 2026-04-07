@@ -112,10 +112,6 @@ export function StudyEnd() {
     download(JSON.stringify(participantDataToDownload, null, 2), `${baseFilename}_${participantIdToDownload}.json`);
   }, [baseFilename, participantData, participantId, refreshParticipantData]);
 
-  const handleDownloadParticipant = useCallback(() => {
-    downloadParticipant();
-  }, [downloadParticipant]);
-
   const retryFinalize = useCallback(() => {
     finalizeLoopRef.current?.retryNow();
   }, []);
@@ -192,6 +188,7 @@ export function StudyEnd() {
     failedAttemptCount,
     isRetryingAutomatically,
     manualRetryRequired,
+    retryAllowed,
     retryDelayMs,
   } = finalizeState;
   const showRetryNotice = failedAttemptCount > 0;
@@ -210,7 +207,9 @@ export function StudyEnd() {
             <>
               <Text size="xl" display="block">
                 {manualRetryRequired
-                  ? 'We could not confirm your upload after 3 attempts.'
+                  ? retryAllowed
+                    ? 'We could not confirm your upload after 3 attempts.'
+                    : 'Your responses were saved, but we could not upload all recorded media from this tab.'
                   : showRetryNotice
                     ? 'We hit an issue while uploading your answers. Retrying automatically...'
                     : 'Please wait while your answers are uploaded.'}
@@ -222,7 +221,9 @@ export function StudyEnd() {
                     <Text c="red" maw={560}>
                       {finalizeError || 'The upload confirmation is taking longer than expected.'}
                       {' '}
-                      You can try the upload again, or download your participant data and submit it manually to the study designer.
+                      {retryAllowed
+                        ? 'You can try the upload again, or download your participant data and submit it manually to the study designer.'
+                        : 'You can download your participant data and send it to the study designer, but the recorded media from this tab cannot be re-uploaded now.'}
                     </Text>
                     {participantId
                       ? (
@@ -234,8 +235,10 @@ export function StudyEnd() {
                       : null}
                     <Space h="lg" />
                     <Group>
-                      <Button onClick={retryFinalize}>Retry Upload</Button>
-                      <Button variant="default" onClick={handleDownloadParticipant} disabled={downloadUnavailable}>
+                      {retryAllowed
+                        ? <Button onClick={retryFinalize}>Retry Upload</Button>
+                        : null}
+                      <Button variant="default" onClick={downloadParticipant} disabled={downloadUnavailable}>
                         Download Participant Data
                       </Button>
                     </Group>

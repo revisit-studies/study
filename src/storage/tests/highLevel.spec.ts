@@ -799,6 +799,16 @@ describe.each([
     const finalizeResult = await finalizePromise;
     expect(finalizeResult.status).toBe('error');
     expect(finalizeResult.message).toContain('Asset upload failed');
+    expect(finalizeResult.retryable).toBe(false);
+
+    const participantData = await storageEngine.getParticipantData();
+    expect(participantData).toBeDefined();
+    expect(participantData!.completed).toBe(true);
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantData!.participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.completed).not.toBeNull();
   });
 
   test('finalizeParticipant does not mask a failed asset upload after a later successful upload', async () => {
@@ -834,6 +844,16 @@ describe.each([
     const finalizeResult = await storageEngine.finalizeParticipant();
     expect(finalizeResult.status).toBe('error');
     expect(finalizeResult.message).toContain('Asset upload failed');
+    expect(finalizeResult.retryable).toBe(false);
+
+    const participantData = await storageEngine.getParticipantData();
+    expect(participantData).toBeDefined();
+    expect(participantData!.completed).toBe(true);
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantData!.participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.completed).not.toBeNull();
   });
 
   test('finalizeParticipant succeeds after a transient realtime completion failure', async () => {

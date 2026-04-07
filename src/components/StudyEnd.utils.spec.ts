@@ -43,6 +43,7 @@ describe('StudyEnd utils', () => {
       failedAttemptCount: 0,
       isRetryingAutomatically: false,
       manualRetryRequired: false,
+      retryAllowed: true,
       retryDelayMs: null,
     });
   });
@@ -79,6 +80,7 @@ describe('StudyEnd utils', () => {
       failedAttemptCount: 1,
       isRetryingAutomatically: true,
       manualRetryRequired: false,
+      retryAllowed: true,
       retryDelayMs: 2000,
     });
     expect(finalizeParticipant).toHaveBeenCalledTimes(1);
@@ -97,6 +99,7 @@ describe('StudyEnd utils', () => {
       failedAttemptCount: 0,
       isRetryingAutomatically: false,
       manualRetryRequired: false,
+      retryAllowed: true,
       retryDelayMs: null,
     });
     expect(onComplete).toHaveBeenCalledTimes(1);
@@ -125,6 +128,7 @@ describe('StudyEnd utils', () => {
       failedAttemptCount: 1,
       isRetryingAutomatically: true,
       manualRetryRequired: false,
+      retryAllowed: true,
       retryDelayMs: 2000,
     });
 
@@ -136,6 +140,7 @@ describe('StudyEnd utils', () => {
       failedAttemptCount: 2,
       isRetryingAutomatically: true,
       manualRetryRequired: false,
+      retryAllowed: true,
       retryDelayMs: 5000,
     });
 
@@ -147,6 +152,7 @@ describe('StudyEnd utils', () => {
       failedAttemptCount: 3,
       isRetryingAutomatically: false,
       manualRetryRequired: true,
+      retryAllowed: true,
       retryDelayMs: null,
     });
     expect(finalizeParticipant).toHaveBeenCalledTimes(3);
@@ -165,6 +171,7 @@ describe('StudyEnd utils', () => {
       failedAttemptCount: 0,
       isRetryingAutomatically: false,
       manualRetryRequired: false,
+      retryAllowed: true,
       retryDelayMs: null,
     });
     expect(onComplete).toHaveBeenCalledTimes(1);
@@ -193,6 +200,7 @@ describe('StudyEnd utils', () => {
       failedAttemptCount: 0,
       isRetryingAutomatically: true,
       manualRetryRequired: false,
+      retryAllowed: true,
       retryDelayMs: 2000,
     });
 
@@ -205,6 +213,7 @@ describe('StudyEnd utils', () => {
       failedAttemptCount: 0,
       isRetryingAutomatically: true,
       manualRetryRequired: false,
+      retryAllowed: true,
       retryDelayMs: 2000,
     });
 
@@ -217,6 +226,7 @@ describe('StudyEnd utils', () => {
       failedAttemptCount: 0,
       isRetryingAutomatically: true,
       manualRetryRequired: false,
+      retryAllowed: true,
       retryDelayMs: 2000,
     });
 
@@ -229,8 +239,44 @@ describe('StudyEnd utils', () => {
       failedAttemptCount: 0,
       isRetryingAutomatically: false,
       manualRetryRequired: false,
+      retryAllowed: true,
       retryDelayMs: null,
     });
     expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  test('stops immediately on a non-retryable finalize error', async () => {
+    const finalizeParticipant = vi.fn()
+      .mockResolvedValueOnce({
+        status: 'error',
+        message: 'Recorded media upload failed',
+        retryable: false,
+      } satisfies FinalizeParticipantResult);
+    const onComplete = vi.fn();
+    const onStateChange = vi.fn();
+
+    const finalizeLoop = createStudyEndFinalizeLoop({
+      getStorageEngine: () => ({ finalizeParticipant } as unknown as StorageEngine),
+      onComplete,
+      onStateChange,
+    });
+
+    finalizeLoop.start();
+    await flushPromises();
+
+    expect(onStateChange).toHaveBeenLastCalledWith({
+      error: 'Recorded media upload failed',
+      failedAttemptCount: 1,
+      isRetryingAutomatically: false,
+      manualRetryRequired: true,
+      retryAllowed: false,
+      retryDelayMs: null,
+    });
+
+    vi.advanceTimersByTime(30000);
+    await flushPromises();
+
+    expect(finalizeParticipant).toHaveBeenCalledTimes(1);
+    expect(onComplete).not.toHaveBeenCalled();
   });
 });

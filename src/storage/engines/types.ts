@@ -125,6 +125,7 @@ export type SnapshotDocContent = Record<string, { name: string; }>;
 export type FinalizeParticipantResult = {
   status: 'complete' | 'retry' | 'error';
   message?: string;
+  retryable?: boolean;
 };
 
 function normalizeError(error: unknown) {
@@ -1261,12 +1262,6 @@ export abstract class StorageEngine {
     }
 
     const assetUploadError = await this.waitForPendingAssetUploads();
-    if (assetUploadError) {
-      return {
-        status: 'error',
-        message: assetUploadError.message,
-      };
-    }
 
     const persistedParticipantData = await this.getParticipantData();
     if (!persistedParticipantData || !this.participantData) {
@@ -1276,8 +1271,8 @@ export abstract class StorageEngine {
     const localAnsweredAnswers = getAnsweredParticipantAnswerMetadata(this.participantData.answers);
     const persistedAnsweredAnswers = getAnsweredParticipantAnswerMetadata(persistedParticipantData.answers);
 
-    if (localAnsweredAnswers.length === 0 && persistedAnsweredAnswers.length === 0) {
-      this.participantData.completed = true;
+    const completeParticipant = async (): Promise<FinalizeParticipantResult> => {
+      this.participantData!.completed = true;
 
       try {
         await this.persistCurrentParticipantData({ immediate: true, cache: true });
@@ -1290,13 +1285,25 @@ export abstract class StorageEngine {
       }
 
       const completedParticipantData = await this.getParticipantData();
-      const sequenceAssignment = await this._getSequenceAssignment(this.currentParticipantId);
+      const sequenceAssignment = await this._getSequenceAssignment(this.currentParticipantId!);
 
       if (completedParticipantData?.completed && sequenceAssignment?.completed) {
+        if (assetUploadError) {
+          return {
+            status: 'error',
+            message: assetUploadError.message,
+            retryable: false,
+          };
+        }
+
         return { status: 'complete' };
       }
 
       return { status: 'retry' };
+    };
+
+    if (localAnsweredAnswers.length === 0 && persistedAnsweredAnswers.length === 0) {
+      return completeParticipant();
     }
 
     if (localAnsweredAnswers.length === 0 || persistedAnsweredAnswers.length === 0) {
@@ -1307,26 +1314,7 @@ export abstract class StorageEngine {
       return { status: 'retry' };
     }
 
-    this.participantData.completed = true;
-
-    try {
-      await this.persistCurrentParticipantData({ immediate: true, cache: true });
-      await this._completeCurrentParticipantRealtime();
-    } catch (error) {
-      return {
-        status: 'error',
-        message: normalizeError(error).message,
-      };
-    }
-
-    const completedParticipantData = await this.getParticipantData();
-    const sequenceAssignment = await this._getSequenceAssignment(this.currentParticipantId);
-
-    if (completedParticipantData?.completed && sequenceAssignment?.completed) {
-      return { status: 'complete' };
-    }
-
-    return { status: 'retry' };
+    return completeParticipant();
   }
 
   // Verifies if the current participant has completed the study.
