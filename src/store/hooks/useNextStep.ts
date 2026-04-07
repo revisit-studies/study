@@ -23,6 +23,7 @@ import {
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
 import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
+import { showNotification } from '../../utils/notifications';
 
 function checkAllAnswersCorrect(answers: StoredAnswer['answer'], componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
   const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
@@ -80,7 +81,7 @@ export function useNextStep() {
   const startTime = useMemo(() => Date.now(), [funcIndex, currentStep]);
 
   const windowEvents = useWindowEvents();
-  const goToNextStep = useCallback((collectData = true) => {
+  const goToNextStep = useCallback(async (collectData = true) => {
     if (typeof currentStep !== 'number') {
       return;
     }
@@ -115,11 +116,24 @@ export function useNextStep() {
           ...toSave,
         }),
       );
-      // Update database
+      const answersToPersist = { ...answers, [identifier]: toSave };
+
       if (storageEngine) {
-        // Force the answers to be up to date before saving
-        storageEngine.saveAnswers({ ...answers, [identifier]: toSave });
+        try {
+          // Force the answers to be up to date before saving.
+          // Await the local snapshot write before navigating away.
+          await storageEngine.saveAnswers(answersToPersist);
+        } catch (error) {
+          console.error('Failed to save participant answers before advancing', error);
+          showNotification({
+            title: 'Failed to Save Response',
+            message: 'Your response could not be saved. Please check your connection and try again.',
+            color: 'red',
+          });
+          return;
+        }
       }
+
       storeDispatch(setReactiveAnswers({}));
       storeDispatch(setMatrixAnswersCheckbox(null));
       storeDispatch(setMatrixAnswersRadio(null));
