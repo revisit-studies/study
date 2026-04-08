@@ -63,29 +63,21 @@ describe('useAuth', () => {
 
 describe('AuthProvider', () => {
   test('renders loading overlay while determining status', async () => {
-    let renderResult: ReturnType<typeof render>;
-
-    await act(async () => {
-      renderResult = render(
-        <AuthProvider>
-          <div data-testid="child">child</div>
-        </AuthProvider>,
-      );
-    });
+    const renderResult = render(
+      <AuthProvider>
+        <div data-testid="child">child</div>
+      </AuthProvider>,
+    );
     // Since storageEngine is null, it should set non-auth user quickly
     expect(renderResult.getByTestId).toBeDefined();
   });
 
   test('renders children when storageEngine is not a cloud engine', async () => {
-    let renderResult: ReturnType<typeof render>;
-
-    await act(async () => {
-      renderResult = render(
-        <AuthProvider>
-          <div data-testid="child-content">Hello</div>
-        </AuthProvider>,
-      );
-    });
+    const renderResult = render(
+      <AuthProvider>
+        <div data-testid="child-content">Hello</div>
+      </AuthProvider>,
+    );
     expect(renderResult.container).toBeDefined();
   });
 
@@ -192,7 +184,7 @@ describe('AuthProvider — non-null storage engine paths', () => {
   });
 
   test('Supabase getSession failure is caught silently (covers catch at line 94)', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     mockStorageEngineVal = {
       getEngine: vi.fn(() => 'supabase'),
       getSession: vi.fn().mockRejectedValue(new Error('session error')),
