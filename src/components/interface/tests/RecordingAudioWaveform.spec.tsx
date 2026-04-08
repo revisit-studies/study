@@ -2,7 +2,7 @@ import { render, act, cleanup } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { RecordingAudioWaveform } from './RecordingAudioWaveform';
+import { RecordingAudioWaveform } from '../RecordingAudioWaveform';
 
 // ── stubs for canvas / Web Audio API (not available in jsdom) ─────────────────
 
@@ -49,7 +49,7 @@ describe('RecordingAudioWaveform', () => {
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
     // Make canvas.getContext return a workable mock in jsdom
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(mockCtx as never);
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(mockCtx as unknown as CanvasRenderingContext2D);
 
     Object.defineProperty(navigator, 'mediaDevices', {
       value: { getUserMedia: mockGetUserMedia },

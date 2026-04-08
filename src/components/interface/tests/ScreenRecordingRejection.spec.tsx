@@ -3,7 +3,7 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import { ReactNode } from 'react';
-import { ScreenRecordingRejection } from './ScreenRecordingRejection';
+import { ScreenRecordingRejection } from '../ScreenRecordingRejection';
 
 vi.mock('@mantine/core', () => ({
   Modal: ({ children }: { children: ReactNode }) => <div role="dialog">{children}</div>,

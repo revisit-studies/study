@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { AlertModal } from './AlertModal';
+import { AlertModal } from '../AlertModal';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -11,7 +11,7 @@ let mockAlertModal = { show: false, title: '', message: '' };
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../store/store', () => ({
+vi.mock('../../../store/store', () => ({
   useStoreSelector: (selector: (s: Record<string, unknown>) => unknown) => selector({
     alertModal: mockAlertModal,
     config: { uiConfig: { contactEmail: 'admin@example.com' } },
@@ -94,7 +94,7 @@ describe('AlertModal', () => {
   });
 
   test('does not show diagnostics for regular (non-storage) alert', () => {
-    mockAlertModal = { show: true, title: 'Generic Error', message: 'Oops' };
+    mockAlertModal = { show: true, title: 'Generic Error', message: 'Test' };
     const html = renderToStaticMarkup(<AlertModal />);
     expect(html).not.toContain('Study ID:');
     expect(html).not.toContain('mailto:');

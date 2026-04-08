@@ -11,9 +11,9 @@ import {
   getFilteredParticipantProgress,
   groupParticipantProgress,
   LiveMonitorView,
-} from '../individualStudy/liveMonitor/LiveMonitorView';
-import { ParticipantSection } from '../individualStudy/liveMonitor/ParticipantSection';
-import { ProgressHeatmap } from '../individualStudy/liveMonitor/ProgressHeatmap';
+} from '../individualStudy/LiveMonitor/LiveMonitorView';
+import { ParticipantSection } from '../individualStudy/LiveMonitor/ParticipantSection';
+import { ProgressHeatmap } from '../individualStudy/LiveMonitor/ProgressHeatmap';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 

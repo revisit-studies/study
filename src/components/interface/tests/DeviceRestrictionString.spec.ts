@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import type { DisplayRules, StudyRules } from '../../parser/types';
-import type { DeviceRuleStatus } from './DeviceRestrictionString';
+import type { DisplayRules, StudyRules } from '../../../parser/types';
+import type { DeviceRuleStatus } from '../DeviceRestrictionString';
 import {
   getConfiguredDeviceRestrictionLines,
   getConfiguredDeviceRestrictionTooltip,
   getUnmetDeviceRestrictionLines,
   getUnmetDeviceRestrictionTooltip,
-} from './DeviceRestrictionString';
+} from '../DeviceRestrictionString';
 
 const allAllowed: DeviceRuleStatus = {
   isBrowserAllowed: true,

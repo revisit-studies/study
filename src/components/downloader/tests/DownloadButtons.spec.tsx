@@ -6,27 +6,27 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { DownloadButtons } from './DownloadButtons';
-import { download } from './DownloadTidy';
-import { downloadParticipantsAudioZip, downloadParticipantsScreenRecordingZip } from '../../utils/handleDownloadFiles';
-import type { ParticipantData } from '../../storage/types';
+import { DownloadButtons } from '../DownloadButtons';
+import { download } from '../DownloadTidy';
+import { downloadParticipantsAudioZip, downloadParticipantsScreenRecordingZip } from '../../../utils/handleDownloadFiles';
+import type { ParticipantData } from '../../../storage/types';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../storage/storageEngineHooks', () => ({
-  useStorageEngine: () => ({ storageEngine: { getEngine: () => 'supabase' } }),
+vi.mock('../../../storage/storageEngineHooks', () => ({
+  useStorageEngine: () => ({ storageEngine: { getEngine: () => 'firebase' } }),
 }));
 
 vi.mock('@mantine/hooks', () => ({
   useDisclosure: () => [false, { open: vi.fn(), close: vi.fn() }],
 }));
 
-vi.mock('./DownloadTidy', () => ({
+vi.mock('../DownloadTidy', () => ({
   DownloadTidy: () => <div data-testid="download-tidy" />,
   download: vi.fn(),
 }));
 
-vi.mock('../../utils/handleDownloadFiles', () => ({
+vi.mock('../../../utils/handleDownloadFiles', () => ({
   downloadParticipantsAudioZip: vi.fn().mockResolvedValue(undefined),
   downloadParticipantsScreenRecordingZip: vi.fn().mockResolvedValue(undefined),
 }));
@@ -129,10 +129,23 @@ describe('DownloadButtons', () => {
 
 // ── interactive tests (click handlers) ────────────────────────────────────────
 
-const participant = {
+const participant: ParticipantData = {
   participantId: 'p1',
-  answers: { trial_0: { endTime: 1000, startTime: 0 } },
-} as unknown as ParticipantData;
+  participantConfigHash: 'hash1',
+  participantIndex: 0,
+  sequence: {
+    orderPath: 'root', order: 'fixed', components: [], skip: [],
+  },
+  answers: {},
+  searchParams: {},
+  metadata: {
+    userAgent: '', resolution: { width: 0, height: 0 }, language: '', ip: '',
+  },
+  completed: false,
+  rejected: false,
+  participantTags: [],
+  stage: 'DEFAULT',
+};
 
 describe('DownloadButtons click handlers', () => {
   afterEach(() => {
@@ -142,17 +155,11 @@ describe('DownloadButtons click handlers', () => {
 
   test('JSON button click calls download with participant JSON', async () => {
     await act(async () => {
-      render(
-        <DownloadButtons
-          studyId="test-study"
-          visibleParticipants={[participant]}
-        />,
-      );
+      render(<DownloadButtons studyId="test-study" visibleParticipants={[participant]} />);
     });
 
-    await act(async () => {
-      fireEvent.click(screen.getAllByRole('button')[0]);
-    });
+    const jsonBtn = screen.getByText('json-icon').closest('button')!;
+    await act(async () => { fireEvent.click(jsonBtn); });
 
     expect(vi.mocked(download)).toHaveBeenCalledWith(
       expect.stringContaining('p1'),
@@ -162,40 +169,22 @@ describe('DownloadButtons click handlers', () => {
 
   test('JSON button uses custom fileName when provided', async () => {
     await act(async () => {
-      render(
-        <DownloadButtons
-          studyId="test-study"
-          visibleParticipants={[participant]}
-          fileName="custom"
-        />,
-      );
+      render(<DownloadButtons studyId="test-study" visibleParticipants={[participant]} fileName="custom" />);
     });
 
-    await act(async () => {
-      fireEvent.click(screen.getAllByRole('button')[0]);
-    });
+    const jsonBtn = screen.getByText('json-icon').closest('button')!;
+    await act(async () => { fireEvent.click(jsonBtn); });
 
-    expect(vi.mocked(download)).toHaveBeenCalledWith(
-      expect.any(String),
-      'custom.json',
-    );
+    expect(vi.mocked(download)).toHaveBeenCalledWith(expect.any(String), 'custom.json');
   });
 
   test('audio button click calls downloadParticipantsAudioZip', async () => {
     await act(async () => {
-      render(
-        <DownloadButtons
-          studyId="test-study"
-          visibleParticipants={[participant]}
-          hasAudio
-        />,
-      );
+      render(<DownloadButtons studyId="test-study" visibleParticipants={[participant]} hasAudio />);
     });
 
-    // buttons: [json, tidy, audio]
-    await act(async () => {
-      fireEvent.click(screen.getAllByRole('button')[2]);
-    });
+    const audioBtn = screen.getByText('audio-icon').closest('button')!;
+    await act(async () => { fireEvent.click(audioBtn); });
 
     expect(vi.mocked(downloadParticipantsAudioZip)).toHaveBeenCalledWith(
       expect.objectContaining({ studyId: 'test-study' }),
@@ -204,19 +193,11 @@ describe('DownloadButtons click handlers', () => {
 
   test('screen recording button click calls downloadParticipantsScreenRecordingZip', async () => {
     await act(async () => {
-      render(
-        <DownloadButtons
-          studyId="test-study"
-          visibleParticipants={[participant]}
-          hasScreenRecording
-        />,
-      );
+      render(<DownloadButtons studyId="test-study" visibleParticipants={[participant]} hasScreenRecording />);
     });
 
-    // buttons: [json, tidy, screen]
-    await act(async () => {
-      fireEvent.click(screen.getAllByRole('button')[2]);
-    });
+    const screenBtn = screen.getByText('screen-icon').closest('button')!;
+    await act(async () => { fireEvent.click(screenBtn); });
 
     expect(vi.mocked(downloadParticipantsScreenRecordingZip)).toHaveBeenCalledWith(
       expect.objectContaining({ studyId: 'test-study' }),
@@ -227,17 +208,11 @@ describe('DownloadButtons click handlers', () => {
     const fetchFn = vi.fn().mockResolvedValue([participant]);
 
     await act(async () => {
-      render(
-        <DownloadButtons
-          studyId="test-study"
-          visibleParticipants={fetchFn}
-        />,
-      );
+      render(<DownloadButtons studyId="test-study" visibleParticipants={fetchFn} />);
     });
 
-    await act(async () => {
-      fireEvent.click(screen.getAllByRole('button')[0]);
-    });
+    const jsonBtn = screen.getByText('json-icon').closest('button')!;
+    await act(async () => { fireEvent.click(jsonBtn); });
 
     expect(fetchFn).toHaveBeenCalled();
     expect(vi.mocked(download)).toHaveBeenCalled();

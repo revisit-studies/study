@@ -3,15 +3,15 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   describe, expect, test, vi,
 } from 'vitest';
-import { AppAside } from './AppAside';
+import { AppAside } from '../AppAside';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('./StepsPanel', () => ({
+vi.mock('../StepsPanel', () => ({
   StepsPanel: () => <div data-testid="steps-panel" />,
 }));
 
-vi.mock('../../store/hooks/useStudyConfig', () => ({
+vi.mock('../../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: () => ({
     studyRules: undefined,
     uiConfig: {},
@@ -20,7 +20,7 @@ vi.mock('../../store/hooks/useStudyConfig', () => ({
   }),
 }));
 
-vi.mock('../../store/store', () => ({
+vi.mock('../../../store/store', () => ({
   useStoreSelector: (selector: (s: Record<string, unknown>) => unknown) => selector({
     sequence: [],
     answers: {},
@@ -32,27 +32,27 @@ vi.mock('../../store/store', () => ({
   useStoreDispatch: () => vi.fn(),
 }));
 
-vi.mock('../../routes/utils', () => ({
+vi.mock('../../../routes/utils', () => ({
   useStudyId: () => 'test-study',
 }));
 
-vi.mock('../../utils/nextParticipant', () => ({
+vi.mock('../../../utils/nextParticipant', () => ({
   getNewParticipant: vi.fn(),
 }));
 
-vi.mock('../../storage/storageEngineHooks', () => ({
+vi.mock('../../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: { getEngine: () => 'localStorage' } }),
 }));
 
-vi.mock('../../store/hooks/useIsAnalysis', () => ({
+vi.mock('../../../store/hooks/useIsAnalysis', () => ({
   useIsAnalysis: () => false,
 }));
 
-vi.mock('../../utils/useStudyRecordings', () => ({
+vi.mock('../../../utils/useStudyRecordings', () => ({
   useStudyRecordings: () => ({ hasAudioRecording: false, hasScreenRecording: false }),
 }));
 
-vi.mock('../../utils/useDeviceRules', () => ({
+vi.mock('../../../utils/useDeviceRules', () => ({
   useDeviceRules: () => ({
     isBrowserAllowed: true,
     isDeviceAllowed: true,
@@ -61,7 +61,7 @@ vi.mock('../../utils/useDeviceRules', () => ({
   }),
 }));
 
-vi.mock('./DeviceRestrictionString', () => ({
+vi.mock('../DeviceRestrictionString', () => ({
   getUnmetDeviceRestrictionLines: () => [],
   getUnmetDeviceRestrictionTooltip: () => '',
 }));
@@ -92,7 +92,7 @@ vi.mock('@mantine/core', () => ({
     },
   ),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
-  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Tooltip: ({ children, label }: { children: ReactNode; label?: string }) => <div title={label}>{children}</div>,
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -112,29 +112,13 @@ vi.mock('@tabler/icons-react', () => ({
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 describe('AppAside', () => {
-  test('renders the aside element', () => {
-    const html = renderToStaticMarkup(<AppAside />);
+  const html = renderToStaticMarkup(<AppAside />);
+
+  test('renders aside element, Study Browser, Next Participant, StepsPanel, and storage indicator', () => {
     expect(html).toContain('data-testid="app-aside"');
-  });
-
-  test('renders Study Browser heading', () => {
-    const html = renderToStaticMarkup(<AppAside />);
     expect(html).toContain('Study Browser');
-  });
-
-  test('renders Next Participant button', () => {
-    const html = renderToStaticMarkup(<AppAside />);
     expect(html).toContain('Next Participant');
-  });
-
-  test('renders StepsPanel', () => {
-    const html = renderToStaticMarkup(<AppAside />);
     expect(html).toContain('data-testid="steps-panel"');
-  });
-
-  test('renders storage engine indicator for localStorage', () => {
-    const html = renderToStaticMarkup(<AppAside />);
-    // localStorage engine renders a specific icon/tooltip
-    expect(html).toBeDefined();
+    expect(html).toContain('Local storage enabled');
   });
 });

@@ -6,7 +6,7 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { DeviceWarning } from './DeviceWarning';
+import { DeviceWarning } from '../DeviceWarning';
 
 type StudyRulesMock = {
   display?: {
@@ -77,13 +77,13 @@ vi.mock('@tabler/icons-react', () => ({
   IconDeviceDesktop: () => <span>display-icon</span>,
 }));
 
-vi.mock('../../store/hooks/useStudyConfig', () => ({
+vi.mock('../../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: () => ({
     studyRules: mockedStudyRules,
   }),
 }));
 
-vi.mock('../../utils/useDeviceRules', () => ({
+vi.mock('../../../utils/useDeviceRules', () => ({
   useDeviceRules: () => mockedDeviceRules,
 }));
 
@@ -91,7 +91,7 @@ vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock('../../storage/storageEngineHooks', () => ({
+vi.mock('../../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({
     storageEngine: {
       rejectCurrentParticipant: vi.fn().mockResolvedValue(undefined),
@@ -294,12 +294,10 @@ describe('DeviceWarning interactive', () => {
   });
 
   test('covers storageEngineRef and navigateRef update effects on mount', async () => {
-    // render (not renderToStaticMarkup) triggers useEffect, covering lines 30 and 33
     await act(async () => { render(<DeviceWarning />); });
   });
 
   test('covers countdown timer setup when display requirement is not met', async () => {
-    // shouldRunDisplayCountdown = true → covers lines 73-79 (interval setup)
     mockedStudyRules = { display: { minWidth: 1200 } };
     mockedDeviceRules = {
       ...mockedDeviceRules,
@@ -310,7 +308,6 @@ describe('DeviceWarning interactive', () => {
   });
 
   test('covers else branch (clears timer) when display requirement is met after render', async () => {
-    // Render with violation first, then without — exercises else branch (lines 107-113)
     mockedStudyRules = { display: { minWidth: 1200 } };
     mockedDeviceRules = {
       ...mockedDeviceRules,
@@ -318,7 +315,6 @@ describe('DeviceWarning interactive', () => {
       currentDisplay: { width: 1000, height: 1080 },
     };
     const { unmount } = await act(async () => render(<DeviceWarning />));
-    // Unmount triggers cleanup function (lines 115-120)
     unmount();
   });
 });

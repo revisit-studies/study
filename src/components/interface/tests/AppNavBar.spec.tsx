@@ -3,41 +3,41 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { AppNavBar } from './AppNavBar';
+import { AppNavBar } from '../AppNavBar';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockCurrentComponent = 'trial1';
 let mockStudyConfig = {
-  components: {} as Record<string, unknown>,
+  components: {} as Record<string, { response: unknown[]; instruction?: string; instructionLocation?: string }>,
   uiConfig: { instructionLocation: 'sidebar' as string },
 };
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../store/hooks/useStudyConfig', () => ({
+vi.mock('../../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: () => mockStudyConfig,
 }));
 
-vi.mock('../../routes/utils', () => ({
+vi.mock('../../../routes/utils', () => ({
   useCurrentComponent: () => mockCurrentComponent,
 }));
 
-vi.mock('../../store/hooks/useStoredAnswer', () => ({
+vi.mock('../../../store/hooks/useStoredAnswer', () => ({
   useStoredAnswer: () => null,
 }));
 
-vi.mock('../../utils/handleComponentInheritance', () => ({
-  studyComponentToIndividualComponent: (stepConfig: unknown, _config: unknown) => stepConfig,
+vi.mock('../../../utils/handleComponentInheritance', () => ({
+  studyComponentToIndividualComponent: (stepConfig: Record<string, unknown>, _config: Record<string, unknown>) => stepConfig,
 }));
 
-vi.mock('../ReactMarkdownWrapper', () => ({
+vi.mock('../../ReactMarkdownWrapper', () => ({
   ReactMarkdownWrapper: ({ text }: { text: string }) => (
     <span data-testid="markdown">{text}</span>
   ),
 }));
 
-vi.mock('../response/ResponseBlock', () => ({
+vi.mock('../../response/ResponseBlock', () => ({
   ResponseBlock: () => <div data-testid="response-block" />,
 }));
 

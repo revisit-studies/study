@@ -76,13 +76,13 @@ vi.mock('../../parser/parser', () => ({
 vi.mock('../interface/AppHeader', () => ({
   AppHeader: () => <div>AppHeader</div>,
 }));
-vi.mock('./LiveMonitor/LiveMonitorView', () => ({
+vi.mock('../individualStudy/LiveMonitor/LiveMonitorView', () => ({
   LiveMonitorView: () => <div>LiveMonitorView</div>,
 }));
-vi.mock('./summary/SummaryView', () => ({
+vi.mock('../individualStudy/summary/SummaryView', () => ({
   SummaryView: () => <div>SummaryView</div>,
 }));
-vi.mock('./table/TableView', () => ({
+vi.mock('../individualStudy/table/TableView', () => ({
   TableView: ({ onSelectionChange }: { onSelectionChange?: (p: { participantId: string; completed: boolean; rejected: boolean; answers: Record<string, never> }[]) => void }) => (
     <div>
       TableView
@@ -98,20 +98,24 @@ vi.mock('./table/TableView', () => ({
     </div>
   ),
 }));
-vi.mock('./stats/StatsView', () => ({
+vi.mock('../individualStudy/stats/StatsView', () => ({
   StatsView: () => <div>StatsView</div>,
 }));
-vi.mock('./management/ManageView', () => ({
+vi.mock('../individualStudy/management/ManageView', () => ({
   ManageView: () => <div>ManageView</div>,
 }));
-vi.mock('./thinkAloud/ThinkAloudAnalysis', () => ({
+vi.mock('../individualStudy/thinkAloud/ThinkAloudAnalysis', () => ({
   ThinkAloudAnalysis: () => <div>ThinkAloudAnalysis</div>,
 }));
-vi.mock('./config/ConfigView', () => ({
+vi.mock('../individualStudy/config/ConfigView', () => ({
   ConfigView: () => <div>ConfigView</div>,
 }));
 vi.mock('../../components/downloader/DownloadButtons', () => ({
   DownloadButtons: () => <div>DownloadButtons</div>,
+}));
+
+vi.mock('react-vega', () => ({
+  VegaLite: () => null,
 }));
 
 vi.mock('@mantine/core', () => ({

@@ -5,10 +5,10 @@ import {
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
-import type { StudyConfig } from '../../parser/types';
-import { Sequence, StoredAnswer } from '../../store/types';
-import { getDynamicComponentsForBlock } from './StepsPanel.utils';
-import { StepsPanel } from './StepsPanel';
+import type { StudyConfig } from '../../../parser/types';
+import { Sequence, StoredAnswer } from '../../../store/types';
+import { getDynamicComponentsForBlock } from '../StepsPanel.utils';
+import { StepsPanel } from '../StepsPanel';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -25,7 +25,7 @@ vi.mock('@tanstack/react-virtual', () => ({
   }),
 }));
 
-vi.mock('../../routes/utils', () => ({
+vi.mock('../../../routes/utils', () => ({
   useStudyId: () => 'test-study',
 }));
 
@@ -35,20 +35,20 @@ vi.mock('react-router', () => ({
   useLocation: () => ({ pathname: '/', search: '' }),
 }));
 
-vi.mock('../../utils/getSequenceFlatMap', () => ({
+vi.mock('../../../utils/getSequenceFlatMap', () => ({
   addPathToComponentBlock: (seq: Sequence) => seq,
 }));
 
-vi.mock('../../utils/encryptDecryptIndex', () => ({
+vi.mock('../../../utils/encryptDecryptIndex', () => ({
   encryptIndex: (i: number) => String(i),
 }));
 
-vi.mock('../../parser/utils', () => ({
+vi.mock('../../../parser/utils', () => ({
   isDynamicBlock: () => false,
   isInheritedComponent: () => false,
 }));
 
-vi.mock('../../utils/correctAnswer', () => ({
+vi.mock('../../../utils/correctAnswer', () => ({
   componentAnswersAreCorrect: vi.fn(() => true),
 }));
 
@@ -304,7 +304,7 @@ describe('StepsPanel NavLink click handler', () => {
     const links = getAllByRole('link');
     const blockLink = links[0];
     await act(async () => { fireEvent.click(blockLink); });
-    // After collapse: block still exists but children are gone; click it again to expand (line 751)
+    // After collapse: block still exists but children are gone; click it again to expand
     const linksAfterCollapse = queryAllByRole('link');
     if (linksAfterCollapse.length > 0) {
       await act(async () => { fireEvent.click(linksAfterCollapse[0]); });
@@ -409,7 +409,7 @@ describe('StepsPanel random order rendering', () => {
   });
 });
 
-// ── excluded blocks / components tests (lines 400-509) ─────────────────────────
+// ── excluded blocks / components tests ──────────────────────────────────────────
 
 describe('StepsPanel excluded blocks and components', () => {
   // Study config: block1 has ['intro', 'survey'], participant only has ['intro']
@@ -434,7 +434,7 @@ describe('StepsPanel excluded blocks and components', () => {
       intro: { type: 'markdown' as const, path: 'intro.md', response: [] },
       survey: { type: 'markdown' as const, path: 'survey.md', response: [] },
     },
-  } as unknown as import('../../parser/types').StudyConfig;
+  } as unknown as import('../../../parser/types').StudyConfig;
 
   const participantWithExcludedComponent: Sequence = {
     id: 'root',
@@ -452,7 +452,7 @@ describe('StepsPanel excluded blocks and components', () => {
     skip: [],
   };
 
-  test('renders excluded component from study sequence (covers lines 401-422)', async () => {
+  test('renders excluded component from study sequence', async () => {
     const { container } = await act(async () => render(
       <StepsPanel
         participantSequence={participantWithExcludedComponent}
@@ -487,7 +487,7 @@ describe('StepsPanel excluded blocks and components', () => {
               id: 'nested2',
               orderPath: 'root-block1-nested2',
               order: 'fixed' as const,
-              components: ['survey'], // string child → covers lines 457-470
+              components: ['survey'],
               skip: [],
             },
           ],
@@ -500,7 +500,7 @@ describe('StepsPanel excluded blocks and components', () => {
       intro: { type: 'markdown' as const, path: 'intro.md', response: [] },
       survey: { type: 'markdown' as const, path: 'survey.md', response: [] },
     },
-  } as unknown as import('../../parser/types').StudyConfig;
+  } as unknown as import('../../../parser/types').StudyConfig;
 
   const participantWithExcludedBlock: Sequence = {
     id: 'root',
@@ -527,7 +527,7 @@ describe('StepsPanel excluded blocks and components', () => {
     skip: [],
   };
 
-  test('renders excluded block with string children (covers lines 424-509)', async () => {
+  test('renders excluded block with string children', async () => {
     const { container } = await act(async () => render(
       <StepsPanel
         participantSequence={participantWithExcludedBlock}
@@ -538,7 +538,7 @@ describe('StepsPanel excluded blocks and components', () => {
     expect(container).toBeDefined();
   });
 
-  // Excluded block with a nested sub-block (covers lines 477-501)
+  // Excluded block with a nested sub-block
   const studyConfigWithNestedExcludedBlock = {
     ...minimalStudyConfig,
     sequence: {
@@ -566,7 +566,7 @@ describe('StepsPanel excluded blocks and components', () => {
                 {
                   id: 'deepBlock',
                   order: 'fixed' as const,
-                  components: ['survey'], // sub-block child → covers lines 477-501
+                  components: ['survey'],
                   skip: [],
                 },
               ],
@@ -582,9 +582,9 @@ describe('StepsPanel excluded blocks and components', () => {
       intro: { type: 'markdown' as const, path: 'intro.md', response: [] },
       survey: { type: 'markdown' as const, path: 'survey.md', response: [] },
     },
-  } as unknown as import('../../parser/types').StudyConfig;
+  } as unknown as import('../../../parser/types').StudyConfig;
 
-  test('excluded block with nested sub-block children (covers lines 477-501)', async () => {
+  test('excluded block with nested sub-block children', async () => {
     const { container } = await act(async () => render(
       <StepsPanel
         participantSequence={participantWithExcludedBlock}
@@ -596,7 +596,7 @@ describe('StepsPanel excluded blocks and components', () => {
   });
 });
 
-// ── nested expand tests (lines 614-638) ─────────────────────────────────────────
+// ── nested expand tests ──────────────────────────────────────────────────────────
 
 describe('StepsPanel nested expand', () => {
   // 3-level deep sequence: root > child block > grandchild block > intro
@@ -624,7 +624,7 @@ describe('StepsPanel nested expand', () => {
     skip: [],
   };
 
-  test('collapse then expand nested block exercises lines 614-638', async () => {
+  test('collapse then expand nested block', async () => {
     const { getAllByRole, queryAllByRole } = await act(async () => render(
       <StepsPanel
         participantSequence={deepSequence}

@@ -5,20 +5,20 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { HelpModal } from './HelpModal';
+import { HelpModal } from '../HelpModal';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockShowHelpText = true;
-let mockConfig = {
-  components: {} as Record<string, unknown>,
-  uiConfig: { helpTextPath: undefined as string | undefined },
+let mockConfig: { components: Record<string, unknown>; uiConfig: { helpTextPath: string | undefined } } = {
+  components: {},
+  uiConfig: { helpTextPath: undefined },
 };
 let mockGetStaticAssetByPath = vi.fn().mockResolvedValue(undefined);
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../store/store', () => ({
+vi.mock('../../../store/store', () => ({
   useStoreSelector: (selector: (s: Record<string, unknown>) => unknown) => selector({
     showHelpText: mockShowHelpText,
     config: mockConfig,
@@ -27,29 +27,29 @@ vi.mock('../../store/store', () => ({
   useStoreDispatch: () => vi.fn(),
 }));
 
-vi.mock('../../utils/getStaticAsset', () => ({
+vi.mock('../../../utils/getStaticAsset', () => ({
   getStaticAssetByPath: (...args: unknown[]) => mockGetStaticAssetByPath(...args),
 }));
 
-vi.mock('../../utils/Prefix', () => ({
+vi.mock('../../../utils/Prefix', () => ({
   PREFIX: '/',
 }));
 
-vi.mock('../../routes/utils', () => ({
+vi.mock('../../../routes/utils', () => ({
   useCurrentComponent: () => 'trial1',
 }));
 
-vi.mock('../../utils/handleComponentInheritance', () => ({
+vi.mock('../../../utils/handleComponentInheritance', () => ({
   studyComponentToIndividualComponent: () => ({ helpTextPath: undefined }),
 }));
 
-vi.mock('../ReactMarkdownWrapper', () => ({
+vi.mock('../../ReactMarkdownWrapper', () => ({
   ReactMarkdownWrapper: ({ text }: { text: string }) => (
     <div data-testid="markdown">{text}</div>
   ),
 }));
 
-vi.mock('../../ResourceNotFound', () => ({
+vi.mock('../../../ResourceNotFound', () => ({
   ResourceNotFound: ({ path }: { path?: string }) => (
     <div data-testid="not-found">{path ?? 'not found'}</div>
   ),

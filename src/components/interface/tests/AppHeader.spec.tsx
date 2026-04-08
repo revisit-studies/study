@@ -6,7 +6,7 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { AppHeader } from './AppHeader';
+import { AppHeader } from '../AppHeader';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -27,7 +27,7 @@ const mockStudyConfig = {
   sequences: {},
 };
 
-vi.mock('../../store/store', () => ({
+vi.mock('../../../store/store', () => ({
   useStoreSelector: (selector: (s: Record<string, unknown>) => unknown) => selector({
     config: mockStudyConfig,
     answers: {},
@@ -45,35 +45,35 @@ vi.mock('../../store/store', () => ({
   useFlatSequence: () => [],
 }));
 
-vi.mock('../../storage/storageEngineHooks', () => ({
+vi.mock('../../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: { getEngine: () => 'localStorage', updateProgressData: vi.fn() } }),
 }));
 
-vi.mock('../../routes/utils', () => ({
+vi.mock('../../../routes/utils', () => ({
   useCurrentComponent: () => 'component1',
   useCurrentStep: () => 0,
   useStudyId: () => 'test-study',
 }));
 
-vi.mock('../../storage/engines/utils', () => ({
+vi.mock('../../../storage/engines/utils', () => ({
   calculateProgressData: vi.fn(() => ({ completedSteps: 0, totalSteps: 1 })),
 }));
 
-vi.mock('../../utils/Prefix', () => ({ PREFIX: '/' }));
-vi.mock('../../utils/nextParticipant', () => ({ getNewParticipant: vi.fn() }));
+vi.mock('../../../utils/Prefix', () => ({ PREFIX: '/' }));
+vi.mock('../../../utils/nextParticipant', () => ({ getNewParticipant: vi.fn() }));
 
-vi.mock('./RecordingAudioWaveform', () => ({
+vi.mock('../RecordingAudioWaveform', () => ({
   RecordingAudioWaveform: () => <div data-testid="waveform" />,
 }));
 
-vi.mock('../../utils/handleComponentInheritance', () => ({
+vi.mock('../../../utils/handleComponentInheritance', () => ({
   studyComponentToIndividualComponent: vi.fn(() => ({
     withProgressBar: false,
     showTitle: true,
   })),
 }));
 
-vi.mock('../../store/hooks/useRecording', () => ({
+vi.mock('../../../store/hooks/useRecording', () => ({
   useRecordingContext: () => ({
     isScreenRecording: false,
     isAudioRecording: false,
@@ -83,7 +83,7 @@ vi.mock('../../store/hooks/useRecording', () => ({
   }),
 }));
 
-vi.mock('../../utils/useDeviceRules', () => ({
+vi.mock('../../../utils/useDeviceRules', () => ({
   useDeviceRules: () => ({
     isBrowserAllowed: true,
     isDeviceAllowed: true,
@@ -166,25 +166,31 @@ describe('AppHeader interactive', () => {
 });
 
 describe('AppHeader', () => {
-  test('renders without crashing', () => {
+  test('renders progress bar in normal mode', () => {
     const html = renderToStaticMarkup(
       <AppHeader developmentModeEnabled={false} dataCollectionEnabled />,
     );
-    expect(html).toBeDefined();
     expect(html.length).toBeGreaterThan(0);
+    // No "Demo Mode" badge when data collection is enabled
+    expect(html).not.toContain('Demo Mode');
   });
 
-  test('renders in development mode', () => {
+  test('shows study browser and analyze links in development mode', () => {
     const html = renderToStaticMarkup(
       <AppHeader developmentModeEnabled dataCollectionEnabled />,
     );
-    expect(html).toBeDefined();
+    expect(html).toContain('Study Browser');
+    expect(html).toContain('Analyze');
+    expect(html).toContain('Next Participant');
   });
 
-  test('renders with data collection disabled', () => {
+  test('renders header content when data collection is disabled', () => {
     const html = renderToStaticMarkup(
       <AppHeader developmentModeEnabled={false} dataCollectionEnabled={false} />,
     );
-    expect(html).toBeDefined();
+    // With no storageEngine connection, shows disconnected state
+    expect(html).toContain('Storage Disconnected');
+    // Dev mode controls should not appear
+    expect(html).not.toContain('Study Browser');
   });
 });

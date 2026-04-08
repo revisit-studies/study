@@ -6,7 +6,7 @@ import { ReactNode } from 'react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { ConfigVersionWarningModal } from './ConfigVersionWarningModal';
+import { ConfigVersionWarningModal } from '../ConfigVersionWarningModal';
 
 let mockedIsStalledConfig = false;
 let mockedIsAnalysis = false;
@@ -24,29 +24,29 @@ vi.mock('@mantine/core', () => ({
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
 }));
 
-vi.mock('../../store/store', () => ({
+vi.mock('../../../store/store', () => ({
   useStoreSelector: (
     selector: (state: { isStalledConfig: boolean; modes: { developmentModeEnabled: boolean } }) => boolean,
   ) => selector({ isStalledConfig: mockedIsStalledConfig, modes: { developmentModeEnabled: true } }),
 }));
 
-vi.mock('../../store/hooks/useIsAnalysis', () => ({
+vi.mock('../../../store/hooks/useIsAnalysis', () => ({
   useIsAnalysis: () => mockedIsAnalysis,
 }));
 
-vi.mock('../../store/hooks/useStudyConfig', () => ({
+vi.mock('../../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: () => ({ uiConfig: { contactEmail: 'admin@example.com' } }),
 }));
 
-vi.mock('../../storage/storageEngineHooks', () => ({
+vi.mock('../../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: undefined }),
 }));
 
-vi.mock('../../routes/utils', () => ({
+vi.mock('../../../routes/utils', () => ({
   useStudyId: () => 'test-study',
 }));
 
-vi.mock('../../utils/nextParticipant', () => ({
+vi.mock('../../../utils/nextParticipant', () => ({
   getNewParticipant: vi.fn(),
 }));
 
@@ -103,7 +103,7 @@ describe('ConfigVersionWarningModal — interactive / effect branches', () => {
   });
 
   test('"Next Participant" button calls getNewParticipant', async () => {
-    const { getNewParticipant } = await import('../../utils/nextParticipant');
+    const { getNewParticipant } = await import('../../../utils/nextParticipant');
     mockedIsStalledConfig = true;
 
     await act(async () => { render(<ConfigVersionWarningModal />); });
