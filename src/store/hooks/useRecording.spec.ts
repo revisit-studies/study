@@ -1,4 +1,6 @@
-import { renderHook, act, cleanup } from '@testing-library/react';
+import {
+  renderHook, act, cleanup, waitFor,
+} from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
@@ -24,6 +26,7 @@ const mockTrackFactory = () => ({
   enabled: true,
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
+  clone: vi.fn(() => mockTrackFactory()),
 });
 
 class MockMediaStream {
@@ -203,6 +206,9 @@ describe('useRecording', () => {
 
 // ── startScreenCapture tests ───────────────────────────────────────────────────
 
+// startScreenCapture fires an internal async function (captureFn) without returning
+// the promise. Use waitFor to poll until the state updates settle.
+
 describe('useRecording startScreenCapture', () => {
   test('success path: sets isScreenCapturing, isAudioCapturing, isMediaCapturing (covers lines 323-376)', async () => {
     mockRecordingConfig = {
@@ -211,10 +217,12 @@ describe('useRecording startScreenCapture', () => {
       studyHasAudioRecording: true,
     };
     const { result } = renderHook(() => useRecording());
-    await act(async () => { result.current.startScreenCapture(); });
-    expect(result.current.isScreenCapturing).toBe(true);
-    expect(result.current.isAudioCapturing).toBe(true);
-    expect(result.current.isMediaCapturing).toBe(true);
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => {
+      expect(result.current.isScreenCapturing).toBe(true);
+      expect(result.current.isAudioCapturing).toBe(true);
+      expect(result.current.isMediaCapturing).toBe(true);
+    });
   });
 
   test('audio-only: getUserMedia called, isAudioCapturing true, isScreenCapturing false', async () => {
@@ -223,10 +231,11 @@ describe('useRecording startScreenCapture', () => {
       studyHasScreenRecording: false,
       studyHasAudioRecording: true,
     };
-    vi.mocked(navigator.mediaDevices.getDisplayMedia).mockResolvedValue(null as never);
     const { result } = renderHook(() => useRecording());
-    await act(async () => { result.current.startScreenCapture(); });
-    expect(result.current.isAudioCapturing).toBe(true);
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => {
+      expect(result.current.isAudioCapturing).toBe(true);
+    });
     expect(result.current.isScreenCapturing).toBe(false);
   });
 
@@ -234,8 +243,10 @@ describe('useRecording startScreenCapture', () => {
     mockRecordingConfig = { ...mockRecordingConfig, studyHasScreenRecording: true };
     vi.mocked(navigator.mediaDevices.getDisplayMedia).mockRejectedValue(new Error('denied'));
     const { result } = renderHook(() => useRecording());
-    await act(async () => { result.current.startScreenCapture(); });
-    expect(result.current.screenRecordingError).toBe('Recording permission denied or not supported.');
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => {
+      expect(result.current.screenRecordingError).toBe('Recording permission denied or not supported.');
+    });
   });
 });
 
@@ -267,8 +278,8 @@ describe('useRecording startScreenRecording after startScreenCapture', () => {
     };
     const { result } = renderHook(() => useRecording());
     // First, start screen capture to set screenMediaStream
-    await act(async () => { result.current.startScreenCapture(); });
-    expect(result.current.isMediaCapturing).toBe(true);
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => { expect(result.current.isMediaCapturing).toBe(true); });
     // Now start screen recording (screenMediaStream is set)
     act(() => { result.current.startScreenRecording('trial_0'); });
     expect(result.current.isScreenRecording).toBe(true);
@@ -285,7 +296,8 @@ describe('useRecording startScreenRecording after startScreenCapture', () => {
     };
     mockStorageEngine = { saveAudioRecording: vi.fn().mockResolvedValue(undefined) };
     const { result } = renderHook(() => useRecording());
-    await act(async () => { result.current.startScreenCapture(); });
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => { expect(result.current.isMediaCapturing).toBe(true); });
     act(() => { result.current.startScreenRecording('trial_0'); });
     expect(result.current.isScreenRecording).toBe(true);
   });
@@ -307,7 +319,8 @@ describe('useRecording stopScreenCapture with refs populated', () => {
       saveAudioRecording: vi.fn().mockResolvedValue(undefined),
     };
     const { result } = renderHook(() => useRecording());
-    await act(async () => { result.current.startScreenCapture(); });
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => { expect(result.current.isMediaCapturing).toBe(true); });
     act(() => { result.current.startScreenRecording('trial_0'); });
     // Now call stopScreenCapture — refs have values → covers cleanup branches
     act(() => { result.current.stopScreenCapture(); });
@@ -370,7 +383,8 @@ describe('useRecording screen recording effect', () => {
     };
     const { result } = renderHook(() => useRecording());
     // Start capture to set isMediaCapturing
-    await act(async () => { result.current.startScreenCapture(); });
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => { expect(result.current.isMediaCapturing).toBe(true); });
     // Screen recording effect: isMediaCapturing=true, currentComponent=intro → startScreenRecording
     await act(async () => { /* let effects settle */ });
     expect(result.current.isScreenRecording).toBe(true);
@@ -381,10 +395,9 @@ describe('useRecording screen recording effect', () => {
     mockStorageEngine = { saveAudioRecording: vi.fn().mockResolvedValue(undefined) };
     mockCurrentComponent = 'end';
     const { result } = renderHook(() => useRecording());
-    await act(async () => { result.current.startScreenCapture(); });
-    await act(async () => { /* let effects settle */ });
-    // stopScreenCapture should have been called → isScreenCapturing resets
-    expect(result.current.isScreenCapturing).toBe(false);
+    act(() => { result.current.startScreenCapture(); });
+    // The stop effect fires because currentComponent is 'end', resetting capture state
+    await waitFor(() => { expect(result.current.isScreenCapturing).toBe(false); });
   });
 });
 
@@ -397,7 +410,8 @@ describe('useRecording isMuted effect', () => {
       studyHasAudioRecording: true,
     };
     const { result } = renderHook(() => useRecording());
-    await act(async () => { result.current.startScreenCapture(); });
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => { expect(result.current.isMediaCapturing).toBe(true); });
     act(() => { result.current.setIsMuted(true); });
     // The effect fires and calls getAudioTracks().forEach(track => track.enabled = !isMuted)
     expect(result.current.isMuted).toBe(true);
@@ -415,7 +429,8 @@ describe('useRecording isRejected effect', () => {
     };
     const { result } = renderHook(() => useRecording());
     // startScreenCapture → screenCaptureStarted=true, isScreenCapturing=true
-    await act(async () => { result.current.startScreenCapture(); });
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => { expect(result.current.isMediaCapturing).toBe(true); });
     expect(result.current.isScreenCapturing).toBe(true);
     // stopScreenCapture → isScreenCapturing=false, screenCaptureStarted stays true
     // Effect: screenCaptureStarted=true && !isScreenCapturing=true → setIsRejected(true)

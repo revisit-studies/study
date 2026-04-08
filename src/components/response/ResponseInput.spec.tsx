@@ -268,6 +268,11 @@ vi.mock('../../utils/getSequenceFlatMap', () => ({
   getSequenceFlatMap: vi.fn(() => []),
 }));
 
+vi.mock('./customResponseModules', () => ({
+  getCustomResponseModule: vi.fn(() => null),
+  getCustomResponseModuleLoadError: vi.fn(() => null),
+}));
+
 // ── HorizontalHandler ─────────────────────────────────────────────────────────
 
 describe('HorizontalHandler', () => {

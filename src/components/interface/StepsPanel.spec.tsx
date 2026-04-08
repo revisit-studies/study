@@ -45,6 +45,7 @@ vi.mock('../../utils/encryptDecryptIndex', () => ({
 
 vi.mock('../../parser/utils', () => ({
   isDynamicBlock: () => false,
+  isInheritedComponent: () => false,
 }));
 
 vi.mock('../../utils/correctAnswer', () => ({

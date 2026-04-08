@@ -94,6 +94,11 @@ vi.mock('../../utils/correctAnswer', () => ({
   responseAnswerIsCorrect: vi.fn(() => true),
 }));
 
+vi.mock('./customResponseModules', () => ({
+  getCustomResponseModule: vi.fn(() => null),
+  getCustomResponseModuleLoadError: vi.fn(() => null),
+}));
+
 vi.mock('./ResponseSwitcher', () => ({
   ResponseSwitcher: ({ response }: { response: { type: string } }) => (
     <div data-testid={`switcher-${response.type}`}>{response.type}</div>
