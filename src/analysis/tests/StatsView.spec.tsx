@@ -4,12 +4,13 @@ import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useParams } from 'react-router';
-import { IndividualComponent, StudyConfig } from '../../../parser/types';
-import { ParticipantData } from '../../../storage/types';
-import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
-import { StatsView } from './StatsView';
-import { TrialVisualization } from './TrialVisualization';
-import { ResponseVisualization } from './ResponseVisualization';
+import { IndividualComponent, StudyConfig } from '../../parser/types';
+import { ParticipantData } from '../../storage/types';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { createMockStudyConfig } from './testUtils';
+import { StatsView } from '../individualStudy/stats/StatsView';
+import { TrialVisualization } from '../individualStudy/stats/TrialVisualization';
+import { ResponseVisualization } from '../individualStudy/stats/ResponseVisualization';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ vi.mock('@mantine/core', () => ({
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Divider: () => <hr />,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  Paper: ({ children, ref: _ref }: { children: ReactNode; ref?: unknown }) => <div>{children}</div>,
+  Paper: ({ children, ref: _ref }: { children: ReactNode; ref?: React.Ref<HTMLElement> }) => <div>{children}</div>,
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h5>{children}</h5>,
   Collapse: ({ children, in: open }: { children: ReactNode; in?: boolean }) => (
@@ -59,15 +60,15 @@ vi.mock('@tabler/icons-react', () => ({
   IconSquares: () => <span>icon-checkbox</span>,
 }));
 
-vi.mock('../../../components/interface/StepsPanel', () => ({
+vi.mock('../../components/interface/StepsPanel', () => ({
   StepsPanel: () => <div>StepsPanel</div>,
 }));
 
-vi.mock('../summary/OverviewStats', () => ({
+vi.mock('../individualStudy/summary/OverviewStats', () => ({
   OverviewStats: () => <div>OverviewStats</div>,
 }));
 
-vi.mock('../summary/utils', () => ({
+vi.mock('../individualStudy/summary/utils', () => ({
   getOverviewStats: vi.fn(() => ({
     participantCounts: {
       total: 5, completed: 3, inProgress: 1, rejected: 1,
@@ -81,30 +82,43 @@ vi.mock('../summary/utils', () => ({
   })),
 }));
 
-vi.mock('../../../utils/handleComponentInheritance', () => ({
+vi.mock('../../utils/handleComponentInheritance', () => ({
   studyComponentToIndividualComponent: vi.fn(() => ({
     type: 'questionnaire',
     response: [],
-    correctAnswer: undefined,
+
   })),
 }));
 
 // ── fixtures ─────────────────────────────────────────────────────────────────
 
-const emptyConfig: StudyConfig = {
-  components: { trial1: { type: 'questionnaire', response: [] } as unknown as StudyConfig['components'][string] },
-  sequence: { order: 'fixed', components: ['trial1'] } as unknown as StudyConfig['sequence'],
-} as unknown as StudyConfig;
+const emptyConfig: StudyConfig = createMockStudyConfig({
+  components: { trial1: { type: 'questionnaire', response: [] } },
+  sequence: { order: 'fixed', components: ['trial1'] },
+});
 
-const mockParticipant = {
-  participantId: 'p1', answers: {}, completed: true, rejected: false,
-} as unknown as ParticipantData;
+const mockParticipant: ParticipantData = {
+  participantId: 'p1',
+  participantConfigHash: 'hash-1',
+  sequence: {
+    id: 'root', order: 'fixed', orderPath: 'root', components: [], skip: [],
+  },
+  participantIndex: 0,
+  answers: {},
+  searchParams: {},
+  metadata: {
+    userAgent: '', resolution: { width: 0, height: 0 }, language: '', ip: '',
+  },
+  completed: true,
+  rejected: false,
+  participantTags: [],
+  stage: 'DEFAULT',
+};
 
-const mockTrialConfig = {
+const mockTrialConfig: IndividualComponent = {
   type: 'questionnaire',
   response: [],
-  correctAnswer: undefined,
-} as unknown as IndividualComponent;
+};
 
 // ── StatsView ─────────────────────────────────────────────────────────────────
 
@@ -172,9 +186,10 @@ describe('TrialVisualization', () => {
   test('renders ResponseVisualization items when trialId matches a component', () => {
     vi.mocked(studyComponentToIndividualComponent).mockReturnValue({
       type: 'questionnaire',
-      response: [{ type: 'radio', id: 'q1', prompt: 'Pick one' } as IndividualComponent['response'][number]],
-      correctAnswer: undefined,
-    } as unknown as IndividualComponent);
+      response: [{
+        type: 'radio', id: 'q1', prompt: 'Pick one', options: [],
+      }],
+    });
 
     const html = renderToStaticMarkup(
       <TrialVisualization participantData={[]} studyConfig={emptyConfig} trialId="trial1" />,
@@ -221,7 +236,7 @@ describe('ResponseVisualization', () => {
     const html = renderToStaticMarkup(
       <ResponseVisualization
         {...baseProps}
-        response={{ type: 'shortText', id: 'q1', prompt: 'Enter text' } as unknown as Parameters<typeof ResponseVisualization>[0]['response']}
+        response={{ type: 'shortText', id: 'q1', prompt: 'Enter text' }}
       />,
     );
     expect(html).toContain('icon-text');
@@ -232,7 +247,7 @@ describe('ResponseVisualization', () => {
     const html = renderToStaticMarkup(
       <ResponseVisualization
         {...baseProps}
-        response={{ type: 'textOnly', id: 'q1', prompt: '' } as unknown as Parameters<typeof ResponseVisualization>[0]['response']}
+        response={{ type: 'textOnly', id: 'q1', prompt: '' }}
       />,
     );
     expect(html).toContain('N/A');
@@ -244,7 +259,7 @@ describe('ResponseVisualization', () => {
         {...baseProps}
         response={{
           type: 'radio', id: 'q1', prompt: 'Pick one', options: ['A', 'B'],
-        } as unknown as Parameters<typeof ResponseVisualization>[0]['response']}
+        }}
       />,
     );
     expect(html).toContain('icon-radio');
@@ -255,7 +270,7 @@ describe('ResponseVisualization', () => {
     const html = renderToStaticMarkup(
       <ResponseVisualization
         {...baseProps}
-        response={{ type: 'numerical', id: 'q1', prompt: 'Enter number' } as unknown as Parameters<typeof ResponseVisualization>[0]['response']}
+        response={{ type: 'numerical', id: 'q1', prompt: 'Enter number' }}
       />,
     );
     expect(html).toContain('icon-numerical');
@@ -268,7 +283,7 @@ describe('ResponseVisualization', () => {
         {...baseProps}
         response={{
           type: 'slider', id: 'q1', prompt: 'Rate', options: [{ label: 'Lo', value: 0 }, { label: 'Hi', value: 100 }],
-        } as unknown as Parameters<typeof ResponseVisualization>[0]['response']}
+        }}
       />,
     );
     expect(html).toContain('icon-slider');
@@ -281,7 +296,7 @@ describe('ResponseVisualization', () => {
         {...baseProps}
         response={{
           type: 'likert', id: 'q1', prompt: 'Rate', numItems: 5,
-        } as unknown as Parameters<typeof ResponseVisualization>[0]['response']}
+        }}
       />,
     );
     expect(html).toContain('icon-likert');
@@ -294,7 +309,7 @@ describe('ResponseVisualization', () => {
         {...baseProps}
         response={{
           type: 'matrix-radio', id: 'q1', prompt: 'Matrix', questionOptions: ['Q1'], answerOptions: ['A', 'B'],
-        } as unknown as Parameters<typeof ResponseVisualization>[0]['response']}
+        }}
       />,
     );
     expect(html).toContain('icon-matrix-r');
@@ -307,7 +322,7 @@ describe('ResponseVisualization', () => {
         {...baseProps}
         response={{
           type: 'matrix-checkbox', id: 'q1', prompt: 'Matrix', questionOptions: ['Q1'], answerOptions: ['A', 'B'],
-        } as unknown as Parameters<typeof ResponseVisualization>[0]['response']}
+        }}
       />,
     );
     expect(html).toContain('icon-matrix-cb');
@@ -320,17 +335,17 @@ describe('ResponseVisualization', () => {
         {...baseProps}
         response={{
           type: 'radio', id: 'q1', prompt: 'Pick one', options: ['A'],
-        } as unknown as Parameters<typeof ResponseVisualization>[0]['response']}
+        }}
       />,
     );
     expect(html).toContain('Response Specification');
   });
 
   test('shows Correct Answer block when trialConfig has a matching correctAnswer', () => {
-    const trialConfigWithAnswer = {
+    const trialConfigWithAnswer: IndividualComponent = {
       ...mockTrialConfig,
       correctAnswer: [{ id: 'q1', answer: 'A' }],
-    } as unknown as IndividualComponent;
+    };
 
     const html = renderToStaticMarkup(
       <ResponseVisualization
@@ -339,7 +354,7 @@ describe('ResponseVisualization', () => {
         trialConfig={trialConfigWithAnswer}
         response={{
           type: 'radio', id: 'q1', prompt: 'Pick one', options: ['A', 'B'],
-        } as unknown as Parameters<typeof ResponseVisualization>[0]['response']}
+        }}
       />,
     );
     expect(html).toContain('Correct Answer');

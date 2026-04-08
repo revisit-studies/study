@@ -3,7 +3,7 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import { ReactNode } from 'react';
-import { ParticipantStatusBadges } from './ParticipantStatusBadges';
+import { ParticipantStatusBadges } from '../interface/ParticipantStatusBadges';
 
 vi.mock('@mantine/core', () => ({
   Tooltip: ({ children }: { children: ReactNode }) => children,

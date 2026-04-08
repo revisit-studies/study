@@ -7,10 +7,10 @@ import userEvent from '@testing-library/user-event';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { ParticipantData } from '../../../storage/types';
-import { ConfigInfo } from './utils';
-import { ConfigView } from './ConfigView';
-import { downloadConfigFile, downloadConfigFilesZip } from '../../../utils/handleDownloadFiles';
+import { ParticipantData } from '../../storage/types';
+import { ConfigInfo } from '../individualStudy/config/utils';
+import { ConfigView } from '../individualStudy/config/ConfigView';
+import { downloadConfigFile, downloadConfigFilesZip } from '../../utils/handleDownloadFiles';
 
 function makeParticipant(configHash: string): ParticipantData {
   return {
@@ -27,7 +27,9 @@ function makeParticipant(configHash: string): ParticipantData {
     },
     completed: false,
     rejected: false,
-  } as unknown as ParticipantData;
+    participantTags: [],
+    stage: 'DEFAULT',
+  } as ParticipantData;
 }
 
 // Capture what gets passed to useMantineReactTable so we can test columns / options
@@ -36,7 +38,7 @@ let capturedTableOptions: Record<string, any> | null = null;
 
 let mockStorageEngine: { getAllConfigsFromHash: ReturnType<typeof vi.fn> } | undefined;
 
-vi.mock('../../../storage/storageEngineHooks', () => ({
+vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
@@ -76,12 +78,12 @@ vi.mock('@tabler/icons-react', () => ({
   IconCopy: () => <span>copy</span>,
 }));
 
-vi.mock('../../../utils/handleDownloadFiles', () => ({
+vi.mock('../../utils/handleDownloadFiles', () => ({
   downloadConfigFile: vi.fn().mockResolvedValue(undefined),
   downloadConfigFilesZip: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('./ConfigDiffModal', () => ({
+vi.mock('../individualStudy/config/ConfigDiffModal', () => ({
   ConfigDiffModal: () => <div>diff modal</div>,
 }));
 
@@ -218,7 +220,7 @@ describe('ConfigView', () => {
 
   test('useEffect sets empty configs and stops loading when fetch throws', async () => {
     mockStorageEngine!.getAllConfigsFromHash.mockRejectedValue(new Error('network error'));
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     await act(async () => {
       render(<ConfigView visibleParticipants={[makeParticipant('x')]} studyId="test-study" />);
     });
@@ -230,8 +232,6 @@ describe('ConfigView', () => {
 
   test('handleCopyHash writes to clipboard', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
-    // jsdom 29 doesn't expose navigator.clipboard in non-secure contexts —
-    // define the property directly so the handler doesn't throw
     Object.defineProperty(window.navigator, 'clipboard', {
       value: { writeText },
       configurable: true,
@@ -273,8 +273,6 @@ describe('ConfigView', () => {
     await act(async () => {
       render(<ConfigView visibleParticipants={participants} studyId="test-study" />);
     });
-
-    // Simulate a checked row by injecting state via the onRowSelectionChange captured in table options
     await act(async () => {
       capturedTableOptions!.onRowSelectionChange({ [mockConfigInfo.hash]: true });
     });
@@ -306,19 +304,16 @@ describe('ConfigView', () => {
     expect(toolbar).toContain('Compare');
 
     const user = userEvent.setup();
-    const { getByText, container } = render(capturedTableOptions!.renderTopToolbarCustomActions());
+    const { getByText } = render(capturedTableOptions!.renderTopToolbarCustomActions());
     await user.click(getByText('Compare'));
 
-    // After clicking, the compare modal should open — rendered by ConfigView's state
-    // The modal is controlled by ConfigView's state, so we verify the button fired without error
-    expect(container).toBeDefined();
+    // Compare button should open the diff modal
+    expect(screen.getByText('diff modal')).toBeDefined();
   });
 
   test('handleViewConfig opens view modal when View button is clicked', async () => {
-    const participants = [makeParticipant(mockConfigInfo.hash)];
-    let container!: HTMLElement;
     await act(async () => {
-      ({ container } = render(<ConfigView visibleParticipants={participants} studyId="test-study" />));
+      render(<ConfigView visibleParticipants={[makeParticipant(mockConfigInfo.hash)]} studyId="test-study" />);
     });
 
     const col = capturedTableOptions!.columns.find((c: { id?: string }) => c.id === 'actions');
@@ -329,7 +324,9 @@ describe('ConfigView', () => {
       await user.click(getAllByText('View')[0]);
     });
 
-    // The modal open state is in ConfigView — verify no crash and container exists
-    expect(container).toBeDefined();
+    const body = document.body.textContent || '';
+    expect(body).toContain('studyMetadata');
+    expect(body).toContain('1.0.0');
+    expect(body).toContain('2026-01-01');
   });
 });

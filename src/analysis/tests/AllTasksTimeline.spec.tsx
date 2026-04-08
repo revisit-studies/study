@@ -4,11 +4,13 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import * as d3 from 'd3';
-import { StudyConfig } from '../../../parser/types';
-import { ParticipantData } from '../../../storage/types';
-import { AllTasksTimeline } from './AllTasksTimeline';
-import { SingleTask } from './SingleTask';
-import { SingleTaskLabelLines } from './SingleTaskLabelLines';
+import { StudyConfig } from '../../parser/types';
+import { ParticipantData } from '../../storage/types';
+import type { StoredAnswer } from '../../store/types';
+import { createMockStudyConfig } from './testUtils';
+import { AllTasksTimeline } from '../individualStudy/replay/AllTasksTimeline';
+import { SingleTask } from '../individualStudy/replay/SingleTask';
+import { SingleTaskLabelLines } from '../individualStudy/replay/SingleTaskLabelLines';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -36,15 +38,15 @@ vi.mock('@mantine/hooks', () => ({
   useResizeObserver: () => [{ current: null }, { width: 60, height: 20 }],
 }));
 
-vi.mock('../../../utils/useNavigateToTrial', () => ({
+vi.mock('../../utils/useNavigateToTrial', () => ({
   useNavigateToTrial: () => vi.fn(),
 }));
 
-vi.mock('../../../utils/correctAnswer', () => ({
+vi.mock('../../utils/correctAnswer', () => ({
   componentAnswersAreCorrect: vi.fn(() => true),
 }));
 
-vi.mock('../../../utils/handleConditionLogic', () => ({
+vi.mock('../../utils/handleConditionLogic', () => ({
   parseConditionParam: vi.fn(() => []),
 }));
 
@@ -52,32 +54,51 @@ vi.mock('../../../utils/handleConditionLogic', () => ({
 
 const t0 = 1_700_000_000_000;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeParticipant(overrides: Record<string, any> = {}): ParticipantData {
+function makeAnswer(overrides: Partial<StoredAnswer> = {}): StoredAnswer {
   return {
-    participantId: 'pid-1',
-    conditions: undefined,
-    searchParams: {},
-    answers: {
-      trial1_0: {
-        componentName: 'trial1',
-        startTime: t0,
-        endTime: t0 + 10_000,
-        answer: {},
-        correctAnswer: [],
-        trialOrder: '0_0',
-        windowEvents: [],
-      },
-    },
+    answer: {},
+    identifier: '',
+    componentName: 'trial1',
+    trialOrder: '0_0',
+    incorrectAnswers: {},
+    startTime: t0,
+    endTime: t0 + 10_000,
+    provenanceGraph: {} as StoredAnswer['provenanceGraph'],
+    windowEvents: [],
+    timedOut: false,
+    helpButtonClickedCount: 0,
+    parameters: {},
+    correctAnswer: [],
+    optionOrders: {},
+    questionOrders: {},
     ...overrides,
-  } as unknown as ParticipantData;
+  };
 }
 
-const emptyConfig = {
-  components: {},
-  uiConfig: {},
-  sequence: { order: 'fixed', components: [] },
-} as unknown as StudyConfig;
+function makeParticipant(overrides: Partial<ParticipantData> & { answers?: Record<string, StoredAnswer> } = {}): ParticipantData {
+  return {
+    participantId: 'pid-1',
+    participantConfigHash: 'hash-1',
+    sequence: {
+      id: 'root', order: 'fixed', orderPath: 'root', components: [], skip: [],
+    },
+    participantIndex: 0,
+    answers: {
+      trial1_0: makeAnswer(),
+    },
+    searchParams: {},
+    metadata: {
+      userAgent: '', resolution: { width: 0, height: 0 }, language: '', ip: '',
+    },
+    completed: false,
+    rejected: false,
+    participantTags: [],
+    stage: 'DEFAULT',
+    ...overrides,
+  };
+}
+
+const emptyConfig: StudyConfig = createMockStudyConfig();
 
 const xScale = d3.scaleLinear([0, 500]).domain([0, 1000]);
 
@@ -200,15 +221,7 @@ describe('AllTasksTimeline', () => {
   test('handles participant with answer values (tooltip shows answer)', () => {
     const participant = makeParticipant({
       answers: {
-        trial1_0: {
-          componentName: 'trial1',
-          startTime: t0,
-          endTime: t0 + 5_000,
-          answer: { q1: 'yes' },
-          correctAnswer: [],
-          trialOrder: '0_0',
-          windowEvents: [],
-        },
+        trial1_0: makeAnswer({ startTime: t0, endTime: t0 + 5_000, answer: { q1: 'yes' } }),
       },
     });
 
@@ -228,24 +241,10 @@ describe('AllTasksTimeline', () => {
   test('handles participant with incomplete answer (startTime === 0)', () => {
     const participant = makeParticipant({
       answers: {
-        trial1_0: {
-          componentName: 'trial1',
-          startTime: t0,
-          endTime: t0 + 5_000,
-          answer: {},
-          correctAnswer: [],
-          trialOrder: '0_0',
-          windowEvents: [],
-        },
-        trial2_1: {
-          componentName: 'trial2',
-          startTime: 0,
-          endTime: 0,
-          answer: {},
-          correctAnswer: [],
-          trialOrder: '1_0',
-          windowEvents: [],
-        },
+        trial1_0: makeAnswer({ startTime: t0, endTime: t0 + 5_000 }),
+        trial2_1: makeAnswer({
+          componentName: 'trial2', startTime: 0, endTime: 0, trialOrder: '1_0',
+        }),
       },
     });
 
@@ -265,18 +264,12 @@ describe('AllTasksTimeline', () => {
   test('handles browsed-away window events', () => {
     const participant = makeParticipant({
       answers: {
-        trial1_0: {
-          componentName: 'trial1',
-          startTime: t0,
-          endTime: t0 + 10_000,
-          answer: {},
-          correctAnswer: [],
-          trialOrder: '0_0',
+        trial1_0: makeAnswer({
           windowEvents: [
             [t0 + 1_000, 'visibility', 'hidden'],
             [t0 + 3_000, 'visibility', 'visible'],
           ],
-        },
+        }),
       },
     });
 
@@ -290,6 +283,42 @@ describe('AllTasksTimeline', () => {
       />,
     );
     // Browsed-away rect should be rendered inside a Tooltip
+    expect(html).toContain('<rect');
+  });
+
+  test('handles all tracked window event types without error', () => {
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: makeAnswer({
+          endTime: t0 + 20_000,
+          windowEvents: [
+            [t0 + 500, 'mousemove', [100, 200]],
+            [t0 + 1_000, 'mousedown', [150, 250]],
+            [t0 + 1_100, 'mouseup', [150, 250]],
+            [t0 + 2_000, 'keydown', 'Enter'],
+            [t0 + 2_100, 'keyup', 'Enter'],
+            [t0 + 3_000, 'scroll', [0, 300]],
+            [t0 + 4_000, 'focus', 'input#name'],
+            [t0 + 5_000, 'input', 'input#name'],
+            [t0 + 6_000, 'resize', [1024, 768]],
+            [t0 + 7_000, 'visibility', 'hidden'],
+            [t0 + 9_000, 'visibility', 'visible'],
+          ],
+        }),
+      },
+    });
+
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={participant}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+      />,
+    );
+    expect(html).toContain('<svg');
+    // The visibility hidden→visible pair should produce a browsed-away rect
     expect(html).toContain('<rect');
   });
 
@@ -312,7 +341,7 @@ describe('AllTasksTimeline', () => {
     // parseConditionParam is mocked to return [] by default; just verify
     // the component renders without error when conditions field is set
     const participant = makeParticipant({
-      conditions: 'condA,condB',
+      conditions: ['condA', 'condB'],
     });
 
     const html = renderToStaticMarkup(
@@ -330,15 +359,7 @@ describe('AllTasksTimeline', () => {
   test('tooltip shows N/A for null answer values', () => {
     const participant = makeParticipant({
       answers: {
-        trial1_0: {
-          componentName: 'trial1',
-          startTime: t0,
-          endTime: t0 + 5_000,
-          answer: { q1: null },
-          correctAnswer: [],
-          trialOrder: '0_0',
-          windowEvents: [],
-        },
+        trial1_0: makeAnswer({ startTime: t0, endTime: t0 + 5_000, answer: { q1: null } }),
       },
     });
     const html = renderToStaticMarkup(
@@ -357,15 +378,7 @@ describe('AllTasksTimeline', () => {
     // Use an array so JSON.stringify produces no string-quoted keys (avoids HTML entity encoding)
     const participant = makeParticipant({
       answers: {
-        trial1_0: {
-          componentName: 'trial1',
-          startTime: t0,
-          endTime: t0 + 5_000,
-          answer: { q1: [1, 2] },
-          correctAnswer: [],
-          trialOrder: '0_0',
-          windowEvents: [],
-        },
+        trial1_0: makeAnswer({ startTime: t0, endTime: t0 + 5_000, answer: { q1: [1, 2] } }),
       },
     });
     const html = renderToStaticMarkup(
@@ -385,33 +398,15 @@ describe('AllTasksTimeline', () => {
     // one has prefix "1" (hits false branch of the prefix comparison)
     const participant = makeParticipant({
       answers: {
-        trial1_0: {
-          componentName: 'trial1',
-          startTime: 0,
-          endTime: 0,
-          answer: {},
-          correctAnswer: [],
-          trialOrder: '0_0',
-          windowEvents: [],
-        },
-        trial2_0: {
-          componentName: 'trial2',
-          startTime: 0,
-          endTime: 0,
-          answer: {},
-          correctAnswer: [],
-          trialOrder: '0_1',
-          windowEvents: [],
-        },
-        trial3_0: {
-          componentName: 'trial3',
-          startTime: 0,
-          endTime: 0,
-          answer: {},
-          correctAnswer: [],
-          trialOrder: '1_0',
-          windowEvents: [],
-        },
+        trial1_0: makeAnswer({
+          componentName: 'trial1', startTime: 0, endTime: 0, trialOrder: '0_0',
+        }),
+        trial2_0: makeAnswer({
+          componentName: 'trial2', startTime: 0, endTime: 0, trialOrder: '0_1',
+        }),
+        trial3_0: makeAnswer({
+          componentName: 'trial3', startTime: 0, endTime: 0, trialOrder: '1_0',
+        }),
       },
     });
     const html = renderToStaticMarkup(

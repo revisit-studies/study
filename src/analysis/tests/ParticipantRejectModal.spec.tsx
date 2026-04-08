@@ -5,7 +5,7 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { ParticipantRejectModal } from './ParticipantRejectModal';
+import { ParticipantRejectModal } from '../individualStudy/ParticipantRejectModal';
 import { ParticipantData } from '../../storage/types';
 
 let mockUser: { isAdmin: boolean };

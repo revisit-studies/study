@@ -3,7 +3,7 @@ import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { ReactNode } from 'react';
-import { AppHeader } from './AppHeader';
+import { AppHeader } from '../interface/AppHeader';
 
 let mockPathname = '/analysis/stats/my-study';
 

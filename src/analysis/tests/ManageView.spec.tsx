@@ -6,10 +6,10 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { ManageView } from './ManageView';
-import { RevisitModesItem } from './RevisitModesItem';
-import { StageManagementItem } from './StageManagementItem';
-import { DataManagementItem } from './DataManagementItem';
+import { ManageView } from '../individualStudy/management/ManageView';
+import { RevisitModesItem } from '../individualStudy/management/RevisitModesItem';
+import { StageManagementItem } from '../individualStudy/management/StageManagementItem';
+import { DataManagementItem } from '../individualStudy/management/DataManagementItem';
 
 let mockStorageEngine: {
   getModes: ReturnType<typeof vi.fn>;
@@ -25,7 +25,7 @@ let mockStorageEngine: {
   getAllParticipantsData: ReturnType<typeof vi.fn>;
 } | undefined;
 
-vi.mock('../../../storage/storageEngineHooks', () => ({
+vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
@@ -35,8 +35,10 @@ vi.mock('@mantine/core', () => ({
   Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Title: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
   Text: ({ children, span }: { children: ReactNode; span?: boolean }) => (span ? <span>{children}</span> : <p>{children}</p>),
-  Button: ({ children, onClick, disabled }: { children: ReactNode; onClick?: () => void; disabled?: boolean }) => (
-    <button type="button" onClick={onClick} disabled={disabled}>{children}</button>
+  Button: ({
+    children, onClick, disabled, 'aria-label': ariaLabel,
+  }: { children: ReactNode; onClick?: () => void; disabled?: boolean; 'aria-label'?: string }) => (
+    <button type="button" onClick={onClick} disabled={disabled} aria-label={ariaLabel}>{children}</button>
   ),
   TextInput: ({ onChange, placeholder }: { onChange?: React.ChangeEventHandler<HTMLInputElement>; placeholder?: string }) => (
     <input placeholder={placeholder} onChange={onChange} />
@@ -44,14 +46,16 @@ vi.mock('@mantine/core', () => ({
   ColorInput: ({ value }: { value?: string }) => <input readOnly value={value ?? ''} />,
   Loader: () => <div>Loading...</div>,
   LoadingOverlay: () => null,
-  ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
-    <button type="button" onClick={onClick}>{children}</button>
+  ActionIcon: ({
+    children, onClick, 'aria-label': ariaLabel,
+  }: { children: ReactNode; onClick?: () => void; 'aria-label'?: string }) => (
+    <button type="button" onClick={onClick} aria-label={ariaLabel}>{children}</button>
   ),
-  Radio: ({ checked, onChange }: { checked: boolean; onChange?: () => void }) => (
-    <input type="radio" readOnly checked={checked} onChange={onChange} />
+  Radio: ({ checked, onChange, 'aria-label': ariaLabel }: { checked: boolean; onChange?: () => void; 'aria-label'?: string }) => (
+    <input type="radio" readOnly checked={checked} onChange={onChange} aria-label={ariaLabel} />
   ),
-  Switch: ({ checked, onChange }: { checked?: boolean; onChange?: React.ChangeEventHandler<HTMLInputElement> }) => (
-    <input type="checkbox" defaultChecked={checked} onChange={onChange} />
+  Switch: ({ checked, onChange, 'aria-label': ariaLabel }: { checked?: boolean; onChange?: React.ChangeEventHandler<HTMLInputElement>; 'aria-label'?: string }) => (
+    <input type="checkbox" defaultChecked={checked} onChange={onChange} aria-label={ariaLabel} />
   ),
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Modal: ({ opened, children }: { opened: boolean; children: ReactNode }) => (opened ? <div>{children}</div> : null),
@@ -83,11 +87,11 @@ vi.mock('@mantine/modals', () => ({
   openConfirmModal: vi.fn(),
 }));
 
-vi.mock('../../../utils/notifications', () => ({
+vi.mock('../../utils/notifications', () => ({
   showNotification: vi.fn(),
 }));
 
-vi.mock('../../../components/downloader/DownloadButtons', () => ({
+vi.mock('../../components/downloader/DownloadButtons', () => ({
   DownloadButtons: () => <div>DownloadButtons</div>,
 }));
 
@@ -170,9 +174,9 @@ describe('ManageView', () => {
     await act(async () => {
       render(<RevisitModesItem studyId="test-study" />);
     });
-    const checkboxes = screen.getAllByRole('checkbox');
+    const dataCollectionSwitch = screen.getByRole('checkbox', { name: 'Data Collection' });
     await act(async () => {
-      fireEvent.click(checkboxes[0]);
+      fireEvent.click(dataCollectionSwitch);
     });
     expect(mockStorageEngine!.setMode).toHaveBeenCalledWith('test-study', 'dataCollectionEnabled', false);
   });
@@ -181,12 +185,11 @@ describe('ManageView', () => {
     await act(async () => {
       render(<RevisitModesItem studyId="test-study" />);
     });
-    const checkboxes = screen.getAllByRole('checkbox');
-    // developmentModeEnabled starts false → click sets true
-    await act(async () => { fireEvent.click(checkboxes[1]); });
+    const devModeSwitch = screen.getByRole('checkbox', { name: 'Development Mode' });
+    const dataSharingSwitch = screen.getByRole('checkbox', { name: 'Share Data and Make Analytics Interface Public' });
+    await act(async () => { fireEvent.click(devModeSwitch); });
     expect(mockStorageEngine!.setMode).toHaveBeenCalledWith('test-study', 'developmentModeEnabled', true);
-    // dataSharingEnabled starts false → click sets true
-    await act(async () => { fireEvent.click(checkboxes[2]); });
+    await act(async () => { fireEvent.click(dataSharingSwitch); });
     expect(mockStorageEngine!.setMode).toHaveBeenCalledWith('test-study', 'dataSharingEnabled', true);
   });
 
@@ -215,7 +218,7 @@ describe('ManageView', () => {
 
   test('StageManagementItem shows defaults and sets asyncStatus on getStageData error', async () => {
     mockStorageEngine!.getStageData.mockRejectedValue(new Error('db error'));
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     await act(async () => {
       render(<StageManagementItem studyId="test-study" />);
     });
@@ -234,9 +237,9 @@ describe('ManageView', () => {
     await act(async () => {
       render(<StageManagementItem studyId="test-study" />);
     });
-    const radios = screen.getAllByRole('radio');
+    const reviewRadio = screen.getByRole('radio', { name: 'Set current stage to REVIEW' });
     await act(async () => {
-      fireEvent.click(radios[1]);
+      fireEvent.click(reviewRadio);
     });
     expect(mockStorageEngine!.setCurrentStage).toHaveBeenCalledWith('test-study', 'REVIEW', '#00AAFF');
   });
@@ -245,13 +248,11 @@ describe('ManageView', () => {
     await act(async () => {
       render(<StageManagementItem studyId="test-study" />);
     });
-    const editBtn = screen.getByText('edit').closest('button')!;
+    const editBtn = screen.getByRole('button', { name: 'Edit stage DEFAULT' });
     await act(async () => { fireEvent.click(editBtn); });
-    // cancel button (X icon) is now visible
-    const cancelBtn = screen.getByText('x').closest('button')!;
+    const cancelBtn = screen.getByRole('button', { name: 'Cancel editing stage DEFAULT' });
     await act(async () => { fireEvent.click(cancelBtn); });
-    // after cancel, edit button should be back
-    expect(screen.getByText('edit').closest('button')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Edit stage DEFAULT' })).toBeDefined();
   });
 
   test('StageManagementItem handleSaveEdit calls updateStageColor then refreshes', async () => {
@@ -259,9 +260,9 @@ describe('ManageView', () => {
     await act(async () => {
       render(<StageManagementItem studyId="test-study" />);
     });
-    const editBtn = screen.getByText('edit').closest('button')!;
+    const editBtn = screen.getByRole('button', { name: 'Edit stage DEFAULT' });
     await act(async () => { fireEvent.click(editBtn); });
-    const saveBtn = screen.getByText('check').closest('button')!;
+    const saveBtn = screen.getByRole('button', { name: 'Save stage DEFAULT' });
     await act(async () => { fireEvent.click(saveBtn); });
     expect(mockStorageEngine!.updateStageColor).toHaveBeenCalledWith('test-study', 'DEFAULT', DEFAULT_STAGE_COLOR);
     expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(2);
@@ -272,11 +273,8 @@ describe('ManageView', () => {
       render(<StageManagementItem studyId="test-study" />);
     });
     await act(async () => { fireEvent.click(screen.getByText('Add New Stage')); });
-    // new row appears with its name input
     expect(screen.getByPlaceholderText('Enter stage name')).toBeDefined();
-    // cancel the new stage row
-    const cancelBtns = screen.getAllByText('x');
-    await act(async () => { fireEvent.click(cancelBtns[cancelBtns.length - 1].closest('button')!); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Cancel new stage' })); });
     expect(screen.getByText('Add New Stage')).toBeDefined();
   });
 
@@ -285,9 +283,7 @@ describe('ManageView', () => {
       render(<StageManagementItem studyId="test-study" />);
     });
     await act(async () => { fireEvent.click(screen.getByText('Add New Stage')); });
-    // click save without entering a name — should show validation error, not call setCurrentStage
-    const saveBtns = screen.getAllByText('check');
-    await act(async () => { fireEvent.click(saveBtns[saveBtns.length - 1].closest('button')!); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Save new stage' })); });
     expect(mockStorageEngine!.setCurrentStage).not.toHaveBeenCalled();
   });
 
@@ -309,8 +305,7 @@ describe('ManageView', () => {
     });
     await act(async () => { fireEvent.click(screen.getByText('Add New Stage')); });
     fireEvent.change(screen.getByPlaceholderText('Enter stage name'), { target: { value: 'NEWSTAGE' } });
-    const saveBtns = screen.getAllByText('check');
-    await act(async () => { fireEvent.click(saveBtns[saveBtns.length - 1].closest('button')!); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Save new stage' })); });
     expect(mockStorageEngine!.setCurrentStage).toHaveBeenCalledWith('test-study', 'NEWSTAGE', DEFAULT_STAGE_COLOR);
     expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(2);
   });
@@ -378,7 +373,9 @@ describe('ManageView', () => {
     // type the study id to enable the button
     const input = screen.getByPlaceholderText('test-study');
     fireEvent.change(input, { target: { value: 'test-study' } });
-    await act(async () => { fireEvent.click(screen.getAllByText('Archive')[1]); });
+    // The second "Archive" text is the confirm button inside the modal
+    const archiveButtons = screen.getAllByText('Archive').map((el) => el.closest('button')!);
+    await act(async () => { fireEvent.click(archiveButtons[archiveButtons.length - 1]); });
     expect(mockStorageEngine!.createSnapshot).toHaveBeenCalledWith('test-study', true);
   });
 
@@ -389,19 +386,21 @@ describe('ManageView', () => {
     fireEvent.click(screen.getByText('Delete'));
     const input = screen.getByPlaceholderText('test-study');
     fireEvent.change(input, { target: { value: 'test-study' } });
-    await act(async () => { fireEvent.click(screen.getAllByText('Delete')[1]); });
+    // The second "Delete" text is the confirm button inside the modal
+    const deleteButtons = screen.getAllByText('Delete').map((el) => el.closest('button')!);
+    await act(async () => { fireEvent.click(deleteButtons[deleteButtons.length - 1]); });
     expect(mockStorageEngine!.removeSnapshotOrLive).toHaveBeenCalledWith('test-study', 'test-study');
   });
 
-  test('DataManagementItem rename and delete snapshot actions work from snapshot row', async () => {
+  test('DataManagementItem rename snapshot action works from snapshot row', async () => {
     mockStorageEngine!.getSnapshots.mockResolvedValue({
       'test-study-snapshot-2026T01:00': { name: 'snap-one' },
     });
     await act(async () => {
       render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
     });
-    // open rename modal
-    fireEvent.click(screen.getByText('pencil').closest('button')!);
+    const pencilBtn = screen.getByRole('button', { name: 'Rename snapshot snap-one' });
+    fireEvent.click(pencilBtn);
     const renameInput = screen.getByPlaceholderText('test-study-snapshot-2026T01:00');
     fireEvent.change(renameInput, { target: { value: 'new-name' } });
     await act(async () => { fireEvent.click(screen.getByText('Rename')); });
@@ -415,10 +414,13 @@ describe('ManageView', () => {
     await act(async () => {
       render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
     });
-    fireEvent.click(screen.getByText('trash').closest('button')!);
+    const trashBtn = screen.getByRole('button', { name: 'Delete snapshot snap-one' });
+    fireEvent.click(trashBtn);
     const input = screen.getByPlaceholderText('test-study');
     fireEvent.change(input, { target: { value: 'test-study' } });
-    await act(async () => { fireEvent.click(screen.getAllByText('Delete')[1]); });
+    // The second "Delete" text is the confirm button inside the modal
+    const deleteButtons = screen.getAllByText('Delete').map((el) => el.closest('button')!);
+    await act(async () => { fireEvent.click(deleteButtons[deleteButtons.length - 1]); });
     expect(mockStorageEngine!.removeSnapshotOrLive).toHaveBeenCalledWith('test-study-snapshot-2026T01:00', 'test-study');
   });
 
@@ -430,7 +432,8 @@ describe('ManageView', () => {
     await act(async () => {
       render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
     });
-    fireEvent.click(screen.getByText('refresh').closest('button')!);
+    const refreshBtn = screen.getByRole('button', { name: 'Restore snapshot snap-one' });
+    fireEvent.click(refreshBtn);
     expect(openConfirmModal).toHaveBeenCalled();
     const call = (openConfirmModal as ReturnType<typeof vi.fn>).mock.calls[0][0];
     await act(async () => { await call.onConfirm(); });
@@ -438,10 +441,10 @@ describe('ManageView', () => {
   });
 
   test('DataManagementItem snapshotAction shows notification on failure', async () => {
-    const { showNotification } = await import('../../../utils/notifications');
+    const { showNotification } = await import('../../utils/notifications');
     mockStorageEngine!.createSnapshot.mockResolvedValue({
       status: 'ERROR',
-      error: { title: 'Oops', message: 'Something went wrong' },
+      error: { title: 'Test error', message: 'Something went wrong' },
     });
     const { openConfirmModal } = await import('@mantine/modals');
     await act(async () => {

@@ -243,6 +243,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
                           <Flex>
                             <Tooltip label="Rename">
                               <Button
+                                aria-label={`Rename snapshot ${snapshotItem.name}`}
                                 color="green"
                                 variant="light"
                                 px={4}
@@ -254,6 +255,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
                             </Tooltip>
                             <Tooltip label="Restore Snapshot">
                               <Button
+                                aria-label={`Restore snapshot ${snapshotItem.name}`}
                                 color="blue"
                                 variant="light"
                                 px={4}
@@ -266,6 +268,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
 
                             <Tooltip label="Delete Snapshot">
                               <Button
+                                aria-label={`Delete snapshot ${snapshotItem.name}`}
                                 color="red"
                                 px={4}
                                 variant="light"

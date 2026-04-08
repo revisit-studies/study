@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { SequenceAssignment } from '../engines/types';
 import { ParticipantData } from '../types';
-import { getFilteredParticipantProgress, groupParticipantProgress } from '../../analysis/individualStudy/LiveMonitor/LiveMonitorView';
+import { getFilteredParticipantProgress, groupParticipantProgress } from '../../analysis/individualStudy/liveMonitor/LiveMonitorView';
 
 function makeAssignment(partial: Partial<SequenceAssignment> & Pick<SequenceAssignment, 'participantId'>): SequenceAssignment {
   return {

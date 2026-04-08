@@ -6,7 +6,7 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { StudyAnalysisTabs } from './StudyAnalysisTabs';
+import { StudyAnalysisTabs } from '../individualStudy/StudyAnalysisTabs';
 import type { GlobalConfig, StudyConfig, ParsedConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
 import { useAsync } from '../../store/hooks/useAsync';

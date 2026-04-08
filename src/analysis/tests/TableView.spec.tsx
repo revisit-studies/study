@@ -4,10 +4,11 @@ import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useParams } from 'react-router';
-import { StudyConfig } from '../../../parser/types';
-import { ParticipantData } from '../../../storage/types';
-import { TableView } from './TableView';
-import { MetaCell } from './MetaCell';
+import { StudyConfig } from '../../parser/types';
+import { ParticipantData } from '../../storage/types';
+import { createMockStudyConfig } from './testUtils';
+import { TableView } from '../individualStudy/table/TableView';
+import { MetaCell } from '../individualStudy/table/MetaCell';
 
 // ── capturedTableOptions ─────────────────────────────────────────────────────
 
@@ -48,63 +49,48 @@ vi.mock('@tabler/icons-react', () => ({
   IconCopy: () => <span>copy</span>,
 }));
 
-vi.mock('../replay/AllTasksTimeline', () => ({
+vi.mock('../individualStudy/replay/AllTasksTimeline', () => ({
   AllTasksTimeline: () => <div>AllTasksTimeline</div>,
 }));
 
-vi.mock('../ParticipantRejectModal', () => ({
+vi.mock('../individualStudy/ParticipantRejectModal', () => ({
   ParticipantRejectModal: () => <div>ParticipantRejectModal</div>,
 }));
 
-vi.mock('../../../utils/getSequenceFlatMap', () => ({
+vi.mock('../../utils/getSequenceFlatMap', () => ({
   getSequenceFlatMap: vi.fn(() => ['intro', 'trial1', 'trial2', 'end']),
 }));
 
-vi.mock('../../../utils/participantName', () => ({
+vi.mock('../../utils/participantName', () => ({
   participantName: () => 'Test User',
 }));
 
 // ── fixtures ─────────────────────────────────────────────────────────────────
 
-const emptyConfig = {
-  components: {},
-  uiConfig: { participantNameField: undefined },
-  sequence: { order: 'fixed', components: [] },
-} as unknown as StudyConfig;
-
-const t0 = 1_700_000_000_000;
+const emptyConfig: StudyConfig = createMockStudyConfig();
 
 function makeParticipant(overrides: Partial<ParticipantData> = {}): ParticipantData {
   return {
     participantId: 'pid-1',
     participantIndex: 1,
+    participantConfigHash: 'hash1',
     stage: 'DEFAULT',
     completed: true,
     rejected: false,
-    conditions: undefined,
     searchParams: {},
-    answers: {
-      trial1_0: {
-        componentName: 'trial1',
-        startTime: t0,
-        endTime: t0 + 10_000,
-        answer: {},
-        correctAnswer: [],
-        trialOrder: '0_0',
-        windowEvents: [],
-      },
-    },
+    answers: {},
     metadata: {
       userAgent: 'test-agent',
       resolution: { width: 1920, height: 1080 },
       language: 'en-US',
       ip: '1.2.3.4',
     },
-    sequence: { order: 'fixed', components: ['trial1'], skip: [] } as unknown as ParticipantData['sequence'],
+    sequence: {
+      orderPath: 'root', order: 'fixed', components: ['trial1'], skip: [],
+    },
     participantTags: [],
-    participantConfigHash: 'hash1',
     ...overrides,
-  } as unknown as ParticipantData;
+  };
 }
 
 const defaultProps = {
@@ -280,10 +266,10 @@ describe('TableView', () => {
   // ── Optional columns ──────────────────────────────────────────────────────
 
   test('includes Name column when studyConfig has participantNameField', () => {
-    const configWithName = {
+    const configWithName: StudyConfig = {
       ...emptyConfig,
-      uiConfig: { participantNameField: 'name' },
-    } as unknown as StudyConfig;
+      uiConfig: { ...emptyConfig.uiConfig, participantNameField: 'name' },
+    };
     renderToStaticMarkup(
       <TableView {...defaultProps} studyConfig={configWithName} visibleParticipants={[makeParticipant()]} />,
     );

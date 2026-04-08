@@ -6,33 +6,41 @@ import {
   getOverviewStats,
   getComponentStats,
   getResponseStats,
-} from './utils';
-import { ParticipantData } from '../../../storage/types';
-import { StudyConfig } from '../../../parser/types';
-import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
+} from '../individualStudy/summary/utils';
+import { ParticipantData } from '../../storage/types';
+import type { IndividualComponent, StudyConfig } from '../../parser/types';
+import type { StoredAnswer } from '../../store/types';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+
+const invalidCleanTimeAnswers = new Set<StoredAnswer>();
 
 // Mock dependencies
-vi.mock('../../../utils/getCleanedDuration', () => ({
-  getCleanedDuration: vi.fn((answer: { startTime: number; endTime: number; windowEvents: unknown[] }) => {
+vi.mock('../../utils/getCleanedDuration', () => ({
+  getCleanedDuration: vi.fn((answer: Pick<StoredAnswer, 'startTime' | 'endTime' | 'windowEvents'>) => {
     // Simple mock: return duration minus 1000ms for "clean" time, or -1 if invalid
     if (answer.endTime === -1) return -1;
     const duration = answer.endTime - answer.startTime;
-    // Simulate invalid clean time for answers with specific flag
-    if ((answer as { invalidCleanTime?: boolean }).invalidCleanTime) return -1;
+    // Simulate invalid clean time for answers explicitly marked in the helper below.
+    if (invalidCleanTimeAnswers.has(answer as StoredAnswer)) return -1;
     return Math.max(duration - 1000, 0);
   }),
 }));
 
-vi.mock('../../../utils/correctAnswer', () => ({
-  componentAnswersAreCorrect: vi.fn((userAnswers: Record<string, unknown>, correctAnswers: Array<{ id: string; answer: unknown }>) => {
+vi.mock('../../utils/correctAnswer', () => ({
+  componentAnswersAreCorrect: vi.fn((userAnswers: StoredAnswer['answer'], correctAnswers: IndividualComponent['correctAnswer']) => {
     if (!correctAnswers || correctAnswers.length === 0) return true;
     return correctAnswers.every((ca) => userAnswers[ca.id] === ca.answer);
   }),
 }));
 
-vi.mock('../../../utils/handleComponentInheritance', () => ({
-  studyComponentToIndividualComponent: vi.fn((component: { response?: unknown[] }) => component),
-}));
+vi.mock('../../utils/handleComponentInheritance', async () => {
+  const actual = await vi.importActual<typeof import('../../utils/handleComponentInheritance')>('../../utils/handleComponentInheritance');
+
+  return {
+    ...actual,
+    studyComponentToIndividualComponent: vi.fn(actual.studyComponentToIndividualComponent),
+  };
+});
 
 // Helper function to create mock participant data
 function createMockParticipant(overrides: Partial<ParticipantData> & { participantId: string }): ParticipantData {
@@ -47,7 +55,7 @@ function createMockParticipant(overrides: Partial<ParticipantData> & { participa
     answers: {},
     searchParams: {},
     metadata: {
-      userAgent: '', resolution: {}, language: '', ip: null,
+      userAgent: '', resolution: { width: 0, height: 0 }, language: '', ip: '',
     },
     completed: false,
     rejected: false,
@@ -65,29 +73,42 @@ function createMockAnswer(overrides: {
   answer?: Record<string, string | number | boolean | string[]>;
   correctAnswer?: Array<{ id: string; answer: string | number | boolean | string[] }>;
   invalidCleanTime?: boolean;
-}) {
-  return {
-    identifier: `${overrides.componentName}_1`,
-    componentName: overrides.componentName,
+}): StoredAnswer {
+  const { invalidCleanTime = false, ...answerOverrides } = overrides;
+  const answer: StoredAnswer = {
+    identifier: `${answerOverrides.componentName}_1`,
     trialOrder: '1',
-    answer: overrides.answer || {},
-    correctAnswer: overrides.correctAnswer || [],
+    answer: answerOverrides.answer || {},
+    correctAnswer: answerOverrides.correctAnswer || [],
     incorrectAnswers: {},
-    startTime: overrides.startTime,
-    endTime: overrides.endTime,
-    provenanceGraph: {
-      sidebar: undefined,
-      aboveStimulus: undefined,
-      belowStimulus: undefined,
-      stimulus: undefined,
-    },
+    provenanceGraph: {} as StoredAnswer['provenanceGraph'],
     windowEvents: [],
     timedOut: false,
     helpButtonClickedCount: 0,
     parameters: {},
     optionOrders: {},
     questionOrders: {},
-    invalidCleanTime: overrides.invalidCleanTime,
+    ...answerOverrides,
+  };
+
+  if (invalidCleanTime) {
+    invalidCleanTimeAnswers.add(answer);
+  }
+
+  return answer;
+}
+
+function makeConfig(partial: Pick<StudyConfig, 'components'> & { sequence?: StudyConfig['sequence'] }): StudyConfig {
+  return {
+    $schema: '',
+    studyMetadata: {
+      title: '', version: '', authors: [], date: '', description: '', organizations: [],
+    },
+    uiConfig: {
+      contactEmail: '', helpTextPath: '', logoPath: '', withProgressBar: false, autoDownloadStudy: false, withSidebar: false,
+    },
+    sequence: { order: 'fixed', components: [] },
+    ...partial,
   };
 }
 
@@ -1332,12 +1353,12 @@ describe('utils.tsx', () => {
         }),
       ];
 
-      const studyConfig = {
+      const studyConfig = makeConfig({
         components: {
-          comp1: { response: [] },
-          comp2: { response: [] },
+          comp1: { type: 'questionnaire', response: [] },
+          comp2: { type: 'questionnaire', response: [] },
         },
-      } as unknown as StudyConfig;
+      });
 
       const result = getComponentStats(participants, studyConfig);
 
@@ -1377,12 +1398,12 @@ describe('utils.tsx', () => {
         }),
       ];
 
-      const studyConfig = {
+      const studyConfig = makeConfig({
         components: {
-          comp1: { response: [] },
-          comp2: { response: [] },
+          comp1: { type: 'questionnaire', response: [] },
+          comp2: { type: 'questionnaire', response: [] },
         },
-      } as unknown as StudyConfig;
+      });
 
       const result = getComponentStats(participants, studyConfig);
 
@@ -1424,12 +1445,12 @@ describe('utils.tsx', () => {
         }),
       ];
 
-      const studyConfig = {
+      const studyConfig = makeConfig({
         components: {
-          comp1: { response: [] },
-          comp2: { response: [] },
+          comp1: { type: 'questionnaire', response: [] },
+          comp2: { type: 'questionnaire', response: [] },
         },
-      } as unknown as StudyConfig;
+      });
 
       const result = getComponentStats(participants, studyConfig);
 
@@ -1445,9 +1466,9 @@ describe('utils.tsx', () => {
         createMockParticipant({ participantId: '1', completed: true }),
       ];
 
-      const studyConfig = {
+      const studyConfig = makeConfig({
         components: {},
-      } as unknown as StudyConfig;
+      });
 
       const result = getComponentStats(participants, studyConfig);
 
@@ -1471,11 +1492,11 @@ describe('utils.tsx', () => {
         }),
       ];
 
-      const studyConfig = {
+      const studyConfig = makeConfig({
         components: {
-          comp1: { response: [] },
+          comp1: { type: 'questionnaire', response: [] },
         },
-      } as unknown as StudyConfig;
+      });
 
       const result = getComponentStats(participants, studyConfig);
 
@@ -1497,12 +1518,12 @@ describe('utils.tsx', () => {
         }),
       ];
 
-      const studyConfig = {
+      const studyConfig = makeConfig({
         components: {
-          comp1: { response: [] },
-          comp2: { response: [] }, // No participant has answered this
+          comp1: { type: 'questionnaire', response: [] },
+          comp2: { type: 'questionnaire', response: [] }, // No participant has answered this
         },
-      } as unknown as StudyConfig;
+      });
 
       const result = getComponentStats(participants, studyConfig);
 
@@ -1524,11 +1545,11 @@ describe('utils.tsx', () => {
         }),
       ];
 
-      const studyConfig = {
+      const studyConfig = makeConfig({
         components: {
-          orphanComponent: { response: [] },
+          orphanComponent: { type: 'questionnaire', response: [] },
         },
-      } as unknown as StudyConfig;
+      });
 
       const result = getComponentStats(participants, studyConfig);
 
@@ -1558,11 +1579,11 @@ describe('utils.tsx', () => {
         }),
       ];
 
-      const studyConfig = {
+      const studyConfig = makeConfig({
         components: {
-          comp1: { response: [] },
+          comp1: { type: 'questionnaire', response: [] },
         },
-      } as unknown as StudyConfig;
+      });
 
       const result = getComponentStats(participants, studyConfig);
 
@@ -1597,11 +1618,11 @@ describe('utils.tsx', () => {
         }),
       ];
 
-      const studyConfig = {
+      const studyConfig = makeConfig({
         components: {
-          comp1: { response: [] },
+          comp1: { type: 'questionnaire', response: [] },
         },
-      } as unknown as StudyConfig;
+      });
 
       const result = getComponentStats(participants, studyConfig);
 
@@ -1618,11 +1639,11 @@ describe('utils.tsx', () => {
         }),
       ];
 
-      const studyConfig = {
+      const studyConfig = makeConfig({
         components: {
-          comp1: { response: [] },
+          comp1: { type: 'questionnaire', response: [] },
         },
-      } as unknown as StudyConfig;
+      });
 
       const result = getComponentStats(participants, studyConfig);
 
@@ -1660,11 +1681,11 @@ describe('utils.tsx', () => {
         }),
       ];
 
-      const studyConfig = {
+      const studyConfig = makeConfig({
         components: {
-          comp1: { response: [] },
+          comp1: { type: 'questionnaire', response: [] },
         },
-      } as unknown as StudyConfig;
+      });
 
       const [comp1Stats] = getComponentStats(participants, studyConfig);
 
@@ -1680,16 +1701,21 @@ describe('utils.tsx', () => {
   describe('getResponseStats', () => {
     describe('basic functionality', () => {
       it('should return response data for all responses in components', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             survey: {
+              type: 'questionnaire',
               response: [
-                { type: 'radio', prompt: 'Question 1', options: ['A', 'B', 'C'] },
-                { type: 'checkbox', prompt: 'Question 2', options: ['X', 'Y'] },
+                {
+                  id: 'r1', type: 'radio', prompt: 'Question 1', options: ['A', 'B', 'C'],
+                },
+                {
+                  id: 'r1', type: 'checkbox', prompt: 'Question 2', options: ['X', 'Y'],
+                },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1701,17 +1727,18 @@ describe('utils.tsx', () => {
       });
 
       it('should use "N/A" when prompt is not provided', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             comp: {
+              type: 'questionnaire',
               response: [
                 {
-                  type: 'shortText',
+                  id: 'r1', type: 'divider',
                 },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1719,16 +1746,19 @@ describe('utils.tsx', () => {
       });
 
       it('should skip components with no responses', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
-            intro: {},
+            intro: { type: 'questionnaire', response: [] },
             survey: {
+              type: 'questionnaire',
               response: [
-                { type: 'radio', prompt: 'Q1', options: ['A', 'B'] },
+                {
+                  id: 'r1', type: 'radio', prompt: 'Q1', options: ['A', 'B'],
+                },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1737,18 +1767,21 @@ describe('utils.tsx', () => {
       });
 
       it('should skip components with empty responses array', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             intro: {
-              response: [],
+              type: 'questionnaire', response: [],
             },
             survey: {
+              type: 'questionnaire',
               response: [
-                { type: 'radio', prompt: 'Q1', options: ['A', 'B'] },
+                {
+                  id: 'r1', type: 'radio', prompt: 'Q1', options: ['A', 'B'],
+                },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1773,15 +1806,18 @@ describe('utils.tsx', () => {
           }),
         ];
 
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             survey: {
+              type: 'questionnaire',
               response: [
-                { type: 'radio', prompt: 'Q1', options: ['A', 'B'] },
+                {
+                  id: 'r1', type: 'radio', prompt: 'Q1', options: ['A', 'B'],
+                },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats(participants, studyConfig);
 
@@ -1791,11 +1827,13 @@ describe('utils.tsx', () => {
 
     describe('slider response options', () => {
       it('should format slider response options correctly', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             slider: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'slider',
                   prompt: 'Rate it',
                   options: [
@@ -1807,7 +1845,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1817,11 +1855,13 @@ describe('utils.tsx', () => {
 
     describe('options-based responses (radio, checkbox, dropdown, button)', () => {
       it('should format string options as comma-separated list', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             radio: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'radio',
                   prompt: 'Choose one',
                   options: ['Option 1', 'Option 2', 'Option 3'],
@@ -1829,7 +1869,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1837,19 +1877,21 @@ describe('utils.tsx', () => {
       });
 
       it('should format button response options correctly', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             buttons: {
+              type: 'questionnaire',
               response: [
                 {
-                  type: 'button',
+                  id: 'r1',
+                  type: 'buttons',
                   prompt: 'Click one',
                   options: ['Yes', 'No', 'Maybe'],
                 },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1857,11 +1899,13 @@ describe('utils.tsx', () => {
       });
 
       it('should format dropdown response options correctly', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             dropdown: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'dropdown',
                   prompt: 'Select one',
                   options: ['First', 'Second', 'Third'],
@@ -1869,7 +1913,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1878,11 +1922,13 @@ describe('utils.tsx', () => {
       });
 
       it('should format checkbox response options correctly', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             checkbox: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'checkbox',
                   prompt: 'Select all that apply',
                   options: ['Option A', 'Option B', 'Option C'],
@@ -1890,7 +1936,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1899,19 +1945,21 @@ describe('utils.tsx', () => {
       });
 
       it('should handle ranking response with options', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             ranking: {
+              type: 'questionnaire',
               response: [
                 {
-                  type: 'ranking',
+                  id: 'r1',
+                  type: 'ranking-sublist',
                   prompt: 'Rank these items',
                   options: ['First', 'Second', 'Third'],
                 },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1919,11 +1967,13 @@ describe('utils.tsx', () => {
       });
 
       it('should handle StringOption objects by extracting labels', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             survey: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'radio',
                   prompt: 'Choose one',
                   options: [
@@ -1934,7 +1984,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1942,11 +1992,13 @@ describe('utils.tsx', () => {
       });
 
       it('should handle mixed string and StringOption options', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             mixed: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'radio',
                   prompt: 'Mixed options',
                   options: [
@@ -1957,7 +2009,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1967,11 +2019,13 @@ describe('utils.tsx', () => {
 
     describe('matrix response options', () => {
       it('should format matrix-radio response options correctly', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             matrix: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'matrix-radio',
                   prompt: 'Rate these',
                   questionOptions: ['Q1', 'Q2', 'Q3'],
@@ -1980,7 +2034,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -1988,11 +2042,13 @@ describe('utils.tsx', () => {
       });
 
       it('should format matrix-checkbox response correctly', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             matrixCheckbox: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'matrix-checkbox',
                   prompt: 'Select all that apply',
                   questionOptions: ['Item 1', 'Item 2'],
@@ -2001,7 +2057,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2010,11 +2066,13 @@ describe('utils.tsx', () => {
       });
 
       it('should format matrix response with preset answer options', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             matrix: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'matrix-radio',
                   prompt: 'Rate these',
                   questionOptions: ['Q1', 'Q2'],
@@ -2023,7 +2081,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2031,11 +2089,13 @@ describe('utils.tsx', () => {
       });
 
       it('should include synthetic dont-know in matrix response options', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             matrix: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'matrix-radio',
                   prompt: 'Rate these',
                   questionOptions: ['Q1', 'Q2'],
@@ -2045,7 +2105,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2053,11 +2113,13 @@ describe('utils.tsx', () => {
       });
 
       it('should format matrix response with mixed string and StringOption entries', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             matrixMixed: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'matrix-radio',
                   prompt: 'Rate these',
                   questionOptions: [
@@ -2072,7 +2134,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2082,11 +2144,13 @@ describe('utils.tsx', () => {
 
     describe('likert response options', () => {
       it('should format likert response options correctly', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             likert: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'likert',
                   prompt: 'Rate your agreement',
                   numItems: 7,
@@ -2096,7 +2160,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2104,11 +2168,13 @@ describe('utils.tsx', () => {
       });
 
       it('should format likert response without labels', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             likert: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'likert',
                   prompt: 'Rate it',
                   numItems: 5,
@@ -2116,7 +2182,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2124,11 +2190,13 @@ describe('utils.tsx', () => {
       });
 
       it('should handle likert with only left label', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             likert: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'likert',
                   prompt: 'Rate it',
                   numItems: 5,
@@ -2137,7 +2205,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2146,11 +2214,13 @@ describe('utils.tsx', () => {
       });
 
       it('should handle likert with custom start and spacing', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             likert: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'likert',
                   prompt: 'Custom scale',
                   numItems: 10,
@@ -2162,7 +2232,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2172,11 +2242,13 @@ describe('utils.tsx', () => {
 
     describe('text-based and other response types (no options)', () => {
       it('should return "N/A" for numerical response', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             numerical: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'numerical',
                   prompt: 'Enter a number',
                   min: 0,
@@ -2185,7 +2257,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2194,18 +2266,20 @@ describe('utils.tsx', () => {
       });
 
       it('should return "N/A" for shortText response', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             text: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'shortText',
                   prompt: 'Enter your name',
                 },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2213,18 +2287,20 @@ describe('utils.tsx', () => {
       });
 
       it('should return "N/A" for longText response', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             longText: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'longText',
                   prompt: 'Describe your experience',
                 },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2232,18 +2308,20 @@ describe('utils.tsx', () => {
       });
 
       it('should handle reactive response (no options)', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             reactive: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'reactive',
                   prompt: 'Dynamic response',
                 },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2251,18 +2329,20 @@ describe('utils.tsx', () => {
       });
 
       it('should handle textOnly response', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             textOnly: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'textOnly',
                   prompt: 'Information text',
                 },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2270,17 +2350,18 @@ describe('utils.tsx', () => {
       });
 
       it('should handle divider response', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             divider: {
+              type: 'questionnaire',
               response: [
                 {
-                  type: 'divider',
+                  id: 'r1', type: 'divider',
                 },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2291,17 +2372,22 @@ describe('utils.tsx', () => {
 
     describe('edge cases', () => {
       it('should handle multiple responses in a single component', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             survey: {
+              type: 'questionnaire',
               response: [
-                { type: 'radio', prompt: 'Q1', options: ['A', 'B'] },
-                { type: 'shortText', prompt: 'Q2' },
-                { type: 'slider', prompt: 'Q3', options: [{ label: 'Low', value: 0 }, { label: 'High', value: 100 }] },
+                {
+                  id: 'r1', type: 'radio', prompt: 'Q1', options: ['A', 'B'],
+                },
+                { id: 'r1', type: 'shortText', prompt: 'Q2' },
+                {
+                  id: 'r1', type: 'slider', prompt: 'Q3', options: [{ label: 'Low', value: 0 }, { label: 'High', value: 100 }],
+                },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2314,9 +2400,9 @@ describe('utils.tsx', () => {
       });
 
       it('should handle empty study config', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {},
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2324,18 +2410,23 @@ describe('utils.tsx', () => {
       });
 
       it('should handle components with response as undefined', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             intro: {
+              type: 'questionnaire',
               // no response property at all
+              response: [],
             },
             survey: {
+              type: 'questionnaire',
               response: [
-                { type: 'radio', prompt: 'Q1', options: ['A', 'B'] },
+                {
+                  id: 'r1', type: 'radio', prompt: 'Q1', options: ['A', 'B'],
+                },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2344,25 +2435,30 @@ describe('utils.tsx', () => {
       });
 
       it('should preserve component name association for multiple components', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             intro: {
+              type: 'questionnaire',
               response: [
-                { type: 'shortText', prompt: 'Name' },
+                { id: 'r1', type: 'shortText', prompt: 'Name' },
               ],
             },
             survey: {
+              type: 'questionnaire',
               response: [
-                { type: 'radio', prompt: 'Q1', options: ['A', 'B'] },
+                {
+                  id: 'r1', type: 'radio', prompt: 'Q1', options: ['A', 'B'],
+                },
               ],
             },
             outro: {
+              type: 'questionnaire',
               response: [
-                { type: 'longText', prompt: 'Feedback' },
+                { id: 'r1', type: 'longText', prompt: 'Feedback' },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2373,11 +2469,13 @@ describe('utils.tsx', () => {
       });
 
       it('should handle slider with single option', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             slider: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'slider',
                   prompt: 'Rate',
                   options: [{ label: 'Only', value: 50 }],
@@ -2385,7 +2483,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2393,11 +2491,13 @@ describe('utils.tsx', () => {
       });
 
       it('should handle empty options array', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             radio: {
+              type: 'questionnaire',
               response: [
                 {
+                  id: 'r1',
                   type: 'radio',
                   prompt: 'Empty options',
                   options: [],
@@ -2405,7 +2505,7 @@ describe('utils.tsx', () => {
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2413,15 +2513,18 @@ describe('utils.tsx', () => {
       });
 
       it('should calculate correctness NaN when no participant data exists', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
             survey: {
+              type: 'questionnaire',
               response: [
-                { type: 'radio', prompt: 'Q1', options: ['A', 'B'] },
+                {
+                  id: 'r1', type: 'radio', prompt: 'Q1', options: ['A', 'B'],
+                },
               ],
             },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats([], studyConfig);
 
@@ -2429,12 +2532,12 @@ describe('utils.tsx', () => {
       });
 
       it('should call studyComponentToIndividualComponent for each component', () => {
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
-            comp1: { response: [{ type: 'shortText', prompt: 'Q1' }] },
-            comp2: { response: [{ type: 'shortText', prompt: 'Q2' }] },
+            comp1: { type: 'questionnaire', response: [{ id: 'r1', type: 'shortText', prompt: 'Q1' }] },
+            comp2: { type: 'questionnaire', response: [{ id: 'r1', type: 'shortText', prompt: 'Q2' }] },
           },
-        } as unknown as StudyConfig;
+        });
 
         getResponseStats([], studyConfig);
 
@@ -2465,12 +2568,12 @@ describe('utils.tsx', () => {
           }),
         ];
 
-        const studyConfig = {
+        const studyConfig = makeConfig({
           components: {
-            comp1: { response: [{ type: 'shortText', prompt: 'Q1' }] },
-            comp2: { response: [{ type: 'shortText', prompt: 'Q2' }] },
+            comp1: { type: 'questionnaire', response: [{ id: 'r1', type: 'shortText', prompt: 'Q1' }] },
+            comp2: { type: 'questionnaire', response: [{ id: 'r1', type: 'shortText', prompt: 'Q2' }] },
           },
-        } as unknown as StudyConfig;
+        });
 
         const result = getResponseStats(participants, studyConfig);
 

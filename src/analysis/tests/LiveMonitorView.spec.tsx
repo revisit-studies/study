@@ -6,14 +6,14 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { SequenceAssignment } from '../../../storage/engines/types';
+import { SequenceAssignment } from '../../storage/engines/types';
 import {
   getFilteredParticipantProgress,
   groupParticipantProgress,
   LiveMonitorView,
-} from './LiveMonitorView';
-import { ParticipantSection } from './ParticipantSection';
-import { ProgressHeatmap } from './ProgressHeatmap';
+} from '../individualStudy/liveMonitor/LiveMonitorView';
+import { ParticipantSection } from '../individualStudy/liveMonitor/ParticipantSection';
+import { ProgressHeatmap } from '../individualStudy/liveMonitor/ProgressHeatmap';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -51,8 +51,8 @@ vi.mock('@tabler/icons-react', () => ({
   IconChevronRight: () => <span>icon-chevron-right</span>,
 }));
 
-vi.mock('../../../storage/engines/FirebaseStorageEngine', () => ({
-  FirebaseStorageEngine: class {},
+vi.mock('../../storage/engines/FirebaseStorageEngine', () => ({
+  FirebaseStorageEngine: class { },
 }));
 
 // ── fixture helpers ───────────────────────────────────────────────────────────
@@ -60,15 +60,17 @@ vi.mock('../../../storage/engines/FirebaseStorageEngine', () => ({
 function makeAssignment(overrides: Partial<SequenceAssignment> = {}): SequenceAssignment {
   return {
     participantId: 'p1',
+    timestamp: 1_700_000_000_000,
     stage: 'DEFAULT',
     answered: [],
     total: 5,
     completed: null,
+    claimed: false,
     rejected: false,
     createdTime: 1_700_000_000_000,
     isDynamic: false,
     ...overrides,
-  } as unknown as SequenceAssignment;
+  };
 }
 
 // ── getFilteredParticipantProgress ────────────────────────────────────────────
@@ -163,7 +165,7 @@ describe('groupParticipantProgress', () => {
   });
 });
 
-afterEach(() => { cleanup(); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 // ── LiveMonitorView ───────────────────────────────────────────────────────────
 
@@ -368,7 +370,7 @@ describe('LiveMonitorView interactive', () => {
     expect(container.textContent).toContain('p-rej');
   });
 
-  test('sets connectionStatus to disconnected when listener returns undefined (covers lines 171-172)', async () => {
+  test('sets connectionStatus to disconnected when listener returns undefined', async () => {
     const mockEngine = {
       initializeStudyDb: vi.fn(),
       getAllSequenceAssignments: vi.fn().mockResolvedValue([]),
@@ -401,7 +403,7 @@ describe('LiveMonitorView interactive', () => {
       getAllSequenceAssignments: vi.fn().mockRejectedValue(new Error('conn failed')),
       _setupSequenceAssignmentListener: vi.fn(() => undefined),
     };
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     const { getAllByRole } = await act(async () => render(
       <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
     ));

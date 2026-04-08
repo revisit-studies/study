@@ -4,16 +4,17 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { cleanup } from '@testing-library/react';
-import { StudyConfig } from '../../../parser/types';
-import { ParticipantData } from '../../../storage/types';
-import type { StorageEngine } from '../../../storage/engines/types';
-import { OverviewData } from '../../types';
-import { useStorageEngine } from '../../../storage/storageEngineHooks';
-import { useAsync } from '../../../store/hooks/useAsync';
-import { SummaryView } from './SummaryView';
-import { OverviewStats } from './OverviewStats';
-import { ComponentStats } from './ComponentStats';
-import { ResponseStats } from './ResponseStats';
+import { StudyConfig } from '../../parser/types';
+import { ParticipantData } from '../../storage/types';
+import type { StorageEngine } from '../../storage/engines/types';
+import { OverviewData } from '../types';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { useAsync } from '../../store/hooks/useAsync';
+import { createMockStudyConfig } from './testUtils';
+import { SummaryView } from '../individualStudy/summary/SummaryView';
+import { OverviewStats } from '../individualStudy/summary/OverviewStats';
+import { ComponentStats } from '../individualStudy/summary/ComponentStats';
+import { ResponseStats } from '../individualStudy/summary/ResponseStats';
 
 // ── capturedTableOptions: intercept MRT ─────────────────────────────────────
 
@@ -49,11 +50,11 @@ vi.mock('@tabler/icons-react', () => ({
   IconAlertTriangle: () => <span>alert</span>,
 }));
 
-vi.mock('../../../storage/storageEngineHooks', () => ({
+vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: vi.fn(() => ({ storageEngine: undefined })),
 }));
 
-vi.mock('../../../store/hooks/useAsync', () => ({
+vi.mock('../../store/hooks/useAsync', () => ({
   useAsync: vi.fn(() => ({ value: null, status: 'idle', error: null })),
 }));
 
@@ -74,10 +75,10 @@ function makeOverviewData(overrides: Partial<OverviewData> = {}): OverviewData {
   };
 }
 
-const emptyConfig: StudyConfig = {
-  components: { comp1: { type: 'questionnaire', response: [] } as unknown as StudyConfig['components'][string] },
-  sequence: { order: 'fixed', components: ['comp1'] } as unknown as StudyConfig['sequence'],
-} as unknown as StudyConfig;
+const emptyConfig: StudyConfig = createMockStudyConfig({
+  components: { comp1: { type: 'questionnaire', response: [] } },
+  sequence: { order: 'fixed', components: ['comp1'] },
+});
 
 const noParticipants: ParticipantData[] = [];
 
@@ -123,7 +124,7 @@ describe('OverviewStats', () => {
     vi.mocked(useAsync).mockReturnValue({
       execute: vi.fn(), value: { completed: 3, inProgress: 5, rejected: 0 }, status: 'success', error: null,
     } as ReturnType<typeof useAsync>);
-    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: {} as unknown as StorageEngine, setStorageEngine: vi.fn() });
+    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: {} as StorageEngine, setStorageEngine: vi.fn() });
 
     const html = renderToStaticMarkup(
       <OverviewStats
@@ -143,7 +144,7 @@ describe('OverviewStats', () => {
     vi.mocked(useAsync).mockReturnValue({
       execute: vi.fn(), value: { completed: 7, inProgress: 2, rejected: 1 }, status: 'success', error: null,
     } as ReturnType<typeof useAsync>);
-    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: {} as unknown as StorageEngine, setStorageEngine: vi.fn() });
+    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: {} as StorageEngine, setStorageEngine: vi.fn() });
 
     const html = renderToStaticMarkup(
       <OverviewStats

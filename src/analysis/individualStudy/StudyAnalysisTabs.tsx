@@ -17,7 +17,7 @@ import { useResizeObserver } from '@mantine/hooks';
 import { AppHeader } from '../interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
-import { LiveMonitorView } from './LiveMonitor/LiveMonitorView';
+import { LiveMonitorView } from './liveMonitor/LiveMonitorView';
 import { SummaryView } from './summary/SummaryView';
 import { TableView } from './table/TableView';
 import { StatsView } from './stats/StatsView';
