@@ -2,12 +2,12 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
-import testConfigSimple from './testConfigSimple.json';
+import testConfigSimple from '../../storage/tests/testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
-import { LocalStorageEngine } from '../engines/LocalStorageEngine';
-import { StageInfo, StorageEngine } from '../engines/types';
+import { LocalStorageEngine } from '../../storage/engines/LocalStorageEngine';
+import { StageInfo, StorageEngine } from '../../storage/engines/types';
 import { download } from '../../components/downloader/DownloadTidy';
-import { validateStageName } from '../../analysis/individualStudy/management/StageManagementItem';
+import { validateStageName } from '../individualStudy/management/StageManagementItem';
 
 const studyId = 'test-study-manage';
 const configSimple = testConfigSimple as StudyConfig;

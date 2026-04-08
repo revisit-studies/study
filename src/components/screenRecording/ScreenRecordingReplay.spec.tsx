@@ -94,7 +94,7 @@ describe('ScreenRecordingReplay', () => {
   });
 
   test('covers url truthy path (setAnalysisHasScreenRecording(true)) when participantId is provided', async () => {
-    // isAnalysis=true, storageEngine returns a URL → covers line 54
+    // isAnalysis=true, storageEngine returns a URL
     mockIsAnalysis = true;
     mockStorageEngine = {
       getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),

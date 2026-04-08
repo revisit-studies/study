@@ -2,11 +2,11 @@ import {
   expect, test, beforeEach, describe, afterEach,
 } from 'vitest';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
-import testConfigSimple from './testConfigSimple.json';
+import testConfigSimple from '../../storage/tests/testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
-import { LocalStorageEngine } from '../engines/LocalStorageEngine';
-import { StorageEngine } from '../engines/types';
-import { Tag, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
+import { LocalStorageEngine } from '../../storage/engines/LocalStorageEngine';
+import { StorageEngine } from '../../storage/engines/types';
+import { Tag, TaglessEditedText } from '../individualStudy/thinkAloud/types';
 
 const studyId = 'test-study-think-aloud';
 const configSimple = testConfigSimple as StudyConfig;

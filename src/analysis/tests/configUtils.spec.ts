@@ -2,12 +2,12 @@ import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { StudyConfig } from '../../parser/types';
-import testConfigSimple from './testConfigSimple.json';
-import testConfigSimple2 from './testConfigSimple2.json';
-import { hash } from '../engines/utils';
-import { buildConfigRows, ConfigInfo, formatDate } from '../../analysis/individualStudy/config/utils';
+import testConfigSimple from '../../storage/tests/testConfigSimple.json';
+import testConfigSimple2 from '../../storage/tests/testConfigSimple2.json';
+import { hash } from '../../storage/engines/utils';
+import { buildConfigRows, ConfigInfo, formatDate } from '../individualStudy/config/utils';
 import { downloadConfigFile, downloadConfigFilesZip } from '../../utils/handleDownloadFiles';
-import { ConfigDiffModal } from '../../analysis/individualStudy/config/ConfigDiffModal';
+import { ConfigDiffModal } from '../individualStudy/config/ConfigDiffModal';
 
 const studyId = 'test-study-analysis-config';
 const configSimple = testConfigSimple as StudyConfig;

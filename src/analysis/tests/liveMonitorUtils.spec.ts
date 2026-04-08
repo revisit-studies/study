@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { SequenceAssignment } from '../engines/types';
-import { ParticipantData } from '../types';
-import { getFilteredParticipantProgress, groupParticipantProgress } from '../../analysis/individualStudy/LiveMonitor/LiveMonitorView';
+import { SequenceAssignment } from '../../storage/engines/types';
+import { ParticipantData } from '../../storage/types';
+import { getFilteredParticipantProgress } from '../individualStudy/LiveMonitor/LiveMonitorView';
 
 function makeAssignment(partial: Partial<SequenceAssignment> & Pick<SequenceAssignment, 'participantId'>): SequenceAssignment {
   return {
@@ -64,33 +64,9 @@ function getParticipantViewIds(
   return stageFiltered.map((participant) => participant.participantId).sort();
 }
 
+// getFilteredParticipantProgress and groupParticipantProgress are tested in analysis/tests/LiveMonitorView.spec.tsx
+
 describe('analysis live monitor', () => {
-  test('participant tracking computes progress and status groups correctly', () => {
-    const assignments: SequenceAssignment[] = [
-      makeAssignment({
-        participantId: 'p1', answered: ['a1', 'a2'], total: 4, completed: null, rejected: false, createdTime: 3, stage: 'S1',
-      }),
-      makeAssignment({
-        participantId: 'p2', answered: ['a1', 'a2', 'a3', 'a4'], total: 4, completed: 10, rejected: false, createdTime: 2, stage: 'S1',
-      }),
-      makeAssignment({
-        participantId: 'p3', answered: ['a1'], total: 4, completed: null, rejected: true, createdTime: 1, stage: 'S2',
-      }),
-    ];
-
-    const filtered = getFilteredParticipantProgress(assignments, ['completed', 'inprogress', 'rejected'], ['ALL']);
-    const grouped = groupParticipantProgress(filtered);
-
-    expect(filtered).toHaveLength(3);
-    expect(filtered.find((item) => item.assignment.participantId === 'p1')?.progress).toBe(50);
-    expect(filtered.find((item) => item.assignment.participantId === 'p2')?.progress).toBe(100);
-    expect(filtered.find((item) => item.assignment.participantId === 'p3')?.progress).toBe(25);
-
-    expect(grouped.inProgress.map((item) => item.assignment.participantId)).toEqual(['p1']);
-    expect(grouped.completed.map((item) => item.assignment.participantId)).toEqual(['p2']);
-    expect(grouped.rejected.map((item) => item.assignment.participantId)).toEqual(['p3']);
-  });
-
   test('live monitor filtered participants match participant view status + stage filtering', () => {
     const assignments: SequenceAssignment[] = [
       makeAssignment({
