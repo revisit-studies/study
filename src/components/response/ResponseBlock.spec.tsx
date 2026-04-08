@@ -120,14 +120,14 @@ vi.mock('../NextButton', () => ({
 
 // ── fixture ───────────────────────────────────────────────────────────────────
 
-const baseConfig = {
+const baseConfig: IndividualComponent = {
   type: 'questionnaire',
   response: [
     {
       type: 'shortText', id: 'q1', prompt: 'Question 1', required: false,
     },
   ],
-} as unknown as IndividualComponent;
+};
 
 // ── ResponseBlock ─────────────────────────────────────────────────────────────
 
@@ -168,7 +168,7 @@ describe('ResponseBlock', () => {
           type: 'shortText', id: 'q1', prompt: 'Q1', required: false, hidden: true,
         },
       ],
-    } as unknown as IndividualComponent;
+    } as IndividualComponent;
     const html = renderToStaticMarkup(
       <ResponseBlock config={hiddenConfig} location="belowStimulus" />,
     );
@@ -186,7 +186,7 @@ describe('ResponseBlock', () => {
     const configWithText = {
       ...baseConfig,
       nextButtonText: 'Submit',
-    } as unknown as IndividualComponent;
+    } as IndividualComponent;
     const html = renderToStaticMarkup(
       <ResponseBlock config={configWithText} location="belowStimulus" />,
     );
@@ -198,7 +198,7 @@ describe('ResponseBlock', () => {
       ...baseConfig,
       provideFeedback: true,
       correctAnswer: [{ id: 'q1', answer: 'correct' }],
-    } as unknown as IndividualComponent;
+    } as IndividualComponent;
     const html = renderToStaticMarkup(
       <ResponseBlock config={configWithFeedback} location="belowStimulus" />,
     );
@@ -209,7 +209,7 @@ describe('ResponseBlock', () => {
     const textOnlyConfig = {
       type: 'questionnaire',
       response: [{ type: 'textOnly', id: 'q1', prompt: 'Read this.' }],
-    } as unknown as IndividualComponent;
+    } as IndividualComponent;
     const html = renderToStaticMarkup(
       <ResponseBlock config={textOnlyConfig} location="belowStimulus" />,
     );
@@ -232,7 +232,7 @@ describe('ResponseBlock', () => {
       ...baseConfig,
       provideFeedback: true,
       correctAnswer: [{ id: 'q1', answer: 'correct' }],
-    } as unknown as IndividualComponent;
+    } as IndividualComponent;
     const { container } = render(
       <ResponseBlock config={configWithFeedback} location="belowStimulus" />,
     );
@@ -250,7 +250,7 @@ describe('ResponseBlock', () => {
       nextOnEnter: true,
       provideFeedback: true,
       correctAnswer: [{ id: 'q1', answer: 'correct' }],
-    } as unknown as IndividualComponent;
+    } as IndividualComponent;
     render(<ResponseBlock config={configWithEnter} location="belowStimulus" />);
     await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
     // Verifies the listener registered without throwing

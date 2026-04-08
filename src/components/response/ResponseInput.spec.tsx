@@ -200,8 +200,8 @@ vi.mock('@dnd-kit/core', () => ({
   useDroppable: () => ({ setNodeRef: vi.fn(), isOver: false }),
   useSensor: vi.fn(),
   useSensors: vi.fn(() => []),
-  PointerSensor: class {},
-  KeyboardSensor: class {},
+  PointerSensor: class { },
+  KeyboardSensor: class { },
   rectIntersection: vi.fn(),
 }));
 
@@ -461,7 +461,7 @@ describe('ReactiveInput', () => {
     const html = renderToStaticMarkup(
       <ReactiveInput
         response={base as Parameters<typeof ReactiveInput>[0]['response']}
-        answer={{ value: { key1: 'val1' } as unknown as Parameters<typeof ReactiveInput>[0]['answer']['value'] }}
+        answer={{ value: { key1: 'val1' } as never }}
         index={1}
         enumerateQuestions={false}
       />,
@@ -745,7 +745,7 @@ describe('SliderInput', () => {
   });
 
   test('renders smeq mark elements when generateSliderBreakValues returns non-empty', () => {
-    // Cover lines 123-139: labelValues.map inside smeq block
+    // smeq block renders mark elements when labelValues is non-empty
     vi.mocked(generateSliderBreakValues).mockReturnValueOnce([25, 50, 75]);
     const html = renderToStaticMarkup(
       <SliderInput
@@ -777,7 +777,7 @@ describe('SliderInput', () => {
         enumerateQuestions={false}
       />,
     ));
-    // Call the captured callback to cover lines 52-58
+    // Call the captured callback to exercise the drag handler
     act(() => { capturedCallback?.({ x: 0, y: 0.5 }); });
     expect(mockOnChange).toHaveBeenCalled();
     cleanup();
@@ -1042,7 +1042,7 @@ describe('ResponseSwitcher', () => {
       form: { value: '' } as Parameters<typeof ResponseSwitcher>[0]['form'],
       storedAnswer: {},
       index: 1,
-      config: { response: [], enumerateQuestions: false } as unknown as IndividualComponent,
+      config: { type: 'questionnaire', response: [] } as IndividualComponent,
       disabled: false,
     };
   }

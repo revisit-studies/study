@@ -815,7 +815,7 @@ describe('generateInitFields additional branches', () => {
 // ── generateErrorMessage — answer.checked branch ─────────────────────────────
 
 describe('generateErrorMessage — answer.checked branch', () => {
-  test('uses answer.checked when it is an array (line 326)', () => {
+  test('uses answer.checked when it is an array', () => {
     const response: Response = {
       id: 'q1', prompt: '', type: 'checkbox', required: true, requiredValue: ['A', 'B'], options: ['A', 'B'],
     };
@@ -824,7 +824,7 @@ describe('generateErrorMessage — answer.checked branch', () => {
     expect(error).toContain('to continue');
   });
 
-  test('uses options label in error when options param is passed (line 330 select branch)', () => {
+  test('uses options label in error when options param is passed', () => {
     const response: Response = {
       id: 'q1', prompt: '', type: 'checkbox', required: true, requiredValue: ['A', 'B'], options: ['A', 'B'],
     };

@@ -156,14 +156,14 @@ function makeDragEnd(
     collisions: null,
     delta: { x: 0, y: 0 },
     activatorEvent: new Event('pointerdown'),
-  } as never;
+  } as DragEndEvent;
 }
 
 function makeDragStart(activeId: string): DragStartEvent {
   return {
     active: { id: activeId, data: { current: undefined }, rect: { current: { initial: null, translated: null } } },
     activatorEvent: new Event('pointerdown'),
-  } as never;
+  } as DragStartEvent;
 }
 
 // ══ RankingSublistComponent ══════════════════════════════════════════════════
@@ -411,7 +411,7 @@ describe('RankingPairwiseComponent', () => {
     expect(container).toBeDefined();
   });
 
-  test('Add New Pair button click (covers lines 474-478)', async () => {
+  test('Add New Pair button click adds a pair', async () => {
     const { getAllByRole } = render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={{ value: {} }} />,
     );
@@ -584,7 +584,7 @@ describe('RankingInput — main component', () => {
   });
 
   test('renders secondaryText when provided', () => {
-    const response = makeResponse('ranking-sublist', { secondaryText: 'secondary hint' } as never);
+    const response = makeResponse('ranking-sublist', { secondaryText: 'secondary hint' });
     const { container } = render(
       <RankingInput {...baseProps} response={response} answer={{ value: {} }} />,
     );
