@@ -29,13 +29,12 @@ describe('analysis data management tests', () => {
   });
 
   test('download helper supports participant data JSON and tidy CSV filenames', () => {
-    const anchor = {
-      setAttribute: vi.fn(),
-      click: vi.fn(),
-      remove: vi.fn(),
-    } as unknown as HTMLAnchorElement;
+    const anchor = document.createElement('a');
+    vi.spyOn(anchor, 'setAttribute');
+    vi.spyOn(anchor, 'click').mockImplementation(() => {});
+    vi.spyOn(anchor, 'remove');
     const createElement = vi.fn().mockReturnValue(anchor);
-    const appendChild = vi.fn().mockReturnValue(anchor as unknown as Node);
+    const appendChild = vi.fn().mockReturnValue(anchor);
     vi.stubGlobal('document', {
       createElement,
       body: {

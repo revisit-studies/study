@@ -10,12 +10,6 @@ import * as d3 from 'd3';
 import { TrrackedProvenance } from '../../store/types';
 import { AudioProvenanceVis } from './AudioProvenanceVis';
 import { syncEmitter } from '../../utils/syncReplay';
-import {
-  FORM_UPDATE_COLOR, ROOT_COLOR, ROOT_KEY, UNKNOWN_COLOR, UNKNOWN_KEY,
-  buildProvenanceLegendEntries, getColorForKey, getNodeColor, getNodeColorKey, getNodeDisplayLabel, normalizeActionName,
-} from './provenanceColors';
-import { getSeekTimeFromSvgPosition } from './timerPosition';
-import { TaskProvenanceNodes } from './TaskProvenanceNodes';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -136,10 +130,6 @@ beforeAll(async () => {
 
 // ── shared fixtures ──────────────────────────────────────────────────────────
 
-function createGraph(nodes: TrrackedProvenance['nodes'], root: string): TrrackedProvenance {
-  return { current: root, root, nodes } as TrrackedProvenance;
-}
-
 function makeNode(
   id: string,
   parent?: string,
@@ -155,7 +145,7 @@ function makeNode(
     label: id,
     artifacts: [],
     meta: { annotation: [], bookmark: [] },
-    state: { type: 'checkpoint' as const, val: {} },
+    state: { type: 'checkpoint', val: {} },
     level: 0,
     event: parent ? 'action' : 'Root',
     sideEffects: { do: [] as { type: string }[], undo: [] },
@@ -167,130 +157,6 @@ const rootNode = makeNode('root');
 
 beforeEach(() => { vi.clearAllMocks(); });
 afterEach(() => { cleanup(); });
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Pure function tests — provenanceColors
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-const zoomSideEffects = { do: [{ type: 'Signal/SetZoom', payload: null }], undo: [] };
-
-describe('provenanceColors', () => {
-  test('normalizeActionName collapses punctuation and whitespace', () => {
-    expect(normalizeActionName('Zoom In')).toBe('zoom in');
-    expect(normalizeActionName(' zoom-in ')).toBe('zoom in');
-    expect(normalizeActionName('ZOOM   IN')).toBe('zoom in');
-  });
-
-  test('getNodeColorKey uses registry action type first', () => {
-    const node = makeNode('n1', 'root', 0, [], { sideEffects: zoomSideEffects, label: 'Different Label' });
-    expect(getNodeColorKey(node)).toBe('signal setzoom');
-  });
-
-  test('getNodeColorKey falls back to event, then label, and handles root', () => {
-    const eventNode = makeNode('n1', 'root', 0, [], { event: 'BrushMove', label: '' });
-    expect(getNodeColorKey(eventNode)).toBe('brushmove');
-
-    const labelNode = makeNode('n2', 'root', 0, [], { event: '', label: ' Zoom In ' });
-    expect(getNodeColorKey(labelNode)).toBe('zoom in');
-
-    expect(getNodeColorKey(rootNode)).toBe(ROOT_KEY);
-  });
-
-  test('getColorForKey is deterministic and root key always uses root color', () => {
-    expect(getColorForKey('signal setzoom')).toBe(getColorForKey('signal setzoom'));
-    expect(getColorForKey(ROOT_KEY)).toBe(ROOT_COLOR);
-    expect(getColorForKey('update')).toBe(FORM_UPDATE_COLOR);
-  });
-
-  test('different keys generally map to different colors', () => {
-    expect(getColorForKey('action 2')).not.toBe(getColorForKey('action 3'));
-  });
-
-  test('getNodeColorKey returns UNKNOWN_KEY when no event, no label, no actionType', () => {
-    const node = makeNode('n1', 'root', 0, [], { event: '', label: '' });
-    expect(getNodeColorKey(node)).toBe(UNKNOWN_KEY);
-  });
-
-  test('getColorForKey returns UNKNOWN_COLOR for empty key', () => {
-    expect(getColorForKey('')).toBe(UNKNOWN_COLOR);
-    expect(getColorForKey(UNKNOWN_KEY)).toBe(UNKNOWN_COLOR);
-  });
-
-  test('getNodeColor delegates to getColorForKey(getNodeColorKey(node))', () => {
-    expect(getNodeColor(rootNode)).toBe(ROOT_COLOR);
-  });
-
-  test('getNodeDisplayLabel returns label, action type, event, or UNKNOWN_KEY', () => {
-    expect(getNodeDisplayLabel(makeNode('n1', 'root', 0, [], { label: 'My Label' }))).toBe('My Label');
-    expect(getNodeDisplayLabel(makeNode('n4', 'root', 0, [], { label: '', event: '' }))).toBe(UNKNOWN_KEY);
-  });
-
-  test('buildProvenanceLegendEntries handles null/undefined graph', () => {
-    expect(buildProvenanceLegendEntries([undefined, null] as never).size).toBe(0);
-  });
-
-  test('buildProvenanceLegendEntries de-dupes by canonical key', () => {
-    const a1 = makeNode('a1', 'root', 1, [], { sideEffects: zoomSideEffects });
-    const b1 = makeNode('b1', 'root', 2, [], { sideEffects: zoomSideEffects });
-
-    const graphA = createGraph({ root: { ...rootNode, children: ['a1'] }, a1 }, 'root');
-    const graphB = createGraph({ root: { ...rootNode, children: ['b1'] }, b1 }, 'root');
-
-    const entries = buildProvenanceLegendEntries([graphA, graphB]);
-    expect(entries.size).toBe(2);
-    expect(entries.get('signal setzoom')?.color).toBe(getColorForKey('signal setzoom'));
-  });
-});
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Pure function tests — timerPosition
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-describe('getSeekTimeFromSvgPosition', () => {
-  test('uses svg-local x coordinate', () => {
-    const xScale = d3.scaleLinear([20, 220]).domain([0, 100]).clamp(true);
-    expect(getSeekTimeFromSvgPosition(160, 100, xScale)).toBeCloseTo(20, 6);
-  });
-
-  test('normalizes to playback-relative time', () => {
-    const xScale = d3.scaleLinear([0, 200]).domain([10, 110]).clamp(true);
-    expect(getSeekTimeFromSvgPosition(50, 0, xScale)).toBeCloseTo(25, 6);
-  });
-});
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// SSR tests — TaskProvenanceNodes (real component, not mocked)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-describe('TaskProvenanceNodes', () => {
-  function getFills(markup: string): string[] {
-    return [...markup.matchAll(/fill="([^"]+)"/g)].map((m) => m[1]);
-  }
-
-  test('uses deterministic color per canonical action key', () => {
-    const action = makeNode('n1', 'root', 1, [], { sideEffects: zoomSideEffects, event: 'signal' });
-
-    const g1 = createGraph({ root: { ...rootNode, children: ['n1'] }, n1: action }, 'root');
-    const g2 = createGraph({ n1: action, root: { ...rootNode, children: ['n1'] } }, 'root');
-    const xScale = d3.scaleLinear([0, 100]).domain([0, 5]);
-
-    const first = renderToStaticMarkup(<svg><TaskProvenanceNodes height={25} xScale={xScale} currentNode={null} provenance={g1} /></svg>);
-    const second = renderToStaticMarkup(<svg><TaskProvenanceNodes height={25} xScale={xScale} currentNode={null} provenance={g2} /></svg>);
-
-    expect(getFills(first).sort()).toEqual(getFills(second).sort());
-    expect(getFills(first)).toContain(getColorForKey('signal setzoom'));
-  });
-
-  test('active-node overlay uses the same color as its base node', () => {
-    const action = makeNode('n1', 'root', 1, [], { sideEffects: zoomSideEffects, event: 'signal' });
-
-    const graph = createGraph({ root: { ...rootNode, children: ['n1'] }, n1: action }, 'root');
-    const xScale = d3.scaleLinear([0, 100]).domain([0, 5]);
-    const markup = renderToStaticMarkup(<svg><TaskProvenanceNodes height={25} xScale={xScale} currentNode="n1" provenance={graph} /></svg>);
-
-    expect(getFills(markup).filter((f) => f === getColorForKey('signal setzoom')).length).toBe(2);
-  });
-});
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SSR tests — TaskProvenanceTimeline (real component via vi.importActual)

@@ -17,7 +17,7 @@ vi.mock('../../../storage/storageEngineHooks', () => ({
 vi.mock('../../../store/hooks/useAsync', () => ({
   useAsync: (fn: (...args: unknown[]) => Promise<unknown>, deps: unknown[]) => {
     fn(...(deps ?? [])).catch(() => { });
-    return { value: ['p1', 'p2'], status: 'success' as const };
+    return { value: ['p1', 'p2'], status: 'success' };
   },
 }));
 

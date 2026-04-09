@@ -636,7 +636,7 @@ describe('ThinkAloudFooter', () => {
     const mockParticipantTags = { participantTags: [], taskTags: { trial_0: [] } };
     vi.mocked(useAsync).mockImplementation((_fn, args) => ({
       value: Array.isArray(args) && args.length === 4 ? mockParticipantTags : null,
-      status: 'success' as const,
+      status: 'success',
       execute: vi.fn(),
       error: null,
     }));
@@ -654,7 +654,7 @@ describe('ThinkAloudFooter', () => {
     const mockParticipantTags = { participantTags: [], taskTags: { trial_0: [] } };
     vi.mocked(useAsync).mockImplementation((_fn, args) => ({
       value: Array.isArray(args) && args.length === 4 ? mockParticipantTags : null,
-      status: 'success' as const,
+      status: 'success',
       execute: vi.fn(),
       error: null,
     }));
@@ -674,7 +674,7 @@ describe('ThinkAloudFooter', () => {
     vi.mocked(useAsync).mockImplementation((_fn, args) => ({
       value: Array.isArray(args) && args[1] === 'task' ? mockTaskTags
         : Array.isArray(args) && args[1] === 'participant' ? [{ id: 'ptag1', label: 'PTag 1', color: 'green' }] : null,
-      status: 'success' as const,
+      status: 'success',
       execute: vi.fn(),
       error: null,
     }));

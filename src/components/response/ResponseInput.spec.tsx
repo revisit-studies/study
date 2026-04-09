@@ -370,7 +370,7 @@ describe('TextOnlyInput', () => {
 
 describe('StringInput', () => {
   const base = {
-    type: 'shortText' as const,
+    type: 'shortText',
     id: 'q1',
     prompt: 'Enter your name',
     required: false,
@@ -438,7 +438,7 @@ describe('NumericInput', () => {
 
 describe('ReactiveInput', () => {
   const base = {
-    type: 'reactive' as const,
+    type: 'reactive',
     id: 'q1',
     prompt: 'Selected items',
     required: false,
@@ -488,7 +488,7 @@ describe('ReactiveInput', () => {
 
 describe('DropdownInput', () => {
   const base = {
-    type: 'dropdown' as const,
+    type: 'dropdown',
     id: 'q1',
     prompt: 'Choose a color',
     required: false,
@@ -529,7 +529,7 @@ describe('DropdownInput', () => {
 
 describe('CheckBoxInput', () => {
   const base = {
-    type: 'checkbox' as const,
+    type: 'checkbox',
     id: 'q1',
     prompt: 'Select all that apply',
     required: false,
@@ -572,7 +572,7 @@ describe('CheckBoxInput', () => {
 
 describe('ButtonsInput', () => {
   const base = {
-    type: 'buttons' as const,
+    type: 'buttons',
     id: 'q1',
     prompt: 'Pick one',
     required: false,
@@ -600,7 +600,7 @@ describe('ButtonsInput', () => {
 
 describe('RadioInput', () => {
   const base = {
-    type: 'radio' as const,
+    type: 'radio',
     id: 'q1',
     prompt: 'How satisfied are you?',
     required: false,
@@ -694,7 +694,7 @@ describe('SliderInput', () => {
   const baseOptions = [{ label: 'Low', value: 0 }, { label: 'High', value: 100 }];
 
   const base = {
-    type: 'slider' as const,
+    type: 'slider',
     id: 'q1',
     prompt: 'Rate your effort',
     required: false,
@@ -788,7 +788,7 @@ describe('SliderInput', () => {
 
 describe('MatrixInput', () => {
   const base = {
-    type: 'matrix-radio' as const,
+    type: 'matrix-radio',
     id: 'q1',
     prompt: 'Please rate each item',
     required: false,

@@ -709,9 +709,9 @@ describe('Library Macro Expansion', () => {
     });
 
     test('preserves interruptions property', () => {
-      const interruptions = [
+      const interruptions: ComponentBlock['interruptions'] = [
         {
-          spacing: 'random' as const,
+          spacing: 'random',
           numInterruptions: 1,
           components: ['breakComponent'],
         },
@@ -732,13 +732,13 @@ describe('Library Macro Expansion', () => {
     });
 
     test('preserves skip conditions', () => {
-      const skip = [
+      const skip: ComponentBlock['skip'] = [
         {
           name: 'skipCondition',
-          check: 'response' as const,
+          check: 'response',
           responseId: 'response1',
           value: 'yes',
-          comparison: 'equal' as const,
+          comparison: 'equal',
           to: 'nextComponent',
         },
       ];

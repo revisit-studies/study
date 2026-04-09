@@ -8,9 +8,10 @@ import {
   getResponseStats,
 } from '../individualStudy/summary/utils';
 import { ParticipantData } from '../../storage/types';
-import type { IndividualComponent, StudyConfig } from '../../parser/types';
+import type { IndividualComponent } from '../../parser/types';
 import type { StoredAnswer } from '../../store/types';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { makeStudyConfig, makeStoredAnswer } from '../../tests/utils';
 
 const invalidCleanTimeAnswers = new Set<StoredAnswer>();
 
@@ -75,21 +76,11 @@ function createMockAnswer(overrides: {
   invalidCleanTime?: boolean;
 }): StoredAnswer {
   const { invalidCleanTime = false, ...answerOverrides } = overrides;
-  const answer: StoredAnswer = {
+  const answer = makeStoredAnswer({
     identifier: `${answerOverrides.componentName}_1`,
     trialOrder: '1',
-    answer: answerOverrides.answer || {},
-    correctAnswer: answerOverrides.correctAnswer || [],
-    incorrectAnswers: {},
-    provenanceGraph: {} as StoredAnswer['provenanceGraph'],
-    windowEvents: [],
-    timedOut: false,
-    helpButtonClickedCount: 0,
-    parameters: {},
-    optionOrders: {},
-    questionOrders: {},
     ...answerOverrides,
-  };
+  });
 
   if (invalidCleanTime) {
     invalidCleanTimeAnswers.add(answer);
@@ -98,19 +89,8 @@ function createMockAnswer(overrides: {
   return answer;
 }
 
-function makeConfig(partial: Pick<StudyConfig, 'components'> & { sequence?: StudyConfig['sequence'] }): StudyConfig {
-  return {
-    $schema: '',
-    studyMetadata: {
-      title: '', version: '', authors: [], date: '', description: '', organizations: [],
-    },
-    uiConfig: {
-      contactEmail: '', helpTextPath: '', logoPath: '', withProgressBar: false, autoDownloadStudy: false, withSidebar: false,
-    },
-    sequence: { order: 'fixed', components: [] },
-    ...partial,
-  };
-}
+// Alias makeStudyConfig for readability in this file
+const makeConfig = makeStudyConfig;
 
 describe('utils.tsx', () => {
   beforeEach(() => {

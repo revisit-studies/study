@@ -33,8 +33,17 @@ function makeParticipant(configHash: string): ParticipantData {
 }
 
 // Capture what gets passed to useMantineReactTable so we can test columns / options
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let capturedTableOptions: Record<string, any> | null = null;
+type CapturedTableOptions = Record<string, unknown> & {
+  columns: { id?: string; header?: string; accessorKey?: string; Cell: (arg: Record<string, unknown>) => unknown }[];
+  enableRowSelection: boolean;
+  enableRowVirtualization: boolean;
+  enablePagination: boolean;
+  enableDensityToggle: boolean;
+  onRowSelectionChange: (sel: Record<string, boolean>) => void;
+  renderTopToolbarCustomActions: () => ReactNode;
+};
+
+let capturedTableOptions: CapturedTableOptions | null = null;
 
 let mockStorageEngine: { getAllConfigsFromHash: ReturnType<typeof vi.fn> } | undefined;
 
@@ -43,8 +52,7 @@ vi.mock('../../storage/storageEngineHooks', () => ({
 }));
 
 vi.mock('mantine-react-table', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useMantineReactTable: (options: Record<string, any>) => {
+  useMantineReactTable: (options: CapturedTableOptions) => {
     capturedTableOptions = options;
     return {};
   },

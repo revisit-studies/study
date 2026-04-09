@@ -7,9 +7,10 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { StudyAnalysisTabs } from '../individualStudy/StudyAnalysisTabs';
-import type { GlobalConfig, StudyConfig, ParsedConfig } from '../../parser/types';
+import type { StudyConfig, ParsedConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
 import { useAsync } from '../../store/hooks/useAsync';
+import { makeGlobalConfig } from '../../tests/utils';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -19,12 +20,12 @@ let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | undefined;
 // Stable result returned by the useAsync mock. Reset in beforeEach so each test
 // gets its own stable reference, avoiding infinite re-render loops that would
 // occur if useAsync returned a new object on every render.
-let currentStable: { value: Record<string, never>; status: 'success'; execute: () => Promise<never>; error: null } = {
-  value: {} as Record<string, never>,
-  status: 'success' as const,
-  execute: () => Promise.resolve() as Promise<never>,
+let currentStable: ReturnType<typeof useAsync> = {
+  value: {},
+  status: 'success',
+  execute: () => Promise.resolve(),
   error: null,
-};
+} as ReturnType<typeof useAsync>;
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -171,11 +172,7 @@ vi.mock('@tabler/icons-react', () => ({
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
 
-const mockGlobalConfig: GlobalConfig = {
-  $schema: 'test',
-  configsList: [],
-  configs: {},
-};
+const mockGlobalConfig = makeGlobalConfig();
 
 // ── tests ─────────────────────────────────────────────────────────────────────
 
@@ -185,8 +182,8 @@ describe('StudyAnalysisTabs', () => {
     mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
     vi.mocked(getStudyConfig).mockResolvedValue(null);
     currentStable = {
-      value: {} as Record<string, never>, status: 'success' as const, execute: () => Promise.resolve() as Promise<never>, error: null,
-    };
+      value: {}, status: 'success', execute: () => Promise.resolve(), error: null,
+    } as ReturnType<typeof useAsync>;
     vi.mocked(useAsync).mockImplementation(() => currentStable);
   });
 

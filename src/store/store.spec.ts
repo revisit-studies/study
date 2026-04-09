@@ -7,7 +7,7 @@ import {
 import {
   studyStoreCreator, useAreResponsesValid, useFlatSequence, useStoreActions, StudyStoreContext,
 } from './store';
-import type { StudyConfig } from '../parser/types';
+import type { ResponseBlockLocation, StudyConfig } from '../parser/types';
 import type { Sequence } from './types';
 import type { ParticipantData } from '../storage/types';
 import type { REVISIT_MODE } from '../storage/engines/types';
@@ -55,7 +55,7 @@ const minimalConfig: StudyConfig = {
     showTitleBar: false,
   },
   components: {
-    intro: { type: 'markdown' as const, path: 'intro.md', response: [] },
+    intro: { type: 'markdown', path: 'intro.md', response: [] },
   },
   sequence: {
     order: 'fixed',
@@ -490,7 +490,7 @@ describe('useAreResponsesValid', () => {
       // eslint-disable-next-line react/no-children-prop
       return createElement(Provider, { store, children });
     }
-    (['aboveStimulus', 'belowStimulus', 'sidebar', 'stimulus'] as const).forEach((loc) => {
+    (['aboveStimulus', 'belowStimulus', 'sidebar', 'stimulus'] as ResponseBlockLocation[]).forEach((loc) => {
       store.dispatch(actions.updateResponseBlockValidation({
         location: loc, identifier: 'intro_0', status: true, values: {},
       }));

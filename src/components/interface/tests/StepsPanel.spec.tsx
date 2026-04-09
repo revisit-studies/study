@@ -119,7 +119,7 @@ const minimalStudyConfig = {
   },
   components: {
     intro: {
-      type: 'markdown' as const,
+      type: 'markdown',
       path: 'intro.md',
       response: [],
     },
@@ -189,7 +189,7 @@ describe('StepsPanel Show more/less buttons', () => {
     ...minimalStudyConfig,
     components: {
       intro: {
-        type: 'markdown' as const,
+        type: 'markdown',
         path: 'intro.md',
         response: longResponse,
         correctAnswer: longCorrectAnswer,
@@ -341,7 +341,7 @@ describe('StepsPanel NavLink click handler', () => {
       ...minimalStudyConfig,
       components: {
         intro: {
-          type: 'markdown' as const,
+          type: 'markdown',
           path: 'intro.md',
           response: [],
           parameters: { key: 'val' },
@@ -384,7 +384,7 @@ describe('StepsPanel random order rendering', () => {
       ...minimalStudyConfig,
       components: {
         intro: {
-          type: 'markdown' as const,
+          type: 'markdown',
           path: 'intro.md',
           response: [
             {
@@ -418,12 +418,12 @@ describe('StepsPanel excluded blocks and components', () => {
     sequence: {
       id: 'root',
       orderPath: 'root',
-      order: 'fixed' as const,
+      order: 'fixed',
       components: [
         {
           id: 'block1',
           orderPath: 'root-block1',
-          order: 'fixed' as const,
+          order: 'fixed',
           components: ['intro', 'survey'],
           skip: [],
         },
@@ -431,8 +431,8 @@ describe('StepsPanel excluded blocks and components', () => {
       skip: [],
     },
     components: {
-      intro: { type: 'markdown' as const, path: 'intro.md', response: [] },
-      survey: { type: 'markdown' as const, path: 'survey.md', response: [] },
+      intro: { type: 'markdown', path: 'intro.md', response: [] },
+      survey: { type: 'markdown', path: 'survey.md', response: [] },
     },
   } as unknown as import('../../../parser/types').StudyConfig;
 
@@ -469,24 +469,24 @@ describe('StepsPanel excluded blocks and components', () => {
     sequence: {
       id: 'root',
       orderPath: 'root',
-      order: 'fixed' as const,
+      order: 'fixed',
       components: [
         {
           id: 'block1',
           orderPath: 'root-block1',
-          order: 'fixed' as const,
+          order: 'fixed',
           components: [
             {
               id: 'nested1',
               orderPath: 'root-block1-nested1',
-              order: 'fixed' as const,
+              order: 'fixed',
               components: ['intro'],
               skip: [],
             },
             {
               id: 'nested2',
               orderPath: 'root-block1-nested2',
-              order: 'fixed' as const,
+              order: 'fixed',
               components: ['survey'],
               skip: [],
             },
@@ -497,8 +497,8 @@ describe('StepsPanel excluded blocks and components', () => {
       skip: [],
     },
     components: {
-      intro: { type: 'markdown' as const, path: 'intro.md', response: [] },
-      survey: { type: 'markdown' as const, path: 'survey.md', response: [] },
+      intro: { type: 'markdown', path: 'intro.md', response: [] },
+      survey: { type: 'markdown', path: 'survey.md', response: [] },
     },
   } as unknown as import('../../../parser/types').StudyConfig;
 
@@ -544,28 +544,28 @@ describe('StepsPanel excluded blocks and components', () => {
     sequence: {
       id: 'root',
       orderPath: 'root',
-      order: 'fixed' as const,
+      order: 'fixed',
       components: [
         {
           id: 'block1',
           orderPath: 'root-block1',
-          order: 'fixed' as const,
+          order: 'fixed',
           components: [
             {
               id: 'nested1',
               orderPath: 'root-block1-nested1',
-              order: 'fixed' as const,
+              order: 'fixed',
               components: ['intro'],
               skip: [],
             },
             {
               id: 'nested2',
               orderPath: 'root-block1-nested2',
-              order: 'fixed' as const,
+              order: 'fixed',
               components: [
                 {
                   id: 'deepBlock',
-                  order: 'fixed' as const,
+                  order: 'fixed',
                   components: ['survey'],
                   skip: [],
                 },
@@ -579,8 +579,8 @@ describe('StepsPanel excluded blocks and components', () => {
       skip: [],
     },
     components: {
-      intro: { type: 'markdown' as const, path: 'intro.md', response: [] },
-      survey: { type: 'markdown' as const, path: 'survey.md', response: [] },
+      intro: { type: 'markdown', path: 'intro.md', response: [] },
+      survey: { type: 'markdown', path: 'survey.md', response: [] },
     },
   } as unknown as import('../../../parser/types').StudyConfig;
 

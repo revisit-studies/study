@@ -6,10 +6,10 @@ import {
 import { cleanup } from '@testing-library/react';
 import { StudyConfig } from '../../parser/types';
 import { ParticipantData } from '../../storage/types';
-import type { StorageEngine } from '../../storage/engines/types';
 import { OverviewData } from '../types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
+import { makeStorageEngine } from '../../tests/utils';
 import { createMockStudyConfig } from './testUtils';
 import { SummaryView } from '../individualStudy/summary/SummaryView';
 import { OverviewStats } from '../individualStudy/summary/OverviewStats';
@@ -21,7 +21,7 @@ import { ResponseStats } from '../individualStudy/summary/ResponseStats';
 type MrtColumn = {
   accessorKey?: string;
   header?: string;
-  Cell: ({ cell }: { cell: { getValue(): unknown } }) => unknown;
+  Cell: ({ cell }: { cell: { getValue(): number } }) => string;
 };
 
 let capturedTableOptions: { columns: MrtColumn[] } | null = null;
@@ -124,7 +124,7 @@ describe('OverviewStats', () => {
     vi.mocked(useAsync).mockReturnValue({
       execute: vi.fn(), value: { completed: 3, inProgress: 5, rejected: 0 }, status: 'success', error: null,
     } as ReturnType<typeof useAsync>);
-    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: {} as StorageEngine, setStorageEngine: vi.fn() });
+    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(), setStorageEngine: vi.fn() });
 
     const html = renderToStaticMarkup(
       <OverviewStats
@@ -144,7 +144,7 @@ describe('OverviewStats', () => {
     vi.mocked(useAsync).mockReturnValue({
       execute: vi.fn(), value: { completed: 7, inProgress: 2, rejected: 1 }, status: 'success', error: null,
     } as ReturnType<typeof useAsync>);
-    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: {} as StorageEngine, setStorageEngine: vi.fn() });
+    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(), setStorageEngine: vi.fn() });
 
     const html = renderToStaticMarkup(
       <OverviewStats

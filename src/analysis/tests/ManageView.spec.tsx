@@ -95,7 +95,7 @@ vi.mock('../../components/downloader/DownloadButtons', () => ({
   DownloadButtons: () => <div>DownloadButtons</div>,
 }));
 
-const successResponse = { status: 'SUCCESS' as const, notifications: [] };
+const successResponse = { status: 'SUCCESS', notifications: [] };
 const DEFAULT_STAGE_COLOR = '#F05A30';
 
 const makeEngine = () => ({
