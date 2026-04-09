@@ -12,9 +12,8 @@ type ResponseWithDefault = Response & { default?: ResponseDefault };
 
 export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
 
-
 // Function for highlighting unanswered required questions
-export function requiredAnswerIsEmpty(value: string | number | boolean | string[] | Record<string, unknown> | null | undefined): boolean {
+export function requiredAnswerIsEmpty(value: JsonValue | undefined): boolean {
   if (value === null || value === undefined || value === '') return true;
   if (Array.isArray(value) && value.length === 0) return true;
   if (typeof value === 'object' && !Array.isArray(value)) {

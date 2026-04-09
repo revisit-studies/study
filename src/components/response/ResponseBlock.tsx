@@ -21,7 +21,7 @@ import {
 
 import { NextButton } from '../NextButton';
 import {
-  generateInitFields, generateCustomResponseErrorMessage, generateInitFields, mergeReactiveAnswers, useAnswerField, usesStandaloneDontKnowField,
+  generateInitFields, generateCustomResponseErrorMessage, mergeReactiveAnswers, useAnswerField, usesStandaloneDontKnowField, requiredAnswerIsEmpty,
 } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';

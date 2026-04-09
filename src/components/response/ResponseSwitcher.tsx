@@ -155,7 +155,7 @@ export function ResponseSwitcher({
 
   const isUnansweredRequired = useMemo(() => {
     if (!showUnanswered || !response.required || dontKnowChecked) return false;
-    const value = (ans as { value?: StoredAnswer['answer'][string] }).value;
+    const { value } = (ans as { value?: StoredAnswer['answer'][string] });
     return requiredAnswerIsEmpty(value);
   }, [showUnanswered, response.required, dontKnowChecked, ans]);
 
