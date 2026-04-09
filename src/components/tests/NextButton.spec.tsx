@@ -6,16 +6,24 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { NextButton } from './NextButton';
+import { NextButton } from '../NextButton';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockIsNextDisabled = false;
 const mockGoToNextStep = vi.fn();
-let mockStudyConfig = {
+let mockStudyConfig: {
   uiConfig: {
-    nextButtonDisableTime: undefined as number | undefined,
-    nextButtonEnableTime: undefined as number | undefined,
+    nextButtonDisableTime: number | undefined;
+    nextButtonEnableTime: number | undefined;
+    nextOnEnter: boolean;
+    previousButtonText: string;
+    timeoutReject: boolean;
+  };
+} = {
+  uiConfig: {
+    nextButtonDisableTime: undefined,
+    nextButtonEnableTime: undefined,
     nextOnEnter: false,
     previousButtonText: 'Previous',
     timeoutReject: false,
@@ -24,14 +32,14 @@ let mockStudyConfig = {
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../store/hooks/useNextStep', () => ({
+vi.mock('../../store/hooks/useNextStep', () => ({
   useNextStep: () => ({
     isNextDisabled: mockIsNextDisabled,
     goToNextStep: mockGoToNextStep,
   }),
 }));
 
-vi.mock('../store/hooks/useStudyConfig', () => ({
+vi.mock('../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: () => mockStudyConfig,
 }));
 
@@ -39,7 +47,7 @@ vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock('./PreviousButton', () => ({
+vi.mock('../PreviousButton', () => ({
   PreviousButton: ({ label }: { label?: string }) => (
     <button type="button" data-testid="prev-btn">{label ?? 'Previous'}</button>
   ),
@@ -65,6 +73,11 @@ vi.mock('@mantine/core', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconAlertTriangle: () => null,
   IconInfoCircle: () => null,
+}));
+
+vi.mock('../response/customResponseModules', () => ({
+  getCustomResponseModule: vi.fn(() => null),
+  getCustomResponseModuleLoadError: vi.fn(() => null),
 }));
 
 // ── tests ─────────────────────────────────────────────────────────────────────
@@ -99,13 +112,20 @@ describe('NextButton', () => {
   });
 
   test('does not render PreviousButton when config.previousButton is false', () => {
-    const html = renderToStaticMarkup(<NextButton config={{ previousButton: false } as never} checkAnswer={null} />);
+    const html = renderToStaticMarkup(
+      <NextButton config={{ type: 'questionnaire', response: [], previousButton: false }} checkAnswer={null} />,
+    );
     expect(html).not.toContain('data-testid="prev-btn"');
   });
 
   test('renders PreviousButton when config.previousButton is true', () => {
     const html = renderToStaticMarkup(
-      <NextButton config={{ previousButton: true, previousButtonText: 'Back' } as never} checkAnswer={null} />,
+      <NextButton
+        config={{
+          type: 'questionnaire', response: [], previousButton: true, previousButtonText: 'Back',
+        }}
+        checkAnswer={null}
+      />,
     );
     expect(html).toContain('data-testid="prev-btn"');
     expect(html).toContain('Back');

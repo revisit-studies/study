@@ -3,7 +3,7 @@ import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { ReactNode } from 'react';
-import { TrainingFailed } from './TrainingFailed';
+import { TrainingFailed } from '../TrainingFailed';
 
 const mockReject = vi.fn(() => Promise.resolve());
 
@@ -11,7 +11,7 @@ vi.mock('@mantine/core', () => ({
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
 }));
 
-vi.mock('../storage/storageEngineHooks', () => ({
+vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: vi.fn(() => ({
     storageEngine: { rejectCurrentParticipant: mockReject },
   })),
@@ -33,7 +33,7 @@ describe('TrainingFailed', () => {
   });
 
   test('does not throw when storageEngine is undefined', async () => {
-    const { useStorageEngine } = await import('../storage/storageEngineHooks');
+    const { useStorageEngine } = await import('../../storage/storageEngineHooks');
     vi.mocked(useStorageEngine).mockReturnValueOnce({
       storageEngine: undefined,
     } as ReturnType<typeof useStorageEngine>);

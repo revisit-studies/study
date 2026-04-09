@@ -222,7 +222,7 @@ describe('useCurrentComponent', () => {
     expect(mockNavigate).toHaveBeenCalled();
   });
 
-  test('third effect: existing answer sets compName (covers lines 123-128)', async () => {
+  test('third effect: existing answer sets compName', async () => {
     mockParams = { studyId: 'test-study', index: '0', funcIndex: '0' };
     mockFlatSequence = ['myFunc', 'end'];
     mockAnswers = { myFunc_0_CompA_0: { componentName: 'CompA' } };

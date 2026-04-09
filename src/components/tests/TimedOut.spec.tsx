@@ -3,7 +3,7 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import { ReactNode } from 'react';
-import { TimedOut } from './TimedOut';
+import { TimedOut } from '../TimedOut';
 
 vi.mock('@mantine/core', () => ({
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,

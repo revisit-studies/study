@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   describe, expect, test, vi,
 } from 'vitest';
-import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
 vi.mock('@mantine/core', () => ({
   Anchor: ({ children, href }: { children: ReactNode; href?: string }) => <a href={href}>{children}</a>,
@@ -36,7 +36,7 @@ vi.mock('@mantine/core', () => ({
   },
 }));
 
-vi.mock('../utils/Prefix', () => ({ PREFIX: '/' }));
+vi.mock('../../utils/Prefix', () => ({ PREFIX: '/' }));
 
 describe('ReactMarkdownWrapper', () => {
   test('renders nothing when text is empty', () => {
@@ -91,7 +91,7 @@ describe('ReactMarkdownWrapper', () => {
 
   test('renders required with no text node (element-only leaf)', () => {
     // A required marker on text ending with an inline element (bold) exercises
-    // the else branch in the rehypeAsterisk plugin (lines 130-147).
+    // the else branch in the rehypeAsterisk plugin.
     const { container } = render(<ReactMarkdownWrapper text="Some **bold text**" required />);
     expect(container.textContent).toContain('bold text');
     expect(container.textContent).toContain('*');
@@ -137,7 +137,7 @@ describe('ReactMarkdownWrapper', () => {
     expect(container.textContent).toContain('*');
   });
 
-  test('required asterisk: last child is an element not text (ELSE branch lines 130-147)', () => {
+  test('required asterisk: last child is an element not text', () => {
     // <b>word<br/></b> → b has children [text("word"), br]
     // → lastNode.children.at(-1) = br (element, not text) → ELSE branch
     const { container } = render(<ReactMarkdownWrapper text="<b>word<br/></b>" required />);

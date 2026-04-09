@@ -5,8 +5,8 @@ import {
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
-import type { GlobalConfig, ParsedConfig, StudyConfig } from '../parser/types';
-import { ConfigSwitcher } from './ConfigSwitcher';
+import type { GlobalConfig, ParsedConfig, StudyConfig } from '../../parser/types';
+import { ConfigSwitcher } from '../ConfigSwitcher';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -70,41 +70,41 @@ vi.mock('react-router', () => ({
   useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }));
 
-vi.mock('../utils/sanitizeStringForUrl', () => ({
+vi.mock('../../utils/sanitizeStringForUrl', () => ({
   sanitizeStringForUrl: (s: string) => s,
 }));
 
-vi.mock('../utils/Prefix', () => ({ PREFIX: '/' }));
+vi.mock('../../utils/Prefix', () => ({ PREFIX: '/' }));
 
-vi.mock('./ErrorLoadingConfig', () => ({
+vi.mock('../ErrorLoadingConfig', () => ({
   ErrorLoadingConfig: () => <div data-testid="error-loading-config" />,
 }));
 
-vi.mock('../analysis/interface/ParticipantStatusBadges', () => ({
+vi.mock('../../analysis/interface/ParticipantStatusBadges', () => ({
   ParticipantStatusBadges: () => <div data-testid="status-badges" />,
 }));
 
-vi.mock('../storage/storageEngineHooks', () => ({
+vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: vi.fn(() => ({ storageEngine: null })),
 }));
 
-vi.mock('../store/hooks/useAuth', () => ({
+vi.mock('../../store/hooks/useAuth', () => ({
   useAuth: () => ({ user: { isAdmin: true, determiningStatus: false } }),
 }));
 
-vi.mock('../storage/engines/utils', () => ({
+vi.mock('../../storage/engines/utils', () => ({
   isCloudStorageEngine: () => false,
 }));
 
-vi.mock('../utils/handleConditionLogic', () => ({
+vi.mock('../../utils/handleConditionLogic', () => ({
   getSequenceConditions: vi.fn(() => []),
 }));
 
-vi.mock('../utils/useStudyRecordings', () => ({
+vi.mock('../../utils/useStudyRecordings', () => ({
   useStudyRecordings: () => ({ hasAudio: false, hasScreenRecording: false }),
 }));
 
-vi.mock('../utils/useDeviceRules', () => ({
+vi.mock('../../utils/useDeviceRules', () => ({
   useDeviceRules: () => ({
     isBrowserAllowed: true,
     isDeviceAllowed: true,
@@ -113,19 +113,21 @@ vi.mock('../utils/useDeviceRules', () => ({
   }),
 }));
 
-vi.mock('./interface/DeviceRestrictionString', () => ({
+vi.mock('../interface/DeviceRestrictionString', () => ({
   getUnmetDeviceRestrictionLines: vi.fn(() => []),
   getUnmetDeviceRestrictionTooltip: vi.fn(() => ''),
 }));
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
 
-const globalConfig = {
+const globalConfig: GlobalConfig = {
+  $schema: '',
   configsList: ['test-study'],
   configs: {},
-} as unknown as GlobalConfig;
+};
 
-const minimalStudyConfig = {
+const minimalStudyConfig: StudyConfig = {
+  $schema: '',
   studyMetadata: {
     title: 'Test Study',
     version: '1.0',
@@ -134,19 +136,21 @@ const minimalStudyConfig = {
     description: 'A test study',
     organizations: [],
   },
-  uiConfig: { withProgressBar: false, logoPath: undefined },
-  components: {},
-  sequence: {
-    order: 'fixed', components: [], orderPath: 'root', skip: [],
+  uiConfig: {
+    contactEmail: '', helpTextPath: '', logoPath: '', withProgressBar: false, autoDownloadStudy: false, withSidebar: false,
   },
-} as unknown as StudyConfig;
+  components: {},
+  sequence: { order: 'fixed', components: [] },
+};
+
+const parsedStudyConfig: ParsedConfig<StudyConfig> = {
+  ...minimalStudyConfig,
+  errors: [],
+  warnings: [],
+};
 
 const studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> = {
-  'test-study': {
-    ...minimalStudyConfig,
-    errors: [],
-    warnings: [],
-  } as unknown as ParsedConfig<StudyConfig>,
+  'test-study': parsedStudyConfig,
 };
 
 // ── tests ─────────────────────────────────────────────────────────────────────
@@ -169,20 +173,23 @@ describe('ConfigSwitcher', () => {
   });
 
   test('renders with empty configsList', async () => {
-    const emptyConfig = { configsList: [], configs: {} } as unknown as GlobalConfig;
+    const emptyConfig: GlobalConfig = { $schema: '', configsList: [], configs: {} };
     const { container } = await act(async () => render(
       <ConfigSwitcher globalConfig={emptyConfig} studyConfigs={{}} />,
     ));
     expect(container).toBeDefined();
   });
 
-  test('renders config with errors (covers lines 138-147)', async () => {
+  test('renders config with errors', async () => {
+    const mockError = {
+      instancePath: '', message: 'Parse error occurred', params: {}, category: 'invalid-config' as const,
+    };
     const studyConfigsWithErrors: Record<string, ParsedConfig<StudyConfig> | null> = {
       'test-study': {
         ...minimalStudyConfig,
-        errors: ['Parse error occurred'],
-        warnings: ['A warning'],
-      } as unknown as ParsedConfig<StudyConfig>,
+        errors: [mockError],
+        warnings: [{ ...mockError, message: 'A warning', category: 'unused-component' as const }],
+      },
     };
     const { container } = await act(async () => render(
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigsWithErrors} />,
@@ -190,13 +197,16 @@ describe('ConfigSwitcher', () => {
     expect(container).toBeDefined();
   });
 
-  test('renders config with warnings but no errors (covers line 176-178)', async () => {
+  test('renders config with warnings but no errors', async () => {
+    const mockWarning = {
+      instancePath: '', message: 'A warning message', params: {}, category: 'unused-component' as const,
+    };
     const studyConfigsWithWarnings: Record<string, ParsedConfig<StudyConfig> | null> = {
       'test-study': {
         ...minimalStudyConfig,
         errors: [],
-        warnings: ['A warning message'],
-      } as unknown as ParsedConfig<StudyConfig>,
+        warnings: [mockWarning],
+      },
     };
     const { container } = await act(async () => render(
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigsWithWarnings} />,
@@ -204,8 +214,8 @@ describe('ConfigSwitcher', () => {
     expect(container).toBeDefined();
   });
 
-  test('renders study with conditions (covers lines 235-262)', async () => {
-    const { getSequenceConditions } = await import('../utils/handleConditionLogic');
+  test('renders study with conditions', async () => {
+    const { getSequenceConditions } = await import('../../utils/handleConditionLogic');
     vi.mocked(getSequenceConditions).mockReturnValueOnce(['condA', 'condB']);
     const { container } = await act(async () => render(
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
@@ -214,14 +224,15 @@ describe('ConfigSwitcher', () => {
   });
 
   test('tab selection based on configName prefixes (demos, examples, etc.)', async () => {
-    const multiGlobalConfig = {
+    const multiGlobalConfig: GlobalConfig = {
+      $schema: '',
       configsList: ['demo-one', 'example-two', 'tutorial-three'],
       configs: {},
-    } as unknown as GlobalConfig;
+    };
     const multiConfigs: Record<string, ParsedConfig<StudyConfig> | null> = {
-      'demo-one': { ...minimalStudyConfig, errors: [], warnings: [] } as unknown as ParsedConfig<StudyConfig>,
-      'example-two': { ...minimalStudyConfig, errors: [], warnings: [] } as unknown as ParsedConfig<StudyConfig>,
-      'tutorial-three': { ...minimalStudyConfig, errors: [], warnings: [] } as unknown as ParsedConfig<StudyConfig>,
+      'demo-one': parsedStudyConfig,
+      'example-two': parsedStudyConfig,
+      'tutorial-three': parsedStudyConfig,
     };
     const { container } = await act(async () => render(
       <ConfigSwitcher globalConfig={multiGlobalConfig} studyConfigs={multiConfigs} />,
@@ -229,7 +240,7 @@ describe('ConfigSwitcher', () => {
     expect(container).toBeDefined();
   });
 
-  test('renders with null config entry (covers line 320 null config guard)', async () => {
+  test('renders with null config entry', async () => {
     const configsWithNull: Record<string, ParsedConfig<StudyConfig> | null> = {
       'test-study': null,
     };
@@ -239,8 +250,8 @@ describe('ConfigSwitcher', () => {
     expect(container).toBeDefined();
   });
 
-  test('renders with a mock storageEngine that returns modes (covers lines 354-371)', async () => {
-    const { useStorageEngine } = await import('../storage/storageEngineHooks');
+  test('renders with a mock storageEngine that returns modes', async () => {
+    const { useStorageEngine } = await import('../../storage/storageEngineHooks');
     const mockEngine = {
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false }),
       getParticipantsStatusCounts: vi.fn().mockResolvedValue({

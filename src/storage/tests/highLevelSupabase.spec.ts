@@ -130,7 +130,7 @@ vi.mock('@supabase/supabase-js', () => {
 
   return {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    AuthError: class AuthError extends Error {} as any,
+    AuthError: class AuthError extends Error { } as any,
     createClient: () => ({
       from: (_table: string) => makeQueryBuilder(() => revisitRows),
       schema: (schemaName: string) => ({
@@ -193,7 +193,7 @@ vi.mock('@supabase/supabase-js', () => {
         signInAnonymously: async () => ({ data: { user: { id: 'mock-uid' } }, error: null }),
         onAuthStateChange: (callback: (event: string, session: unknown) => void) => {
           callback('SIGNED_IN', { user: { id: 'mock-uid', email: null } });
-          return { data: { subscription: { unsubscribe: () => {} } } };
+          return { data: { subscription: { unsubscribe: () => { } } } };
         },
         signOut: async () => ({ error: null }),
         signInWithOAuth: async () => ({ error: null }),
@@ -835,7 +835,7 @@ describe.each([
     expect(restoreResponse.notifications![1].color).toBe('green');
   });
 
-  // User management tests (covers lines 657-809)
+  // User management tests
   test('getUserManagementData returns undefined when no data exists', async () => {
     // @ts-expect-error accessing CloudStorageEngine method via StorageEngine
     const authData = await storageEngine.getUserManagementData('authentication');
@@ -856,19 +856,19 @@ describe.each([
 
   test('addAdminUser adds user to admin list', async () => {
     // @ts-expect-error accessing CloudStorageEngine method
-    await storageEngine.addAdminUser({ email: 'admin@test.com', uid: 'uid-1' });
+    await storageEngine.addAdminUser({ email: 'test@test.com', uid: 'uid-1' });
     // @ts-expect-error accessing CloudStorageEngine method
     const adminData = await storageEngine.getUserManagementData('adminUsers');
     expect(adminData).toBeDefined();
     expect(adminData?.adminUsersList.length).toBeGreaterThan(0);
-    expect(adminData?.adminUsersList[0].email).toBe('admin@test.com');
+    expect(adminData?.adminUsersList[0].email).toBe('test@test.com');
   });
 
   test('removeAdminUser removes user from admin list', async () => {
     // @ts-expect-error accessing CloudStorageEngine method
-    await storageEngine.addAdminUser({ email: 'admin@test.com', uid: 'uid-1' });
+    await storageEngine.addAdminUser({ email: 'test@test.com', uid: 'uid-1' });
     // @ts-expect-error accessing CloudStorageEngine method
-    await storageEngine.removeAdminUser('admin@test.com');
+    await storageEngine.removeAdminUser('test@test.com');
     // @ts-expect-error accessing CloudStorageEngine method
     const adminData = await storageEngine.getUserManagementData('adminUsers');
     expect(adminData?.adminUsersList.length).toBe(0);

@@ -21,7 +21,7 @@ const mockStudyConfig = {
     logoPath: undefined,
     withProgressBar: false,
     showTitle: true,
-    contactEmail: 'admin@test.com',
+    contactEmail: 'test@test.com',
   },
   components: {},
   sequences: {},

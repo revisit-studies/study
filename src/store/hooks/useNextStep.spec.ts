@@ -14,7 +14,7 @@ function createStudyConfig(): StudyConfig {
       organizations: ['Test Org'],
     },
     uiConfig: {
-      contactEmail: 'test@example.com',
+      contactEmail: 'test@test.com',
       helpTextPath: '',
       logoPath: '',
       withProgressBar: true,

@@ -35,7 +35,7 @@ vi.mock('../../../store/hooks/useIsAnalysis', () => ({
 }));
 
 vi.mock('../../../store/hooks/useStudyConfig', () => ({
-  useStudyConfig: () => ({ uiConfig: { contactEmail: 'admin@example.com' } }),
+  useStudyConfig: () => ({ uiConfig: { contactEmail: 'test@test.com' } }),
 }));
 
 vi.mock('../../../storage/storageEngineHooks', () => ({

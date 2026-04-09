@@ -5,7 +5,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useSearchParams, useNavigate } from 'react-router';
-import { Vega } from 'react-vega';
+import { Vega, View } from 'react-vega';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import type {
   ImageComponent,
@@ -135,7 +135,7 @@ vi.mock('react-redux', () => ({
 vi.mock('../store/hooks/useStudyConfig', () => ({
   useStudyConfig: vi.fn(() => ({
     components: {},
-    uiConfig: { contactEmail: 'test@example.com', instructionLocation: 'sidebar' },
+    uiConfig: { contactEmail: 'test@test.com', instructionLocation: 'sidebar' },
     sequence: { order: 'fixed', components: [] },
   })),
 }));
@@ -248,7 +248,7 @@ describe('ErrorBoundary', () => {
   });
 
   test('getDerivedStateFromError returns hasError true with the error object', () => {
-    const err = new Error('boom');
+    const err = new Error('Test error');
     const state = ErrorBoundary.getDerivedStateFromError(err);
     expect(state.hasError).toBe(true);
     expect(state.error).toBe(err);
@@ -258,7 +258,7 @@ describe('ErrorBoundary', () => {
     function ThrowingChild(): ReactNode {
       throw new Error('test error');
     }
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => { });
     const { container } = render(
       <ErrorBoundary><ThrowingChild /></ErrorBoundary>,
     );
@@ -426,7 +426,7 @@ describe('IframeController', () => {
         provState={{ event: 'test' }}
       />,
     );
-    // provState effect fires sendMessage (lines 46-48 and 32-41 covered)
+    // provState effect fires sendMessage
   });
 
   test('dispatches store actions when an ANSWERS window message arrives with matching iframeId', async () => {
@@ -569,14 +569,14 @@ describe('ComponentController — effect coverage (render-based)', () => {
     });
     vi.mocked(findBlockForStep).mockReturnValue([]);
     vi.mocked(useStoreDispatch).mockReturnValue(vi.fn());
-    vi.mocked(useStoreActions).mockReturnValue({
+    const mockActions = {
       setReactiveAnswers: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
       setAlertModal: vi.fn(),
       setAnalysisCanPlayScreenRecording: vi.fn(),
-    } as never);
-    // Return 'firebase' so engine differs from VITE_STORAGE_ENGINE ('localStorage'),
-    // making the storageEngine mismatch effect (lines 82-89) always exercise its true branch.
+    };
+    // @ts-expect-error partial mock
+    vi.mocked(useStoreActions).mockReturnValue(mockActions);
     vi.mocked(useStorageEngine).mockReturnValue({
       storageEngine: {
         isConnected: () => true,
@@ -593,26 +593,26 @@ describe('ComponentController — effect coverage (render-based)', () => {
     );
   });
 
-  test('setAlertModal dispatched when engine does not match env (lines 82-89)', async () => {
+  test('setAlertModal dispatched when engine does not match env', async () => {
     const mockDispatch = vi.fn();
     vi.mocked(useStoreDispatch).mockReturnValue(mockDispatch);
     render(<ComponentController />);
     await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
   });
 
-  test('isAnalysis=true returns early from block effect (lines 94-96)', async () => {
+  test('isAnalysis=true returns early from block effect', async () => {
     vi.mocked(useIsAnalysis).mockReturnValue(true);
     render(<ComponentController />);
-    await act(async () => {});
+    await act(async () => { });
     expect(vi.mocked(findBlockForStep)).not.toHaveBeenCalled();
   });
 
-  test('findBlockForStep called inside updateBlockForStep (lines 99-103)', async () => {
+  test('findBlockForStep called inside updateBlockForStep', async () => {
     render(<ComponentController />);
     await waitFor(() => expect(vi.mocked(findBlockForStep)).toHaveBeenCalled());
   });
 
-  test('addParticipantTags called when blockForStep becomes non-empty (lines 112-114)', async () => {
+  test('addParticipantTags called when blockForStep becomes non-empty', async () => {
     const addTagsSpy = vi.fn().mockResolvedValue(undefined);
     vi.mocked(useStorageEngine).mockReturnValue({
       storageEngine: {
@@ -622,9 +622,9 @@ describe('ComponentController — effect coverage (render-based)', () => {
       } as Partial<StorageEngine> as StorageEngine,
       setStorageEngine: vi.fn(),
     });
-    vi.mocked(findBlockForStep).mockReturnValue(
-      [{ currentBlock: { id: 'blockA' }, blockIndex: 0 }] as never,
-    );
+    const mockBlock = [{ currentBlock: { id: 'blockA' }, blockIndex: 0 }];
+    // @ts-expect-error partial mock
+    vi.mocked(findBlockForStep).mockReturnValue(mockBlock);
 
     const { rerender } = render(<ComponentController />);
     // Wait for first effect run to call findBlockForStep and update blockForStep state
@@ -637,29 +637,30 @@ describe('ComponentController — effect coverage (render-based)', () => {
     await waitFor(() => expect(addTagsSpy).toHaveBeenCalledWith(['blockA']));
   });
 
-  test('setAnalysisCanPlayScreenRecording dispatched with true (lines 142-146)', async () => {
+  test('setAnalysisCanPlayScreenRecording dispatched with true', async () => {
     const setAnalysisCanPlaySpy = vi.fn().mockReturnValue('PLAY_ACTION');
-    vi.mocked(useStoreActions).mockReturnValue({
+    const mockActionsWithSpy = {
       setReactiveAnswers: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
       setAlertModal: vi.fn(),
       setAnalysisCanPlayScreenRecording: setAnalysisCanPlaySpy,
-    } as never);
+    };
+    // @ts-expect-error partial mock
+    vi.mocked(useStoreActions).mockReturnValue(mockActionsWithSpy);
     render(<ComponentController />);
     await waitFor(() => expect(setAnalysisCanPlaySpy).toHaveBeenCalledWith(true));
   });
 
-  test('auto-forward navigates when last answer step > currentStep (lines 155-168)', async () => {
+  test('auto-forward navigates when last answer step > currentStep', async () => {
     const mockNavigate = vi.fn();
     vi.mocked(useNavigate).mockReturnValue(mockNavigate);
     vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
-    vi.mocked(useStoredAnswer).mockReturnValue({ endTime: 1, startTime: 0, trialOrder: '0' } as never);
-    // answers has a completed entry at trialOrder='2'; currentStep=0 → 2>0 → navigate
-    const stableStateWithAnswer = makeStableState({
-      answers: {
-        trial_0: { endTime: 1, startTime: 0, trialOrder: '2' },
-      } as never,
-    });
+    const mockStoredAnswer = { endTime: 1, startTime: 0, trialOrder: '0' };
+    // @ts-expect-error partial mock
+    vi.mocked(useStoredAnswer).mockReturnValue(mockStoredAnswer);
+    const mockAnswers = { trial_0: { endTime: 1, startTime: 0, trialOrder: '2' } };
+    // @ts-expect-error partial mock
+    const stableStateWithAnswer = makeStableState({ answers: mockAnswers });
     vi.mocked(useStoreSelector).mockImplementation(
       (selector) => selector(stableStateWithAnswer),
     );
@@ -667,7 +668,7 @@ describe('ComponentController — effect coverage (render-based)', () => {
     await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
   });
 
-  test('ScreenRecordingReplay rendered when studyHasScreenRecording+isAnalysis+canPlay (line 217)', async () => {
+  test('ScreenRecordingReplay rendered when studyHasScreenRecording+isAnalysis+canPlay', async () => {
     vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
     vi.mocked(useIsAnalysis).mockReturnValue(true);
     vi.mocked(useRecordingConfig).mockReturnValue({
@@ -690,35 +691,37 @@ describe('ComponentController — effect coverage (render-based)', () => {
 // ── VegaController — signal and event coverage ────────────────────────────────
 
 describe('VegaController — signal and event coverage', () => {
-  test('renders "Failed to load vega config" when inline config is undefined (lines 161-162)', async () => {
+  test('renders "Failed to load vega config" when inline config is missing', async () => {
     const { container } = render(
-      <VegaController currentConfig={{ type: 'vega', config: undefined as never, response: [] }} />,
+      // @ts-expect-error intentionally passing undefined config to test error path
+      <VegaController currentConfig={{ type: 'vega', config: undefined, response: [] }} />,
     );
     await waitFor(() => expect(container.textContent).toContain('Failed to load vega config'));
   });
 
   test('signal listeners, handleSignalEvt, handleRevisitAnswer, and provState effect all covered', async () => {
-    // Capture the props that InternalVega receives so we can call them after render.
-    let capturedSignalListeners: Record<string, (...args: unknown[]) => void> = {};
-    let capturedOnNewView: ((v: unknown) => void) | undefined;
+    type SignalHandler = (name: string, value: string | Record<string, string>) => void;
+    let capturedSignalListeners: Record<string, SignalHandler> = {};
+    let capturedOnNewView: ((v: View) => void) | undefined;
 
     vi.mocked(getJsonAssetByPath).mockResolvedValueOnce({
       $schema: 'vega',
       config: { signals: [{ name: 'mySignal' }, { name: 'revisitAnswer' }] },
-    } as never);
+    });
 
     const mockDispatch = vi.fn();
     vi.mocked(useStoreDispatch).mockReturnValue(mockDispatch);
 
-    // Override Vega mock to capture signalListeners + onNewView, then render placeholder.
-    vi.mocked(Vega).mockImplementation(((props: {
-      signalListeners?: Record<string, (...a: unknown[]) => void>;
-      onNewView?: (v: unknown) => void;
+    const vegaMockImpl = (props: {
+      signalListeners?: Record<string, SignalHandler>;
+      onNewView?: (v: View) => void;
     }) => {
       capturedSignalListeners = props.signalListeners ?? {};
       capturedOnNewView = props.onNewView;
       return React.createElement('div', null, 'Vega');
-    }) as never);
+    };
+    // @ts-expect-error partial mock
+    vi.mocked(Vega).mockImplementation(vegaMockImpl);
 
     render(
       <VegaController
@@ -727,16 +730,13 @@ describe('VegaController — signal and event coverage', () => {
       />,
     );
 
-    // Wait for fetchVega effect to complete and InternalVega to render.
     await waitFor(() => expect(capturedOnNewView).toBeDefined());
 
     await act(async () => {
-      // Covers signalListeners reduce + handleSignalEvt body (lines 117-124, 83-94)
-      capturedSignalListeners.mySignal?.('mySignal', 'hello' as never);
-      // Covers handleRevisitAnswer body (lines 97-111) + setAnswer with non-empty answers (lines 63-79)
-      capturedSignalListeners.revisitAnswer?.('revisitAnswer', { responseId: 'r1', response: 'yes' } as never);
-      // Covers provState useEffect body (lines 150-151) by setting view
+      capturedSignalListeners.mySignal?.('mySignal', 'hello');
+      capturedSignalListeners.revisitAnswer?.('revisitAnswer', { responseId: 'r1', response: 'yes' });
       const fakeView = { signal: vi.fn().mockReturnValue({ run: vi.fn() }) };
+      // @ts-expect-error partial mock
       capturedOnNewView?.(fakeView);
     });
 

@@ -124,7 +124,7 @@ describe('signIn', () => {
   });
 
   test('calls storageEngine.login and returns user when cloud engine', async () => {
-    const mockUser2 = { email: 'admin@test.com', uid: '123' };
+    const mockUser2 = { email: 'test@test.com', uid: '123' };
     const fakeEngine = { login: vi.fn().mockResolvedValue(mockUser2) } as unknown as { login: ReturnType<typeof vi.fn> };
     const result = await signIn(fakeEngine as never, mockSetLoading);
     expect(fakeEngine.login).toHaveBeenCalled();

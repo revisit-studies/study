@@ -174,7 +174,7 @@ function makeVideoWithSrc(): HTMLVideoElement {
 }
 
 describe('useReplay — hasEnded via timerValue >= duration', () => {
-  test('setHasEnded(true) when timerValue.current >= duration (covers lines 47-48)', () => {
+  test('setHasEnded(true) when timerValue.current >= duration', () => {
     const { result } = renderHook(() => useReplay());
     act(() => {
       result.current.setSeekTime(15); // sets timerValue.current = 15
@@ -187,7 +187,7 @@ describe('useReplay — hasEnded via timerValue >= duration', () => {
 });
 
 describe('useReplay — handlePlay/Seeked/Pause via video element events', () => {
-  test('handlePlay: play event sets isPlaying true (covers lines 102-130)', () => {
+  test('handlePlay: play event sets isPlaying true', () => {
     const { result } = renderHook(() => useReplay());
     const video = makeVideoWithSrc();
     act(() => {
@@ -200,7 +200,7 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
     expect(result.current.isPlaying).toBe(true);
   });
 
-  test('handlePlay: with audioRef set mutes audio (covers lines 110-113)', () => {
+  test('handlePlay: with audioRef set mutes audio', () => {
     const { result } = renderHook(() => useReplay());
     const video = makeVideoWithSrc();
     const audio = document.createElement('audio');
@@ -216,7 +216,7 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
     expect(audio.muted).toBe(true);
   });
 
-  test('handleSeeked: seeked event updates seekTime (covers lines 132-144)', () => {
+  test('handleSeeked: seeked event updates seekTime', () => {
     const { result } = renderHook(() => useReplay());
     const video = makeVideoWithSrc();
     act(() => {
@@ -229,7 +229,7 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
     expect(result.current.seekTime).toBe(0); // currentTime defaults to 0
   });
 
-  test('handleSeeked: audio-as-replayRef path covers else-if branch (covers lines 141-143)', () => {
+  test('handleSeeked: audio-as-replayRef path covers else-if branch', () => {
     const { result } = renderHook(() => useReplay());
     const audio = document.createElement('audio');
     Object.defineProperty(audio, 'src', { value: 'fake.mp3', writable: true, configurable: true });
@@ -245,7 +245,7 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
     expect(result.current.seekTime).toBe(0);
   });
 
-  test('handlePause: pause event sets isPlaying false (covers lines 158-173)', () => {
+  test('handlePause: pause event sets isPlaying false', () => {
     const { result } = renderHook(() => useReplay());
     const video = makeVideoWithSrc();
     act(() => {
@@ -262,7 +262,7 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
     expect(result.current.isPlaying).toBe(false);
   });
 
-  test('updateReplayRef sets replayRef to audioRef when videoRef has no src (covers lines 188-213)', () => {
+  test('updateReplayRef sets replayRef to audioRef when videoRef has no src', () => {
     const { result } = renderHook(() => useReplay());
     const audio = document.createElement('audio');
     Object.defineProperty(audio, 'src', { value: 'fake.mp3', writable: true, configurable: true });
@@ -275,7 +275,7 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
 });
 
 describe('useReplay — public setIsPlaying with hasEnded=true', () => {
-  test('setIsPlaying resets hasEnded and seeks to 0 (covers lines 219-221)', () => {
+  test('setIsPlaying resets hasEnded and seeks to 0', () => {
     const { result } = renderHook(() => useReplay());
     // Drive hasEnded to true
     act(() => {

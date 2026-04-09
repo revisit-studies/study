@@ -6,56 +6,66 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { StudyEnd } from './StudyEnd';
+import { StudyEnd } from '../StudyEnd';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockIsAnalysis = false;
-let mockStudyConfig = {
+let mockStudyConfig: {
+  studyMetadata: { title: string };
+  uiConfig: {
+    studyEndMsg: string | undefined;
+    autoDownloadStudy: boolean;
+    autoDownloadTime: number | undefined;
+    studyEndAutoRedirectURL: string | undefined;
+    studyEndAutoRedirectDelay: number | undefined;
+    urlParticipantIdParam: string | undefined;
+  };
+} = {
   studyMetadata: { title: 'Test Study' },
   uiConfig: {
-    studyEndMsg: undefined as string | undefined,
+    studyEndMsg: undefined,
     autoDownloadStudy: false,
-    autoDownloadTime: undefined as number | undefined,
-    studyEndAutoRedirectURL: undefined as string | undefined,
-    studyEndAutoRedirectDelay: undefined as number | undefined,
-    urlParticipantIdParam: undefined as string | undefined,
+    autoDownloadTime: undefined,
+    studyEndAutoRedirectURL: undefined,
+    studyEndAutoRedirectDelay: undefined,
+    urlParticipantIdParam: undefined,
   },
 };
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | undefined;
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../store/hooks/useStudyConfig', () => ({
+vi.mock('../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: () => mockStudyConfig,
 }));
 
-vi.mock('../store/hooks/useIsAnalysis', () => ({
+vi.mock('../../store/hooks/useIsAnalysis', () => ({
   useIsAnalysis: () => mockIsAnalysis,
 }));
 
-vi.mock('../storage/storageEngineHooks', () => ({
+vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
-vi.mock('../store/store', () => ({
+vi.mock('../../store/store', () => ({
   useStoreDispatch: () => vi.fn(),
   useStoreActions: () => ({ setParticipantCompleted: vi.fn() }),
 }));
 
-vi.mock('../routes/utils', () => ({
+vi.mock('../../routes/utils', () => ({
   useStudyId: () => 'test-study',
 }));
 
-vi.mock('../utils/useDisableBrowserBack', () => ({
+vi.mock('../../utils/useDisableBrowserBack', () => ({
   useDisableBrowserBack: vi.fn(),
 }));
 
-vi.mock('./downloader/DownloadTidy', () => ({
+vi.mock('../downloader/DownloadTidy', () => ({
   download: vi.fn(),
 }));
 
-vi.mock('./ReactMarkdownWrapper', () => ({
+vi.mock('../ReactMarkdownWrapper', () => ({
   ReactMarkdownWrapper: ({ text }: { text: string }) => (
     <div data-testid="markdown">{text}</div>
   ),
@@ -159,7 +169,7 @@ describe('StudyEnd', () => {
     expect(screen.getByTestId('markdown').textContent).toBe('# Study Complete');
   });
 
-  test('sets completed when verifyCompletion resolves true (covers lines 53-56)', async () => {
+  test('sets completed when verifyCompletion resolves true', async () => {
     mockStorageEngine = {
       verifyCompletion: vi.fn().mockResolvedValue(true),
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
@@ -171,8 +181,8 @@ describe('StudyEnd', () => {
     expect(screen.queryByTestId('loader')).toBeNull();
   });
 
-  test('handles verifyCompletion error gracefully (covers lines 58-59)', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  test('handles verifyCompletion error gracefully', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     mockStorageEngine = {
       verifyCompletion: vi.fn().mockRejectedValue(new Error('network error')),
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
@@ -187,7 +197,7 @@ describe('StudyEnd', () => {
     consoleSpy.mockRestore();
   });
 
-  test('no-engine branch: setTimeout fires when storageEngine is null (covers lines 44-48)', async () => {
+  test('no-engine branch: setTimeout fires when storageEngine is null', async () => {
     vi.useFakeTimers();
     mockStorageEngine = undefined;
     await act(async () => { render(<StudyEnd />); });
@@ -198,8 +208,8 @@ describe('StudyEnd', () => {
     expect(screen.getByText('Thank you for completing the study. You may close this window now.')).toBeDefined();
   });
 
-  test('autoDownload fires when completed and delayCounter <= 0 (covers lines 119, 124-131)', async () => {
-    const downloadMock = await import('./downloader/DownloadTidy');
+  test('autoDownload fires when completed and delayCounter <= 0', async () => {
+    const downloadMock = await import('../downloader/DownloadTidy');
     const downloadSpy = vi.mocked(downloadMock.download);
     mockIsAnalysis = true; // skip verifyLoop, sets completed=true immediately
     mockStudyConfig = {
@@ -220,7 +230,7 @@ describe('StudyEnd', () => {
     await waitFor(() => { expect(downloadSpy).toHaveBeenCalled(); });
   });
 
-  test('replaces {PARTICIPANT_ID} in studyEndMsg when urlParticipantIdParam is set (covers lines 154-155)', async () => {
+  test('replaces {PARTICIPANT_ID} in studyEndMsg when urlParticipantIdParam is set', async () => {
     mockIsAnalysis = true;
     mockStudyConfig = {
       ...mockStudyConfig,
@@ -242,7 +252,7 @@ describe('StudyEnd', () => {
     });
   });
 
-  test('sets up redirect timeout when studyEndAutoRedirectURL configured (covers lines 165-171)', async () => {
+  test('sets up redirect timeout when studyEndAutoRedirectURL configured', async () => {
     vi.useFakeTimers();
     // jsdom's window.location.replace is non-configurable; replace the whole location object
     const replaceSpy = vi.fn();
@@ -272,7 +282,7 @@ describe('StudyEnd', () => {
     await act(async () => { await Promise.resolve(); });
     await act(async () => { vi.advanceTimersByTime(600); });
     expect(replaceSpy).toHaveBeenCalledWith('https://example.com');
-    unmount(); // exercises clearTimeout cleanup (lines 169-171)
+    unmount(); // exercises clearTimeout cleanup
     Object.defineProperty(window, 'location', { configurable: true, value: origLocation });
     vi.useRealTimers();
   });

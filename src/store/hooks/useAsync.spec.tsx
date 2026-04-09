@@ -27,8 +27,8 @@ describe('useAsync', () => {
   });
 
   test('transitions to error state when the async function rejects', async () => {
-    const boom = new Error('network failure');
-    const asyncFn = vi.fn(() => Promise.reject(boom));
+    const networkFailure = new Error('network failure');
+    const asyncFn = vi.fn(() => Promise.reject(networkFailure));
     const { result } = renderHook(() => useAsync(asyncFn));
 
     await act(async () => {
@@ -40,7 +40,7 @@ describe('useAsync', () => {
     });
 
     expect(result.current.status).toBe('error');
-    expect(result.current.error).toBe(boom);
+    expect(result.current.error).toBe(networkFailure);
     expect(result.current.value).toBeNull();
   });
 
@@ -89,7 +89,7 @@ describe('useAsync', () => {
   });
 
   test('swallows synchronous errors thrown during immediate execution', () => {
-    const asyncFn = vi.fn(() => { throw new Error('sync boom'); });
+    const asyncFn = vi.fn(() => { throw new Error('sync error'); });
     // Should not throw — the try/catch in useDeepCompareEffect swallows it
     expect(() => renderHook(() => useAsync(asyncFn, []))).not.toThrow();
   });

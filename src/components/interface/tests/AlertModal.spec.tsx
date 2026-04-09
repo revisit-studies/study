@@ -14,7 +14,7 @@ let mockAlertModal = { show: false, title: '', message: '' };
 vi.mock('../../../store/store', () => ({
   useStoreSelector: (selector: (s: Record<string, unknown>) => unknown) => selector({
     alertModal: mockAlertModal,
-    config: { uiConfig: { contactEmail: 'admin@example.com' } },
+    config: { uiConfig: { contactEmail: 'test@test.com' } },
     studyId: 'test-study',
     participantId: 'p1',
     metadata: {
@@ -88,7 +88,7 @@ describe('AlertModal', () => {
       message: 'Connection refused',
     };
     const html = renderToStaticMarkup(<AlertModal />);
-    expect(html).toContain('mailto:admin@example.com');
+    expect(html).toContain('mailto:test@test.com');
     expect(html).toContain('Study ID: test-study');
     expect(html).toContain('Participant ID: p1');
   });

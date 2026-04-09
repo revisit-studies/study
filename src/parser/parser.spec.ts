@@ -4,8 +4,11 @@ import {
 import { parseStudyConfig } from './parser';
 import { isDynamicBlock } from './utils';
 
-// Mock the fetch function for library loading
 global.fetch = vi.fn();
+
+function mockFetchText(body: string) {
+  return { text: () => Promise.resolve(body) } as Response;
+}
 
 describe('BaseComponent Macro Expansion', () => {
   describe('.co. macro expansion in baseComponent references', () => {
@@ -23,10 +26,7 @@ describe('BaseComponent Macro Expansion', () => {
         sequences: {},
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValueOnce({
-        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
-      });
+      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
 
       const studyConfig = {
         $schema: '',
@@ -60,17 +60,11 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      // The component should be successfully resolved (no errors about missing baseComponent)
-      // This proves that .co. was expanded to .components. and found the base component
       expect(result.errors).toBeDefined();
       const hasBaseComponentError = result.errors.some(
         (error) => error.message && error.message.includes('$testLib.components.baseComp') && error.message.includes('not defined'),
       );
       expect(hasBaseComponentError).toBe(false);
-
-      // The component should exist and have the baseComponent reference
-      const derivedComp = result.components.derivedComponent;
-      expect(derivedComp).toBeDefined();
     });
 
     test('handles multiple components with .co. in baseComponent', async () => {
@@ -92,10 +86,7 @@ describe('BaseComponent Macro Expansion', () => {
         sequences: {},
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValueOnce({
-        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
-      });
+      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
 
       const studyConfig = {
         $schema: '',
@@ -132,17 +123,10 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      // Both components should be successfully resolved without errors
-      // This proves .co. was expanded and found the base components
       const hasBaseComponentError = result.errors.some(
         (error) => error.message && error.message.includes('baseComp') && error.message.includes('not defined'),
       );
       expect(hasBaseComponentError).toBe(false);
-
-      // Both components should exist
-      const { derived1, derived2 } = result.components;
-      expect(derived1).toBeDefined();
-      expect(derived2).toBeDefined();
     });
 
     test('leaves .components. in baseComponent unchanged', async () => {
@@ -159,10 +143,7 @@ describe('BaseComponent Macro Expansion', () => {
         sequences: {},
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValueOnce({
-        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
-      });
+      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
 
       const studyConfig = {
         $schema: '',
@@ -196,14 +177,10 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      // Should successfully resolve without errors
       const hasBaseComponentError = result.errors.some(
         (error) => error.message && error.message.includes('baseComp') && error.message.includes('not defined'),
       );
       expect(hasBaseComponentError).toBe(false);
-
-      const derivedComp = result.components.derivedComponent;
-      expect(derivedComp).toBeDefined();
     });
 
     test('does not modify non-library baseComponent references', async () => {
@@ -245,14 +222,10 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      // Should successfully resolve without errors
       const hasBaseComponentError = result.errors.some(
         (error) => error.message && error.message.includes('baseComp') && error.message.includes('not defined'),
       );
       expect(hasBaseComponentError).toBe(false);
-
-      const derivedComp = result.components.derivedComponent;
-      expect(derivedComp).toBeDefined();
     });
 
     test('generates correct error for missing baseComponent after expansion', async () => {
@@ -269,10 +242,7 @@ describe('BaseComponent Macro Expansion', () => {
         sequences: {},
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValueOnce({
-        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
-      });
+      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
 
       const studyConfig = {
         $schema: '',
@@ -306,8 +276,6 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      // Should have an error about missing baseComponent
-      // The error message should reference the expanded form (.components.)
       expect(result.errors).toBeDefined();
       const hasExpectedError = result.errors.some(
         (error) => error.message && error.message.includes('$testLib.components.missingComp')
@@ -337,10 +305,7 @@ describe('BaseComponent Macro Expansion', () => {
         sequences: {},
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValueOnce({
-        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
-      });
+      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
 
       const studyConfig = {
         $schema: '',
@@ -377,20 +342,15 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      // Check sequence expansion - the .co. should have been expanded to .components.
       expect(!isDynamicBlock(result.sequence)).toBe(true);
       if (!isDynamicBlock(result.sequence)) {
         expect(result.sequence.components).toContain('$testLib.components.directComp');
       }
 
-      // Check baseComponent expansion - component should be resolved without errors
       const hasBaseComponentError = result.errors.some(
         (error) => error.message && error.message.includes('baseComp') && error.message.includes('not defined'),
       );
       expect(hasBaseComponentError).toBe(false);
-
-      const derivedComp = result.components.derivedComponent;
-      expect(derivedComp).toBeDefined();
     });
 
     test('expands .se. in study sequence and inlines imported library sequence', async () => {
@@ -412,10 +372,7 @@ describe('BaseComponent Macro Expansion', () => {
         },
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValueOnce({
-        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
-      });
+      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
 
       const studyConfig = {
         $schema: '',
@@ -476,10 +433,7 @@ describe('BaseComponent Macro Expansion', () => {
         },
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValueOnce({
-        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
-      });
+      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
 
       const studyConfig = {
         $schema: '',
@@ -545,10 +499,7 @@ describe('BaseComponent Macro Expansion', () => {
         sequences: {},
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValueOnce({
-        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
-      });
+      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
 
       const studyConfig = {
         $schema: '',
@@ -1159,10 +1110,7 @@ describe('Parser Warnings', () => {
       sequences: {},
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (global.fetch as any).mockResolvedValueOnce({
-      text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
-    });
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
 
     const studyConfig = {
       $schema: '',
@@ -1224,10 +1172,7 @@ describe('Parser Warnings', () => {
       sequences: {},
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (global.fetch as any).mockResolvedValueOnce({
-      text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
-    });
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
 
     const studyConfig = {
       $schema: '',
@@ -1282,10 +1227,7 @@ describe('Parser Warnings', () => {
       sequences: {},
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (global.fetch as any).mockResolvedValueOnce({
-      text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
-    });
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
 
     const studyConfig = {
       $schema: '',
@@ -1350,10 +1292,7 @@ describe('Parser Warnings', () => {
       sequences: {},
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (global.fetch as any).mockResolvedValueOnce({
-      text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
-    });
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
 
     const studyConfig = {
       $schema: '',

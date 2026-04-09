@@ -1,8 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MantineProvider } from '@mantine/core';
 import { describe, expect, test } from 'vitest';
-import { ParsedConfig, StudyConfig } from '../parser/types';
-import { ErrorLoadingConfig } from './ErrorLoadingConfig';
+import { ParsedConfig, StudyConfig } from '../../parser/types';
+import { ErrorLoadingConfig } from '../ErrorLoadingConfig';
 
 describe('ErrorLoadingConfig', () => {
   test('separates non-combinable grouped messages on new lines', () => {

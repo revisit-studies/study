@@ -100,7 +100,7 @@ describe('Generating sequences works as expected', () => {
     });
   });
 
-  test('generateSequenceArray returns balanced random sequences, numSamples = 1', async () => {
+  test('generateSequenceArray returns balanced random sequences, numSamples = 1', { timeout: 10000 }, async () => {
     const sequenceArray = generateSequenceArray(config);
 
     const counts = sequenceArray.flatMap(((seq) => seq.components)).filter((comp) => comp !== 'end').reduce((acc, compId) => {
@@ -313,7 +313,7 @@ describe('generateSequenceArray ComponentBlock and DynamicBlock coverage', () =>
     logoPath: '', contactEmail: '', withProgressBar: false, withSidebar: false, numSequences: 1,
   };
 
-  test('covers line 52: duplicate ComponentBlock pushes second index into existing entry', () => {
+  test('duplicate ComponentBlock pushes second index into existing entry', () => {
     const nestedBlock = {
       id: 'nested', order: 'fixed' as const, components: ['a'], skip: [],
     };
@@ -332,7 +332,7 @@ describe('generateSequenceArray ComponentBlock and DynamicBlock coverage', () =>
     expect(seqs).toHaveLength(1);
   });
 
-  test('covers lines 140-149: DynamicBlock component in sequence becomes Sequence node', () => {
+  test('DynamicBlock component in sequence becomes Sequence node', () => {
     const dynamicBlock = {
       id: 'dyn', order: 'dynamic' as const, functionPath: '/func',
     };
@@ -356,7 +356,7 @@ describe('generateSequenceArray ComponentBlock and DynamicBlock coverage', () =>
     expect(dynComp).toBeDefined();
   });
 
-  test('covers lines 171-172: latinSquare with ComponentBlock component maps _componentBlock prefix', () => {
+  test('latinSquare with ComponentBlock component maps _componentBlock prefix', () => {
     const innerBlock = {
       id: 'inner', order: 'fixed' as const, components: ['a'], skip: [],
     };

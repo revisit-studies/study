@@ -210,7 +210,7 @@ describe('useRecording', () => {
 // the promise. Use waitFor to poll until the state updates settle.
 
 describe('useRecording startScreenCapture', () => {
-  test('success path: sets isScreenCapturing, isAudioCapturing, isMediaCapturing (covers lines 323-376)', async () => {
+  test('success path: sets isScreenCapturing, isAudioCapturing, isMediaCapturing', async () => {
     mockRecordingConfig = {
       ...mockRecordingConfig,
       studyHasScreenRecording: true,
@@ -253,7 +253,7 @@ describe('useRecording startScreenCapture', () => {
 // ── startScreenRecording tests ─────────────────────────────────────────────────
 
 describe('useRecording startScreenRecording after startScreenCapture', () => {
-  test('startScreenRecording returns early when screenMediaStream is null (covers lines 119-121)', () => {
+  test('startScreenRecording returns early when screenMediaStream is null', () => {
     // audio recording enabled but no startScreenCapture → screenMediaStream is null
     mockRecordingConfig = {
       ...mockRecordingConfig,
@@ -264,7 +264,7 @@ describe('useRecording startScreenRecording after startScreenCapture', () => {
     expect(result.current.isScreenRecording).toBe(false);
   });
 
-  test('startScreenRecording after startScreenCapture starts the recorder (covers lines 123-201)', async () => {
+  test('startScreenRecording after startScreenCapture starts the recorder', async () => {
     mockRecordingConfig = {
       ...mockRecordingConfig,
       studyHasScreenRecording: true,
@@ -286,7 +286,7 @@ describe('useRecording startScreenRecording after startScreenCapture', () => {
     expect(result.current.isAudioRecording).toBe(true);
   });
 
-  test('startScreenRecording screen-only (no audio): uses audio stop handler for audio (covers lines 182-190)', async () => {
+  test('startScreenRecording screen-only (no audio): uses audio stop handler for audio', async () => {
     mockRecordingConfig = {
       ...mockRecordingConfig,
       studyHasScreenRecording: true,
@@ -306,7 +306,7 @@ describe('useRecording startScreenRecording after startScreenCapture', () => {
 // ── stopScreenCapture with populated refs ──────────────────────────────────────
 
 describe('useRecording stopScreenCapture with refs populated', () => {
-  test('stopScreenCapture cleans up all refs and resets state (covers lines 70-108)', async () => {
+  test('stopScreenCapture cleans up all refs and resets state', async () => {
     mockRecordingConfig = {
       ...mockRecordingConfig,
       studyHasScreenRecording: true,
@@ -334,7 +334,7 @@ describe('useRecording stopScreenCapture with refs populated', () => {
 // ── stopAudioRecording tests ───────────────────────────────────────────────────
 
 describe('useRecording audio recording effect', () => {
-  test('audio recording effect triggers startAudioRecording when conditions met (covers lines 276-293)', async () => {
+  test('audio recording effect triggers startAudioRecording when conditions met', async () => {
     mockRecordingConfig = {
       ...mockRecordingConfig,
       studyHasScreenRecording: false,
@@ -350,7 +350,7 @@ describe('useRecording audio recording effect', () => {
     expect(result.current.isAudioRecording).toBe(true);
   });
 
-  test('audio effect stopAudioRecording called when currentComponentHasAudioRecording turns false (covers lines 276-279)', async () => {
+  test('audio effect stopAudioRecording called when currentComponentHasAudioRecording turns false', async () => {
     mockStorageEngine = { saveAudioRecording: vi.fn().mockResolvedValue(undefined) };
     // Start with audio enabled
     mockRecordingConfig = {
@@ -370,7 +370,7 @@ describe('useRecording audio recording effect', () => {
 // ── screen recording effect tests ──────────────────────────────────────────────
 
 describe('useRecording screen recording effect', () => {
-  test('screen recording effect starts recording when isMediaCapturing and conditions met (covers lines 304-316)', async () => {
+  test('screen recording effect starts recording when isMediaCapturing and conditions met', async () => {
     mockRecordingConfig = {
       ...mockRecordingConfig,
       studyHasScreenRecording: true,
@@ -390,7 +390,7 @@ describe('useRecording screen recording effect', () => {
     expect(result.current.isScreenRecording).toBe(true);
   });
 
-  test('screen effect calls stopScreenCapture when currentComponent is end (covers lines 314-316)', async () => {
+  test('screen effect calls stopScreenCapture when currentComponent is end', async () => {
     mockRecordingConfig = { ...mockRecordingConfig, studyHasScreenRecording: true };
     mockStorageEngine = { saveAudioRecording: vi.fn().mockResolvedValue(undefined) };
     mockCurrentComponent = 'end';
@@ -404,7 +404,7 @@ describe('useRecording screen recording effect', () => {
 // ── isMuted effect test ────────────────────────────────────────────────────────
 
 describe('useRecording isMuted effect', () => {
-  test('changing isMuted updates audio track enabled state (covers lines 381-382)', async () => {
+  test('changing isMuted updates audio track enabled state', async () => {
     mockRecordingConfig = {
       ...mockRecordingConfig,
       studyHasAudioRecording: true,
@@ -421,7 +421,7 @@ describe('useRecording isMuted effect', () => {
 // ── isRejected effect test ─────────────────────────────────────────────────────
 
 describe('useRecording isRejected effect', () => {
-  test('isRejected set true when screenCaptureStarted but not isScreenCapturing (covers lines 228-229)', async () => {
+  test('isRejected set true when screenCaptureStarted but not isScreenCapturing', async () => {
     mockRecordingConfig = {
       ...mockRecordingConfig,
       studyHasScreenRecording: true,
@@ -442,7 +442,7 @@ describe('useRecording isRejected effect', () => {
 // ── useRecordingContext ────────────────────────────────────────────────────────
 
 describe('useRecordingContext', () => {
-  test('throws when used outside RecordingProvider (covers lines 418-419)', () => {
+  test('throws when used outside RecordingProvider', () => {
     expect(() => { renderHook(() => useRecordingContext()); }).toThrow('useRecordingContext must be used within a RecordingProvider');
   });
 });

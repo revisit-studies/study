@@ -3,17 +3,15 @@ import {
 } from 'vitest';
 import { expandLibrarySequences, verifyLibraryUsage, loadLibrariesParseNamespace } from './libraryParser';
 import {
-  ComponentBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
+  ComponentBlock, DynamicBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
 } from './types';
 import { isDynamicBlock } from './utils';
 
-// Helper function to check if a value is a ComponentBlock
-function isComponentBlock(value: unknown): value is ComponentBlock {
-  return typeof value === 'object' && value !== null && 'components' in value && !isDynamicBlock(value as StudyConfig['sequence']);
+function isComponentBlock(value: string | ComponentBlock | DynamicBlock): value is ComponentBlock {
+  return typeof value === 'object' && value !== null && 'components' in value && !isDynamicBlock(value);
 }
 
 describe('Library Macro Expansion', () => {
-  // Mock library data for testing
   const mockLibraryData: Record<string, LibraryConfig> = {
     testLib: {
       $schema: '',
@@ -334,7 +332,6 @@ describe('Library Macro Expansion', () => {
     });
 
     test('expands .co. within expanded .se. sequences', () => {
-      // Create a library with a sequence that uses .co. internally
       const libraryWithCoInSequence: Record<string, LibraryConfig> = {
         testLib: {
           ...mockLibraryData.testLib,
@@ -360,7 +357,6 @@ describe('Library Macro Expansion', () => {
         const expandedSequence = result.components[0];
         expect(typeof expandedSequence).toBe('object');
         if (isComponentBlock(expandedSequence)) {
-          // Components in the sequence should be namespaced with .components.
           expect(expandedSequence.components).toEqual([
             '$testLib.components.component1',
             '$testLib.components.component2',
@@ -409,7 +405,6 @@ describe('Library Macro Expansion', () => {
 
       expect(isComponentBlock(result)).toBe(true);
       if (isComponentBlock(result)) {
-        // Should only replace the first .co.
         expect(result.components).toEqual(['$testLib.components.component1']);
       }
     });
@@ -466,7 +461,6 @@ describe('Library Macro Expansion', () => {
         expect(result.components).toHaveLength(1);
         const expandedSequence = result.components[0];
         if (isComponentBlock(expandedSequence)) {
-          // Component should be namespaced
           expect(expandedSequence.components).toEqual(['$testLib.components.component1']);
         }
       }
@@ -505,7 +499,6 @@ describe('Library Macro Expansion', () => {
         expect(result.components).toHaveLength(1);
         const expandedSequence = result.components[0];
         if (isComponentBlock(expandedSequence)) {
-          // Component should remain the same
           expect(expandedSequence.components).toEqual(['$testLib.components.component1']);
         }
       }
@@ -634,7 +627,6 @@ describe('Library Macro Expansion', () => {
       const errors: ParserErrorWarning[] = [];
       expandLibrarySequences(sequence, mockLibraryData, errors);
 
-      // Should have collected errors from expansion
       expect(errors.length).toBe(2);
       expect(errors.some((e) => e.message?.includes('missingLib'))).toBe(true);
       expect(errors.some((e) => e.message?.includes('anotherMissingLib'))).toBe(true);
@@ -652,7 +644,6 @@ describe('Library Macro Expansion', () => {
 
       expect(isComponentBlock(result)).toBe(true);
       if (isComponentBlock(result)) {
-        // Should only replace the first .co.
         expect(result.components).toEqual(['$testLib.components.component.with.dots']);
       }
     });
@@ -667,8 +658,6 @@ describe('Library Macro Expansion', () => {
 
       expect(isComponentBlock(result)).toBe(true);
       if (isComponentBlock(result)) {
-        // .se. gets replaced first, then the string becomes .sequences.co.something
-        // The .co. won't be in the right position to be replaced again
         expect(result.components[0]).toContain('.sequences.');
       }
     });
@@ -688,10 +677,11 @@ describe('Library Macro Expansion', () => {
     });
 
     test('handles undefined/null components array gracefully', () => {
-      const sequence = {
+      const sequence: StudyConfig['sequence'] = {
         order: 'fixed',
+        // @ts-expect-error intentionally passing undefined to test edge case
         components: undefined,
-      } as unknown as StudyConfig['sequence'];
+      };
 
       const result = expandLibrarySequences(sequence, mockLibraryData);
 
@@ -1465,12 +1455,12 @@ describe('loadLibrariesParseNamespace', () => {
     const result = await loadLibrariesParseNamespace(['testLib'], errors, warnings);
 
     const derivedComp = result.testLib.components['$testLib.components.derivedComp'];
-    const derivedCompRecord = derivedComp as Record<string, unknown>;
     expect(derivedComp).toBeDefined();
+    const derivedCompRecord = derivedComp as IndividualComponent & Record<string, string>;
     expect(derivedCompRecord.instructionText).toBe('Override text');
     expect(derivedCompRecord.type).toBe('markdown');
     expect(derivedCompRecord.path).toBe('base.md');
-    expect(derivedCompRecord.baseComponent).toBeUndefined(); // Should be removed
+    expect(derivedCompRecord.baseComponent).toBeUndefined();
     expect(result.testLib.__revisitInheritedComponentMetadata).toEqual({
       '$testLib.components.derivedComp': {
         baseComponent: 'baseComp',
@@ -1575,7 +1565,6 @@ describe('loadLibrariesParseNamespace', () => {
 
     await loadLibrariesParseNamespace(['testLib'], errors, warnings);
 
-    // Warnings array should exist even if empty
     expect(Array.isArray(warnings)).toBe(true);
   });
 
@@ -1650,9 +1639,9 @@ describe('loadLibrariesParseNamespace', () => {
     const result = await loadLibrariesParseNamespace(['testLib'], errors, warnings);
 
     const derivedComp = result.testLib.components['$testLib.components.derivedComp'];
-    const derivedCompRecord = derivedComp as Record<string, unknown> & { meta?: Record<string, unknown> };
+    const derivedCompRecord = derivedComp as IndividualComponent & Record<string, string> & { meta?: Record<string, string> };
     expect(derivedCompRecord.instructionText).toBe('Override instruction');
     expect(derivedCompRecord.meta?.customProp).toBe('derived value');
-    expect(derivedCompRecord.meta?.baseProp).toBe('base value'); // Merged from base
+    expect(derivedCompRecord.meta?.baseProp).toBe('base value');
   });
 });

@@ -219,7 +219,7 @@ vi.mock('firebase/firestore', () => {
   }
 
   class MockTimestamp {
-    constructor(public seconds: number, public nanoseconds: number) {}
+    constructor(public seconds: number, public nanoseconds: number) { }
 
     toMillis() { return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6); }
   }
@@ -1088,7 +1088,7 @@ describe.each([
   });
 
   test('getUserManagementData returns adminUsers data when it exists', async () => {
-    await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'admin@a.com', uid: 'u1' });
+    await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'test@test.com', uid: 'u1' });
     const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers');
     expect(result).toBeDefined();
     expect((result as { adminUsersList: unknown[] }).adminUsersList).toHaveLength(1);

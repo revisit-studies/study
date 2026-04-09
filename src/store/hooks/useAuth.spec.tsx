@@ -100,7 +100,7 @@ describe('AuthProvider', () => {
 });
 
 describe('AuthProvider — non-null storage engine paths', () => {
-  test('non-cloud storageEngine sets nonAuthUser (covers line 148)', async () => {
+  test('non-cloud storageEngine sets nonAuthUser', async () => {
     mockStorageEngineVal = { getEngine: vi.fn(() => 'localStorage') };
     mockIsCloudStorage = false;
 
@@ -120,7 +120,7 @@ describe('AuthProvider — non-null storage engine paths', () => {
     }, { timeout: 2000 });
   });
 
-  test('cloud engine with authInfo.isEnabled=false sets nonAuthUser (covers lines 140-145)', async () => {
+  test('cloud engine with authInfo.isEnabled=false sets nonAuthUser', async () => {
     mockStorageEngineVal = {
       getEngine: vi.fn(() => 'firebase'),
       getUserManagementData: vi.fn().mockResolvedValue({ isEnabled: false }),
@@ -143,7 +143,7 @@ describe('AuthProvider — non-null storage engine paths', () => {
     }, { timeout: 2000 });
   });
 
-  test('cloud engine with authInfo.isEnabled=true calls unsubscribe (covers lines 142-143)', async () => {
+  test('cloud engine with authInfo.isEnabled=true calls unsubscribe', async () => {
     const unsubscribeSpy = vi.fn();
     mockStorageEngineVal = {
       getEngine: vi.fn(() => 'firebase'),
@@ -163,7 +163,7 @@ describe('AuthProvider — non-null storage engine paths', () => {
     }, { timeout: 2000 });
   });
 
-  test('Supabase engine calls getSession on mount (covers lines 88-100)', async () => {
+  test('Supabase engine calls getSession on mount', async () => {
     const getSessionSpy = vi.fn().mockResolvedValue(undefined);
     mockStorageEngineVal = {
       getEngine: vi.fn(() => 'supabase'),
@@ -204,7 +204,7 @@ describe('AuthProvider — non-null storage engine paths', () => {
     consoleSpy.mockRestore();
   });
 
-  test('logout with cloud engine calls storageEngine.logout (covers lines 71-81)', async () => {
+  test('logout with cloud engine calls storageEngine.logout', async () => {
     const logoutSpy = vi.fn().mockResolvedValue(undefined);
     mockStorageEngineVal = {
       getEngine: vi.fn(() => 'firebase'),
@@ -229,7 +229,7 @@ describe('AuthProvider — non-null storage engine paths', () => {
     expect(logoutSpy).toHaveBeenCalled();
   });
 
-  test('verifyAdminStatus with cloud engine calls validateUser (covers lines 102-107)', async () => {
+  test('verifyAdminStatus with cloud engine calls validateUser', async () => {
     const validateSpy = vi.fn().mockResolvedValue(true);
     mockStorageEngineVal = {
       getEngine: vi.fn(() => 'firebase'),

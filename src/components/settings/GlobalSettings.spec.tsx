@@ -18,7 +18,7 @@ let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 
 vi.mock('../../store/hooks/useAuth', () => ({
   useAuth: () => ({
-    user: { user: { email: 'admin@test.com' } },
+    user: { user: { email: 'test@test.com' } },
     triggerAuth: vi.fn(),
     logout: vi.fn(),
   }),
@@ -37,7 +37,7 @@ vi.mock('../../Login', () => ({
 }));
 
 vi.mock('../../storage/engines/SupabaseStorageEngine', () => ({
-  SupabaseStorageEngine: class {},
+  SupabaseStorageEngine: class { },
 }));
 
 vi.mock('@mantine/form', () => ({
@@ -118,7 +118,7 @@ describe('GlobalSettings', () => {
   test('shows "enabled" state after effect resolves with isEnabled:true', async () => {
     mockGetUserManagementData.mockImplementation(async (key: string) => {
       if (key === 'authentication') return { isEnabled: true };
-      if (key === 'adminUsers') return { adminUsersList: [{ email: 'admin@test.com', uid: '1' }] };
+      if (key === 'adminUsers') return { adminUsersList: [{ email: 'test@test.com', uid: '1' }] };
       return null;
     });
 
@@ -159,7 +159,7 @@ describe('GlobalSettings', () => {
       getUserManagementData: mockGetUserManagementData,
       getEngine: vi.fn().mockReturnValue('supabase'),
       getSession: vi.fn().mockResolvedValue({
-        data: { session: { user: { email: 'admin@test.com', id: '123' } } },
+        data: { session: { user: { email: 'test@test.com', id: '123' } } },
       }),
     };
     mockGetUserManagementData.mockImplementation(async (key: string) => {
@@ -247,7 +247,7 @@ describe('GlobalSettings', () => {
     };
     mockGetUserManagementData.mockImplementation(async (key: string) => {
       if (key === 'authentication') return { isEnabled: true };
-      if (key === 'adminUsers') return { adminUsersList: [{ email: 'admin@test.com', uid: '1' }] };
+      if (key === 'adminUsers') return { adminUsersList: [{ email: 'test@test.com', uid: '1' }] };
       return null;
     });
 
@@ -272,7 +272,7 @@ describe('GlobalSettings', () => {
     mockGetUserManagementData.mockImplementation(async (key: string) => {
       if (key === 'authentication') return { isEnabled: true };
       if (key === 'adminUsers') {
-        return { adminUsersList: [{ email: 'admin@test.com', uid: '1' }] };
+        return { adminUsersList: [{ email: 'test@test.com', uid: '1' }] };
       }
       return null;
     });

@@ -4,7 +4,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { ReactNode } from 'react';
-import { PreviousButton } from './PreviousButton';
+import { PreviousButton } from '../PreviousButton';
 
 const mockGoToPreviousStep = vi.fn();
 const mockDispatch = vi.fn();
@@ -17,21 +17,21 @@ vi.mock('@mantine/core', () => ({
   ),
 }));
 
-vi.mock('../store/hooks/usePreviousStep', () => ({
+vi.mock('../../store/hooks/usePreviousStep', () => ({
   usePreviousStep: vi.fn(() => ({
     isPreviousDisabled: false,
     goToPreviousStep: mockGoToPreviousStep,
   })),
 }));
 
-vi.mock('../store/store', () => ({
+vi.mock('../../store/store', () => ({
   useStoreActions: vi.fn(() => ({
     setClickedPrevious: vi.fn(() => ({ type: 'setClickedPrevious' })),
   })),
   useStoreDispatch: vi.fn(() => mockDispatch),
 }));
 
-const { usePreviousStep } = await import('../store/hooks/usePreviousStep');
+const { usePreviousStep } = await import('../../store/hooks/usePreviousStep');
 
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.restoreAllMocks());

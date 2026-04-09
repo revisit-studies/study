@@ -3,47 +3,47 @@ import { render, act } from '@testing-library/react';
 import {
   describe, expect, test, vi,
 } from 'vitest';
-import { StepRenderer } from './StepRenderer';
+import { StepRenderer } from '../StepRenderer';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('./interface/AppAside', () => ({
+vi.mock('../interface/AppAside', () => ({
   AppAside: () => <div data-testid="app-aside" />,
 }));
 
-vi.mock('./interface/AppHeader', () => ({
+vi.mock('../interface/AppHeader', () => ({
   AppHeader: () => <div data-testid="app-header" />,
 }));
 
-vi.mock('./interface/AppNavBar', () => ({
+vi.mock('../interface/AppNavBar', () => ({
   AppNavBar: () => <div data-testid="app-navbar" />,
 }));
 
-vi.mock('./interface/HelpModal', () => ({
+vi.mock('../interface/HelpModal', () => ({
   HelpModal: () => null,
 }));
 
-vi.mock('./interface/AlertModal', () => ({
+vi.mock('../interface/AlertModal', () => ({
   AlertModal: () => null,
 }));
 
-vi.mock('./interface/ConfigVersionWarningModal', () => ({
+vi.mock('../interface/ConfigVersionWarningModal', () => ({
   ConfigVersionWarningModal: () => null,
 }));
 
-vi.mock('./interface/AnalysisFooter', () => ({
+vi.mock('../interface/AnalysisFooter', () => ({
   AnalysisFooter: () => null,
 }));
 
-vi.mock('./interface/ScreenRecordingRejection', () => ({
+vi.mock('../interface/ScreenRecordingRejection', () => ({
   ScreenRecordingRejection: () => null,
 }));
 
-vi.mock('./interface/DeviceWarning', () => ({
+vi.mock('../interface/DeviceWarning', () => ({
   DeviceWarning: () => null,
 }));
 
-vi.mock('../store/hooks/useStudyConfig', () => ({
+vi.mock('../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: () => ({
     studyRules: undefined,
     uiConfig: {
@@ -57,20 +57,20 @@ vi.mock('../store/hooks/useStudyConfig', () => ({
   }),
 }));
 
-vi.mock('../store/hooks/useIsAnalysis', () => ({
+vi.mock('../../store/hooks/useIsAnalysis', () => ({
   useIsAnalysis: () => false,
 }));
 
-vi.mock('../store/hooks/useWindowEvents', () => ({
+vi.mock('../../store/hooks/useWindowEvents', () => ({
   WindowEventsContext: { Provider: ({ children }: { children: ReactNode }) => <span>{children}</span> },
 }));
 
-vi.mock('../store/hooks/useRecording', () => ({
+vi.mock('../../store/hooks/useRecording', () => ({
   useRecording: () => ({ isRejected: false }),
   RecordingContext: { Provider: ({ children }: { children: ReactNode }) => <span>{children}</span> },
 }));
 
-vi.mock('../store/hooks/useReplay', () => ({
+vi.mock('../../store/hooks/useReplay', () => ({
   useReplay: () => ({
     seekTime: 0,
     setSeekTime: vi.fn(),
@@ -88,7 +88,7 @@ vi.mock('../store/hooks/useReplay', () => ({
   ReplayContext: { Provider: ({ children }: { children: ReactNode }) => <span>{children}</span> },
 }));
 
-vi.mock('../store/store', () => ({
+vi.mock('../../store/store', () => ({
   useStoreSelector: (selector: (s: Record<string, unknown>) => unknown) => selector({
     showStudyBrowser: false,
     modes: { developmentModeEnabled: false, dataCollectionEnabled: true },
@@ -100,11 +100,11 @@ vi.mock('../store/store', () => ({
   useStoreActions: () => ({ toggleStudyBrowser: vi.fn() }),
 }));
 
-vi.mock('../routes/utils', () => ({
+vi.mock('../../routes/utils', () => ({
   useCurrentComponent: () => 'intro',
 }));
 
-vi.mock('../utils/handleComponentInheritance', () => ({
+vi.mock('../../utils/handleComponentInheritance', () => ({
   studyComponentToIndividualComponent: vi.fn(() => ({
     withSidebar: true,
     sidebarWidth: 300,
@@ -113,11 +113,11 @@ vi.mock('../utils/handleComponentInheritance', () => ({
   })),
 }));
 
-vi.mock('../utils/fetchStylesheet', () => ({
+vi.mock('../../utils/fetchStylesheet', () => ({
   useFetchStylesheet: vi.fn(),
 }));
 
-vi.mock('../utils/closeTabConfirmation', () => ({
+vi.mock('../../utils/closeTabConfirmation', () => ({
   handleBeforeUnload: vi.fn(),
   shouldConfirmTabClose: vi.fn(() => false),
 }));
@@ -146,7 +146,7 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 
 vi.mock('lodash.debounce', () => ({
-  default: (fn: (...args: unknown[]) => unknown) => fn,
+  default: (fn: (...args: never[]) => void) => fn,
 }));
 
 // ── tests ─────────────────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ describe('StepRenderer', () => {
     expect(getAllByTestId('outlet').length).toBeGreaterThan(0);
   });
 
-  test('window event listeners fire debounced callbacks (covers lines 64-106)', async () => {
+  test('window event listeners fire debounced callbacks', async () => {
     await act(async () => render(<StepRenderer />));
     // Fire each tracked window/document event so the debounce callbacks (which
     // now call through immediately thanks to the lodash.debounce mock) are covered.
@@ -179,19 +179,19 @@ describe('StepRenderer', () => {
     expect(true).toBe(true); // reaching here without crash is the assertion
   });
 
-  test('cleanup removes all event listeners on unmount (covers lines 121-131)', async () => {
+  test('cleanup removes all event listeners on unmount', async () => {
     const { unmount } = await act(async () => render(<StepRenderer />));
     // Unmount triggers the useEffect cleanup which removes all event listeners
     expect(() => act(() => { unmount(); })).not.toThrow();
   });
 
-  test('beforeunload listener added when shouldConfirmClose is true (covers lines 162-169)', async () => {
-    const { shouldConfirmTabClose } = await import('../utils/closeTabConfirmation');
+  test('beforeunload listener added when shouldConfirmClose is true', async () => {
+    const { shouldConfirmTabClose } = await import('../../utils/closeTabConfirmation');
     vi.mocked(shouldConfirmTabClose).mockReturnValue(true);
     const addEventSpy = vi.spyOn(window, 'addEventListener');
     const { unmount } = await act(async () => render(<StepRenderer />));
     expect(addEventSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function));
-    // Unmount triggers cleanup: removeEventListener (covers lines 167-169)
+    // Unmount triggers cleanup: removeEventListener
     act(() => { unmount(); });
     addEventSpy.mockRestore();
     vi.mocked(shouldConfirmTabClose).mockReturnValue(false);

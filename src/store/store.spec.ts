@@ -429,22 +429,22 @@ describe('studyStoreCreator', () => {
     expect(store.getState().funcSequence.myFunc).toBeUndefined();
   });
 
-  test('pushToFuncSequence creates entry and returns early on duplicate funcIndex (covers lines 150-199)', async () => {
+  test('pushToFuncSequence creates entry and returns early on duplicate funcIndex', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
-    // First call: creates funcSequence entry and answer (covers lines 150-198)
+    // First call: creates funcSequence entry and answer
     store.dispatch(actions.pushToFuncSequence({
       component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: undefined, correctAnswer: undefined,
     }));
     expect(store.getState().funcSequence.myFunc).toEqual(['intro']);
     expect(store.getState().answers.myFunc_5_intro_0).toBeDefined();
-    // Second call with same funcIndex: length (1) > funcIndex (0) → early return (covers lines 154-155)
+    // Second call with same funcIndex: length (1) > funcIndex (0) → early return
     store.dispatch(actions.pushToFuncSequence({
       component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: undefined, correctAnswer: undefined,
     }));
     expect(store.getState().funcSequence.myFunc).toEqual(['intro']); // unchanged
   });
 
-  test('saveIncorrectAnswer initializes incorrectAnswers when undefined (covers lines 339-340)', async () => {
+  test('saveIncorrectAnswer initializes incorrectAnswers when undefined', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     // Overwrite intro_0 without incorrectAnswers to simulate old config import
     store.dispatch(actions.saveTrialAnswer({
@@ -462,7 +462,7 @@ describe('studyStoreCreator', () => {
     expect(store.getState().answers.intro_0?.incorrectAnswers?.attempt_1?.value).toContain('wrong');
   });
 
-  test('deleteDynamicBlockAnswers with matching answers and funcSequence cleanup (covers lines 356-357, 362-363, 366-367)', async () => {
+  test('deleteDynamicBlockAnswers with matching answers and funcSequence cleanup', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     // Use pushToFuncSequence to create funcSequence and a matching answer key
     store.dispatch(actions.pushToFuncSequence({
@@ -512,7 +512,7 @@ describe('useAreResponsesValid', () => {
     expect(result.current).toBe(true);
   });
 
-  test('invokes every callback and returns false when some entries are invalid (covers lines 408-412)', async () => {
+  test('invokes every callback and returns false when some entries are invalid', async () => {
     const { Wrapper } = await makeWrapper();
     // intro_0 exists in trialValidation with aboveStimulus/belowStimulus/sidebar.valid=false
     // → enters every callback (lines 408-412); short-circuits on first false → returns false
@@ -520,7 +520,7 @@ describe('useAreResponsesValid', () => {
     expect(result.current).toBe(false);
   });
 
-  test('every callback hits return true branch when entry has no valid key (covers line 411)', async () => {
+  test('every callback hits return true branch when entry has no valid key', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     function Wrapper({ children }: { children: React.ReactNode }) {
       return createElement(Provider, { store } as never, children);
