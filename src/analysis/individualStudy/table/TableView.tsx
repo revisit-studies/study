@@ -23,6 +23,7 @@ import { youtubeReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
+import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
 function formatDate(date: Date): string | JSX.Element {
   if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
@@ -35,6 +36,7 @@ function formatDate(date: Date): string | JSX.Element {
 export function TableView({
   visibleParticipants,
   studyConfig,
+  allConfigs,
   refresh,
   width,
   stageColors,
@@ -43,6 +45,7 @@ export function TableView({
 }: {
   visibleParticipants: ParticipantData[];
   studyConfig: StudyConfig;
+  allConfigs: Record<string, StudyConfig>;
   refresh: () => Promise<Record<number, ParticipantData>>;
   width: number;
   stageColors: Record<string, string>;
@@ -208,7 +211,14 @@ export function TableView({
         Cell: ({ cell }: { cell: MrtCell<ParticipantData, Date> }) => (formatDate(cell.getValue() as Date)),
       },
       {
-        accessorFn: (row: ParticipantData) => Object.values(row.answers).filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0).map((answer) => componentAnswersAreCorrect(answer.answer, answer.correctAnswer)),
+        accessorFn: (row: ParticipantData) => Object.values(row.answers)
+          .filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0)
+          .map((answer) => {
+            const componentConfig = studyConfig.components[answer.componentName];
+            const component = componentConfig ? studyComponentToIndividualComponent(componentConfig, studyConfig) : undefined;
+
+            return componentAnswersAreCorrect(answer.answer, answer.correctAnswer, component?.response);
+          }),
         header: 'Correct Answers',
         size: 160,
         Cell: ({ cell }: { cell: MrtCell<ParticipantData, boolean[]> }) => (
@@ -267,7 +277,7 @@ export function TableView({
       }
 
       return (
-        <AllTasksTimeline maxLength={undefined} studyConfig={studyConfig} studyId={studyId || ''} participantData={r} width={width - 60} />
+        <AllTasksTimeline maxLength={undefined} studyConfig={allConfigs[r.participantConfigHash] ?? studyConfig} studyId={studyId || ''} participantData={r} width={width - 60} />
       );
     },
     defaultColumn: {

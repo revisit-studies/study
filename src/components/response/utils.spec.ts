@@ -1,11 +1,16 @@
 import {
   afterEach, beforeEach, describe, expect, it,
 } from 'vitest';
-import type { CheckboxResponse, MatrixResponse, Response } from '../../parser/types';
+import type {
+  CheckboxResponse, CustomResponse, MatrixResponse, Response,
+} from '../../parser/types';
+import type { CustomResponseValidate } from '../../store/types';
 import {
   checkCheckboxResponseForValidation,
+  generateCustomResponseErrorMessage,
   generateErrorMessage,
   generateInitFields,
+  generateValidation,
   mergeReactiveAnswers,
   normalizeCheckboxDontKnowValue,
   requiredAnswerIsEmpty,
@@ -100,6 +105,17 @@ describe('generateInitFields', () => {
         minSelections: 1,
         default: 'B',
       },
+      {
+        id: 'custom-default',
+        prompt: 'Custom response',
+        type: 'custom',
+        path: 'demo-form-elements/assets/CustomResponseCard.tsx',
+        default: {
+          chartType: 'Line',
+          confidence: 75,
+          rationale: 'Preset',
+        },
+      },
     ];
 
     const initialFields = generateInitFields(responses, {});
@@ -113,7 +129,209 @@ describe('generateInitFields', () => {
       },
       'likert-default': '3',
       'multiselect-dropdown-default': ['B'],
+      'custom-default': {
+        chartType: 'Line',
+        confidence: 75,
+        rationale: 'Preset',
+      },
     });
+  });
+
+  it('preserves stored falsy answers instead of replacing them with defaults', () => {
+    const responses: Response[] = [
+      {
+        id: 'stored-empty-string',
+        prompt: 'Short text',
+        type: 'shortText',
+        default: 'prefilled',
+      },
+      {
+        id: 'stored-zero',
+        prompt: 'Number',
+        type: 'numerical',
+        default: 5,
+      },
+      {
+        id: 'stored-false',
+        prompt: 'Custom response',
+        type: 'custom',
+        path: 'demo-form-elements/assets/CustomResponseCard.tsx',
+        default: true,
+      },
+    ];
+
+    const initialFields = generateInitFields(responses, {
+      'stored-empty-string': '',
+      'stored-zero': 0,
+      'stored-false': false,
+    });
+
+    expect(initialFields).toEqual({
+      'stored-empty-string': '',
+      'stored-zero': 0,
+      'stored-false': false,
+    });
+  });
+});
+
+describe('generateValidation custom', () => {
+  const response: CustomResponse = {
+    id: 'custom-response-demo',
+    prompt: 'Custom response',
+    type: 'custom',
+    path: 'custom-response/Example.tsx',
+    parameters: {
+      minimumConfidence: 70,
+    },
+  };
+
+  const customValidate: CustomResponseValidate = (value, _values, customResponse) => {
+    const minimumConfidence = customResponse.parameters?.minimumConfidence as number;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return 'Select a chart type to continue.';
+    }
+    if (typeof value.confidence !== 'number' || value.confidence < minimumConfidence) {
+      return `Set confidence to at least ${minimumConfidence} to continue.`;
+    }
+
+    return null;
+  };
+
+  it('uses the module validate export when a partial object is present', () => {
+    const validation = generateValidation([response], { [response.id]: customValidate });
+    const error = validation[response.id]({
+      chartType: 'Bar',
+      confidence: 50,
+      rationale: '',
+    }, {});
+
+    expect(error).toBe('Set confidence to at least 70 to continue.');
+  });
+
+  it('passes once the custom response module validation succeeds', () => {
+    const validation = generateValidation([response], { [response.id]: customValidate });
+    const error = validation[response.id]({
+      chartType: 'Scatter',
+      confidence: 80,
+      rationale: 'Looks right',
+    }, {});
+
+    expect(error).toBeNull();
+  });
+
+  it('treats empty objects as missing required input', () => {
+    const validation = generateValidation([response], { [response.id]: customValidate });
+    const error = validation[response.id]({}, {});
+
+    expect(error).toBe('Empty input');
+  });
+
+  it('treats nested empty string structures as missing required input', () => {
+    const validation = generateValidation([response], { [response.id]: customValidate });
+    const error = validation[response.id]({
+      chartType: '',
+      rationale: '',
+      details: {
+        note: '',
+      },
+      tags: ['', ''],
+    }, {});
+
+    expect(error).toBe('Empty input');
+  });
+
+  it('does not treat 0 or false as empty custom values', () => {
+    const validation = generateValidation([response]);
+    const error = validation[response.id]({
+      confidence: 0,
+      confirmed: false,
+    }, {});
+
+    expect(error).toBeNull();
+  });
+
+  it('skips custom validation for optional empty custom responses', () => {
+    const optionalResponse: CustomResponse = {
+      ...response,
+      required: false,
+    };
+
+    const validation = generateValidation([optionalResponse], { [optionalResponse.id]: customValidate });
+    const error = validation[optionalResponse.id](null, {});
+
+    expect(error).toBeNull();
+  });
+
+  it('surfaces module load errors for optional custom responses', () => {
+    const optionalResponse: CustomResponse = {
+      ...response,
+      required: false,
+    };
+
+    const validation = generateValidation(
+      [optionalResponse],
+      {},
+      { [optionalResponse.id]: `Unable to load custom response module at ${optionalResponse.path}` },
+    );
+    const error = validation[optionalResponse.id](null, {});
+
+    expect(error).toBe(`Unable to load custom response module at ${optionalResponse.path}`);
+  });
+
+  it('treats standalone dont-know as a completed custom response', () => {
+    const validation = generateValidation([{
+      ...response,
+      withDontKnow: true,
+    }], { [response.id]: customValidate });
+    const error = validation[response.id](null, {
+      [`${response.id}-dontKnow`]: true,
+    });
+
+    expect(error).toBeNull();
+  });
+});
+
+describe('generateCustomResponseErrorMessage', () => {
+  const response: CustomResponse = {
+    id: 'custom-response-demo',
+    prompt: 'Custom response',
+    type: 'custom',
+    path: 'custom-response/Example.tsx',
+    parameters: {
+      minimumConfidence: 70,
+    },
+  };
+
+  const customValidate: CustomResponseValidate = (value, _values, customResponse) => {
+    const minimumConfidence = customResponse.parameters?.minimumConfidence as number;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return 'Select a chart type to continue.';
+    }
+    if (typeof value.confidence !== 'number' || value.confidence < minimumConfidence) {
+      return `Set confidence to at least ${minimumConfidence} to continue.`;
+    }
+
+    return null;
+  };
+
+  it('does not show an error for untouched required custom responses', () => {
+    expect(generateCustomResponseErrorMessage(response, null, {}, customValidate)).toBeNull();
+  });
+
+  it('shows validation feedback once the response is partially filled', () => {
+    expect(generateCustomResponseErrorMessage(response, {
+      chartType: 'Bar',
+      confidence: null,
+      rationale: '',
+    }, {}, customValidate)).toBe('Set confidence to at least 70 to continue.');
+  });
+
+  it('shows no feedback once the current value is valid', () => {
+    expect(generateCustomResponseErrorMessage(response, {
+      chartType: 'Bar',
+      confidence: 80,
+      rationale: '',
+    }, {}, customValidate)).toBeNull();
   });
 });
 
