@@ -163,7 +163,15 @@ describe('StepRenderer', () => {
   });
 
   test('window event listeners fire debounced callbacks', async () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
     await act(async () => render(<StepRenderer />));
+
+    // Verify that event listeners were registered for tracked events
+    const registeredEvents = addSpy.mock.calls.map(([event]) => event);
+    expect(registeredEvents).toContain('focus');
+    expect(registeredEvents).toContain('mousemove');
+    expect(registeredEvents).toContain('scroll');
+
     // Fire each tracked window/document event so the debounce callbacks (which
     // now call through immediately thanks to the lodash.debounce mock) are covered.
     window.dispatchEvent(new Event('focus', { bubbles: true }));
@@ -176,7 +184,8 @@ describe('StepRenderer', () => {
     window.dispatchEvent(new MouseEvent('mousemove', { clientX: 3, clientY: 4 }));
     window.dispatchEvent(new Event('scroll'));
     document.dispatchEvent(new Event('visibilitychange'));
-    expect(true).toBe(true); // reaching here without crash is the assertion
+
+    addSpy.mockRestore();
   });
 
   test('cleanup removes all event listeners on unmount', async () => {

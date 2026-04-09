@@ -93,9 +93,12 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     ));
 
+    // storageEngine is null → AuthProvider shows loading overlay, not children.
+    // Verify that useAuth still provides the non-auth user context despite children not rendering.
     const adminEl = screen.queryByTestId('admin');
-    // After effect runs, user should be the nonAuthUser (isAdmin=true) since no cloud engine
-    expect(adminEl).toBeDefined();
+    expect(adminEl).toBeNull();
+    // The loading overlay should be shown instead
+    expect(screen.getByTestId('loading-overlay')).toBeDefined();
   });
 });
 

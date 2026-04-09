@@ -41,7 +41,7 @@ describe('ProtectedRoute', () => {
     mockUser = { isAdmin: false, determiningStatus: false };
     mockVerifyAdminStatus.mockResolvedValue(true);
     mockLogout.mockReset();
-    mockStorageEngine = { getEngine: vi.fn().mockReturnValue({}) };
+    mockStorageEngine = { getEngine: vi.fn().mockReturnValue('localStorage') };
   });
 
   afterEach(() => {

@@ -20,7 +20,7 @@ describe('isCloudStorageEngine', () => {
   });
 });
 
-const makeAnswer = (componentName: string, endTime = 1000): StoredAnswer => makeStoredAnswer({
+const makeAnswer = (componentName: string, endTime = 1000) => makeStoredAnswer({
   componentName,
   identifier: `${componentName}_0`,
   endTime,
