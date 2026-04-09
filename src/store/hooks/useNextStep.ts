@@ -112,11 +112,6 @@ export function useNextStep() {
           windowEvents: currentWindowEvents,
           timedOut: !collectData,
         };
-        storeDispatch(
-          saveTrialAnswer({
-            ...toSave,
-          }),
-        );
         const answersToPersist = { ...answers, [identifier]: toSave };
 
         if (storageEngine) {
@@ -135,6 +130,11 @@ export function useNextStep() {
           }
         }
 
+        storeDispatch(
+          saveTrialAnswer({
+            ...toSave,
+          }),
+        );
         storeDispatch(setReactiveAnswers({}));
         storeDispatch(setMatrixAnswersCheckbox(null));
         storeDispatch(setMatrixAnswersRadio(null));
