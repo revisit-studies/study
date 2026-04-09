@@ -4,13 +4,14 @@ export function shouldConfirmTabClose(
   developmentModeEnabled: boolean,
   isCompleted: boolean,
   dataCollectionEnabled: boolean,
+  isSubmittingFinal: boolean,
 ): boolean {
   if (isAnalysis || developmentModeEnabled) {
     return false;
   }
 
   if (currentComponent === 'end') {
-    return dataCollectionEnabled && !isCompleted;
+    return isSubmittingFinal || (dataCollectionEnabled && !isCompleted);
   }
 
   return true;

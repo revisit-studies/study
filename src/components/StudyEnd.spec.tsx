@@ -1,12 +1,19 @@
 import { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
+  beforeEach,
   describe,
   expect,
   test,
   vi,
 } from 'vitest';
 import { StudyEnd } from './StudyEnd';
+
+const mockState = {
+  modes: {
+    dataCollectionEnabled: true,
+  },
+};
 
 vi.mock('@mantine/core', () => ({
   Button: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
@@ -50,9 +57,14 @@ vi.mock('../store/hooks/useIsAnalysis', () => ({
 
 vi.mock('../store/store', () => ({
   useStoreDispatch: () => vi.fn(),
+  useStoreSelector: (selector: (state: typeof mockState) => unknown) => selector(mockState),
   useStoreActions: () => ({
     setParticipantCompleted: vi.fn((value: boolean) => ({
       type: 'setParticipantCompleted',
+      payload: value,
+    })),
+    setIsSubmittingFinal: vi.fn((value: boolean) => ({
+      type: 'setIsSubmittingFinal',
       payload: value,
     })),
   }),
@@ -63,7 +75,19 @@ vi.mock('./downloader/DownloadTidy', () => ({
 }));
 
 describe('StudyEnd', () => {
-  test('renders the study end message', () => {
+  beforeEach(() => {
+    mockState.modes.dataCollectionEnabled = true;
+  });
+
+  test('renders the upload spinner while data collection is enabled', () => {
+    const html = renderToStaticMarkup(<StudyEnd />);
+    expect(html).toContain('Please wait while your answers are uploaded.');
+    expect(html).toContain('Loading');
+  });
+
+  test('renders the study end message immediately when data collection is disabled', () => {
+    mockState.modes.dataCollectionEnabled = false;
+
     const html = renderToStaticMarkup(<StudyEnd />);
     expect(html).toContain('Study complete');
   });
