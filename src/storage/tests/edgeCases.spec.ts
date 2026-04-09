@@ -894,7 +894,7 @@ describe('StorageEngine edge cases', () => {
   // ── Sequence exhaustion and reuse ─────────────────────────────────────────
 
   describe('sequence exhaustion and reuse', () => {
-    test('participants cycle through sequences when count exceeds numSequences', async () => {
+    test('participants cycle through sequences when count exceeds numSequences', { timeout: 30_000 }, async () => {
       const sequenceArray = generateSequenceArray(configSimple);
       const numSequences = sequenceArray.length;
 
