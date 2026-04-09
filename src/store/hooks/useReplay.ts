@@ -263,6 +263,12 @@ export function useReplay() {
         timer.current && clearInterval(timer.current);
       }
     }
+
+    return () => {
+      if (timer.current) {
+        clearInterval(timer.current);
+      }
+    };
   }, [isPlaying, setIsPlaying]);
 
   useEffect(() => {
