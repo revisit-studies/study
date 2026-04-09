@@ -14,7 +14,7 @@ import {
 } from '@tabler/icons-react';
 
 import {
-  ParticipantData, StoredAnswer, StudyConfig,
+  ParticipantDataWithStatus, StoredAnswer, StudyConfig,
 } from '../../../parser/types';
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { participantName } from '../../../utils/participantName';
@@ -42,14 +42,14 @@ export function TableView({
   selectedParticipants,
   onSelectionChange,
 }: {
-  visibleParticipants: ParticipantData[];
+  visibleParticipants: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
   allConfigs: Record<string, StudyConfig>;
-  refresh: () => Promise<Record<number, ParticipantData>>;
+  refresh: () => Promise<ParticipantDataWithStatus[]>;
   width: number;
   stageColors: Record<string, string>;
-  selectedParticipants: ParticipantData[];
-  onSelectionChange: (participants: ParticipantData[]) => void;
+  selectedParticipants: ParticipantDataWithStatus[];
+  onSelectionChange: (participants: ParticipantDataWithStatus[]) => void;
 }) {
   const { studyId } = useParams();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
@@ -57,7 +57,7 @@ export function TableView({
   useEffect(() => {
     const newSelectedParticipants = Object.keys(checked).filter((v) => checked[v])
       .map((participantId) => visibleParticipants.find((p) => p.participantId === participantId))
-      .filter((p) => p !== undefined) as ParticipantData[];
+      .filter((p) => p !== undefined) as ParticipantDataWithStatus[];
     onSelectionChange(newSelectedParticipants);
   }, [checked, visibleParticipants, onSelectionChange]);
 
@@ -73,19 +73,19 @@ export function TableView({
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const columns = useMemo<MrtColumnDef<ParticipantData>[]>(() => {
+  const columns = useMemo<MrtColumnDef<ParticipantDataWithStatus>[]>(() => {
     const hasCondition = visibleParticipants.some((participant) => participant.conditions ?? participant.searchParams?.condition);
 
     return [
       {
-        accessorFn: (row: ParticipantData) => {
+        accessorFn: (row: ParticipantDataWithStatus) => {
           const incompleteEntries = Object.entries(row.answers || {}).filter((e) => e[1].startTime === 0);
 
           return { percent: (Object.entries(row.answers).length - incompleteEntries.length) / (getSequenceFlatMap(row.sequence).length - 1), completed: row.completed, rejected: row.rejected };
         },
         header: 'Status',
         size: 100,
-        Cell: ({ cell }: { cell: MrtCell<ParticipantData, { percent: number, completed: boolean, rejected: ParticipantData['rejected'] }> }) => {
+        Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, { percent: number, completed: boolean, rejected: ParticipantDataWithStatus['rejected'] }> }) => {
           const cellValue = cell.getValue();
           return (
             cellValue.rejected ? (
@@ -121,7 +121,7 @@ export function TableView({
         accessorKey: 'stage',
         header: 'Stage',
         size: 100,
-        Cell: ({ cell }: { cell: MrtCell<ParticipantData, string> }) => {
+        Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, string> }) => {
           const stageName = cell.getValue();
           if (!stageName || stageName === '') {
             return (
@@ -149,7 +149,7 @@ export function TableView({
       {
         accessorKey: 'participantId',
         header: 'ID',
-        Cell: ({ row }: { row: { original: ParticipantData } }) => (
+        Cell: ({ row }: { row: { original: ParticipantDataWithStatus } }) => (
           <Flex align="center">
             <Text size="sm">{row.original.participantId}</Text>
             <Tooltip label={copied === row.original.participantId ? 'Copied' : 'Copy ID'}>
@@ -166,14 +166,14 @@ export function TableView({
       },
       ...(studyConfig.uiConfig.participantNameField ? [
         {
-          accessorFn: (row: ParticipantData) => participantName(row, studyConfig),
+          accessorFn: (row: ParticipantDataWithStatus) => participantName(row, studyConfig),
           header: 'Name',
           size: 100,
         },
       ] : []),
       ...(hasCondition ? [
         {
-          accessorFn: (row: ParticipantData) => {
+          accessorFn: (row: ParticipantDataWithStatus) => {
             const { conditions } = row;
             if (Array.isArray(conditions) && conditions.length > 0) {
               return conditions.join(',');
@@ -185,10 +185,10 @@ export function TableView({
         },
       ] : []),
       {
-        accessorFn: (row: ParticipantData) => new Date(Math.max(...Object.values<StoredAnswer>(row.answers).filter((data) => data.endTime > 0).map((s) => s.endTime)) - Math.min(...Object.values<StoredAnswer>(row.answers).filter((data) => data.startTime > 0).map((s) => s.startTime))),
+        accessorFn: (row: ParticipantDataWithStatus) => new Date(Math.max(...Object.values<StoredAnswer>(row.answers).filter((data) => data.endTime > 0).map((s) => s.endTime)) - Math.min(...Object.values<StoredAnswer>(row.answers).filter((data) => data.startTime > 0).map((s) => s.startTime))),
         header: 'Duration',
         size: 120,
-        Cell: ({ cell }: { cell: MrtCell<ParticipantData, Date> }) => (
+        Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, Date> }) => (
           !Number.isNaN(cell.getValue()) ? (
             <Badge
               variant="light"
@@ -204,16 +204,18 @@ export function TableView({
 
       },
       {
-        accessorFn: (row: ParticipantData) => new Date(Math.min(...Object.values<StoredAnswer>(row.answers).filter((data) => data.startTime > 0).map((s) => s.startTime))),
+        accessorFn: (row: ParticipantDataWithStatus) => new Date(Math.min(...Object.values<StoredAnswer>(row.answers).filter((data) => data.startTime > 0).map((s) => s.startTime))),
         header: 'Start Time',
         size: 150,
-        Cell: ({ cell }: { cell: MrtCell<ParticipantData, Date> }) => (formatDate(cell.getValue() as Date)),
+        Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, Date> }) => (formatDate(cell.getValue() as Date)),
       },
       {
-        accessorFn: (row: ParticipantData) => Object.values(row.answers).filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0).map((answer) => componentAnswersAreCorrect(answer.answer, answer.correctAnswer)),
+        accessorFn: (row: ParticipantDataWithStatus) => Object.values(row.answers)
+          .filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0)
+          .map((answer) => componentAnswersAreCorrect(answer.answer, answer.correctAnswer)),
         header: 'Correct Answers',
         size: 160,
-        Cell: ({ cell }: { cell: MrtCell<ParticipantData, boolean[]> }) => (
+        Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, boolean[]> }) => (
           <Group gap={4}>
             <Badge
               variant="light"
@@ -241,7 +243,7 @@ export function TableView({
         accessorKey: 'metadata',
         header: 'Metadata',
         size: 200,
-        Cell: ({ cell }: { cell: MrtCell<ParticipantData, ParticipantData['metadata']> }) => <MetaCell metaData={cell.getValue()} />,
+        Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, ParticipantDataWithStatus['metadata']> }) => <MetaCell metaData={cell.getValue()} />,
       },
     ];
   }, [studyConfig, stageColors, copied, visibleParticipants]);

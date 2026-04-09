@@ -8,10 +8,6 @@ export function shouldPreferCachedParticipantData(
   cachedParticipantData: ParticipantData,
   remoteParticipantData: ParticipantData,
 ) {
-  if (cachedParticipantData.completed !== remoteParticipantData.completed) {
-    return cachedParticipantData.completed;
-  }
-
   const cachedAnsweredAnswers = getAnsweredParticipantAnswerMetadata(cachedParticipantData.answers);
   const remoteAnsweredAnswers = getAnsweredParticipantAnswerMetadata(remoteParticipantData.answers);
 

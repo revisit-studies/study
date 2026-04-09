@@ -314,7 +314,6 @@ describe.each([
     expect(participantData!.searchParams).toEqual({});
     expect(participantData!.conditions).toBeUndefined();
     expect(participantData!.metadata).toEqual(participantMetadata);
-    expect(participantData!.completed).toBe(false);
     expect(participantData!.rejected).toBe(false);
     expect(participantData!.participantTags).toEqual([]);
   });
@@ -641,9 +640,50 @@ describe.each([
 
   // getParticipantStatusCounts test
 
-  // saveAnswers test
+  test('flushPendingParticipantData persists the newest queued answers snapshot', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
-  test('saveAnswers coalesces to the latest answer and finalizeParticipant persists completed state after delayed writes', async () => {
+    const firstAnswers = {
+      intro_0: {
+        identifier: 'intro_0',
+        componentName: 'intro',
+        trialOrder: '0',
+        answer: { response: 'first' },
+        correctAnswer: [],
+        incorrectAnswers: {},
+        startTime: 10,
+        endTime: 20,
+        provenanceGraph: {
+          sidebar: undefined,
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          stimulus: undefined,
+        },
+        windowEvents: [],
+        timedOut: false,
+        helpButtonClickedCount: 0,
+        parameters: {},
+        optionOrders: {},
+        questionOrders: {},
+      },
+    };
+    const secondAnswers = {
+      intro_0: {
+        ...firstAnswers.intro_0,
+        answer: { response: 'second' },
+        endTime: 30,
+      },
+    };
+
+    await storageEngine.saveAnswers(firstAnswers);
+    await storageEngine.saveAnswers(secondAnswers);
+    await storageEngine.flushPendingParticipantData();
+
+    const participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData?.answers).toEqual(secondAnswers);
+  });
+
+  test('saveAnswers coalesces to the latest answer and finalizeParticipant persists completion after delayed writes', async () => {
     storageEngine = new DelayedLocalStorageEngine(true);
     await storageEngine.connect();
     await storageEngine.initializeStudyDb(studyId);
@@ -678,7 +718,12 @@ describe.each([
     const participantData = await storageEngine.getParticipantData();
     expect(participantData).toBeDefined();
     expect(participantData!.answers[identifier].endTime).toBe(200);
-    expect(participantData!.completed).toBe(true);
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find(
+      (assignment) => assignment.participantId === participantData!.participantId,
+    );
+    expect(sequenceAssignment?.completed).not.toBeNull();
   });
 
   test('initializeParticipantSession recovers the latest local participant data while remote writes are pending', async () => {
@@ -759,7 +804,6 @@ describe.each([
 
     const participantData = await storageEngine.getParticipantData(participantSession.participantId);
     expect(participantData).toBeDefined();
-    expect(participantData!.completed).toBe(true);
 
     const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantSession.participantId);
@@ -803,12 +847,11 @@ describe.each([
 
     const participantData = await storageEngine.getParticipantData();
     expect(participantData).toBeDefined();
-    expect(participantData!.completed).toBe(true);
 
     const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantData!.participantId);
     expect(sequenceAssignment).toBeDefined();
-    expect(sequenceAssignment!.completed).not.toBeNull();
+    expect(sequenceAssignment!.completed).toBeNull();
   });
 
   test('finalizeParticipant does not mask a failed asset upload after a later successful upload', async () => {
@@ -848,12 +891,11 @@ describe.each([
 
     const participantData = await storageEngine.getParticipantData();
     expect(participantData).toBeDefined();
-    expect(participantData!.completed).toBe(true);
 
     const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantData!.participantId);
     expect(sequenceAssignment).toBeDefined();
-    expect(sequenceAssignment!.completed).not.toBeNull();
+    expect(sequenceAssignment!.completed).toBeNull();
   });
 
   test('finalizeParticipant succeeds after a transient realtime completion failure', async () => {
@@ -883,7 +925,6 @@ describe.each([
 
     const participantData = await storageEngine.getParticipantData(participantSession.participantId);
     expect(participantData).toBeDefined();
-    expect(participantData!.completed).toBe(true);
 
     const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     const sequenceAssignment = sequenceAssignments.find(

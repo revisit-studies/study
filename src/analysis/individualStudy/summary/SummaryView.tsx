@@ -1,6 +1,6 @@
 import { Stack, Group } from '@mantine/core';
 import { useMemo } from 'react';
-import { ParticipantData } from '../../../storage/types';
+import { ParticipantDataWithStatus } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { OverviewStats } from './OverviewStats';
 import { ComponentStats } from './ComponentStats';
@@ -12,7 +12,7 @@ export function SummaryView({
   studyConfig,
   studyId,
 }: {
-  visibleParticipants: ParticipantData[];
+  visibleParticipants: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
   studyId?: string;
 }) {

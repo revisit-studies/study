@@ -1,4 +1,4 @@
-export type { ParticipantData } from '../storage/types';
+export type { ParticipantData, ParticipantDataWithStatus } from '../storage/types';
 export type { StoredAnswer, ParticipantMetadata } from '../store/types';
 
 /**

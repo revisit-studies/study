@@ -3,12 +3,8 @@ import throttle from 'lodash.throttle';
 import { v4 as uuidv4 } from 'uuid';
 import { StudyConfig } from '../../parser/types';
 import { ParticipantMetadata, Sequence } from '../../store/types';
-import { ParticipantData } from '../types';
+import { ParticipantData, ParticipantDataWithStatus } from '../types';
 import { hash, isParticipantData } from './utils/storageEngineHelpers';
-import {
-  answeredParticipantAnswerMetadataMatches,
-  getAnsweredParticipantAnswerMetadata,
-} from './utils/participantAnswerMetadata';
 import { shouldPreferCachedParticipantData } from './utils/participantDataRecovery';
 import { RevisitNotification } from '../../utils/notifications';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
@@ -892,7 +888,6 @@ export abstract class StorageEngine {
       searchParams,
       conditions,
       metadata,
-      completed: false,
       rejected: false,
       participantTags: [],
       stage: currentStage,
@@ -1147,9 +1142,12 @@ export abstract class StorageEngine {
   }
 
   // Gets all participant IDs for the current studyId or a provided studyId.
-  async getAllParticipantsData(studyId: string) {
+  async getAllParticipantsData(studyId: string): Promise<ParticipantDataWithStatus[]> {
     const participantIds = await this.getAllParticipantIds(studyId);
-    const participantsData: ParticipantData[] = [];
+    const sequenceAssignments = await this.getAllSequenceAssignments(studyId);
+    const completedByParticipantId = new Map(
+      sequenceAssignments.map((assignment) => [assignment.participantId, assignment.completed !== null]),
+    );
 
     const participantPulls = participantIds.map(async (participantId) => {
       const participantData = await this._getFromStorage(
@@ -1159,13 +1157,16 @@ export abstract class StorageEngine {
       );
 
       if (isParticipantData(participantData)) {
-        participantsData.push(participantData);
+        return {
+          ...participantData,
+          completed: completedByParticipantId.get(participantId) ?? false,
+        } satisfies ParticipantDataWithStatus;
       }
+      return null;
     });
 
-    await Promise.all(participantPulls);
-
-    return participantsData;
+    const participantsData = await Promise.all(participantPulls);
+    return participantsData.filter((participant): participant is ParticipantDataWithStatus => participant !== null);
   }
 
   async getParticipantsStatusCounts(studyId: string) {
@@ -1232,26 +1233,27 @@ export abstract class StorageEngine {
     }
   }
 
-  async finalizeParticipant(): Promise<FinalizeParticipantResult> {
-    await this.verifyStudyDatabase();
+  async getParticipantCompletionStatus(participantId?: string, studyId?: string): Promise<boolean> {
+    const studyIdToUse = this.studyId || studyId;
+    const participantIdToUse = participantId || this.currentParticipantId;
 
-    if (!this.studyId) {
+    if (!studyIdToUse) {
       throw new Error('Study not initialized');
     }
 
-    if (!this.currentParticipantId) {
+    if (!participantIdToUse) {
       throw new Error('Participant not initialized');
     }
 
-    const modes = await this.getModes(this.studyId);
+    const sequenceAssignments = await this.getAllSequenceAssignments(studyIdToUse);
+    const sequenceAssignment = sequenceAssignments.find(
+      (assignment) => assignment.participantId === participantIdToUse,
+    );
 
-    if (!modes.dataCollectionEnabled) {
-      if (this.participantData) {
-        this.participantData.completed = true;
-      }
-      return { status: 'complete' };
-    }
+    return sequenceAssignment ? sequenceAssignment.completed !== null : false;
+  }
 
+  async finalizeParticipant(): Promise<FinalizeParticipantResult> {
     try {
       await this.flushPendingParticipantData();
     } catch (error) {
@@ -1263,64 +1265,42 @@ export abstract class StorageEngine {
 
     const assetUploadError = await this.waitForPendingAssetUploads();
 
-    const persistedParticipantData = await this.getParticipantData();
-    if (!persistedParticipantData || !this.participantData) {
+    if (!this.studyId) {
+      throw new Error('Study not initialized');
+    }
+
+    if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
 
-    const localAnsweredAnswers = getAnsweredParticipantAnswerMetadata(this.participantData.answers);
-    const persistedAnsweredAnswers = getAnsweredParticipantAnswerMetadata(persistedParticipantData.answers);
-
-    const completeParticipant = async (): Promise<FinalizeParticipantResult> => {
-      this.participantData!.completed = true;
-
-      try {
-        await this.persistCurrentParticipantData({ immediate: true, cache: true });
-        await this._completeCurrentParticipantRealtime();
-      } catch (error) {
-        return {
-          status: 'error',
-          message: normalizeError(error).message,
-        };
-      }
-
-      const completedParticipantData = await this.getParticipantData();
-      const sequenceAssignment = await this._getSequenceAssignment(this.currentParticipantId!);
-
-      if (completedParticipantData?.completed && sequenceAssignment?.completed) {
-        if (assetUploadError) {
-          return {
-            status: 'error',
-            message: assetUploadError.message,
-            retryable: false,
-          };
-        }
-
-        return { status: 'complete' };
-      }
-
-      return { status: 'retry' };
-    };
-
-    if (localAnsweredAnswers.length === 0 && persistedAnsweredAnswers.length === 0) {
-      return completeParticipant();
+    const modes = await this.getModes(this.studyId);
+    if (!modes.dataCollectionEnabled) {
+      return { status: 'complete' };
     }
 
-    if (localAnsweredAnswers.length === 0 || persistedAnsweredAnswers.length === 0) {
-      return { status: 'retry' };
+    const alreadyCompleted = await this.getParticipantCompletionStatus();
+    if (alreadyCompleted) {
+      return { status: 'complete' };
     }
 
-    if (!answeredParticipantAnswerMetadataMatches(localAnsweredAnswers, persistedAnsweredAnswers)) {
-      return { status: 'retry' };
+    if (assetUploadError) {
+      return {
+        status: 'error',
+        message: assetUploadError.message,
+        retryable: false,
+      };
     }
 
-    return completeParticipant();
-  }
+    try {
+      await this._completeCurrentParticipantRealtime();
+    } catch (error) {
+      return {
+        status: 'error',
+        message: normalizeError(error).message,
+      };
+    }
 
-  // Verifies if the current participant has completed the study.
-  async verifyCompletion() {
-    const result = await this.finalizeParticipant();
-    return result.status === 'complete';
+    return { status: 'complete' };
   }
 
   async getAsset(url: string | null) {
@@ -1392,7 +1372,13 @@ export abstract class StorageEngine {
     const uploadPromise = (async () => {
       try {
         await this._pushToStorage(participantKey, taskName, blob);
-        await this._cacheStorageObject(participantKey, taskName);
+        this.clearAssetUploadError(assetKey);
+
+        try {
+          await this._cacheStorageObject(participantKey, taskName);
+        } catch (error) {
+          console.warn(`Failed to update cache headers for asset ${assetKey}:`, error);
+        }
       } catch (error) {
         const normalizedError = normalizeError(error);
         this.recordAssetUploadError(assetKey, normalizedError);

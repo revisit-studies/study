@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Paper, Title } from '@mantine/core';
 // eslint-disable-next-line camelcase
 import { MantineReactTable, useMantineReactTable, type MRT_ColumnDef } from 'mantine-react-table';
-import { ParticipantData } from '../../../storage/types';
+import { ParticipantDataWithStatus } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { getResponseStats, convertNumberToString } from './utils';
 import { ResponseData } from '../../types';
@@ -11,7 +11,7 @@ export function ResponseStats({
   visibleParticipants,
   studyConfig,
 }: {
-  visibleParticipants: ParticipantData[];
+  visibleParticipants: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
 }) {
   const responseData: ResponseData[] = useMemo(() => getResponseStats(visibleParticipants, studyConfig), [visibleParticipants, studyConfig]);

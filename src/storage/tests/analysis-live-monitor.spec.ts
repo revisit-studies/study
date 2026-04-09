@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { SequenceAssignment } from '../engines/types';
-import { ParticipantData } from '../types';
+import { ParticipantDataWithStatus } from '../types';
 import { getFilteredParticipantProgress, groupParticipantProgress } from '../../analysis/individualStudy/LiveMonitor/LiveMonitorView';
 
 function makeAssignment(partial: Partial<SequenceAssignment> & Pick<SequenceAssignment, 'participantId'>): SequenceAssignment {
@@ -19,7 +19,9 @@ function makeAssignment(partial: Partial<SequenceAssignment> & Pick<SequenceAssi
   };
 }
 
-function makeParticipant(partial: Partial<ParticipantData> & Pick<ParticipantData, 'participantId'>): ParticipantData {
+function makeParticipant(
+  partial: Partial<ParticipantDataWithStatus> & Pick<ParticipantDataWithStatus, 'participantId'>,
+): ParticipantDataWithStatus {
   return {
     participantId: partial.participantId,
     participantConfigHash: partial.participantConfigHash ?? 'hash',
@@ -48,7 +50,7 @@ function makeParticipant(partial: Partial<ParticipantData> & Pick<ParticipantDat
 }
 
 function getParticipantViewIds(
-  participants: ParticipantData[],
+  participants: ParticipantDataWithStatus[],
   includedParticipants: string[],
   selectedStages: string[],
 ): string[] {
@@ -107,7 +109,7 @@ describe('analysis live monitor', () => {
       }),
     ];
 
-    const participants: ParticipantData[] = [
+    const participants: ParticipantDataWithStatus[] = [
       makeParticipant({
         participantId: 'p1', completed: false, rejected: false, stage: 'S1',
       }),
