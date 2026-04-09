@@ -1,11 +1,3 @@
-/**
- * Firebase high-level tests — mirrors highLevel.spec.ts for FirebaseStorageEngine.
- *
- * Uses in-memory Firestore mocks (no emulator required).
- *
- *   yarn vitest run src/storage/tests/highLevelFirebase.spec.ts
- */
-
 import {
   beforeAll, beforeEach, afterAll, afterEach, describe, expect, test, vi,
 } from 'vitest';
@@ -16,20 +8,16 @@ import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils';
 import { type Sequence } from '../../store/types';
 import { FirebaseStorageEngine } from '../engines/FirebaseStorageEngine';
-import { type StorageEngine, type SequenceAssignment } from '../engines/types';
+import { type StorageEngine, type SequenceAssignment, type StoredUser } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 
-// ── module-level state (captured by-ref inside vi.mock factories) ─────────────
-// In-memory Firestore substitute (keyed by document path)
-const firestoreData: Record<string, Record<string, unknown>> = {};
-// Sentinel values for serverTimestamp() and deleteField()
+type DocData = Record<string, string | number | boolean | null | object>;
+
+const firestoreData: Record<string, DocData> = {};
 const SERVER_TS_SENTINEL = { __sentinel: 'serverTimestamp' };
 const DELETE_FIELD_SENTINEL = { __sentinel: 'deleteField' };
-// In-memory Firebase Storage substitute
 const storageObjects: Record<string, string> = {};
-// In-memory localforage substitute (participant ID persistence)
-const localStore: Record<string, unknown> = {};
-// Mutable auth state updated by signInAnonymously mock
+const localStore: Record<string, string | number | object | null> = {};
 const authState: { currentUser: { email: string | null; uid: string } | null } = {
   currentUser: null,
 };
@@ -65,8 +53,8 @@ vi.mock('firebase/storage', () => {
 
   return {
     getStorage: vi.fn(() => ({})),
-    ref: vi.fn((_storage: unknown, path: string) => makeRef(path)),
-    uploadBytes: vi.fn(async (refObj: { path: string }, blob: Blob | unknown) => {
+    ref: vi.fn((_storage: object, path: string) => makeRef(path)),
+    uploadBytes: vi.fn(async (refObj: { path: string }, blob: Blob | object) => {
       const text = blob instanceof Blob ? await blob.text() : JSON.stringify(blob);
       storageObjects[refObj.path] = text;
       return { ref: refObj };
@@ -98,7 +86,7 @@ vi.mock('localforage', () => ({
   default: {
     createInstance: vi.fn(() => ({
       getItem: vi.fn((key: string) => Promise.resolve(localStore[key] ?? null)),
-      setItem: vi.fn((key: string, value: unknown) => {
+      setItem: vi.fn((key: string, value: string | number | object | null) => {
         localStore[key] = value;
         return Promise.resolve();
       }),
@@ -116,32 +104,32 @@ vi.mock('localforage', () => ({
 
 // Complete in-memory Firestore mock — no emulator needed.
 vi.mock('firebase/firestore', () => {
-  function resolveSentinels(data: Record<string, unknown>): Record<string, unknown> {
+  function resolveSentinels(data: DocData): DocData {
     const now = Date.now();
-    const result: Record<string, unknown> = {};
+    const result: DocData = {};
     for (const [k, v] of Object.entries(data)) {
       result[k] = v === SERVER_TS_SENTINEL ? now : v;
     }
     return result;
   }
 
-  function mockCollection(parent: unknown, path: string) {
-    if (parent && typeof parent === 'object' && '_path' in (parent as Record<string, unknown>)) {
+  function mockCollection(parent: object | null, path: string) {
+    if (parent && typeof parent === 'object' && '_path' in (parent as DocData)) {
       return { _path: `${(parent as { _path: string })._path}/${path}` };
     }
     return { _path: path };
   }
 
-  function mockDoc(...args: unknown[]) {
+  function mockDoc(...args: [{ _path: string }, string] | [object, string, string]) {
     if (args.length === 2) {
       const [parent, id] = args as [{ _path: string }, string];
       return { _path: `${parent._path}/${id}`, id };
     }
-    const [, collPath, docId] = args as [unknown, string, string];
+    const [, collPath, docId] = args as [object, string, string];
     return { _path: `${collPath}/${docId}`, id: docId };
   }
 
-  function mockSetDoc(docRef: { _path: string }, data: Record<string, unknown>, options?: { merge?: boolean }) {
+  function mockSetDoc(docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) {
     const resolved = resolveSentinels(data);
     if (options?.merge) {
       firestoreData[docRef._path] = { ...(firestoreData[docRef._path] ?? {}), ...resolved };
@@ -162,7 +150,7 @@ vi.mock('firebase/firestore', () => {
 
   function getDocsInCollection(collPath: string) {
     const prefix = `${collPath}/`;
-    const docs: Array<{ id: string; data: () => Record<string, unknown> }> = [];
+    const docs: Array<{ id: string; data: () => DocData }> = [];
     for (const [path, data] of Object.entries(firestoreData)) {
       if (path.startsWith(prefix)) {
         const remainder = path.slice(prefix.length);
@@ -179,11 +167,11 @@ vi.mock('firebase/firestore', () => {
     const docs = getDocsInCollection(collRef._path);
     return Promise.resolve({
       docs,
-      forEach: (cb: (d: { id: string; data: () => Record<string, unknown> }) => void) => docs.forEach(cb),
+      forEach: (cb: (d: { id: string; data: () => DocData }) => void) => docs.forEach(cb),
     });
   }
 
-  function mockUpdateDoc(docRef: { _path: string }, data: Record<string, unknown>) {
+  function mockUpdateDoc(docRef: { _path: string }, data: DocData) {
     const existing = firestoreData[docRef._path];
     if (!existing) return Promise.reject(new Error(`No document to update: ${docRef._path}`));
     const now = Date.now();
@@ -199,7 +187,7 @@ vi.mock('firebase/firestore', () => {
 
   function mockOnSnapshot(
     collRef: { _path: string },
-    callback: (snapshot: { docs: Array<{ id: string; data: () => Record<string, unknown> }> }) => void,
+    callback: (snapshot: { docs: Array<{ id: string; data: () => DocData }> }) => void,
   ) {
     Promise.resolve().then(() => callback({ docs: getDocsInCollection(collRef._path) }));
     return vi.fn();
@@ -208,7 +196,7 @@ vi.mock('firebase/firestore', () => {
   function mockWriteBatch() {
     const ops: Array<() => void> = [];
     return {
-      set: (docRef: { _path: string }, data: Record<string, unknown>) => {
+      set: (docRef: { _path: string }, data: DocData) => {
         ops.push(() => { firestoreData[docRef._path] = resolveSentinels(data); });
       },
       delete: (docRef: { _path: string }) => {
@@ -255,7 +243,7 @@ const participantMetadata: ParticipantMetadata = {
 };
 
 const conditionalLatinSquareConfig: StudyConfig = {
-  $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json',
+  $schema: '',
   studyMetadata: {
     title: 'Conditional Latin Square Test',
     version: '1.0.0',
@@ -478,14 +466,12 @@ describe.each([
   });
 
   test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
-    const createSequenceAssignmentSpy = vi.spyOn(
-      storageEngine as unknown as { _createSequenceAssignment: (...args: unknown[]) => Promise<void> },
-      '_createSequenceAssignment',
-    );
+    // @ts-expect-error accessing protected method for spying
+    const createSequenceAssignmentSpy = vi.spyOn(storageEngine, '_createSequenceAssignment');
 
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
-    const sequenceAssignmentPayload = createSequenceAssignmentSpy.mock.calls[0][1] as Record<string, unknown>;
+    const sequenceAssignmentPayload = (createSequenceAssignmentSpy.mock.calls[0] as DocData[])[1];
     expect(Object.hasOwn(sequenceAssignmentPayload, 'conditions')).toBe(false);
   });
 
@@ -1091,7 +1077,7 @@ describe.each([
     await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'test@test.com', uid: 'u1' });
     const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers');
     expect(result).toBeDefined();
-    expect((result as { adminUsersList: unknown[] }).adminUsersList).toHaveLength(1);
+    expect((result as { adminUsersList: StoredUser[] }).adminUsersList).toHaveLength(1);
   });
 
   test('getUserManagementData uses cached data on second call', async () => {
@@ -1118,21 +1104,21 @@ describe.each([
   // ── addAdminUser ─────────────────────────────────────────────────────────────
   test('addAdminUser creates new list when no adminUsers doc exists', async () => {
     await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'new@a.com', uid: 'u1' });
-    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: unknown[] };
+    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: StoredUser[] };
     expect(result.adminUsersList).toHaveLength(1);
   });
 
   test('addAdminUser appends user to existing list', async () => {
     await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'a@a.com', uid: 'u0' });
     await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'b@b.com', uid: 'u1' });
-    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: unknown[] };
+    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: StoredUser[] };
     expect(result.adminUsersList).toHaveLength(2);
   });
 
   test('addAdminUser does not add duplicate user', async () => {
     await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'a@a.com', uid: 'u0' });
     await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'a@a.com', uid: 'u0' });
-    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: unknown[] };
+    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: StoredUser[] };
     expect(result.adminUsersList).toHaveLength(1);
   });
 
@@ -1141,14 +1127,14 @@ describe.each([
     await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'a@a.com', uid: 'u0' });
     await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'b@b.com', uid: 'u1' });
     await (storageEngine as FirebaseStorageEngine).removeAdminUser('a@a.com');
-    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: unknown[] };
+    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: StoredUser[] };
     expect(result.adminUsersList).toHaveLength(1);
   });
 
   test('removeAdminUser does not remove user when they are the only admin', async () => {
     await (storageEngine as FirebaseStorageEngine).addAdminUser({ email: 'a@a.com', uid: 'u0' });
     await (storageEngine as FirebaseStorageEngine).removeAdminUser('a@a.com');
-    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: unknown[] };
+    const result = await (storageEngine as FirebaseStorageEngine).getUserManagementData('adminUsers') as { adminUsersList: StoredUser[] };
     expect(result.adminUsersList).toHaveLength(1);
   });
 
@@ -1193,12 +1179,13 @@ describe.each([
     const lines = [
       {
         text: 'line1',
-        selectedTags: [{ id: 't1', name: 'T1', color: 'red' }, undefined as never],
+        selectedTags: [{ id: 't1', name: 'T1', color: 'red' }, undefined],
         annotation: '',
         transcriptMappingStart: 0,
         transcriptMappingEnd: 0,
       },
     ];
+    // @ts-expect-error intentionally including undefined in selectedTags to test filtering
     await (storageEngine as FirebaseStorageEngine).saveEditedTranscript('p1', 'editor@a.com', 'task1', lines);
     // @ts-expect-error protected
     const prefix = storageEngine.collectionPrefix;
@@ -1229,10 +1216,6 @@ describe.each([
     expect(result[0].text).toBe('line');
   });
 });
-
-// ── unit tests (no emulator required) ────────────────────────────────────────
-// Tests for auth, connection, and other methods that only need the vi.mock'ed
-// @firebase/auth and firebase/storage — the Firestore emulator is not needed.
 
 describe('FirebaseStorageEngine auth/connection unit tests', () => {
   beforeEach(() => {

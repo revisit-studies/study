@@ -11,11 +11,12 @@ import type { StudyConfig } from '../parser/types';
 import type { Sequence } from './types';
 import type { ParticipantData } from '../storage/types';
 import type { REVISIT_MODE } from '../storage/engines/types';
+import { makeStoredAnswer } from '../tests/utils';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
 vi.mock('../utils/handleComponentInheritance', () => ({
-  studyComponentToIndividualComponent: (_comp: unknown, _config: unknown) => ({
+  studyComponentToIndividualComponent: (_comp: object, _config: object) => ({
     response: [],
     correctAnswer: [],
   }),
@@ -45,25 +46,22 @@ const minimalConfig: StudyConfig = {
   },
   uiConfig: {
     contactEmail: 'test@test.com',
+    logoPath: '',
     withProgressBar: false,
     withSidebar: false,
     sidebarWidth: 0,
     studyEndMsg: '',
     windowEventDebounceTime: 100,
-    navigationBar: 'sidebar',
     showTitleBar: false,
   },
   components: {
     intro: { type: 'markdown' as const, path: 'intro.md', response: [] },
   },
   sequence: {
-    id: 'root',
-    orderPath: 'root',
     order: 'fixed',
     components: ['intro', 'end'],
-    skip: [],
   },
-} as unknown as StudyConfig;
+};
 
 const minimalSequence: Sequence = {
   id: 'root',
@@ -320,35 +318,27 @@ describe('studyStoreCreator', () => {
 
   test('setMatrixAnswersCheckbox sets and clears checkbox answers', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
-    const choiceOptions = [{ value: 'A', label: 'A' }, { value: 'B', label: 'B' }] as never[];
-    // First check (empty existing)
+    const choiceOptions = [{ value: 'A', label: 'A' }, { value: 'B', label: 'B' }];
     store.dispatch(actions.setMatrixAnswersCheckbox({
       responseId: 'r1', questionKey: 'q1', value: 'A', label: 'A', isChecked: true, choiceOptions,
     }));
     expect(store.getState().matrixAnswers.r1.q1).toBe('A');
-    // Second check (existing + new)
     store.dispatch(actions.setMatrixAnswersCheckbox({
       responseId: 'r1', questionKey: 'q1', value: 'B', label: 'B', isChecked: true, choiceOptions,
     }));
     expect(store.getState().matrixAnswers.r1.q1).toContain('B');
-    // Uncheck
     store.dispatch(actions.setMatrixAnswersCheckbox({
       responseId: 'r1', questionKey: 'q1', value: 'A', label: 'A', isChecked: false, choiceOptions,
     }));
     expect(store.getState().matrixAnswers.r1.q1).not.toContain('A');
-    // Null clears
     store.dispatch(actions.setMatrixAnswersCheckbox(null));
     expect(store.getState().matrixAnswers).toEqual({});
   });
 
   test('emptyAnswers skips components not in config (return null path)', async () => {
-    // getSequenceFlatMap mock returns ['intro', 'end'] - 'end' is filtered out so line 37
-    // is not reached. Add a component not in config to the flatSequence to cover it.
     const { getSequenceFlatMap: mockGSFM } = await import('../utils/getSequenceFlatMap');
     (mockGSFM as ReturnType<typeof vi.fn>).mockReturnValueOnce(['intro', 'dynamicComp', 'end']);
     const { store } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
-    // 'dynamicComp' is not in minimalConfig.components → return null at line 37
-    // 'intro' IS in components → answer is created
     expect(store.getState().answers.intro_0).toBeDefined();
     expect(store.getState().answers.dynamicComp_1).toBeUndefined();
   });
@@ -362,7 +352,6 @@ describe('studyStoreCreator', () => {
 
   test('updateResponseBlockValidation updates trialValidation for known identifier', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
-    // 'intro_0' should be in trialValidation from the initial setup
     store.dispatch(actions.updateResponseBlockValidation({
       location: 'stimulus',
       identifier: 'intro_0',
@@ -370,18 +359,13 @@ describe('studyStoreCreator', () => {
       values: { r1: 'A' },
     }));
     expect(store.getState().trialValidation.intro_0?.stimulus?.valid).toBe(true);
-    // Also cover the empty values branch and provenanceGraph branch
     store.dispatch(actions.updateResponseBlockValidation({
       location: 'aboveStimulus',
       identifier: 'intro_0',
       status: false,
       values: {},
-      provenanceGraph: {
-        aboveStimulus: null, belowStimulus: null, stimulus: null, sidebar: null,
-      } as never,
     }));
     expect(store.getState().trialValidation.intro_0?.aboveStimulus?.valid).toBe(false);
-    // Unknown identifier returns early (line 301-302)
     store.dispatch(actions.updateResponseBlockValidation({
       location: 'stimulus',
       identifier: 'unknown_99',
@@ -392,17 +376,14 @@ describe('studyStoreCreator', () => {
 
   test('saveTrialAnswer updates answers state', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
-    store.dispatch(actions.saveTrialAnswer({
+    store.dispatch(actions.saveTrialAnswer(makeStoredAnswer({
       identifier: 'intro_0',
       componentName: 'intro',
       answer: { q1: 'yes' },
       startTime: 0,
       endTime: 100,
       trialOrder: '0',
-      incorrectAnswers: {},
-      provenanceGraph: {} as never,
-      windowEvents: [],
-    } as never));
+    })));
     expect(store.getState().answers.intro_0?.answer).toEqual({ q1: 'yes' });
   });
 
@@ -416,60 +397,47 @@ describe('studyStoreCreator', () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     store.dispatch(actions.saveIncorrectAnswer({ question: 'intro_0', identifier: 'attempt_1', answer: 'wrong' }));
     expect(store.getState().answers.intro_0?.incorrectAnswers?.attempt_1?.value).toContain('wrong');
-    // Second dispatch covers non-null incorrectAnswers branch
     store.dispatch(actions.saveIncorrectAnswer({ question: 'intro_0', identifier: 'attempt_1', answer: 'wrong2' }));
     expect(store.getState().answers.intro_0?.incorrectAnswers?.attempt_1?.value).toContain('wrong2');
   });
 
   test('deleteDynamicBlockAnswers removes matching answers and funcSequence', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
-    // Manually add a funcSequence and matching answer via pushToFuncSequence-like setup
-    // Use deleteDynamicBlockAnswers with no matching keys (covers loop with no matches)
     store.dispatch(actions.deleteDynamicBlockAnswers({ currentStep: 0, funcIndex: 0, funcName: 'myFunc' }));
     expect(store.getState().funcSequence.myFunc).toBeUndefined();
   });
 
   test('pushToFuncSequence creates entry and returns early on duplicate funcIndex', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
-    // First call: creates funcSequence entry and answer
     store.dispatch(actions.pushToFuncSequence({
-      component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: undefined, correctAnswer: undefined,
+      component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: {}, correctAnswer: [],
     }));
     expect(store.getState().funcSequence.myFunc).toEqual(['intro']);
     expect(store.getState().answers.myFunc_5_intro_0).toBeDefined();
-    // Second call with same funcIndex: length (1) > funcIndex (0) → early return
     store.dispatch(actions.pushToFuncSequence({
-      component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: undefined, correctAnswer: undefined,
+      component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: {}, correctAnswer: [],
     }));
     expect(store.getState().funcSequence.myFunc).toEqual(['intro']); // unchanged
   });
 
-  test('saveIncorrectAnswer initializes incorrectAnswers when undefined', async () => {
+  test('saveIncorrectAnswer initializes incorrectAnswers when missing', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
-    // Overwrite intro_0 without incorrectAnswers to simulate old config import
-    store.dispatch(actions.saveTrialAnswer({
-      identifier: 'intro_0',
-      componentName: 'intro',
-      answer: {},
-      startTime: 0,
-      endTime: 100,
-      trialOrder: '0',
-      incorrectAnswers: undefined as never,
-      provenanceGraph: {} as never,
-      windowEvents: [],
-    } as never));
+    const answerWithoutIncorrect = makeStoredAnswer({
+      identifier: 'intro_0', componentName: 'intro', answer: {}, startTime: 0, endTime: 100, trialOrder: '0',
+    });
+    // Simulates old config import where incorrectAnswers was not present
+    delete (answerWithoutIncorrect as { incorrectAnswers?: unknown }).incorrectAnswers;
+    store.dispatch(actions.saveTrialAnswer(answerWithoutIncorrect));
     store.dispatch(actions.saveIncorrectAnswer({ question: 'intro_0', identifier: 'attempt_1', answer: 'wrong' }));
     expect(store.getState().answers.intro_0?.incorrectAnswers?.attempt_1?.value).toContain('wrong');
   });
 
   test('deleteDynamicBlockAnswers with matching answers and funcSequence cleanup', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
-    // Use pushToFuncSequence to create funcSequence and a matching answer key
     store.dispatch(actions.pushToFuncSequence({
-      component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: undefined, correctAnswer: undefined,
+      component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: {}, correctAnswer: [],
     }));
     expect(store.getState().answers.myFunc_5_intro_0).toBeDefined();
-    // Delete: regex .*_5_.*_0 matches myFunc_5_intro_0; funcSequence becomes empty → deleted
     store.dispatch(actions.deleteDynamicBlockAnswers({ currentStep: 5, funcIndex: 0, funcName: 'myFunc' }));
     expect(store.getState().answers.myFunc_5_intro_0).toBeUndefined();
     expect(store.getState().funcSequence.myFunc).toBeUndefined();
@@ -480,11 +448,8 @@ describe('useStoreActions hook', () => {
   test('returns actions from store context', async () => {
     const studyStore = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     function Wrapper({ children }: { children: React.ReactNode }) {
-      return createElement(
-        Provider,
-{ store: studyStore.store } as never,
-createElement(StudyStoreContext.Provider, { value: studyStore }, children),
-      );
+      // eslint-disable-next-line react/no-children-prop
+      return createElement(Provider, { store: studyStore.store, children: createElement(StudyStoreContext.Provider, { value: studyStore }, children) });
     }
     const { result } = renderHook(() => useStoreActions(), { wrapper: Wrapper });
     expect(typeof result.current.saveTrialAnswer).toBe('function');
@@ -495,7 +460,8 @@ describe('useAreResponsesValid', () => {
   async function makeWrapper() {
     const { store } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     function Wrapper({ children }: { children: React.ReactNode }) {
-      return createElement(Provider, { store } as never, children);
+      // eslint-disable-next-line react/no-children-prop
+      return createElement(Provider, { store, children });
     }
     return { store, Wrapper };
   }
@@ -514,8 +480,6 @@ describe('useAreResponsesValid', () => {
 
   test('invokes every callback and returns false when some entries are invalid', async () => {
     const { Wrapper } = await makeWrapper();
-    // intro_0 exists in trialValidation with aboveStimulus/belowStimulus/sidebar.valid=false
-    // → enters every callback (lines 408-412); short-circuits on first false → returns false
     const { result } = renderHook(() => useAreResponsesValid('intro_0'), { wrapper: Wrapper });
     expect(result.current).toBe(false);
   });
@@ -523,9 +487,9 @@ describe('useAreResponsesValid', () => {
   test('every callback hits return true branch when entry has no valid key', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     function Wrapper({ children }: { children: React.ReactNode }) {
-      return createElement(Provider, { store } as never, children);
+      // eslint-disable-next-line react/no-children-prop
+      return createElement(Provider, { store, children });
     }
-    // Set all locations to valid so every() reaches provenanceGraph (no 'valid' key → return true)
     (['aboveStimulus', 'belowStimulus', 'sidebar', 'stimulus'] as const).forEach((loc) => {
       store.dispatch(actions.updateResponseBlockValidation({
         location: loc, identifier: 'intro_0', status: true, values: {},
@@ -540,7 +504,8 @@ describe('useFlatSequence', () => {
   test('returns array from flat sequence', async () => {
     const { store } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     function Wrapper({ children }: { children: React.ReactNode }) {
-      return createElement(Provider, { store } as never, children);
+      // eslint-disable-next-line react/no-children-prop
+      return createElement(Provider, { store, children });
     }
     const { result } = renderHook(() => useFlatSequence(), { wrapper: Wrapper });
     expect(Array.isArray(result.current)).toBe(true);

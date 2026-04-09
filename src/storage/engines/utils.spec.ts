@@ -1,12 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import type { StorageEngine } from './types';
 import type { StudyConfig } from '../../parser/types';
 import type { ParticipantData } from '../types';
 import { calculateProgressData, isCloudStorageEngine } from './utils';
-
-// ---------------------------------------------------------------------------
-// isCloudStorageEngine
-// ---------------------------------------------------------------------------
+import { makeStorageEngine } from '../../tests/utils';
 
 describe('isCloudStorageEngine', () => {
   test('returns false when engine is undefined', () => {
@@ -14,19 +10,15 @@ describe('isCloudStorageEngine', () => {
   });
 
   test('returns false when engine.isCloudEngine() returns false', () => {
-    const engine = { isCloudEngine: () => false } as Partial<StorageEngine> as StorageEngine;
+    const engine = makeStorageEngine({ isCloudEngine: () => false });
     expect(isCloudStorageEngine(engine)).toBe(false);
   });
 
   test('returns true when engine.isCloudEngine() returns true', () => {
-    const engine = { isCloudEngine: () => true } as Partial<StorageEngine> as StorageEngine;
+    const engine = makeStorageEngine({ isCloudEngine: () => true });
     expect(isCloudStorageEngine(engine)).toBe(true);
   });
 });
-
-// ---------------------------------------------------------------------------
-// calculateProgressData
-// ---------------------------------------------------------------------------
 
 const makeAnswer = (componentName: string, endTime = 1000): ParticipantData['answers'][string] => ({
   componentName,

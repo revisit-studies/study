@@ -8,13 +8,11 @@ import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
 import { StorageEngine, cleanupModes } from '../engines/types';
 import { hash } from '../engines/utils';
 
-// ── module-level state (captured by-ref inside vi.mock factories) ─────────────
-// In-memory Supabase DB substitute
-const revisitRows: Array<Record<string, unknown>> = [];
-// In-memory Supabase Storage substitute
+type RowData = Record<string, string | number | boolean | null | object>;
+
+const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
-// In-memory localforage substitute (participant ID persistence)
-const localStore: Record<string, unknown> = {};
+const localStore: Record<string, string | number | object | null> = {};
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock('@supabase/supabase-js', () => {
@@ -26,23 +24,23 @@ vi.mock('@supabase/supabase-js', () => {
     return new RegExp(regexStr).test(value);
   }
 
-  function getFieldValue(obj: Record<string, unknown>, col: string): unknown {
+  function getFieldValue(obj: RowData, col: string): string | number | boolean | null | object | undefined {
     if (col.includes('->')) {
       const arrowIdx = col.indexOf('->');
       const parent = col.slice(0, arrowIdx);
       const child = col.slice(arrowIdx + 2);
       const parentVal = obj[parent];
       return parentVal && typeof parentVal === 'object'
-        ? (parentVal as Record<string, unknown>)[child]
+        ? (parentVal as RowData)[child]
         : undefined;
     }
     return obj[col];
   }
 
   function applyFilters(
-    rows: Array<Record<string, unknown>>,
-    filters: Array<{ col: string; val: unknown; type: 'eq' | 'like' }>,
-  ): Array<Record<string, unknown>> {
+    rows: Array<RowData>,
+    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' }>,
+  ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
       if (type === 'eq') return colVal === val;
@@ -50,23 +48,23 @@ vi.mock('@supabase/supabase-js', () => {
     }));
   }
 
-  function makeQueryBuilder(getRows: () => Array<Record<string, unknown>>) {
+  function makeQueryBuilder(getRows: () => Array<RowData>) {
     let op: 'select' | 'upsert' | 'update' | 'delete' | null = null;
-    let payload: unknown = null;
-    const filters: Array<{ col: string; val: unknown; type: 'eq' | 'like' }> = [];
+    let payload: RowData | RowData[] | Partial<RowData> | null = null;
+    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' }> = [];
     let isSingle = false;
 
     const qb = {
       select(_fields?: string) { op = 'select'; return qb; },
-      upsert(row: unknown) { op = 'upsert'; payload = row; return qb; },
-      update(obj: unknown) { op = 'update'; payload = obj; return qb; },
+      upsert(row: RowData | RowData[]) { op = 'upsert'; payload = row; return qb; },
+      update(obj: Partial<RowData>) { op = 'update'; payload = obj; return qb; },
       delete() { op = 'delete'; return qb; },
-      eq(col: string, val: unknown) { filters.push({ col, val, type: 'eq' }); return qb; },
+      eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
       single() { isSingle = true; return qb; },
       then(
-        resolve: (val: { data: unknown; error: unknown }) => void,
-        reject?: (err: unknown) => void,
+        resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null }) => void,
+        reject?: (err: Error) => void,
       ) {
         Promise.resolve().then(() => {
           const rows = getRows();
@@ -85,7 +83,7 @@ vi.mock('@supabase/supabase-js', () => {
           } else if (op === 'upsert') {
             const toUpsert = (Array.isArray(payload)
               ? payload
-              : [payload]) as Array<Record<string, unknown>>;
+              : [payload]) as Array<RowData>;
             toUpsert.forEach((row) => {
               const idx = rows.findIndex(
                 (r) => r.studyId === row.studyId && r.docId === row.docId,
@@ -105,7 +103,7 @@ vi.mock('@supabase/supabase-js', () => {
             resolve({ data: toUpsert, error: null });
           } else if (op === 'update') {
             const matched = applyFilters(rows, filters);
-            matched.forEach((row) => Object.assign(row, payload as Record<string, unknown>));
+            matched.forEach((row) => Object.assign(row, payload as RowData));
             resolve({ data: matched, error: null });
           } else if (op === 'delete') {
             const matched = applyFilters(rows, filters);
@@ -124,8 +122,7 @@ vi.mock('@supabase/supabase-js', () => {
   }
 
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    AuthError: class AuthError extends Error {} as any,
+    AuthError: class AuthError extends Error {},
     createClient: () => ({
       from: (_table: string) => makeQueryBuilder(() => revisitRows),
       schema: (schemaName: string) => ({
@@ -140,12 +137,11 @@ vi.mock('@supabase/supabase-js', () => {
         from: (_bucket: string) => ({
           download: async (path: string) => {
             if (path in storageFiles) {
-              // Return raw string — _getFromStorage (testing=true) wraps it in new Blob([string])
-              return { data: storageFiles[path] as unknown as Blob, error: null };
+              return { data: storageFiles[path], error: null };
             }
             return { data: null, error: { message: 'Object not found' } };
           },
-          upload: async (path: string, data: unknown, _opts?: unknown) => {
+          upload: async (path: string, data: Blob | Buffer | string | object, _opts?: object) => {
             let text: string;
             if (data instanceof Blob) {
               text = await data.text();
@@ -171,13 +167,13 @@ vi.mock('@supabase/supabase-js', () => {
             });
             return { data: paths, error: null };
           },
-          list: async (path: string, _opts?: unknown) => {
+          list: async (path: string, _opts?: object) => {
             const prefix = path.endsWith('/') ? path : `${path}/`;
             const keys = Object.keys(storageFiles).filter((k) => k.startsWith(prefix));
             const names = new Set(keys.map((k) => k.slice(prefix.length).split('/')[0]));
             return { data: [...names].map((name) => ({ name })), error: null };
           },
-          updateMetadata: async (_path: string, _metadata: unknown) => ({ data: {}, error: null }),
+          updateMetadata: async (_path: string, _metadata: object) => ({ data: {}, error: null }),
         }),
       },
       auth: {
@@ -186,7 +182,7 @@ vi.mock('@supabase/supabase-js', () => {
           error: null,
         }),
         signInAnonymously: async () => ({ data: { user: { id: 'mock-uid' } }, error: null }),
-        onAuthStateChange: (callback: (event: string, session: unknown) => void) => {
+        onAuthStateChange: (callback: (event: string, session: object | null) => void) => {
           callback('SIGNED_IN', { user: { id: 'mock-uid', email: null } });
           return { data: { subscription: { unsubscribe: () => {} } } };
         },
@@ -201,7 +197,7 @@ vi.mock('localforage', () => ({
   default: {
     createInstance: vi.fn(() => ({
       getItem: vi.fn((key: string) => Promise.resolve(localStore[key] ?? null)),
-      setItem: vi.fn((key: string, value: unknown) => {
+      setItem: vi.fn((key: string, value: string | number | object | null) => {
         localStore[key] = value;
         return Promise.resolve(value);
       }),
@@ -227,9 +223,7 @@ describe.each([
 ])('describe object $TestEngine', ({ TestEngine }) => {
   let storageEngine: StorageEngine;
 
-  // Before test harness
   beforeEach(async () => {
-    // Reset the storage engine before each test
     storageEngine = new TestEngine(true);
     await storageEngine.connect();
     await storageEngine.initializeStudyDb(studyId);
@@ -246,7 +240,6 @@ describe.each([
     await storageEngine._testingReset('test-realtime-copy');
   });
 
-  // _pushToStorage, _getFromStorage, and _removeFromStorage tests
   test('_pushToStorage, _getFromStorage, and _removeFromStorage work correctly', async () => {
     const sequenceArray = generateSequenceArray(configSimple);
     const participantData = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
@@ -274,14 +267,12 @@ describe.each([
     expect(storedBlob).toBeInstanceOf(Object);
   });
 
-  // verifyStudyDatabase test
   test('_verifyStudyDatabase throws error if not initialized', async () => {
     const uninitializedStorageEngine = new TestEngine();
     // @ts-expect-error using protected method for testing
     await expect(uninitializedStorageEngine.verifyStudyDatabase()).rejects.toThrow('Study database not initialized');
   });
 
-  // getCurrentConfigHash and setCurrentConfigHash tests
   test('_getCurrentConfigHash and _setCurrentConfigHash work correctly', async () => {
     // @ts-expect-error using protected method for testing
     const initialHash = await storageEngine._getCurrentConfigHash();
@@ -295,7 +286,6 @@ describe.each([
     expect(updatedHash).toBe(configHash);
   });
 
-  // getAllSequenceAssignments test
   test('getAllSequenceAssignments returns sequence assignment for participant', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;
@@ -314,7 +304,6 @@ describe.each([
     expect(sequenceAssignment!.createdTime).equal(sequenceAssignment!.timestamp);
   });
 
-  // _completeCurrentParticipantRealtime test
   test('_completeCurrentParticipantRealtime updates sequence assignment', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;
@@ -327,7 +316,6 @@ describe.each([
     expect(sequenceAssignment!.participantId).toBe(participantId);
     expect(sequenceAssignment!.completed).toBeNull();
 
-    // Complete the participant
     // @ts-expect-error using protected method for testing
     await storageEngine._completeCurrentParticipantRealtime();
 
@@ -341,9 +329,6 @@ describe.each([
     expect(updatedSequenceAssignment!.completed).toBeGreaterThanOrEqual(updatedSequenceAssignment!.createdTime);
   });
 
-  // Reject assignment and claim assignment tested by high-level tests
-
-  // getModes test
   test('_getModes returns correct modes and _setMode updates correctly', async () => {
     const modes = await storageEngine.getModes(studyId);
     expect(modes).toBeDefined();
@@ -384,7 +369,6 @@ describe.each([
     expect(afterDataSharingToggle.dataSharingEnabled).toBe(false);
   });
 
-  // cleanupModes test
   test('cleanupModes updates old modes to new modes', async () => {
     const oldModes = {
       studyNavigatorEnabled: true,
@@ -419,17 +403,14 @@ describe.each([
     expect(sanitizedModesFalse).toEqual(cleanedModesFalse);
     expect(sanitizedModesFalse).not.toEqual(oldModesFalse);
 
-    // pass in already cleaned modes
     const alreadySanitizedModes = cleanupModes(cleanedModes);
     expect(alreadySanitizedModes).toBeDefined();
     expect(alreadySanitizedModes).toEqual(cleanedModes);
 
-    // pass in empty object
     const emptySanitizedModes = cleanupModes({});
     expect(emptySanitizedModes).toBeDefined();
     expect(emptySanitizedModes).toEqual({});
 
-    // pass in an object with more fields
     const extraModes = {
       testField1: true,
       testField2: false,
@@ -442,7 +423,6 @@ describe.each([
     expect(extraSanitizedModes).not.toEqual(cleanedModes);
     expect(extraSanitizedModes).toEqual({ ...extraModes, ...sanitizedModes });
 
-    // pass in an object with old modes and cleaned modes
     const mixedModes = {
       ...oldModes,
       ...cleanedModes,
@@ -455,7 +435,6 @@ describe.each([
 
   /* Snapshots ----------------------------------------------------------- */
 
-  // _getSnapshotData test
   test('_getSnapshotData is empty on initialization', async () => {
     // @ts-expect-error using protected value for testing
     const snapshotData = await storageEngine.getSnapshots(`${storageEngine.collectionPrefix}${studyId}`);
@@ -463,7 +442,6 @@ describe.each([
     expect(Object.keys(snapshotData).length).toBe(0);
   });
 
-  // _directoryExists test
   test('_directoryExists returns false for non-existent directory', async () => {
     // @ts-expect-error using protected method for testing
     const exists = await storageEngine._directoryExists('missing-study');
@@ -477,39 +455,32 @@ describe.each([
     expect(exists).toBe(true);
   });
 
-  // _copyDirectory, _deleteDirectory test
   test('_copyDirectory copies directory and contents', async () => {
     // @ts-expect-error using protected value for testing
     const source = `${storageEngine.collectionPrefix}${studyId}`;
     // @ts-expect-error using protected value for testing
     const target = `${storageEngine.collectionPrefix}test-copy`;
 
-    // Ensure source directory exists
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     // @ts-expect-error using protected method for testing
     const sourceExists = await storageEngine._directoryExists(source);
     expect(sourceExists).toBe(true);
 
-    // Copy the directory
     // @ts-expect-error using protected method for testing
     await storageEngine._copyDirectory(source, target);
 
-    // Check if target directory exists
     // @ts-expect-error using protected method for testing
     const targetExists = await storageEngine._directoryExists(target);
     expect(targetExists).toBe(true);
 
-    // Clean up by deleting the copied directory
     // @ts-expect-error using protected method for testing
     await storageEngine._deleteDirectory(target);
 
-    // Verify the target directory is deleted
     // @ts-expect-error using protected method for testing
     const targetDeleted = await storageEngine._directoryExists(target);
     expect(targetDeleted).toBe(false);
   });
 
-  // _copyRealtimeData, _deleteRealtimeData test
   test('_copyRealtimeData copies realtime data', async () => {
     const targetId = 'test-realtime-copy';
     // @ts-expect-error using protected value for testing
@@ -517,7 +488,6 @@ describe.each([
     // @ts-expect-error using protected value for testing
     const target = `${storageEngine.collectionPrefix}test-realtime-copy`;
 
-    // Ensure source directory exists
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
     const sourceSequenceAssignments1 = await storageEngine.getAllSequenceAssignments(studyId);
@@ -528,11 +498,9 @@ describe.each([
     expect(targetSequenceAssignments).toBeDefined();
     expect(targetSequenceAssignments.length).toBe(0);
 
-    // Copy the realtime data
     // @ts-expect-error using protected method for testing
     await storageEngine._copyRealtimeData(source, target);
 
-    // Check if target directory has the copied data
     const sourceSequenceAssignments2 = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sourceSequenceAssignments2).toBeDefined();
     expect(sourceSequenceAssignments2.length).toEqual(1);
@@ -542,22 +510,17 @@ describe.each([
     expect(targetSequenceAssignments.length).toEqual(1);
     expect(targetSequenceAssignments[0].participantId).toBe(sourceSequenceAssignments2[0].participantId);
 
-    // Delete the target realtime data
     // @ts-expect-error using protected method for testing
     await storageEngine._deleteRealtimeData(target);
 
-    // Verify the target directory is empty
     targetSequenceAssignments = await storageEngine.getAllSequenceAssignments(targetId);
     expect(targetSequenceAssignments).toBeDefined();
     expect(targetSequenceAssignments.length).toBe(0);
   });
 
-  // _addDirectoryNameToSnapshots, removeDirectoryNameFromSnapshots, _changeDirectoryNameInSnapshots tests
   test('_addDirectoryNameToSnapshots, _removeDirectoryNameFromSnapshots, and _changeDirectoryNameInSnapshots work correctly', async () => {
-    // Ensure the study database is initialized
     const directoryName = 'test-directory';
 
-    // Make sure the directory name is not already in the snapshots
     // @ts-expect-error using protected method for testing
     const snapshotData1 = await storageEngine.getSnapshots(`${storageEngine.collectionPrefix}${studyId}`);
     expect(snapshotData1).toBeDefined();
@@ -566,29 +529,24 @@ describe.each([
     // @ts-expect-error using protected method for testing
     await storageEngine._addDirectoryNameToSnapshots(directoryName, studyId);
 
-    // Verify the directory name is added to the snapshot metadata
     const snapshotData2 = await storageEngine.getSnapshots(studyId);
     expect(snapshotData2).toBeDefined();
     expect(snapshotData2[directoryName]).toBeDefined();
     expect(snapshotData2[directoryName].name).toBe(directoryName);
 
-    // Change the directory name in the snapshot metadata
     const newDirectoryName = 'renamed-directory';
     // @ts-expect-error using protected method for testing
     await storageEngine._changeDirectoryNameInSnapshots(directoryName, newDirectoryName, studyId);
 
-    // Verify the directory name is updated in the snapshot metadata
     const updatedSnapshotData = await storageEngine.getSnapshots(studyId);
     expect(updatedSnapshotData).toBeDefined();
     expect(updatedSnapshotData[directoryName]).toBeDefined();
     expect(updatedSnapshotData[directoryName].name).toBe(newDirectoryName);
     expect(updatedSnapshotData[newDirectoryName]).not.toBeDefined();
 
-    // Clean up by removing the directory name
     // @ts-expect-error using protected method for testing
     await storageEngine._removeDirectoryNameFromSnapshots(directoryName, studyId);
 
-    // Verify the directory name is removed from the snapshot metadata
     const snapshotData3 = await storageEngine.getSnapshots(studyId);
     expect(snapshotData3).toBeDefined();
     expect(snapshotData3[directoryName]).not.toBeDefined();

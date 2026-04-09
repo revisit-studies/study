@@ -5,11 +5,11 @@ import {
   afterEach, describe, expect, test,
 } from 'vitest';
 import { StorageEngineProvider, useStorageEngine } from './storageEngineHooks';
-import type { StorageEngine } from './engines/types';
+import { makeStorageEngine } from '../tests/utils';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-const fakeEngine = { getEngine: () => 'localStorage' } as unknown as StorageEngine;
+const fakeEngine = makeStorageEngine();
 
 function EngineConsumer() {
   const { storageEngine, setStorageEngine } = useStorageEngine();

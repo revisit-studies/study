@@ -17,17 +17,13 @@ import { FirebaseStorageEngine } from '../engines/FirebaseStorageEngine';
 import { type StorageEngine, cleanupModes } from '../engines/types';
 import { hash } from '../engines/utils';
 
-// ── module-level state (captured by-ref inside vi.mock factories) ─────────────
-// In-memory Firestore substitute (keyed by document path)
-const firestoreData: Record<string, Record<string, unknown>> = {};
-// Sentinel values for serverTimestamp() and deleteField()
+type DocData = Record<string, string | number | boolean | null | object>;
+
+const firestoreData: Record<string, DocData> = {};
 const SERVER_TS_SENTINEL = { __sentinel: 'serverTimestamp' };
 const DELETE_FIELD_SENTINEL = { __sentinel: 'deleteField' };
-// In-memory Firebase Storage substitute
 const storageObjects: Record<string, string> = {};
-// In-memory localforage substitute (participant ID persistence)
-const localStore: Record<string, unknown> = {};
-// Mutable auth state updated by signInAnonymously mock
+const localStore: Record<string, string | number | object | null> = {};
 const authState: { currentUser: { email: string | null; uid: string } | null } = {
   currentUser: null,
 };
@@ -63,8 +59,8 @@ vi.mock('firebase/storage', () => {
 
   return {
     getStorage: vi.fn(() => ({})),
-    ref: vi.fn((_storage: unknown, path: string) => makeRef(path)),
-    uploadBytes: vi.fn(async (refObj: { path: string }, blob: Blob | unknown) => {
+    ref: vi.fn((_storage: object, path: string) => makeRef(path)),
+    uploadBytes: vi.fn(async (refObj: { path: string }, blob: Blob | object) => {
       const text = blob instanceof Blob ? await blob.text() : JSON.stringify(blob);
       storageObjects[refObj.path] = text;
       return { ref: refObj };
@@ -96,7 +92,7 @@ vi.mock('localforage', () => ({
   default: {
     createInstance: vi.fn(() => ({
       getItem: vi.fn((key: string) => Promise.resolve(localStore[key] ?? null)),
-      setItem: vi.fn((key: string, value: unknown) => {
+      setItem: vi.fn((key: string, value: string | number | object | null) => {
         localStore[key] = value;
         return Promise.resolve();
       }),
@@ -112,34 +108,33 @@ vi.mock('localforage', () => ({
   },
 }));
 
-// Complete in-memory Firestore mock — no emulator needed.
 vi.mock('firebase/firestore', () => {
-  function resolveSentinels(data: Record<string, unknown>): Record<string, unknown> {
+  function resolveSentinels(data: DocData): DocData {
     const now = Date.now();
-    const result: Record<string, unknown> = {};
+    const result: DocData = {};
     for (const [k, v] of Object.entries(data)) {
       result[k] = v === SERVER_TS_SENTINEL ? now : v;
     }
     return result;
   }
 
-  function mockCollection(parent: unknown, path: string) {
-    if (parent && typeof parent === 'object' && '_path' in (parent as Record<string, unknown>)) {
+  function mockCollection(parent: object | null, path: string) {
+    if (parent && typeof parent === 'object' && '_path' in parent) {
       return { _path: `${(parent as { _path: string })._path}/${path}` };
     }
     return { _path: path };
   }
 
-  function mockDoc(...args: unknown[]) {
+  function mockDoc(...args: [{ _path: string }, string] | [object, string, string]) {
     if (args.length === 2) {
-      const [parent, id] = args as [{ _path: string }, string];
+      const [parent, id] = args;
       return { _path: `${parent._path}/${id}`, id };
     }
-    const [, collPath, docId] = args as [unknown, string, string];
+    const [, collPath, docId] = args as [object, string, string];
     return { _path: `${collPath}/${docId}`, id: docId };
   }
 
-  function mockSetDoc(docRef: { _path: string }, data: Record<string, unknown>, options?: { merge?: boolean }) {
+  function mockSetDoc(docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) {
     const resolved = resolveSentinels(data);
     if (options?.merge) {
       firestoreData[docRef._path] = { ...(firestoreData[docRef._path] ?? {}), ...resolved };
@@ -160,7 +155,7 @@ vi.mock('firebase/firestore', () => {
 
   function getDocsInCollection(collPath: string) {
     const prefix = `${collPath}/`;
-    const docs: Array<{ id: string; data: () => Record<string, unknown> }> = [];
+    const docs: Array<{ id: string; data: () => DocData }> = [];
     for (const [path, data] of Object.entries(firestoreData)) {
       if (path.startsWith(prefix)) {
         const remainder = path.slice(prefix.length);
@@ -177,11 +172,11 @@ vi.mock('firebase/firestore', () => {
     const docs = getDocsInCollection(collRef._path);
     return Promise.resolve({
       docs,
-      forEach: (cb: (d: { id: string; data: () => Record<string, unknown> }) => void) => docs.forEach(cb),
+      forEach: (cb: (d: { id: string; data: () => DocData }) => void) => docs.forEach(cb),
     });
   }
 
-  function mockUpdateDoc(docRef: { _path: string }, data: Record<string, unknown>) {
+  function mockUpdateDoc(docRef: { _path: string }, data: DocData) {
     const existing = firestoreData[docRef._path];
     if (!existing) return Promise.reject(new Error(`No document to update: ${docRef._path}`));
     const now = Date.now();
@@ -197,7 +192,7 @@ vi.mock('firebase/firestore', () => {
 
   function mockOnSnapshot(
     collRef: { _path: string },
-    callback: (snapshot: { docs: Array<{ id: string; data: () => Record<string, unknown> }> }) => void,
+    callback: (snapshot: { docs: Array<{ id: string; data: () => DocData }> }) => void,
   ) {
     Promise.resolve().then(() => callback({ docs: getDocsInCollection(collRef._path) }));
     return vi.fn();
@@ -206,7 +201,7 @@ vi.mock('firebase/firestore', () => {
   function mockWriteBatch() {
     const ops: Array<() => void> = [];
     return {
-      set: (docRef: { _path: string }, data: Record<string, unknown>) => {
+      set: (docRef: { _path: string }, data: DocData) => {
         ops.push(() => { firestoreData[docRef._path] = resolveSentinels(data); });
       },
       delete: (docRef: { _path: string }) => {
@@ -239,8 +234,6 @@ vi.mock('firebase/firestore', () => {
   };
 });
 
-// ── constants ─────────────────────────────────────────────────────────────────
-// Use a project ID unique to this file so parallel test files don't share data.
 const PROJECT_ID = 'demo-primitives';
 const studyId = 'test-study';
 const configSimple = testConfigSimple as StudyConfig;
@@ -251,12 +244,10 @@ const participantMetadata: ParticipantMetadata = {
   ip: '122.122.122.122',
 };
 
-// ── lifecycle ─────────────────────────────────────────────────────────────────
 beforeAll(() => {
   vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: PROJECT_ID }));
   vi.stubEnv('VITE_RECAPTCHAV3TOKEN', 'fake-recaptcha-token');
 
-  // Mock fetch so _getFromStorage can retrieve data stored via uploadBytes mock.
   const realFetch = globalThis.fetch.bind(globalThis);
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
     const urlStr = url.toString();
@@ -291,12 +282,10 @@ describe.each([
     Object.keys(storageObjects).forEach((k) => delete storageObjects[k]);
     Object.keys(localStore).forEach((k) => delete localStore[k]);
     authState.currentUser = null;
-    // Reset in-memory engine state (participantData, currentParticipantId)
     // @ts-expect-error using protected method for testing
     await storageEngine.__testingReset();
   });
 
-  // _pushToStorage, _getFromStorage tests
   test('_pushToStorage, _getFromStorage, and _deleteFromStorage work correctly', async () => {
     const sequenceArray = await generateSequenceArray(configSimple);
     const participantData = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
@@ -324,7 +313,6 @@ describe.each([
     expect(storedBlob).toBeInstanceOf(Object);
   });
 
-  // _cacheStorageObject test (Firebase implements updateMetadata)
   test('_cacheStorageObject calls updateMetadata without throwing', async () => {
     // Push something first so a ref exists
     // @ts-expect-error using protected method for testing
@@ -333,10 +321,6 @@ describe.each([
     await expect(storageEngine._cacheStorageObject('', 'sequenceArray')).resolves.not.toThrow();
   });
 
-  // _verifyStudyDatabase — for Firebase, studyCollection is always initialized
-  // in the constructor so this test is not applicable; omitted.
-
-  // _getCurrentConfigHash and _setCurrentConfigHash tests
   test('_getCurrentConfigHash and _setCurrentConfigHash work correctly', async () => {
     // @ts-expect-error using protected method for testing
     const initialHash = await storageEngine._getCurrentConfigHash();
@@ -350,7 +334,6 @@ describe.each([
     expect(updatedHash).toBe(configHash);
   });
 
-  // getAllSequenceAssignments test
   test('getAllSequenceAssignments returns sequence assignment for participant', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;
@@ -369,7 +352,6 @@ describe.each([
     expect(sequenceAssignment!.createdTime).equal(sequenceAssignment!.timestamp);
   });
 
-  // _completeCurrentParticipantRealtime test
   test('_completeCurrentParticipantRealtime updates sequence assignment', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;
@@ -387,7 +369,6 @@ describe.each([
     expect(updated!.completed).toBeGreaterThanOrEqual(updated!.createdTime);
   });
 
-  // getModes and setMode tests
   test('_getModes returns correct modes and _setMode updates correctly', async () => {
     const modes = await storageEngine.getModes(studyId);
     expect(modes).toBeDefined();
@@ -427,7 +408,6 @@ describe.each([
     expect(after3.dataSharingEnabled).toBe(false);
   });
 
-  // cleanupModes test (pure logic, same as LocalStorage version)
   test('cleanupModes updates old modes to new modes', async () => {
     const oldModes = {
       studyNavigatorEnabled: true,
@@ -476,7 +456,6 @@ describe.each([
     expect(mixedSanitized).toEqual(mixedModes);
   });
 
-  // _getSnapshotData test
   test('_getSnapshotData is empty on initialization', async () => {
     // @ts-expect-error using protected value for testing
     const snapshotData = await storageEngine.getSnapshots(`${storageEngine.collectionPrefix}${studyId}`);
@@ -484,7 +463,6 @@ describe.each([
     expect(Object.keys(snapshotData).length).toBe(0);
   });
 
-  // _directoryExists tests
   test('_directoryExists returns false for non-existent directory', async () => {
     // @ts-expect-error using protected method for testing
     const exists = await storageEngine._directoryExists('missing-study');
@@ -498,7 +476,6 @@ describe.each([
     expect(exists).toBe(true);
   });
 
-  // _copyDirectory and _deleteDirectory test
   test('_copyDirectory copies directory and contents', async () => {
     // @ts-expect-error using protected value for testing
     const source = `${storageEngine.collectionPrefix}${studyId}`;
@@ -520,7 +497,6 @@ describe.each([
     expect(await storageEngine._directoryExists(target)).toBe(false);
   });
 
-  // _copyRealtimeData and _deleteRealtimeData test
   test('_copyRealtimeData copies realtime data', async () => {
     const targetId = 'test-realtime-copy';
     // @ts-expect-error using protected value for testing
@@ -553,7 +529,6 @@ describe.each([
     expect(targetAssignments.length).toBe(0);
   });
 
-  // _addDirectoryNameToSnapshots, _removeDirectoryNameFromSnapshots, _changeDirectoryNameInSnapshots tests
   test('_addDirectoryNameToSnapshots, _removeDirectoryNameFromSnapshots, and _changeDirectoryNameInSnapshots work correctly', async () => {
     const directoryName = 'test-directory';
 

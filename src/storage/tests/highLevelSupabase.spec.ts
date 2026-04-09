@@ -13,13 +13,11 @@ import { StorageEngine } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
 
-// ── module-level state (captured by-ref inside vi.mock factories) ─────────────
-// In-memory Supabase DB substitute
-const revisitRows: Array<Record<string, unknown>> = [];
-// In-memory Supabase Storage substitute
+type RowData = Record<string, string | number | boolean | null | object>;
+
+const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
-// In-memory localforage substitute (participant ID persistence)
-const localStore: Record<string, unknown> = {};
+const localStore: Record<string, string | number | object | null> = {};
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock('@supabase/supabase-js', () => {
@@ -31,23 +29,23 @@ vi.mock('@supabase/supabase-js', () => {
     return new RegExp(regexStr).test(value);
   }
 
-  function getFieldValue(obj: Record<string, unknown>, col: string): unknown {
+  function getFieldValue(obj: RowData, col: string): string | number | boolean | null | object | undefined {
     if (col.includes('->')) {
       const arrowIdx = col.indexOf('->');
       const parent = col.slice(0, arrowIdx);
       const child = col.slice(arrowIdx + 2);
       const parentVal = obj[parent];
       return parentVal && typeof parentVal === 'object'
-        ? (parentVal as Record<string, unknown>)[child]
+        ? (parentVal as RowData)[child]
         : undefined;
     }
     return obj[col];
   }
 
   function applyFilters(
-    rows: Array<Record<string, unknown>>,
-    filters: Array<{ col: string; val: unknown; type: 'eq' | 'like' }>,
-  ): Array<Record<string, unknown>> {
+    rows: Array<RowData>,
+    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' }>,
+  ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
       if (type === 'eq') return colVal === val;
@@ -55,23 +53,23 @@ vi.mock('@supabase/supabase-js', () => {
     }));
   }
 
-  function makeQueryBuilder(getRows: () => Array<Record<string, unknown>>) {
+  function makeQueryBuilder(getRows: () => Array<RowData>) {
     let op: 'select' | 'upsert' | 'update' | 'delete' | null = null;
-    let payload: unknown = null;
-    const filters: Array<{ col: string; val: unknown; type: 'eq' | 'like' }> = [];
+    let payload: RowData | RowData[] | Partial<RowData> | null = null;
+    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' }> = [];
     let isSingle = false;
 
     const qb = {
       select(_fields?: string) { op = 'select'; return qb; },
-      upsert(row: unknown) { op = 'upsert'; payload = row; return qb; },
-      update(obj: unknown) { op = 'update'; payload = obj; return qb; },
+      upsert(row: RowData | RowData[]) { op = 'upsert'; payload = row; return qb; },
+      update(obj: Partial<RowData>) { op = 'update'; payload = obj; return qb; },
       delete() { op = 'delete'; return qb; },
-      eq(col: string, val: unknown) { filters.push({ col, val, type: 'eq' }); return qb; },
+      eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
       single() { isSingle = true; return qb; },
       then(
-        resolve: (val: { data: unknown; error: unknown }) => void,
-        reject?: (err: unknown) => void,
+        resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null }) => void,
+        reject?: (err: Error) => void,
       ) {
         Promise.resolve().then(() => {
           const rows = getRows();
@@ -90,7 +88,7 @@ vi.mock('@supabase/supabase-js', () => {
           } else if (op === 'upsert') {
             const toUpsert = (Array.isArray(payload)
               ? payload
-              : [payload]) as Array<Record<string, unknown>>;
+              : [payload]) as Array<RowData>;
             toUpsert.forEach((row) => {
               const idx = rows.findIndex(
                 (r) => r.studyId === row.studyId && r.docId === row.docId,
@@ -110,7 +108,7 @@ vi.mock('@supabase/supabase-js', () => {
             resolve({ data: toUpsert, error: null });
           } else if (op === 'update') {
             const matched = applyFilters(rows, filters);
-            matched.forEach((row) => Object.assign(row, payload as Record<string, unknown>));
+            matched.forEach((row) => Object.assign(row, payload as RowData));
             resolve({ data: matched, error: null });
           } else if (op === 'delete') {
             const matched = applyFilters(rows, filters);
@@ -129,8 +127,7 @@ vi.mock('@supabase/supabase-js', () => {
   }
 
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    AuthError: class AuthError extends Error { } as any,
+    AuthError: class AuthError extends Error {},
     createClient: () => ({
       from: (_table: string) => makeQueryBuilder(() => revisitRows),
       schema: (schemaName: string) => ({
@@ -146,11 +143,11 @@ vi.mock('@supabase/supabase-js', () => {
           download: async (path: string) => {
             if (path in storageFiles) {
               // Return raw string — _getFromStorage (testing=true) wraps it in new Blob([string])
-              return { data: storageFiles[path] as unknown as Blob, error: null };
+              return { data: storageFiles[path], error: null };
             }
             return { data: null, error: { message: 'Object not found' } };
           },
-          upload: async (path: string, data: unknown, _opts?: unknown) => {
+          upload: async (path: string, data: Blob | Buffer | string | object, _opts?: object) => {
             let text: string;
             if (data instanceof Blob) {
               text = await data.text();
@@ -176,13 +173,13 @@ vi.mock('@supabase/supabase-js', () => {
             });
             return { data: paths, error: null };
           },
-          list: async (path: string, _opts?: unknown) => {
+          list: async (path: string, _opts?: object) => {
             const prefix = path.endsWith('/') ? path : `${path}/`;
             const keys = Object.keys(storageFiles).filter((k) => k.startsWith(prefix));
             const names = new Set(keys.map((k) => k.slice(prefix.length).split('/')[0]));
             return { data: [...names].map((name) => ({ name })), error: null };
           },
-          updateMetadata: async (_path: string, _metadata: unknown) => ({ data: {}, error: null }),
+          updateMetadata: async (_path: string, _metadata: object) => ({ data: {}, error: null }),
         }),
       },
       auth: {
@@ -191,7 +188,7 @@ vi.mock('@supabase/supabase-js', () => {
           error: null,
         }),
         signInAnonymously: async () => ({ data: { user: { id: 'mock-uid' } }, error: null }),
-        onAuthStateChange: (callback: (event: string, session: unknown) => void) => {
+        onAuthStateChange: (callback: (event: string, session: object | null) => void) => {
           callback('SIGNED_IN', { user: { id: 'mock-uid', email: null } });
           return { data: { subscription: { unsubscribe: () => { } } } };
         },
@@ -206,7 +203,7 @@ vi.mock('localforage', () => ({
   default: {
     createInstance: vi.fn(() => ({
       getItem: vi.fn((key: string) => Promise.resolve(localStore[key] ?? null)),
-      setItem: vi.fn((key: string, value: unknown) => {
+      setItem: vi.fn((key: string, value: string | number | object | null) => {
         localStore[key] = value;
         return Promise.resolve(value);
       }),
@@ -229,7 +226,7 @@ const participantMetadata: ParticipantMetadata = {
 };
 
 const conditionalLatinSquareConfig: StudyConfig = {
-  $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json',
+  $schema: '',
   studyMetadata: {
     title: 'Conditional Latin Square Test',
     version: '1.0.0',
@@ -449,14 +446,12 @@ describe.each([
   });
 
   test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
-    const createSequenceAssignmentSpy = vi.spyOn(
-      storageEngine as unknown as { _createSequenceAssignment: (...args: unknown[]) => Promise<void> },
-      '_createSequenceAssignment',
-    );
+    // @ts-expect-error accessing protected method for spying
+    const createSequenceAssignmentSpy = vi.spyOn(storageEngine, '_createSequenceAssignment');
 
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
-    const sequenceAssignmentPayload = createSequenceAssignmentSpy.mock.calls[0][1] as Record<string, unknown>;
+    const sequenceAssignmentPayload = (createSequenceAssignmentSpy.mock.calls[0] as RowData[])[1];
     expect(Object.hasOwn(sequenceAssignmentPayload, 'conditions')).toBe(false);
   });
 

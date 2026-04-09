@@ -4,6 +4,7 @@ import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { Login, signIn } from './Login';
+import { makeStorageEngine } from './tests/utils';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -117,17 +118,21 @@ describe('signIn', () => {
 
   test('returns null when storageEngine is not a cloud engine', async () => {
     mockIsCloud = false;
-    const fakeEngine = { login: vi.fn() } as unknown as { login: ReturnType<typeof vi.fn> };
-    const result = await signIn(fakeEngine as never, mockSetLoading);
+    const login = vi.fn();
+    const engine = makeStorageEngine();
+    Object.assign(engine, { login });
+    const result = await signIn(engine, mockSetLoading);
     expect(result).toBeNull();
-    expect(fakeEngine.login).not.toHaveBeenCalled();
+    expect(login).not.toHaveBeenCalled();
   });
 
   test('calls storageEngine.login and returns user when cloud engine', async () => {
     const mockUser2 = { email: 'test@test.com', uid: '123' };
-    const fakeEngine = { login: vi.fn().mockResolvedValue(mockUser2) } as unknown as { login: ReturnType<typeof vi.fn> };
-    const result = await signIn(fakeEngine as never, mockSetLoading);
-    expect(fakeEngine.login).toHaveBeenCalled();
+    const login = vi.fn().mockResolvedValue(mockUser2);
+    const engine = makeStorageEngine();
+    Object.assign(engine, { login });
+    const result = await signIn(engine, mockSetLoading);
+    expect(login).toHaveBeenCalled();
     expect(result).toEqual(mockUser2);
     expect(mockSetLoading).toHaveBeenCalledWith(true);
     expect(mockSetLoading).toHaveBeenCalledWith(false);
@@ -135,8 +140,9 @@ describe('signIn', () => {
 
   test('calls showNotification and returns undefined when login throws', async () => {
     const { showNotification } = await import('./utils/notifications');
-    const fakeEngine = { login: vi.fn().mockRejectedValue(new Error('Auth failed')) } as never;
-    const result = await signIn(fakeEngine, mockSetLoading);
+    const engine = makeStorageEngine();
+    Object.assign(engine, { login: vi.fn().mockRejectedValue(new Error('Auth failed')) });
+    const result = await signIn(engine, mockSetLoading);
     expect(result).toBeNull();
     expect(showNotification).toHaveBeenCalledWith(expect.objectContaining({ title: 'Error' }));
     expect(mockSetLoading).toHaveBeenCalledWith(false);

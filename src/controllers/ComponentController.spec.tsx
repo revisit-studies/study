@@ -5,7 +5,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useSearchParams, useNavigate } from 'react-router';
-import { Vega, View } from 'react-vega';
+import { View } from 'react-vega';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import type {
   ImageComponent,
@@ -16,7 +16,6 @@ import type {
   WebsiteComponent,
 } from '../parser/types';
 import type { StoreState } from '../store/types';
-import type { StorageEngine } from '../storage/engines/types';
 import { ComponentController } from './ComponentController';
 import { ErrorBoundary } from './ErrorBoundary';
 import { IframeController } from './IframeController';
@@ -28,10 +27,22 @@ import { VideoController } from './VideoController';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { getStaticAssetByPath, getJsonAssetByPath } from '../utils/getStaticAsset';
-import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
+import { useStoreDispatch, useStoreSelector } from '../store/store';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
+import { makeStoredAnswer, makeStorageEngine } from '../tests/utils';
+
+// ── mutable state ────────────────────────────────────────────────────────────
+
+let mockVegaImpl: React.FC = () => React.createElement('div', null, 'Vega');
+
+let mockStoreActions = {
+  setReactiveAnswers: vi.fn(),
+  updateResponseBlockValidation: vi.fn(),
+  setAlertModal: vi.fn(),
+  setAnalysisCanPlayScreenRecording: vi.fn(),
+};
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -95,12 +106,7 @@ vi.mock('../utils/Prefix', () => ({
 
 vi.mock('../store/store', () => ({
   useStoreDispatch: vi.fn(() => vi.fn()),
-  useStoreActions: vi.fn(() => ({
-    setReactiveAnswers: vi.fn(),
-    updateResponseBlockValidation: vi.fn(),
-    setAlertModal: vi.fn(),
-    setAnalysisCanPlayScreenRecording: vi.fn(),
-  })),
+  useStoreActions: vi.fn(() => mockStoreActions),
   useStoreSelector: vi.fn((selector: (s: StoreState) => StoreState[keyof StoreState]) => selector({
     answers: {},
     analysisCanPlayScreenRecording: false,
@@ -209,7 +215,7 @@ vi.mock('@trrack/core', () => ({
 }));
 
 vi.mock('react-vega', () => ({
-  Vega: vi.fn(() => <div>Vega</div>),
+  Vega: vi.fn((props: Record<string, unknown>) => mockVegaImpl(props)),
 }));
 
 vi.mock('react-vega/lib/Vega', () => ({}));
@@ -522,11 +528,7 @@ describe('ComponentController', () => {
   test('renders "Database Disconnected" when storageEngine is not connected', () => {
     vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
     vi.mocked(useStorageEngine).mockReturnValueOnce({
-      storageEngine: {
-        isConnected: () => false,
-        getEngine: () => 'localStorage',
-        addParticipantTags: vi.fn(),
-      } as Partial<StorageEngine> as StorageEngine,
+      storageEngine: makeStorageEngine({ isConnected: vi.fn(() => false) }),
       setStorageEngine: vi.fn(),
     });
     const html = renderToStaticMarkup(<ComponentController />);
@@ -534,12 +536,8 @@ describe('ComponentController', () => {
   });
 });
 
-// ── ComponentController — effect coverage ────────────────────────────────────
+// ── ComponentController ────────────────────────────────────
 
-// Stable state object — must be created once and reused so that object references
-// (e.g. sequence, answers) don't change between renders. Changing refs in
-// useStoreSelector would make useEffect deps appear different every render and
-// cause an infinite re-render loop.
 const makeStableState = (overrides: Partial<StoreState> = {}): StoreState => ({
   answers: {},
   analysisCanPlayScreenRecording: false,
@@ -569,20 +567,14 @@ describe('ComponentController — effect coverage (render-based)', () => {
     });
     vi.mocked(findBlockForStep).mockReturnValue([]);
     vi.mocked(useStoreDispatch).mockReturnValue(vi.fn());
-    const mockActions = {
+    mockStoreActions = {
       setReactiveAnswers: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
       setAlertModal: vi.fn(),
       setAnalysisCanPlayScreenRecording: vi.fn(),
     };
-    // @ts-expect-error partial mock
-    vi.mocked(useStoreActions).mockReturnValue(mockActions);
     vi.mocked(useStorageEngine).mockReturnValue({
-      storageEngine: {
-        isConnected: () => true,
-        getEngine: () => 'firebase',
-        addParticipantTags: vi.fn(),
-      } as Partial<StorageEngine> as StorageEngine,
+      storageEngine: makeStorageEngine({ getEngine: vi.fn<() => 'firebase'>(() => 'firebase') }),
       setStorageEngine: vi.fn(),
     });
     // Use a stable (single) state instance per test so object refs don't change
@@ -615,16 +607,16 @@ describe('ComponentController — effect coverage (render-based)', () => {
   test('addParticipantTags called when blockForStep becomes non-empty', async () => {
     const addTagsSpy = vi.fn().mockResolvedValue(undefined);
     vi.mocked(useStorageEngine).mockReturnValue({
-      storageEngine: {
-        isConnected: () => true,
-        getEngine: () => 'localStorage',
-        addParticipantTags: addTagsSpy,
-      } as Partial<StorageEngine> as StorageEngine,
+      storageEngine: makeStorageEngine({ addParticipantTags: addTagsSpy }),
       setStorageEngine: vi.fn(),
     });
-    const mockBlock = [{ currentBlock: { id: 'blockA' }, blockIndex: 0 }];
-    // @ts-expect-error partial mock
-    vi.mocked(findBlockForStep).mockReturnValue(mockBlock);
+    vi.mocked(findBlockForStep).mockReturnValue([{
+      currentBlock: {
+        id: 'blockA', orderPath: '', order: 'fixed', components: [], skip: [],
+      },
+      firstIndex: 0,
+      lastIndex: 0,
+    }]);
 
     const { rerender } = render(<ComponentController />);
     // Wait for first effect run to call findBlockForStep and update blockForStep state
@@ -639,14 +631,12 @@ describe('ComponentController — effect coverage (render-based)', () => {
 
   test('setAnalysisCanPlayScreenRecording dispatched with true', async () => {
     const setAnalysisCanPlaySpy = vi.fn().mockReturnValue('PLAY_ACTION');
-    const mockActionsWithSpy = {
+    mockStoreActions = {
       setReactiveAnswers: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
       setAlertModal: vi.fn(),
       setAnalysisCanPlayScreenRecording: setAnalysisCanPlaySpy,
     };
-    // @ts-expect-error partial mock
-    vi.mocked(useStoreActions).mockReturnValue(mockActionsWithSpy);
     render(<ComponentController />);
     await waitFor(() => expect(setAnalysisCanPlaySpy).toHaveBeenCalledWith(true));
   });
@@ -655,12 +645,8 @@ describe('ComponentController — effect coverage (render-based)', () => {
     const mockNavigate = vi.fn();
     vi.mocked(useNavigate).mockReturnValue(mockNavigate);
     vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
-    const mockStoredAnswer = { endTime: 1, startTime: 0, trialOrder: '0' };
-    // @ts-expect-error partial mock
-    vi.mocked(useStoredAnswer).mockReturnValue(mockStoredAnswer);
-    const mockAnswers = { trial_0: { endTime: 1, startTime: 0, trialOrder: '2' } };
-    // @ts-expect-error partial mock
-    const stableStateWithAnswer = makeStableState({ answers: mockAnswers });
+    vi.mocked(useStoredAnswer).mockReturnValue(makeStoredAnswer({ endTime: 1, startTime: 0, trialOrder: '0' }));
+    const stableStateWithAnswer = makeStableState({ answers: { trial_0: makeStoredAnswer({ endTime: 1, startTime: 0, trialOrder: '2' }) } });
     vi.mocked(useStoreSelector).mockImplementation(
       (selector) => selector(stableStateWithAnswer),
     );
@@ -671,6 +657,10 @@ describe('ComponentController — effect coverage (render-based)', () => {
   test('ScreenRecordingReplay rendered when studyHasScreenRecording+isAnalysis+canPlay', async () => {
     vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
     vi.mocked(useIsAnalysis).mockReturnValue(true);
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine(),
+      setStorageEngine: vi.fn(),
+    });
     vi.mocked(useRecordingConfig).mockReturnValue({
       studyHasScreenRecording: true,
       studyHasAudioRecording: false,
@@ -702,7 +692,8 @@ describe('VegaController — signal and event coverage', () => {
   test('signal listeners, handleSignalEvt, handleRevisitAnswer, and provState effect all covered', async () => {
     type SignalHandler = (name: string, value: string | Record<string, string>) => void;
     let capturedSignalListeners: Record<string, SignalHandler> = {};
-    let capturedOnNewView: ((v: View) => void) | undefined;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let capturedOnNewView: ((v: any) => void) | undefined;
 
     vi.mocked(getJsonAssetByPath).mockResolvedValueOnce({
       $schema: 'vega',
@@ -712,7 +703,7 @@ describe('VegaController — signal and event coverage', () => {
     const mockDispatch = vi.fn();
     vi.mocked(useStoreDispatch).mockReturnValue(mockDispatch);
 
-    const vegaMockImpl = (props: {
+    mockVegaImpl = (props: {
       signalListeners?: Record<string, SignalHandler>;
       onNewView?: (v: View) => void;
     }) => {
@@ -720,8 +711,6 @@ describe('VegaController — signal and event coverage', () => {
       capturedOnNewView = props.onNewView;
       return React.createElement('div', null, 'Vega');
     };
-    // @ts-expect-error partial mock
-    vi.mocked(Vega).mockImplementation(vegaMockImpl);
 
     render(
       <VegaController
@@ -732,11 +721,10 @@ describe('VegaController — signal and event coverage', () => {
 
     await waitFor(() => expect(capturedOnNewView).toBeDefined());
 
+    const fakeView = { signal: vi.fn().mockReturnValue({ run: vi.fn() }) };
     await act(async () => {
       capturedSignalListeners.mySignal?.('mySignal', 'hello');
       capturedSignalListeners.revisitAnswer?.('revisitAnswer', { responseId: 'r1', response: 'yes' });
-      const fakeView = { signal: vi.fn().mockReturnValue({ run: vi.fn() }) };
-      // @ts-expect-error partial mock
       capturedOnNewView?.(fakeView);
     });
 

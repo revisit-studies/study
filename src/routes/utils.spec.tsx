@@ -5,13 +5,11 @@ import {
 import { parseTrialOrder } from '../utils/parseTrialOrder';
 import { getComponent } from '../utils/handleComponentInheritance';
 import { decryptIndex } from '../utils/encryptDecryptIndex';
+import type { IndividualComponent } from '../parser/types';
 import {
   useStudyId, useCurrentStep, useCurrentComponent, useCurrentIdentifier,
 } from './utils';
-// Mock @trrack/core before any imports to prevent CJS/ESM conflict caused by
-// import.meta.glob in routes/utils.tsx eagerly importing src/public/** files.
-// Mock packages that have CJS/ESM incompatibility when eagerly imported via
-// import.meta.glob in routes/utils.tsx (src/public/** files use these).
+
 vi.mock('@trrack/core', () => {
   const mockRegistry = {
     register: vi.fn(() => vi.fn()),
@@ -32,7 +30,7 @@ let mockParams: Record<string, string | undefined> = { studyId: 'test-study' };
 let mockSearchParams = new URLSearchParams();
 let mockNavigate = vi.fn();
 let mockFlatSequence: string[] = ['intro', 'end'];
-let mockAnswers: Record<string, unknown> = {};
+let mockAnswers: Record<string, Record<string, string | number | undefined>> = {};
 const mockStudyConfig = {
   sequence: {
     id: 'root', order: 'fixed', components: ['intro', 'end'], skip: [],
@@ -52,7 +50,7 @@ vi.mock('../store/store', () => ({
   useFlatSequence: () => mockFlatSequence,
   useStoreActions: () => ({ pushToFuncSequence: vi.fn() }),
   useStoreDispatch: () => vi.fn(),
-  useStoreSelector: (selector: (s: { answers: Record<string, unknown> }) => unknown) => selector({ answers: mockAnswers }),
+  useStoreSelector: (selector: (s: { answers: typeof mockAnswers }) => string | number | undefined) => selector({ answers: mockAnswers }),
 }));
 
 vi.mock('../utils/encryptDecryptIndex', () => ({
@@ -86,7 +84,7 @@ beforeEach(() => {
   mockFlatSequence = ['intro', 'end'];
   mockAnswers = {};
   vi.mocked(parseTrialOrder).mockReturnValue({ step: null, funcIndex: null });
-  vi.mocked(getComponent).mockReturnValue('intro' as never);
+  vi.mocked(getComponent).mockReturnValue({ type: 'markdown', path: '/test.md', response: [] } as IndividualComponent);
   vi.mocked(decryptIndex).mockImplementation((x: string) => parseInt(x, 10));
 });
 
@@ -159,7 +157,7 @@ describe('useCurrentComponent', () => {
   test('returns the component name when currentComponent is truthy', async () => {
     mockParams = { studyId: 'test-study', index: '0' };
     mockFlatSequence = ['intro', 'end'];
-    vi.mocked(getComponent).mockReturnValue('intro' as never);
+    vi.mocked(getComponent).mockReturnValue({ type: 'markdown', path: '/test.md', response: [] } as IndividualComponent);
     const { result } = renderHook(() => useCurrentComponent());
     expect(result.current).toBe('intro');
   });
@@ -176,7 +174,6 @@ describe('useCurrentComponent', () => {
     mockFlatSequence = ['myFunc', 'end'];
     vi.mocked(getComponent).mockReturnValue(null);
     const { result } = renderHook(() => useCurrentComponent());
-    // nextFunc is null (findFuncBlock returns null) → no funcIndex → returns __dynamicLoading
     expect(result.current).toBe('__dynamicLoading');
   });
 
@@ -184,12 +181,9 @@ describe('useCurrentComponent', () => {
     mockParams = { studyId: 'test-study', index: '0' };
     mockFlatSequence = ['myFunc', 'end'];
     vi.mocked(getComponent).mockReturnValue(null);
-    // nextFunc would be non-null only if module is found — in test env modules={} so null
-    // The navigate effect: nextFunc null → no navigation → no error
     await act(async () => {
       renderHook(() => useCurrentComponent());
     });
-    // No crash is the expectation here
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
@@ -197,7 +191,6 @@ describe('useCurrentComponent', () => {
     mockParams = { studyId: 'test-study', index: '2', funcIndex: '0' };
     mockSearchParams = new URLSearchParams('currentTrial=myFunc_2_C_0');
     mockAnswers = { myFunc_2_C_0: { trialOrder: '2_0' } };
-    // parseTrialOrder returns step=2, funcIndex=null → navigate to strip funcIndex
     vi.mocked(parseTrialOrder).mockReturnValue({ step: 2, funcIndex: null });
     vi.mocked(decryptIndex).mockReturnValue(0);
     mockFlatSequence = ['myFunc', 'x', 'end'];
@@ -237,7 +230,7 @@ describe('useCurrentIdentifier', () => {
   test('returns identifier with funcIndex when funcIndex is set', () => {
     mockParams = { studyId: 'test-study', index: '0', funcIndex: '0' };
     mockFlatSequence = ['intro', 'end'];
-    vi.mocked(getComponent).mockReturnValue('intro' as never);
+    vi.mocked(getComponent).mockReturnValue({ type: 'markdown', path: '/test.md', response: [] } as IndividualComponent);
     vi.mocked(decryptIndex).mockReturnValue(0);
     const { result } = renderHook(() => useCurrentIdentifier());
     expect(result.current).toBe('intro_0_intro_0');
@@ -246,7 +239,7 @@ describe('useCurrentIdentifier', () => {
   test('returns short identifier without funcIndex', () => {
     mockParams = { studyId: 'test-study', index: '0' };
     mockFlatSequence = ['intro', 'end'];
-    vi.mocked(getComponent).mockReturnValue('intro' as never);
+    vi.mocked(getComponent).mockReturnValue({ type: 'markdown', path: '/test.md', response: [] } as IndividualComponent);
     const { result } = renderHook(() => useCurrentIdentifier());
     expect(result.current).toBe('intro_0');
   });
