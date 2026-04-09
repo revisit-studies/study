@@ -57,9 +57,10 @@ vi.mock('@mantine/core', () => ({
   Box: ({ children, component, onSubmit }: { children: ReactNode; component?: string; onSubmit?: React.FormEventHandler }) => (
     component === 'form' ? <form onSubmit={onSubmit}>{children}</form> : <div>{children}</div>
   ),
-  Button: ({ children, onClick, type }: { children: ReactNode; onClick?: () => void; type?: string }) => (
-    // eslint-disable-next-line react/button-has-type
-    <button type={(type as 'button' | 'submit' | 'reset') ?? 'button'} onClick={onClick}>{children}</button>
+  Button: ({
+    children, onClick, type,
+  }: { children: ReactNode; onClick?: () => void; type?: 'button' | 'submit' | 'reset' }) => (
+    <button type={type === 'submit' ? 'submit' : 'button'} onClick={onClick}>{children}</button>
   ),
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Container: ({ children }: { children: ReactNode }) => <div>{children}</div>,

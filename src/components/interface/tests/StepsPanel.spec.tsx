@@ -5,8 +5,9 @@ import {
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
-import type { StudyConfig } from '../../../parser/types';
+import type { Answer, NumericalResponse } from '../../../parser/types';
 import { Sequence, StoredAnswer } from '../../../store/types';
+import { makeStudyConfig, makeStoredAnswer } from '../../../tests/utils';
 import { getDynamicComponentsForBlock } from '../StepsPanel.utils';
 import { StepsPanel } from '../StepsPanel';
 
@@ -97,24 +98,10 @@ const minimalSequence: Sequence = {
   skip: [],
 };
 
-const minimalStudyConfig = {
-  $schema: '',
-  studyMetadata: {
-    title: 'Test Study',
-    version: '1.0',
-    authors: [],
-    date: '2024-01-01',
-    description: '',
-    organizations: [],
-  },
+const minimalStudyConfig = makeStudyConfig({
   uiConfig: {
-    contactEmail: 'test@test.com',
-    withProgressBar: false,
     withSidebar: true,
     sidebarWidth: 300,
-    studyEndMsg: '',
-    windowEventDebounceTime: 100,
-    navigationBar: 'sidebar',
     showTitleBar: true,
   },
   components: {
@@ -125,7 +112,7 @@ const minimalStudyConfig = {
     },
   },
   sequence: minimalSequence,
-} as unknown as StudyConfig;
+});
 
 afterEach(() => { cleanup(); });
 
@@ -168,25 +155,29 @@ describe('StepsPanel rendering', () => {
 
 describe('StepsPanel Show more/less buttons', () => {
   // correctAnswer with 7 keys produces 9-line JSON (> INITIAL_CLAMP=6)
-  const longCorrectAnswer = [
-    { id: 'q1', value: 1 },
-    { id: 'q2', value: 2 },
-    { id: 'q3', value: 3 },
-    { id: 'q4', value: 4 },
-    { id: 'q5', value: 5 },
-    { id: 'q6', value: 6 },
-    { id: 'q7', value: 7 },
+  const longCorrectAnswer: Answer[] = [
+    { id: 'q1', answer: 1 },
+    { id: 'q2', answer: 2 },
+    { id: 'q3', answer: 3 },
+    { id: 'q4', answer: 4 },
+    { id: 'q5', answer: 5 },
+    { id: 'q6', answer: 6 },
+    { id: 'q7', answer: 7 },
   ];
 
   // response array with enough items to exceed INITIAL_CLAMP lines
-  const longResponse = [
+  const longResponse: NumericalResponse[] = [
     { id: 'r1', type: 'numerical', prompt: 'A' },
     { id: 'r2', type: 'numerical', prompt: 'B' },
     { id: 'r3', type: 'numerical', prompt: 'C' },
   ];
 
-  const configWithLongAnswers = {
-    ...minimalStudyConfig,
+  const configWithLongAnswers = makeStudyConfig({
+    uiConfig: {
+      withSidebar: true,
+      sidebarWidth: 300,
+      showTitleBar: true,
+    },
     components: {
       intro: {
         type: 'markdown',
@@ -195,19 +186,17 @@ describe('StepsPanel Show more/less buttons', () => {
         correctAnswer: longCorrectAnswer,
       },
     },
-  } as unknown as StudyConfig;
+    sequence: minimalSequence,
+  });
 
-  const participantAnswer = {
+  const participantAnswer = makeStoredAnswer({
     answer: { q1: 1 },
     identifier: 'intro_0',
     componentName: 'intro',
     trialOrder: 'root_0',
-    incorrectAnswers: {},
     startTime: 0,
     endTime: 100,
-    provenanceGraph: {},
-    windowEvents: [],
-  } as unknown as StoredAnswer;
+  });
 
   test('renders Show more button when correctAnswer JSON exceeds INITIAL_CLAMP', async () => {
     const { getAllByRole } = await act(async () => render(
@@ -313,18 +302,15 @@ describe('StepsPanel NavLink click handler', () => {
   });
 
   test('renders with component having parameters in answer', async () => {
-    const answerWithParams = {
+    const answerWithParams = makeStoredAnswer({
       answer: { q1: 1 },
       identifier: 'intro_0',
       componentName: 'intro',
       trialOrder: 'root_0',
-      incorrectAnswers: {},
       startTime: 0,
       endTime: 100,
-      provenanceGraph: {},
-      windowEvents: [],
       parameters: { key: 'val' },
-    } as unknown as StoredAnswer;
+    });
 
     const { container } = await act(async () => render(
       <StepsPanel
@@ -337,17 +323,22 @@ describe('StepsPanel NavLink click handler', () => {
   });
 
   test('renders with component having parameters in config', async () => {
-    const configWithParams = {
-      ...minimalStudyConfig,
+    const configWithParams = makeStudyConfig({
+      uiConfig: {
+        withSidebar: true,
+        sidebarWidth: 300,
+        showTitleBar: true,
+      },
       components: {
         intro: {
-          type: 'markdown',
-          path: 'intro.md',
+          type: 'react-component',
+          path: 'intro.tsx',
           response: [],
           parameters: { key: 'val' },
         },
       },
-    } as unknown as StudyConfig;
+      sequence: minimalSequence,
+    });
 
     const { container } = await act(async () => render(
       <StepsPanel
@@ -380,8 +371,12 @@ describe('StepsPanel random order rendering', () => {
   });
 
   test('renders with randomized response options (covers hasRandomization radio/matrix paths)', async () => {
-    const configWithRandomization = {
-      ...minimalStudyConfig,
+    const configWithRandomization = makeStudyConfig({
+      uiConfig: {
+        withSidebar: true,
+        sidebarWidth: 300,
+        showTitleBar: true,
+      },
       components: {
         intro: {
           type: 'markdown',
@@ -391,12 +386,13 @@ describe('StepsPanel random order rendering', () => {
               id: 'r1', type: 'radio', prompt: 'Q1', options: ['A', 'B'], optionOrder: 'random',
             },
             {
-              id: 'r2', type: 'matrix-radio', prompt: 'Q2', options: ['A', 'B'], questions: [], questionOrder: 'random',
+              id: 'r2', type: 'matrix-radio', prompt: 'Q2', answerOptions: ['A', 'B'], questionOptions: ['Q1'], questionOrder: 'random',
             },
           ],
         },
       },
-    } as unknown as StudyConfig;
+      sequence: minimalSequence,
+    });
 
     const { container } = await act(async () => render(
       <StepsPanel
@@ -413,8 +409,12 @@ describe('StepsPanel random order rendering', () => {
 
 describe('StepsPanel excluded blocks and components', () => {
   // Study config: block1 has ['intro', 'survey'], participant only has ['intro']
-  const studyConfigWithExtraComponents = {
-    ...minimalStudyConfig,
+  const studyConfigWithExtraComponents = makeStudyConfig({
+    uiConfig: {
+      withSidebar: true,
+      sidebarWidth: 300,
+      showTitleBar: true,
+    },
     sequence: {
       id: 'root',
       orderPath: 'root',
@@ -434,7 +434,7 @@ describe('StepsPanel excluded blocks and components', () => {
       intro: { type: 'markdown', path: 'intro.md', response: [] },
       survey: { type: 'markdown', path: 'survey.md', response: [] },
     },
-  } as unknown as import('../../../parser/types').StudyConfig;
+  });
 
   const participantWithExcludedComponent: Sequence = {
     id: 'root',
@@ -464,8 +464,12 @@ describe('StepsPanel excluded blocks and components', () => {
   });
 
   // Study config: block1 has [nested1, nested2 (excluded)]
-  const studyConfigWithExcludedBlock = {
-    ...minimalStudyConfig,
+  const studyConfigWithExcludedBlock = makeStudyConfig({
+    uiConfig: {
+      withSidebar: true,
+      sidebarWidth: 300,
+      showTitleBar: true,
+    },
     sequence: {
       id: 'root',
       orderPath: 'root',
@@ -500,7 +504,7 @@ describe('StepsPanel excluded blocks and components', () => {
       intro: { type: 'markdown', path: 'intro.md', response: [] },
       survey: { type: 'markdown', path: 'survey.md', response: [] },
     },
-  } as unknown as import('../../../parser/types').StudyConfig;
+  });
 
   const participantWithExcludedBlock: Sequence = {
     id: 'root',
@@ -539,8 +543,12 @@ describe('StepsPanel excluded blocks and components', () => {
   });
 
   // Excluded block with a nested sub-block
-  const studyConfigWithNestedExcludedBlock = {
-    ...minimalStudyConfig,
+  const studyConfigWithNestedExcludedBlock = makeStudyConfig({
+    uiConfig: {
+      withSidebar: true,
+      sidebarWidth: 300,
+      showTitleBar: true,
+    },
     sequence: {
       id: 'root',
       orderPath: 'root',
@@ -565,6 +573,7 @@ describe('StepsPanel excluded blocks and components', () => {
               components: [
                 {
                   id: 'deepBlock',
+                  orderPath: 'root-block1-nested2-deepBlock',
                   order: 'fixed',
                   components: ['survey'],
                   skip: [],
@@ -582,7 +591,7 @@ describe('StepsPanel excluded blocks and components', () => {
       intro: { type: 'markdown', path: 'intro.md', response: [] },
       survey: { type: 'markdown', path: 'survey.md', response: [] },
     },
-  } as unknown as import('../../../parser/types').StudyConfig;
+  });
 
   test('excluded block with nested sub-block children', async () => {
     const { container } = await act(async () => render(

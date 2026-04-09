@@ -7,6 +7,7 @@ import {
 } from 'vitest';
 import { ParticipantRejectModal } from '../individualStudy/ParticipantRejectModal';
 import { ParticipantData } from '../../storage/types';
+import { makeParticipant as _makeParticipant } from '../../tests/utils';
 
 let mockUser: { isAdmin: boolean };
 let mockStorageEngine: {
@@ -64,19 +65,12 @@ vi.mock('@tabler/icons-react', () => ({
   IconAlertTriangle: () => <span>warning</span>,
 }));
 
-const makeParticipant = (participantId: string, rejected: ParticipantData['rejected'] = false): ParticipantData => ({
-  participantId,
-  participantConfigHash: 'hash',
-  sequence: {} as ParticipantData['sequence'],
-  participantIndex: 0,
-  answers: {},
-  searchParams: {},
-  metadata: {} as ParticipantData['metadata'],
-  completed: false,
-  rejected,
-  participantTags: [],
-  stage: 'DEFAULT',
-});
+function makeParticipant(overrides: Partial<ParticipantData> = {}): ParticipantData {
+  return _makeParticipant({
+    participantConfigHash: 'hash',
+    ...overrides,
+  });
+}
 
 describe('ParticipantRejectModal', () => {
   beforeEach(() => {
@@ -95,7 +89,7 @@ describe('ParticipantRejectModal', () => {
   });
 
   test('shows Reject button for non-rejected participant', async () => {
-    const participants = [makeParticipant('p1')];
+    const participants = [makeParticipant({ participantId: 'p1' })];
     await act(async () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
@@ -103,7 +97,7 @@ describe('ParticipantRejectModal', () => {
   });
 
   test('shows Undo Reject button for rejected participant', async () => {
-    const participants = [makeParticipant('p1', { reason: 'test', timestamp: 0 })];
+    const participants = [makeParticipant({ participantId: 'p1', rejected: { reason: 'test', timestamp: 0 } })];
     await act(async () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
@@ -112,8 +106,8 @@ describe('ParticipantRejectModal', () => {
 
   test('shows both buttons when participants have mixed rejected status', async () => {
     const participants = [
-      makeParticipant('p1'),
-      makeParticipant('p2', { reason: 'test', timestamp: 0 }),
+      makeParticipant({ participantId: 'p1' }),
+      makeParticipant({ participantId: 'p2', rejected: { reason: 'test', timestamp: 0 } }),
     ];
     await act(async () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
@@ -124,7 +118,7 @@ describe('ParticipantRejectModal', () => {
 
   test('Reject button is disabled when user is not admin', async () => {
     mockUser = { isAdmin: false };
-    const participants = [makeParticipant('p1')];
+    const participants = [makeParticipant({ participantId: 'p1' })];
     await act(async () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
@@ -133,7 +127,7 @@ describe('ParticipantRejectModal', () => {
   });
 
   test('opens reject modal when Reject button clicked', async () => {
-    const participants = [makeParticipant('p1')];
+    const participants = [makeParticipant({ participantId: 'p1' })];
     await act(async () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
@@ -144,7 +138,7 @@ describe('ParticipantRejectModal', () => {
   });
 
   test('calls rejectParticipant when reject confirmed', async () => {
-    const participants = [makeParticipant('p1')];
+    const participants = [makeParticipant({ participantId: 'p1' })];
     await act(async () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
@@ -158,7 +152,7 @@ describe('ParticipantRejectModal', () => {
   });
 
   test('opens undo reject modal when Undo Reject clicked', async () => {
-    const participants = [makeParticipant('p1', { reason: 'test', timestamp: 0 })];
+    const participants = [makeParticipant({ participantId: 'p1', rejected: { reason: 'test', timestamp: 0 } })];
     await act(async () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
@@ -169,7 +163,7 @@ describe('ParticipantRejectModal', () => {
   });
 
   test('calls undoRejectParticipant when undo confirmed', async () => {
-    const participants = [makeParticipant('p1', { reason: 'done', timestamp: 0 })];
+    const participants = [makeParticipant({ participantId: 'p1', rejected: { reason: 'done', timestamp: 0 } })];
     await act(async () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });

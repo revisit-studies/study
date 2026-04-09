@@ -8,7 +8,7 @@ import {
   studyStoreCreator, useAreResponsesValid, useFlatSequence, useStoreActions, StudyStoreContext,
 } from './store';
 import type { ResponseBlockLocation, StudyConfig } from '../parser/types';
-import type { Sequence } from './types';
+import type { Sequence, StoredAnswer } from './types';
 import type { ParticipantData } from '../storage/types';
 import type { REVISIT_MODE } from '../storage/engines/types';
 import { makeStoredAnswer } from '../tests/utils';
@@ -422,12 +422,12 @@ describe('studyStoreCreator', () => {
 
   test('saveIncorrectAnswer initializes incorrectAnswers when missing', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
-    const answerWithoutIncorrect = makeStoredAnswer({
+    const fullAnswer = makeStoredAnswer({
       identifier: 'intro_0', componentName: 'intro', answer: {}, startTime: 0, endTime: 100, trialOrder: '0',
     });
     // Simulates old config import where incorrectAnswers was not present
-    delete (answerWithoutIncorrect as { incorrectAnswers?: unknown }).incorrectAnswers;
-    store.dispatch(actions.saveTrialAnswer(answerWithoutIncorrect));
+    const { incorrectAnswers: _, ...answerWithoutIncorrect } = fullAnswer;
+    store.dispatch(actions.saveTrialAnswer(answerWithoutIncorrect as StoredAnswer));
     store.dispatch(actions.saveIncorrectAnswer({ question: 'intro_0', identifier: 'attempt_1', answer: 'wrong' }));
     expect(store.getState().answers.intro_0?.incorrectAnswers?.attempt_1?.value).toContain('wrong');
   });

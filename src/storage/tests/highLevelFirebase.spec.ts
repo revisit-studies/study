@@ -249,7 +249,7 @@ const conditionalLatinSquareConfig: StudyConfig = {
     version: '1.0.0',
     authors: ['Test Author'],
     description: 'A study config for testing conditional latin square balancing.',
-    date: '2026-02-23',
+    date: '2026-04-08',
     organizations: ['Test Organization'],
   },
   uiConfig: {

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import type { StudyConfig } from '../../parser/types';
 import type { ParticipantData } from '../types';
 import { calculateProgressData, isCloudStorageEngine } from './utils';
-import { makeStorageEngine } from '../../tests/utils';
+import { makeStorageEngine, makeStoredAnswer, makeStudyConfig } from '../../tests/utils';
 
 describe('isCloudStorageEngine', () => {
   test('returns false when engine is undefined', () => {
@@ -20,27 +20,14 @@ describe('isCloudStorageEngine', () => {
   });
 });
 
-const makeAnswer = (componentName: string, endTime = 1000): ParticipantData['answers'][string] => ({
+const makeAnswer = (componentName: string, endTime = 1000): StoredAnswer => makeStoredAnswer({
   componentName,
-  trialOrder: '0',
   identifier: `${componentName}_0`,
-  answer: {},
-  incorrectAnswers: {},
-  startTime: 0,
   endTime,
-  windowEvents: [],
-  timedOut: false,
-  provenanceGraph: {} as ParticipantData['answers'][string]['provenanceGraph'],
-} as Partial<ParticipantData['answers'][string]> as ParticipantData['answers'][string]);
+});
 
-const makeConfig = (componentKeys: string[]): StudyConfig => ({
-  $schema: '',
-  studyMetadata: {} as StudyConfig['studyMetadata'],
-  sequence: { order: 'fixed', components: [] } as StudyConfig['sequence'],
-  uiConfig: {
-    logoPath: '', contactEmail: '', withProgressBar: false, withSidebar: false,
-  },
-  components: Object.fromEntries(componentKeys.map((k) => [k, {} as StudyConfig['components'][string]])),
+const makeConfig = (componentKeys: string[]): StudyConfig => makeStudyConfig({
+  components: Object.fromEntries(componentKeys.map((k) => [k, {} as Partial<StudyConfig['components'][string]>])),
 });
 
 describe('calculateProgressData', () => {

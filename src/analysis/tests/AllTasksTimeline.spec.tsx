@@ -8,6 +8,7 @@ import { StudyConfig } from '../../parser/types';
 import { ParticipantData } from '../../storage/types';
 import type { StoredAnswer } from '../../store/types';
 import { createMockStudyConfig } from './testUtils';
+import { makeStoredAnswer, makeParticipant as _makeParticipant } from '../../tests/utils';
 import { AllTasksTimeline } from '../individualStudy/replay/AllTasksTimeline';
 import { SingleTask } from '../individualStudy/replay/SingleTask';
 import { SingleTaskLabelLines } from '../individualStudy/replay/SingleTaskLabelLines';
@@ -55,47 +56,22 @@ vi.mock('../../utils/handleConditionLogic', () => ({
 const t0 = 1_700_000_000_000;
 
 function makeAnswer(overrides: Partial<StoredAnswer> = {}): StoredAnswer {
-  return {
-    answer: {},
-    identifier: '',
+  return makeStoredAnswer({
     componentName: 'trial1',
     trialOrder: '0_0',
-    incorrectAnswers: {},
     startTime: t0,
     endTime: t0 + 10_000,
-    provenanceGraph: {} as StoredAnswer['provenanceGraph'],
-    windowEvents: [],
-    timedOut: false,
-    helpButtonClickedCount: 0,
-    parameters: {},
-    correctAnswer: [],
-    optionOrders: {},
-    questionOrders: {},
     ...overrides,
-  };
+  });
 }
 
-function makeParticipant(overrides: Partial<ParticipantData> & { answers?: Record<string, StoredAnswer> } = {}): ParticipantData {
-  return {
+function makeParticipant(overrides: Partial<ParticipantData> & { answers?: Record<string, StoredAnswer> } = {}) {
+  return _makeParticipant({
     participantId: 'pid-1',
     participantConfigHash: 'hash-1',
-    sequence: {
-      id: 'root', order: 'fixed', orderPath: 'root', components: [], skip: [],
-    },
-    participantIndex: 0,
-    answers: {
-      trial1_0: makeAnswer(),
-    },
-    searchParams: {},
-    metadata: {
-      userAgent: '', resolution: { width: 0, height: 0 }, language: '', ip: '',
-    },
-    completed: false,
-    rejected: false,
-    participantTags: [],
-    stage: 'DEFAULT',
+    answers: { trial1_0: makeAnswer() },
     ...overrides,
-  };
+  });
 }
 
 const emptyConfig: StudyConfig = createMockStudyConfig();

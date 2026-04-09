@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { parseStringOption, parseStringOptionValue, parseStringOptions } from '../stringOptions';
 
 describe('stringOptions', () => {
-  it('fills missing option values with labels', () => {
+  test('fills missing option values with labels', () => {
     expect(parseStringOption({ label: 'Bar' })).toEqual({ label: 'Bar', value: 'Bar' });
 
     expect(parseStringOption({ label: 'Line', infoText: 'Trend chart' })).toEqual({
@@ -12,11 +12,11 @@ describe('stringOptions', () => {
     });
   });
 
-  it('preserves explicit option values', () => {
+  test('preserves explicit option values', () => {
     expect(parseStringOption({ label: 'Bar', value: 'bar-value' })).toEqual({ label: 'Bar', value: 'bar-value' });
   });
 
-  it('preserves infoText for single option normalization', () => {
+  test('preserves infoText for single option normalization', () => {
     expect(parseStringOption({ label: 'Bar', infoText: 'Helpful details' })).toEqual({
       label: 'Bar',
       value: 'Bar',
@@ -29,7 +29,7 @@ describe('stringOptions', () => {
     });
   });
 
-  it('normalizes option arrays and string values', () => {
+  test('normalizes option arrays and string values', () => {
     expect(parseStringOptions(['A', { label: 'B' }])).toEqual([
       { label: 'A', value: 'A' },
       { label: 'B', value: 'B' },
@@ -37,7 +37,7 @@ describe('stringOptions', () => {
     expect(parseStringOptionValue({ label: 'Question 1' })).toBe('Question 1');
   });
 
-  it('preserves infoText in normalized option arrays', () => {
+  test('preserves infoText in normalized option arrays', () => {
     expect(parseStringOptions([
       { label: 'A', infoText: 'Info A' },
       { label: 'B', value: 'b-value', infoText: 'Info B' },

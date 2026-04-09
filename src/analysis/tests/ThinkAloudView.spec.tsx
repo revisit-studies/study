@@ -8,8 +8,9 @@ import {
 } from 'vitest';
 import * as d3 from 'd3';
 import { useParams, useSearchParams } from 'react-router';
-import { EditedText, Tag } from '../individualStudy/thinkAloud/types';
+import { EditedText, Tag, TranscribedAudio } from '../individualStudy/thinkAloud/types';
 import type { ParticipantData } from '../../storage/types';
+import { makeStoredAnswer as makeStoredAnswerBase, makeStorageEngine } from '../../tests/utils';
 import type { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { useAsync } from '../../store/hooks/useAsync';
 import { Pills } from '../individualStudy/thinkAloud/tags/Pills';
@@ -240,7 +241,7 @@ function makeTag(overrides: Partial<Tag> = {}): Tag {
   };
 }
 
-const mockStorageEngine = {} as FirebaseStorageEngine;
+const mockStorageEngine = makeStorageEngine() as unknown as FirebaseStorageEngine;
 
 afterEach(() => { cleanup(); });
 
@@ -368,24 +369,7 @@ const baseParticipant: ParticipantData = {
 const mockParticipant = baseParticipant;
 
 function makeStoredAnswer(overrides: Partial<ParticipantData['answers'][string]> = {}): ParticipantData['answers'][string] {
-  return {
-    answer: {},
-    identifier: '',
-    componentName: '',
-    trialOrder: '0_null',
-    incorrectAnswers: {},
-    startTime: 0,
-    endTime: 0,
-    provenanceGraph: {} as ParticipantData['answers'][string]['provenanceGraph'],
-    windowEvents: [],
-    timedOut: false,
-    helpButtonClickedCount: 0,
-    parameters: {},
-    correctAnswer: [],
-    optionOrders: {},
-    questionOrders: {},
-    ...overrides,
-  };
+  return makeStoredAnswerBase({ trialOrder: '0_null', ...overrides });
 }
 
 const mockParticipantFull: ParticipantData = {
@@ -547,7 +531,7 @@ describe('ThinkAloudFooter', () => {
 
   test('fetchAssetsUrl effect runs when storageEngine provided', async () => {
     await act(async () => render(
-      <RealThinkAloudFooter {...footerDefaultProps} storageEngine={mockFooterStorageEngine as never} />,
+      <RealThinkAloudFooter {...footerDefaultProps} storageEngine={makeStorageEngine(mockFooterStorageEngine)} />,
     ));
     expect(mockFooterStorageEngine.getAudioUrl).toHaveBeenCalled();
     expect(mockFooterStorageEngine.getScreenRecording).toHaveBeenCalled();
@@ -576,7 +560,7 @@ describe('ThinkAloudFooter', () => {
 
   test('handleDownloadAudio covered when storageEngine provided', async () => {
     await act(async () => render(
-      <RealThinkAloudFooter {...footerDefaultProps} storageEngine={mockFooterStorageEngine as never} />,
+      <RealThinkAloudFooter {...footerDefaultProps} storageEngine={makeStorageEngine(mockFooterStorageEngine)} />,
     ));
     // fetchAssetsUrl effect fetches audio/screen URLs
     expect(mockFooterStorageEngine.getAudioUrl).toHaveBeenCalled();
@@ -606,7 +590,7 @@ describe('ThinkAloudFooter', () => {
       },
     };
     vi.mocked(useAsync).mockReturnValueOnce({
-      value: mockParticipantWithAnswers as never, status: 'success', execute: vi.fn(), error: null,
+      value: mockParticipantWithAnswers as unknown as ParticipantData, status: 'success', execute: vi.fn(), error: null,
     }).mockReturnValue({
       value: null, status: 'success', execute: vi.fn(), error: null,
     });
@@ -641,7 +625,7 @@ describe('ThinkAloudFooter', () => {
       error: null,
     }));
     const { getAllByRole } = await act(async () => render(
-      <RealThinkAloudFooter {...footerDefaultProps} storageEngine={mockFooterStorageEngine as never} />,
+      <RealThinkAloudFooter {...footerDefaultProps} storageEngine={makeStorageEngine(mockFooterStorageEngine)} />,
     ));
     const selectTagsBtns = getAllByRole('button').filter((b) => b.textContent === 'select-tags');
     if (selectTagsBtns[0]) {
@@ -659,7 +643,7 @@ describe('ThinkAloudFooter', () => {
       error: null,
     }));
     const { getAllByRole } = await act(async () => render(
-      <RealThinkAloudFooter {...footerDefaultProps} storageEngine={mockFooterStorageEngine as never} />,
+      <RealThinkAloudFooter {...footerDefaultProps} storageEngine={makeStorageEngine(mockFooterStorageEngine)} />,
     ));
     const selectTagsBtns = getAllByRole('button').filter((b) => b.textContent === 'select-tags');
     const taskTagsBtn = selectTagsBtns[selectTagsBtns.length - 1];
@@ -679,7 +663,7 @@ describe('ThinkAloudFooter', () => {
       error: null,
     }));
     const { getAllByRole } = await act(async () => render(
-      <RealThinkAloudFooter {...footerDefaultProps} storageEngine={mockFooterStorageEngine as never} />,
+      <RealThinkAloudFooter {...footerDefaultProps} storageEngine={makeStorageEngine(mockFooterStorageEngine)} />,
     ));
     const editBtns = getAllByRole('button').filter((b) => b.textContent === 'edit-tag');
     await act(async () => { editBtns.forEach((btn) => { fireEvent.click(btn); }); });
@@ -699,7 +683,7 @@ describe('ThinkAloudFooter', () => {
       },
     };
     vi.mocked(useAsync).mockReturnValueOnce({
-      value: mockParticipantWithAnswers as never, status: 'success', execute: vi.fn(), error: null,
+      value: mockParticipantWithAnswers as unknown as ParticipantData, status: 'success', execute: vi.fn(), error: null,
     }).mockReturnValue({
       value: null, status: 'success', execute: vi.fn(), error: null,
     });
@@ -713,19 +697,21 @@ describe('ThinkAloudFooter', () => {
   });
 
   test('editedTranscript mapping effect processes transcript data without crashing', async () => {
-    const editedTranscript = [
+    const editedTranscript: EditedText[] = [
       {
         text: 'hello', selectedTags: [], annotation: '', transcriptMappingStart: 0, transcriptMappingEnd: 0,
       },
     ];
-    const rawTranscript = {
-      results: [{ resultEndTime: 1.5, alternatives: [{ transcript: 'hello' }] }],
+    const rawTranscript: TranscribedAudio = {
+      results: [{
+        resultEndTime: 1.5, alternatives: [{ transcript: 'hello', confidence: 1 }], languageCode: 'en',
+      }],
     };
     const { container } = await act(async () => render(
       <RealThinkAloudFooter
         {...footerDefaultProps}
-        editedTranscript={editedTranscript as never}
-        rawTranscript={rawTranscript as never}
+        editedTranscript={editedTranscript}
+        rawTranscript={rawTranscript}
       />,
     ));
     // The effect runs and maps editedTranscript + rawTranscript into transcriptLines

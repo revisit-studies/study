@@ -8,6 +8,7 @@ import {
 } from 'vitest';
 import * as d3 from 'd3';
 import { TrrackedProvenance } from '../../store/types';
+import { makeStoredAnswer } from '../../tests/utils';
 import { AudioProvenanceVis } from './AudioProvenanceVis';
 import { syncEmitter } from '../../utils/syncReplay';
 
@@ -29,7 +30,7 @@ vi.mock('@mantine/core', () => ({
 
 vi.mock('@mantine/hooks', () => ({
   useResizeObserver: () => [{ current: null }, { width: 500 }],
-  useThrottledCallback: (fn: (...args: never[]) => void) => fn,
+  useThrottledCallback: (fn: (...args: unknown[]) => unknown) => fn,
 }));
 
 vi.mock('react-router', () => ({
@@ -66,7 +67,7 @@ vi.mock('../../utils/humanReadableDuration', () => ({
 }));
 
 vi.mock('../../store/hooks/useEvent', () => ({
-  useEvent: (fn: (...args: never[]) => void) => fn,
+  useEvent: (fn: (...args: unknown[]) => unknown) => fn,
 }));
 
 vi.mock('../../utils/encryptDecryptIndex', () => ({
@@ -119,8 +120,7 @@ vi.mock('@trrack/core', () => {
 
 let RealTaskProvenanceTimeline: typeof import('./TaskProvenanceTimeline').TaskProvenanceTimeline;
 let RealTimer: typeof import('./Timer').Timer;
-type UpdateProvenanceFn = (location: string, playTime: number, provGraph: TrrackedProvenance | undefined, currentNode: string | undefined, setCurrentNode: (...args: never[]) => void, saveProvenance: ((...args: never[]) => void) | undefined) => void;
-let RealUseUpdateProvenance: UpdateProvenanceFn;
+let RealUseUpdateProvenance: typeof import('./useUpdateProvenance').useUpdateProvenance;
 
 beforeAll(async () => {
   RealTaskProvenanceTimeline = ((await vi.importActual('./TaskProvenanceTimeline')) as { TaskProvenanceTimeline: typeof import('./TaskProvenanceTimeline').TaskProvenanceTimeline }).TaskProvenanceTimeline;
@@ -184,7 +184,7 @@ describe('TaskProvenanceTimeline', () => {
   });
 
   test('skips null provenanceGraph entries gracefully', () => {
-    const answers = { trial_0: { endTime: 5000, startTime: 0, provenanceGraph: { vis: null } } } as never;
+    const answers = { trial_0: makeStoredAnswer({ endTime: 5000, startTime: 0 }) };
     const html = renderToStaticMarkup(
       <RealTaskProvenanceTimeline xScale={xScale} answers={answers} width={500} height={50} currentNode={null} trialName="trial_0" startTime={0} margin={margin} />,
     );
@@ -332,42 +332,30 @@ const defaultProps = {
 };
 
 const answersWithTask = {
-  trial_0: {
+  trial_0: makeStoredAnswer({
     startTime: 1000,
     endTime: 6000,
-    answer: {},
-    provenanceGraph: {
-      aboveStimulus: null, belowStimulus: null, sidebar: null, stimulus: null,
-    },
-    windowEvents: [],
-    trialOrder: '0',
-    conditions: [],
-  },
-} as never;
+  }),
+};
+
+const stimulusGraph: TrrackedProvenance = {
+  current: 'root-id',
+  root: 'root-id',
+  nodes: { 'root-id': makeNode('root-id', undefined, 500) },
+} as TrrackedProvenance;
 
 const answersWithStimulus = {
-  trial_0: {
+  trial_0: makeStoredAnswer({
     startTime: 1000,
     endTime: 6000,
-    answer: {},
     provenanceGraph: {
-      aboveStimulus: null,
-      belowStimulus: null,
-      sidebar: null,
-      stimulus: {
-        root: 'root-id',
-        nodes: {
-          'root-id': {
-            id: 'root-id', children: [], parent: null, createdOn: 500,
-          },
-        },
-      },
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      sidebar: undefined,
+      stimulus: stimulusGraph,
     },
-    windowEvents: [],
-    trialOrder: '0',
-    conditions: [],
-  },
-} as never;
+  }),
+};
 
 describe('AudioProvenanceVis', () => {
   test('renders wavesurfer element', async () => {

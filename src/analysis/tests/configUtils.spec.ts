@@ -14,27 +14,29 @@ const configSimple = testConfigSimple as StudyConfig;
 const configSimple2 = testConfigSimple2 as StudyConfig;
 type VisibleParticipant = Parameters<typeof buildConfigRows>[1][number];
 
-function makeConfigInfo(hashKey: string, version: string): ConfigInfo {
+function makeConfigInfo(overrides: Partial<ConfigInfo> = {}): ConfigInfo {
   return {
-    hash: hashKey,
-    version,
-    date: '2026-02-23',
+    hash: 'default-hash',
+    version: '1.0.0',
+    date: '2026-04-08',
     timeFrame: 'N/A',
     participantCount: 1,
     config: {
       studyMetadata: {
-        version,
-        date: '2026-02-23',
+        version: '1.0.0',
+        date: '2026-04-08',
       },
     } as ConfigInfo['config'],
+    ...overrides,
   };
 }
 
-function makeParticipant(configHash: string): VisibleParticipant {
+function makeParticipant(overrides: Partial<VisibleParticipant> = {}): VisibleParticipant {
   return {
-    participantConfigHash: configHash,
+    participantConfigHash: 'default-hash',
     answers: {},
     rejected: false,
+    ...overrides,
   };
 }
 
@@ -51,9 +53,9 @@ describe('analysis config tests', () => {
       [configHash2]: configSimple2,
     };
     const participants: VisibleParticipant[] = [
-      makeParticipant(configHash1),
-      makeParticipant(configHash2),
-      makeParticipant(configHash2),
+      makeParticipant({ participantConfigHash: configHash1 }),
+      makeParticipant({ participantConfigHash: configHash2 }),
+      makeParticipant({ participantConfigHash: configHash2 }),
     ];
 
     const rows = buildConfigRows(fetchedConfigs, participants);
@@ -86,9 +88,9 @@ describe('analysis config tests', () => {
       [configHash2]: configSimple2,
     };
     const participants: VisibleParticipant[] = [
-      makeParticipant(configHash1),
-      makeParticipant(configHash2),
-      makeParticipant(configHash2),
+      makeParticipant({ participantConfigHash: configHash1 }),
+      makeParticipant({ participantConfigHash: configHash2 }),
+      makeParticipant({ participantConfigHash: configHash2 }),
     ];
 
     const onlyConfig2Participants = participants.filter(
@@ -144,12 +146,12 @@ describe('analysis config tests', () => {
 
   test('compare configs returns null when selected config count is not exactly 2', () => {
     const none = ConfigDiffModal({ configs: [] });
-    const one = ConfigDiffModal({ configs: [makeConfigInfo('hashA', '1.0.0')] });
+    const one = ConfigDiffModal({ configs: [makeConfigInfo({ hash: 'hashA', version: '1.0.0' })] });
     const three = ConfigDiffModal({
       configs: [
-        makeConfigInfo('hashA', '1.0.0'),
-        makeConfigInfo('hashB', '2.0.0'),
-        makeConfigInfo('hashC', '3.0.0'),
+        makeConfigInfo({ hash: 'hashA', version: '1.0.0' }),
+        makeConfigInfo({ hash: 'hashB', version: '2.0.0' }),
+        makeConfigInfo({ hash: 'hashC', version: '3.0.0' }),
       ],
     });
 
@@ -161,8 +163,8 @@ describe('analysis config tests', () => {
   test('compare configs returns a diff view when exactly two configs are selected', () => {
     const view = ConfigDiffModal({
       configs: [
-        makeConfigInfo('hashA', '1.0.0'),
-        makeConfigInfo('hashB', '2.0.0'),
+        makeConfigInfo({ hash: 'hashA', version: '1.0.0' }),
+        makeConfigInfo({ hash: 'hashB', version: '2.0.0' }),
       ],
     });
 

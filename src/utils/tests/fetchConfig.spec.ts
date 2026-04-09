@@ -29,7 +29,7 @@ describe('fetchConfig', () => {
           title: 'Test',
           version: '1',
           authors: [],
-          date: '2026-01-01',
+          date: '2026-04-08',
           description: '',
           organizations: [],
         },

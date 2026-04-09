@@ -10,7 +10,7 @@ function createBaseStudyConfig() {
       title: 'Custom Response Study',
       version: '1.0',
       authors: ['Test'],
-      date: '2026-03-18',
+      date: '2026-04-08',
       description: 'Test custom response parsing',
       organizations: ['Test Org'],
     },
@@ -70,8 +70,8 @@ describe('custom parser support', () => {
 
   it('rejects custom definitions without a path', async () => {
     const invalidConfig = createBaseStudyConfig();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (invalidConfig.components.customResponsePage.response[0] as any).path;
+    const { path: _, ...rest } = invalidConfig.components.customResponsePage.response[0];
+    invalidConfig.components.customResponsePage.response = [rest as typeof invalidConfig.components.customResponsePage.response[0]];
 
     const parsed = await parseStudyConfig(JSON.stringify(invalidConfig));
 

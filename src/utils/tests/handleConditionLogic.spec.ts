@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, test, expect } from 'vitest';
 import {
   parseConditionParam,
   resolveParticipantConditions,
@@ -8,27 +8,13 @@ import {
 } from '../handleConditionLogic';
 import { Sequence } from '../../store/types';
 import { ParticipantData } from '../../storage/types';
-import { QuestionnaireComponent, StudyConfig } from '../../parser/types';
+import { QuestionnaireComponent } from '../../parser/types';
+import { makeStudyConfig } from '../../tests/utils';
 
 const components = Object.fromEntries(Array(50).fill(0).map((_, idx) => [`component_${idx}`, { type: 'questionnaire', response: [] } as QuestionnaireComponent]));
 
-const config: StudyConfig = {
-  $schema: '',
-  studyMetadata: {
-    title: '',
-    version: '',
-    authors: [],
-    date: '',
-    description: '',
-    organizations: [],
-  },
-  uiConfig: {
-    logoPath: '',
-    contactEmail: '',
-    withProgressBar: true,
-    withSidebar: true,
-    numSequences: 100_000,
-  },
+const config = makeStudyConfig({
+  uiConfig: { numSequences: 100_000 },
   components,
   sequence: {
     order: 'fixed',
@@ -36,7 +22,7 @@ const config: StudyConfig = {
     skip: [],
     interruptions: [],
   },
-};
+});
 
 const participantData: ParticipantData = {
   participantId: 'participant-test-sequence-condition',
@@ -61,31 +47,31 @@ const participantData: ParticipantData = {
 };
 
 describe('parseConditionParam', () => {
-  it('should return empty array for undefined', () => {
+  test('should return empty array for undefined', () => {
     expect(parseConditionParam(undefined)).toEqual([]);
   });
 
-  it('should return empty array for null', () => {
+  test('should return empty array for null', () => {
     expect(parseConditionParam(null)).toEqual([]);
   });
 
-  it('should return empty array for empty string', () => {
+  test('should return empty array for empty string', () => {
     expect(parseConditionParam('')).toEqual([]);
   });
 
-  it('should parse a single condition string', () => {
+  test('should parse a single condition string', () => {
     expect(parseConditionParam('color')).toEqual(['color']);
   });
 
-  it('should parse comma-separated conditions', () => {
+  test('should parse comma-separated conditions', () => {
     expect(parseConditionParam('color,size')).toEqual(['color', 'size']);
   });
 
-  it('should trim whitespace around conditions', () => {
+  test('should trim whitespace around conditions', () => {
     expect(parseConditionParam('color , size , shape')).toEqual(['color', 'size', 'shape']);
   });
 
-  it('should filter out empty conditions', () => {
+  test('should filter out empty conditions', () => {
     expect(parseConditionParam('color,,size')).toEqual(['color', 'size']);
   });
 });
@@ -119,19 +105,19 @@ describe('filterSequenceByCondition', () => {
     skip: [],
   });
 
-  it('should return original sequence when no condition is specified', () => {
+  test('should return original sequence when no condition is specified', () => {
     const sequence = createTestSequence();
     const result = filterSequenceByCondition(sequence);
     expect(result).toEqual(sequence);
   });
 
-  it('should return original sequence when condition is null', () => {
+  test('should return original sequence when condition is null', () => {
     const sequence = createTestSequence();
     const result = filterSequenceByCondition(sequence, null);
     expect(result).toEqual(sequence);
   });
 
-  it('should filter to only matching condition (color)', () => {
+  test('should filter to only matching condition (color)', () => {
     const sequence = createTestSequence();
     const result = filterSequenceByCondition(sequence, 'color');
 
@@ -145,7 +131,7 @@ describe('filterSequenceByCondition', () => {
     expect(colorBlock.components).toEqual(['color-trial-1', 'color-trial-2']);
   });
 
-  it('should filter to only matching condition (size)', () => {
+  test('should filter to only matching condition (size)', () => {
     const sequence = createTestSequence();
     const result = filterSequenceByCondition(sequence, 'size');
 
@@ -159,7 +145,7 @@ describe('filterSequenceByCondition', () => {
     expect(sizeBlock.components).toEqual(['size-trial-1', 'size-trial-2']);
   });
 
-  it('should include multiple conditions with comma-separated string', () => {
+  test('should include multiple conditions with comma-separated string', () => {
     const sequence = createTestSequence();
     const result = filterSequenceByCondition(sequence, 'color,size');
 
@@ -176,7 +162,7 @@ describe('filterSequenceByCondition', () => {
     expect(sizeBlock.conditional).toBe(true);
   });
 
-  it('should include multiple conditions when passed as an array', () => {
+  test('should include multiple conditions when passed as an array', () => {
     const sequence = createTestSequence();
     const result = filterSequenceByCondition(sequence, ['color', 'size']);
 
@@ -191,7 +177,7 @@ describe('filterSequenceByCondition', () => {
     expect(sizeBlock.id).toBe('size');
   });
 
-  it('should exclude non-matching conditions', () => {
+  test('should exclude non-matching conditions', () => {
     const sequence = createTestSequence();
     const result = filterSequenceByCondition(sequence, 'unknown');
 
@@ -200,7 +186,7 @@ describe('filterSequenceByCondition', () => {
     expect(result.components[1]).toBe('outro');
   });
 
-  it('should exclude nested condition when parent condition does not match', () => {
+  test('should exclude nested condition when parent condition does not match', () => {
     const sequence: Sequence = {
       order: 'fixed',
       orderPath: '',
@@ -234,7 +220,7 @@ describe('filterSequenceByCondition', () => {
     expect(result.components[1]).toBe('outro');
   });
 
-  it('should throw when a conditional block is missing id', () => {
+  test('should throw when a conditional block is missing id', () => {
     const sequence: Sequence = {
       order: 'fixed',
       orderPath: '',
@@ -256,7 +242,7 @@ describe('filterSequenceByCondition', () => {
 });
 
 describe('resolveParticipantConditions', () => {
-  it('should use persisted participant conditions when URL override is disabled', () => {
+  test('should use persisted participant conditions when URL override is disabled', () => {
     const result = resolveParticipantConditions({
       urlCondition: 'shape',
       participantConditions: ['color'],
@@ -267,7 +253,7 @@ describe('resolveParticipantConditions', () => {
     expect(result).toEqual(['color']);
   });
 
-  it('should use persisted search param condition when participant conditions are missing', () => {
+  test('should use persisted search param condition when participant conditions are missing', () => {
     const result = resolveParticipantConditions({
       urlCondition: 'shape',
       participantConditions: undefined,
@@ -278,7 +264,7 @@ describe('resolveParticipantConditions', () => {
     expect(result).toEqual(['size']);
   });
 
-  it('should use URL condition when override is enabled', () => {
+  test('should use URL condition when override is enabled', () => {
     const result = resolveParticipantConditions({
       urlCondition: 'shape,color',
       participantConditions: ['size'],
@@ -289,7 +275,7 @@ describe('resolveParticipantConditions', () => {
     expect(result).toEqual(['shape', 'color']);
   });
 
-  it('should fall back to persisted condition when URL condition is empty with override enabled', () => {
+  test('should fall back to persisted condition when URL condition is empty with override enabled', () => {
     const result = resolveParticipantConditions({
       urlCondition: '',
       participantConditions: ['size'],
@@ -302,7 +288,7 @@ describe('resolveParticipantConditions', () => {
 });
 
 describe('getSequenceConditions', () => {
-  it('should return all unique conditions from a sequence', () => {
+  test('should return all unique conditions from a sequence', () => {
     const sequence: Sequence = {
       order: 'fixed',
       orderPath: '',
@@ -333,7 +319,7 @@ describe('getSequenceConditions', () => {
     expect(conditions).toHaveLength(2);
   });
 
-  it('should return empty array when no conditions exist', () => {
+  test('should return empty array when no conditions exist', () => {
     const sequence: Sequence = {
       order: 'fixed',
       orderPath: '',
@@ -345,7 +331,7 @@ describe('getSequenceConditions', () => {
     expect(conditions).toEqual([]);
   });
 
-  it('should return unique conditions (no duplicates)', () => {
+  test('should return unique conditions (no duplicates)', () => {
     const sequence: Sequence = {
       order: 'fixed',
       orderPath: '',
@@ -374,7 +360,7 @@ describe('getSequenceConditions', () => {
     expect(conditions).toEqual(['color']);
   });
 
-  it('should throw when a conditional block is missing id', () => {
+  test('should throw when a conditional block is missing id', () => {
     const sequence: Sequence = {
       order: 'fixed',
       orderPath: '',
@@ -396,7 +382,7 @@ describe('getSequenceConditions', () => {
 });
 
 describe('getConditionParticipantCounts', () => {
-  it('should count participants with no condition as default', () => {
+  test('should count participants with no condition as default', () => {
     const participants = [
       { ...participantData, participantId: 'participant-default', searchParams: {} as Record<string, string> },
       { ...participantData, participantId: 'participant-empty', searchParams: { condition: '' } },
@@ -407,7 +393,7 @@ describe('getConditionParticipantCounts', () => {
     });
   });
 
-  it('should count participants with single conditions', () => {
+  test('should count participants with single conditions', () => {
     const participants = [
       { ...participantData, participantId: 'participant-color', searchParams: { condition: 'color' } },
       { ...participantData, participantId: 'participant-size', searchParams: { condition: 'size' } },
@@ -419,7 +405,7 @@ describe('getConditionParticipantCounts', () => {
     });
   });
 
-  it('should count participants with multiple comma-separated conditions', () => {
+  test('should count participants with multiple comma-separated conditions', () => {
     const participants = [
       { ...participantData, participantId: 'participant-color-size', searchParams: { condition: 'color,size' } },
       { ...participantData, participantId: 'participant-size-shape', searchParams: { condition: 'size,shape' } },
@@ -432,11 +418,11 @@ describe('getConditionParticipantCounts', () => {
     });
   });
 
-  it('should return empty object for empty participant list', () => {
+  test('should return empty object for empty participant list', () => {
     expect(getConditionParticipantCounts([])).toEqual({});
   });
 
-  it('should prefer conditions over searchParams.condition', () => {
+  test('should prefer conditions over searchParams.condition', () => {
     const participants = [
       {
         ...participantData, participantId: 'participant-top-level', conditions: ['color'], searchParams: { condition: 'size' },
@@ -450,7 +436,7 @@ describe('getConditionParticipantCounts', () => {
     });
   });
 
-  it('should fall back to searchParams.condition when conditions are undefined', () => {
+  test('should fall back to searchParams.condition when conditions are undefined', () => {
     const participants = [
       {
         ...participantData, participantId: 'participant-no-top-level', conditions: undefined, searchParams: { condition: 'size' },
@@ -462,7 +448,7 @@ describe('getConditionParticipantCounts', () => {
     });
   });
 
-  it('should count conditions with multiple values', () => {
+  test('should count conditions with multiple values', () => {
     const participants = [
       { ...participantData, participantId: 'participant-multi', conditions: ['color', 'size'] },
     ];

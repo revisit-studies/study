@@ -7,34 +7,14 @@ import userEvent from '@testing-library/user-event';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { ParticipantData } from '../../storage/types';
 import { ConfigInfo } from '../individualStudy/config/utils';
 import { ConfigView } from '../individualStudy/config/ConfigView';
 import { downloadConfigFile, downloadConfigFilesZip } from '../../utils/handleDownloadFiles';
-
-function makeParticipant(configHash: string): ParticipantData {
-  return {
-    participantId: 'p1',
-    participantConfigHash: configHash,
-    sequence: {
-      id: 'root', order: 'fixed', orderPath: 'root', components: [], skip: [], interruptions: [],
-    },
-    participantIndex: 0,
-    answers: {},
-    searchParams: {},
-    metadata: {
-      userAgent: '', resolution: { width: 0, height: 0 }, language: '', ip: '',
-    },
-    completed: false,
-    rejected: false,
-    participantTags: [],
-    stage: 'DEFAULT',
-  } as ParticipantData;
-}
+import { makeParticipant } from '../../tests/utils';
 
 // Capture what gets passed to useMantineReactTable so we can test columns / options
 type CapturedTableOptions = Record<string, unknown> & {
-  columns: { id?: string; header?: string; accessorKey?: string; Cell: (arg: Record<string, unknown>) => unknown }[];
+  columns: { id?: string; header: string; accessorKey?: string; Cell: (arg: Record<string, unknown>) => ReactNode }[];
   enableRowSelection: boolean;
   enableRowVirtualization: boolean;
   enablePagination: boolean;
@@ -98,10 +78,10 @@ vi.mock('../individualStudy/config/ConfigDiffModal', () => ({
 const mockConfigInfo: ConfigInfo = {
   hash: 'abcdef1234567890',
   version: '1.0.0',
-  date: '2026-01-01',
+  date: '2026-04-08',
   timeFrame: 'N/A',
   participantCount: 2,
-  config: { studyMetadata: { version: '1.0.0', date: '2026-01-01' } } as ConfigInfo['config'],
+  config: { studyMetadata: { version: '1.0.0', date: '2026-04-08' } } as ConfigInfo['config'],
 };
 
 describe('ConfigView', () => {
@@ -162,21 +142,27 @@ describe('ConfigView', () => {
 
   test('configIndex column Cell renders row number', () => {
     renderToStaticMarkup(<ConfigView visibleParticipants={[]} studyId="test-study" />);
-    const col = capturedTableOptions!.columns.find((c: { id?: string }) => c.id === 'configIndex');
+    const col = capturedTableOptions!.columns.find((c) => c.id === 'configIndex');
+    expect(col).toBeDefined();
+    if (!col) return;
     expect(col.Cell({ row: { index: 0 } })).toBe(1);
     expect(col.Cell({ row: { index: 4 } })).toBe(5);
   });
 
   test('version column Cell renders version text', () => {
     renderToStaticMarkup(<ConfigView visibleParticipants={[]} studyId="test-study" />);
-    const col = capturedTableOptions!.columns.find((c: { accessorKey?: string }) => c.accessorKey === 'version');
+    const col = capturedTableOptions!.columns.find((c) => c.accessorKey === 'version');
+    expect(col).toBeDefined();
+    if (!col) return;
     const html = renderToStaticMarkup(col.Cell({ row: { original: { version: '2.5.0' } as ConfigInfo } }));
     expect(html).toContain('2.5.0');
   });
 
   test('hash column Cell renders truncated hash and copy tooltip', () => {
     renderToStaticMarkup(<ConfigView visibleParticipants={[]} studyId="test-study" />);
-    const col = capturedTableOptions!.columns.find((c: { accessorKey?: string }) => c.accessorKey === 'hash');
+    const col = capturedTableOptions!.columns.find((c) => c.accessorKey === 'hash');
+    expect(col).toBeDefined();
+    if (!col) return;
     const html = renderToStaticMarkup(col.Cell({ row: { original: { hash: 'abcdef1234567890' } as ConfigInfo } }));
     expect(html).toContain('abcdef');
     expect(html).toContain('Copy hash');
@@ -184,7 +170,9 @@ describe('ConfigView', () => {
 
   test('actions column Cell renders View and Download buttons', () => {
     renderToStaticMarkup(<ConfigView visibleParticipants={[]} studyId="test-study" />);
-    const col = capturedTableOptions!.columns.find((c: { id?: string }) => c.id === 'actions');
+    const col = capturedTableOptions!.columns.find((c) => c.id === 'actions');
+    expect(col).toBeDefined();
+    if (!col) return;
     const html = renderToStaticMarkup(col.Cell({ cell: { getValue: () => 'hashA' } }));
     expect(html).toContain('View');
     expect(html).toContain('Download');
@@ -215,7 +203,7 @@ describe('ConfigView', () => {
   });
 
   test('useEffect fetches configs and renders table when storageEngine and studyId are present', async () => {
-    const participants = [makeParticipant(mockConfigInfo.hash)];
+    const participants = [makeParticipant({ participantConfigHash: mockConfigInfo.hash })];
     await act(async () => {
       render(<ConfigView visibleParticipants={participants} studyId="test-study" />);
     });
@@ -230,7 +218,7 @@ describe('ConfigView', () => {
     mockStorageEngine!.getAllConfigsFromHash.mockRejectedValue(new Error('network error'));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     await act(async () => {
-      render(<ConfigView visibleParticipants={[makeParticipant('x')]} studyId="test-study" />);
+      render(<ConfigView visibleParticipants={[makeParticipant({ participantConfigHash: 'x' })]} studyId="test-study" />);
     });
     expect(consoleSpy).toHaveBeenCalledWith('Error fetching configs:', expect.any(Error));
     expect(screen.getByText('No data available')).toBeDefined();
@@ -247,8 +235,10 @@ describe('ConfigView', () => {
 
     renderToStaticMarkup(<ConfigView visibleParticipants={[]} studyId="test-study" />);
     const hashCol = capturedTableOptions!.columns.find(
-      (c: { accessorKey?: string }) => c.accessorKey === 'hash',
+      (c) => c.accessorKey === 'hash',
     );
+    expect(hashCol).toBeDefined();
+    if (!hashCol) return;
 
     const { container } = render(
       hashCol.Cell({ row: { original: { hash: 'abcdef1234' } as ConfigInfo } }),
@@ -259,12 +249,14 @@ describe('ConfigView', () => {
   });
 
   test('handleDownloadConfig calls downloadConfigFile with correct args', async () => {
-    const participants = [makeParticipant(mockConfigInfo.hash)];
+    const participants = [makeParticipant({ participantConfigHash: mockConfigInfo.hash })];
     await act(async () => {
       render(<ConfigView visibleParticipants={participants} studyId="test-study" />);
     });
 
-    const col = capturedTableOptions!.columns.find((c: { id?: string }) => c.id === 'actions');
+    const col = capturedTableOptions!.columns.find((c) => c.id === 'actions');
+    expect(col).toBeDefined();
+    if (!col) return;
     const user = userEvent.setup();
     const { getAllByText } = render(col.Cell({ cell: { getValue: () => mockConfigInfo.hash } }));
     await user.click(getAllByText('Download')[0]);
@@ -277,7 +269,7 @@ describe('ConfigView', () => {
   });
 
   test('handleDownloadConfigs calls downloadConfigFilesZip with selected hashes', async () => {
-    const participants = [makeParticipant(mockConfigInfo.hash)];
+    const participants = [makeParticipant({ participantConfigHash: mockConfigInfo.hash })];
     await act(async () => {
       render(<ConfigView visibleParticipants={participants} studyId="test-study" />);
     });
@@ -299,7 +291,7 @@ describe('ConfigView', () => {
   });
 
   test('handleCompareConfigs opens compare modal when two rows are selected', async () => {
-    const participants = [makeParticipant(mockConfigInfo.hash)];
+    const participants = [makeParticipant({ participantConfigHash: mockConfigInfo.hash })];
     await act(async () => {
       render(<ConfigView visibleParticipants={participants} studyId="test-study" />);
     });
@@ -321,10 +313,12 @@ describe('ConfigView', () => {
 
   test('handleViewConfig opens view modal when View button is clicked', async () => {
     await act(async () => {
-      render(<ConfigView visibleParticipants={[makeParticipant(mockConfigInfo.hash)]} studyId="test-study" />);
+      render(<ConfigView visibleParticipants={[makeParticipant({ participantConfigHash: mockConfigInfo.hash })]} studyId="test-study" />);
     });
 
-    const col = capturedTableOptions!.columns.find((c: { id?: string }) => c.id === 'actions');
+    const col = capturedTableOptions!.columns.find((c) => c.id === 'actions');
+    expect(col).toBeDefined();
+    if (!col) return;
     const user = userEvent.setup();
     const { getAllByText } = render(col.Cell({ cell: { getValue: () => mockConfigInfo.hash } }));
 
@@ -335,6 +329,6 @@ describe('ConfigView', () => {
     const body = document.body.textContent || '';
     expect(body).toContain('studyMetadata');
     expect(body).toContain('1.0.0');
-    expect(body).toContain('2026-01-01');
+    expect(body).toContain('2026-04-08');
   });
 });

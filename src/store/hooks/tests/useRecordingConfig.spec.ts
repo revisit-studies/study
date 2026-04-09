@@ -3,28 +3,10 @@ import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
 
-import type { StudyConfig } from '../../../parser/types';
 import { useStudyConfig } from '../useStudyConfig';
 import { useFlatSequence } from '../../store';
 import { useRecordingConfig } from '../useRecordingConfig';
-
-// Minimal StudyConfig factory — only the fields useRecordingConfig cares about
-const makeConfig = (
-  uiConfig: Partial<StudyConfig['uiConfig']> = {},
-  components: Record<string, object> = {},
-): StudyConfig => ({
-  $schema: '',
-  studyMetadata: {} as StudyConfig['studyMetadata'],
-  sequence: { order: 'fixed', components: [] } as StudyConfig['sequence'],
-  uiConfig: {
-    logoPath: '',
-    contactEmail: '',
-    withProgressBar: false,
-    withSidebar: false,
-    ...uiConfig,
-  },
-  components: components as StudyConfig['components'],
-});
+import { makeStudyConfig } from '../../../tests/utils';
 
 vi.mock('../useStudyConfig', () => ({
   useStudyConfig: vi.fn(() => ({
@@ -54,14 +36,14 @@ describe('useRecordingConfig', () => {
   });
 
   test('studyHasScreenRecording is true when uiConfig.recordScreen is set', () => {
-    vi.mocked(useStudyConfig).mockReturnValueOnce(makeConfig({ recordScreen: true }));
+    vi.mocked(useStudyConfig).mockReturnValueOnce(makeStudyConfig({ uiConfig: { recordScreen: true } }));
     const { result } = renderHook(() => useRecordingConfig());
     expect(result.current.studyHasScreenRecording).toBe(true);
   });
 
   test('studyHasScreenRecording is true when a participant sequence component has recordScreen', () => {
     vi.mocked(useStudyConfig).mockReturnValueOnce(
-      makeConfig({}, { trial1: { recordScreen: true } }),
+      makeStudyConfig({ components: { trial1: { recordScreen: true } } }),
     );
     vi.mocked(useFlatSequence).mockReturnValueOnce(['trial1']);
     const { result } = renderHook(() => useRecordingConfig());
@@ -69,7 +51,7 @@ describe('useRecordingConfig', () => {
   });
 
   test('studyHasAudioRecording is true when uiConfig.recordAudio is set', () => {
-    vi.mocked(useStudyConfig).mockReturnValueOnce(makeConfig({ recordAudio: true }));
+    vi.mocked(useStudyConfig).mockReturnValueOnce(makeStudyConfig({ uiConfig: { recordAudio: true } }));
     const { result } = renderHook(() => useRecordingConfig());
     expect(result.current.studyHasAudioRecording).toBe(true);
   });

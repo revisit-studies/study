@@ -1,24 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { parseStudyConfig } from '../../parser/parser';
 import { StudyConfig } from '../../parser/types';
+import { makeStudyConfig } from '../../tests/utils';
 
 function buildConfig(sequence: StudyConfig['sequence']): StudyConfig {
-  return {
-    $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json',
-    studyMetadata: {
-      title: 'Skip logic unit test',
-      description: 'Unit tests for skip validation',
-      version: '1.0.0',
-      authors: ['ReVISit Team'],
-      date: '2026-02-20',
-      organizations: ['ReVISit'],
-    },
-    uiConfig: {
-      contactEmail: 'test@test.com',
-      logoPath: 'revisitAssets/revisitLogoSquare.svg',
-      withSidebar: true,
-      withProgressBar: true,
-    },
+  return makeStudyConfig({
     components: {
       trial1: {
         type: 'questionnaire',
@@ -31,31 +17,14 @@ function buildConfig(sequence: StudyConfig['sequence']): StudyConfig {
             options: ['A', 'B'],
           },
         ],
-        correctAnswer: [
-          {
-            id: 'q1',
-            answer: 'A',
-          },
-        ],
+        correctAnswer: [{ id: 'q1', answer: 'A' }],
       },
-      middle: {
-        type: 'markdown',
-        path: 'test-skip-logic/continuingComponent.md',
-        response: [],
-      },
-      targetComponent: {
-        type: 'markdown',
-        path: 'test-skip-logic/targetComponent.md',
-        response: [],
-      },
-      targetBlockComponent: {
-        type: 'markdown',
-        path: 'test-skip-logic/targetBlockComponent.md',
-        response: [],
-      },
+      middle: { type: 'markdown', path: 'test-skip-logic/continuingComponent.md', response: [] },
+      targetComponent: { type: 'markdown', path: 'test-skip-logic/targetComponent.md', response: [] },
+      targetBlockComponent: { type: 'markdown', path: 'test-skip-logic/targetBlockComponent.md', response: [] },
     },
     sequence,
-  };
+  });
 }
 
 describe('handleSkipLogic parser validation', () => {

@@ -7,7 +7,9 @@ import {
 } from 'vitest';
 import { useRoutes } from 'react-router';
 import { Shell } from '../Shell';
+import type { ParsedConfig, StudyConfig } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
+import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
 import { studyStoreCreator } from '../../store/store';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
 import { parseStudyConfig } from '../../parser/parser';
@@ -105,19 +107,16 @@ vi.mock('../../store/store', () => ({
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
 
-const globalConfig = {
-  configsList: [{ id: 'test-study', path: 'test-study.json' }],
-  configs: {},
-} as never;
+const globalConfig = makeGlobalConfig({
+  configsList: ['test-study'],
+  configs: { 'test-study': { path: 'test-study.json' } },
+});
 
-const mockActiveConfig = {
-  studyMetadata: { version: '1' },
-  components: {},
-  sequences: {},
+const mockActiveConfig: ParsedConfig<StudyConfig> = {
+  ...makeStudyConfig(),
   errors: [],
   warnings: [],
-  uiConfig: { urlParticipantIdParam: null },
-} as never;
+};
 
 const baseSession = {
   participantId: 'p1',

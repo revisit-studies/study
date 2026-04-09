@@ -27,7 +27,18 @@ import { RankingInput } from './RankingInput';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
 import { usesStandaloneDontKnowField } from './utils';
-import type { IndividualComponent, Response } from '../../parser/types';
+import type {
+  ButtonsResponse,
+  CheckboxResponse,
+  DropdownResponse,
+  IndividualComponent,
+  MatrixRadioResponse,
+  RadioResponse,
+  ReactiveResponse,
+  Response,
+  ShortTextResponse,
+  SliderResponse,
+} from '../../parser/types';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -369,7 +380,7 @@ describe('TextOnlyInput', () => {
 // ── StringInput ───────────────────────────────────────────────────────────────
 
 describe('StringInput', () => {
-  const base = {
+  const base: ShortTextResponse = {
     type: 'shortText',
     id: 'q1',
     prompt: 'Enter your name',
@@ -437,7 +448,7 @@ describe('NumericInput', () => {
 // ── ReactiveInput ─────────────────────────────────────────────────────────────
 
 describe('ReactiveInput', () => {
-  const base = {
+  const base: ReactiveResponse = {
     type: 'reactive',
     id: 'q1',
     prompt: 'Selected items',
@@ -447,7 +458,7 @@ describe('ReactiveInput', () => {
   test('renders list items from answer.value array', () => {
     const html = renderToStaticMarkup(
       <ReactiveInput
-        response={base as Parameters<typeof ReactiveInput>[0]['response']}
+        response={base}
         answer={{ value: ['apple', 'banana'] }}
         index={1}
         enumerateQuestions={false}
@@ -460,8 +471,8 @@ describe('ReactiveInput', () => {
   test('renders key:value pairs from object answer', () => {
     const html = renderToStaticMarkup(
       <ReactiveInput
-        response={base as Parameters<typeof ReactiveInput>[0]['response']}
-        answer={{ value: { key1: 'val1' } as never }}
+        response={base}
+        answer={{ value: { key1: 'val1' } as unknown as string[] }}
         index={1}
         enumerateQuestions={false}
       />,
@@ -472,7 +483,7 @@ describe('ReactiveInput', () => {
   test('renders nothing when answer.value is undefined', () => {
     const html = renderToStaticMarkup(
       <ReactiveInput
-        response={base as Parameters<typeof ReactiveInput>[0]['response']}
+        response={base}
         answer={{}}
         index={1}
         enumerateQuestions={false}
@@ -487,7 +498,7 @@ describe('ReactiveInput', () => {
 // ── DropdownInput ─────────────────────────────────────────────────────────────
 
 describe('DropdownInput', () => {
-  const base = {
+  const base: DropdownResponse = {
     type: 'dropdown',
     id: 'q1',
     prompt: 'Choose a color',
@@ -499,7 +510,7 @@ describe('DropdownInput', () => {
   test('renders single Select with options', () => {
     const html = renderToStaticMarkup(
       <DropdownInput
-        response={base as Parameters<typeof DropdownInput>[0]['response']}
+        response={base}
         disabled={false}
         answer={{ value: '' }}
         index={1}
@@ -528,7 +539,7 @@ describe('DropdownInput', () => {
 // ── CheckBoxInput ─────────────────────────────────────────────────────────────
 
 describe('CheckBoxInput', () => {
-  const base = {
+  const base: CheckboxResponse = {
     type: 'checkbox',
     id: 'q1',
     prompt: 'Select all that apply',
@@ -540,7 +551,7 @@ describe('CheckBoxInput', () => {
   test('renders prompt and checkbox options', () => {
     const html = renderToStaticMarkup(
       <CheckBoxInput
-        response={base as Parameters<typeof CheckBoxInput>[0]['response']}
+        response={base}
         disabled={false}
         answer={{ value: [] }}
         index={1}
@@ -571,7 +582,7 @@ describe('CheckBoxInput', () => {
 // ── ButtonsInput ──────────────────────────────────────────────────────────────
 
 describe('ButtonsInput', () => {
-  const base = {
+  const base: ButtonsResponse = {
     type: 'buttons',
     id: 'q1',
     prompt: 'Pick one',
@@ -582,7 +593,7 @@ describe('ButtonsInput', () => {
   test('renders prompt and button options', () => {
     const html = renderToStaticMarkup(
       <ButtonsInput
-        response={base as Parameters<typeof ButtonsInput>[0]['response']}
+        response={base}
         disabled={false}
         answer={{ value: '' }}
         index={1}
@@ -599,7 +610,7 @@ describe('ButtonsInput', () => {
 // ── RadioInput ────────────────────────────────────────────────────────────────
 
 describe('RadioInput', () => {
-  const base = {
+  const base: RadioResponse = {
     type: 'radio',
     id: 'q1',
     prompt: 'How satisfied are you?',
@@ -611,7 +622,7 @@ describe('RadioInput', () => {
   test('renders prompt and radio options', () => {
     const html = renderToStaticMarkup(
       <RadioInput
-        response={base as Parameters<typeof RadioInput>[0]['response']}
+        response={base}
         disabled={false}
         answer={{}}
         index={1}
@@ -693,7 +704,7 @@ describe('LikertInput', () => {
 describe('SliderInput', () => {
   const baseOptions = [{ label: 'Low', value: 0 }, { label: 'High', value: 100 }];
 
-  const base = {
+  const base: SliderResponse = {
     type: 'slider',
     id: 'q1',
     prompt: 'Rate your effort',
@@ -704,7 +715,7 @@ describe('SliderInput', () => {
   test('renders prompt label', () => {
     const html = renderToStaticMarkup(
       <SliderInput
-        response={base as Parameters<typeof SliderInput>[0]['response']}
+        response={base}
         disabled={false}
         answer={{}}
         index={1}
@@ -717,7 +728,7 @@ describe('SliderInput', () => {
   test('renders standard Slider component when smeqStyle is false', () => {
     const html = renderToStaticMarkup(
       <SliderInput
-        response={base as Parameters<typeof SliderInput>[0]['response']}
+        response={base}
         disabled={false}
         answer={{}}
         index={1}
@@ -787,7 +798,7 @@ describe('SliderInput', () => {
 // ── MatrixInput ───────────────────────────────────────────────────────────────
 
 describe('MatrixInput', () => {
-  const base = {
+  const base: MatrixRadioResponse = {
     type: 'matrix-radio',
     id: 'q1',
     prompt: 'Please rate each item',
@@ -799,7 +810,7 @@ describe('MatrixInput', () => {
   test('renders prompt', () => {
     const html = renderToStaticMarkup(
       <MatrixInput
-        response={base as Parameters<typeof MatrixInput>[0]['response']}
+        response={base}
         answer={{ value: {} }}
         index={1}
         disabled={false}
@@ -812,7 +823,7 @@ describe('MatrixInput', () => {
   test('renders column header labels (answer options)', () => {
     const html = renderToStaticMarkup(
       <MatrixInput
-        response={base as Parameters<typeof MatrixInput>[0]['response']}
+        response={base}
         answer={{ value: {} }}
         index={1}
         disabled={false}
@@ -826,7 +837,7 @@ describe('MatrixInput', () => {
   test('renders row labels (question options)', () => {
     const html = renderToStaticMarkup(
       <MatrixInput
-        response={base as Parameters<typeof MatrixInput>[0]['response']}
+        response={base}
         answer={{ value: {} }}
         index={1}
         disabled={false}

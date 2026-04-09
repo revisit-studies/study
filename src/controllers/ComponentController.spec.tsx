@@ -692,8 +692,7 @@ describe('VegaController — signal and event coverage', () => {
   test('signal listeners, handleSignalEvt, handleRevisitAnswer, and provState effect all covered', async () => {
     type SignalHandler = (name: string, value: string | Record<string, string>) => void;
     let capturedSignalListeners: Record<string, SignalHandler> = {};
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let capturedOnNewView: ((v: any) => void) | undefined;
+    let capturedOnNewView: ((v: View) => void) | undefined;
 
     vi.mocked(getJsonAssetByPath).mockResolvedValueOnce({
       $schema: 'vega',
@@ -721,7 +720,7 @@ describe('VegaController — signal and event coverage', () => {
 
     await waitFor(() => expect(capturedOnNewView).toBeDefined());
 
-    const fakeView = { signal: vi.fn().mockReturnValue({ run: vi.fn() }) };
+    const fakeView = { signal: vi.fn().mockReturnValue({ run: vi.fn() }) } as unknown as View;
     await act(async () => {
       capturedSignalListeners.mySignal?.('mySignal', 'hello');
       capturedSignalListeners.revisitAnswer?.('revisitAnswer', { responseId: 'r1', response: 'yes' });

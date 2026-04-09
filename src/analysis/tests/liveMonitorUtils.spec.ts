@@ -1,50 +1,27 @@
 import { describe, expect, test } from 'vitest';
 import { SequenceAssignment } from '../../storage/engines/types';
 import { ParticipantData } from '../../storage/types';
+import { makeSequenceAssignment, makeParticipant as _makeParticipant } from '../../tests/utils';
 import { getFilteredParticipantProgress } from '../individualStudy/LiveMonitor/LiveMonitorView';
 
-function makeAssignment(partial: Partial<SequenceAssignment> & Pick<SequenceAssignment, 'participantId'>): SequenceAssignment {
-  return {
-    participantId: partial.participantId,
-    timestamp: partial.timestamp ?? 0,
-    rejected: partial.rejected ?? false,
-    claimed: partial.claimed ?? false,
-    completed: partial.completed ?? null,
-    createdTime: partial.createdTime ?? 0,
-    total: partial.total ?? 10,
-    answered: partial.answered ?? [],
-    isDynamic: partial.isDynamic ?? false,
-    stage: partial.stage ?? 'DEFAULT',
-    conditions: partial.conditions,
-  };
+function makeAssignment(overrides: Partial<SequenceAssignment> & Pick<SequenceAssignment, 'participantId'>): SequenceAssignment {
+  return makeSequenceAssignment({
+    total: 10,
+    ...overrides,
+  });
 }
 
-function makeParticipant(partial: Partial<ParticipantData> & Pick<ParticipantData, 'participantId'>): ParticipantData {
-  return {
-    participantId: partial.participantId,
-    participantConfigHash: partial.participantConfigHash ?? 'hash',
-    sequence: partial.sequence ?? {
-      orderPath: '',
-      order: 'fixed',
-      components: [],
-      skip: [],
-    },
-    participantIndex: partial.participantIndex ?? 1,
-    answers: partial.answers ?? {},
-    searchParams: partial.searchParams ?? {},
-    metadata: partial.metadata ?? {
+function makeParticipant(overrides: Partial<ParticipantData> & Pick<ParticipantData, 'participantId'>): ParticipantData {
+  return _makeParticipant({
+    participantIndex: 1,
+    metadata: {
       userAgent: 'ua',
       resolution: { width: 100, height: 100 },
       language: 'en',
       ip: '0.0.0.0',
     },
-    completed: partial.completed ?? false,
-    rejected: partial.rejected ?? false,
-    participantTags: partial.participantTags ?? [],
-    stage: partial.stage ?? 'DEFAULT',
-    conditions: partial.conditions,
-    createdTime: partial.createdTime,
-  };
+    ...overrides,
+  });
 }
 
 function getParticipantViewIds(

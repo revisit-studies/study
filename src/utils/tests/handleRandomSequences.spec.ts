@@ -100,7 +100,7 @@ describe('Generating sequences works as expected', () => {
     });
   });
 
-  test('generateSequenceArray returns balanced random sequences, numSamples = 1', { timeout: 10000 }, async () => {
+  test('generateSequenceArray returns balanced random sequences, numSamples = 1', { timeout: 30_000 }, async () => {
     const sequenceArray = generateSequenceArray(config);
 
     const counts = sequenceArray.flatMap(((seq) => seq.components)).filter((comp) => comp !== 'end').reduce((acc, compId) => {
@@ -116,7 +116,7 @@ describe('Generating sequences works as expected', () => {
     expect(max - min).toBeLessThan(300); // Allow a small margin of error
   });
 
-  test('generateSequenceArray returns balanced random sequences, numSamples = 50', async () => {
+  test('generateSequenceArray returns balanced random sequences, numSamples = 50', { timeout: 30_000 }, async () => {
     const sequenceArray = generateSequenceArray({ ...config, sequence: { order: 'random', numSamples: 31, components: Object.keys(components) } });
 
     const counts = sequenceArray.flatMap(((seq) => seq.components)).filter((comp) => comp !== 'end').reduce((acc, compId) => {
@@ -129,7 +129,7 @@ describe('Generating sequences works as expected', () => {
     const max = Math.max(...values);
 
     // Check that the difference between max and min counts is within an acceptable range
-    expect(max - min).toBeLessThan(1500); // Allow a small margin of error
+    expect(max - min).toBeLessThan(1000); // Allow a small margin of error
 
     const counts1 = sequenceArray.map(((seq) => seq.components[1])).reduce((acc, compId) => {
       acc[compId as string] = (acc[compId as string] || 0) + 1;

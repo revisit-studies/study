@@ -1,32 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import { StudyConfig } from '../../parser/types';
 import { generateSequenceArray } from '../handleRandomSequences';
-
-function createBaseConfig(): Omit<StudyConfig, 'components' | 'sequence'> {
-  return {
-    $schema: '',
-    studyMetadata: {
-      title: '',
-      version: '',
-      authors: [],
-      date: '',
-      description: '',
-      organizations: [],
-    },
-    uiConfig: {
-      logoPath: '',
-      contactEmail: '',
-      withProgressBar: true,
-      withSidebar: true,
-      numSequences: 1,
-    },
-  };
-}
+import { makeStudyConfig } from '../../tests/utils';
 
 describe('handleInterruptionSequences', () => {
   test('inserts deterministic interruptions using firstLocation and spacing', () => {
-    const config: StudyConfig = {
-      ...createBaseConfig(),
+    const config: StudyConfig = makeStudyConfig({
       components: {
         a: { type: 'questionnaire', response: [] },
         b: { type: 'questionnaire', response: [] },
@@ -45,19 +24,15 @@ describe('handleInterruptionSequences', () => {
           },
         ],
       },
-    };
+    });
 
     const [sequence] = generateSequenceArray(config);
     expect(sequence.components).toEqual(['a', 'brk', 'b', 'brk', 'c', 'd', 'end']);
   });
 
   test('inserts the exact number of random interruptions', () => {
-    const config: StudyConfig = {
-      ...createBaseConfig(),
-      uiConfig: {
-        ...createBaseConfig().uiConfig,
-        numSequences: 50,
-      },
+    const config: StudyConfig = makeStudyConfig({
+      uiConfig: { numSequences: 50 },
       components: {
         a: { type: 'questionnaire', response: [] },
         b: { type: 'questionnaire', response: [] },
@@ -77,7 +52,7 @@ describe('handleInterruptionSequences', () => {
           },
         ],
       },
-    };
+    });
 
     const sequenceArray = generateSequenceArray(config);
     sequenceArray.forEach((sequence) => {
@@ -93,12 +68,8 @@ describe('handleInterruptionSequences', () => {
   });
 
   test('does not place random interruptions first or back to back across groups', () => {
-    const config: StudyConfig = {
-      ...createBaseConfig(),
-      uiConfig: {
-        ...createBaseConfig().uiConfig,
-        numSequences: 500,
-      },
+    const config: StudyConfig = makeStudyConfig({
+      uiConfig: { numSequences: 500 },
       components: {
         a: { type: 'questionnaire', response: [] },
         b: { type: 'questionnaire', response: [] },
@@ -127,7 +98,7 @@ describe('handleInterruptionSequences', () => {
           },
         ],
       },
-    };
+    });
 
     const sequenceArray = generateSequenceArray(config);
     sequenceArray.forEach((sequence) => {
@@ -146,8 +117,7 @@ describe('handleInterruptionSequences', () => {
   });
 
   test('fills every possible random interruption slot across groups when all slots are requested', () => {
-    const config: StudyConfig = {
-      ...createBaseConfig(),
+    const config: StudyConfig = makeStudyConfig({
       components: {
         a: { type: 'questionnaire', response: [] },
         b: { type: 'questionnaire', response: [] },
@@ -172,7 +142,7 @@ describe('handleInterruptionSequences', () => {
           },
         ],
       },
-    };
+    });
 
     const [sequence] = generateSequenceArray(config);
 
@@ -190,8 +160,7 @@ describe('handleInterruptionSequences', () => {
   });
 
   test('throws when grouped random interruptions request more slots than available', () => {
-    const config: StudyConfig = {
-      ...createBaseConfig(),
+    const config: StudyConfig = makeStudyConfig({
       components: {
         a: { type: 'questionnaire', response: [] },
         b: { type: 'questionnaire', response: [] },
@@ -216,14 +185,13 @@ describe('handleInterruptionSequences', () => {
           },
         ],
       },
-    };
+    });
 
     expect(() => generateSequenceArray(config)).toThrow('Number of interruptions cannot be greater than the number of available interruption slots');
   });
 
   test('throws when random interruptions exceed allowed maximum', () => {
-    const config: StudyConfig = {
-      ...createBaseConfig(),
+    const config: StudyConfig = makeStudyConfig({
       components: {
         a: { type: 'questionnaire', response: [] },
         b: { type: 'questionnaire', response: [] },
@@ -240,7 +208,7 @@ describe('handleInterruptionSequences', () => {
           },
         ],
       },
-    };
+    });
 
     expect(() => generateSequenceArray(config)).toThrow('Number of interruptions cannot be greater than the number of available interruption slots');
   });

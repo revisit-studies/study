@@ -4,14 +4,9 @@ import {
 } from 'vitest';
 import { useStudyConfig } from '../useStudyConfig';
 import type { StudyConfig } from '../../../parser/types';
+import { makeStudyConfig } from '../../../tests/utils';
 
-const mockConfig: StudyConfig = {
-  $schema: '',
-  studyMetadata: { title: 'Test Study' } as StudyConfig['studyMetadata'],
-  uiConfig: { withProgressBar: false } as StudyConfig['uiConfig'],
-  components: {},
-  sequence: { order: 'fixed', components: [] } as StudyConfig['sequence'],
-};
+const mockConfig = makeStudyConfig();
 
 vi.mock('../../store', () => ({
   useStoreSelector: (selector: (s: { config: StudyConfig }) => StudyConfig) => selector({ config: mockConfig }),
@@ -20,11 +15,11 @@ vi.mock('../../store', () => ({
 describe('useStudyConfig', () => {
   test('returns the config from the store', () => {
     const { result } = renderHook(() => useStudyConfig());
-    expect(result.current).toBeDefined();
+    expect(result.current).toEqual(mockConfig);
   });
 
-  test('returns config with studyMetadata', () => {
+  test('returns config with studyMetadata matching the mock', () => {
     const { result } = renderHook(() => useStudyConfig());
-    expect(result.current.studyMetadata).toBeDefined();
+    expect(result.current.studyMetadata.title).toBe('Test Study');
   });
 });

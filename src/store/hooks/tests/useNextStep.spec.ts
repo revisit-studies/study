@@ -1,9 +1,10 @@
 import { renderHook, act } from '@testing-library/react';
 import {
-  beforeEach, describe, expect, it, vi,
+  beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import type { StudyConfig } from '../../../parser/types';
-import type { Sequence, StoredAnswer } from '../../types';
+import type { Sequence, StoredAnswer, StoreState } from '../../types';
+import { makeStudyConfig } from '../../../tests/utils';
 import { areComponentAnswersCorrect, getSkipConditionCorrectAnswers } from '../useNextStep.utils';
 import { useNextStep } from '../useNextStep';
 
@@ -38,14 +39,13 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('../../store', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  useStoreSelector: (selector: Function) => selector({
+  useStoreSelector: (selector: (s: StoreState) => unknown) => selector({
     trialValidation: mockTrialValidation,
     sequence: mockSequence,
     answers: mockAnswers,
     modes: mockModes,
     clickedPrevious: false,
-  }),
+  } as StoreState),
   useStoreDispatch: () => mockDispatch,
   useStoreActions: () => ({
     saveTrialAnswer: mockSaveTrialAnswer,
@@ -81,8 +81,44 @@ vi.mock('../../../utils/getSequenceFlatMap', () => ({
   findIndexOfBlock: vi.fn(() => -1),
 }));
 
+function createStudyConfig(): StudyConfig {
+  return makeStudyConfig({
+    baseComponents: {
+      trial: {
+        type: 'questionnaire',
+        response: [
+          {
+            id: 'q1', type: 'radio', prompt: 'Favorite color', options: ['Blue', 'Red'],
+          },
+          {
+            id: 'q2', type: 'radio', prompt: 'Favorite animal', options: ['Cat', 'Dog'],
+          },
+        ],
+      },
+    },
+    components: {
+      trial1: {
+        baseComponent: 'trial',
+        correctAnswer: [{ id: 'q1', answer: 'Blue' }, { id: 'q2', answer: 'Cat' }],
+      },
+      attentionCheck: {
+        type: 'questionnaire',
+        response: [
+          {
+            id: 'q1', type: 'radio', prompt: 'Are you paying attention?', options: ['Yes', 'No'],
+          },
+        ],
+        correctAnswer: [{ id: 'q1', answer: 'Yes' }],
+      },
+    },
+    sequence: {
+      order: 'fixed',
+      components: ['trial1', 'attentionCheck'],
+    },
+  });
+}
+
 vi.mock('../useStudyConfig', () => ({
-  // eslint-disable-next-line no-use-before-define
   useStudyConfig: () => createStudyConfig(),
 }));
 
@@ -95,85 +131,8 @@ vi.mock('../useIsAnalysis', () => ({
   useIsAnalysis: () => mockIsAnalysis,
 }));
 
-function createStudyConfig(): StudyConfig {
-  return {
-    $schema: '',
-    studyMetadata: {
-      title: 'Skip logic regression test',
-      version: '1.0.0',
-      authors: ['Test'],
-      date: '2026-03-25',
-      description: 'Regression coverage for block skip correctness',
-      organizations: ['Test Org'],
-    },
-    uiConfig: {
-      contactEmail: 'test@test.com',
-      helpTextPath: '',
-      logoPath: '',
-      withProgressBar: true,
-      autoDownloadStudy: false,
-      withSidebar: true,
-    },
-    baseComponents: {
-      trial: {
-        type: 'questionnaire',
-        response: [
-          {
-            id: 'q1',
-            type: 'radio',
-            prompt: 'Favorite color',
-            options: ['Blue', 'Red'],
-          },
-          {
-            id: 'q2',
-            type: 'radio',
-            prompt: 'Favorite animal',
-            options: ['Cat', 'Dog'],
-          },
-        ],
-      },
-    },
-    components: {
-      trial1: {
-        baseComponent: 'trial',
-        correctAnswer: [
-          {
-            id: 'q1',
-            answer: 'Blue',
-          },
-          {
-            id: 'q2',
-            answer: 'Cat',
-          },
-        ],
-      },
-      attentionCheck: {
-        type: 'questionnaire',
-        response: [
-          {
-            id: 'q1',
-            type: 'radio',
-            prompt: 'Are you paying attention?',
-            options: ['Yes', 'No'],
-          },
-        ],
-        correctAnswer: [
-          {
-            id: 'q1',
-            answer: 'Yes',
-          },
-        ],
-      },
-    },
-    sequence: {
-      order: 'fixed',
-      components: ['trial1', 'attentionCheck'],
-    },
-  };
-}
-
 describe('areComponentAnswersCorrect', () => {
-  it('returns true when component has no correctAnswer', () => {
+  test('returns true when component has no correctAnswer', () => {
     const config = createStudyConfig();
     const noCorrectAnswer = { type: 'questionnaire' as const, response: [] };
     config.components.noAnswer = noCorrectAnswer;
@@ -181,34 +140,34 @@ describe('areComponentAnswersCorrect', () => {
     expect(areComponentAnswersCorrect({ q1: 'anything' }, config.components.noAnswer, config)).toBe(true);
   });
 
-  it('returns true when all answers match correctAnswer', () => {
+  test('returns true when all answers match correctAnswer', () => {
     const config = createStudyConfig();
     expect(areComponentAnswersCorrect({ q1: 'Blue', q2: 'Cat' }, config.components.trial1, config)).toBe(true);
   });
 
-  it('returns false when an answer is wrong', () => {
+  test('returns false when an answer is wrong', () => {
     const config = createStudyConfig();
     expect(areComponentAnswersCorrect({ q1: 'Red', q2: 'Cat' }, config.components.trial1, config)).toBe(false);
   });
 
-  it('returns false when an answer is missing', () => {
+  test('returns false when an answer is missing', () => {
     const config = createStudyConfig();
     expect(areComponentAnswersCorrect({ q1: 'Blue' }, config.components.trial1, config)).toBe(false);
   });
 
-  it('returns true for attention check with correct answer', () => {
+  test('returns true for attention check with correct answer', () => {
     const config = createStudyConfig();
     expect(areComponentAnswersCorrect({ q1: 'Yes' }, config.components.attentionCheck, config)).toBe(true);
   });
 
-  it('returns false for attention check with wrong answer', () => {
+  test('returns false for attention check with wrong answer', () => {
     const config = createStudyConfig();
     expect(areComponentAnswersCorrect({ q1: 'No' }, config.components.attentionCheck, config)).toBe(false);
   });
 });
 
 describe('getSkipConditionCorrectAnswers', () => {
-  it('uses each candidate component config when counting block correctness', () => {
+  test('uses each candidate component config when counting block correctness', () => {
     const studyConfig = createStudyConfig();
 
     const correctAnswers = getSkipConditionCorrectAnswers([
@@ -219,12 +178,12 @@ describe('getSkipConditionCorrectAnswers', () => {
     expect(correctAnswers).toEqual([true, false]);
   });
 
-  it('returns empty array for empty input', () => {
+  test('returns empty array for empty input', () => {
     const config = createStudyConfig();
     expect(getSkipConditionCorrectAnswers([], config)).toEqual([]);
   });
 
-  it('returns all true when every answer is correct', () => {
+  test('returns all true when every answer is correct', () => {
     const config = createStudyConfig();
     const result = getSkipConditionCorrectAnswers([
       ['trial1_0', { answer: { q1: 'Blue', q2: 'Cat' } }],
@@ -233,7 +192,7 @@ describe('getSkipConditionCorrectAnswers', () => {
     expect(result).toEqual([true, true]);
   });
 
-  it('returns all false when every answer is wrong', () => {
+  test('returns all false when every answer is wrong', () => {
     const config = createStudyConfig();
     const result = getSkipConditionCorrectAnswers([
       ['trial1_0', { answer: { q1: 'Red', q2: 'Dog' } }],
@@ -242,7 +201,7 @@ describe('getSkipConditionCorrectAnswers', () => {
     expect(result).toEqual([false, false]);
   });
 
-  it('extracts component name correctly with multiple underscores', () => {
+  test('extracts component name correctly with multiple underscores', () => {
     const config = createStudyConfig();
     const result = getSkipConditionCorrectAnswers([
       ['trial1_5', { answer: { q1: 'Blue', q2: 'Cat' } }],
@@ -273,36 +232,36 @@ describe('useNextStep', () => {
     mockSaveTrialAnswer = vi.fn();
   });
 
-  it('isNextDisabled is false when step is a number, not analysis, and responses are valid', () => {
+  test('isNextDisabled is false when step is a number, not analysis, and responses are valid', () => {
     const { result } = renderHook(() => useNextStep());
     expect(result.current.isNextDisabled).toBe(false);
   });
 
-  it('isNextDisabled is true when currentStep is a string', () => {
+  test('isNextDisabled is true when currentStep is a string', () => {
     mockCurrentStep = 'reviewer-0';
     const { result } = renderHook(() => useNextStep());
     expect(result.current.isNextDisabled).toBe(true);
   });
 
-  it('isNextDisabled is true when isAnalysis is true', () => {
+  test('isNextDisabled is true when isAnalysis is true', () => {
     mockIsAnalysis = true;
     const { result } = renderHook(() => useNextStep());
     expect(result.current.isNextDisabled).toBe(true);
   });
 
-  it('isNextDisabled is true when responses are invalid', () => {
+  test('isNextDisabled is true when responses are invalid', () => {
     mockAreResponsesValid = false;
     const { result } = renderHook(() => useNextStep());
     expect(result.current.isNextDisabled).toBe(true);
   });
 
-  it('goToNextStep navigates to next step', () => {
+  test('goToNextStep navigates to next step', () => {
     const { result } = renderHook(() => useNextStep());
     act(() => { result.current.goToNextStep(); });
     expect(mockNavigate).toHaveBeenCalledWith('/test-study/1');
   });
 
-  it('goToNextStep dispatches saveTrialAnswer and clears form state', () => {
+  test('goToNextStep dispatches saveTrialAnswer and clears form state', () => {
     mockStoredAnswer = defaultStoredAnswer;
     const { result } = renderHook(() => useNextStep());
     act(() => { result.current.goToNextStep(); });
@@ -310,20 +269,20 @@ describe('useNextStep', () => {
     expect(mockSaveTrialAnswer).toHaveBeenCalled();
   });
 
-  it('goToNextStep saves answers to storage engine', () => {
+  test('goToNextStep saves answers to storage engine', () => {
     const { result } = renderHook(() => useNextStep());
     act(() => { result.current.goToNextStep(); });
     expect(mockSaveAnswers).toHaveBeenCalled();
   });
 
-  it('goToNextStep does nothing when currentStep is not a number', () => {
+  test('goToNextStep does nothing when currentStep is not a number', () => {
     mockCurrentStep = 'reviewer-0';
     const { result } = renderHook(() => useNextStep());
     act(() => { result.current.goToNextStep(); });
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  it('goToNextStep(false) marks answer as timed out', () => {
+  test('goToNextStep(false) marks answer as timed out', () => {
     const { result } = renderHook(() => useNextStep());
     act(() => { result.current.goToNextStep(false); });
     const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as Record<string, object | boolean>;
@@ -331,7 +290,7 @@ describe('useNextStep', () => {
     expect(savedPayload.answer).toEqual({});
   });
 
-  it('goToNextStep collects answers from trialValidation', () => {
+  test('goToNextStep collects answers from trialValidation', () => {
     mockTrialValidation = {
       trial1_0: {
         stimulus: { valid: true, values: { q1: 'Blue' } },
@@ -349,14 +308,14 @@ describe('useNextStep', () => {
     expect(savedPayload.answer).toEqual({ q1: 'Blue', q2: 'Cat' });
   });
 
-  it('goToNextStep navigates with funcIndex increment when funcIndex is set', () => {
+  test('goToNextStep navigates with funcIndex increment when funcIndex is set', () => {
     mockFuncIndex = '0';
     const { result } = renderHook(() => useNextStep());
     act(() => { result.current.goToNextStep(); });
     expect(mockNavigate).toHaveBeenCalledWith('/test-study/0/1');
   });
 
-  it('goToNextStep skips saving when data collection is disabled', () => {
+  test('goToNextStep skips saving when data collection is disabled', () => {
     mockModes = { dataCollectionEnabled: false, developmentModeEnabled: false, dataSharingEnabled: false };
     const { result } = renderHook(() => useNextStep());
     act(() => { result.current.goToNextStep(); });
@@ -364,7 +323,7 @@ describe('useNextStep', () => {
     expect(mockNavigate).toHaveBeenCalled();
   });
 
-  it('goToNextStep skips saving when answer already has endTime > -1', () => {
+  test('goToNextStep skips saving when answer already has endTime > -1', () => {
     mockStoredAnswer = { endTime: 100 } as StoredAnswer;
     const { result } = renderHook(() => useNextStep());
     act(() => { result.current.goToNextStep(); });
@@ -372,7 +331,7 @@ describe('useNextStep', () => {
     expect(mockNavigate).toHaveBeenCalled();
   });
 
-  it('goToNextStep evaluates response skip condition and navigates to skip target', async () => {
+  test('goToNextStep evaluates response skip condition and navigates to skip target', async () => {
     const { findBlockForStep } = await import('../../../utils/getSequenceFlatMap');
     vi.mocked(findBlockForStep).mockReturnValue([{
       currentBlock: {

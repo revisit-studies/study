@@ -6,6 +6,7 @@ import { parseTrialOrder } from '../utils/parseTrialOrder';
 import { getComponent } from '../utils/handleComponentInheritance';
 import { decryptIndex } from '../utils/encryptDecryptIndex';
 import type { IndividualComponent } from '../parser/types';
+import { makeStudyConfig } from '../tests/utils';
 import {
   useStudyId, useCurrentStep, useCurrentComponent, useCurrentIdentifier,
 } from './utils';
@@ -31,12 +32,11 @@ let mockSearchParams = new URLSearchParams();
 let mockNavigate = vi.fn();
 let mockFlatSequence: string[] = ['intro', 'end'];
 let mockAnswers: Record<string, Record<string, string | number | undefined>> = {};
-const mockStudyConfig = {
+const mockStudyConfig = makeStudyConfig({
   sequence: {
     id: 'root', order: 'fixed', components: ['intro', 'end'], skip: [],
   },
-  components: {},
-};
+});
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 

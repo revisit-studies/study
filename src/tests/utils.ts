@@ -2,19 +2,22 @@ import { vi } from 'vitest';
 import type {
   GlobalConfig, StudyConfig, StudyMetadata, UIConfig,
 } from '../parser/types';
-import type { StoredAnswer } from '../store/types';
-import { StorageEngine } from '../storage/engines/types';
+import type { StoredAnswer, Sequence } from '../store/types';
+import type { ParticipantData } from '../storage/types';
+import { SequenceAssignment, StorageEngine } from '../storage/engines/types';
 
-type StudyConfigOverrides = Omit<Partial<StudyConfig>, 'studyMetadata' | 'uiConfig'> & {
+type StudyConfigOverrides = Omit<Partial<StudyConfig>, 'studyMetadata' | 'uiConfig' | 'sequence' | 'components'> & {
   studyMetadata?: Partial<StudyMetadata>;
-  uiConfig?: Partial<UIConfig>;
+  uiConfig?: Partial<UIConfig> & Record<string, unknown>;
+  sequence?: StudyConfig['sequence'] | Sequence;
+  components?: Record<string, Partial<StudyConfig['components'][string]>>;
 };
 
 const defaultStudyMetadata: StudyMetadata = {
   title: 'Test Study',
   version: '1.0',
   authors: ['Test'],
-  date: '2026-04-09',
+  date: '2026-04-08',
   description: 'Test',
   organizations: ['Test Org'],
 };
@@ -158,6 +161,50 @@ export function makeStoredAnswer(overrides: Partial<StoredAnswer> = {}): StoredA
     correctAnswer: [],
     optionOrders: {},
     questionOrders: {},
+    ...overrides,
+  };
+}
+
+export function makeParticipant(overrides: Partial<ParticipantData> & { participantId?: string } = {}): ParticipantData {
+  return {
+    participantId: 'p1',
+    participantConfigHash: 'config-hash-1',
+    sequence: {
+      id: 'root',
+      orderPath: 'root',
+      order: 'fixed',
+      components: [],
+      skip: [],
+    },
+    participantIndex: 0,
+    answers: {},
+    searchParams: {},
+    metadata: {
+      userAgent: 'test-agent',
+      resolution: { width: 1920, height: 1080 },
+      language: 'en',
+      ip: null,
+    },
+    completed: false,
+    rejected: false,
+    participantTags: [],
+    stage: 'DEFAULT',
+    ...overrides,
+  } as ParticipantData;
+}
+
+export function makeSequenceAssignment(overrides: Partial<SequenceAssignment> = {}): SequenceAssignment {
+  return {
+    participantId: 'p1',
+    timestamp: 0,
+    createdTime: 0,
+    rejected: false,
+    claimed: false,
+    completed: null,
+    total: 0,
+    answered: [],
+    isDynamic: false,
+    stage: 'DEFAULT',
     ...overrides,
   };
 }

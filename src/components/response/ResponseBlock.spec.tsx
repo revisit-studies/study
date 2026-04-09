@@ -5,8 +5,8 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import type { IndividualComponent } from '../../parser/types';
-import type { StoredAnswer } from '../../store/types';
 import { ResponseBlock } from './ResponseBlock';
+import { makeStoredAnswer } from '../../tests/utils';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -217,9 +217,7 @@ describe('ResponseBlock', () => {
   });
 
   test('initialises from status.answer when status prop is provided', () => {
-    const status = {
-      answer: { q1: 'hello' },
-    } as Partial<StoredAnswer> as StoredAnswer;
+    const status = makeStoredAnswer({ answer: { q1: 'hello' } });
     // render (not SSR) so useEffect fires and reads status.answer
     const { container } = render(
       <ResponseBlock config={baseConfig} location="belowStimulus" status={status} />,

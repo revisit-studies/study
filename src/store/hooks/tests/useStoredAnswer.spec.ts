@@ -16,7 +16,7 @@ vi.mock('react-router', () => ({
 
 vi.mock('../../store', () => ({
   useFlatSequence: vi.fn(() => ['intro', 'trial1']),
-  useStoreSelector: vi.fn((selector: (s: { answers: Record<string, StoredAnswer> }) => StoredAnswer) => selector({ answers: {} as Record<string, StoredAnswer> })),
+  useStoreSelector: vi.fn((selector: (s: StoreState) => StoredAnswer) => selector({ answers: {} as Record<string, StoredAnswer> } as StoreState)),
 }));
 
 vi.mock('../../../routes/utils', () => ({

@@ -7,6 +7,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { SequenceAssignment } from '../../storage/engines/types';
+import { makeStorageEngine, makeSequenceAssignment } from '../../tests/utils';
 import {
   getFilteredParticipantProgress,
   groupParticipantProgress,
@@ -58,19 +59,12 @@ vi.mock('../../storage/engines/FirebaseStorageEngine', () => ({
 // ── fixture helpers ───────────────────────────────────────────────────────────
 
 function makeAssignment(overrides: Partial<SequenceAssignment> = {}): SequenceAssignment {
-  return {
-    participantId: 'p1',
+  return makeSequenceAssignment({
     timestamp: 1_700_000_000_000,
-    stage: 'DEFAULT',
-    answered: [],
     total: 5,
-    completed: null,
-    claimed: false,
-    rejected: false,
     createdTime: 1_700_000_000_000,
-    isDynamic: false,
     ...overrides,
-  };
+  });
 }
 
 // ── getFilteredParticipantProgress ────────────────────────────────────────────
@@ -135,21 +129,22 @@ describe('getFilteredParticipantProgress', () => {
 // ── groupParticipantProgress ──────────────────────────────────────────────────
 
 describe('groupParticipantProgress', () => {
-  function makeProgress(isCompleted: boolean, isRejected: boolean) {
+  function makeProgress(overrides: Partial<{ isCompleted: boolean; isRejected: boolean }> = {}) {
     return {
       assignment: makeAssignment(),
       progress: 50,
-      isCompleted,
-      isRejected,
+      isCompleted: false,
+      isRejected: false,
+      ...overrides,
     };
   }
 
   test('splits into inProgress, completed, rejected groups', () => {
     const items = [
-      makeProgress(false, false), // inProgress
-      makeProgress(true, false), // completed
-      makeProgress(true, true), // rejected (rejected takes precedence)
-      makeProgress(false, true), // rejected
+      makeProgress(), // inProgress
+      makeProgress({ isCompleted: true }), // completed
+      makeProgress({ isCompleted: true, isRejected: true }), // rejected (rejected takes precedence)
+      makeProgress({ isRejected: true }), // rejected
     ];
     const { inProgress, completed, rejected } = groupParticipantProgress(items);
     expect(inProgress).toHaveLength(1);
@@ -226,7 +221,7 @@ describe('LiveMonitorView', () => {
     const { container } = await act(async () => render(
       <LiveMonitorView
         {...baseProps}
-        storageEngine={mockEngine as never}
+        storageEngine={makeStorageEngine(mockEngine)}
         studyId="test-study"
       />,
     ));
@@ -342,7 +337,7 @@ describe('LiveMonitorView interactive', () => {
       }),
     };
     const { container } = await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
     ));
     expect(container.textContent).toContain('p-active');
   });
@@ -364,7 +359,7 @@ describe('LiveMonitorView interactive', () => {
       }),
     };
     const { container } = await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
     ));
     expect(container.textContent).toContain('p-done');
     expect(container.textContent).toContain('p-rej');
@@ -377,7 +372,7 @@ describe('LiveMonitorView interactive', () => {
       _setupSequenceAssignmentListener: vi.fn(() => undefined),
     };
     const { container } = await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
     ));
     expect(container.textContent).toContain('icon-wifioff');
   });
@@ -389,7 +384,7 @@ describe('LiveMonitorView interactive', () => {
       _setupSequenceAssignmentListener: vi.fn(() => undefined),
     };
     const { getAllByRole } = await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
     ));
     const reconnectBtn = getAllByRole('button').find((b) => b.textContent?.includes('Reconnect'));
     expect(reconnectBtn).toBeDefined();
@@ -405,7 +400,7 @@ describe('LiveMonitorView interactive', () => {
     };
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     const { getAllByRole } = await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
     ));
     const reconnectBtn = getAllByRole('button').find((b) => b.textContent?.includes('Reconnect'));
     expect(reconnectBtn).toBeDefined();
@@ -424,7 +419,7 @@ describe('LiveMonitorView interactive', () => {
       }),
     };
     await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
     ));
     act(() => { window.dispatchEvent(new Event('offline')); });
   });
@@ -436,7 +431,7 @@ describe('LiveMonitorView interactive', () => {
       _setupSequenceAssignmentListener: vi.fn(() => undefined),
     };
     await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={mockEngine as never} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
     ));
     await act(async () => { window.dispatchEvent(new Event('online')); });
     expect(mockEngine.getAllSequenceAssignments).toHaveBeenCalled();

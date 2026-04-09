@@ -3,6 +3,7 @@ import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { usePreviousStep } from '../usePreviousStep';
+import type { StoreState } from '../../types';
 
 // --- module mocks ---
 const mockNavigate = vi.fn();
@@ -37,7 +38,7 @@ vi.mock('../useStudyConfig', () => ({
 vi.mock('../../store', () => ({
   useStoreDispatch: () => mockDispatch,
   useStoreActions: () => ({ deleteDynamicBlockAnswers: mockDeleteDynamicBlockAnswers }),
-  useStoreSelector: vi.fn((selector: (s: { answers: Record<string, unknown> }) => unknown) => selector({ answers: {} })),
+  useStoreSelector: vi.fn((selector: (s: StoreState) => unknown) => selector({ answers: {} } as StoreState)),
 }));
 
 vi.mock('../../../utils/encryptDecryptIndex', () => ({

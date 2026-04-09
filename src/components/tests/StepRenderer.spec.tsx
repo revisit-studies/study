@@ -146,7 +146,7 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 
 vi.mock('lodash.debounce', () => ({
-  default: (fn: (...args: never[]) => void) => fn,
+  default: (fn: (...args: unknown[]) => unknown) => fn,
 }));
 
 // ── tests ─────────────────────────────────────────────────────────────────────

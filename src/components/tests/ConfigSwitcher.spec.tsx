@@ -5,8 +5,11 @@ import {
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
-import type { GlobalConfig, ParsedConfig, StudyConfig } from '../../parser/types';
+import type {
+  ParsedConfig, ParserErrorWarning, StudyConfig,
+} from '../../parser/types';
 import { ConfigSwitcher } from '../ConfigSwitcher';
+import { makeGlobalConfig, makeStorageEngine, makeStudyConfig } from '../../tests/utils';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -120,28 +123,9 @@ vi.mock('../interface/DeviceRestrictionString', () => ({
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
 
-const globalConfig: GlobalConfig = {
-  $schema: '',
-  configsList: ['test-study'],
-  configs: {},
-};
+const globalConfig = makeGlobalConfig({ configsList: ['test-study'] });
 
-const minimalStudyConfig: StudyConfig = {
-  $schema: '',
-  studyMetadata: {
-    title: 'Test Study',
-    version: '1.0',
-    authors: ['Author One'],
-    date: '2024-01-01',
-    description: 'A test study',
-    organizations: [],
-  },
-  uiConfig: {
-    contactEmail: '', helpTextPath: '', logoPath: '', withProgressBar: false, autoDownloadStudy: false, withSidebar: false,
-  },
-  components: {},
-  sequence: { order: 'fixed', components: [] },
-};
+const minimalStudyConfig = makeStudyConfig();
 
 const parsedStudyConfig: ParsedConfig<StudyConfig> = {
   ...minimalStudyConfig,
@@ -173,7 +157,7 @@ describe('ConfigSwitcher', () => {
   });
 
   test('renders with empty configsList', async () => {
-    const emptyConfig: GlobalConfig = { $schema: '', configsList: [], configs: {} };
+    const emptyConfig = makeGlobalConfig();
     const { container } = await act(async () => render(
       <ConfigSwitcher globalConfig={emptyConfig} studyConfigs={{}} />,
     ));
@@ -181,14 +165,14 @@ describe('ConfigSwitcher', () => {
   });
 
   test('renders config with errors', async () => {
-    const mockError = {
-      instancePath: '', message: 'Parse error occurred', params: {}, category: 'invalid-config' as const,
+    const mockError: ParserErrorWarning = {
+      instancePath: '', message: 'Parse error occurred', params: {}, category: 'invalid-config',
     };
     const studyConfigsWithErrors: Record<string, ParsedConfig<StudyConfig> | null> = {
       'test-study': {
         ...minimalStudyConfig,
         errors: [mockError],
-        warnings: [{ ...mockError, message: 'A warning', category: 'unused-component' as const }],
+        warnings: [{ ...mockError, message: 'A warning', category: 'unused-component' }],
       },
     };
     const { container } = await act(async () => render(
@@ -198,8 +182,8 @@ describe('ConfigSwitcher', () => {
   });
 
   test('renders config with warnings but no errors', async () => {
-    const mockWarning = {
-      instancePath: '', message: 'A warning message', params: {}, category: 'unused-component' as const,
+    const mockWarning: ParserErrorWarning = {
+      instancePath: '', message: 'A warning message', params: {}, category: 'unused-component',
     };
     const studyConfigsWithWarnings: Record<string, ParsedConfig<StudyConfig> | null> = {
       'test-study': {
@@ -224,11 +208,9 @@ describe('ConfigSwitcher', () => {
   });
 
   test('tab selection based on configName prefixes (demos, examples, etc.)', async () => {
-    const multiGlobalConfig: GlobalConfig = {
-      $schema: '',
+    const multiGlobalConfig = makeGlobalConfig({
       configsList: ['demo-one', 'example-two', 'tutorial-three'],
-      configs: {},
-    };
+    });
     const multiConfigs: Record<string, ParsedConfig<StudyConfig> | null> = {
       'demo-one': parsedStudyConfig,
       'example-two': parsedStudyConfig,
@@ -260,7 +242,7 @@ describe('ConfigSwitcher', () => {
       getConditionData: vi.fn().mockResolvedValue({ conditionCounts: {} }),
       getEngine: vi.fn().mockReturnValue('firebase'),
     };
-    vi.mocked(useStorageEngine).mockReturnValueOnce({ storageEngine: mockEngine as never, setStorageEngine: vi.fn() });
+    vi.mocked(useStorageEngine).mockReturnValueOnce({ storageEngine: makeStorageEngine(mockEngine), setStorageEngine: vi.fn() });
     const { container } = await act(async () => render(
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
     ));

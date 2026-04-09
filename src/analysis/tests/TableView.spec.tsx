@@ -7,6 +7,7 @@ import { useParams } from 'react-router';
 import { StudyConfig } from '../../parser/types';
 import { ParticipantData } from '../../storage/types';
 import { createMockStudyConfig } from './testUtils';
+import { makeParticipant as _makeParticipant } from '../../tests/utils';
 import { TableView } from '../individualStudy/table/TableView';
 import { MetaCell } from '../individualStudy/table/MetaCell';
 
@@ -69,16 +70,12 @@ vi.mock('../../utils/participantName', () => ({
 
 const emptyConfig: StudyConfig = createMockStudyConfig();
 
-function makeParticipant(overrides: Partial<ParticipantData> = {}): ParticipantData {
-  return {
+function makeParticipant(overrides: Partial<ParticipantData> = {}) {
+  return _makeParticipant({
     participantId: 'pid-1',
     participantIndex: 1,
     participantConfigHash: 'hash1',
-    stage: 'DEFAULT',
     completed: true,
-    rejected: false,
-    searchParams: {},
-    answers: {},
     metadata: {
       userAgent: 'test-agent',
       resolution: { width: 1920, height: 1080 },
@@ -88,9 +85,8 @@ function makeParticipant(overrides: Partial<ParticipantData> = {}): ParticipantD
     sequence: {
       orderPath: 'root', order: 'fixed', components: ['trial1'], skip: [],
     },
-    participantTags: [],
     ...overrides,
-  };
+  });
 }
 
 const defaultProps = {
