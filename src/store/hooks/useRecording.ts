@@ -289,12 +289,12 @@ export function useRecording() {
 
       recorder.start();
       setAudioRecordingError(null);
+      setIsAudioRecording(true);
     }).catch((err) => {
       console.error('Error accessing microphone:', err);
       setAudioRecordingError('Microphone permission denied or not supported.');
+      setIsAudioRecording(false);
     });
-
-    setIsAudioRecording(true);
   }, [storageEngine, isMuted]);
 
   // For study with just audio recording
