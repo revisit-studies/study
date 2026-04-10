@@ -17,8 +17,7 @@
     "contactEmail": "",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
-    "withSidebar": false,
-    "recordScreen": true
+    "withSidebar": false
   },
   "importedLibraries": [
     "screen-recording"
