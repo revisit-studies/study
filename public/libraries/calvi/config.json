@@ -5,7 +5,7 @@
   "reference": "Lily W. Ge, Yuan Cui, and Matthew Kay. 2023. CALVI: Critical Thinking Assessment for Literacy in Visualizations. In Proceedings of the 2023 CHI Conference on Human Factors in Computing Systems (CHI '23). Association for Computing Machinery, New York, NY, USA, Article 815, 1-18.",
   "components": {
     "N1": {
-      "description": "Audio test",
+      "description": "Visitors at Movie Theaters in 2001",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N1.jpg",
       "nextButtonLocation": "sidebar",
