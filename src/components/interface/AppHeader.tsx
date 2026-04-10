@@ -207,7 +207,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
                 {isAudioRecording && !isMuted && !audioRecordingError && <RecordingAudioWaveform />}
                 {isAudioRecording && (audioRecordingError ? (
                   <Tooltip label={audioRecordingError}>
-                    <ActionIcon variant="light" size="md" aria-label="Microphone error" data-disabled>
+                    <ActionIcon variant="light" size="md" aria-label="Microphone error" data-disabled aria-disabled tabIndex={-1}>
                       <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} />
                     </ActionIcon>
                   </Tooltip>
