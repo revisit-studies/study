@@ -98,6 +98,7 @@ function calculateTimeStats(visibleParticipants: ParticipantDataWithStatus[], co
 function calculateCorrectnessStats(
   visibleParticipants: ParticipantDataWithStatus[],
   componentName?: string,
+  studyConfig?: StudyConfig,
 ): number {
   // Filter out rejected participants and filter by component if provided
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
@@ -116,9 +117,12 @@ function calculateCorrectnessStats(
   answers.forEach((answer) => {
     const correctCount = answer.correctAnswer.length;
     if (!correctCount) return;
+    const component = studyConfig?.components[answer.componentName]
+      ? studyComponentToIndividualComponent(studyConfig.components[answer.componentName], studyConfig)
+      : undefined;
 
     totalQuestions += correctCount;
-    const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer);
+    const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer, component?.response);
     if (isCorrect) {
       correctSum += correctCount;
     }
@@ -176,6 +180,7 @@ export function convertNumberToString(number: number | Date | null, type: 'date'
 export function getOverviewStats(
   visibleParticipants: ParticipantDataWithStatus[],
   componentName?: string,
+  studyConfig?: StudyConfig,
 ): OverviewData {
   const timeStats = calculateTimeStats(visibleParticipants, componentName);
   const dateStats = calculateDateStats(visibleParticipants, componentName);
@@ -188,7 +193,7 @@ export function getOverviewStats(
     avgTime: timeStats.avgTime,
     avgCleanTime: timeStats.avgCleanTime,
     participantsWithInvalidCleanTimeCount: timeStats.participantsWithInvalidCleanTimeCount,
-    correctness: calculateCorrectnessStats(visibleParticipants, componentName),
+    correctness: calculateCorrectnessStats(visibleParticipants, componentName, studyConfig),
   };
 
   return overviewData;
@@ -205,7 +210,7 @@ export function getComponentStats(visibleParticipants: ParticipantDataWithStatus
       participants: calculateParticipantCounts(visibleParticipants, name).total,
       avgTime: timeStats.avgTime,
       avgCleanTime: timeStats.avgCleanTime,
-      correctness: calculateCorrectnessStats(visibleParticipants, name),
+      correctness: calculateCorrectnessStats(visibleParticipants, name, studyConfig),
     };
   });
 
@@ -224,7 +229,7 @@ export function getResponseStats(visibleParticipants: ParticipantDataWithStatus[
       type: response.type,
       question: response.prompt ?? 'N/A',
       options: getResponseOptions(response),
-      correctness: calculateCorrectnessStats(visibleParticipants, name),
+      correctness: calculateCorrectnessStats(visibleParticipants, name, studyConfig),
     }));
   });
 

@@ -24,8 +24,8 @@ export function StatsView(
   const { trialId } = useParams();
 
   const overviewData = useMemo(
-    () => (trialId && trialId !== 'end' ? getOverviewStats(visibleParticipants, trialId) : null),
-    [visibleParticipants, trialId],
+    () => (trialId && trialId !== 'end' ? getOverviewStats(visibleParticipants, trialId, studyConfig) : null),
+    [studyConfig, visibleParticipants, trialId],
   );
 
   return (

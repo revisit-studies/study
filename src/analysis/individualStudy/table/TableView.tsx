@@ -13,9 +13,9 @@ import {
   IconCheck, IconHourglassEmpty, IconX, IconCopy,
 } from '@tabler/icons-react';
 
-import {
-  ParticipantDataWithStatus, StoredAnswer, StudyConfig,
-} from '../../../parser/types';
+import { StudyConfig } from '../../../parser/types';
+import { ParticipantDataWithStatus } from '../../../storage/types';
+import { StoredAnswer } from '../../../store/types';
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { participantName } from '../../../utils/participantName';
 import { AllTasksTimeline } from '../replay/AllTasksTimeline';
@@ -23,6 +23,7 @@ import { youtubeReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
+import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
 function formatDate(date: Date): string | JSX.Element {
   if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
@@ -212,7 +213,12 @@ export function TableView({
       {
         accessorFn: (row: ParticipantDataWithStatus) => Object.values(row.answers)
           .filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0)
-          .map((answer) => componentAnswersAreCorrect(answer.answer, answer.correctAnswer)),
+          .map((answer) => {
+            const componentConfig = studyConfig.components[answer.componentName];
+            const component = componentConfig ? studyComponentToIndividualComponent(componentConfig, studyConfig) : undefined;
+
+            return componentAnswersAreCorrect(answer.answer, answer.correctAnswer, component?.response);
+          }),
         header: 'Correct Answers',
         size: 160,
         Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, boolean[]> }) => (

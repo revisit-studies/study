@@ -1,6 +1,13 @@
 export type { ParticipantData, ParticipantDataWithStatus } from '../storage/types';
 export type { StoredAnswer, ParticipantMetadata } from '../store/types';
 
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+export interface JsonObject {
+  [key: string]: JsonValue;
+}
+export type JsonArray = JsonValue[];
+
 /**
  * The GlobalConfig is used to generate the list of available studies in the UI.
  * This list is displayed on the landing page when running the app.
@@ -813,6 +820,41 @@ export interface ReactiveResponse extends BaseResponse {
 }
 
 /**
+ * The CustomResponse interface is used to define the properties of a response rendered by React code in `src/public`.
+ * This is useful when built-in response types do not fit the interaction you need, but you still want the response to participate in the standard form, validation, provenance, and answer-saving flow.
+ *
+ * Unlike other response assets, the path for a custom response is relative to the `src/public/` folder.
+ * Similar to React stimulus components, we suggest creating a folder named `src/public/{studyName}/assets` to house custom response files for a particular study.
+ * The React component must be the default export from the file. You may also optionally export a named `validate` function from the same module.
+ *
+ * Example:
+ * ```json
+ * {
+ *   "id": "custom-chart-response",
+ *   "type": "custom",
+ *   "prompt": "Use the custom response to select a chart and confidence.",
+ *   "path": "my_study/assets/CustomChartResponse.tsx",
+ *   "parameters": {
+ *     "chartOptions": ["Bar", "Line", "Scatter"]
+ *   },
+ *   "default": {
+ *     "chartType": "Bar",
+ *     "confidence": 70
+ *   }
+ * }
+ * ```
+ */
+export interface CustomResponse extends BaseResponse {
+  type: 'custom';
+  /** The path to the react component. This should be a relative path from the src/public folder. */
+  path: string;
+  /** Parameters passed to the custom response component. */
+  parameters?: Record<string, unknown>;
+  /** The default value of the response. Must be JSON-serializable. */
+  default?: JsonValue;
+}
+
+/**
  * The ButtonsResponse interface is used to define the properties of a buttons response.
  * ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file.
  * Participants can cycle through the options using the arrow keys.
@@ -900,7 +942,7 @@ export interface DividerResponse extends Omit<BaseResponse, 'prompt' | 'infoText
   withDontKnow?: undefined;
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | CustomResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
