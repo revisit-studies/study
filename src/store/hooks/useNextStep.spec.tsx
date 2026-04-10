@@ -194,7 +194,7 @@ describe('useNextStep', () => {
     vi.restoreAllMocks();
   });
 
-  test('retries persistence on the next click after a save failure', async () => {
+  test('continues locally and shows an error when persistence fails', async () => {
     mockSaveAnswers
       .mockRejectedValueOnce(new Error('write failed'))
       .mockResolvedValueOnce(undefined);
@@ -204,22 +204,23 @@ describe('useNextStep', () => {
     expect(capturedGoToNextStep).toBeDefined();
 
     await capturedGoToNextStep?.();
+    await Promise.resolve();
 
     expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
-    expect(mockSaveTrialAnswer).not.toHaveBeenCalled();
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(mockShowNotification).toHaveBeenCalledWith({
       title: 'Failed to Save Response',
       message: 'Your response could not be saved. Please check your connection and try again.',
       color: 'red',
     });
-    expect(mockStoredAnswer.endTime).toBe(-1);
+    expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
 
     await capturedGoToNextStep?.();
 
-    expect(mockSaveAnswers).toHaveBeenCalledTimes(2);
+    expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
     expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
     expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
-    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledTimes(2);
   });
 });
