@@ -60,7 +60,7 @@ export function useNextStep() {
   const startTime = useMemo(() => Date.now(), [funcIndex, currentStep]);
 
   const windowEvents = useWindowEvents();
-  const goToNextStep = useCallback(async (collectData = true) => {
+  const goToNextStep = useCallback((collectData = true) => {
     try {
       if (typeof currentStep !== 'number') {
         return;
@@ -97,19 +97,14 @@ export function useNextStep() {
         const answersToPersist = { ...answers, [identifier]: toSave };
 
         if (storageEngine) {
-          try {
-            // Force the answers to be up to date before saving.
-            // Await the local snapshot write before navigating away.
-            await storageEngine.saveAnswers(answersToPersist);
-          } catch (error) {
-            console.error('Failed to save participant answers before advancing', error);
+          storageEngine.saveAnswers(answersToPersist).catch((error) => {
+            console.error('Failed to save participant answers', error);
             showNotification({
               title: 'Failed to Save Response',
               message: 'Your response could not be saved. Please check your connection and try again.',
               color: 'red',
             });
-            return;
-          }
+          });
         }
 
         storeDispatch(setReactiveAnswers({}));
