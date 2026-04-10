@@ -54,7 +54,6 @@ function makeParticipantData(overrides: Partial<ParticipantData> = {}): Particip
       language: 'en-US',
       ip: '127.0.0.1',
     },
-    completed: false,
     rejected: false,
     participantTags: [],
     stage: 'DEFAULT',
@@ -64,19 +63,6 @@ function makeParticipantData(overrides: Partial<ParticipantData> = {}): Particip
 }
 
 describe('shouldPreferCachedParticipantData', () => {
-  test('prefers cached participant data when cached completion is newer', () => {
-    const remoteParticipantData = makeParticipantData({
-      completed: false,
-      answers: { intro_0: makeStoredAnswer('intro_0', 100) },
-    });
-    const cachedParticipantData = makeParticipantData({
-      completed: true,
-      answers: { intro_0: makeStoredAnswer('intro_0', 100) },
-    });
-
-    expect(shouldPreferCachedParticipantData(cachedParticipantData, remoteParticipantData)).toBe(true);
-  });
-
   test('prefers cached participant data when it has more answered questions', () => {
     const remoteParticipantData = makeParticipantData({
       answers: { intro_0: makeStoredAnswer('intro_0', 100) },

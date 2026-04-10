@@ -1,4 +1,4 @@
-import { ParticipantData } from '../../../storage/types';
+import { ParticipantDataWithStatus } from '../../../storage/types';
 import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 import {
   ComponentData, OverviewData, ParticipantCounts, ResponseData,
@@ -8,7 +8,11 @@ import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { getMatrixAnswerOptions } from '../../../utils/responseOptions';
 
-function filterParticipants(visibleParticipants: ParticipantData[], componentName?: string, excludeRejected?: boolean): ParticipantData[] {
+function filterParticipants(
+  visibleParticipants: ParticipantDataWithStatus[],
+  componentName?: string,
+  excludeRejected?: boolean,
+): ParticipantDataWithStatus[] {
   return visibleParticipants.filter((participant) => {
     // Filter out rejected participants if excludeRejected is true
     const isNotRejected = !excludeRejected || !participant.rejected;
@@ -20,7 +24,7 @@ function filterParticipants(visibleParticipants: ParticipantData[], componentNam
   });
 }
 
-function calculateParticipantCounts(visibleParticipants: ParticipantData[], componentName?: string): ParticipantCounts {
+function calculateParticipantCounts(visibleParticipants: ParticipantDataWithStatus[], componentName?: string): ParticipantCounts {
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, false);
 
   const participantCounts: ParticipantCounts = {
@@ -34,7 +38,7 @@ function calculateParticipantCounts(visibleParticipants: ParticipantData[], comp
   return participantCounts;
 }
 
-function calculateDateStats(visibleParticipants: ParticipantData[], componentName?: string): { startDate: Date | null; endDate: Date | null } {
+function calculateDateStats(visibleParticipants: ParticipantDataWithStatus[], componentName?: string): { startDate: Date | null; endDate: Date | null } {
   // Filter out rejected participants and filter by component if provided
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
   const answers = filteredParticipants
@@ -54,7 +58,7 @@ function calculateDateStats(visibleParticipants: ParticipantData[], componentNam
   };
 }
 
-function calculateTimeStats(visibleParticipants: ParticipantData[], componentName?: string): { avgTime: number; avgCleanTime: number; participantsWithInvalidCleanTimeCount: number } {
+function calculateTimeStats(visibleParticipants: ParticipantDataWithStatus[], componentName?: string): { avgTime: number; avgCleanTime: number; participantsWithInvalidCleanTimeCount: number } {
   // Filter out rejected participants and filter by component if provided
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
 
@@ -91,7 +95,11 @@ function calculateTimeStats(visibleParticipants: ParticipantData[], componentNam
   };
 }
 
-function calculateCorrectnessStats(visibleParticipants: ParticipantData[], componentName?: string, studyConfig?: StudyConfig): number {
+function calculateCorrectnessStats(
+  visibleParticipants: ParticipantDataWithStatus[],
+  componentName?: string,
+  studyConfig?: StudyConfig,
+): number {
   // Filter out rejected participants and filter by component if provided
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
   const answers = filteredParticipants
@@ -169,7 +177,11 @@ export function convertNumberToString(number: number | Date | null, type: 'date'
   return 'N/A';
 }
 
-export function getOverviewStats(visibleParticipants: ParticipantData[], componentName?: string, studyConfig?: StudyConfig): OverviewData {
+export function getOverviewStats(
+  visibleParticipants: ParticipantDataWithStatus[],
+  componentName?: string,
+  studyConfig?: StudyConfig,
+): OverviewData {
   const timeStats = calculateTimeStats(visibleParticipants, componentName);
   const dateStats = calculateDateStats(visibleParticipants, componentName);
   const calculatedCounts = calculateParticipantCounts(visibleParticipants, componentName);
@@ -187,7 +199,7 @@ export function getOverviewStats(visibleParticipants: ParticipantData[], compone
   return overviewData;
 }
 
-export function getComponentStats(visibleParticipants: ParticipantData[], studyConfig: StudyConfig): ComponentData[] {
+export function getComponentStats(visibleParticipants: ParticipantDataWithStatus[], studyConfig: StudyConfig): ComponentData[] {
   // Get all component names from the current study
   const componentNames = Object.keys(studyConfig.components);
   const componentData: ComponentData[] = componentNames.map((name) => {
@@ -205,7 +217,7 @@ export function getComponentStats(visibleParticipants: ParticipantData[], studyC
   return componentData;
 }
 
-export function getResponseStats(visibleParticipants: ParticipantData[], studyConfig: StudyConfig): ResponseData[] {
+export function getResponseStats(visibleParticipants: ParticipantDataWithStatus[], studyConfig: StudyConfig): ResponseData[] {
   // Get all responses for each component
   const responseData: ResponseData[] = Object.entries(studyConfig.components).flatMap(([name, componentConfig]) => {
     const component = studyComponentToIndividualComponent(componentConfig, studyConfig);

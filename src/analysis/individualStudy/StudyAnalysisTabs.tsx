@@ -15,7 +15,7 @@ import {
 } from 'react';
 import { useResizeObserver } from '@mantine/hooks';
 import { AppHeader } from '../interface/AppHeader';
-import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
+import { GlobalConfig, ParticipantDataWithStatus, StudyConfig } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { LiveMonitorView } from './LiveMonitor/LiveMonitorView';
 import { SummaryView } from './summary/SummaryView';
@@ -37,7 +37,7 @@ import { ConfigView } from './config/ConfigView';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 
-function sortByStartTime(a: ParticipantData, b: ParticipantData) {
+function sortByStartTime(a: ParticipantDataWithStatus, b: ParticipantDataWithStatus) {
   const aStartTimes = Object.values(a.answers).map((answer) => answer.startTime).filter((startTime) => startTime !== undefined).sort();
   const bStartTimes = Object.values(b.answers).map((answer) => answer.startTime).filter((startTime) => startTime !== undefined).sort();
   if (aStartTimes.length === 0 || bStartTimes.length === 0) {
@@ -52,7 +52,11 @@ function sortByStartTime(a: ParticipantData, b: ParticipantData) {
   return bStartTimes[0] - aStartTimes[0];
 }
 
-async function getParticipantsData(studyConfig: StudyConfig | undefined, storageEngine: StorageEngine | undefined, studyId: string | undefined): Promise<Record<number, ParticipantData>> {
+async function getParticipantsData(
+  studyConfig: StudyConfig | undefined,
+  storageEngine: StorageEngine | undefined,
+  studyId: string | undefined,
+): Promise<ParticipantDataWithStatus[]> {
   if (studyId && storageEngine) {
     await storageEngine.initializeStudyDb(studyId);
   }
@@ -71,7 +75,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [selectedStages, setSelectedStages] = useState<string[]>(['ALL']);
   const [availableStages, setAvailableStages] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
   const [stageColors, setStageColors] = useState<Record<string, string>>({});
-  const [selectedParticipants, setSelectedParticipants] = useState<ParticipantData[]>([]);
+  const [selectedParticipants, setSelectedParticipants] = useState<ParticipantDataWithStatus[]>([]);
   const [selectedConfigs, setSelectedConfigs] = useState<string[]>(['ALL']);
   const [availableConfigs, setAvailableConfigs] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
   const [allConfigs, setAllConfigs] = useState<Record<string, StudyConfig>>({});

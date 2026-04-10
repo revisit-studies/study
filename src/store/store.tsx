@@ -133,6 +133,7 @@ export async function studyStoreCreator(
     participantId,
     funcSequence: {},
     completed,
+    isSubmittingFinal: false,
     clickedPrevious: false,
     storageEngineFailedToConnect,
     isStalledConfig,
@@ -368,6 +369,9 @@ export async function studyStoreCreator(
       },
       setParticipantCompleted(state, { payload }: PayloadAction<boolean>) {
         state.completed = payload;
+      },
+      setIsSubmittingFinal(state, { payload }: PayloadAction<boolean>) {
+        state.isSubmittingFinal = payload;
       },
       setClickedPrevious(state, { payload }: PayloadAction<boolean>) {
         state.clickedPrevious = payload;

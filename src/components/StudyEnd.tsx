@@ -10,9 +10,8 @@ import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { ParticipantData } from '../storage/types';
 import { download } from './downloader/DownloadTidy';
-import { useStudyId } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
-import { useStoreDispatch, useStoreActions } from '../store/store';
+import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
 import {
   createStudyEndFinalizeLoop,
   DEFAULT_STUDY_END_FINALIZE_STATE,
@@ -23,9 +22,10 @@ export function StudyEnd() {
   const studyConfig = useStudyConfig();
   const { storageEngine } = useStorageEngine();
   const dispatch = useStoreDispatch();
-  const { setParticipantCompleted } = useStoreActions();
+  const { setParticipantCompleted, setIsSubmittingFinal } = useStoreActions();
 
   const isAnalysis = useIsAnalysis();
+  const dataCollectionEnabled = useStoreSelector((state) => state.modes.dataCollectionEnabled);
 
   const [completed, setCompleted] = useState(false);
   const [finalizeState, setFinalizeState] = useState<StudyEndFinalizeLoopState>(DEFAULT_STUDY_END_FINALIZE_STATE);
@@ -45,6 +45,7 @@ export function StudyEnd() {
           setFinalizeState(DEFAULT_STUDY_END_FINALIZE_STATE);
           setCompleted(true);
           dispatch(setParticipantCompleted(true));
+          dispatch(setIsSubmittingFinal(false));
         },
         onStateChange: setFinalizeState,
         onUnexpectedError: (error) => {
@@ -52,17 +53,20 @@ export function StudyEnd() {
         },
       });
 
+      dispatch(setIsSubmittingFinal(true));
       finalizeLoopRef.current = finalizeLoop;
       finalizeLoop.start();
 
       return () => {
         finalizeLoopRef.current = null;
         finalizeLoop.cancel();
+        dispatch(setIsSubmittingFinal(false));
       };
     }
 
     setCompleted(true);
     dispatch(setParticipantCompleted(true));
+    dispatch(setIsSubmittingFinal(false));
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -143,18 +147,6 @@ export function StudyEnd() {
     }
     return () => { };
   }, [autoDownload, completed, delayCounter, downloadParticipant]);
-
-  const studyId = useStudyId();
-  const [dataCollectionEnabled, setDataCollectionEnabled] = useState(false);
-  useEffect(() => {
-    const checkDataCollectionEnabled = async () => {
-      if (storageEngine) {
-        const modes = await storageEngine.getModes(studyId);
-        setDataCollectionEnabled(modes.dataCollectionEnabled);
-      }
-    };
-    checkDataCollectionEnabled();
-  }, [storageEngine, studyId]);
 
   const processedStudyEndMsg = useMemo(() => {
     const { studyEndMsg, urlParticipantIdParam } = studyConfig.uiConfig;
