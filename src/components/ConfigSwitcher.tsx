@@ -17,7 +17,7 @@ import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatus
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { REVISIT_MODE } from '../storage/engines/types';
 import { useAuth } from '../store/hooks/useAuth';
-import { isCloudStorageEngine } from '../storage/engines/utils';
+import { isCloudStorageEngine } from '../storage/engines/utils/storageEngineHelpers';
 import { getSequenceConditions } from '../utils/handleConditionLogic';
 import { useStudyRecordings } from '../utils/useStudyRecordings';
 import { useDeviceRules } from '../utils/useDeviceRules';

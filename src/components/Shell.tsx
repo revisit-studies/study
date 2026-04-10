@@ -31,7 +31,7 @@ import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
-import { hash } from '../storage/engines/utils';
+import { hash } from '../storage/engines/utils/storageEngineHelpers';
 import {
   filterSequenceByCondition,
   parseConditionParam,
