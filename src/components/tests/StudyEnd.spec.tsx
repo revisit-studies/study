@@ -33,6 +33,8 @@ let mockStudyConfig: {
   },
 };
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | undefined;
+let mockDataCollectionEnabled = false;
+const mockFinalizeLoopHandlers: { onComplete?: () => void; onUnexpectedError?: (error: unknown) => void } = {};
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -50,7 +52,36 @@ vi.mock('../../storage/storageEngineHooks', () => ({
 
 vi.mock('../../store/store', () => ({
   useStoreDispatch: () => vi.fn(),
-  useStoreActions: () => ({ setParticipantCompleted: vi.fn() }),
+  useStoreActions: () => ({ setParticipantCompleted: vi.fn(), setIsSubmittingFinal: vi.fn() }),
+  useStoreSelector: (selector: (state: { modes: { dataCollectionEnabled: boolean } }) => unknown) => selector({ modes: { dataCollectionEnabled: mockDataCollectionEnabled } }),
+}));
+
+vi.mock('../StudyEnd.utils', () => ({
+  DEFAULT_STUDY_END_FINALIZE_STATE: {
+    error: null,
+    failedAttemptCount: 0,
+    isRetryingAutomatically: false,
+    manualRetryRequired: false,
+    retryAllowed: true,
+    retryDelayMs: null,
+  },
+  createStudyEndFinalizeLoop: ({ onComplete, onUnexpectedError }: { onComplete: () => void; onUnexpectedError: (error: unknown) => void }) => {
+    mockFinalizeLoopHandlers.onComplete = onComplete;
+    mockFinalizeLoopHandlers.onUnexpectedError = onUnexpectedError;
+    return {
+      start: async () => {
+        if (!mockStorageEngine) return;
+        try {
+          const result = await mockStorageEngine.verifyCompletion?.();
+          if (result === true) onComplete();
+        } catch (error) {
+          onUnexpectedError(error);
+        }
+      },
+      cancel: vi.fn(),
+      retryNow: vi.fn(),
+    };
+  },
 }));
 
 vi.mock('../../routes/utils', () => ({
@@ -95,11 +126,13 @@ describe('StudyEnd', () => {
         urlParticipantIdParam: undefined,
       },
     };
+    mockDataCollectionEnabled = false;
     mockStorageEngine = {
       verifyCompletion: vi.fn().mockResolvedValue(true),
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p1'),
       getParticipantData: vi.fn().mockResolvedValue(null),
+      getCurrentParticipantDataSnapshot: vi.fn().mockReturnValue(null),
     };
   });
 
@@ -126,11 +159,13 @@ describe('StudyEnd', () => {
   });
 
   test('shows loader when data collection is enabled and not yet complete', async () => {
+    mockDataCollectionEnabled = true;
     mockStorageEngine = {
       verifyCompletion: vi.fn().mockResolvedValue(false),
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: true }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p1'),
       getParticipantData: vi.fn().mockResolvedValue(null),
+      getCurrentParticipantDataSnapshot: vi.fn().mockReturnValue(null),
     };
 
     await act(async () => {
@@ -175,6 +210,7 @@ describe('StudyEnd', () => {
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p1'),
       getParticipantData: vi.fn().mockResolvedValue(null),
+      getCurrentParticipantDataSnapshot: vi.fn().mockReturnValue(null),
     };
     await act(async () => { render(<StudyEnd />); });
     // verifyCompletion returns true → completed set to true → loader disappears
@@ -188,6 +224,7 @@ describe('StudyEnd', () => {
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p1'),
       getParticipantData: vi.fn().mockResolvedValue(null),
+      getCurrentParticipantDataSnapshot: vi.fn().mockReturnValue(null),
     };
     await act(async () => { render(<StudyEnd />); });
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -225,6 +262,7 @@ describe('StudyEnd', () => {
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p1'),
       getParticipantData: vi.fn().mockResolvedValue({ participantId: 'p1' }),
+      getCurrentParticipantDataSnapshot: vi.fn().mockReturnValue(null),
     };
     await act(async () => { render(<StudyEnd />); });
     await waitFor(() => { expect(downloadSpy).toHaveBeenCalled(); });
@@ -245,6 +283,7 @@ describe('StudyEnd', () => {
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p42'),
       getParticipantData: vi.fn().mockResolvedValue(null),
+      getCurrentParticipantDataSnapshot: vi.fn().mockReturnValue(null),
     };
     await act(async () => { render(<StudyEnd />); });
     await waitFor(() => {
@@ -269,6 +308,7 @@ describe('StudyEnd', () => {
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p1'),
       getParticipantData: vi.fn().mockResolvedValue(null),
+      getCurrentParticipantDataSnapshot: vi.fn().mockReturnValue(null),
     };
     mockStudyConfig = {
       ...mockStudyConfig,

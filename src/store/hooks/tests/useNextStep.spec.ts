@@ -227,7 +227,7 @@ describe('useNextStep', () => {
     mockAreResponsesValid = true;
     mockIsAnalysis = false;
     mockStoredAnswer = defaultStoredAnswer;
-    mockSaveAnswers = vi.fn();
+    mockSaveAnswers = vi.fn().mockResolvedValue(undefined);
     mockDispatch = vi.fn();
     mockSaveTrialAnswer = vi.fn();
   });

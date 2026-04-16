@@ -27,7 +27,7 @@ vi.mock('./storage/storageEngineHooks', () => ({
   }),
 }));
 
-vi.mock('./storage/engines/utils', () => ({
+vi.mock('./storage/engines/utils/storageEngineHelpers', () => ({
   isCloudStorageEngine: () => mockIsCloud,
 }));
 
