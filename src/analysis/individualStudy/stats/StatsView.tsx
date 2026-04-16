@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
-import { ParticipantData } from '../../../storage/types';
+import { ParticipantDataWithStatus } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { TrialVisualization } from './TrialVisualization';
 import { StepsPanel } from '../../../components/interface/StepsPanel';
@@ -17,7 +17,7 @@ export function StatsView(
     studyId,
   }: {
     studyConfig: StudyConfig;
-    visibleParticipants: ParticipantData[];
+    visibleParticipants: ParticipantDataWithStatus[];
     studyId?: string;
   },
 ) {

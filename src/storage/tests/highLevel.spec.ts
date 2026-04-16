@@ -7,10 +7,10 @@ import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
-import { hash } from '../engines/utils';
-import { Sequence } from '../../store/types';
+import { hash } from '../engines/utils/storageEngineHelpers';
+import { Sequence, StoredAnswer } from '../../store/types';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
-import { StorageEngine } from '../engines/types';
+import { StorageEngine, StorageObject, StorageObjectType } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 
 const studyId = 'test-study';
@@ -87,6 +87,150 @@ function getConditionalBlockOrder(sequence: Sequence, condition: string): string
   }
 
   return conditionalBlock.components as string[];
+}
+
+function makeStoredAnswer(identifier: string, endTime: number): StoredAnswer {
+  return {
+    answer: { response: `answer-${endTime}` },
+    identifier,
+    componentName: 'intro',
+    trialOrder: '0',
+    incorrectAnswers: {},
+    startTime: endTime - 10,
+    endTime,
+    provenanceGraph: {
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      stimulus: undefined,
+      sidebar: undefined,
+    },
+    windowEvents: [],
+    timedOut: false,
+    helpButtonClickedCount: 0,
+    parameters: {},
+    correctAnswer: [],
+    optionOrders: {},
+    questionOrders: {},
+  };
+}
+
+class DelayedLocalStorageEngine extends LocalStorageEngine {
+  private holdParticipantDataWrite = false;
+
+  private releaseParticipantDataWrite: (() => void) | null = null;
+
+  private participantDataWriteHeld = Promise.resolve();
+
+  private resolveParticipantDataWriteHeld: (() => void) | null = null;
+
+  private holdAssetUpload = false;
+
+  private failHeldAssetUpload = false;
+
+  private releaseAssetUpload: (() => void) | null = null;
+
+  private assetUploadHeld = Promise.resolve();
+
+  private resolveAssetUploadHeld: (() => void) | null = null;
+
+  private failRealtimeCompletionAttempts = 0;
+
+  constructor(testing: boolean = false) {
+    super(testing);
+    this.participantDataWriteDelayMs = 0;
+  }
+
+  holdNextParticipantDataWrite() {
+    this.holdParticipantDataWrite = true;
+    this.participantDataWriteHeld = new Promise<void>((resolve) => {
+      this.resolveParticipantDataWriteHeld = resolve;
+    });
+  }
+
+  releaseHeldParticipantDataWrite() {
+    this.releaseParticipantDataWrite?.();
+    this.releaseParticipantDataWrite = null;
+  }
+
+  waitForHeldParticipantDataWrite() {
+    return this.participantDataWriteHeld;
+  }
+
+  holdNextAssetUpload(options: { fail?: boolean } = {}) {
+    this.holdAssetUpload = true;
+    this.failHeldAssetUpload = options.fail ?? false;
+    this.assetUploadHeld = new Promise<void>((resolve) => {
+      this.resolveAssetUploadHeld = resolve;
+    });
+  }
+
+  releaseHeldAssetUpload() {
+    this.releaseAssetUpload?.();
+    this.releaseAssetUpload = null;
+  }
+
+  waitForHeldAssetUpload() {
+    return this.assetUploadHeld;
+  }
+
+  failNextRealtimeCompletionAttempt() {
+    this.failRealtimeCompletionAttempts += 1;
+  }
+
+  protected override async _pushToStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    objectToUpload: StorageObject<T>,
+  ) {
+    const isParticipantDataWrite = type === 'participantData' && prefix.startsWith('participants/');
+    const isAssetUpload = objectToUpload instanceof Blob
+      && (prefix.startsWith('audio/') || prefix.startsWith('screenRecording/'));
+
+    if (isParticipantDataWrite && this.holdParticipantDataWrite) {
+      this.holdParticipantDataWrite = false;
+      this.resolveParticipantDataWriteHeld?.();
+      this.resolveParticipantDataWriteHeld = null;
+      await new Promise<void>((resolve) => {
+        this.releaseParticipantDataWrite = resolve;
+      });
+    }
+
+    if (isAssetUpload && this.holdAssetUpload) {
+      const shouldFail = this.failHeldAssetUpload;
+      this.holdAssetUpload = false;
+      this.failHeldAssetUpload = false;
+      this.resolveAssetUploadHeld?.();
+      this.resolveAssetUploadHeld = null;
+
+      await new Promise<void>((resolve, reject) => {
+        this.releaseAssetUpload = () => {
+          this.releaseAssetUpload = null;
+
+          if (shouldFail) {
+            reject(new Error('Asset upload failed'));
+            return;
+          }
+
+          resolve();
+        };
+      });
+    }
+
+    if (isAssetUpload) {
+      return;
+    }
+
+    await super._pushToStorage(prefix, type, objectToUpload);
+  }
+
+  protected override async _completeCurrentParticipantRealtime() {
+    if (this.failRealtimeCompletionAttempts > 0) {
+      this.failRealtimeCompletionAttempts -= 1;
+      throw new Error('Realtime completion update failed');
+    }
+
+    await super._completeCurrentParticipantRealtime();
+  }
 }
 
 describe.each([
@@ -167,7 +311,6 @@ describe.each([
     expect(participantData!.searchParams).toEqual({});
     expect(participantData!.conditions).toBeUndefined();
     expect(participantData!.metadata).toEqual(participantMetadata);
-    expect(participantData!.completed).toBe(false);
     expect(participantData!.rejected).toBe(false);
     expect(participantData!.participantTags).toEqual([]);
   });
@@ -494,9 +637,386 @@ describe.each([
 
   // getParticipantStatusCounts test
 
-  // saveAnswers test
+  test('flushPendingParticipantData persists the newest queued answers snapshot', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
-  // verifyCompletion test
+    const firstAnswers = {
+      intro_0: {
+        identifier: 'intro_0',
+        componentName: 'intro',
+        trialOrder: '0',
+        answer: { response: 'first' },
+        correctAnswer: [],
+        incorrectAnswers: {},
+        startTime: 10,
+        endTime: 20,
+        provenanceGraph: {
+          sidebar: undefined,
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          stimulus: undefined,
+        },
+        windowEvents: [],
+        timedOut: false,
+        helpButtonClickedCount: 0,
+        parameters: {},
+        optionOrders: {},
+        questionOrders: {},
+      },
+    };
+    const secondAnswers = {
+      intro_0: {
+        ...firstAnswers.intro_0,
+        answer: { response: 'second' },
+        endTime: 30,
+      },
+    };
+
+    await storageEngine.saveAnswers(firstAnswers);
+    await storageEngine.saveAnswers(secondAnswers);
+    await storageEngine.flushPendingParticipantData();
+
+    const participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData?.answers).toEqual(secondAnswers);
+  });
+
+  test('saveAnswers coalesces to the latest answer and finalizeParticipant persists completion after delayed writes', async () => {
+    storageEngine = new DelayedLocalStorageEngine(true);
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    sequenceArray = await generateSequenceArray(configSimple);
+    await storageEngine.setSequenceArray(sequenceArray);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const delayedStorageEngine = storageEngine as DelayedLocalStorageEngine;
+    const identifier = 'intro_0';
+
+    delayedStorageEngine.holdNextParticipantDataWrite();
+    await storageEngine.saveAnswers({
+      [identifier]: makeStoredAnswer(identifier, 100),
+    });
+
+    const firstWritePromise = storageEngine.flushPendingParticipantData();
+    await delayedStorageEngine.waitForHeldParticipantDataWrite();
+
+    await storageEngine.saveAnswers({
+      [identifier]: makeStoredAnswer(identifier, 200),
+    });
+
+    const finalizePromise = storageEngine.finalizeParticipant();
+
+    delayedStorageEngine.releaseHeldParticipantDataWrite();
+
+    await firstWritePromise;
+
+    const finalizeResult = await finalizePromise;
+    expect(finalizeResult.status).toBe('complete');
+
+    const participantData = await storageEngine.getParticipantData();
+    expect(participantData).toBeDefined();
+    expect(participantData!.answers[identifier].endTime).toBe(200);
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find(
+      (assignment) => assignment.participantId === participantData!.participantId,
+    );
+    expect(sequenceAssignment?.completed).not.toBeNull();
+  });
+
+  test('initializeParticipantSession recovers the latest local participant data while remote writes are pending', async () => {
+    storageEngine = new DelayedLocalStorageEngine(true);
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    sequenceArray = await generateSequenceArray(configSimple);
+    await storageEngine.setSequenceArray(sequenceArray);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const delayedStorageEngine = storageEngine as DelayedLocalStorageEngine;
+    const identifier = 'intro_0';
+
+    delayedStorageEngine.holdNextParticipantDataWrite();
+    await storageEngine.saveAnswers({
+      [identifier]: makeStoredAnswer(identifier, 100),
+    });
+
+    await delayedStorageEngine.waitForHeldParticipantDataWrite();
+
+    const recoveredStorageEngine = new LocalStorageEngine(true);
+    await recoveredStorageEngine.connect();
+    await recoveredStorageEngine.initializeStudyDb(studyId);
+
+    const recoveredParticipantSession = await recoveredStorageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+    );
+
+    expect(recoveredParticipantSession.answers[identifier].endTime).toBe(100);
+
+    delayedStorageEngine.releaseHeldParticipantDataWrite();
+    await storageEngine.flushPendingParticipantData();
+
+    // @ts-expect-error using protected method for testing
+    await recoveredStorageEngine._testingReset(studyId);
+  });
+
+  test('updateProgressData preserves completion when progress is updated after completion', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const { participantId } = participantSession;
+    const identifier = 'intro_0';
+
+    await storageEngine.saveAnswers({
+      [identifier]: makeStoredAnswer(identifier, 100),
+    });
+    await storageEngine.flushPendingParticipantData();
+
+    const finalizeResult = await storageEngine.finalizeParticipant();
+    expect(finalizeResult.status).toBe('complete');
+
+    let sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    let sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.completed).not.toBeNull();
+    const completedTime = sequenceAssignment!.completed;
+
+    await storageEngine.updateProgressData({
+      total: 29,
+      answered: ['intro', 'late-progress'],
+      isDynamic: false,
+    });
+
+    sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.completed).toBe(completedTime);
+    expect(sequenceAssignment!.total).toBe(29);
+    expect(sequenceAssignment!.answered).toEqual(['intro', 'late-progress']);
+  });
+
+  test('finalizeParticipant completes when there are no answered questions', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const finalizeResult = await storageEngine.finalizeParticipant();
+    expect(finalizeResult.status).toBe('complete');
+
+    const participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData).toBeDefined();
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantSession.participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.completed).not.toBeNull();
+  });
+
+  test('finalizeParticipant waits for pending asset uploads and returns an error when an upload fails', async () => {
+    storageEngine = new DelayedLocalStorageEngine(true);
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    sequenceArray = await generateSequenceArray(configSimple);
+    await storageEngine.setSequenceArray(sequenceArray);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const delayedStorageEngine = storageEngine as DelayedLocalStorageEngine;
+    const identifier = 'intro_0';
+
+    await storageEngine.saveAnswers({
+      [identifier]: makeStoredAnswer(identifier, 100),
+    });
+    await storageEngine.flushPendingParticipantData();
+
+    delayedStorageEngine.holdNextAssetUpload({ fail: true });
+
+    const assetUploadPromise = storageEngine
+      .saveAudioRecording(new Blob(['audio'], { type: 'audio/webm' }), identifier)
+      .catch(() => undefined);
+    await delayedStorageEngine.waitForHeldAssetUpload();
+
+    const finalizePromise = storageEngine.finalizeParticipant();
+
+    delayedStorageEngine.releaseHeldAssetUpload();
+
+    await assetUploadPromise;
+
+    const finalizeResult = await finalizePromise;
+    expect(finalizeResult.status).toBe('error');
+    expect(finalizeResult.message).toContain('Asset upload failed');
+    expect(finalizeResult.retryable).toBe(false);
+
+    const participantData = await storageEngine.getParticipantData();
+    expect(participantData).toBeDefined();
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantData!.participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.completed).toBeNull();
+  });
+
+  test('finalizeParticipant does not mask a failed asset upload after a later successful upload', async () => {
+    storageEngine = new DelayedLocalStorageEngine(true);
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    sequenceArray = await generateSequenceArray(configSimple);
+    await storageEngine.setSequenceArray(sequenceArray);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const delayedStorageEngine = storageEngine as DelayedLocalStorageEngine;
+    const firstIdentifier = 'intro_0';
+    const secondIdentifier = 'intro_1';
+
+    await storageEngine.saveAnswers({
+      [firstIdentifier]: makeStoredAnswer(firstIdentifier, 100),
+    });
+    await storageEngine.flushPendingParticipantData();
+
+    delayedStorageEngine.holdNextAssetUpload({ fail: true });
+    const failedAssetUploadPromise = storageEngine
+      .saveAudioRecording(new Blob(['first-audio'], { type: 'audio/webm' }), firstIdentifier)
+      .catch(() => undefined);
+    await delayedStorageEngine.waitForHeldAssetUpload();
+    delayedStorageEngine.releaseHeldAssetUpload();
+    await failedAssetUploadPromise;
+
+    await storageEngine.saveAudioRecording(
+      new Blob(['second-audio'], { type: 'audio/webm' }),
+      secondIdentifier,
+    );
+
+    const finalizeResult = await storageEngine.finalizeParticipant();
+    expect(finalizeResult.status).toBe('error');
+    expect(finalizeResult.message).toContain('Asset upload failed');
+    expect(finalizeResult.retryable).toBe(false);
+
+    const participantData = await storageEngine.getParticipantData();
+    expect(participantData).toBeDefined();
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find((assignment) => assignment.participantId === participantData!.participantId);
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.completed).toBeNull();
+  });
+
+  test('finalizeParticipant succeeds after a transient realtime completion failure', async () => {
+    storageEngine = new DelayedLocalStorageEngine(true);
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    sequenceArray = await generateSequenceArray(configSimple);
+    await storageEngine.setSequenceArray(sequenceArray);
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const delayedStorageEngine = storageEngine as DelayedLocalStorageEngine;
+    const identifier = 'intro_0';
+
+    await storageEngine.saveAnswers({
+      [identifier]: makeStoredAnswer(identifier, 100),
+    });
+    await storageEngine.flushPendingParticipantData();
+
+    delayedStorageEngine.failNextRealtimeCompletionAttempt();
+
+    const firstFinalizeResult = await storageEngine.finalizeParticipant();
+    expect(firstFinalizeResult.status).toBe('error');
+    expect(firstFinalizeResult.message).toContain('Realtime completion update failed');
+
+    const retryFinalizeResult = await storageEngine.finalizeParticipant();
+    expect(retryFinalizeResult.status).toBe('complete');
+
+    const participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData).toBeDefined();
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find(
+      (assignment) => assignment.participantId === participantSession.participantId,
+    );
+    expect(sequenceAssignment).toBeDefined();
+    expect(sequenceAssignment!.completed).not.toBeNull();
+  });
+
+  test('finalizeParticipant waits for a high-latency asset upload before completing', async () => {
+    storageEngine = new DelayedLocalStorageEngine(true);
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    sequenceArray = await generateSequenceArray(configSimple);
+    await storageEngine.setSequenceArray(sequenceArray);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const delayedStorageEngine = storageEngine as DelayedLocalStorageEngine;
+    const identifier = 'intro_0';
+
+    await storageEngine.saveAnswers({
+      [identifier]: makeStoredAnswer(identifier, 100),
+    });
+    await storageEngine.flushPendingParticipantData();
+
+    delayedStorageEngine.holdNextAssetUpload();
+
+    const assetUploadPromise = storageEngine.saveAudioRecording(
+      new Blob(['audio'], { type: 'audio/webm' }),
+      identifier,
+    );
+    await delayedStorageEngine.waitForHeldAssetUpload();
+
+    const finalizePromise = storageEngine.finalizeParticipant();
+    let finalizeSettled = false;
+    finalizePromise.finally(() => {
+      finalizeSettled = true;
+    });
+
+    await Promise.resolve();
+    expect(finalizeSettled).toBe(false);
+
+    delayedStorageEngine.releaseHeldAssetUpload();
+
+    await assetUploadPromise;
+
+    const finalizeResult = await finalizePromise;
+    expect(finalizeResult.status).toBe('complete');
+  });
+
+  test('finalizeParticipant waits for asset uploads that start after finalization begins', async () => {
+    storageEngine = new DelayedLocalStorageEngine(true);
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    sequenceArray = await generateSequenceArray(configSimple);
+    await storageEngine.setSequenceArray(sequenceArray);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const delayedStorageEngine = storageEngine as DelayedLocalStorageEngine;
+    const identifier = 'intro_0';
+
+    await storageEngine.saveAnswers({
+      [identifier]: makeStoredAnswer(identifier, 100),
+    });
+    await storageEngine.flushPendingParticipantData();
+
+    delayedStorageEngine.holdNextAssetUpload();
+
+    const finalizePromise = storageEngine.finalizeParticipant();
+    let finalizeSettled = false;
+    finalizePromise.finally(() => {
+      finalizeSettled = true;
+    });
+
+    let lateAssetUploadPromise: Promise<void> | undefined;
+    await new Promise<void>((resolve) => {
+      setTimeout(() => {
+        lateAssetUploadPromise = storageEngine.saveAudioRecording(
+          new Blob(['audio'], { type: 'audio/webm' }),
+          identifier,
+        );
+        resolve();
+      }, 0);
+    });
+
+    await delayedStorageEngine.waitForHeldAssetUpload();
+    expect(finalizeSettled).toBe(false);
+
+    delayedStorageEngine.releaseHeldAssetUpload();
+
+    await lateAssetUploadPromise;
+
+    const finalizeResult = await finalizePromise;
+    expect(finalizeResult.status).toBe('complete');
+  });
 
   // getAudio and saveAudio untestable due to browser-specific implementation
 

@@ -6,7 +6,7 @@ import testConfigSimple from './testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
 import { StorageEngine, cleanupModes } from '../engines/types';
-import { hash } from '../engines/utils';
+import { hash } from '../engines/utils/storageEngineHelpers';
 
 type RowData = Record<string, string | number | boolean | null | object>;
 
@@ -122,7 +122,7 @@ vi.mock('@supabase/supabase-js', () => {
   }
 
   return {
-    AuthError: class AuthError extends Error {},
+    AuthError: class AuthError extends Error { },
     createClient: () => ({
       from: (_table: string) => makeQueryBuilder(() => revisitRows),
       schema: (schemaName: string) => ({
@@ -184,7 +184,7 @@ vi.mock('@supabase/supabase-js', () => {
         signInAnonymously: async () => ({ data: { user: { id: 'mock-uid' } }, error: null }),
         onAuthStateChange: (callback: (event: string, session: object | null) => void) => {
           callback('SIGNED_IN', { user: { id: 'mock-uid', email: null } });
-          return { data: { subscription: { unsubscribe: () => {} } } };
+          return { data: { subscription: { unsubscribe: () => { } } } };
         },
         signOut: async () => ({ error: null }),
         signInWithOAuth: async () => ({ error: null }),

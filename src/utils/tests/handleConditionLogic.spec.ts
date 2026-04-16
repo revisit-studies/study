@@ -40,7 +40,6 @@ const participantData: ParticipantData = {
     language: '',
     ip: null,
   },
-  completed: false,
   rejected: false,
   participantTags: [],
   stage: 'test-sequence-condition',

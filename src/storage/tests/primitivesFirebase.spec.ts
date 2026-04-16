@@ -15,7 +15,7 @@ import testConfigSimple from './testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { FirebaseStorageEngine } from '../engines/FirebaseStorageEngine';
 import { type StorageEngine, cleanupModes } from '../engines/types';
-import { hash } from '../engines/utils';
+import { hash } from '../engines/utils/storageEngineHelpers';
 
 type DocData = Record<string, string | number | boolean | null | object>;
 
@@ -212,7 +212,7 @@ vi.mock('firebase/firestore', () => {
   }
 
   class MockTimestamp {
-    constructor(public seconds: number, public nanoseconds: number) {}
+    constructor(public seconds: number, public nanoseconds: number) { }
 
     toMillis() { return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6); }
   }

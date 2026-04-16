@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { SequenceAssignment } from '../../storage/engines/types';
-import { ParticipantData } from '../../storage/types';
+import { ParticipantDataWithStatus } from '../../storage/types';
 import { makeSequenceAssignment, makeParticipant as _makeParticipant } from '../../tests/utils';
 import { getFilteredParticipantProgress } from '../individualStudy/LiveMonitor/LiveMonitorView';
 
@@ -11,21 +11,26 @@ function makeAssignment(overrides: Partial<SequenceAssignment> & Pick<SequenceAs
   });
 }
 
-function makeParticipant(overrides: Partial<ParticipantData> & Pick<ParticipantData, 'participantId'>): ParticipantData {
-  return _makeParticipant({
-    participantIndex: 1,
-    metadata: {
-      userAgent: 'ua',
-      resolution: { width: 100, height: 100 },
-      language: 'en',
-      ip: '0.0.0.0',
-    },
+function makeParticipant(
+  overrides: Partial<ParticipantDataWithStatus> & Pick<ParticipantDataWithStatus, 'participantId'>,
+): ParticipantDataWithStatus {
+  return {
+    ..._makeParticipant({
+      participantIndex: 1,
+      metadata: {
+        userAgent: 'ua',
+        resolution: { width: 100, height: 100 },
+        language: 'en',
+        ip: '0.0.0.0',
+      },
+    }),
+    completed: false,
     ...overrides,
-  });
+  };
 }
 
 function getParticipantViewIds(
-  participants: ParticipantData[],
+  participants: ParticipantDataWithStatus[],
   includedParticipants: string[],
   selectedStages: string[],
 ): string[] {
@@ -60,7 +65,7 @@ describe('analysis live monitor', () => {
       }),
     ];
 
-    const participants: ParticipantData[] = [
+    const participants: ParticipantDataWithStatus[] = [
       makeParticipant({
         participantId: 'p1', completed: false, rejected: false, stage: 'S1',
       }),

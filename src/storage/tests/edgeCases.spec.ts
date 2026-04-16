@@ -8,7 +8,7 @@ import testConfigSimple2 from './testConfigSimple2.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { type StorageEngine } from '../engines/types';
-import { hash } from '../engines/utils';
+import { hash } from '../engines/utils/storageEngineHelpers';
 import { makeStoredAnswer } from '../../tests/utils';
 
 const studyId = 'test-edge-cases';
@@ -184,11 +184,11 @@ describe('StorageEngine edge cases', () => {
       };
       await storageEngine.saveAnswers(answers);
 
-      const completed = await storageEngine.verifyCompletion();
-      expect(completed).toBe(true);
+      const result = await storageEngine.finalizeParticipant();
+      expect(result.status).toBe('complete');
 
       const participantData = await storageEngine.getParticipantData();
-      expect(participantData!.completed).toBe(true);
+      expect(await storageEngine.getParticipantCompletionStatus(participantData!.participantId)).toBe(true);
     });
 
     test('verifyCompletion returns false when asset uploads are pending', async () => {
@@ -198,8 +198,8 @@ describe('StorageEngine edge cases', () => {
       // @ts-expect-error accessing protected property for testing
       storageEngine.uploadingAssetIds.push('audio/task1');
 
-      const completed = await storageEngine.verifyCompletion();
-      expect(completed).toBe(false);
+      const result = await storageEngine.finalizeParticipant();
+      expect(result.status).not.toBe('complete');
 
       // Clean up
       // @ts-expect-error accessing protected property for testing
@@ -242,8 +242,8 @@ describe('StorageEngine edge cases', () => {
       expect(storageEngine.uploadingAssetIds).toContain('audio/task1');
 
       // This means verifyCompletion will block
-      const completed = await storageEngine.verifyCompletion();
-      expect(completed).toBe(false);
+      const result = await storageEngine.finalizeParticipant();
+      expect(result.status).not.toBe('complete');
 
       // Restore
       // @ts-expect-error using protected method for testing
@@ -568,13 +568,13 @@ describe('StorageEngine edge cases', () => {
       // @ts-expect-error accessing protected method
       storageEngine._pushToStorage = vi.fn().mockRejectedValue(new Error('Connection lost'));
 
-      await expect(storageEngine.verifyCompletion()).rejects.toThrow('Connection lost');
+      await expect(storageEngine.finalizeParticipant()).rejects.toThrow('Connection lost');
 
       // Participant should not be marked as complete in storage
       // @ts-expect-error restore
       storageEngine._pushToStorage = originalPush;
       const data = await storageEngine.getParticipantData();
-      expect(data!.completed).toBe(false);
+      expect(await storageEngine.getParticipantCompletionStatus(data!.participantId)).toBe(false);
     });
 
     test('network failure during asset upload blocks completion', async () => {
@@ -610,16 +610,16 @@ describe('StorageEngine edge cases', () => {
       // @ts-expect-error flush throttle
       await storageEngine.__throttleSaveAnswers.flush?.();
 
-      const completed = await storageEngine.verifyCompletion();
-      expect(completed).toBe(false);
+      const result = await storageEngine.finalizeParticipant();
+      expect(result.status).not.toBe('complete');
 
       // Clean up stuck asset
       // @ts-expect-error accessing protected property
       storageEngine.uploadingAssetIds = [];
 
       // Now completion should succeed
-      const completedAfterCleanup = await storageEngine.verifyCompletion();
-      expect(completedAfterCleanup).toBe(true);
+      const resultAfterCleanup = await storageEngine.finalizeParticipant();
+      expect(resultAfterCleanup.status).toBe('complete');
     });
   });
 
@@ -701,8 +701,8 @@ describe('StorageEngine edge cases', () => {
       // @ts-expect-error flush throttle
       await storageEngine.__throttleSaveAnswers.flush?.();
 
-      const completed = await storageEngine.verifyCompletion();
-      expect(completed).toBe(true);
+      const result = await storageEngine.finalizeParticipant();
+      expect(result.status).toBe('complete');
 
       // Simulate refresh
       const refreshedEngine: StorageEngine = new LocalStorageEngine(true);
@@ -711,7 +711,7 @@ describe('StorageEngine edge cases', () => {
 
       const id = await refreshedEngine.getCurrentParticipantId();
       const data = await refreshedEngine.getParticipantData(id);
-      expect(data!.completed).toBe(true);
+      expect(await refreshedEngine.getParticipantCompletionStatus(data!.participantId)).toBe(true);
     });
 
     test('new engine instance does not duplicate participant on refresh', async () => {
@@ -850,15 +850,15 @@ describe('StorageEngine edge cases', () => {
       await flushThrottle(storageEngine);
 
       const [result1, result2, result3] = await Promise.all([
-        storageEngine.verifyCompletion(),
-        storageEngine.verifyCompletion(),
-        storageEngine.verifyCompletion(),
+        storageEngine.finalizeParticipant(),
+        storageEngine.finalizeParticipant(),
+        storageEngine.finalizeParticipant(),
       ]);
 
-      expect(result1 || result2 || result3).toBe(true);
+      expect([result1.status, result2.status, result3.status]).toContain('complete');
 
       const data = await storageEngine.getParticipantData();
-      expect(data!.completed).toBe(true);
+      expect(await storageEngine.getParticipantCompletionStatus(data!.participantId)).toBe(true);
 
       const assignments = await storageEngine.getAllSequenceAssignments(studyId);
       const mine = assignments.find((a) => a.participantId === data!.participantId);
@@ -1151,7 +1151,7 @@ describe('StorageEngine edge cases', () => {
         t_0: makeStoredAnswer({ componentName: 't', identifier: 't_0', endTime: 100 }),
       });
       await flushThrottle(storageEngine);
-      await storageEngine.verifyCompletion();
+      await storageEngine.finalizeParticipant();
       await storageEngine.clearCurrentParticipantId();
 
       const s2 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
@@ -1166,7 +1166,7 @@ describe('StorageEngine edge cases', () => {
       expect(counts.inProgress).toBe(1);
 
       const data1 = await storageEngine.getParticipantData(s1.participantId);
-      expect(data1!.completed).toBe(true);
+      expect(await storageEngine.getParticipantCompletionStatus(s1.participantId)).toBe(true);
       expect(data1!.answers.t_0).toBeDefined();
     });
   });

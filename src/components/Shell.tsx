@@ -31,7 +31,7 @@ import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
-import { hash } from '../storage/engines/utils';
+import { hash } from '../storage/engines/utils/storageEngineHelpers';
 import {
   filterSequenceByCondition,
   parseConditionParam,
@@ -172,6 +172,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           allowUrlOverride: modes.developmentModeEnabled,
         });
         const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, effectiveStudyCondition);
+        const participantCompleted = await storageEngine.getParticipantCompletionStatus(participantSession.participantId);
         // Initialize the redux stores
         const newStore = await studyStoreCreator(
           canonicalStudyId,
@@ -181,7 +182,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantSession.answers,
           modes,
           participantSession.participantId,
-          participantSession.completed,
+          participantCompleted,
           false,
           participantSession.participantConfigHash !== activeHash,
         );

@@ -7,7 +7,7 @@ import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
-import { hash } from '../engines/utils';
+import { hash } from '../engines/utils/storageEngineHelpers';
 import { Sequence } from '../../store/types';
 import { StorageEngine, SequenceAssignment, StoredUser } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
@@ -369,7 +369,6 @@ describe.each([
     expect(participantData!.searchParams).toEqual({});
     expect(participantData!.conditions).toBeUndefined();
     expect(participantData!.metadata).toEqual(participantMetadata);
-    expect(participantData!.completed).toBe(false);
     expect(participantData!.rejected).toBe(false);
     expect(participantData!.participantTags).toEqual([]);
   });

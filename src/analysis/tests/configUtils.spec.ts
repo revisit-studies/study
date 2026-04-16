@@ -4,7 +4,7 @@ import {
 import { StudyConfig } from '../../parser/types';
 import testConfigSimple from '../../storage/tests/testConfigSimple.json';
 import testConfigSimple2 from '../../storage/tests/testConfigSimple2.json';
-import { hash } from '../../storage/engines/utils';
+import { hash } from '../../storage/engines/utils/storageEngineHelpers';
 import { buildConfigRows, ConfigInfo, formatDate } from '../individualStudy/config/utils';
 import { downloadConfigFile, downloadConfigFilesZip } from '../../utils/handleDownloadFiles';
 import { ConfigDiffModal } from '../individualStudy/config/ConfigDiffModal';

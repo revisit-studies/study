@@ -1,5 +1,5 @@
 import {
-  Center, Flex, Loader, Space, Text,
+  Button, Center, Flex, Group, Loader, Space, Text,
 } from '@mantine/core';
 import {
   useEffect, useState, useCallback, useMemo, useRef,
@@ -10,20 +10,27 @@ import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { ParticipantData } from '../storage/types';
 import { download } from './downloader/DownloadTidy';
-import { useStudyId } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
-import { useStoreDispatch, useStoreActions } from '../store/store';
+import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
+import {
+  createStudyEndFinalizeLoop,
+  DEFAULT_STUDY_END_FINALIZE_STATE,
+  StudyEndFinalizeLoopState,
+} from './StudyEnd.utils';
 
 export function StudyEnd() {
   const studyConfig = useStudyConfig();
   const { storageEngine } = useStorageEngine();
   const dispatch = useStoreDispatch();
-  const { setParticipantCompleted } = useStoreActions();
+  const { setParticipantCompleted, setIsSubmittingFinal } = useStoreActions();
 
   const isAnalysis = useIsAnalysis();
+  const dataCollectionEnabled = useStoreSelector((state) => state.modes.dataCollectionEnabled);
 
   const [completed, setCompleted] = useState(false);
+  const [finalizeState, setFinalizeState] = useState<StudyEndFinalizeLoopState>(DEFAULT_STUDY_END_FINALIZE_STATE);
   const storageEngineRef = useRef(storageEngine);
+  const finalizeLoopRef = useRef<ReturnType<typeof createStudyEndFinalizeLoop> | null>(null);
 
   useEffect(() => {
     storageEngineRef.current = storageEngine;
@@ -32,52 +39,34 @@ export function StudyEnd() {
   useEffect(() => {
     // Don't save to the storage engine in analysis
     if (!isAnalysis) {
-      let cancelled = false;
-      let timeoutId: NodeJS.Timeout | null = null;
-      const verifyLoop = async () => {
-        if (cancelled) {
-          return;
-        }
-
-        const engine = storageEngineRef.current;
-        if (!engine) {
-          timeoutId = setTimeout(() => {
-            verifyLoop();
-          }, 2000);
-          return;
-        }
-
-        try {
-          const isComplete = await engine.verifyCompletion();
-          if (isComplete) {
-            setCompleted(true);
-            dispatch(setParticipantCompleted(true));
-            return;
-          }
-        } catch (error) {
+      const finalizeLoop = createStudyEndFinalizeLoop({
+        getStorageEngine: () => storageEngineRef.current,
+        onComplete: () => {
+          setFinalizeState(DEFAULT_STUDY_END_FINALIZE_STATE);
+          setCompleted(true);
+          dispatch(setParticipantCompleted(true));
+          dispatch(setIsSubmittingFinal(false));
+        },
+        onStateChange: setFinalizeState,
+        onUnexpectedError: (error) => {
           console.error('An error occurred while verifying completion', error);
-        }
+        },
+      });
 
-        if (!cancelled) {
-          timeoutId = setTimeout(() => {
-            verifyLoop();
-          }, 2000);
-        }
-      };
-
-      verifyLoop();
+      dispatch(setIsSubmittingFinal(true));
+      finalizeLoopRef.current = finalizeLoop;
+      finalizeLoop.start();
 
       return () => {
-        cancelled = true;
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
+        finalizeLoopRef.current = null;
+        finalizeLoop.cancel();
+        dispatch(setIsSubmittingFinal(false));
       };
     }
 
     setCompleted(true);
     dispatch(setParticipantCompleted(true));
+    dispatch(setIsSubmittingFinal(false));
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -88,21 +77,48 @@ export function StudyEnd() {
   const [participantData, setParticipantData] = useState<ParticipantData | null>();
   const [participantId, setParticipantId] = useState('');
   const baseFilename = studyConfig.studyMetadata.title.replace(' ', '_');
-  useEffect(() => {
-    async function fetchParticipantId() {
-      if (storageEngine) {
-        const _participantId = await storageEngine.getCurrentParticipantId();
-        const _participantData = await storageEngine.getParticipantData();
 
-        setParticipantId(_participantId);
-        setParticipantData(_participantData);
-      }
+  const refreshParticipantData = useCallback(async () => {
+    if (storageEngine) {
+      const participantDataSnapshot = storageEngine.getCurrentParticipantDataSnapshot();
+      const [_participantId, _participantData] = await Promise.all([
+        storageEngine.getCurrentParticipantId(),
+        participantDataSnapshot ? Promise.resolve(participantDataSnapshot) : storageEngine.getParticipantData(),
+      ]);
+
+      setParticipantId(_participantId);
+      setParticipantData(_participantData);
+      return {
+        participantId: _participantId,
+        participantData: _participantData,
+      };
     }
-    fetchParticipantId();
+
+    return {
+      participantId: '',
+      participantData: null,
+    };
   }, [storageEngine]);
+
+  useEffect(() => {
+    refreshParticipantData();
+  }, [refreshParticipantData]);
+
   const downloadParticipant = useCallback(async () => {
-    download(JSON.stringify(participantData, null, 2), `${baseFilename}_${participantId}.json`);
-  }, [baseFilename, participantData, participantId]);
+    const latestParticipant = await refreshParticipantData();
+    const participantDataToDownload = latestParticipant.participantData || participantData;
+    const participantIdToDownload = latestParticipant.participantId || participantId;
+
+    if (!participantDataToDownload || !participantIdToDownload) {
+      return;
+    }
+
+    download(JSON.stringify(participantDataToDownload, null, 2), `${baseFilename}_${participantIdToDownload}.json`);
+  }, [baseFilename, participantData, participantId, refreshParticipantData]);
+
+  const retryFinalize = useCallback(() => {
+    finalizeLoopRef.current?.retryNow();
+  }, []);
 
   const autoDownload = studyConfig.uiConfig.autoDownloadStudy || false;
   const autoDownloadDelay = autoDownload
@@ -132,18 +148,6 @@ export function StudyEnd() {
     return () => { };
   }, [autoDownload, completed, delayCounter, downloadParticipant]);
 
-  const studyId = useStudyId();
-  const [dataCollectionEnabled, setDataCollectionEnabled] = useState(false);
-  useEffect(() => {
-    const checkDataCollectionEnabled = async () => {
-      if (storageEngine) {
-        const modes = await storageEngine.getModes(studyId);
-        setDataCollectionEnabled(modes.dataCollectionEnabled);
-      }
-    };
-    checkDataCollectionEnabled();
-  }, [storageEngine, studyId]);
-
   const processedStudyEndMsg = useMemo(() => {
     const { studyEndMsg, urlParticipantIdParam } = studyConfig.uiConfig;
 
@@ -171,6 +175,19 @@ export function StudyEnd() {
     };
   }, [completed, isAnalysis, studyConfig.uiConfig]);
 
+  const {
+    error: finalizeError,
+    failedAttemptCount,
+    isRetryingAutomatically,
+    manualRetryRequired,
+    retryAllowed,
+    retryDelayMs,
+  } = finalizeState;
+  const showRetryNotice = failedAttemptCount > 0;
+  const downloadUnavailable = !participantId || participantData === null || participantData === undefined;
+  const automaticRetryDelaySeconds = retryDelayMs ? Math.ceil(retryDelayMs / 1000) : null;
+  const automaticRetryLabel = `${failedAttemptCount}/3 retries`;
+
   return (
     <Center style={{ height: '100%' }}>
       <Flex direction="column">
@@ -180,11 +197,67 @@ export function StudyEnd() {
             : <Text size="xl" display="block">Thank you for completing the study. You may close this window now.</Text>)
           : (
             <>
-              <Text size="xl" display="block">Please wait while your answers are uploaded.</Text>
+              <Text size="xl" display="block">
+                {manualRetryRequired
+                  ? retryAllowed
+                    ? 'We could not confirm your upload after 3 attempts.'
+                    : 'Your responses were saved, but we could not upload all recorded media from this tab.'
+                  : showRetryNotice
+                    ? 'We hit an issue while uploading your answers. Retrying automatically...'
+                    : 'Please wait while your answers are uploaded.'}
+              </Text>
               <Space h="lg" />
-              <Center>
-                <Loader color="blue" />
-              </Center>
+              {manualRetryRequired
+                ? (
+                  <>
+                    <Text c="red" maw={560}>
+                      {finalizeError || 'The upload confirmation is taking longer than expected.'}
+                      {' '}
+                      {retryAllowed
+                        ? 'You can try the upload again, or download your participant data and submit it manually to the study designer.'
+                        : 'You can download your participant data and send it to the study designer, but the recorded media from this tab cannot be re-uploaded now.'}
+                    </Text>
+                    {participantId
+                      ? (
+                        <>
+                          <Space h="sm" />
+                          <Text size="sm" c="dimmed">{`Participant ID: ${participantId}`}</Text>
+                        </>
+                      )
+                      : null}
+                    <Space h="lg" />
+                    <Group>
+                      {retryAllowed
+                        ? <Button onClick={retryFinalize}>Retry Upload</Button>
+                        : null}
+                      <Button variant="default" onClick={downloadParticipant} disabled={downloadUnavailable}>
+                        Download Participant Data
+                      </Button>
+                    </Group>
+                  </>
+                )
+                : showRetryNotice
+                  ? (
+                    <>
+                      <Text c={finalizeError ? 'red' : undefined} maw={560}>
+                        {finalizeError || 'The upload confirmation is taking longer than expected.'}
+                        {' '}
+                        {`${automaticRetryLabel}. `}
+                        {isRetryingAutomatically && automaticRetryDelaySeconds
+                          ? `We will retry automatically in about ${automaticRetryDelaySeconds} seconds.`
+                          : 'We will retry automatically.'}
+                      </Text>
+                      <Space h="lg" />
+                      <Center>
+                        <Loader color="blue" />
+                      </Center>
+                    </>
+                  )
+                  : (
+                    <Center>
+                      <Loader color="blue" />
+                    </Center>
+                  )}
             </>
           )}
       </Flex>
