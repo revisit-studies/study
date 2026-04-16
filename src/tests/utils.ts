@@ -3,7 +3,7 @@ import type {
   GlobalConfig, StudyConfig, StudyMetadata, UIConfig,
 } from '../parser/types';
 import type { StoredAnswer, Sequence } from '../store/types';
-import type { ParticipantData } from '../storage/types';
+import type { ParticipantDataWithStatus } from '../storage/types';
 import { SequenceAssignment, StorageEngine } from '../storage/engines/types';
 
 type StudyConfigOverrides = Omit<Partial<StudyConfig>, 'studyMetadata' | 'uiConfig' | 'sequence' | 'components'> & {
@@ -62,6 +62,8 @@ class TestStorageEngine extends StorageEngine {
   protected _setCurrentConfigHash = vi.fn(async () => { });
 
   protected _createSequenceAssignment = vi.fn(async () => { });
+
+  protected _getSequenceAssignment = vi.fn(async () => null);
 
   protected _updateSequenceAssignmentFields = vi.fn(async () => { });
 
@@ -165,7 +167,7 @@ export function makeStoredAnswer(overrides: Partial<StoredAnswer> = {}): StoredA
   };
 }
 
-export function makeParticipant(overrides: Partial<ParticipantData> & { participantId?: string } = {}): ParticipantData {
+export function makeParticipant(overrides: Partial<ParticipantDataWithStatus> & { participantId?: string } = {}): ParticipantDataWithStatus {
   return {
     participantId: 'p1',
     participantConfigHash: 'config-hash-1',
@@ -190,7 +192,7 @@ export function makeParticipant(overrides: Partial<ParticipantData> & { particip
     participantTags: [],
     stage: 'DEFAULT',
     ...overrides,
-  } as ParticipantData;
+  } as ParticipantDataWithStatus;
 }
 
 export function makeSequenceAssignment(overrides: Partial<SequenceAssignment> = {}): SequenceAssignment {

@@ -360,7 +360,6 @@ const baseParticipant: ParticipantData = {
   metadata: {
     userAgent: '', resolution: { width: 0, height: 0 }, language: '', ip: '',
   },
-  completed: false,
   rejected: false,
   participantTags: [],
   stage: 'DEFAULT',

@@ -42,7 +42,7 @@ let mockStoredAnswer: {
 };
 
 let mockAnswers: Record<string, unknown>;
-let capturedGoToNextStep: ((collectData?: boolean) => Promise<void>) | undefined;
+let capturedGoToNextStep: ((collectData?: boolean) => void) | undefined;
 
 const mockDispatch = vi.fn((action) => {
   if (action.type === 'saveTrialAnswer') {

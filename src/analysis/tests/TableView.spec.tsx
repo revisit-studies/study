@@ -5,7 +5,7 @@ import {
 } from 'vitest';
 import { useParams } from 'react-router';
 import { StudyConfig } from '../../parser/types';
-import { ParticipantData } from '../../storage/types';
+import { ParticipantDataWithStatus } from '../../storage/types';
 import { createMockStudyConfig } from './testUtils';
 import { makeParticipant as _makeParticipant } from '../../tests/utils';
 import { TableView } from '../individualStudy/table/TableView';
@@ -70,7 +70,7 @@ vi.mock('../../utils/participantName', () => ({
 
 const emptyConfig: StudyConfig = createMockStudyConfig();
 
-function makeParticipant(overrides: Partial<ParticipantData> = {}) {
+function makeParticipant(overrides: Partial<ParticipantDataWithStatus> = {}) {
   return _makeParticipant({
     participantId: 'pid-1',
     participantIndex: 1,
@@ -92,11 +92,11 @@ function makeParticipant(overrides: Partial<ParticipantData> = {}) {
 const defaultProps = {
   studyConfig: emptyConfig,
   allConfigs: {} as Record<string, StudyConfig>,
-  refresh: async () => ({} as Record<number, ParticipantData>),
+  refresh: async () => [] as ParticipantDataWithStatus[],
   width: 800,
   stageColors: { DEFAULT: '#F05A30' },
-  selectedParticipants: [],
-  onSelectionChange: vi.fn(),
+  selectedParticipants: [] as ParticipantDataWithStatus[],
+  onSelectionChange: vi.fn<(participants: ParticipantDataWithStatus[]) => void>(),
 };
 
 beforeEach(() => {

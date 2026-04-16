@@ -9,7 +9,7 @@ import {
 import { DownloadButtons } from '../DownloadButtons';
 import { download } from '../DownloadTidy';
 import { downloadParticipantsAudioZip, downloadParticipantsScreenRecordingZip } from '../../../utils/handleDownloadFiles';
-import type { ParticipantData } from '../../../storage/types';
+import type { ParticipantDataWithStatus } from '../../../storage/types';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -54,7 +54,7 @@ vi.mock('@tabler/icons-react', () => ({
 
 const baseProps = {
   studyId: 'test-study',
-  visibleParticipants: [] as ParticipantData[],
+  visibleParticipants: [] as ParticipantDataWithStatus[],
 };
 
 // ── tests ─────────────────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ describe('DownloadButtons', () => {
   test('buttons are enabled when participant list is non-empty', () => {
     const props = {
       ...baseProps,
-      visibleParticipants: [{ participantId: 'p1' } as ParticipantData],
+      visibleParticipants: [{ participantId: 'p1' } as ParticipantDataWithStatus],
     };
     const html = renderToStaticMarkup(<DownloadButtons {...props} />);
     expect(html).not.toContain('disabled=""');
@@ -111,7 +111,7 @@ describe('DownloadButtons', () => {
   test('tooltip shows count for array participants', () => {
     const props = {
       ...baseProps,
-      visibleParticipants: [{ participantId: 'p1' } as ParticipantData, { participantId: 'p2' } as ParticipantData],
+      visibleParticipants: [{ participantId: 'p1' } as ParticipantDataWithStatus, { participantId: 'p2' } as ParticipantDataWithStatus],
     };
     const html = renderToStaticMarkup(<DownloadButtons {...props} />);
     expect(html).toContain('Download 2 participants');
@@ -129,7 +129,7 @@ describe('DownloadButtons', () => {
 
 // ── interactive tests (click handlers) ────────────────────────────────────────
 
-const participant: ParticipantData = {
+const participant: ParticipantDataWithStatus = {
   participantId: 'p1',
   participantConfigHash: 'hash1',
   participantIndex: 0,

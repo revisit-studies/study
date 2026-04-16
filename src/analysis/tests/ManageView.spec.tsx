@@ -133,7 +133,7 @@ describe('ManageView', () => {
 
   test('renders all three management sections', async () => {
     await act(async () => {
-      render(<ManageView studyId="my-study" refresh={async () => ({})} />);
+      render(<ManageView studyId="my-study" refresh={async () => []} />);
     });
     expect(screen.getByText('ReVISit Modes')).toBeDefined();
     expect(screen.getByText('Stage Management')).toBeDefined();
@@ -316,14 +316,14 @@ describe('ManageView', () => {
     mockStorageEngine = undefined;
     let container: HTMLElement;
     await act(async () => {
-      ({ container } = render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />));
+      ({ container } = render(<DataManagementItem studyId="test-study" refresh={async () => []} />));
     });
     expect(container!.firstChild).toBeNull();
   });
 
   test('DataManagementItem renders main actions and "No snapshots" when snapshots empty', async () => {
     await act(async () => {
-      render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });
     expect(screen.getByText('Data Management')).toBeDefined();
     expect(screen.getByText('No snapshots.')).toBeDefined();
@@ -334,7 +334,7 @@ describe('ManageView', () => {
       'test-study-snapshot-2026T01:00': { name: 'my-snapshot' },
     });
     await act(async () => {
-      render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });
     expect(screen.getByText('my-snapshot')).toBeDefined();
     expect(screen.getByText('DownloadButtons')).toBeDefined();
@@ -345,7 +345,7 @@ describe('ManageView', () => {
       'plain-key': { name: 'no-date-snap' },
     });
     await act(async () => {
-      render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });
     // snapshot renders but date cell is null — just verify the row appears without throwing
     expect(screen.getByText('no-date-snap')).toBeDefined();
@@ -354,7 +354,7 @@ describe('ManageView', () => {
   test('DataManagementItem createSnapshot called via handleCreateSnapshot', async () => {
     const { openConfirmModal } = await import('@mantine/modals');
     await act(async () => {
-      render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });
     fireEvent.click(screen.getByText('Snapshot'));
     expect(openConfirmModal).toHaveBeenCalled();
@@ -366,7 +366,7 @@ describe('ManageView', () => {
 
   test('DataManagementItem handleArchiveData calls createSnapshot with archive=true', async () => {
     await act(async () => {
-      render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });
     // open archive modal
     fireEvent.click(screen.getByText('Archive'));
@@ -381,7 +381,7 @@ describe('ManageView', () => {
 
   test('DataManagementItem handleDeleteLive calls removeSnapshotOrLive', async () => {
     await act(async () => {
-      render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });
     fireEvent.click(screen.getByText('Delete'));
     const input = screen.getByPlaceholderText('test-study');
@@ -397,7 +397,7 @@ describe('ManageView', () => {
       'test-study-snapshot-2026T01:00': { name: 'snap-one' },
     });
     await act(async () => {
-      render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });
     const pencilBtn = screen.getByRole('button', { name: 'Rename snapshot snap-one' });
     fireEvent.click(pencilBtn);
@@ -412,7 +412,7 @@ describe('ManageView', () => {
       'test-study-snapshot-2026T01:00': { name: 'snap-one' },
     });
     await act(async () => {
-      render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });
     const trashBtn = screen.getByRole('button', { name: 'Delete snapshot snap-one' });
     fireEvent.click(trashBtn);
@@ -430,7 +430,7 @@ describe('ManageView', () => {
       'test-study-snapshot-2026T01:00': { name: 'snap-one' },
     });
     await act(async () => {
-      render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });
     const refreshBtn = screen.getByRole('button', { name: 'Restore snapshot snap-one' });
     fireEvent.click(refreshBtn);
@@ -448,7 +448,7 @@ describe('ManageView', () => {
     });
     const { openConfirmModal } = await import('@mantine/modals');
     await act(async () => {
-      render(<DataManagementItem studyId="test-study" refresh={async () => ({})} />);
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });
     fireEvent.click(screen.getByText('Snapshot'));
     const call = (openConfirmModal as ReturnType<typeof vi.fn>).mock.calls[0][0];

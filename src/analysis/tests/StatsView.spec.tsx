@@ -5,7 +5,7 @@ import {
 } from 'vitest';
 import { useParams } from 'react-router';
 import { IndividualComponent, StudyConfig } from '../../parser/types';
-import { ParticipantData } from '../../storage/types';
+import { ParticipantData, ParticipantDataWithStatus } from '../../storage/types';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { createMockStudyConfig } from './testUtils';
 import { StatsView } from '../individualStudy/stats/StatsView';
@@ -97,7 +97,7 @@ const emptyConfig: StudyConfig = createMockStudyConfig({
   sequence: { order: 'fixed', components: ['trial1'] },
 });
 
-const mockParticipant: ParticipantData = {
+const mockParticipant: ParticipantDataWithStatus = {
   participantId: 'p1',
   participantConfigHash: 'hash-1',
   sequence: {

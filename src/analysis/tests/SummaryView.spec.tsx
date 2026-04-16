@@ -5,7 +5,7 @@ import {
 } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { StudyConfig } from '../../parser/types';
-import { ParticipantData } from '../../storage/types';
+import { ParticipantDataWithStatus } from '../../storage/types';
 import { OverviewData } from '../types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
@@ -80,7 +80,7 @@ const emptyConfig: StudyConfig = createMockStudyConfig({
   sequence: { order: 'fixed', components: ['comp1'] },
 });
 
-const noParticipants: ParticipantData[] = [];
+const noParticipants: ParticipantDataWithStatus[] = [];
 
 // ── SummaryView ──────────────────────────────────────────────────────────────
 
