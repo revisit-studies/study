@@ -210,6 +210,7 @@ export interface StoreState {
   rankingAnswers: Record<string, Record<string, string>>;
   funcSequence: Record<string, string[]>;
   completed: boolean;
+  isSubmittingFinal: boolean;
   clickedPrevious: boolean;
   storageEngineFailedToConnect: boolean;
   isStalledConfig: boolean;
