@@ -507,7 +507,8 @@ describe('requiredAnswerIsEmpty', () => {
   it('returns true for empty object', () => expect(requiredAnswerIsEmpty({})).toBe(true));
   it('returns true for object with empty-string value', () => expect(requiredAnswerIsEmpty({ q1: '' })).toBe(true));
   it('returns true for object with null value', () => expect(requiredAnswerIsEmpty({ q1: null })).toBe(true));
-  it('returns true for object with undefined value', () => expect(requiredAnswerIsEmpty({ q1: undefined })).toBe(true));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  it('returns true for object with undefined value', () => expect(requiredAnswerIsEmpty({ q1: undefined } as any)).toBe(true));
   it('returns false for non-empty string', () => expect(requiredAnswerIsEmpty('hello')).toBe(false));
   it('returns false for non-empty array', () => expect(requiredAnswerIsEmpty(['a'])).toBe(false));
   it('returns false for object with all values answered', () => expect(requiredAnswerIsEmpty({ q1: '0', q2: '1' })).toBe(false));
