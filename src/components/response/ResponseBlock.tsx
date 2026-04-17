@@ -139,7 +139,8 @@ export function ResponseBlock({
   const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
-  const [showUnanswered, setShowUnanswered] = useState(false);
+  const showUnanswered = useStoreSelector((state) => state.showUnanswered);
+  const { setShowUnanswered } = useStoreActions();
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
@@ -476,7 +477,7 @@ export function ResponseBlock({
           location={location}
           onNextAttempted={() => {
             if (!answerValidator.isValid() && !bypassValidationForFailedTraining) {
-              setShowUnanswered(true);
+              storeDispatch(setShowUnanswered(true));
             }
           }}
           checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (

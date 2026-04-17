@@ -38,7 +38,7 @@ export function useNextStep() {
 
   const storeDispatch = useStoreDispatch();
   const {
-    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, setRankingAnswers,
+    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, setRankingAnswers, setShowUnanswered,
   } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
@@ -198,6 +198,8 @@ export function useNextStep() {
         });
       }
 
+      storeDispatch(setShowUnanswered(false));
+
       if (funcIndex) {
         navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(decryptIndex(funcIndex) + 1)}${window.location.search}`);
       } else {
@@ -211,7 +213,7 @@ export function useNextStep() {
         color: 'red',
       });
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, studyConfig, participantSequence, navigate, studyId]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setShowUnanswered, studyConfig, participantSequence, navigate, studyId]);
 
   return {
     isNextDisabled,

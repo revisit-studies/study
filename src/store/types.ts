@@ -212,6 +212,7 @@ export interface StoreState {
   completed: boolean;
   isSubmittingFinal: boolean;
   clickedPrevious: boolean;
+  showUnanswered: boolean;
   storageEngineFailedToConnect: boolean;
   isStalledConfig: boolean;
 }

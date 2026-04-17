@@ -135,6 +135,7 @@ export async function studyStoreCreator(
     completed,
     isSubmittingFinal: false,
     clickedPrevious: false,
+    showUnanswered: false,
     storageEngineFailedToConnect,
     isStalledConfig,
   };
@@ -375,6 +376,9 @@ export async function studyStoreCreator(
       },
       setClickedPrevious(state, { payload }: PayloadAction<boolean>) {
         state.clickedPrevious = payload;
+      },
+      setShowUnanswered(state, { payload }: PayloadAction<boolean>) {
+        state.showUnanswered = payload;
       },
     },
   });

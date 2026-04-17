@@ -99,6 +99,7 @@ vi.mock('../store', () => ({
     setMatrixAnswersRadio: mockSetMatrixAnswersRadio,
     setMatrixAnswersCheckbox: mockSetMatrixAnswersCheckbox,
     setRankingAnswers: mockSetRankingAnswers,
+    setShowUnanswered: vi.fn((payload: boolean) => ({ type: 'setShowUnanswered', payload })),
   }),
   useStoreDispatch: () => mockDispatch,
   useAreResponsesValid: () => true,
@@ -150,7 +151,7 @@ function HookHarness() {
 
 describe('useNextStep', () => {
   beforeEach(() => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => { });
     mockNavigate.mockReset();
     mockShowNotification.mockReset();
     mockSaveAnswers.mockReset();
