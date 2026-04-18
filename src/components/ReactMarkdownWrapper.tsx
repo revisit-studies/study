@@ -18,7 +18,7 @@ function isElement(node: unknown): node is Element {
 }
 
 const markdownComponents: Partial<Components> = {
-  p({ node: _, ...props }) { return <Text {...props} pb={8} fw="inherit" ref={undefined} />; },
+  p({ node: _, ...props }) { return <Text {...props} pb={8} fw="inherit" size="1.25rem" ref={undefined} />; },
   h1({ node: _, ...props }) { return <Title {...props} order={1} pb={12} />; },
   h2({ node: _, ...props }) { return <Title {...props} order={2} pb={12} />; },
   h3({ node: _, ...props }) { return <Title {...props} order={3} pb={12} />; },

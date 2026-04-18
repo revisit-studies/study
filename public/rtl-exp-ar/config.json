@@ -16,9 +16,11 @@
     "uiConfig": {
         "contactEmail": "ltharrison@wpi.edu",
         "logoPath": "revisitAssets/revisitLogoSquare.svg",
-        "withProgressBar": true,
+        "withProgressBar": false,
         "autoDownloadStudy": false,
-        "withSidebar": true,
+        "withSidebar": false,
+        "showTitleBar": false,
+        "showTitle": false,
         "nextButtonText": "التالي"
     },
     "components": {
@@ -505,8 +507,69 @@
                     ]
                 },
                 {
-                    "id": "q5-other-languages",
-                    "prompt": "<div dir=\"rtl\">ما هي اللغات الأخرى التي تعرفها بطلاقة؟</div>",
+                    "id": "q5-speak-languages",
+                    "prompt": "<div dir=\"rtl\">ما هي اللغات الأخرى التي تتحدثها بطلاقة؟</div>",
+                    "required": false,
+                    "location": "aboveStimulus",
+                    "type": "dropdown",
+                    "options": [
+                        "الإنجليزية",
+                        "الإسبانية",
+                        "الصينية (لغة ماندرين)",
+                        "الهندية",
+                        "العربية",
+                        "البرتغالية",
+                        "الروسية",
+                        "اليابانية",
+                        "الفرنسية",
+                        "الألمانية",
+                        "الكورية",
+                        "الإيطالية",
+                        "التركية",
+                        "البولندية",
+                        "الفيتنامية",
+                        "الهولندية",
+                        "اليونانية",
+                        "السويدية",
+                        "الدنماركية",
+                        "الفنلندية",
+                        "النرويجية",
+                        "التشيكية",
+                        "المجرية",
+                        "الرومانية",
+                        "البلغارية",
+                        "الكرواتية",
+                        "الصربية",
+                        "الأوكرانية",
+                        "الفارسية",
+                        "التايلاندية",
+                        "الإندونيسية",
+                        "الماليزية",
+                        "الفيليبينية",
+                        "العبرية",
+                        "الأردية",
+                        "البنغالية",
+                        "البنجابية",
+                        "الجوجاراتية",
+                        "التاميلية",
+                        "التيلوغو",
+                        "الكانادا",
+                        "المالايالامية",
+                        "الماراثية",
+                        "السواحيلية",
+                        "الزولو",
+                        "الأمهرية",
+                        "التاغالوغية",
+                        "اليوروبا",
+                        "الإيغبو",
+                        "الهاوسا",
+                        "لا توجد"
+                    ],
+                    "minSelections": 1
+                },
+                {
+                    "id": "q5a-write-languages",
+                    "prompt": "<div dir=\"rtl\">ما هي اللغات الأخرى التي تكتبها بطلاقة؟</div>",
                     "required": false,
                     "location": "aboveStimulus",
                     "type": "dropdown",
@@ -577,7 +640,15 @@
                     "prompt": "<div dir=\"rtl\">ما هو جنسك؟</div>",
                     "required": true,
                     "location": "aboveStimulus",
-                    "type": "shortText"
+                    "type": "dropdown",
+                    "options": [
+                        "<div dir=\"rtl\">ذكر</div>",
+                        "<div dir=\"rtl\">أنثى</div>",
+                        "<div dir=\"rtl\">غير ثنائي</div>",
+                        "<div dir=\"rtl\">لا أعرف كيفية وصف نفسي</div>",
+                        "<div dir=\"rtl\">جنس لم يتم ذكره هنا</div>",
+                        "<div dir=\"rtl\">أفضل عدم الإجابة</div>"
+                    ]
                 },
                 {
                     "id": "q8-profession",
@@ -587,11 +658,32 @@
                     "type": "shortText"
                 },
                 {
-                    "id": "q9-chart-usage",
-                    "prompt": "<div dir=\"rtl\">ما معدل استخدامك للرسوم البيانية وتصور البيانات؟</div>",
-                    "required": false,
+                    "id": "q9-chart-creation",
+                    "prompt": "<div dir=\"rtl\">ما معدل إنشاء أو تصميمك للرسوم البيانية أو تصور البيانات؟</div>",
+                    "required": true,
                     "location": "aboveStimulus",
-                    "type": "shortText"
+                    "type": "dropdown",
+                    "options": [
+                        "<div dir=\"rtl\">أبداً</div>",
+                        "<div dir=\"rtl\">أقل من مرة في الشهر</div>",
+                        "<div dir=\"rtl\">عدة مرات في الشهر</div>",
+                        "<div dir=\"rtl\">عدة مرات في الأسبوع</div>",
+                        "<div dir=\"rtl\">يومياً</div>"
+                    ]
+                },
+                {
+                    "id": "q10-chart-encounter",
+                    "prompt": "<div dir=\"rtl\">ما معدل مواجهتك للرسوم البيانية أو تصور البيانات؟</div>",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "dropdown",
+                    "options": [
+                        "<div dir=\"rtl\">أبداً</div>",
+                        "<div dir=\"rtl\">أقل من مرة في الشهر</div>",
+                        "<div dir=\"rtl\">عدة مرات في الشهر</div>",
+                        "<div dir=\"rtl\">عدة مرات في الأسبوع</div>",
+                        "<div dir=\"rtl\">يومياً</div>"
+                    ]
                 }
             ]
         },

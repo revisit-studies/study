@@ -16,9 +16,11 @@
     "uiConfig": {
         "contactEmail": "ltharrison@wpi.edu",
         "logoPath": "revisitAssets/revisitLogoSquare.svg",
-        "withProgressBar": true,
+        "withProgressBar": false,
         "autoDownloadStudy": false,
-        "withSidebar": true
+        "withSidebar": false,
+        "showTitleBar": false,
+        "showTitle": false
     },
     "baseComponents": {
         "trial-numerical": {
@@ -531,8 +533,69 @@
                     ]
                 },
                 {
-                    "id": "q5-other-languages",
-                    "prompt": "What other languages do you know fluently?",
+                    "id": "q5-speak-languages",
+                    "prompt": "What other languages do you speak fluently?",
+                    "required": false,
+                    "location": "aboveStimulus",
+                    "type": "dropdown",
+                    "options": [
+                        "Amharic",
+                        "Arabic",
+                        "Bengali",
+                        "Bulgarian",
+                        "Croatian",
+                        "Czech",
+                        "Danish",
+                        "Dutch",
+                        "English",
+                        "Filipino",
+                        "Finnish",
+                        "French",
+                        "German",
+                        "Greek",
+                        "Gujarati",
+                        "Hausa",
+                        "Hebrew",
+                        "Hindi",
+                        "Hungarian",
+                        "Igbo",
+                        "Indonesian",
+                        "Italian",
+                        "Japanese",
+                        "Kannada",
+                        "Korean",
+                        "Malagasy",
+                        "Malayalam",
+                        "Malaysian",
+                        "Mandarin Chinese",
+                        "Marathi",
+                        "None",
+                        "Persian",
+                        "Polish",
+                        "Portuguese",
+                        "Punjabi",
+                        "Romanian",
+                        "Russian",
+                        "Serbian",
+                        "Spanish",
+                        "Swahili",
+                        "Swedish",
+                        "Tagalog",
+                        "Tamil",
+                        "Telugu",
+                        "Thai",
+                        "Turkish",
+                        "Ukrainian",
+                        "Urdu",
+                        "Vietnamese",
+                        "Yoruba",
+                        "Zulu"
+                    ],
+                    "minSelections": 1
+                },
+                {
+                    "id": "q5a-write-languages",
+                    "prompt": "What other languages do you write fluently?",
                     "required": false,
                     "location": "aboveStimulus",
                     "type": "dropdown",
@@ -603,7 +666,15 @@
                     "prompt": "What is your gender?",
                     "required": true,
                     "location": "aboveStimulus",
-                    "type": "shortText"
+                    "type": "dropdown",
+                    "options": [
+                        "Male",
+                        "Female",
+                        "Non-binary",
+                        "Unsure how to describe myself",
+                        "A gender not listed here",
+                        "Prefer not to say"
+                    ]
                 },
                 {
                     "id": "q8-profession",
@@ -613,11 +684,32 @@
                     "type": "shortText"
                 },
                 {
-                    "id": "q9-chart-usage",
-                    "prompt": "How often do you use charts or data visualizations?",
-                    "required": false,
+                    "id": "q9-chart-creation",
+                    "prompt": "How often do you create or design charts or data visualizations?",
+                    "required": true,
                     "location": "aboveStimulus",
-                    "type": "shortText"
+                    "type": "dropdown",
+                    "options": [
+                        "Never",
+                        "Less than once a month",
+                        "A few times a month",
+                        "A few times a week",
+                        "Daily"
+                    ]
+                },
+                {
+                    "id": "q10-chart-encounter",
+                    "prompt": "How often do you encounter charts or data visualizations?",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "dropdown",
+                    "options": [
+                        "Never",
+                        "Less than once a month",
+                        "A few times a month",
+                        "A few times a week",
+                        "Daily"
+                    ]
                 }
             ]
         },

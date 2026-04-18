@@ -12,7 +12,7 @@ import {
   ResponseBlockLocation,
   Response,
 } from '../../parser/types';
-import { useCurrentIdentifier, useCurrentStep } from '../../routes/utils';
+import { useCurrentIdentifier, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
@@ -57,6 +57,8 @@ export function ResponseBlock({
   } = useStoreActions();
 
   const currentStep = useCurrentStep();
+  const studyId = useStudyId();
+  const isArabicStudy = studyId === 'rtl-exp-ar';
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
 
   const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
@@ -321,10 +323,14 @@ export function ResponseBlock({
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
+  // For website components at belowStimulus, skip rendering response forms (they're embedded in the website itself)
+  const shouldSkipResponses = config.type === 'website' && location === 'belowStimulus';
+
   let index = 0;
   return (
     <>
-      <Box className={`responseBlock responseBlock-${location}`} style={style}>
+      {!shouldSkipResponses && (
+      <Box className={`responseBlock responseBlock-${location}`} style={{ direction: isArabicStudy ? 'rtl' : 'ltr', ...style }}>
         {allResponsesWithDefaults.map((response) => {
           const configCorrectAnswer = config.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
           const correctAnswer = Array.isArray(configCorrectAnswer) && configCorrectAnswer.length > 0 ? JSON.stringify(configCorrectAnswer) : configCorrectAnswer;
@@ -387,6 +393,7 @@ export function ResponseBlock({
           );
         })}
       </Box>
+      )}
 
       {showBtnsInLocation && (
       <NextButton
