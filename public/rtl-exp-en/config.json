@@ -1161,10 +1161,10 @@
                 "sorted": "sst"
             },
             "description": "Line chart (sorted short-to-tall): Did the number of artworks increase or decrease?",
-            "instruction": "Did the number of artworks curated increase or decrease over the years?",
+            "instruction": "Did the number of curated artworks increase or decrease over the years?",
             "parameters": {
                 "imagePath": "rtl-exp-en/assets/line/img-trials/line-2-sst.png",
-                "prompt": "The number of artworks curated:",
+                "prompt": "The number of artworks curated",
                 "options": [
                     "increased",
                     "decreased"
@@ -1174,7 +1174,7 @@
             "response": [
                 {
                     "id": "line-2-sst-ans",
-                    "prompt": "The number of artworks curated:",
+                    "prompt": "The number of artworks curated",
                     "location": "belowStimulus",
                     "type": "reactive"
                 }
@@ -1189,10 +1189,10 @@
                 "sorted": "sts"
             },
             "description": "Line chart (sorted tall-to-short): Did the number of artworks increase or decrease?",
-            "instruction": "Did the number of artworks curated increase or decrease over the years?",
+            "instruction": "Did the number of curated artworks increase or decrease over the years?",
             "parameters": {
                 "imagePath": "rtl-exp-en/assets/line/img-trials/line-2-sts.png",
-                "prompt": "The number of artworks curated:",
+                "prompt": "The number of artworks curated",
                 "options": [
                     "increased",
                     "decreased"
@@ -1202,7 +1202,7 @@
             "response": [
                 {
                     "id": "line-2-sts-ans",
-                    "prompt": "The number of artworks curated:",
+                    "prompt": "The number of artworks curated",
                     "location": "belowStimulus",
                     "type": "reactive"
                 }
