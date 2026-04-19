@@ -3,8 +3,8 @@
 In this section of the study, consider the following scenario.
 
 <div class="hover-box">
-You are part of a team at your local art museum that monitors the number of artworks curated each year.
-In the following pages, you will see a series of line charts that show the total number of arts curated over several years.
+You are part of a team that studies the artworks at your local museum.
+In the following pages, you will see a series of line charts that show the total number of artworks curated over several years.
 
 Your task is to interpret the charts and answer questions about them.
 </div>
@@ -13,7 +13,8 @@ Your task is to interpret the charts and answer questions about them.
 <div class="highlight-box"><b> About the linechart </b></div>
 
 - Each year is represented by one dot in the linechart.
-- The vertical distance between the dot and the horizontal axis represents the number of arts curated during that year (the actual value is shown above the dot). A general rule of thumb is that the further away from the axis the dot is, the more arts were curated that year.
+<!-- - The vertical distance between the dot and the horizontal axis represents the number of arts curated during that year (the actual value is shown above the dot). A general rule of thumb is that the further away from the axis the dot is, the more arts were curated that year. -->
+- The number of arts curated during a year is shown next to the dot for that year
 - The years are ordered from the first to the last year of the study.
 - Bigger dots in the linechart indicate that **a special artwork** was received that year.
 
