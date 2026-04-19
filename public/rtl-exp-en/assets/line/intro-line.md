@@ -24,7 +24,7 @@ Your task is to interpret the charts and answer questions about them.
 <div class="highlight-box"><b> Your task </b></div>
 
 <div style="text-align: center;">
-  <video width="600" controls autoplay loop muted><source src="/rtl-exp-en/assets/line/intro-line-task.mp4" type="video/mp4"></video>
+  <video width="600" controls autoplay loop muted><source src="https://github.com/wpivis/rtl-exp/blob/main/public/rtl-exp-en/assets/line/intro-line-task.mp4" type="video/mp4"></video>
 </div>
 
 - Each trial consists of a question and a chart. There are no trick questions.
