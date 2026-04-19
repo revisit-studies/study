@@ -295,12 +295,30 @@ export function ComponentController() {
   const instruction = currentConfig?.instruction || '';
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
+  const isArabicStudy = studyId === 'rtl-exp-ar';
 
   if (studyHasScreenRecording && isAnalysis && analysisCanPlayScreenRecording) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
 
   return (
     <>
-      {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
+      {instructionLocation === 'aboveStimulus' && (
+        <Box style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column',
+          paddingLeft: 16,
+          paddingRight: 16,
+          marginBottom: 16,
+          textAlign: 'center',
+        }}
+        >
+          <Box style={{ maxWidth: 920 }}>
+            <ReactMarkdownWrapper text={instruction} />
+          </Box>
+        </Box>
+      )}
       <ResponseBlock
         key={`${currentStep}-above-response-block`}
         status={status}
@@ -315,6 +333,7 @@ export function ComponentController() {
           display: 'flex',
           flexGrow: currentConfig.type === 'website' ? 1 : undefined,
           flexDirection: 'column',
+          direction: isArabicStudy ? 'rtl' : 'ltr',
           ...currentConfig.style,
         }}
       >
@@ -330,7 +349,24 @@ export function ComponentController() {
         </Suspense>
       </Box>
 
-      {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
+      {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && (
+        <Box style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column',
+          paddingLeft: 16,
+          paddingRight: 16,
+          marginTop: 16,
+          textAlign: 'center',
+        }}
+        >
+          <Box style={{ maxWidth: 920 }}>
+            <ReactMarkdownWrapper text={instruction} />
+          </Box>
+        </Box>
+      )}
       <ResponseBlock
         key={`${currentStep}-below-response-block`}
         status={status}

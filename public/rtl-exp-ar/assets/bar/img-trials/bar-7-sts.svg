@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 720 300">
+  <defs>
+    <style>
+      .cls-1 {
+        font-family: ArialMT, Arial;
+        font-size: 11.9px;
+      }
+
+      .cls-1, .cls-2 {
+        fill: #000;
+      }
+
+      .cls-1, .cls-3 {
+        isolation: isolate;
+      }
+
+      .cls-2, .cls-4 {
+        stroke-width: 0px;
+      }
+
+      .cls-4 {
+        fill: #d3d3d3;
+      }
+
+      .cls-5 {
+        stroke: #000;
+      }
+
+      .cls-5, .cls-6 {
+        fill: none;
+        stroke-linejoin: round;
+        stroke-width: 1.1px;
+      }
+
+      .cls-6 {
+        stroke: #fff;
+      }
+    </style>
+  </defs>
+  <line class="cls-6" x1="20.7" y1="222" x2="702.1" y2="222"/>
+  <rect class="cls-4" x="31.2" y="74.6" width="29.4" height="147.4"/>
+  <rect class="cls-4" x="73.2" y="108.8" width="29.4" height="113.2"/>
+  <rect class="cls-4" x="115.3" y="111" width="29.4" height="111.1"/>
+  <rect class="cls-4" x="157.4" y="115.2" width="29.4" height="106.8"/>
+  <rect class="cls-2" x="199.4" y="116.3" width="29.4" height="105.7"/>
+  <rect class="cls-4" x="241.5" y="128" width="29.4" height="94"/>
+  <rect class="cls-4" x="283.6" y="132.3" width="29.4" height="89.7"/>
+  <rect class="cls-4" x="325.6" y="146.2" width="29.4" height="75.8"/>
+  <rect class="cls-4" x="367.7" y="180.4" width="29.4" height="41.7"/>
+  <rect class="cls-4" x="409.7" y="182.5" width="29.4" height="39.5"/>
+  <rect class="cls-4" x="451.8" y="188.9" width="29.4" height="33.1"/>
+  <rect class="cls-4" x="493.9" y="194.3" width="29.4" height="27.8"/>
+  <rect class="cls-4" x="535.9" y="196.4" width="29.4" height="25.6"/>
+  <rect class="cls-4" x="578" y="200.7" width="29.4" height="21.4"/>
+  <rect class="cls-4" x="620" y="207.1" width="29.4" height="15"/>
+  <rect class="cls-4" x="662.1" y="210.3" width="29.4" height="11.8"/>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(36 71)"><tspan x="0" y="0">138</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(78 105.2)"><tspan x="0" y="0">106</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(120.1 107.3)"><tspan x="0" y="0">104</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(162.2 111.6)"><tspan x="0" y="0">100</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(207.5 112.6)"><tspan x="0" y="0">99</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(249.6 124.4)"><tspan x="0" y="0">88</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(291.7 128.7)"><tspan x="0" y="0">84</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(333.7 142.5)"><tspan x="0" y="0">71</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(375.8 176.7)"><tspan x="0" y="0">39</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(417.8 178.9)"><tspan x="0" y="0">37</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(459.9 185.3)"><tspan x="0" y="0">31</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(502 190.6)"><tspan x="0" y="0">26</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(544 192.7)"><tspan x="0" y="0">24</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(586.1 197)"><tspan x="0" y="0">20</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(628.2 203.4)"><tspan x="0" y="0">14</tspan></text>
+    </g>
+  </g>
+  <g class="cls-3">
+    <g class="cls-3">
+      <text class="cls-1" transform="translate(670.6 206.6)"><tspan x="0" y="0">11</tspan></text>
+    </g>
+  </g>
+  <line class="cls-5" x1="20.7" y1="222" x2="702.1" y2="222"/>
+</svg>

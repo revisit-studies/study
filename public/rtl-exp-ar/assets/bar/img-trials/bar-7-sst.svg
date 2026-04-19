@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 720 300">
+  <defs>
+    <style>
+      .cls-1 {
+        font-size: 11.9px;
+      }
+
+      .cls-1, .cls-2 {
+        font-family: ArialMT, Arial;
+      }
+
+      .cls-1, .cls-2, .cls-3 {
+        fill: #000;
+      }
+
+      .cls-1, .cls-2, .cls-4 {
+        isolation: isolate;
+      }
+
+      .cls-2 {
+        font-size: 11.3px;
+      }
+
+      .cls-3, .cls-5 {
+        stroke-width: 0px;
+      }
+
+      .cls-5 {
+        fill: #d3d3d3;
+      }
+
+      .cls-6 {
+        stroke: #000;
+      }
+
+      .cls-6, .cls-7 {
+        fill: none;
+        stroke-linejoin: round;
+        stroke-width: 1.1px;
+      }
+
+      .cls-7 {
+        stroke: #fff;
+      }
+    </style>
+  </defs>
+  <line class="cls-7" x1="37.7" y1="218.1" x2="685" y2="218.1"/>
+  <rect class="cls-5" x="47.7" y="185.8" width="28" height="32.3"/>
+  <rect class="cls-5" x="87.7" y="182.7" width="28" height="35.4"/>
+  <rect class="cls-5" x="127.6" y="161.1" width="28" height="56.9"/>
+  <rect class="cls-5" x="167.6" y="158.1" width="28" height="60"/>
+  <rect class="cls-5" x="207.5" y="151.9" width="28" height="66.2"/>
+  <rect class="cls-5" x="247.5" y="150.4" width="28" height="67.7"/>
+  <rect class="cls-5" x="287.4" y="148.8" width="28" height="69.2"/>
+  <rect class="cls-5" x="327.4" y="144.2" width="28" height="73.9"/>
+  <rect class="cls-5" x="367.4" y="135" width="28" height="83.1"/>
+  <rect class="cls-5" x="407.3" y="128.8" width="28" height="89.2"/>
+  <rect class="cls-5" x="447.3" y="119.6" width="28" height="98.5"/>
+  <rect class="cls-3" x="487.2" y="118" width="28" height="100"/>
+  <rect class="cls-5" x="527.2" y="110.4" width="28" height="107.7"/>
+  <rect class="cls-5" x="567.2" y="88.8" width="28" height="129.3"/>
+  <rect class="cls-5" x="607.1" y="81.1" width="28" height="137"/>
+  <rect class="cls-5" x="647.1" y="78" width="28" height="140"/>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(55.1 183.3)"><tspan x="0" y="0">21</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(95 180.3)"><tspan x="0" y="0">23</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(135 158.7)"><tspan x="0" y="0">37</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(175 155.6)"><tspan x="0" y="0">39</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(214.9 149.5)"><tspan x="0" y="0">43</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(254.9 147.9)"><tspan x="0" y="0">44</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(294.8 146.4)"><tspan x="0" y="0">45</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(334.8 141.8)"><tspan x="0" y="0">48</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(374.8 132.6)"><tspan x="0" y="0">54</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(414.7 126.4)"><tspan x="0" y="0">58</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(454.7 117.2)"><tspan x="0" y="0">64</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(494.6 115.6)"><tspan x="0" y="0">65</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(534.6 107.9)"><tspan x="0" y="0">70</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-1" transform="translate(574.5 86.4)"><tspan x="0" y="0">84</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-2" transform="translate(614.8 78.5)"><tspan x="0" y="0">89</tspan></text>
+  </g>
+  <g class="cls-4">
+    <text class="cls-2" transform="translate(654.8 75.5)"><tspan x="0" y="0">91</tspan></text>
+  </g>
+  <line class="cls-6" x1="37.7" y1="218.1" x2="685" y2="218.1"/>
+</svg>

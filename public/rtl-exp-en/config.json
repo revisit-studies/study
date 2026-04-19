@@ -16,9 +16,39 @@
     "uiConfig": {
         "contactEmail": "ltharrison@wpi.edu",
         "logoPath": "revisitAssets/revisitLogoSquare.svg",
-        "withProgressBar": true,
+        "withProgressBar": false,
         "autoDownloadStudy": false,
-        "withSidebar": true
+        "withSidebar": false,
+        "showTitleBar": false,
+        "showTitle": false
+    },
+    "baseComponents": {
+        "trial-numerical": {
+            "type": "website",
+            "path": "rtl-exp-en/assets/trial-numerical.html",
+            "instructionLocation": "aboveStimulus",
+            "response": [
+                {
+                    "id": "trial-ans",
+                    "prompt": "Your answer:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "trial-dropdown": {
+            "type": "website",
+            "path": "rtl-exp-en/assets/trial-dropdown.html",
+            "instructionLocation": "aboveStimulus",
+            "response": [
+                {
+                    "id": "trial-ans",
+                    "prompt": "Your answer:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        }
     },
     "components": {
         "consent": {
@@ -503,8 +533,69 @@
                     ]
                 },
                 {
-                    "id": "q5-other-languages",
-                    "prompt": "What other languages do you know fluently?",
+                    "id": "q5-speak-languages",
+                    "prompt": "What other languages do you speak fluently?",
+                    "required": false,
+                    "location": "aboveStimulus",
+                    "type": "dropdown",
+                    "options": [
+                        "Amharic",
+                        "Arabic",
+                        "Bengali",
+                        "Bulgarian",
+                        "Croatian",
+                        "Czech",
+                        "Danish",
+                        "Dutch",
+                        "English",
+                        "Filipino",
+                        "Finnish",
+                        "French",
+                        "German",
+                        "Greek",
+                        "Gujarati",
+                        "Hausa",
+                        "Hebrew",
+                        "Hindi",
+                        "Hungarian",
+                        "Igbo",
+                        "Indonesian",
+                        "Italian",
+                        "Japanese",
+                        "Kannada",
+                        "Korean",
+                        "Malagasy",
+                        "Malayalam",
+                        "Malaysian",
+                        "Mandarin Chinese",
+                        "Marathi",
+                        "None",
+                        "Persian",
+                        "Polish",
+                        "Portuguese",
+                        "Punjabi",
+                        "Romanian",
+                        "Russian",
+                        "Serbian",
+                        "Spanish",
+                        "Swahili",
+                        "Swedish",
+                        "Tagalog",
+                        "Tamil",
+                        "Telugu",
+                        "Thai",
+                        "Turkish",
+                        "Ukrainian",
+                        "Urdu",
+                        "Vietnamese",
+                        "Yoruba",
+                        "Zulu"
+                    ],
+                    "minSelections": 1
+                },
+                {
+                    "id": "q5a-write-languages",
+                    "prompt": "What other languages do you write fluently?",
                     "required": false,
                     "location": "aboveStimulus",
                     "type": "dropdown",
@@ -575,7 +666,15 @@
                     "prompt": "What is your gender?",
                     "required": true,
                     "location": "aboveStimulus",
-                    "type": "shortText"
+                    "type": "dropdown",
+                    "options": [
+                        "Male",
+                        "Female",
+                        "Non-binary",
+                        "Unsure how to describe myself",
+                        "A gender not listed here",
+                        "Prefer not to say"
+                    ]
                 },
                 {
                     "id": "q8-profession",
@@ -585,11 +684,842 @@
                     "type": "shortText"
                 },
                 {
-                    "id": "q9-chart-usage",
-                    "prompt": "How often do you use charts or data visualizations?",
-                    "required": false,
+                    "id": "q9-chart-creation",
+                    "prompt": "How often do you create or design charts or data visualizations?",
+                    "required": true,
                     "location": "aboveStimulus",
-                    "type": "shortText"
+                    "type": "dropdown",
+                    "options": [
+                        "Never",
+                        "Less than once a month",
+                        "A few times a month",
+                        "A few times a week",
+                        "Daily"
+                    ]
+                },
+                {
+                    "id": "q10-chart-encounter",
+                    "prompt": "How often do you encounter charts or data visualizations?",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "dropdown",
+                    "options": [
+                        "Never",
+                        "Less than once a month",
+                        "A few times a month",
+                        "A few times a week",
+                        "Daily"
+                    ]
+                }
+            ]
+        },
+        "bar-intro": {
+            "type": "markdown",
+            "path": "rtl-exp-en/assets/bar/intro-bar.md",
+            "response": []
+        },
+        "line-intro": {
+            "type": "markdown",
+            "path": "rtl-exp-en/assets/line/intro-line.md",
+            "response": []
+        },
+        "break": {
+            "type": "markdown",
+            "path": "rtl-exp-en/assets/break.md",
+            "response": []
+        },
+        "outro": {
+            "type": "markdown",
+            "path": "rtl-exp-en/assets/outro.md",
+            "response": []
+        },
+        "bar-1-u": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "1-u",
+                "cat": "count-all",
+                "chartType": "bar",
+                "sorted": "u"
+            },
+            "description": "Bar chart: How many days did the data collection last?",
+            "instruction": "How many days did the data collection last?\n\n*(Each bar in the graph represents one day.)*",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-1-u.svg",
+                "prompt": "Answer (in days):",
+                "responseId": "bar-1-u-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-1-u-ans",
+                    "prompt": "Answer (in days):",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-2-sst": {
+            "baseComponent": "trial-dropdown",
+            "meta": {
+                "qId": "2-sst",
+                "cat": "identify-trend",
+                "chartType": "bar",
+                "sorted": "sst"
+            },
+            "description": "Bar chart (sorted short-to-tall): Did the number of visitors increase or decrease?",
+            "instruction": "Did the number of visitors increase or decrease over the years?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-2-sst.svg",
+                "prompt": "The number of visitors:",
+                "options": [
+                    "increased",
+                    "decreased"
+                ],
+                "responseId": "bar-2-sst-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-2-sst-ans",
+                    "prompt": "The number of visitors:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-2-sts": {
+            "baseComponent": "trial-dropdown",
+            "meta": {
+                "qId": "2-sts",
+                "cat": "identify-trend",
+                "chartType": "bar",
+                "sorted": "sts"
+            },
+            "description": "Bar chart (sorted tall-to-short): Did the number of visitors increase or decrease?",
+            "instruction": "Did the number of visitors increase or decrease over the years?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-2-sts.svg",
+                "prompt": "The number of visitors:",
+                "options": [
+                    "increased",
+                    "decreased"
+                ],
+                "responseId": "bar-2-sts-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-2-sts-ans",
+                    "prompt": "The number of visitors:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-3-u": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "3-u",
+                "cat": "extract-value",
+                "chartType": "bar",
+                "sorted": "u"
+            },
+            "description": "Bar chart (unsorted): How many visitors on the 5th day?",
+            "instruction": "How many visitors on the fifth (5th) day?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-3-u.svg",
+                "prompt": "Number of visitors:",
+                "responseId": "bar-3-u-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-3-u-ans",
+                    "prompt": "Number of visitors:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-4-sst": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "4-sst",
+                "cat": "extract-value",
+                "chartType": "bar",
+                "sorted": "sst"
+            },
+            "description": "Bar chart (sorted short-to-tall): How many visitors on the 6th day?",
+            "instruction": "How many visitors on the sixth (6th) day?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-4-sst.svg",
+                "prompt": "Number of visitors:",
+                "responseId": "bar-4-sst-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-4-sst-ans",
+                    "prompt": "Number of visitors:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-4-sts": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "4-sts",
+                "cat": "extract-value",
+                "chartType": "bar",
+                "sorted": "sts"
+            },
+            "description": "Bar chart (sorted tall-to-short): How many visitors on the 6th day?",
+            "instruction": "How many visitors on the sixth (6th) day?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-4-sts.svg",
+                "prompt": "Number of visitors:",
+                "responseId": "bar-4-sts-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-4-sts-ans",
+                    "prompt": "Number of visitors:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-5-u-1": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "5-u-1",
+                "cat": "count",
+                "chartType": "bar",
+                "sorted": "u"
+            },
+            "description": "Bar chart (1 holiday): How many holidays were there?",
+            "instruction": "How many holidays were there during the study?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-5-u-1.svg",
+                "prompt": "Number of holidays:",
+                "responseId": "bar-5-u-1-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-5-u-1-ans",
+                    "prompt": "Number of holidays:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-5-u-2": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "5-u-2",
+                "cat": "count",
+                "chartType": "bar",
+                "sorted": "u"
+            },
+            "description": "Bar chart (2 holidays): How many holidays were there?",
+            "instruction": "How many holidays were there during the study?\n\n*(A holiday is represented by a black bar.)*",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-5-u-2.svg",
+                "prompt": "Number of holidays:",
+                "note": "A holiday is represented by a black bar.",
+                "responseId": "bar-5-u-2-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-5-u-2-ans",
+                    "prompt": "Number of holidays:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-6-count-until": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "6-count-until",
+                "cat": "count",
+                "chartType": "bar",
+                "sorted": "u"
+            },
+            "description": "Bar chart: How many days have passed before the holiday?",
+            "instruction": "How many days have passed before the holiday?\n\n*(Do not include the holiday in your count.)*",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-6-u.svg",
+                "prompt": "Number of days:",
+                "note": "Do not include the holiday in your count.",
+                "responseId": "bar-6-count-until-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-6-count-until-ans",
+                    "prompt": "Number of days:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-6-count-from": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "6-count-from",
+                "cat": "count",
+                "chartType": "bar",
+                "sorted": "u"
+            },
+            "description": "Bar chart: How many days have passed after the holiday?",
+            "instruction": "How many days have passed after the holiday?\n\n*(Do not include the holiday in your count.)*",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-6-u.svg",
+                "prompt": "Number of days:",
+                "note": "Do not include the holiday in your count.",
+                "responseId": "bar-6-count-from-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-6-count-from-ans",
+                    "prompt": "Number of days:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-7-extract-before-u": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "7-extract-before-u",
+                "cat": "extract-before",
+                "chartType": "bar",
+                "sorted": "u"
+            },
+            "description": "Bar chart (unsorted): How many visitors on the day before the holiday?",
+            "instruction": "How many visitors were there on the day before the holiday?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-7-u.svg",
+                "prompt": "Number of visitors:",
+                "responseId": "bar-7-extract-before-u-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-7-extract-before-u-ans",
+                    "prompt": "Number of visitors:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-7-extract-before-sst": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "7-extract-before-sst",
+                "cat": "extract-before",
+                "chartType": "bar",
+                "sorted": "sst"
+            },
+            "description": "Bar chart (sorted short-to-tall): How many visitors on the day before the holiday?",
+            "instruction": "How many visitors were there on the day before the holiday?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-7-sst.svg",
+                "prompt": "Number of visitors:",
+                "responseId": "bar-7-extract-before-sst-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-7-extract-before-sst-ans",
+                    "prompt": "Number of visitors:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-7-extract-before-sts": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "7-extract-before-sts",
+                "cat": "extract-before",
+                "chartType": "bar",
+                "sorted": "sts"
+            },
+            "description": "Bar chart (sorted tall-to-short): How many visitors on the day before the holiday?",
+            "instruction": "How many visitors were there on the day before the holiday?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-7-sts.svg",
+                "prompt": "Number of visitors:",
+                "responseId": "bar-7-extract-before-sts-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-7-extract-before-sts-ans",
+                    "prompt": "Number of visitors:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-7-extract-after-u": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "7-extract-after-u",
+                "cat": "extract-after",
+                "chartType": "bar",
+                "sorted": "u"
+            },
+            "description": "Bar chart (unsorted): How many visitors on the day after the holiday?",
+            "instruction": "How many visitors were there on the day after the holiday?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-7-u.svg",
+                "prompt": "Number of visitors:",
+                "responseId": "bar-7-extract-after-u-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-7-extract-after-u-ans",
+                    "prompt": "Number of visitors:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-7-extract-after-sst": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "7-extract-after-sst",
+                "cat": "extract-after",
+                "chartType": "bar",
+                "sorted": "sst"
+            },
+            "description": "Bar chart (sorted short-to-tall): How many visitors on the day after the holiday?",
+            "instruction": "How many visitors were there on the day after the holiday?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-7-sst.svg",
+                "prompt": "Number of visitors:",
+                "responseId": "bar-7-extract-after-sst-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-7-extract-after-sst-ans",
+                    "prompt": "Number of visitors:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "bar-7-extract-after-sts": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "7-extract-after-sts",
+                "cat": "extract-after",
+                "chartType": "bar",
+                "sorted": "sts"
+            },
+            "description": "Bar chart (sorted tall-to-short): How many visitors on the day after the holiday?",
+            "instruction": "How many visitors were there on the day after the holiday?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/bar/img-trials/bar-7-sts.svg",
+                "prompt": "Number of visitors:",
+                "responseId": "bar-7-extract-after-sts-ans"
+            },
+            "response": [
+                {
+                    "id": "bar-7-extract-after-sts-ans",
+                    "prompt": "Number of visitors:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-1-u": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "1-u",
+                "cat": "count-all",
+                "chartType": "line",
+                "sorted": "u"
+            },
+            "description": "Line chart: How many years did the data collection last?",
+            "instruction": "How many years did the data collection last?\n\n*(Each dot in the graph represents one year.)*",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-1-u.png",
+                "prompt": "Answer (in years):",
+                "responseId": "line-1-u-ans"
+            },
+            "response": [
+                {
+                    "id": "line-1-u-ans",
+                    "prompt": "Answer (in years):",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-2-sst": {
+            "baseComponent": "trial-dropdown",
+            "meta": {
+                "qId": "2-sst",
+                "cat": "identify-trend",
+                "chartType": "line",
+                "sorted": "sst"
+            },
+            "description": "Line chart (sorted short-to-tall): Did the number of artworks increase or decrease?",
+            "instruction": "Did the number of curated artworks increase or decrease over the years?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-2-sst.png",
+                "prompt": "The number of artworks curated",
+                "options": [
+                    "increased",
+                    "decreased"
+                ],
+                "responseId": "line-2-sst-ans"
+            },
+            "response": [
+                {
+                    "id": "line-2-sst-ans",
+                    "prompt": "The number of artworks curated",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-2-sts": {
+            "baseComponent": "trial-dropdown",
+            "meta": {
+                "qId": "2-sts",
+                "cat": "identify-trend",
+                "chartType": "line",
+                "sorted": "sts"
+            },
+            "description": "Line chart (sorted tall-to-short): Did the number of artworks increase or decrease?",
+            "instruction": "Did the number of curated artworks increase or decrease over the years?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-2-sts.png",
+                "prompt": "The number of artworks curated",
+                "options": [
+                    "increased",
+                    "decreased"
+                ],
+                "responseId": "line-2-sts-ans"
+            },
+            "response": [
+                {
+                    "id": "line-2-sts-ans",
+                    "prompt": "The number of artworks curated",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-3-u": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "3-u",
+                "cat": "extract-value",
+                "chartType": "line",
+                "sorted": "u"
+            },
+            "description": "Line chart (unsorted): How many artworks in the 5th year?",
+            "instruction": "How many artworks were curated in the fifth (5th) year?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-3-u.png",
+                "prompt": "Number of artworks:",
+                "responseId": "line-3-u-ans"
+            },
+            "response": [
+                {
+                    "id": "line-3-u-ans",
+                    "prompt": "Number of artworks:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-4-sst": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "4-sst",
+                "cat": "extract-value",
+                "chartType": "line",
+                "sorted": "sst"
+            },
+            "description": "Line chart (sorted short-to-tall): How many artworks in the 6th year?",
+            "instruction": "How many artworks were curated in the sixth (6th) year?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-4-sst.png",
+                "prompt": "Number of artworks:",
+                "responseId": "line-4-sst-ans"
+            },
+            "response": [
+                {
+                    "id": "line-4-sst-ans",
+                    "prompt": "Number of artworks:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-4-sts": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "4-sts",
+                "cat": "extract-value",
+                "chartType": "line",
+                "sorted": "sts"
+            },
+            "description": "Line chart (sorted tall-to-short): How many artworks in the 6th year?",
+            "instruction": "How many artworks were curated in the sixth (6th) year?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-4-sts.png",
+                "prompt": "Number of artworks:",
+                "responseId": "line-4-sts-ans"
+            },
+            "response": [
+                {
+                    "id": "line-4-sts-ans",
+                    "prompt": "Number of artworks:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-5-u-1": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "5-u-1",
+                "cat": "count",
+                "chartType": "line",
+                "sorted": "u"
+            },
+            "description": "Line chart (1 special artwork): How many years had a special artwork?",
+            "instruction": "How many years had a special artwork received during the study?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-5-u-1.png",
+                "prompt": "Number of years with a special artwork:",
+                "responseId": "line-5-u-1-ans"
+            },
+            "response": [
+                {
+                    "id": "line-5-u-1-ans",
+                    "prompt": "Number of years with a special artwork:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-5-u-2": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "5-u-2",
+                "cat": "count",
+                "chartType": "line",
+                "sorted": "u"
+            },
+            "description": "Line chart (2 special artworks): How many years had a special artwork?",
+            "instruction": "How many years had a special artwork received during the study?\n\n*(A special artwork is indicated by a bigger dot.)*",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-5-u-2.png",
+                "prompt": "Number of years with a special artwork:",
+                "note": "A special artwork is indicated by a bigger dot.",
+                "responseId": "line-5-u-2-ans"
+            },
+            "response": [
+                {
+                    "id": "line-5-u-2-ans",
+                    "prompt": "Number of years with a special artwork:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-6-count-until": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "6-count-until",
+                "cat": "count",
+                "chartType": "line",
+                "sorted": "u"
+            },
+            "description": "Line chart: How many years before the special artwork year?",
+            "instruction": "How many years have passed before the year with the special artwork?\n\n*(Do not include the special artwork year in your count.)*",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-6-u.png",
+                "prompt": "Number of years:",
+                "note": "Do not include the special artwork year in your count.",
+                "responseId": "line-6-count-until-ans"
+            },
+            "response": [
+                {
+                    "id": "line-6-count-until-ans",
+                    "prompt": "Number of years:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-6-count-from": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "6-count-from",
+                "cat": "count",
+                "chartType": "line",
+                "sorted": "u"
+            },
+            "description": "Line chart: How many years after the special artwork year?",
+            "instruction": "How many years have passed after the year with the special artwork?\n\n*(Do not include the special artwork year in your count.)*",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-6-u.png",
+                "prompt": "Number of years:",
+                "note": "Do not include the special artwork year in your count.",
+                "responseId": "line-6-count-from-ans"
+            },
+            "response": [
+                {
+                    "id": "line-6-count-from-ans",
+                    "prompt": "Number of years:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-7-extract-before-u": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "7-extract-before-u",
+                "cat": "extract-before",
+                "chartType": "line",
+                "sorted": "u"
+            },
+            "description": "Line chart (unsorted): How many artworks in the year before the special artwork?",
+            "instruction": "How many artworks were curated in the year before the special artwork was received?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-7-u.png",
+                "prompt": "Number of artworks:",
+                "responseId": "line-7-extract-before-u-ans"
+            },
+            "response": [
+                {
+                    "id": "line-7-extract-before-u-ans",
+                    "prompt": "Number of artworks:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-7-extract-before-sst": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "7-extract-before-sst",
+                "cat": "extract-before",
+                "chartType": "line",
+                "sorted": "sst"
+            },
+            "description": "Line chart (sorted short-to-tall): How many artworks in the year before the special artwork?",
+            "instruction": "How many artworks were curated in the year before the special artwork was received?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-7-sst.png",
+                "prompt": "Number of artworks:",
+                "responseId": "line-7-extract-before-sst-ans"
+            },
+            "response": [
+                {
+                    "id": "line-7-extract-before-sst-ans",
+                    "prompt": "Number of artworks:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-7-extract-before-sts": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "7-extract-before-sts",
+                "cat": "extract-before",
+                "chartType": "line",
+                "sorted": "sts"
+            },
+            "description": "Line chart (sorted tall-to-short): How many artworks in the year before the special artwork?",
+            "instruction": "How many artworks were curated in the year before the special artwork was received?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-7-sts.png",
+                "prompt": "Number of artworks:",
+                "responseId": "line-7-extract-before-sts-ans"
+            },
+            "response": [
+                {
+                    "id": "line-7-extract-before-sts-ans",
+                    "prompt": "Number of artworks:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-7-extract-after-u": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "7-extract-after-u",
+                "cat": "extract-after",
+                "chartType": "line",
+                "sorted": "u"
+            },
+            "description": "Line chart (unsorted): How many artworks in the year after the special artwork?",
+            "instruction": "How many artworks were curated in the year after the special artwork was received?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-7-u.png",
+                "prompt": "Number of artworks:",
+                "responseId": "line-7-extract-after-u-ans"
+            },
+            "response": [
+                {
+                    "id": "line-7-extract-after-u-ans",
+                    "prompt": "Number of artworks:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-7-extract-after-sst": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "7-extract-after-sst",
+                "cat": "extract-after",
+                "chartType": "line",
+                "sorted": "sst"
+            },
+            "description": "Line chart (sorted short-to-tall): How many artworks in the year after the special artwork?",
+            "instruction": "How many artworks were curated in the year after the special artwork was received?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-7-sst.png",
+                "prompt": "Number of artworks:",
+                "responseId": "line-7-extract-after-sst-ans"
+            },
+            "response": [
+                {
+                    "id": "line-7-extract-after-sst-ans",
+                    "prompt": "Number of artworks:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
+                }
+            ]
+        },
+        "line-7-extract-after-sts": {
+            "baseComponent": "trial-numerical",
+            "meta": {
+                "qId": "7-extract-after-sts",
+                "cat": "extract-after",
+                "chartType": "line",
+                "sorted": "sts"
+            },
+            "description": "Line chart (sorted tall-to-short): How many artworks in the year after the special artwork?",
+            "instruction": "How many artworks were curated in the year after the special artwork was received?",
+            "parameters": {
+                "imagePath": "rtl-exp-en/assets/line/img-trials/line-7-sts.png",
+                "prompt": "Number of artworks:",
+                "responseId": "line-7-extract-after-sts-ans"
+            },
+            "response": [
+                {
+                    "id": "line-7-extract-after-sts-ans",
+                    "prompt": "Number of artworks:",
+                    "location": "belowStimulus",
+                    "type": "reactive"
                 }
             ]
         }
@@ -598,7 +1528,138 @@
         "order": "fixed",
         "components": [
             "consent",
-            "demographics"
+            "demographics",
+            {
+                "order": "random",
+                "components": [
+                    {
+                        "order": "fixed",
+                        "components": [
+                            "bar-intro",
+                            "bar-1-u",
+                            {
+                                "order": "random",
+                                "numSamples": 1,
+                                "components": [
+                                    "bar-2-sst",
+                                    "bar-2-sts"
+                                ]
+                            },
+                            "bar-3-u",
+                            {
+                                "order": "random",
+                                "numSamples": 1,
+                                "components": [
+                                    "bar-4-sst",
+                                    "bar-4-sts"
+                                ]
+                            },
+                            {
+                                "order": "random",
+                                "numSamples": 1,
+                                "components": [
+                                    "bar-5-u-1",
+                                    "bar-5-u-2"
+                                ]
+                            },
+                            {
+                                "order": "random",
+                                "numSamples": 1,
+                                "components": [
+                                    "bar-6-count-until",
+                                    "bar-6-count-from"
+                                ]
+                            },
+                            {
+                                "order": "random",
+                                "numSamples": 1,
+                                "components": [
+                                    "bar-7-extract-before-u",
+                                    "bar-7-extract-before-sst",
+                                    "bar-7-extract-before-sts"
+                                ]
+                            },
+                            {
+                                "order": "random",
+                                "numSamples": 1,
+                                "components": [
+                                    "bar-7-extract-after-u",
+                                    "bar-7-extract-after-sst",
+                                    "bar-7-extract-after-sts"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "order": "fixed",
+                        "components": [
+                            "line-intro",
+                            "line-1-u",
+                            {
+                                "order": "random",
+                                "numSamples": 1,
+                                "components": [
+                                    "line-2-sst",
+                                    "line-2-sts"
+                                ]
+                            },
+                            "line-3-u",
+                            {
+                                "order": "random",
+                                "numSamples": 1,
+                                "components": [
+                                    "line-4-sst",
+                                    "line-4-sts"
+                                ]
+                            },
+                            {
+                                "order": "random",
+                                "numSamples": 1,
+                                "components": [
+                                    "line-5-u-1",
+                                    "line-5-u-2"
+                                ]
+                            },
+                            {
+                                "order": "random",
+                                "numSamples": 1,
+                                "components": [
+                                    "line-6-count-until",
+                                    "line-6-count-from"
+                                ]
+                            },
+                            {
+                                "order": "random",
+                                "numSamples": 1,
+                                "components": [
+                                    "line-7-extract-before-u",
+                                    "line-7-extract-before-sst",
+                                    "line-7-extract-before-sts"
+                                ]
+                            },
+                            {
+                                "order": "random",
+                                "numSamples": 1,
+                                "components": [
+                                    "line-7-extract-after-u",
+                                    "line-7-extract-after-sst",
+                                    "line-7-extract-after-sts"
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "interruptions": [
+                    {
+                        "firstLocation": 1,
+                        "spacing": 1,
+                        "components": [
+                            "break"
+                        ]
+                    }
+                ]
+            },
+            "outro"
         ]
     }
 }

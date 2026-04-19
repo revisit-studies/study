@@ -1,0 +1,159 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trial Stimulus</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      height: 100vh;
+    }
+
+    #container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100%;
+      text-align: center;
+    }
+
+    #show-button {
+      font-size: 1.35rem;
+      padding: 16px 40px;
+      margin: 30px auto;
+      background: #228be6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #show-button:hover {
+      background: #1e7ed4;
+    }
+
+    #stimulus-container {
+      display: none;
+      margin: 20px auto;
+      padding: 0;
+      background: transparent;
+      border-radius: 8px;
+    }
+
+    #chart-img {
+      width: 90vw;
+      height: 90vh;
+      object-fit: contain;
+    }
+
+    #answer-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 500px;
+      margin-top: 20px;
+    }
+
+    #answer-container.visible {
+      display: flex;
+    }
+
+    #answer-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #212529;
+    }
+
+    #dropdown-select {
+      width: 280px;
+      padding: 10px 14px;
+      font-size: 16px;
+      border: 2px solid #ced4da;
+      border-radius: 6px;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <button id="show-button">Show the Chart</button>
+    <div id="stimulus-container">
+      <img id="chart-img" src="" alt="Chart stimulus" />
+    </div>
+    <div id="answer-container">
+      <label id="answer-label" for="dropdown-select">Your answer:</label>
+      <select id="dropdown-select">
+        <option value="">Select an option</option>
+      </select>
+    </div>
+  </div>
+
+  <script src="../../revisitUtilities/revisit-communicate.js"></script>
+  <script>
+    const DISPLAY_TIME_MS = 8000;
+
+    let responseId = 'trial-ans';
+
+    Revisit.onDataReceive(function(data) {
+      const imagePath = data['imagePath'] || '';
+      const prompt = data['prompt'] || 'Your answer:';
+      const options = data['options'] || [];
+      responseId = data['responseId'] || 'trial-ans';
+
+      document.getElementById('chart-img').src = '/' + imagePath;
+      document.getElementById('answer-label').textContent = prompt;
+
+      const select = document.getElementById('dropdown-select');
+      select.innerHTML = '<option value="">Select an option</option>';
+      options.forEach((opt) => {
+        const optionEl = document.createElement('option');
+        optionEl.value = opt;
+        optionEl.textContent = opt;
+        select.appendChild(optionEl);
+      });
+
+      Revisit.postReady();
+    });
+
+    const showButton = document.getElementById('show-button');
+    const stimulusContainer = document.getElementById('stimulus-container');
+    const answerContainer = document.getElementById('answer-container');
+
+    showButton.addEventListener('click', () => {
+      showButton.style.display = 'none';
+      stimulusContainer.style.display = 'block';
+
+      setTimeout(() => {
+        const chartImg = document.getElementById('chart-img');
+        if (chartImg) chartImg.remove();
+        stimulusContainer.remove();
+        answerContainer.classList.add('visible');
+      }, DISPLAY_TIME_MS);
+    });
+
+    document.getElementById('dropdown-select').addEventListener('change', () => {
+      const val = document.getElementById('dropdown-select').value;
+      const answers = {};
+      answers[responseId] = val || null;
+      Revisit.postAnswers(answers);
+    });
+  </script>
+</body>
+</html>
