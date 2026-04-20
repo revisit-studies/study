@@ -36,6 +36,7 @@ import {
   buildProvenanceLegendEntries,
 } from '../../../components/audioAnalysis/provenanceColors';
 import { revisitPageId, syncChannel } from '../../../utils/syncReplay';
+import { buildTaskNavigationTarget } from './taskNavigation';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
@@ -259,19 +260,19 @@ export function ThinkAloudFooter({
       return;
     }
 
-    const { step, funcIndex } = parseTrialOrder(answer.trialOrder);
-    if (step === null) {
+    const navigationTarget = buildTaskNavigationTarget({
+      answerIdentifier,
+      trialOrder: answer.trialOrder,
+      isReplay,
+      studyId,
+      search: location.search,
+    });
+
+    if (!navigationTarget) {
       return;
     }
 
-    const pathname = isReplay ? (funcIndex === null
-      ? `/${studyId}/${encryptIndex(step)}`
-      : `/${studyId}/${encryptIndex(step)}/${encryptIndex(funcIndex)}`) : `/analysis/stats/${studyId}/tagging/${encodeURIComponent(answerIdentifier)}`;
-
-    navigate({
-      pathname,
-      search: location.search,
-    });
+    navigate(navigationTarget);
 
     if (answer.trialOrder) {
       syncChannel.postMessage({
