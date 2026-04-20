@@ -20,7 +20,7 @@ Your task is to interpret the charts and answer questions to help understand the
 <!-- ![Barchart used in this study](rtl-exp-en/assets/bar/intro-bar-ex.png) -->
 
 <div>
-  <img src="rtl-exp-en/assets/bar/intro-bar-ex.png" style="width:70%; height:auto; display:block; margin:0 auto;" />
+  <img src="rtl-exp-en/assets/bar/intro-bar-ex-en.png" style="width:70%; height:auto; display:block; margin:0 auto;" />
   <br/>
 </div>
 
@@ -28,7 +28,7 @@ Your task is to interpret the charts and answer questions to help understand the
 <div class="highlight-box"><b> Your task </b></div>
 
 <div style="text-align: center;">
-  <video width="600" controls autoplay loop muted><source src="assets/bar/intro-bar-task.mp4" type="video/mp4"></video>
+  <video width="600" controls autoplay loop muted><source src="assets/bar/intro-bar-task-en.mp4" type="video/mp4"></video>
 </div>
 
 - Each trial consists of a question and a chart. There are no trick questions.
