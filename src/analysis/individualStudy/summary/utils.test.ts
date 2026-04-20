@@ -7,7 +7,7 @@ import {
   getComponentStats,
   getResponseStats,
 } from './utils';
-import { ParticipantData } from '../../../storage/types';
+import { ParticipantDataWithStatus } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
@@ -35,7 +35,7 @@ vi.mock('../../../utils/handleComponentInheritance', () => ({
 }));
 
 // Helper function to create mock participant data
-function createMockParticipant(overrides: Partial<ParticipantData> & { participantId: string }): ParticipantData {
+function createMockParticipant(overrides: Partial<ParticipantDataWithStatus> & { participantId: string }): ParticipantDataWithStatus {
   const { participantId, ...rest } = overrides;
   return {
     participantId,

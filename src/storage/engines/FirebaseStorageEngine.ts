@@ -265,6 +265,35 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await updateDoc(participantSequenceAssignmentDoc, firebaseUpdatedFields);
   }
 
+  protected async _getSequenceAssignment(participantId: string) {
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      participantId,
+    );
+
+    const participantSequenceAssignment = await getDoc(participantSequenceAssignmentDoc);
+    if (!participantSequenceAssignment.exists()) {
+      return null;
+    }
+
+    const data = participantSequenceAssignment.data();
+    return {
+      ...data,
+      timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
+      createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
+      completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+    } as SequenceAssignment;
+  }
+
   protected async _completeCurrentParticipantRealtime() {
     await this.verifyStudyDatabase();
     if (!this.currentParticipantId) {

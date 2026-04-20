@@ -6,7 +6,7 @@ import {
 import { LoadingOverlay } from '@mantine/core';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StoredUser, UserWrapped } from '../../storage/engines/types';
-import { isCloudStorageEngine } from '../../storage/engines/utils';
+import { isCloudStorageEngine } from '../../storage/engines/utils/storageEngineHelpers';
 import { SupabaseStorageEngine } from '../../storage/engines/SupabaseStorageEngine';
 
 // Defines default AuthContextValue
