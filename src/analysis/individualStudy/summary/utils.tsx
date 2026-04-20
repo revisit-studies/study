@@ -16,14 +16,11 @@ function getParticipantStudyConfig(
   if (!participantConfigHash) {
     return studyConfig;
   }
-
   const participantStudyConfig = allConfigs[participantConfigHash];
-
   if (!participantStudyConfig) {
     console.warn(`Missing study config for participant config hash "${participantConfigHash}". Correctness stats should not be computed against the current study config.`);
     return undefined;
   }
-
   return participantStudyConfig;
 }
 
@@ -78,7 +75,7 @@ function calculateDateStats(visibleParticipants: ParticipantDataWithStatus[], co
 }
 
 function calculateTimeStats(visibleParticipants: ParticipantDataWithStatus[], componentName?: string): { avgTime: number; avgCleanTime: number; participantsWithInvalidCleanTimeCount: number } {
-  // Filter out rejected participants and filter by component if provided
+  // Time stats use any non-rejected participant who has finished the relevant answer(s).
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
 
   let participantsWithInvalidCleanTimeCount = 0;
@@ -99,20 +96,30 @@ function calculateTimeStats(visibleParticipants: ParticipantDataWithStatus[], co
     if (timeStats.length > 0) {
       const totalTime = timeStats.reduce((sum, t) => sum + t.totalTime, 0);
       const cleanTime = timeStats.reduce((sum, t) => sum + t.cleanTime, 0);
+      const countIncrement = componentName ? timeStats.length : 1;
 
-      acc.count += componentName ? timeStats.length : 1;
+      // Overview (no componentName) averages total study duration per participant; component view averages per answer.
+      acc.count += countIncrement;
       acc.totalTimeSum += totalTime;
-      acc.cleanTimeSum += cleanTime;
+      if (!hasInvalidCleanTime) {
+        acc.cleanCount += countIncrement;
+        acc.cleanTimeSum += cleanTime;
+      }
       if (hasInvalidCleanTime) {
         participantsWithInvalidCleanTimeCount += 1;
       }
     }
     return acc;
-  }, { count: 0, totalTimeSum: 0, cleanTimeSum: 0 });
+  }, {
+    count: 0,
+    cleanCount: 0,
+    totalTimeSum: 0,
+    cleanTimeSum: 0,
+  });
 
   return {
     avgTime: time.count > 0 ? time.totalTimeSum / time.count : NaN,
-    avgCleanTime: time.count > 0 ? time.cleanTimeSum / time.count : NaN,
+    avgCleanTime: time.cleanCount > 0 ? time.cleanTimeSum / time.cleanCount : NaN,
     participantsWithInvalidCleanTimeCount,
   };
 }
@@ -259,13 +266,14 @@ export function getResponseStats(
     const component = studyComponentToIndividualComponent(componentConfig, studyConfig);
     const responses = component.response ?? [];
     if (responses.length === 0) return [];
+    const correctness = calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs);
 
     return responses.map((response) => ({
       component: name,
       type: response.type,
       question: response.prompt ?? 'N/A',
       options: getResponseOptions(response),
-      correctness: calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs),
+      correctness,
     }));
   });
 

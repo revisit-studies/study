@@ -144,19 +144,14 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   }, [selectedParticipants]);
 
   const showStoredCountMismatch = useMemo(() => {
-    const includesAllParticipantStatuses = includedParticipants.length === 3
-      && includedParticipants.includes('completed')
-      && includedParticipants.includes('inprogress')
-      && includedParticipants.includes('rejected');
     const hasStageFilter = !(selectedStages.length === 1 && selectedStages[0] === 'ALL');
     const hasConfigFilter = !(selectedConfigs.length === 1 && selectedConfigs[0] === 'ALL');
     const hasConditionFilter = availableConditions.length > 0 && !(selectedConditions.length === 1 && selectedConditions[0] === 'ALL');
 
-    return includesAllParticipantStatuses
-      && !hasStageFilter
+    return !hasStageFilter
       && !hasConfigFilter
       && !hasConditionFilter;
-  }, [includedParticipants, selectedStages, selectedConfigs, selectedConditions, availableConditions.length]);
+  }, [selectedStages, selectedConfigs, selectedConditions, availableConditions.length]);
 
   const mismatchComparisonParticipantCounts = useMemo((): ParticipantCounts => ({
     total: participantCounts.completed + participantCounts.inprogress + participantCounts.rejected,

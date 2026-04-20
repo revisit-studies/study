@@ -570,6 +570,38 @@ describe('utils.tsx', () => {
         expect(result.avgTime).toBe(10);
       });
 
+      it('should include finished answers from in-progress participants in overview time calculations', () => {
+        const participants = [
+          createMockParticipant({
+            participantId: '1',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({
+                componentName: 'comp1',
+                startTime: 0,
+                endTime: 10000,
+              }),
+            },
+          }),
+          createMockParticipant({
+            participantId: '2',
+            completed: false,
+            answers: {
+              comp1_1: createMockAnswer({
+                componentName: 'comp1',
+                startTime: 0,
+                endTime: 40000,
+              }),
+            },
+          }),
+        ];
+
+        const result = getOverviewStats(participants);
+
+        expect(result.participantCounts.inProgress).toBe(1);
+        expect(result.avgTime).toBe(25);
+      });
+
       it('should count participants with invalid clean time', () => {
         const participants = [
           createMockParticipant({
@@ -600,6 +632,39 @@ describe('utils.tsx', () => {
         const result = getOverviewStats(participants);
 
         expect(result.participantsWithInvalidCleanTimeCount).toBe(1);
+      });
+
+      it('should exclude participants with invalid clean time from avgCleanTime', () => {
+        const participants = [
+          createMockParticipant({
+            participantId: '1',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({
+                componentName: 'comp1',
+                startTime: 0,
+                endTime: 10000,
+                invalidCleanTime: true,
+              }),
+            },
+          }),
+          createMockParticipant({
+            participantId: '2',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({
+                componentName: 'comp1',
+                startTime: 0,
+                endTime: 10000,
+              }),
+            },
+          }),
+        ];
+
+        const result = getOverviewStats(participants);
+
+        expect(result.participantsWithInvalidCleanTimeCount).toBe(1);
+        expect(result.avgCleanTime).toBe(9);
       });
 
       it('should return NaN for avgTime when no valid answers exist', () => {
@@ -1451,6 +1516,44 @@ describe('utils.tsx', () => {
       expect(comp2Stats?.avgTime).toBe(5);
     });
 
+    it('should include finished component answers from in-progress participants in component time calculations', () => {
+      const participants = [
+        createMockParticipant({
+          participantId: '1',
+          completed: true,
+          answers: {
+            comp1_1: createMockAnswer({
+              componentName: 'comp1',
+              startTime: 1,
+              endTime: 10001,
+            }),
+          },
+        }),
+        createMockParticipant({
+          participantId: '2',
+          completed: false,
+          answers: {
+            comp1_1: createMockAnswer({
+              componentName: 'comp1',
+              startTime: 1,
+              endTime: 30001,
+            }),
+          },
+        }),
+      ];
+
+      const studyConfig = {
+        components: {
+          comp1: { response: [] },
+        },
+      } as unknown as StudyConfig;
+
+      const result = getComponentStats(participants, studyConfig);
+
+      expect(result[0].participants).toBe(2);
+      expect(result[0].avgTime).toBe(20);
+    });
+
     it('should return participant count for each component', () => {
       const participants = [
         createMockParticipant({
@@ -1540,7 +1643,7 @@ describe('utils.tsx', () => {
       expect(result[0].correctness).toBe(100);
     });
 
-    it('should resolve component correctness with each participant config hash', () => {
+    it('should use each participant config hash when calculating correctness', () => {
       const participants = [
         createMockParticipant({
           participantId: '1',
@@ -1551,8 +1654,8 @@ describe('utils.tsx', () => {
               componentName: 'comp1',
               startTime: 1,
               endTime: 10000,
-              answer: { q1: ['B', 'A'] },
-              correctAnswer: [{ id: 'q1', answer: ['A', 'B'] }],
+              answer: { q1: ['b', 'a'] },
+              correctAnswer: [{ id: 'q1', answer: ['a', 'b'] }],
             }),
           },
         }),
@@ -1565,39 +1668,33 @@ describe('utils.tsx', () => {
               componentName: 'comp1',
               startTime: 1,
               endTime: 10000,
-              answer: { q1: ['B', 'A'] },
-              correctAnswer: [{ id: 'q1', answer: ['A', 'B'] }],
+              answer: { q1: ['b', 'a'] },
+              correctAnswer: [{ id: 'q1', answer: ['a', 'b'] }],
             }),
           },
         }),
       ];
 
-      const currentStudyConfig = {
+      const studyConfig = {
         components: {
-          comp1: {
-            response: [{ id: 'q1', type: 'radio' }],
-          },
+          comp1: { response: [{ id: 'q1', type: 'radio' }] },
         },
       } as unknown as StudyConfig;
 
       const allConfigs = {
         'config-a': {
           components: {
-            comp1: {
-              response: [{ id: 'q1', type: 'checkbox' }],
-            },
+            comp1: { response: [{ id: 'q1', type: 'checkbox' }] },
           },
         },
         'config-b': {
           components: {
-            comp1: {
-              response: [{ id: 'q1', type: 'radio' }],
-            },
+            comp1: { response: [{ id: 'q1', type: 'radio' }] },
           },
         },
       } as unknown as Record<string, StudyConfig>;
 
-      const result = getComponentStats(participants, currentStudyConfig, allConfigs);
+      const result = getComponentStats(participants, studyConfig, allConfigs);
 
       expect(result[0].correctness).toBe(50);
     });
