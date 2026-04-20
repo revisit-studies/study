@@ -17,7 +17,12 @@ Your task is to interpret the charts and answer questions to help understand the
 - The days are ordered from the first to the last day of the study.
 - Black-colored bars indicate **holidays**
 
-![Barchart used in this study](rtl-exp-en/assets/bar/intro-bar-ex.png)
+<!-- ![Barchart used in this study](rtl-exp-en/assets/bar/intro-bar-ex.png) -->
+
+<div>
+  <img src="rtl-exp-en/assets/bar/intro-bar-ex.png" style="width:70%; height:auto; display:block; margin:0 auto;" />
+  <br/>
+</div>
 
 <!-- -------------------------------------------- -->
 <div class="highlight-box"><b> Your task </b></div>

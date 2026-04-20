@@ -21,6 +21,11 @@
 
 ![الرسم البياني المستخدم في الدراسة](rtl-exp-ar/assets/bar/intro-bar-ex.png)
 
+<div>
+  <img src="rtl-exp-ar/assets/bar/intro-bar-ex.png" style="width:70%; height:auto; display:block; margin:0 auto;" />
+  <br/>
+</div>
+
 <!-- -------------------------------------------- -->
 <div class="highlight-box"><b>مهمتك</b></div>
 

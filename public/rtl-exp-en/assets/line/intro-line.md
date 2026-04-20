@@ -18,10 +18,11 @@ Your task is to interpret the charts and answer questions about them.
 - The years are ordered from the first to the last year of the study.
 - Bigger dots in the linechart indicate that **a special artwork** was received that year.
 
-![Linechart used in this study](rtl-exp-en/assets/line/intro-line-ex.png)
+<!-- ![Linechart used in this study](rtl-exp-en/assets/line/intro-line-ex.png) -->
 
-<div style="text-align:center;">
-  <img src="assets/line/intro-line-ex.png" style="width:75%; height:auto;" />
+<div>
+  <img src="rtl-exp-en/assets/line/intro-line-ex.png" style="width:70%; height:auto; display:block; margin:0 auto;" />
+  <br/>
 </div>
 
 <!-- -------------------------------------------- -->

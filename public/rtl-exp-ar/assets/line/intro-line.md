@@ -19,7 +19,12 @@
 - يتم ترتيب السنوات من أول سنة إلى آخر سنة من الدراسة.
 - النقاط الأكبر حجمًا في الرسم البياني الخطي تشير إلى استقبال **عمل فني مميز** في تلك السنة.
 
-![الرسم البياني الخطي المستخدم في الدراسة](rtl-exp-ar/assets/line/intro-line-ex.png)
+<!-- ![الرسم البياني الخطي المستخدم في الدراسة](rtl-exp-ar/assets/line/intro-line-ex.png) -->
+
+<div>
+  <img src="rtl-exp-ar/assets/line/intro-line-ex.png" style="width:70%; height:auto; display:block; margin:0 auto;" />
+  <br/>
+</div>
 
 <!-- -------------------------------------------- -->
 <div class="highlight-box"><b>مهمتك</b></div>
