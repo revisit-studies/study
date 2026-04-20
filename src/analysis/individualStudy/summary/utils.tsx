@@ -13,7 +13,18 @@ function getParticipantStudyConfig(
   studyConfig?: StudyConfig,
   allConfigs: Record<string, StudyConfig> = {},
 ) {
-  return allConfigs[participantConfigHash] ?? studyConfig;
+  if (!participantConfigHash) {
+    return studyConfig;
+  }
+
+  const participantStudyConfig = allConfigs[participantConfigHash];
+
+  if (!participantStudyConfig) {
+    console.warn(`Missing study config for participant config hash "${participantConfigHash}". Correctness stats should not be computed against the current study config.`);
+    return undefined;
+  }
+
+  return participantStudyConfig;
 }
 
 function filterParticipants(
