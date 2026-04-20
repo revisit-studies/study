@@ -21,7 +21,13 @@ import {
 
 import { NextButton } from '../NextButton';
 import {
-  generateInitFields, generateCustomResponseErrorMessage, mergeReactiveAnswers, useAnswerField, usesStandaloneDontKnowField, requiredAnswerIsEmpty,
+  countRequiredUnansweredResponses,
+  generateCustomResponseErrorMessage,
+  generateInitFields,
+  isRequiredResponseUnanswered,
+  mergeReactiveAnswers,
+  useAnswerField,
+  usesStandaloneDontKnowField,
 } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
@@ -367,15 +373,32 @@ export function ResponseBlock({
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
+  const allCurrentAnswers = useMemo(() => {
+    const blockAnswers = trialValidation[identifier]
+      ? Object.values(trialValidation[identifier]).reduce((acc, curr) => {
+        if (typeof curr === 'object' && curr !== null && 'values' in curr) {
+          return { ...acc, ...(curr as ValidationStatus).values };
+        }
+
+        return acc;
+      }, {} as StoredAnswer['answer'])
+      : {};
+
+    return {
+      ...blockAnswers,
+      ...answerValidator.values,
+    };
+  }, [trialValidation, identifier, answerValidator.values]);
+
+  const totalUnansweredCount = useMemo(
+    () => countRequiredUnansweredResponses(allResponsesWithDefaults, allCurrentAnswers),
+    [allResponsesWithDefaults, allCurrentAnswers],
+  );
+
   const unansweredCount = useMemo(() => {
     if (!showUnanswered) return 0;
-    return responsesWithDefaults.filter((response) => {
-      if (!response.required) return false;
-      // If the response uses a standalone "Don't Know" field and that field is checked, we consider the question answered
-      if (usesStandaloneDontKnowField(response) && answerValidator.values[`${response.id}-dontKnow`]) return false;
-      return requiredAnswerIsEmpty(answerValidator.values[response.id]);
-    }).length;
-  }, [showUnanswered, responsesWithDefaults, answerValidator.values]);
+    return totalUnansweredCount;
+  }, [showUnanswered, totalUnansweredCount]);
 
   let index = 0;
   return (
@@ -424,12 +447,18 @@ export function ResponseBlock({
                         } as CustomResponseField
                         : undefined}
                       customError={response.type === 'custom'
-                        ? generateCustomResponseErrorMessage(
-                          response,
-                          answerValidator.values[response.id],
-                          answerValidator.values,
-                          customResponseValidators[response.id],
-                          customResponseLoadErrors[response.id],
+                        ? (
+                          generateCustomResponseErrorMessage(
+                            response,
+                            allCurrentAnswers[response.id],
+                            allCurrentAnswers,
+                            customResponseValidators[response.id],
+                            customResponseLoadErrors[response.id],
+                          ) ?? (
+                            showUnanswered && isRequiredResponseUnanswered(response, allCurrentAnswers)
+                              ? 'Please answer this question to continue.'
+                              : undefined
+                          )
                         )
                         : undefined}
                       response={response}
@@ -465,7 +494,7 @@ export function ResponseBlock({
 
       {showBtnsInLocation && showUnanswered && unansweredCount > 0 && (
         <Alert mt="sm" color="red" icon={<IconAlertCircle />}>
-          {`Please answer ${unansweredCount} required ${unansweredCount === 1 ? 'question' : 'questions'} above to continue.`}
+          {`Please answer ${unansweredCount} required ${unansweredCount === 1 ? 'question' : 'questions'} to continue.`}
         </Alert>
       )}
       {showBtnsInLocation && (
@@ -476,7 +505,7 @@ export function ResponseBlock({
           config={config}
           location={location}
           onNextAttempted={() => {
-            if (!answerValidator.isValid() && !bypassValidationForFailedTraining) {
+            if (totalUnansweredCount > 0 && !bypassValidationForFailedTraining) {
               storeDispatch(setShowUnanswered(true));
             }
           }}

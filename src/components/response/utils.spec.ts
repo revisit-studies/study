@@ -6,11 +6,13 @@ import type {
 } from '../../parser/types';
 import type { CustomResponseValidate } from '../../store/types';
 import {
+  countRequiredUnansweredResponses,
   checkCheckboxResponseForValidation,
   generateCustomResponseErrorMessage,
   generateErrorMessage,
   generateInitFields,
   generateValidation,
+  isRequiredResponseUnanswered,
   mergeReactiveAnswers,
   normalizeCheckboxDontKnowValue,
   requiredAnswerIsEmpty,
@@ -563,5 +565,105 @@ describe('generateErrorMessage showUnanswered', () => {
     // Partially answered matrix already returns its own error; showUnanswered should not change the message
     const error = generateErrorMessage(matrixResponse, { value: { q1: '0', q2: '' } }, undefined, true);
     expect(error).toBe('Please answer all questions in the matrix to continue.');
+  });
+
+  it('does not show multiselect min-selection errors on initial load', () => {
+    const dropdownResponse: Response = {
+      id: 'multi-select-dropdown',
+      prompt: 'Dropdown',
+      type: 'dropdown',
+      required: true,
+      options: ['A', 'B', 'C'],
+      minSelections: 2,
+    };
+
+    const error = generateErrorMessage(dropdownResponse, { value: '' }, undefined, false);
+    expect(error).toBeNull();
+  });
+
+  it('shows multiselect min-selection errors after the user has made a partial selection', () => {
+    const dropdownResponse: Response = {
+      id: 'multi-select-dropdown',
+      prompt: 'Dropdown',
+      type: 'dropdown',
+      required: true,
+      options: ['A', 'B', 'C'],
+      minSelections: 2,
+    };
+
+    const error = generateErrorMessage(dropdownResponse, { value: ['A'] }, undefined, false);
+    expect(error).toBe('Please select at least 2 options');
+  });
+});
+
+describe('isRequiredResponseUnanswered', () => {
+  it('returns true for an empty required response', () => {
+    const response: Response = {
+      id: 'required-short-text',
+      prompt: 'Required',
+      type: 'shortText',
+      required: true,
+    };
+
+    expect(isRequiredResponseUnanswered(response, { [response.id]: '' })).toBe(true);
+  });
+
+  it('returns false for optional responses', () => {
+    const response: Response = {
+      id: 'optional-short-text',
+      prompt: 'Optional',
+      type: 'shortText',
+      required: false,
+    };
+
+    expect(isRequiredResponseUnanswered(response, { [response.id]: '' })).toBe(false);
+  });
+
+  it('returns false when dont-know is checked for standalone dont-know responses', () => {
+    const response: Response = {
+      id: 'dont-know-response',
+      prompt: 'Required numerical',
+      type: 'numerical',
+      required: true,
+      withDontKnow: true,
+    };
+
+    expect(isRequiredResponseUnanswered(response, {
+      [response.id]: '',
+      [`${response.id}-dontKnow`]: true,
+    })).toBe(false);
+  });
+});
+
+describe('countRequiredUnansweredResponses', () => {
+  it('counts required unanswered responses across locations', () => {
+    const responses: Response[] = [
+      {
+        id: 'main-required',
+        prompt: 'Main required',
+        type: 'shortText',
+        required: true,
+      },
+      {
+        id: 'sidebar-required',
+        prompt: 'Sidebar required',
+        type: 'radio',
+        required: true,
+        location: 'sidebar',
+        options: ['Yes', 'No'],
+      },
+      {
+        id: 'optional-response',
+        prompt: 'Optional',
+        type: 'shortText',
+        required: false,
+      },
+    ];
+
+    expect(countRequiredUnansweredResponses(responses, {
+      'main-required': '',
+      'sidebar-required': '',
+      'optional-response': '',
+    })).toBe(2);
   });
 });

@@ -1,5 +1,5 @@
 import {
-  Box, Checkbox, Input,
+  Box, Checkbox, Input, Text,
 } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { CheckboxResponse, ParsedStringOption } from '../../parser/types';
@@ -82,8 +82,6 @@ export function CheckBoxInput({
       label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       {...answer}
-      error={error}
-      errorProps={{ c: required ? 'red' : 'orange' }}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Box mt="xs">
@@ -127,6 +125,11 @@ export function CheckBoxInput({
           w={216}
           classNames={{ input: inputClasses.fixDisabled }}
         />
+      )}
+      {error && (
+        <Text c={required ? 'red' : 'orange'} size="sm" mt="xs">
+          {error}
+        </Text>
       )}
     </Checkbox.Group>
   );

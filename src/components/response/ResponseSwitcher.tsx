@@ -1,4 +1,6 @@
-import { Box, Checkbox, Divider } from '@mantine/core';
+import {
+  Box, Checkbox, Divider, Text,
+} from '@mantine/core';
 import { useSearchParams } from 'react-router';
 import { useMemo } from 'react';
 import { GetInputPropsReturnType } from '@mantine/form/lib/types';
@@ -27,7 +29,11 @@ import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue } from '../../utils/stringOptions';
-import { getDefaultFieldValue, requiredAnswerIsEmpty, usesStandaloneDontKnowField } from './utils';
+import {
+  getDefaultFieldValue,
+  isRequiredResponseUnanswered,
+  usesStandaloneDontKnowField,
+} from './utils';
 import { CustomResponseField } from '../../store/types';
 
 export function ResponseSwitcher({
@@ -154,10 +160,13 @@ export function ResponseSwitcher({
   const customResponseValue = useMemo<JsonValue | null>(() => (ans.value ?? null) as JsonValue | null, [ans.value]);
 
   const isUnansweredRequired = useMemo(() => {
-    if (!showUnanswered || !response.required || dontKnowChecked) return false;
+    if (!showUnanswered) return false;
     const { value } = (ans as { value?: StoredAnswer['answer'][string] });
-    return requiredAnswerIsEmpty(value);
-  }, [showUnanswered, response.required, dontKnowChecked, ans]);
+    return isRequiredResponseUnanswered(response, {
+      [response.id]: value,
+      [`${response.id}-dontKnow`]: dontKnowChecked,
+    });
+  }, [showUnanswered, response, dontKnowChecked, ans]);
 
   const highlightStyle = isUnansweredRequired ? {
     borderLeft: '3px solid var(--mantine-color-red-5)',
@@ -166,9 +175,22 @@ export function ResponseSwitcher({
     backgroundColor: 'var(--mantine-color-red-0)',
     borderRadius: 'var(--mantine-radius-sm)',
   } : {};
+  const responseLevelUnansweredMessage = usesStandaloneDontKnow && isUnansweredRequired
+    ? 'Please answer this question to continue.'
+    : null;
+  const childShowUnanswered = responseLevelUnansweredMessage ? false : showUnanswered;
+  const customResponseError = responseLevelUnansweredMessage && customError === 'Please answer this question to continue.'
+    ? undefined
+    : customError;
 
   return (
-    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={{ ...responseStyle, ...highlightStyle }}>
+    <Box
+      mb={responseDividers ? 'xl' : 'lg'}
+      className="response"
+      id={response.id}
+      data-unanswered-required={isUnansweredRequired ? 'true' : undefined}
+      style={{ ...responseStyle, ...highlightStyle }}
+    >
       {response.type === 'numerical' && (
         <NumericInput
           response={response}
@@ -176,7 +198,7 @@ export function ResponseSwitcher({
           answer={ans as { value: number }}
           index={index}
           enumerateQuestions={enumerateQuestions}
-          showUnanswered={showUnanswered}
+          showUnanswered={childShowUnanswered}
         />
       )}
       {response.type === 'shortText' && (
@@ -186,7 +208,7 @@ export function ResponseSwitcher({
           answer={ans as { value: string }}
           index={index}
           enumerateQuestions={enumerateQuestions}
-          showUnanswered={showUnanswered}
+          showUnanswered={childShowUnanswered}
         />
       )}
       {response.type === 'longText' && (
@@ -196,7 +218,7 @@ export function ResponseSwitcher({
           answer={ans as { value: string }}
           index={index}
           enumerateQuestions={enumerateQuestions}
-          showUnanswered={showUnanswered}
+          showUnanswered={childShowUnanswered}
         />
       )}
       {response.type === 'likert' && (
@@ -206,7 +228,7 @@ export function ResponseSwitcher({
           answer={ans as { value: string }}
           index={index}
           enumerateQuestions={enumerateQuestions}
-          showUnanswered={showUnanswered}
+          showUnanswered={childShowUnanswered}
         />
       )}
       {response.type === 'dropdown' && (
@@ -216,7 +238,7 @@ export function ResponseSwitcher({
           answer={ans as { value: string }}
           index={index}
           enumerateQuestions={enumerateQuestions}
-          showUnanswered={showUnanswered}
+          showUnanswered={childShowUnanswered}
         />
       )}
       {response.type === 'slider' && (
@@ -226,7 +248,7 @@ export function ResponseSwitcher({
           answer={ans as { value: number }}
           index={index}
           enumerateQuestions={enumerateQuestions}
-          showUnanswered={showUnanswered}
+          showUnanswered={childShowUnanswered}
         />
       )}
       {response.type === 'radio' && (
@@ -237,7 +259,7 @@ export function ResponseSwitcher({
           index={index}
           enumerateQuestions={enumerateQuestions}
           otherValue={otherValue}
-          showUnanswered={showUnanswered}
+          showUnanswered={childShowUnanswered}
         />
       )}
       {response.type === 'checkbox' && (
@@ -249,7 +271,7 @@ export function ResponseSwitcher({
           enumerateQuestions={enumerateQuestions}
           otherValue={otherValue}
           dontKnowCheckbox={dontKnowCheckbox as { checked?: boolean; onChange?: (value: boolean) => void }}
-          showUnanswered={showUnanswered}
+          showUnanswered={childShowUnanswered}
         />
       )}
       {(response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') && (
@@ -259,7 +281,7 @@ export function ResponseSwitcher({
           answer={ans as { value: Record<string, string> }}
           index={index}
           enumerateQuestions={enumerateQuestions}
-          showUnanswered={showUnanswered}
+          showUnanswered={childShowUnanswered}
         />
       )}
       {response.type === 'reactive' && (
@@ -287,7 +309,7 @@ export function ResponseSwitcher({
           answer={ans as { value: string }}
           index={index}
           enumerateQuestions={enumerateQuestions}
-          showUnanswered={showUnanswered}
+          showUnanswered={childShowUnanswered}
         />
       )}
       {response.type === 'custom' && field && (
@@ -295,7 +317,7 @@ export function ResponseSwitcher({
         response={response as CustomResponse}
         disabled={isDisabled || dontKnowChecked}
         value={customResponseValue}
-        error={customError || undefined}
+        error={customResponseError || undefined}
         index={index}
         enumerateQuestions={enumerateQuestions}
         field={field}
@@ -305,15 +327,22 @@ export function ResponseSwitcher({
         <TextOnlyInput response={response} />
       )}
       {usesStandaloneDontKnow && (
-        <Checkbox
-          mt="xs"
-          disabled={isDisabled}
-          label="I don't know"
-          classNames={{ input: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
-          {...dontKnowCheckbox}
-          checked={dontKnowValue.checked}
-          onChange={(event) => { dontKnowCheckbox?.onChange(event.currentTarget.checked); form.onChange(fieldInitialValue); }}
-        />
+        <>
+          <Checkbox
+            mt="xs"
+            disabled={isDisabled}
+            label="I don't know"
+            classNames={{ input: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
+            {...dontKnowCheckbox}
+            checked={dontKnowValue.checked}
+            onChange={(event) => { dontKnowCheckbox?.onChange(event.currentTarget.checked); form.onChange(fieldInitialValue); }}
+          />
+          {responseLevelUnansweredMessage && (
+            <Text c={response.required ? 'red' : 'orange'} size="sm" mt="xs">
+              {responseLevelUnansweredMessage}
+            </Text>
+          )}
+        </>
       )}
       {(response.type === 'divider' || responseDividers) && <Divider mt="xl" mb="xs" />}
     </Box>

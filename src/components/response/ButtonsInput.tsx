@@ -1,5 +1,5 @@
 import {
-  Flex, FocusTrap, Radio,
+  Flex, FocusTrap, Radio, Text,
 } from '@mantine/core';
 import { useMemo } from 'react';
 import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
@@ -51,8 +51,6 @@ export function ButtonsInput({
         description={secondaryText}
         key={response.id}
         {...answer}
-        error={error}
-        errorProps={{ c: required ? 'red' : 'orange' }}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
         <Flex justify="space-between" align="center" gap="xl" mt="xs">
@@ -69,6 +67,11 @@ export function ButtonsInput({
             </Radio.Card>
           ))}
         </Flex>
+        {error && (
+          <Text c={required ? 'red' : 'orange'} size="sm" mt="xs">
+            {error}
+          </Text>
+        )}
       </Radio.Group>
     </FocusTrap>
   );

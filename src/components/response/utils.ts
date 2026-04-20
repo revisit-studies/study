@@ -146,6 +146,28 @@ export const shouldBypassValidationForStandaloneDontKnow = (response: Response, 
   usesStandaloneDontKnowField(response) && dontKnowChecked
 );
 
+export function isRequiredResponseUnanswered(
+  response: Response,
+  values: Partial<StoredAnswer['answer']>,
+) {
+  if (response.hidden || response.type === 'textOnly' || response.type === 'divider' || !response.required) {
+    return false;
+  }
+
+  if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
+    return false;
+  }
+
+  return requiredAnswerIsEmpty(values[response.id]);
+}
+
+export function countRequiredUnansweredResponses(
+  responses: Response[],
+  values: Partial<StoredAnswer['answer']>,
+) {
+  return responses.filter((response) => isRequiredResponseUnanswered(response, values)).length;
+}
+
 export const getDefaultFieldValue = (response: Response) => {
   const responseDefault = (response as ResponseWithDefault).default;
   if (!Object.hasOwn(response, 'default') || responseDefault === undefined) {
@@ -458,7 +480,7 @@ export function generateErrorMessage(
     error = requiredValue && [...requiredValue].sort().toString() !== [...checkboxValues].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
   } else if (checkboxValues && response.required && response.type === 'checkbox') {
     error = checkCheckboxResponseForValidation(response, checkboxValues, !!answer.dontKnowChecked);
-  } else if (answer.value != null && response.type === 'dropdown') {
+  } else if (response.type === 'dropdown' && Array.isArray(answer.value) && answer.value.length > 0) {
     error = checkDropdownResponse(response, answer.value as string[]);
   } else if (answer.value !== null && answer.value !== undefined && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalResponse(response, answer.value)) {
     error = checkNumericalResponse(response, answer.value);

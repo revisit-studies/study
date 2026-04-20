@@ -64,8 +64,6 @@ export function RadioInput({
       description={secondaryText}
       key={response.id}
       {...answer}
-      error={error}
-      errorProps={{ c: required ? 'red' : 'orange' }}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       {horizontal && label === 'above' && (leftLabel || rightLabel) && (
@@ -149,6 +147,11 @@ export function RadioInput({
           {leftLabel && <Text>{leftLabel}</Text>}
           {rightLabel && <Text>{rightLabel}</Text>}
         </Group>
+      )}
+      {error && (
+        <Text c={required ? 'red' : 'orange'} size="sm" mt="xs">
+          {error}
+        </Text>
       )}
     </Radio.Group>
   );

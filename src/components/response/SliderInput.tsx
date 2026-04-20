@@ -66,7 +66,7 @@ export function SliderInput({
       description={secondaryText}
       error={errorMessage}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
-      errorProps={{ c: required ? 'red' : 'orange' }}
+      errorProps={{ c: required ? 'red' : 'orange', size: 'sm' }}
     >
       {/* Vertical slider for SMEQ style */}
       {smeqStyle ? (

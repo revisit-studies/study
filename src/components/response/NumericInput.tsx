@@ -38,7 +38,7 @@ export function NumericInput({
       {...answer}
       error={generateErrorMessage(response, answer, undefined, showUnanswered)}
       withErrorStyles={required}
-      errorProps={{ c: required ? 'red' : 'orange' }}
+      errorProps={{ c: required ? 'red' : 'orange', size: 'sm' }}
       classNames={{ input: classes.fixDisabled }}
     />
   );

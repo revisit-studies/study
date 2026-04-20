@@ -20,7 +20,7 @@ import { useStoreSelector, useStoreDispatch, useStoreActions } from '../store/st
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
-import { useCurrentComponent } from '../routes/utils';
+import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { RecordingContext, useRecording } from '../store/hooks/useRecording';
 import { ScreenRecordingRejection } from './interface/ScreenRecordingRejection';
@@ -33,11 +33,12 @@ const STUDY_BROWSER_WIDTH = 360;
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
   const dispatch = useStoreDispatch();
-  const { toggleStudyBrowser } = useStoreActions();
+  const { toggleStudyBrowser, setShowUnanswered } = useStoreActions();
 
   const isAnalysis = useIsAnalysis();
   const studyConfig = useStudyConfig();
   const currentComponent = useCurrentComponent();
+  const currentStep = useCurrentStep();
 
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
 
@@ -57,6 +58,10 @@ export function StepRenderer() {
 
   const analysisHasScreenRecording = useStoreSelector((state) => state.analysisHasScreenRecording);
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
+
+  useEffect(() => {
+    dispatch(setShowUnanswered(false));
+  }, [currentComponent, currentStep, dispatch, setShowUnanswered]);
 
   // Attach event listeners
   useEffect(() => {

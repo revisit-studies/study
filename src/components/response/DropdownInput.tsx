@@ -50,7 +50,7 @@ export function DropdownInput({
         value={answer.value === '' ? [] : Array.isArray(answer.value) ? answer.value : [answer.value]}
         error={generateErrorMessage(response, answer, optionsAsStringOptions, showUnanswered)}
         withErrorStyles={required}
-        errorProps={{ c: required ? 'red' : 'orange' }}
+        errorProps={{ c: required ? 'red' : 'orange', size: 'sm' }}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
         clearable
@@ -70,7 +70,7 @@ export function DropdownInput({
         value={answer.value === '' ? null : answer.value}
         error={generateErrorMessage(response, answer, optionsAsStringOptions, showUnanswered)}
         withErrorStyles={required}
-        errorProps={{ c: required ? 'red' : 'orange' }}
+        errorProps={{ c: required ? 'red' : 'orange', size: 'sm' }}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
         renderOption={renderOption}
