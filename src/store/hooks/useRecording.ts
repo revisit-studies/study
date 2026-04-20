@@ -488,6 +488,8 @@ export function useRecording() {
   return {
     recordVideoRef,
     studyHasScreenRecording,
+    studyHasAudioRecording,
+    currentComponentHasAudioRecording,
     isMuted,
     setIsMuted,
     recordAudio,
@@ -509,6 +511,13 @@ export function useRecording() {
     isRejected,
     isSpeakingWhileMuted,
     showMutedWarning,
+    audioStatus: audioRecordingError
+      ? 'denied'
+      : isAudioRecording
+        ? 'recording'
+        : currentComponentHasAudioRecording
+          ? 'pending'
+          : 'idle',
   };
 }
 
