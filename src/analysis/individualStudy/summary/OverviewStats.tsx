@@ -4,7 +4,7 @@ import {
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { convertNumberToString } from './utils';
-import { OverviewData } from '../../types';
+import { OverviewData, ParticipantCounts } from '../../types';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { useAsync } from '../../../store/hooks/useAsync';
 import { StorageEngine } from '../../../storage/engines/types';
@@ -17,9 +17,13 @@ async function getStoredParticipantCounts(storageEngine: StorageEngine, studyId:
 export function OverviewStats({
   overviewData,
   studyId,
+  showStoredCountMismatch = false,
+  comparisonParticipantCounts,
 }: {
   overviewData: OverviewData;
   studyId?: string;
+  showStoredCountMismatch?: boolean;
+  comparisonParticipantCounts?: ParticipantCounts;
 }) {
   // Check if there are participants with invalid clean time (e.g. due to a window events bug)
   const hasExcluded = overviewData && overviewData.participantsWithInvalidCleanTimeCount > 0;
@@ -27,25 +31,30 @@ export function OverviewStats({
   const { storageEngine } = useStorageEngine();
 
   // Get the stored participant counts from the storage engine
-  const { value: storedCounts } = useAsync(getStoredParticipantCounts, storageEngine && studyId ? [storageEngine, studyId] : null);
+  const { value: storedCounts } = useAsync(
+    getStoredParticipantCounts,
+    showStoredCountMismatch && storageEngine && studyId ? [storageEngine, studyId] : null,
+  );
+
+  const mismatchComparisonCounts = comparisonParticipantCounts ?? overviewData.participantCounts;
 
   const mismatchDetails = useMemo(() => {
-    if (!storedCounts) return null;
+    if (!showStoredCountMismatch || !storedCounts) return null;
     return {
       completed: {
         current: storedCounts.completed,
-        calculated: overviewData.participantCounts.completed,
+        calculated: mismatchComparisonCounts.completed,
       },
       inProgress: {
         current: storedCounts.inProgress,
-        calculated: overviewData.participantCounts.inProgress,
+        calculated: mismatchComparisonCounts.inProgress,
       },
       rejected: {
         current: storedCounts.rejected,
-        calculated: overviewData.participantCounts.rejected,
+        calculated: mismatchComparisonCounts.rejected,
       },
     };
-  }, [overviewData, storedCounts]);
+  }, [mismatchComparisonCounts, showStoredCountMismatch, storedCounts]);
 
   // Check if the stored participant counts match the calculated participant counts
   const hasMismatch = (type: 'completed' | 'inProgress' | 'rejected') => {

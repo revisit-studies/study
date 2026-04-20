@@ -24,9 +24,26 @@ vi.mock('../../../utils/getCleanedDuration', () => ({
 }));
 
 vi.mock('../../../utils/correctAnswer', () => ({
-  componentAnswersAreCorrect: vi.fn((userAnswers: Record<string, unknown>, correctAnswers: Array<{ id: string; answer: unknown }>) => {
+  componentAnswersAreCorrect: vi.fn((
+    userAnswers: Record<string, unknown>,
+    correctAnswers: Array<{ id: string; answer: unknown }>,
+    responses?: Array<{ id: string; type?: string }>,
+  ) => {
     if (!correctAnswers || correctAnswers.length === 0) return true;
-    return correctAnswers.every((ca) => userAnswers[ca.id] === ca.answer);
+    return correctAnswers.every((ca) => {
+      const userAnswer = userAnswers[ca.id];
+      const response = responses?.find((entry) => entry.id === ca.id);
+
+      if (Array.isArray(userAnswer) && Array.isArray(ca.answer)) {
+        if (response?.type === 'checkbox' || response?.type === 'dropdown') {
+          return [...userAnswer].sort().join('|') === [...ca.answer].sort().join('|');
+        }
+
+        return userAnswer.join('|') === ca.answer.join('|');
+      }
+
+      return userAnswer === ca.answer;
+    });
   }),
 }));
 
@@ -1135,6 +1152,47 @@ describe('utils.tsx', () => {
         expect(result.avgTime).toBe(15);
       });
 
+      it('should use total study duration per participant in study overview stats', () => {
+        const participants = [
+          createMockParticipant({
+            participantId: '1',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({
+                componentName: 'comp1',
+                startTime: 1,
+                endTime: 10001,
+              }),
+              comp2_1: createMockAnswer({
+                componentName: 'comp2',
+                startTime: 10001,
+                endTime: 30001,
+              }),
+            },
+          }),
+          createMockParticipant({
+            participantId: '2',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({
+                componentName: 'comp1',
+                startTime: 1,
+                endTime: 5001,
+              }),
+              comp2_1: createMockAnswer({
+                componentName: 'comp2',
+                startTime: 5001,
+                endTime: 15001,
+              }),
+            },
+          }),
+        ];
+
+        const result = getOverviewStats(participants);
+
+        expect(result.avgTime).toBe(22.5);
+      });
+
       it('should handle all participants being rejected', () => {
         const participants = [
           createMockParticipant({
@@ -1480,6 +1538,68 @@ describe('utils.tsx', () => {
       const result = getComponentStats(participants, studyConfig);
 
       expect(result[0].correctness).toBe(100);
+    });
+
+    it('should resolve component correctness with each participant config hash', () => {
+      const participants = [
+        createMockParticipant({
+          participantId: '1',
+          participantConfigHash: 'config-a',
+          completed: true,
+          answers: {
+            comp1_1: createMockAnswer({
+              componentName: 'comp1',
+              startTime: 1,
+              endTime: 10000,
+              answer: { q1: ['B', 'A'] },
+              correctAnswer: [{ id: 'q1', answer: ['A', 'B'] }],
+            }),
+          },
+        }),
+        createMockParticipant({
+          participantId: '2',
+          participantConfigHash: 'config-b',
+          completed: true,
+          answers: {
+            comp1_1: createMockAnswer({
+              componentName: 'comp1',
+              startTime: 1,
+              endTime: 10000,
+              answer: { q1: ['B', 'A'] },
+              correctAnswer: [{ id: 'q1', answer: ['A', 'B'] }],
+            }),
+          },
+        }),
+      ];
+
+      const currentStudyConfig = {
+        components: {
+          comp1: {
+            response: [{ id: 'q1', type: 'radio' }],
+          },
+        },
+      } as unknown as StudyConfig;
+
+      const allConfigs = {
+        'config-a': {
+          components: {
+            comp1: {
+              response: [{ id: 'q1', type: 'checkbox' }],
+            },
+          },
+        },
+        'config-b': {
+          components: {
+            comp1: {
+              response: [{ id: 'q1', type: 'radio' }],
+            },
+          },
+        },
+      } as unknown as Record<string, StudyConfig>;
+
+      const result = getComponentStats(participants, currentStudyConfig, allConfigs);
+
+      expect(result[0].correctness).toBe(50);
     });
 
     it('should return NaN stats for components with no participant data', () => {

@@ -8,6 +8,14 @@ import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { getMatrixAnswerOptions } from '../../../utils/responseOptions';
 
+function getParticipantStudyConfig(
+  participantConfigHash: string,
+  studyConfig?: StudyConfig,
+  allConfigs: Record<string, StudyConfig> = {},
+) {
+  return allConfigs[participantConfigHash] ?? studyConfig;
+}
+
 function filterParticipants(
   visibleParticipants: ParticipantDataWithStatus[],
   componentName?: string,
@@ -78,9 +86,12 @@ function calculateTimeStats(visibleParticipants: ParticipantDataWithStatus[], co
         };
       });
     if (timeStats.length > 0) {
-      acc.count += timeStats.length;
-      acc.totalTimeSum += timeStats.reduce((sum, t) => sum + t.totalTime, 0);
-      acc.cleanTimeSum += timeStats.reduce((sum, t) => sum + t.cleanTime, 0);
+      const totalTime = timeStats.reduce((sum, t) => sum + t.totalTime, 0);
+      const cleanTime = timeStats.reduce((sum, t) => sum + t.cleanTime, 0);
+
+      acc.count += componentName ? timeStats.length : 1;
+      acc.totalTimeSum += totalTime;
+      acc.cleanTimeSum += cleanTime;
       if (hasInvalidCleanTime) {
         participantsWithInvalidCleanTimeCount += 1;
       }
@@ -99,14 +110,15 @@ function calculateCorrectnessStats(
   visibleParticipants: ParticipantDataWithStatus[],
   componentName?: string,
   studyConfig?: StudyConfig,
+  allConfigs: Record<string, StudyConfig> = {},
 ): number {
   // Filter out rejected participants and filter by component if provided
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
-  const answers = filteredParticipants
-    .flatMap((participant) => Object.values(participant.answers))
-    .filter((answer) => (!componentName || answer.componentName === componentName));
+  const participantAnswers = filteredParticipants.flatMap((participant) => Object.values(participant.answers)
+    .filter((answer) => (!componentName || answer.componentName === componentName))
+    .map((answer) => ({ answer, participant })));
 
-  const hasCorrectAnswer = answers.some((answer) => answer.correctAnswer && answer.correctAnswer.length > 0);
+  const hasCorrectAnswer = participantAnswers.some(({ answer }) => answer.correctAnswer && answer.correctAnswer.length > 0);
   if (!hasCorrectAnswer) {
     return NaN;
   }
@@ -114,11 +126,15 @@ function calculateCorrectnessStats(
   let totalQuestions = 0;
   let correctSum = 0;
 
-  answers.forEach((answer) => {
+  participantAnswers.forEach(({ answer, participant }) => {
     const correctCount = answer.correctAnswer.length;
     if (!correctCount) return;
-    const component = studyConfig?.components[answer.componentName]
-      ? studyComponentToIndividualComponent(studyConfig.components[answer.componentName], studyConfig)
+    const participantStudyConfig = getParticipantStudyConfig(participant.participantConfigHash, studyConfig, allConfigs);
+    const component = participantStudyConfig?.components[answer.componentName]
+      ? studyComponentToIndividualComponent(
+        participantStudyConfig.components[answer.componentName],
+        participantStudyConfig,
+      )
       : undefined;
 
     totalQuestions += correctCount;
@@ -181,6 +197,7 @@ export function getOverviewStats(
   visibleParticipants: ParticipantDataWithStatus[],
   componentName?: string,
   studyConfig?: StudyConfig,
+  allConfigs: Record<string, StudyConfig> = {},
 ): OverviewData {
   const timeStats = calculateTimeStats(visibleParticipants, componentName);
   const dateStats = calculateDateStats(visibleParticipants, componentName);
@@ -193,13 +210,17 @@ export function getOverviewStats(
     avgTime: timeStats.avgTime,
     avgCleanTime: timeStats.avgCleanTime,
     participantsWithInvalidCleanTimeCount: timeStats.participantsWithInvalidCleanTimeCount,
-    correctness: calculateCorrectnessStats(visibleParticipants, componentName, studyConfig),
+    correctness: calculateCorrectnessStats(visibleParticipants, componentName, studyConfig, allConfigs),
   };
 
   return overviewData;
 }
 
-export function getComponentStats(visibleParticipants: ParticipantDataWithStatus[], studyConfig: StudyConfig): ComponentData[] {
+export function getComponentStats(
+  visibleParticipants: ParticipantDataWithStatus[],
+  studyConfig: StudyConfig,
+  allConfigs: Record<string, StudyConfig> = {},
+): ComponentData[] {
   // Get all component names from the current study
   const componentNames = Object.keys(studyConfig.components);
   const componentData: ComponentData[] = componentNames.map((name) => {
@@ -210,14 +231,18 @@ export function getComponentStats(visibleParticipants: ParticipantDataWithStatus
       participants: calculateParticipantCounts(visibleParticipants, name).total,
       avgTime: timeStats.avgTime,
       avgCleanTime: timeStats.avgCleanTime,
-      correctness: calculateCorrectnessStats(visibleParticipants, name, studyConfig),
+      correctness: calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs),
     };
   });
 
   return componentData;
 }
 
-export function getResponseStats(visibleParticipants: ParticipantDataWithStatus[], studyConfig: StudyConfig): ResponseData[] {
+export function getResponseStats(
+  visibleParticipants: ParticipantDataWithStatus[],
+  studyConfig: StudyConfig,
+  allConfigs: Record<string, StudyConfig> = {},
+): ResponseData[] {
   // Get all responses for each component
   const responseData: ResponseData[] = Object.entries(studyConfig.components).flatMap(([name, componentConfig]) => {
     const component = studyComponentToIndividualComponent(componentConfig, studyConfig);
@@ -229,7 +254,7 @@ export function getResponseStats(visibleParticipants: ParticipantDataWithStatus[
       type: response.type,
       question: response.prompt ?? 'N/A',
       options: getResponseOptions(response),
-      correctness: calculateCorrectnessStats(visibleParticipants, name, studyConfig),
+      correctness: calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs),
     }));
   });
 

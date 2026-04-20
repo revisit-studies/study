@@ -30,6 +30,7 @@ import { StorageEngine } from '../../storage/engines/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
+import { ParticipantCounts } from '../types';
 import 'mantine-react-table/styles.css';
 import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
@@ -141,6 +142,28 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       rejected: selectedParticipants.filter((d) => d.rejected).length,
     };
   }, [selectedParticipants]);
+
+  const showStoredCountMismatch = useMemo(() => {
+    const includesAllParticipantStatuses = includedParticipants.length === 3
+      && includedParticipants.includes('completed')
+      && includedParticipants.includes('inprogress')
+      && includedParticipants.includes('rejected');
+    const hasStageFilter = !(selectedStages.length === 1 && selectedStages[0] === 'ALL');
+    const hasConfigFilter = !(selectedConfigs.length === 1 && selectedConfigs[0] === 'ALL');
+    const hasConditionFilter = availableConditions.length > 0 && !(selectedConditions.length === 1 && selectedConditions[0] === 'ALL');
+
+    return includesAllParticipantStatuses
+      && !hasStageFilter
+      && !hasConfigFilter
+      && !hasConditionFilter;
+  }, [includedParticipants, selectedStages, selectedConfigs, selectedConditions, availableConditions.length]);
+
+  const mismatchComparisonParticipantCounts = useMemo((): ParticipantCounts => ({
+    total: participantCounts.completed + participantCounts.inprogress + participantCounts.rejected,
+    completed: participantCounts.completed,
+    inProgress: participantCounts.inprogress,
+    rejected: participantCounts.rejected,
+  }), [participantCounts]);
 
   const visibleParticipants = useMemo(() => {
     if (!expData) return [];
@@ -469,13 +492,22 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
-                {studyConfig && <SummaryView studyConfig={studyConfig} visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} />}
+                {studyConfig && (
+                  <SummaryView
+                    studyConfig={studyConfig}
+                    visibleParticipants={visibleParticipants}
+                    allConfigs={allConfigs}
+                    studyId={canonicalStudyId ?? undefined}
+                    showStoredCountMismatch={showStoredCountMismatch}
+                    comparisonParticipantCounts={mismatchComparisonParticipantCounts}
+                  />
+                )}
               </Tabs.Panel>
               <Tabs.Panel style={{ height: `calc(100% - ${TABLE_HEADER_HEIGHT}px)` }} value="table" pt="xs">
                 {studyConfig && <TableView width={width} stageColors={stageColors} visibleParticipants={visibleParticipants} studyConfig={studyConfig} allConfigs={allConfigs} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId ?? undefined)} selectedParticipants={selectedParticipants} onSelectionChange={setSelectedParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="stats" pt="xs">
-                {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} />}
+                {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} allConfigs={allConfigs} studyId={canonicalStudyId ?? undefined} />}
               </Tabs.Panel>
               <Tabs.Panel value="tagging" pt="xs">
                 {studyConfig && storageEngine?.getEngine() === 'firebase' ? <ThinkAloudAnalysis visibleParticipants={visibleParticipants} storageEngine={storageEngine as FirebaseStorageEngine} /> : <Center>Think aloud coding is only available when using Firebase.</Center>}

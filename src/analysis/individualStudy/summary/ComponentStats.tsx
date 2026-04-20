@@ -10,11 +10,16 @@ import { ComponentData } from '../../types';
 export function ComponentStats({
   visibleParticipants,
   studyConfig,
+  allConfigs,
 }: {
   visibleParticipants: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
+  allConfigs: Record<string, StudyConfig>;
 }) {
-  const componentData: ComponentData[] = useMemo(() => getComponentStats(visibleParticipants, studyConfig), [visibleParticipants, studyConfig]);
+  const componentData: ComponentData[] = useMemo(
+    () => getComponentStats(visibleParticipants, studyConfig, allConfigs),
+    [visibleParticipants, studyConfig, allConfigs],
+  );
 
   // eslint-disable-next-line camelcase
   const columns = useMemo<MRT_ColumnDef<ComponentData>[]>(

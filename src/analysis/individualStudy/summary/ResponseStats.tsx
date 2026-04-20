@@ -10,11 +10,16 @@ import { ResponseData } from '../../types';
 export function ResponseStats({
   visibleParticipants,
   studyConfig,
+  allConfigs,
 }: {
   visibleParticipants: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
+  allConfigs: Record<string, StudyConfig>;
 }) {
-  const responseData: ResponseData[] = useMemo(() => getResponseStats(visibleParticipants, studyConfig), [visibleParticipants, studyConfig]);
+  const responseData: ResponseData[] = useMemo(
+    () => getResponseStats(visibleParticipants, studyConfig, allConfigs),
+    [visibleParticipants, studyConfig, allConfigs],
+  );
 
   // eslint-disable-next-line camelcase
   const columns = useMemo<MRT_ColumnDef<ResponseData>[]>(() => [
