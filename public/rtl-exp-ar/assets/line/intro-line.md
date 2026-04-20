@@ -22,7 +22,7 @@
 <!-- ![الرسم البياني الخطي المستخدم في الدراسة](rtl-exp-ar/assets/line/intro-line-ex.png) -->
 
 <div>
-  <img src="rtl-exp-ar/assets/line/intro-line-ex.png" style="width:70%; height:auto; display:block; margin:0 auto;" />
+  <img src="rtl-exp-ar/assets/line/intro-line-ex-ar.png" style="width:70%; height:auto; display:block; margin:0 auto;" />
   <br/>
 </div>
 
@@ -30,7 +30,7 @@
 <div class="highlight-box"><b>مهمتك</b></div>
 
 <div style="text-align: center;">
-  <video width="600" controls autoplay loop muted><source src="assets/line/intro-line-task.mp4" type="video/mp4"></video>
+  <video width="600" controls autoplay loop muted><source src="assets/line/intro-line-task-ar.mp4" type="video/mp4"></video>
 </div>
 
 - تتكون كل تجربة من سؤال ورسم بياني. لا توجد أسئلة خادعة.
