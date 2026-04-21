@@ -2,7 +2,7 @@ import { render, act, cleanup } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { ScreenRecordingReplay } from './ScreenRecordingReplay';
+import { ScreenRecordingReplay } from '../ScreenRecordingReplay';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -24,7 +24,7 @@ vi.mock('@mantine/core', () => ({
   Box: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('../../storage/storageEngineHooks', () => ({
+vi.mock('../../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
@@ -32,7 +32,7 @@ const mockDispatch = vi.fn();
 const mockSetAnalysisHasScreenRecording = vi.fn();
 const mockSetAnalysisCanPlayScreenRecording = vi.fn();
 
-vi.mock('../../store/store', () => ({
+vi.mock('../../../store/store', () => ({
   useStoreSelector: () => mockCanPlayScreenRecording,
   useStoreActions: () => ({
     setAnalysisHasScreenRecording: mockSetAnalysisHasScreenRecording,
@@ -41,15 +41,15 @@ vi.mock('../../store/store', () => ({
   useStoreDispatch: () => mockDispatch,
 }));
 
-vi.mock('../../routes/utils', () => ({
+vi.mock('../../../routes/utils', () => ({
   useCurrentIdentifier: () => 'component1',
 }));
 
-vi.mock('../../store/hooks/useIsAnalysis', () => ({
+vi.mock('../../../store/hooks/useIsAnalysis', () => ({
   useIsAnalysis: () => mockIsAnalysis,
 }));
 
-vi.mock('../../store/hooks/useReplay', () => ({
+vi.mock('../../../store/hooks/useReplay', () => ({
   useReplayContext: () => ({
     videoRef: mockVideoRef,
     updateReplayRef: mockUpdateReplayRef,

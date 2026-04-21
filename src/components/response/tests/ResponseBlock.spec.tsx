@@ -4,9 +4,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   describe, expect, test, vi,
 } from 'vitest';
-import type { IndividualComponent } from '../../parser/types';
-import { ResponseBlock } from './ResponseBlock';
-import { makeStoredAnswer } from '../../tests/utils';
+import type { IndividualComponent } from '../../../parser/types';
+import { ResponseBlock } from '../ResponseBlock';
+import { makeStoredAnswer } from '../../../tests/utils';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -33,7 +33,7 @@ vi.mock('@trrack/core', () => ({
 
 vi.mock('lodash.isequal', () => ({ default: vi.fn(() => true) }));
 
-vi.mock('../../store/store', () => ({
+vi.mock('../../../store/store', () => ({
   useStoreDispatch: vi.fn(() => vi.fn()),
   useStoreActions: vi.fn(() => ({
     updateResponseBlockValidation: vi.fn((v: unknown) => v),
@@ -49,7 +49,7 @@ vi.mock('../../store/store', () => ({
   })),
 }));
 
-vi.mock('../../store/hooks/useStudyConfig', () => ({
+vi.mock('../../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: vi.fn(() => ({
     uiConfig: {
       nextButtonLocation: 'belowStimulus',
@@ -63,7 +63,7 @@ vi.mock('../../store/hooks/useStudyConfig', () => ({
   })),
 }));
 
-vi.mock('../../store/hooks/useStoredAnswer', () => ({
+vi.mock('../../../store/hooks/useStoredAnswer', () => ({
   useStoredAnswer: vi.fn(() => ({
     formOrder: { response: ['q1'] },
     questionOrders: {},
@@ -71,12 +71,12 @@ vi.mock('../../store/hooks/useStoredAnswer', () => ({
   })),
 }));
 
-vi.mock('../../routes/utils', () => ({
+vi.mock('../../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
   useCurrentIdentifier: vi.fn(() => 'trial1_0'),
 }));
 
-vi.mock('./utils', () => ({
+vi.mock('../utils', () => ({
   generateInitFields: vi.fn(() => ({})),
   mergeReactiveAnswers: vi.fn((_: unknown, values: unknown) => values),
   useAnswerField: vi.fn(() => ({
@@ -90,26 +90,26 @@ vi.mock('./utils', () => ({
   usesStandaloneDontKnowField: vi.fn(() => false),
 }));
 
-vi.mock('../../utils/correctAnswer', () => ({
+vi.mock('../../../utils/correctAnswer', () => ({
   responseAnswerIsCorrect: vi.fn(() => true),
 }));
 
-vi.mock('./customResponseModules', () => ({
+vi.mock('../customResponseModules', () => ({
   getCustomResponseModule: vi.fn(() => null),
   getCustomResponseModuleLoadError: vi.fn(() => null),
 }));
 
-vi.mock('./ResponseSwitcher', () => ({
+vi.mock('../ResponseSwitcher', () => ({
   ResponseSwitcher: ({ response }: { response: { type: string } }) => (
     <div data-testid={`switcher-${response.type}`}>{response.type}</div>
   ),
 }));
 
-vi.mock('./FeedbackAlert', () => ({
+vi.mock('../FeedbackAlert', () => ({
   FeedbackAlert: () => null,
 }));
 
-vi.mock('../NextButton', () => ({
+vi.mock('../../NextButton', () => ({
   NextButton: ({ label, disabled, checkAnswer }: { label?: string; disabled?: boolean; checkAnswer?: ReactNode }) => (
     <div>
       {checkAnswer}

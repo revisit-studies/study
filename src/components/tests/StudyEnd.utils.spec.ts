@@ -6,11 +6,11 @@ import {
   test,
   vi,
 } from 'vitest';
-import { FinalizeParticipantResult, StorageEngine } from '../storage/engines/types';
+import { FinalizeParticipantResult, StorageEngine } from '../../storage/engines/types';
 import {
   createStudyEndFinalizeLoop,
   DEFAULT_STUDY_END_FINALIZE_STATE,
-} from './StudyEnd.utils';
+} from '../StudyEnd.utils';
 
 function createDeferred<T>() {
   let resolve!: (value: T) => void;

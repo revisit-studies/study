@@ -1,7 +1,7 @@
 import {
   describe, expect, it,
 } from 'vitest';
-import { parseStudyConfig } from './parser';
+import { parseStudyConfig } from '../parser';
 
 function createBaseStudyConfig() {
   return {

@@ -4,14 +4,14 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { ProtectedRoute } from './ProtectedRoute';
+import { ProtectedRoute } from '../ProtectedRoute';
 
 let mockUser: { isAdmin: boolean; determiningStatus: boolean };
 const mockVerifyAdminStatus = vi.fn();
 const mockLogout = vi.fn();
 let mockStorageEngine: { getEngine: ReturnType<typeof vi.fn> } | undefined;
 
-vi.mock('./store/hooks/useAuth', () => ({
+vi.mock('../store/hooks/useAuth', () => ({
   useAuth: () => ({
     user: mockUser,
     verifyAdminStatus: mockVerifyAdminStatus,
@@ -19,7 +19,7 @@ vi.mock('./store/hooks/useAuth', () => ({
   }),
 }));
 
-vi.mock('./storage/storageEngineHooks', () => ({
+vi.mock('../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 

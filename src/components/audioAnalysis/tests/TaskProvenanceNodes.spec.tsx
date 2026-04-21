@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import * as d3 from 'd3';
 import { describe, expect, test } from 'vitest';
-import { TrrackedProvenance } from '../../store/types';
-import { TaskProvenanceNodes } from './TaskProvenanceNodes';
-import { getColorForKey } from './provenanceColors';
+import { TrrackedProvenance } from '../../../store/types';
+import { TaskProvenanceNodes } from '../TaskProvenanceNodes';
+import { getColorForKey } from '../provenanceColors';
 
 function getFills(markup: string): string[] {
   return [...markup.matchAll(/fill="([^"]+)"/g)].map((match) => match[1]);

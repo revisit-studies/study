@@ -4,8 +4,8 @@ import {
 import {
   afterEach, describe, expect, test,
 } from 'vitest';
-import { StorageEngineProvider, useStorageEngine } from './storageEngineHooks';
-import { makeStorageEngine } from '../tests/utils';
+import { StorageEngineProvider, useStorageEngine } from '../storageEngineHooks';
+import { makeStorageEngine } from '../../tests/utils';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 

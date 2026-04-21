@@ -4,8 +4,8 @@ import {
 } from 'vitest';
 import type {
   CheckboxResponse, CustomResponse, DropdownResponse, MatrixResponse, NumericalResponse, Response,
-} from '../../parser/types';
-import type { CustomResponseValidate } from '../../store/types';
+} from '../../../parser/types';
+import type { CustomResponseValidate } from '../../../store/types';
 import {
   checkCheckboxResponseForValidation,
   generateCustomResponseErrorMessage,
@@ -18,7 +18,7 @@ import {
   shouldBypassValidationForStandaloneDontKnow,
   useAnswerField,
   usesStandaloneDontKnowField,
-} from './utils';
+} from '../utils';
 
 describe('generateInitFields', () => {
   const originalWindow = globalThis.window;

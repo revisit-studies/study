@@ -6,8 +6,8 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
-import { RankingInput } from './RankingInput';
-import type { RankingResponse } from '../../parser/types';
+import { RankingInput } from '../RankingInput';
+import type { RankingResponse } from '../../../parser/types';
 
 // ── DnD handler capture ──────────────────────────────────────────────────────
 
@@ -82,24 +82,24 @@ vi.mock('@mantine/core', () => ({
 
 vi.mock('clsx', () => ({ default: (...args: unknown[]) => args.filter(Boolean).join(' ') }));
 
-vi.mock('./InputLabel', () => ({
+vi.mock('../InputLabel', () => ({
   InputLabel: ({ prompt }: { prompt: string }) => React.createElement('label', null, prompt),
 }));
 
-vi.mock('./OptionLabel', () => ({
+vi.mock('../OptionLabel', () => ({
   OptionLabel: ({ label }: { label: string }) => React.createElement('span', null, label),
 }));
 
-vi.mock('./css/RankingDnd.module.css', () => ({
+vi.mock('../css/RankingDnd.module.css', () => ({
   default: { item: 'item', itemDragging: 'itemDragging' },
 }));
 
-vi.mock('../../store/store', () => ({
+vi.mock('../../../store/store', () => ({
   useStoreActions: () => ({ setRankingAnswers: vi.fn().mockReturnValue({}) }),
   useStoreDispatch: () => vi.fn(),
 }));
 
-vi.mock('../../utils/stringOptions', () => ({
+vi.mock('../../../utils/stringOptions', () => ({
   parseStringOptions: (opts: (string | { value: string; label: string })[]) => opts.map((o) => (
     typeof o === 'string' ? { value: o, label: o } : o
   )),

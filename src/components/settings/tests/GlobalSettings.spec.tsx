@@ -6,7 +6,7 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { GlobalSettings } from './GlobalSettings';
+import { GlobalSettings } from '../GlobalSettings';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -16,7 +16,7 @@ let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../store/hooks/useAuth', () => ({
+vi.mock('../../../store/hooks/useAuth', () => ({
   useAuth: () => ({
     user: { user: { email: 'test@test.com' } },
     triggerAuth: vi.fn(),
@@ -24,19 +24,19 @@ vi.mock('../../store/hooks/useAuth', () => ({
   }),
 }));
 
-vi.mock('../../storage/storageEngineHooks', () => ({
+vi.mock('../../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
-vi.mock('../../storage/engines/utils/storageEngineHelpers', () => ({
+vi.mock('../../../storage/engines/utils/storageEngineHelpers', () => ({
   isCloudStorageEngine: () => mockIsCloud,
 }));
 
-vi.mock('../../Login', () => ({
+vi.mock('../../../Login', () => ({
   signIn: vi.fn(),
 }));
 
-vi.mock('../../storage/engines/SupabaseStorageEngine', () => ({
+vi.mock('../../../storage/engines/SupabaseStorageEngine', () => ({
   SupabaseStorageEngine: class { },
 }));
 

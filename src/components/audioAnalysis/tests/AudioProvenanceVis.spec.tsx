@@ -7,10 +7,10 @@ import {
   afterEach, beforeAll, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import * as d3 from 'd3';
-import { TrrackedProvenance } from '../../store/types';
-import { makeStoredAnswer } from '../../tests/utils';
-import { AudioProvenanceVis } from './AudioProvenanceVis';
-import { syncEmitter } from '../../utils/syncReplay';
+import { TrrackedProvenance } from '../../../store/types';
+import { makeStoredAnswer } from '../../../tests/utils';
+import { AudioProvenanceVis } from '../AudioProvenanceVis';
+import { syncEmitter } from '../../../utils/syncReplay';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -46,42 +46,42 @@ vi.mock('react-router', () => ({
   },
 }));
 
-vi.mock('../../storage/storageEngineHooks', () => ({
+vi.mock('../../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: null }),
 }));
 
-vi.mock('./TaskProvenanceTimeline', () => ({
+vi.mock('../TaskProvenanceTimeline', () => ({
   TaskProvenanceTimeline: () => <div data-testid="provenance-timeline" />,
 }));
 
-vi.mock('../../store/hooks/useIsAnalysis', () => ({
+vi.mock('../../../store/hooks/useIsAnalysis', () => ({
   useIsAnalysis: () => false,
 }));
 
-vi.mock('./Timer', () => ({
+vi.mock('../Timer', () => ({
   Timer: () => <div data-testid="timer" />,
 }));
 
-vi.mock('../../utils/humanReadableDuration', () => ({
+vi.mock('../../../utils/humanReadableDuration', () => ({
   youtubeReadableDuration: (ms: number) => String(ms),
 }));
 
-vi.mock('../../store/hooks/useEvent', () => ({
+vi.mock('../../../store/hooks/useEvent', () => ({
   useEvent: (fn: (...args: unknown[]) => unknown) => fn,
 }));
 
-vi.mock('../../utils/encryptDecryptIndex', () => ({
+vi.mock('../../../utils/encryptDecryptIndex', () => ({
   encryptIndex: (i: number) => String(i),
 }));
 
-vi.mock('../../utils/parseTrialOrder', () => ({
+vi.mock('../../../utils/parseTrialOrder', () => ({
   parseTrialOrder: vi.fn(() => ({ step: 0, funcIndex: null })),
 }));
 
 const mockImportObject = vi.fn();
 const mockGetState = vi.fn(() => ({ state: 'mocked' }));
 
-vi.mock('./useUpdateProvenance', () => ({
+vi.mock('../useUpdateProvenance', () => ({
   useUpdateProvenance: vi.fn(),
 }));
 
@@ -96,11 +96,11 @@ const mockReplayContext = {
   replayEvent: { on: vi.fn(), off: vi.fn() },
 };
 
-vi.mock('../../store/hooks/useReplay', () => ({
+vi.mock('../../../store/hooks/useReplay', () => ({
   useReplayContext: () => mockReplayContext,
 }));
 
-vi.mock('../../utils/syncReplay', () => ({
+vi.mock('../../../utils/syncReplay', () => ({
   syncChannel: { postMessage: vi.fn() },
   syncEmitter: { on: vi.fn(), off: vi.fn() },
 }));
@@ -118,14 +118,14 @@ vi.mock('@trrack/core', () => {
 
 // ── real component references for sub-component tests ────────────────────────
 
-let RealTaskProvenanceTimeline: typeof import('./TaskProvenanceTimeline').TaskProvenanceTimeline;
-let RealTimer: typeof import('./Timer').Timer;
-let RealUseUpdateProvenance: typeof import('./useUpdateProvenance').useUpdateProvenance;
+let RealTaskProvenanceTimeline: typeof import('../TaskProvenanceTimeline').TaskProvenanceTimeline;
+let RealTimer: typeof import('../Timer').Timer;
+let RealUseUpdateProvenance: typeof import('../useUpdateProvenance').useUpdateProvenance;
 
 beforeAll(async () => {
-  RealTaskProvenanceTimeline = ((await vi.importActual('./TaskProvenanceTimeline')) as { TaskProvenanceTimeline: typeof import('./TaskProvenanceTimeline').TaskProvenanceTimeline }).TaskProvenanceTimeline;
-  RealTimer = ((await vi.importActual('./Timer')) as { Timer: typeof import('./Timer').Timer }).Timer;
-  RealUseUpdateProvenance = ((await vi.importActual('./useUpdateProvenance')) as { useUpdateProvenance: typeof RealUseUpdateProvenance }).useUpdateProvenance;
+  RealTaskProvenanceTimeline = ((await vi.importActual('../TaskProvenanceTimeline')) as { TaskProvenanceTimeline: typeof import('../TaskProvenanceTimeline').TaskProvenanceTimeline }).TaskProvenanceTimeline;
+  RealTimer = ((await vi.importActual('../Timer')) as { Timer: typeof import('../Timer').Timer }).Timer;
+  RealUseUpdateProvenance = ((await vi.importActual('../useUpdateProvenance')) as { useUpdateProvenance: typeof RealUseUpdateProvenance }).useUpdateProvenance;
 });
 
 // ── shared fixtures ──────────────────────────────────────────────────────────
@@ -378,7 +378,7 @@ describe('AudioProvenanceVis', () => {
   });
 
   test('syncChannel.postMessage fires when answers have trialOrder', async () => {
-    const { syncChannel } = await import('../../utils/syncReplay');
+    const { syncChannel } = await import('../../../utils/syncReplay');
     await act(async () => render(
       <AudioProvenanceVis {...defaultProps} answers={answersWithTask} />,
     ));

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { generateSliderBreakValues, getDefaultSliderSpacing } from './sliderBreaks';
+import { generateSliderBreakValues, getDefaultSliderSpacing } from '../sliderBreaks';
 
 describe('getDefaultSliderSpacing', () => {
   test('uses largest power of 10 below the range', () => {

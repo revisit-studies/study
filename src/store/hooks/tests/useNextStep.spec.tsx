@@ -7,7 +7,7 @@ import {
   test,
   vi,
 } from 'vitest';
-import { useNextStep } from './useNextStep';
+import { useNextStep } from '../useNextStep';
 
 const mockNavigate = vi.fn();
 const mockShowNotification = vi.fn();
@@ -59,7 +59,7 @@ vi.mock('react-router', () => ({
   useParams: () => ({ funcIndex: undefined }),
 }));
 
-vi.mock('../store', () => ({
+vi.mock('../../store', () => ({
   useStoreSelector: (selector: (state: {
     trialValidation: Record<string, unknown>;
     sequence: {
@@ -105,13 +105,13 @@ vi.mock('../store', () => ({
   useFlatSequence: () => ['intro'],
 }));
 
-vi.mock('../../routes/utils', () => ({
+vi.mock('../../../routes/utils', () => ({
   useCurrentIdentifier: () => 'intro_0',
   useCurrentStep: () => 0,
   useStudyId: () => 'study-1',
 }));
 
-vi.mock('../../storage/storageEngineHooks', () => ({
+vi.mock('../../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({
     storageEngine: {
       saveAnswers: mockSaveAnswers,
@@ -119,15 +119,15 @@ vi.mock('../../storage/storageEngineHooks', () => ({
   }),
 }));
 
-vi.mock('./useStoredAnswer', () => ({
+vi.mock('../useStoredAnswer', () => ({
   useStoredAnswer: () => mockStoredAnswer,
 }));
 
-vi.mock('./useWindowEvents', () => ({
+vi.mock('../useWindowEvents', () => ({
   useWindowEvents: () => ({ current: [] }),
 }));
 
-vi.mock('./useStudyConfig', () => ({
+vi.mock('../useStudyConfig', () => ({
   useStudyConfig: () => ({
     components: {
       intro: {},
@@ -135,11 +135,11 @@ vi.mock('./useStudyConfig', () => ({
   }),
 }));
 
-vi.mock('./useIsAnalysis', () => ({
+vi.mock('../useIsAnalysis', () => ({
   useIsAnalysis: () => false,
 }));
 
-vi.mock('../../utils/notifications', () => ({
+vi.mock('../../../utils/notifications', () => ({
   showNotification: (...args: unknown[]) => mockShowNotification(...args),
 }));
 

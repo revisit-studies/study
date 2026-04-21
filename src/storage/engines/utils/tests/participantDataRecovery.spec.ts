@@ -3,9 +3,9 @@ import {
   expect,
   test,
 } from 'vitest';
-import { Sequence, StoredAnswer } from '../../../store/types';
-import { ParticipantData } from '../../types';
-import { shouldPreferCachedParticipantData } from './participantDataRecovery';
+import { Sequence, StoredAnswer } from '../../../../store/types';
+import { ParticipantData } from '../../../types';
+import { shouldPreferCachedParticipantData } from '../participantDataRecovery';
 
 const baseSequence: Sequence = {
   id: 'root',

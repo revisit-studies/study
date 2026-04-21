@@ -1,11 +1,11 @@
 import {
   describe, expect, test, vi,
 } from 'vitest';
-import { expandLibrarySequences, verifyLibraryUsage, loadLibrariesParseNamespace } from './libraryParser';
+import { expandLibrarySequences, verifyLibraryUsage, loadLibrariesParseNamespace } from '../libraryParser';
 import {
   ComponentBlock, DynamicBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
-} from './types';
-import { isDynamicBlock } from './utils';
+} from '../types';
+import { isDynamicBlock } from '../utils';
 
 function isComponentBlock(value: string | ComponentBlock | DynamicBlock): value is ComponentBlock {
   return typeof value === 'object' && value !== null && 'components' in value && !isDynamicBlock(value);

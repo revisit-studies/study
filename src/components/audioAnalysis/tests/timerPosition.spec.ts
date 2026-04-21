@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { describe, expect, test } from 'vitest';
-import { getSeekTimeFromSvgPosition } from './timerPosition';
+import { getSeekTimeFromSvgPosition } from '../timerPosition';
 
 describe('getSeekTimeFromSvgPosition', () => {
   test('uses svg-local x coordinate instead of viewport x coordinate', () => {

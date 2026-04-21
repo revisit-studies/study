@@ -6,29 +6,29 @@ import {
 } from 'vitest';
 import {
   studyStoreCreator, useAreResponsesValid, useFlatSequence, useStoreActions, StudyStoreContext,
-} from './store';
-import type { ResponseBlockLocation, StudyConfig } from '../parser/types';
-import type { Sequence, StoredAnswer } from './types';
-import type { ParticipantData } from '../storage/types';
-import type { REVISIT_MODE } from '../storage/engines/types';
-import { makeStoredAnswer } from '../tests/utils';
+} from '../store';
+import type { ResponseBlockLocation, StudyConfig } from '../../parser/types';
+import type { Sequence, StoredAnswer } from '../types';
+import type { ParticipantData } from '../../storage/types';
+import type { REVISIT_MODE } from '../../storage/engines/types';
+import { makeStoredAnswer } from '../../tests/utils';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../utils/handleComponentInheritance', () => ({
+vi.mock('../../utils/handleComponentInheritance', () => ({
   studyComponentToIndividualComponent: (_comp: object, _config: object) => ({
     response: [],
     correctAnswer: [],
   }),
 }));
 
-vi.mock('../utils/handleResponseRandomization', () => ({
+vi.mock('../../utils/handleResponseRandomization', () => ({
   randomizeOptions: vi.fn(() => ({})),
   randomizeQuestionOrder: vi.fn(() => ({})),
   randomizeForm: vi.fn(() => []),
 }));
 
-vi.mock('../utils/getSequenceFlatMap', () => ({
+vi.mock('../../utils/getSequenceFlatMap', () => ({
   getSequenceFlatMap: vi.fn(() => ['intro', 'end']),
 }));
 
@@ -336,7 +336,7 @@ describe('studyStoreCreator', () => {
   });
 
   test('emptyAnswers skips components not in config (return null path)', async () => {
-    const { getSequenceFlatMap: mockGSFM } = await import('../utils/getSequenceFlatMap');
+    const { getSequenceFlatMap: mockGSFM } = await import('../../utils/getSequenceFlatMap');
     (mockGSFM as ReturnType<typeof vi.fn>).mockReturnValueOnce(['intro', 'dynamicComp', 'end']);
     const { store } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     expect(store.getState().answers.intro_0).toBeDefined();

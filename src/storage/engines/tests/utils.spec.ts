@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import type { StudyConfig } from '../../parser/types';
-import type { ParticipantData } from '../types';
-import { calculateProgressData, isCloudStorageEngine } from './utils/storageEngineHelpers';
-import { makeStorageEngine, makeStoredAnswer, makeStudyConfig } from '../../tests/utils';
+import type { StudyConfig } from '../../../parser/types';
+import type { ParticipantData } from '../../types';
+import { calculateProgressData, isCloudStorageEngine } from '../utils/storageEngineHelpers';
+import { makeStorageEngine, makeStoredAnswer, makeStudyConfig } from '../../../tests/utils';
 
 describe('isCloudStorageEngine', () => {
   test('returns false when engine is undefined', () => {

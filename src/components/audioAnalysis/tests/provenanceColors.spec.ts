@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { TrrackedProvenance } from '../../store/types';
+import { TrrackedProvenance } from '../../../store/types';
 import {
   FORM_UPDATE_COLOR,
   ROOT_COLOR,
@@ -8,7 +8,7 @@ import {
   getColorForKey,
   getNodeColorKey,
   normalizeActionName,
-} from './provenanceColors';
+} from '../provenanceColors';
 
 function createGraph(nodes: TrrackedProvenance['nodes'], root: string): TrrackedProvenance {
   return {

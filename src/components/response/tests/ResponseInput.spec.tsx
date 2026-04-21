@@ -7,26 +7,26 @@ import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { useMove } from '@mantine/hooks';
-import { generateSliderBreakValues } from './sliderBreaks';
-import { HorizontalHandler } from './HorizontalHandler';
-import { OptionLabel } from './OptionLabel';
-import { InputLabel } from './InputLabel';
-import { TextOnlyInput } from './TextOnlyInput';
-import { StringInput } from './StringInput';
-import { TextAreaInput } from './TextAreaInput';
-import { NumericInput } from './NumericInput';
-import { ReactiveInput } from './ReactiveInput';
-import { DropdownInput } from './DropdownInput';
-import { CheckBoxInput } from './CheckBoxInput';
-import { ButtonsInput } from './ButtonsInput';
-import { RadioInput } from './RadioInput';
-import { LikertInput } from './LikertInput';
-import { SliderInput } from './SliderInput';
-import { MatrixInput } from './MatrixInput';
-import { RankingInput } from './RankingInput';
-import { ResponseSwitcher } from './ResponseSwitcher';
-import { FeedbackAlert } from './FeedbackAlert';
-import { usesStandaloneDontKnowField } from './utils';
+import { generateSliderBreakValues } from '../sliderBreaks';
+import { HorizontalHandler } from '../HorizontalHandler';
+import { OptionLabel } from '../OptionLabel';
+import { InputLabel } from '../InputLabel';
+import { TextOnlyInput } from '../TextOnlyInput';
+import { StringInput } from '../StringInput';
+import { TextAreaInput } from '../TextAreaInput';
+import { NumericInput } from '../NumericInput';
+import { ReactiveInput } from '../ReactiveInput';
+import { DropdownInput } from '../DropdownInput';
+import { CheckBoxInput } from '../CheckBoxInput';
+import { ButtonsInput } from '../ButtonsInput';
+import { RadioInput } from '../RadioInput';
+import { LikertInput } from '../LikertInput';
+import { SliderInput } from '../SliderInput';
+import { MatrixInput } from '../MatrixInput';
+import { RankingInput } from '../RankingInput';
+import { ResponseSwitcher } from '../ResponseSwitcher';
+import { FeedbackAlert } from '../FeedbackAlert';
+import { usesStandaloneDontKnowField } from '../utils';
 import type {
   ButtonsResponse,
   CheckboxResponse,
@@ -38,7 +38,7 @@ import type {
   Response,
   ShortTextResponse,
   SliderResponse,
-} from '../../parser/types';
+} from '../../../parser/types';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -172,7 +172,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconInfoCircle: () => <span>icon-info</span>,
 }));
 
-vi.mock('../ReactMarkdownWrapper', () => ({
+vi.mock('../../ReactMarkdownWrapper', () => ({
   ReactMarkdownWrapper: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
@@ -180,11 +180,11 @@ vi.mock('@mantine/hooks', () => ({
   useMove: vi.fn(() => ({ ref: { current: null } })),
 }));
 
-vi.mock('./sliderBreaks', () => ({
+vi.mock('../sliderBreaks', () => ({
   generateSliderBreakValues: vi.fn(() => []),
 }));
 
-vi.mock('../../store/store', () => ({
+vi.mock('../../../store/store', () => ({
   useStoreDispatch: vi.fn(() => vi.fn()),
   useStoreActions: vi.fn(() => ({
     setMatrixAnswersRadio: vi.fn(),
@@ -199,7 +199,7 @@ vi.mock('../../store/store', () => ({
   })),
 }));
 
-vi.mock('../../utils/responseOptions', () => ({
+vi.mock('../../../utils/responseOptions', () => ({
   getMatrixAnswerOptions: vi.fn((response) => (response.answerOptions || []).map((o: string) => ({ label: o, value: o }))),
   isMatrixDontKnowValue: vi.fn(() => false),
   MATRIX_DONT_KNOW_OPTION: { value: '__dontKnow', label: "I don't know" },
@@ -235,11 +235,11 @@ vi.mock('@dnd-kit/utilities', () => ({
 
 vi.mock('clsx', () => ({ default: vi.fn((...args: unknown[]) => args.filter(Boolean).join(' ')) }));
 
-vi.mock('../../store/hooks/useStoredAnswer', () => ({
+vi.mock('../../../store/hooks/useStoredAnswer', () => ({
   useStoredAnswer: vi.fn(() => ({ questionOrders: {}, optionOrders: {} })),
 }));
 
-vi.mock('./utils', () => ({
+vi.mock('../utils', () => ({
   generateErrorMessage: vi.fn(() => null),
   DONT_KNOW_DEFAULT_VALUE: "I don't know",
   normalizeCheckboxDontKnowValue: vi.fn((v: string[]) => v),
@@ -247,7 +247,7 @@ vi.mock('./utils', () => ({
   getDefaultFieldValue: vi.fn(() => null),
 }));
 
-vi.mock('../../utils/stringOptions', () => ({
+vi.mock('../../../utils/stringOptions', () => ({
   parseStringOptions: vi.fn((options: (string | { label: string; value: string })[]) => options.map((o) => (typeof o === 'string' ? { label: o, value: o } : o))),
   parseStringOptionValue: vi.fn((o: string | { value: string }) => (typeof o === 'string' ? o : o.value)),
 }));
@@ -256,30 +256,30 @@ vi.mock('react-router', () => ({
   useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
 }));
 
-vi.mock('../../store/hooks/useStudyConfig', () => ({
+vi.mock('../../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: vi.fn(() => ({
     uiConfig: { enumerateQuestions: false, responseDividers: false },
     components: {},
   })),
 }));
 
-vi.mock('../../store/hooks/useIsAnalysis', () => ({
+vi.mock('../../../store/hooks/useIsAnalysis', () => ({
   useIsAnalysis: vi.fn(() => false),
 }));
 
-vi.mock('../../routes/utils', () => ({
+vi.mock('../../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
 }));
 
-vi.mock('../../utils/fetchStylesheet', () => ({
+vi.mock('../../../utils/fetchStylesheet', () => ({
   useFetchStylesheet: vi.fn(),
 }));
 
-vi.mock('../../utils/getSequenceFlatMap', () => ({
+vi.mock('../../../utils/getSequenceFlatMap', () => ({
   getSequenceFlatMap: vi.fn(() => []),
 }));
 
-vi.mock('./customResponseModules', () => ({
+vi.mock('../customResponseModules', () => ({
   getCustomResponseModule: vi.fn(() => null),
   getCustomResponseModuleLoadError: vi.fn(() => null),
 }));

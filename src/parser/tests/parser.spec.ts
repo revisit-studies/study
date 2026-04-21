@@ -1,8 +1,8 @@
 import {
   describe, expect, test, vi,
 } from 'vitest';
-import { parseStudyConfig } from './parser';
-import { isDynamicBlock } from './utils';
+import { parseStudyConfig } from '../parser';
+import { isDynamicBlock } from '../utils';
 
 global.fetch = vi.fn();
 

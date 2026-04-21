@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { ResourceNotFound } from './ResourceNotFound';
+import { ResourceNotFound } from '../ResourceNotFound';
 
 let mockPathname = '/some/path';
 

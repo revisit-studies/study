@@ -3,8 +3,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { Login, signIn } from './Login';
-import { makeStorageEngine } from './tests/utils';
+import { Login, signIn } from '../Login';
+import { makeStorageEngine } from './utils';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -14,11 +14,11 @@ let mockIsCloud = false;
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('./store/hooks/useAuth', () => ({
+vi.mock('../store/hooks/useAuth', () => ({
   useAuth: () => ({ user: mockUser }),
 }));
 
-vi.mock('./storage/storageEngineHooks', () => ({
+vi.mock('../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({
     storageEngine: {
       getEngine: () => mockEngine,
@@ -27,15 +27,15 @@ vi.mock('./storage/storageEngineHooks', () => ({
   }),
 }));
 
-vi.mock('./storage/engines/utils/storageEngineHelpers', () => ({
+vi.mock('../storage/engines/utils/storageEngineHelpers', () => ({
   isCloudStorageEngine: () => mockIsCloud,
 }));
 
-vi.mock('./utils/Prefix', () => ({
+vi.mock('../utils/Prefix', () => ({
   PREFIX: '/',
 }));
 
-vi.mock('./utils/notifications', () => ({
+vi.mock('../utils/notifications', () => ({
   showNotification: vi.fn(),
 }));
 
@@ -139,7 +139,7 @@ describe('signIn', () => {
   });
 
   test('calls showNotification and returns undefined when login throws', async () => {
-    const { showNotification } = await import('./utils/notifications');
+    const { showNotification } = await import('../utils/notifications');
     const engine = makeStorageEngine();
     Object.assign(engine, { login: vi.fn().mockRejectedValue(new Error('Auth failed')) });
     const result = await signIn(engine, mockSetLoading);

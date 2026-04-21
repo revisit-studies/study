@@ -1,7 +1,7 @@
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { initializeStorageEngine } from './initialize';
+import { initializeStorageEngine } from '../initialize';
 
 // ── hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -37,15 +37,15 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('./engines/SupabaseStorageEngine', () => ({
+vi.mock('../engines/SupabaseStorageEngine', () => ({
   SupabaseStorageEngine: mocks.MockSupabase,
 }));
 
-vi.mock('./engines/FirebaseStorageEngine', () => ({
+vi.mock('../engines/FirebaseStorageEngine', () => ({
   FirebaseStorageEngine: mocks.MockFirebase,
 }));
 
-vi.mock('./engines/LocalStorageEngine', () => ({
+vi.mock('../engines/LocalStorageEngine', () => ({
   LocalStorageEngine: mocks.MockLocal,
 }));
 

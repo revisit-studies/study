@@ -2,14 +2,14 @@ import { renderHook, act } from '@testing-library/react';
 import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { parseTrialOrder } from '../utils/parseTrialOrder';
-import { getComponent } from '../utils/handleComponentInheritance';
-import { decryptIndex } from '../utils/encryptDecryptIndex';
-import type { IndividualComponent } from '../parser/types';
-import { makeStudyConfig } from '../tests/utils';
+import { parseTrialOrder } from '../../utils/parseTrialOrder';
+import { getComponent } from '../../utils/handleComponentInheritance';
+import { decryptIndex } from '../../utils/encryptDecryptIndex';
+import type { IndividualComponent } from '../../parser/types';
+import { makeStudyConfig } from '../../tests/utils';
 import {
   useStudyId, useCurrentStep, useCurrentComponent, useCurrentIdentifier,
-} from './utils';
+} from '../utils';
 
 vi.mock('@trrack/core', () => {
   const mockRegistry = {
@@ -46,31 +46,31 @@ vi.mock('react-router', () => ({
   useSearchParams: () => [mockSearchParams, vi.fn()],
 }));
 
-vi.mock('../store/store', () => ({
+vi.mock('../../store/store', () => ({
   useFlatSequence: () => mockFlatSequence,
   useStoreActions: () => ({ pushToFuncSequence: vi.fn() }),
   useStoreDispatch: () => vi.fn(),
   useStoreSelector: (selector: (s: { answers: typeof mockAnswers }) => string | number | undefined) => selector({ answers: mockAnswers }),
 }));
 
-vi.mock('../utils/encryptDecryptIndex', () => ({
+vi.mock('../../utils/encryptDecryptIndex', () => ({
   decryptIndex: vi.fn((x: string) => parseInt(x, 10)),
   encryptIndex: vi.fn((x: number) => String(x)),
 }));
 
-vi.mock('../utils/parseTrialOrder', () => ({
+vi.mock('../../utils/parseTrialOrder', () => ({
   parseTrialOrder: vi.fn(() => ({ step: null, funcIndex: null })),
 }));
 
-vi.mock('../utils/getSequenceFlatMap', () => ({
+vi.mock('../../utils/getSequenceFlatMap', () => ({
   findFuncBlock: vi.fn(() => null),
 }));
 
-vi.mock('../store/hooks/useStudyConfig', () => ({
+vi.mock('../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: () => mockStudyConfig,
 }));
 
-vi.mock('../utils/handleComponentInheritance', () => ({
+vi.mock('../../utils/handleComponentInheritance', () => ({
   getComponent: vi.fn(() => 'intro'),
   studyComponentToIndividualComponent: vi.fn(() => ({ response: [] })),
 }));

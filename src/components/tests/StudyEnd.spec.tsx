@@ -10,6 +10,17 @@ import { StudyEnd } from '../StudyEnd';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
+function createDeferred<T>() {
+  let resolve!: (value: T) => void;
+
+  return {
+    promise: new Promise<T>((res) => {
+      resolve = res;
+    }),
+    resolve,
+  };
+}
+
 let mockIsAnalysis = false;
 let mockStudyConfig: {
   studyMetadata: { title: string };
@@ -72,8 +83,10 @@ vi.mock('../StudyEnd.utils', () => ({
       start: async () => {
         if (!mockStorageEngine) return;
         try {
-          const result = await mockStorageEngine.verifyCompletion?.();
-          if (result === true) onComplete();
+          const result = await mockStorageEngine.finalizeParticipant?.();
+          if (result?.status === 'complete') {
+            onComplete();
+          }
         } catch (error) {
           onUnexpectedError(error);
         }
@@ -128,7 +141,7 @@ describe('StudyEnd', () => {
     };
     mockDataCollectionEnabled = false;
     mockStorageEngine = {
-      verifyCompletion: vi.fn().mockResolvedValue(true),
+      finalizeParticipant: vi.fn().mockResolvedValue({ status: 'complete' }),
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p1'),
       getParticipantData: vi.fn().mockResolvedValue(null),
@@ -159,9 +172,10 @@ describe('StudyEnd', () => {
   });
 
   test('shows loader when data collection is enabled and not yet complete', async () => {
+    const finalizeParticipant = createDeferred<{ status: 'complete' | 'retry' | 'error' }>();
     mockDataCollectionEnabled = true;
     mockStorageEngine = {
-      verifyCompletion: vi.fn().mockResolvedValue(false),
+      finalizeParticipant: vi.fn().mockImplementation(() => finalizeParticipant.promise),
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: true }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p1'),
       getParticipantData: vi.fn().mockResolvedValue(null),
@@ -204,23 +218,23 @@ describe('StudyEnd', () => {
     expect(screen.getByTestId('markdown').textContent).toBe('# Study Complete');
   });
 
-  test('sets completed when verifyCompletion resolves true', async () => {
+  test('sets completed when finalizeParticipant resolves complete', async () => {
     mockStorageEngine = {
-      verifyCompletion: vi.fn().mockResolvedValue(true),
+      finalizeParticipant: vi.fn().mockResolvedValue({ status: 'complete' }),
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p1'),
       getParticipantData: vi.fn().mockResolvedValue(null),
       getCurrentParticipantDataSnapshot: vi.fn().mockReturnValue(null),
     };
     await act(async () => { render(<StudyEnd />); });
-    // verifyCompletion returns true → completed set to true → loader disappears
+    // finalizeParticipant returns complete -> completed set to true -> loader disappears
     expect(screen.queryByTestId('loader')).toBeNull();
   });
 
-  test('handles verifyCompletion error gracefully', async () => {
+  test('handles finalizeParticipant error gracefully', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     mockStorageEngine = {
-      verifyCompletion: vi.fn().mockRejectedValue(new Error('network error')),
+      finalizeParticipant: vi.fn().mockRejectedValue(new Error('network error')),
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p1'),
       getParticipantData: vi.fn().mockResolvedValue(null),
@@ -234,21 +248,16 @@ describe('StudyEnd', () => {
     consoleSpy.mockRestore();
   });
 
-  test('no-engine branch: setTimeout fires when storageEngine is null', async () => {
-    vi.useFakeTimers();
+  test('does not crash when storageEngine is undefined and data collection is disabled', async () => {
     mockStorageEngine = undefined;
     await act(async () => { render(<StudyEnd />); });
-    // Advance timers so the setTimeout(verifyLoop, 2000) fires once
-    await act(async () => { vi.advanceTimersByTime(2100); });
-    vi.useRealTimers();
-    // No crash is the assertion
     expect(screen.getByText('Thank you for completing the study. You may close this window now.')).toBeDefined();
   });
 
   test('autoDownload fires when completed and delayCounter <= 0', async () => {
     const downloadMock = await import('../downloader/DownloadTidy');
     const downloadSpy = vi.mocked(downloadMock.download);
-    mockIsAnalysis = true; // skip verifyLoop, sets completed=true immediately
+    mockIsAnalysis = true; // analysis mode sets completed=true immediately
     mockStudyConfig = {
       ...mockStudyConfig,
       uiConfig: {
@@ -258,7 +267,7 @@ describe('StudyEnd', () => {
       },
     };
     mockStorageEngine = {
-      verifyCompletion: vi.fn().mockResolvedValue(false),
+      finalizeParticipant: vi.fn().mockResolvedValue({ status: 'complete' }),
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p1'),
       getParticipantData: vi.fn().mockResolvedValue({ participantId: 'p1' }),
@@ -279,7 +288,7 @@ describe('StudyEnd', () => {
       },
     };
     mockStorageEngine = {
-      verifyCompletion: vi.fn().mockResolvedValue(false),
+      finalizeParticipant: vi.fn().mockResolvedValue({ status: 'complete' }),
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p42'),
       getParticipantData: vi.fn().mockResolvedValue(null),
@@ -304,7 +313,7 @@ describe('StudyEnd', () => {
     });
     mockIsAnalysis = false;
     mockStorageEngine = {
-      verifyCompletion: vi.fn().mockResolvedValue(true),
+      finalizeParticipant: vi.fn().mockResolvedValue({ status: 'complete' }),
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: false }),
       getCurrentParticipantId: vi.fn().mockResolvedValue('p1'),
       getParticipantData: vi.fn().mockResolvedValue(null),

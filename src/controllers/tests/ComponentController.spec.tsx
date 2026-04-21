@@ -6,7 +6,7 @@ import {
 } from 'vitest';
 import { useSearchParams, useNavigate } from 'react-router';
 import { View } from 'react-vega';
-import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import type {
   ImageComponent,
   MarkdownComponent,
@@ -14,24 +14,24 @@ import type {
   VegaComponent,
   VideoComponent,
   WebsiteComponent,
-} from '../parser/types';
-import type { StoreState } from '../store/types';
-import { ComponentController } from './ComponentController';
-import { ErrorBoundary } from './ErrorBoundary';
-import { IframeController } from './IframeController';
-import { ImageController } from './ImageController';
-import { MarkdownController } from './MarkdownController';
-import { ReactComponentController } from './ReactComponentController';
-import { VegaController } from './VegaController';
-import { VideoController } from './VideoController';
-import { useCurrentComponent, useCurrentStep } from '../routes/utils';
-import { useStorageEngine } from '../storage/storageEngineHooks';
-import { getStaticAssetByPath, getJsonAssetByPath } from '../utils/getStaticAsset';
-import { useStoreDispatch, useStoreSelector } from '../store/store';
-import { findBlockForStep } from '../utils/getSequenceFlatMap';
-import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
-import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
-import { makeStoredAnswer, makeStorageEngine } from '../tests/utils';
+} from '../../parser/types';
+import type { StoreState } from '../../store/types';
+import { ComponentController } from '../ComponentController';
+import { ErrorBoundary } from '../ErrorBoundary';
+import { IframeController } from '../IframeController';
+import { ImageController } from '../ImageController';
+import { MarkdownController } from '../MarkdownController';
+import { ReactComponentController } from '../ReactComponentController';
+import { VegaController } from '../VegaController';
+import { VideoController } from '../VideoController';
+import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { getStaticAssetByPath, getJsonAssetByPath } from '../../utils/getStaticAsset';
+import { useStoreDispatch, useStoreSelector } from '../../store/store';
+import { findBlockForStep } from '../../utils/getSequenceFlatMap';
+import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { useRecordingConfig } from '../../store/hooks/useRecordingConfig';
+import { makeStoredAnswer, makeStorageEngine } from '../../tests/utils';
 
 // ── mutable state ────────────────────────────────────────────────────────────
 
@@ -60,7 +60,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconPlugConnectedX: () => <span>icon-plug-x</span>,
 }));
 
-vi.mock('../ResourceNotFound', () => ({
+vi.mock('../../ResourceNotFound', () => ({
   ResourceNotFound: ({ path, email }: { path?: string; email?: string }) => (
     <div>
       ResourceNotFound:
@@ -69,42 +69,42 @@ vi.mock('../ResourceNotFound', () => ({
   ),
 }));
 
-vi.mock('../components/StudyEnd', () => ({
+vi.mock('../../components/StudyEnd', () => ({
   StudyEnd: () => <div>StudyEnd</div>,
 }));
 
-vi.mock('../components/TrainingFailed', () => ({
+vi.mock('../../components/TrainingFailed', () => ({
   TrainingFailed: () => <div>TrainingFailed</div>,
 }));
 
-vi.mock('../components/TimedOut', () => ({
+vi.mock('../../components/TimedOut', () => ({
   TimedOut: () => <div>TimedOut</div>,
 }));
 
-vi.mock('../components/ReactMarkdownWrapper', () => ({
+vi.mock('../../components/ReactMarkdownWrapper', () => ({
   ReactMarkdownWrapper: ({ text }: { text: string }) => (
     <div data-testid="markdown">{text}</div>
   ),
 }));
 
-vi.mock('../components/response/ResponseBlock', () => ({
+vi.mock('../../components/response/ResponseBlock', () => ({
   ResponseBlock: () => <div>ResponseBlock</div>,
 }));
 
-vi.mock('../components/screenRecording/ScreenRecordingReplay', () => ({
+vi.mock('../../components/screenRecording/ScreenRecordingReplay', () => ({
   ScreenRecordingReplay: () => <div>ScreenRecordingReplay</div>,
 }));
 
-vi.mock('../utils/getStaticAsset', () => ({
+vi.mock('../../utils/getStaticAsset', () => ({
   getStaticAssetByPath: vi.fn(),
   getJsonAssetByPath: vi.fn(),
 }));
 
-vi.mock('../utils/Prefix', () => ({
+vi.mock('../../utils/Prefix', () => ({
   PREFIX: '/test/',
 }));
 
-vi.mock('../store/store', () => ({
+vi.mock('../../store/store', () => ({
   useStoreDispatch: vi.fn(() => vi.fn()),
   useStoreActions: vi.fn(() => mockStoreActions),
   useStoreSelector: vi.fn((selector: (s: StoreState) => StoreState[keyof StoreState]) => selector({
@@ -121,7 +121,7 @@ vi.mock('../store/store', () => ({
   } as Partial<StoreState> as StoreState)),
 }));
 
-vi.mock('../routes/utils', () => ({
+vi.mock('../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
   useCurrentComponent: vi.fn(() => 'end'),
   useCurrentIdentifier: vi.fn(() => 'trial1_0'),
@@ -138,7 +138,7 @@ vi.mock('react-redux', () => ({
   useDispatch: vi.fn(() => vi.fn()),
 }));
 
-vi.mock('../store/hooks/useStudyConfig', () => ({
+vi.mock('../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: vi.fn(() => ({
     components: {},
     uiConfig: { contactEmail: 'test@test.com', instructionLocation: 'sidebar' },
@@ -146,7 +146,7 @@ vi.mock('../store/hooks/useStudyConfig', () => ({
   })),
 }));
 
-vi.mock('../storage/storageEngineHooks', () => ({
+vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: vi.fn(() => ({
     storageEngine: {
       isConnected: () => true,
@@ -156,31 +156,31 @@ vi.mock('../storage/storageEngineHooks', () => ({
   })),
 }));
 
-vi.mock('../store/hooks/useStoredAnswer', () => ({
+vi.mock('../../store/hooks/useStoredAnswer', () => ({
   useStoredAnswer: vi.fn(() => null),
 }));
 
-vi.mock('../store/hooks/useIsAnalysis', () => ({
+vi.mock('../../store/hooks/useIsAnalysis', () => ({
   useIsAnalysis: vi.fn(() => false),
 }));
 
-vi.mock('../store/hooks/useRecordingConfig', () => ({
+vi.mock('../../store/hooks/useRecordingConfig', () => ({
   useRecordingConfig: vi.fn(() => ({ studyHasScreenRecording: false })),
 }));
 
-vi.mock('../utils/useDisableBrowserBack', () => ({
+vi.mock('../../utils/useDisableBrowserBack', () => ({
   useDisableBrowserBack: vi.fn(),
 }));
 
-vi.mock('../utils/fetchStylesheet', () => ({
+vi.mock('../../utils/fetchStylesheet', () => ({
   useFetchStylesheet: vi.fn(),
 }));
 
-vi.mock('../utils/getSequenceFlatMap', () => ({
+vi.mock('../../utils/getSequenceFlatMap', () => ({
   findBlockForStep: vi.fn(() => []),
 }));
 
-vi.mock('../utils/handleComponentInheritance', () => ({
+vi.mock('../../utils/handleComponentInheritance', () => ({
   studyComponentToIndividualComponent: vi.fn(() => ({
     type: 'markdown',
     path: '/test.md',
@@ -189,16 +189,16 @@ vi.mock('../utils/handleComponentInheritance', () => ({
   })),
 }));
 
-vi.mock('../utils/encryptDecryptIndex', () => ({
+vi.mock('../../utils/encryptDecryptIndex', () => ({
   decryptIndex: vi.fn((v: string) => v),
   encryptIndex: vi.fn((v: number) => String(v)),
 }));
 
-vi.mock('../utils/componentStyle', () => ({
+vi.mock('../../utils/componentStyle', () => ({
   getComponentContainerStyle: vi.fn(() => ({})),
 }));
 
-vi.mock('../store/hooks/useEvent', () => ({
+vi.mock('../../store/hooks/useEvent', () => ({
   useEvent: <T extends (...args: Parameters<T>) => ReturnType<T>>(fn: T): T => fn,
 }));
 
