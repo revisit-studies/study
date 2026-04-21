@@ -17,8 +17,45 @@ function isElement(node: unknown): node is Element {
   return !!node && typeof node === 'object' && (node as Element).type === 'element';
 }
 
+const BASE_TEXT_SIZE = '1.25rem';
+
 const markdownComponents: Partial<Components> = {
-  p({ node: _, ...props }) { return <Text {...props} pb={8} fw="inherit" size="1.25rem" ref={undefined} />; },
+  p({ node: _, ...props }) { return <Text {...props} pb={20} fw="inherit" size={BASE_TEXT_SIZE} ref={undefined} />; },
+  div({
+    node: _,
+    className,
+    style,
+    ...props
+  }) {
+    // Some study markdown uses raw HTML wrappers (rehypeRaw), e.g. <div class="hover-box">...</div>.
+    // Without a renderer override, that content renders at the browser default font-size,
+    // which looks smaller than our paragraph Text size.
+    const classes = typeof className === 'string' ? className.split(/\s+/).filter(Boolean) : [];
+    if (classes.includes('hover-box')) {
+      return (
+        <Text
+          {...props}
+          component="div"
+          className={className}
+          style={style as React.CSSProperties}
+          size={BASE_TEXT_SIZE}
+          fw="inherit"
+          ref={undefined}
+        />
+      );
+    }
+
+    if (classes.includes('highlight-box')) {
+      const mergedStyle: React.CSSProperties = {
+        ...(style as React.CSSProperties),
+        fontSize: BASE_TEXT_SIZE,
+      };
+
+      return <div {...props} className={className} style={mergedStyle} />;
+    }
+
+    return <div {...props} className={className} style={style as React.CSSProperties} />;
+  },
   h1({ node: _, ...props }) { return <Title {...props} order={1} pb={12} />; },
   h2({ node: _, ...props }) { return <Title {...props} order={2} pb={12} />; },
   h3({ node: _, ...props }) { return <Title {...props} order={3} pb={12} />; },
@@ -28,6 +65,15 @@ const markdownComponents: Partial<Components> = {
   a({ node: _, ...props }) { return <Anchor {...props} ref={undefined} />; },
   ul({ node: _, ...props }) { return <List withPadding {...props} pb={8} />; },
   ol({ node: _, type: _type, ...props }) { return <List {...props} type="ordered" withPadding pb={8} />; },
+  li({ node: _, children }) {
+    return (
+      <List.Item>
+        <Text component="span" size={BASE_TEXT_SIZE} fw="inherit">
+          {children}
+        </Text>
+      </List.Item>
+    );
+  },
   table({ node: _, ...props }) { return <Table {...props} mb={12} borderColor="grey" />; },
   thead({ node: _, ...props }) { return <Table.Thead {...props} />; },
   tbody({ node: _, ...props }) { return <Table.Tbody {...props} />; },

@@ -4,11 +4,11 @@ In this section of the study, consider the following scenario.
 
 <div class="hover-box">
 You are part of a research team at your local Art Museum, tasked with analyzing visitor patterns.
-In the following pages, you will be presented with a series of bar charts that show the number of daily visitors over several days.
 
-Your task is to interpret the charts and answer questions to help understand the museum's daily attendance.
+In the following pages, you will be presented with a series of bar charts that show the number of daily visitors over several days.
 </div>
 
+Your task is to interpret the charts and answer questions to help understand the museum's daily attendance.
 <!-- -------------------------------------------- -->
 <div class="highlight-box"><b> About the barchart </b></div>
 

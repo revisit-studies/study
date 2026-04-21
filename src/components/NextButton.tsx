@@ -82,7 +82,7 @@ export function NextButton({
 
   return (
     <>
-      <Group justify="right" gap="xs" mt="sm">
+      <Group justify="center" gap="xs" mt="md">
         {config?.previousButton && (
           <PreviousButton
             label={previousButtonText}

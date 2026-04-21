@@ -109,6 +109,19 @@
   <script>
     const DISPLAY_TIME_MS = 8000;
 
+    function resolveAssetUrl(path) {
+      if (!path) return '';
+      if (/^https?:\/\//i.test(path)) return path;
+
+      const normalizedPath = String(path).replace(/^\/+/, '');
+      const studyFolder = normalizedPath.split('/')[0];
+      const marker = `/${studyFolder}/`;
+      const pathname = window.location.pathname;
+      const markerIndex = pathname.indexOf(marker);
+      const basePrefix = markerIndex >= 0 ? pathname.substring(0, markerIndex + 1) : '/';
+      return `${basePrefix}${normalizedPath}`;
+    }
+
     let responseId = 'trial-ans';
 
     Revisit.onDataReceive(function(data) {
@@ -117,7 +130,7 @@
       const options = data['options'] || [];
       responseId = data['responseId'] || 'trial-ans';
 
-      document.getElementById('chart-img').src = '/' + imagePath;
+      document.getElementById('chart-img').src = resolveAssetUrl(imagePath);
       document.getElementById('answer-label').textContent = prompt;
 
       const select = document.getElementById('dropdown-select');
