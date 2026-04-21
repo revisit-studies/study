@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
 import {
-  beforeEach, describe, expect, test, vi,
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { ReplayContext, useReplay, useReplayContext } from '../useReplay';
 import { syncEmitter } from '../../../utils/syncReplay';
@@ -23,6 +23,10 @@ const useSearchParamsMock = await import('react-router').then((m) => m.useSearch
 beforeEach(() => {
   vi.clearAllMocks();
   useSearchParamsMock.mockReturnValue([new URLSearchParams()]);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('useReplayContext', () => {
@@ -291,5 +295,27 @@ describe('useReplay — public setIsPlaying with hasEnded=true', () => {
     });
     expect(result.current.hasEnded).toBe(false);
     expect(result.current.seekTime).toBe(0);
+  });
+});
+
+describe('useReplay — cleanup', () => {
+  test('clears the synthetic replay timer on unmount', () => {
+    vi.useFakeTimers();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    const { result, unmount } = renderHook(() => useReplay());
+
+    act(() => {
+      result.current.setDuration(0.01);
+      result.current.setIsPlaying(true);
+    });
+
+    unmount();
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
   });
 });

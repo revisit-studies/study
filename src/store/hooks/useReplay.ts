@@ -12,6 +12,7 @@ import { getNextSyntheticReplayTime } from './replayTimer';
 export function useReplay() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isMountedRef = useRef(true);
 
   // isMasterplayer is true for the window where play button is clicked.
   // This is set to false when the video / provenance is initiated via different tab/window
@@ -107,6 +108,10 @@ export function useReplay() {
   }, [speed]);
 
   const handlePlay = useCallback(() => {
+    if (!isMountedRef.current) {
+      return;
+    }
+
     _setIsPlaying(true);
 
     const t = replayRef.current?.currentTime || 0;
@@ -123,6 +128,9 @@ export function useReplay() {
 
     const elem = replayRef.current;
     if (elem) {
+      if (timer.current) {
+        clearInterval(timer.current);
+      }
       timer.current = setInterval(() => {
         emitterRef.current.emit('timeupdate', elem.currentTime);
       }, 30);
@@ -156,6 +164,10 @@ export function useReplay() {
   }, []);
 
   const handlePause = useCallback(() => {
+    if (!isMountedRef.current) {
+      return;
+    }
+
     _setIsPlaying(false);
 
     timer.current && clearInterval(timer.current);
@@ -214,6 +226,10 @@ export function useReplay() {
 
   // this should be the only way to start video/audio
   const setIsPlaying = useCallback((playing: boolean, isRemoteTriggered = false) => {
+    if (!isMountedRef.current) {
+      return;
+    }
+
     setIsMasterPlayer(!isRemoteTriggered);
     if (hasEnded) {
       setHasEnded(false);
@@ -226,6 +242,25 @@ export function useReplay() {
       replayRef.current?.pause();
     }
   }, [hasEnded, setSeekTime]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      if (timer.current) {
+        clearInterval(timer.current);
+        timer.current = null;
+      }
+
+      videoRef.current?.removeEventListener('play', handlePlay);
+      videoRef.current?.removeEventListener('pause', handlePause);
+      videoRef.current?.removeEventListener('seeked', handleSeeked);
+      audioRef.current?.removeEventListener('play', handlePlay);
+      audioRef.current?.removeEventListener('pause', handlePause);
+      audioRef.current?.removeEventListener('seeked', handleSeeked);
+    };
+  }, [handlePause, handlePlay, handleSeeked]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -246,6 +281,14 @@ export function useReplay() {
       if (isPlaying) {
         let lastTickTime = Date.now();
         timer.current = setInterval(() => {
+          if (!isMountedRef.current) {
+            if (timer.current) {
+              clearInterval(timer.current);
+              timer.current = null;
+            }
+            return;
+          }
+
           const now = Date.now();
           timerValue.current = getNextSyntheticReplayTime(
             timerValue.current,
@@ -256,17 +299,23 @@ export function useReplay() {
           lastTickTime = now;
           emitterRef.current.emit('timeupdate', timerValue.current);
           if (timerValue.current >= internalDuration.current) {
+            if (timer.current) {
+              clearInterval(timer.current);
+              timer.current = null;
+            }
             setIsPlaying(false);
           }
         }, 30);
-      } else {
-        timer.current && clearInterval(timer.current);
+      } else if (timer.current) {
+        clearInterval(timer.current);
+        timer.current = null;
       }
     }
 
     return () => {
       if (timer.current) {
         clearInterval(timer.current);
+        timer.current = null;
       }
     };
   }, [isPlaying, setIsPlaying]);
