@@ -38,6 +38,13 @@ import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
 import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
 import { getComponentContainerStyle } from '../utils/componentStyle';
 
+const STIMULUS_BLOCK_HIGHLIGHT_TYPES = new Set([
+  'video',
+  'react-component',
+  'vega',
+  'website',
+]);
+
 // current active stimuli presented to the user
 export function ComponentController() {
   // Get the config for the current step
@@ -51,8 +58,11 @@ export function ComponentController() {
 
   const answers = useStoreSelector((store) => store.answers);
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
+  const trialValidation = useStoreSelector((state) => state.trialValidation);
+  const showStimulusValidation = useStoreSelector((state) => state.showStimulusValidation);
+  const completed = useStoreSelector((state) => state.completed);
 
-  const { setAnalysisCanPlayScreenRecording } = useStoreActions();
+  const { setAnalysisCanPlayScreenRecording, setShowStimulusValidation } = useStoreActions();
 
   const analysisProvState = useStoreSelector((state) => state.analysisProvState.stimulus);
 
@@ -122,6 +132,15 @@ export function ComponentController() {
   }, [currentStep, storageEngine, sequence]);
 
   const currentIdentifier = useCurrentIdentifier();
+  const currentValidation = useMemo(
+    () => trialValidation[currentIdentifier],
+    [currentIdentifier, trialValidation],
+  );
+  useEffect(() => {
+    if (showStimulusValidation && currentValidation?.stimulus.valid) {
+      storeDispatch(setShowStimulusValidation(false));
+    }
+  }, [currentValidation, setShowStimulusValidation, showStimulusValidation, storeDispatch]);
   const currentConfig = useMemo(() => {
     const toReturn = currentComponent && currentComponent !== 'end' && !currentComponent.startsWith('__') && studyComponentToIndividualComponent(stepConfig, studyConfig) as IndividualComponent;
     if (typeof toReturn === 'object') {
@@ -213,6 +232,20 @@ export function ComponentController() {
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
   const componentContainerStyle = getComponentContainerStyle(currentConfig.type, currentConfig.style);
+  const showStimulusBlockedState = !isAnalysis
+    && !completed
+    && showStimulusValidation
+    && !!currentValidation
+    && !currentValidation.stimulus.valid
+    && STIMULUS_BLOCK_HIGHLIGHT_TYPES.has(currentConfig.type);
+  const stimulusBlockedMessage = currentConfig.type === 'video'
+    ? 'Please finish the video before continuing.'
+    : 'Complete the required interaction in the stimulus to continue.';
+  const stimulusHighlightStyle = showStimulusBlockedState ? {
+    boxShadow: '0 0 0 6px var(--mantine-color-red-0), 0 0 0 7px var(--mantine-color-red-2)',
+    backgroundColor: 'var(--mantine-color-red-0)',
+    borderRadius: 'var(--mantine-radius-sm)',
+  } : undefined;
 
   if (studyHasScreenRecording && isAnalysis && analysisCanPlayScreenRecording) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
 
@@ -226,20 +259,30 @@ export function ComponentController() {
         location="aboveStimulus"
       />
       <Box
-        id={currentComponent}
-        className={currentConfig.type}
-        style={componentContainerStyle}
+        data-blocked-stimulus={showStimulusBlockedState ? 'true' : undefined}
+        style={stimulusHighlightStyle}
       >
-        <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
-          <>
-            {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
-            {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-            {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-            {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-            {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
-            {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
-          </>
-        </Suspense>
+        <Box
+          id={currentComponent}
+          className={currentConfig.type}
+          style={componentContainerStyle}
+        >
+          <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
+            <>
+              {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
+              {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
+              {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
+              {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
+              {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
+              {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
+            </>
+          </Suspense>
+        </Box>
+        {showStimulusBlockedState && (
+          <Text c="red" size="sm" mt="xs">
+            {stimulusBlockedMessage}
+          </Text>
+        )}
       </Box>
 
       {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}

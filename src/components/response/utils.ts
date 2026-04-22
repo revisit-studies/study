@@ -5,16 +5,20 @@ import {
   CheckboxResponse, CustomResponse, DropdownResponse, JsonValue, MatrixResponse, NumberOption, NumericalResponse, RadioResponse, Response, StringOption,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
-import { parseStringOptionValue } from '../../utils/stringOptions';
+import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
 
 type ResponseDefault = JsonValue;
 type ResponseWithDefault = Response & { default?: ResponseDefault };
 
 export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
+export const GENERIC_UNANSWERED_MESSAGE = 'Please answer this question to continue.';
+export const OTHER_FIELD_REQUIRED_MESSAGE = 'Please fill in the "Other" field to continue.';
+export type ResponseBlockingStatus = 'satisfied' | 'unanswered' | 'invalid';
 
 // Function for highlighting unanswered required questions
 export function requiredAnswerIsEmpty(value: JsonValue | undefined): boolean {
   if (value === null || value === undefined || value === '') return true;
+  if (typeof value === 'number' && Number.isNaN(value)) return true;
   if (Array.isArray(value) && value.length === 0) return true;
   if (typeof value === 'object' && !Array.isArray(value)) {
     const obj = value as Record<string, unknown>;
@@ -129,6 +133,31 @@ function checkMatrixResponseForMessage(response: MatrixResponse, value: Record<s
   return checkMatrixResponse(response, value);
 }
 
+function getOtherFieldError(
+  response: Response,
+  value: number | string | string[] | Record<string, string> | undefined,
+  otherValue?: string,
+) {
+  const supportsOtherField = (response.type === 'radio' || response.type === 'checkbox') && response.withOther;
+
+  if (!supportsOtherField) {
+    return null;
+  }
+
+  const isOtherSelected = (
+    // Radio uses a simple single-value sentinel, while checkbox uses a reserved
+    // option token to avoid collisions with participant-defined option values.
+    (response.type === 'radio' && value === 'other')
+    || (response.type === 'checkbox' && Array.isArray(value) && value.includes('__other'))
+  );
+
+  if (!isOtherSelected) {
+    return null;
+  }
+
+  return requiredAnswerIsEmpty(otherValue) ? OTHER_FIELD_REQUIRED_MESSAGE : null;
+}
+
 const getQueryParameters = () => {
   if (typeof window === 'undefined') {
     return new URLSearchParams('');
@@ -145,28 +174,6 @@ export const usesStandaloneDontKnowField = (response: Response) => !!response.wi
 export const shouldBypassValidationForStandaloneDontKnow = (response: Response, dontKnowChecked: boolean) => (
   usesStandaloneDontKnowField(response) && dontKnowChecked
 );
-
-export function isRequiredResponseUnanswered(
-  response: Response,
-  values: Partial<StoredAnswer['answer']>,
-) {
-  if (response.hidden || response.type === 'textOnly' || response.type === 'divider' || !response.required) {
-    return false;
-  }
-
-  if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
-    return false;
-  }
-
-  return requiredAnswerIsEmpty(values[response.id]);
-}
-
-export function countRequiredUnansweredResponses(
-  responses: Response[],
-  values: Partial<StoredAnswer['answer']>,
-) {
-  return responses.filter((response) => isRequiredResponseUnanswered(response, values)).length;
-}
 
 export const getDefaultFieldValue = (response: Response) => {
   const responseDefault = (response as ResponseWithDefault).default;
@@ -365,7 +372,15 @@ export const generateValidation = (
 ): Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> => {
   let validateObj: Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> = {};
   responses.forEach((response) => {
-    if (response.required || response.type === 'custom') {
+    const validatesOtherField = (response.type === 'radio' || response.type === 'checkbox') && !!response.withOther;
+
+    // Reactive answers are satisfied through stimulus controllers, so they should
+    // not participate in form-response blocking or unanswered reveal logic.
+    if (response.type === 'reactive') {
+      return;
+    }
+
+    if (response.required || response.type === 'custom' || validatesOtherField) {
       validateObj = {
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
@@ -383,51 +398,56 @@ export const generateValidation = (
             return null;
           }
 
+          let error: string | null = null;
+
           if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
             if (response.type === 'matrix-checkbox' || response.type === 'matrix-radio') {
-              return checkMatrixResponse(response, value as Record<string, string>);
+              error = checkMatrixResponse(response, value as Record<string, string>);
+            } else if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+              error = Object.keys(value).length > 0 ? null : 'Empty Input';
+            } else {
+              error = Object.values(value).every((val) => val !== '') ? null : 'Empty Input';
             }
-            if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
-              return Object.keys(value).length > 0 ? null : 'Empty Input';
-            }
-            return Object.values(value).every((val) => val !== '') ? null : 'Empty Input';
-          }
-          if (Array.isArray(value)) {
+          } else if (Array.isArray(value)) {
             if (response.requiredValue != null && !Array.isArray(response.requiredValue)) {
-              return 'Incorrect required value. Contact study administrator.';
-            }
-            if (response.requiredValue != null && Array.isArray(response.requiredValue)) {
+              error = 'Incorrect required value. Contact study administrator.';
+            } else if (response.requiredValue != null && Array.isArray(response.requiredValue)) {
               if (response.requiredValue.length !== value.length) {
-                return 'Incorrect input';
+                error = 'Incorrect input';
+              } else {
+                const sortedReq = [...response.requiredValue].sort();
+                const sortedVal = [...value].sort();
+
+                error = sortedReq.every((val, index) => val === sortedVal[index]) ? null : 'Incorrect input';
               }
-              const sortedReq = [...response.requiredValue].sort();
-              const sortedVal = [...value].sort();
-
-              return sortedReq.every((val, index) => val === sortedVal[index]) ? null : 'Incorrect input';
+            } else if (response.type === 'checkbox') {
+              error = checkCheckboxResponseForValidation(response, value as string[], !!values[`${response.id}-dontKnow`]);
+            } else if (response.type === 'dropdown') {
+              error = checkDropdownResponse(response, value as string[]);
+            } else {
+              error = value.length === 0 ? 'Empty input' : null;
             }
-            if (response.type === 'checkbox') {
-              return checkCheckboxResponseForValidation(response, value as string[], !!values[`${response.id}-dontKnow`]);
-            }
-            if (response.type === 'dropdown') {
-              return checkDropdownResponse(response, value as string[]);
-            }
-            return value.length === 0 ? 'Empty input' : null;
-          }
-
-          if (response.required && response.requiredValue != null && value != null) {
-            return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
-          }
-          if (response.required) {
+          } else if (response.required && response.requiredValue != null && value != null) {
+            error = value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
+          } else if (response.required) {
             if ((value === null || value === undefined || value === '') && !values[`${response.id}-dontKnow`]) {
-              return 'Empty input';
+              error = 'Empty input';
+            } else if (response.type === 'numerical') {
+              error = checkNumericalResponse(response, value as unknown as number);
             }
-            if (response.type === 'numerical') {
-              return checkNumericalResponse(response, value as unknown as number);
-              // return 'Empty input';
-            }
+          } else {
+            error = value === null ? 'Empty input' : null;
           }
 
-          return value === null ? 'Empty input' : null;
+          if (error) {
+            return error;
+          }
+
+          return getOtherFieldError(
+            response,
+            value as number | string | string[] | Record<string, string> | undefined,
+            values[`${response.id}-other`] as string | undefined,
+          );
         },
       };
     }
@@ -461,7 +481,12 @@ export function useAnswerField(
 
 export function generateErrorMessage(
   response: Response,
-  answer: { value?: number | string | string[] | Record<string, string>; checked?: string[]; dontKnowChecked?: boolean },
+  answer: {
+    value?: number | string | string[] | Record<string, string>;
+    checked?: string[];
+    dontKnowChecked?: boolean;
+    otherValue?: string;
+  },
   options?: (StringOption | NumberOption)[],
   showUnanswered?: boolean,
 ) {
@@ -490,6 +515,10 @@ export function generateErrorMessage(
     error = answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.` : null;
   }
 
+  if (!error) {
+    error = getOtherFieldError(response, answer.value, answer.otherValue);
+  }
+
   // If no existing error was found and the field is required and unanswered, show a prompt when showUnanswered is true
   if (!error && showUnanswered && response.required) {
     if (requiredAnswerIsEmpty(answer.value)) {
@@ -498,4 +527,138 @@ export function generateErrorMessage(
   }
 
   return error;
+}
+
+export function getResponseBlockingDetails(
+  response: Response,
+  values: Partial<StoredAnswer['answer']>,
+  customValidate?: CustomResponseValidate,
+  loadError?: string,
+): {
+  status: ResponseBlockingStatus;
+  message: string | null;
+} {
+  if (response.hidden || response.type === 'textOnly' || response.type === 'divider' || response.type === 'reactive') {
+    return { status: 'satisfied', message: null };
+  }
+
+  const value = values[response.id] as StoredAnswer['answer'][string];
+  const dontKnowChecked = !!values[`${response.id}-dontKnow`];
+
+  if (response.type === 'custom') {
+    if (shouldBypassValidationForStandaloneDontKnow(response, dontKnowChecked)) {
+      return { status: 'satisfied', message: null };
+    }
+
+    const customMessage = generateCustomResponseErrorMessage(
+      response,
+      value,
+      values as StoredAnswer['answer'],
+      customValidate,
+      loadError,
+    );
+
+    if (customMessage) {
+      return { status: 'invalid', message: customMessage };
+    }
+
+    if (response.required !== false && isEmptyCustomResponseValue(value)) {
+      return { status: 'unanswered', message: GENERIC_UNANSWERED_MESSAGE };
+    }
+
+    return { status: 'satisfied', message: null };
+  }
+
+  if (!response.required && !((response.type === 'radio' || response.type === 'checkbox') && response.withOther)) {
+    return { status: 'satisfied', message: null };
+  }
+
+  if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+    const rankingValue = (value && typeof value === 'object' && !Array.isArray(value))
+      ? value as Record<string, string>
+      : {};
+
+    if (Object.keys(rankingValue).length === 0) {
+      return { status: 'unanswered', message: GENERIC_UNANSWERED_MESSAGE };
+    }
+
+    return { status: 'satisfied', message: null };
+  }
+
+  const options = (
+    response.type === 'checkbox'
+    || response.type === 'radio'
+    || response.type === 'buttons'
+    || response.type === 'dropdown'
+  ) ? parseStringOptions(response.options) : undefined;
+
+  const message = generateErrorMessage(
+    response,
+    {
+      value: value as number | string | string[] | Record<string, string> | undefined,
+      checked: Array.isArray(value) ? value as string[] : undefined,
+      dontKnowChecked,
+      otherValue: values[`${response.id}-other`] as string | undefined,
+    },
+    options,
+    true,
+  );
+
+  if (!message) {
+    return { status: 'satisfied', message: null };
+  }
+
+  return {
+    status: message === GENERIC_UNANSWERED_MESSAGE ? 'unanswered' : 'invalid',
+    message,
+  };
+}
+
+export function countBlockedResponses(
+  responses: Response[],
+  values: Partial<StoredAnswer['answer']>,
+  customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
+  customResponseLoadErrors: Record<string, string | undefined> = {},
+) {
+  return responses.reduce((acc, response) => {
+    const { status } = getResponseBlockingDetails(
+      response,
+      values,
+      customResponseValidators[response.id],
+      customResponseLoadErrors[response.id],
+    );
+
+    if (status === 'unanswered') {
+      acc.unansweredCount += 1;
+    } else if (status === 'invalid') {
+      acc.invalidCount += 1;
+    }
+
+    return acc;
+  }, {
+    unansweredCount: 0,
+    invalidCount: 0,
+  });
+}
+
+export function isRequiredResponseUnanswered(
+  response: Response,
+  values: Partial<StoredAnswer['answer']>,
+) {
+  if (response.hidden || response.type === 'textOnly' || response.type === 'divider' || !response.required) {
+    return false;
+  }
+
+  if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
+    return false;
+  }
+
+  return getResponseBlockingDetails(response, values).status === 'unanswered';
+}
+
+export function countRequiredUnansweredResponses(
+  responses: Response[],
+  values: Partial<StoredAnswer['answer']>,
+) {
+  return responses.filter((response) => isRequiredResponseUnanswered(response, values)).length;
 }

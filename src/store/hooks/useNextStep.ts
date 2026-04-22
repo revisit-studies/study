@@ -4,11 +4,13 @@ import {
   useStoreSelector,
   useStoreActions,
   useStoreDispatch,
-  useAreResponsesValid,
   useFlatSequence,
 } from '../store';
 import {
-  useCurrentIdentifier, useCurrentStep, useStudyId,
+  useCurrentComponent,
+  useCurrentIdentifier,
+  useCurrentStep,
+  useStudyId,
 } from '../../routes/utils';
 
 import { StoredAnswer, ValidationStatus } from '../types';
@@ -20,10 +22,16 @@ import { useStudyConfig } from './useStudyConfig';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
 import { showNotification } from '../../utils/notifications';
-import { areComponentAnswersCorrect, getSkipConditionCorrectAnswers } from './useNextStep.utils';
+import {
+  areComponentAnswersCorrect,
+  getNextValidationState,
+  getSkipConditionCorrectAnswers,
+} from './useNextStep.utils';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
+  const currentComponent = useCurrentComponent();
   const participantSequence = useFlatSequence();
 
   const trialValidation = useStoreSelector((state) => state.trialValidation);
@@ -38,7 +46,7 @@ export function useNextStep() {
 
   const storeDispatch = useStoreDispatch();
   const {
-    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, setRankingAnswers, setShowUnanswered,
+    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, setRankingAnswers, setShowStimulusValidation, setShowUnanswered,
   } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
@@ -46,11 +54,22 @@ export function useNextStep() {
 
   const dataCollectionEnabled = useMemo(() => modes.dataCollectionEnabled, [modes]);
 
-  const areResponsesValid = useAreResponsesValid(identifier);
-
-  // Status of the next button. If false, the next button should be disabled
   const isAnalysis = useIsAnalysis();
-  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || !areResponsesValid;
+  const currentValidation = useMemo(() => trialValidation[identifier], [trialValidation, identifier]);
+  const componentConfig = useMemo(
+    () => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig),
+    [currentComponent, studyConfig],
+  );
+  const {
+    isNextHardDisabled,
+    isNextSoftBlocked,
+    hardDisabledReason,
+  } = useMemo(() => getNextValidationState({
+    componentConfig,
+    currentStep,
+    isAnalysis,
+    validation: currentValidation,
+  }), [componentConfig, currentStep, currentValidation, isAnalysis]);
 
   const storedAnswer = useStoredAnswer();
 
@@ -199,6 +218,7 @@ export function useNextStep() {
       }
 
       storeDispatch(setShowUnanswered(false));
+      storeDispatch(setShowStimulusValidation(false));
 
       if (funcIndex) {
         navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(decryptIndex(funcIndex) + 1)}${window.location.search}`);
@@ -213,10 +233,12 @@ export function useNextStep() {
         color: 'red',
       });
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setShowUnanswered, studyConfig, participantSequence, navigate, studyId]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setShowStimulusValidation, setShowUnanswered, studyConfig, participantSequence, navigate, studyId]);
 
   return {
-    isNextDisabled,
+    isNextHardDisabled,
+    isNextSoftBlocked,
+    hardDisabledReason,
     goToNextStep,
   };
 }

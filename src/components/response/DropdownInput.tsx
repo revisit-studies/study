@@ -16,7 +16,7 @@ export function DropdownInput({
 }: {
   response: DropdownResponse;
   disabled: boolean;
-  answer: { value: string };
+  answer: { value: string | string[] | undefined };
   index: number;
   enumerateQuestions: boolean;
   showUnanswered?: boolean;
@@ -32,6 +32,9 @@ export function DropdownInput({
 
   const optionsAsStringOptions = parseStringOptions(options);
   const isMultiselect = (response.minSelections && response.minSelections >= 1) || (response.maxSelections && response.maxSelections > 1);
+  const normalizedValue = isMultiselect
+    ? (answer.value === '' || answer.value === undefined ? [] : Array.isArray(answer.value) ? answer.value : [answer.value])
+    : (answer.value === undefined ? '' : answer.value);
   const renderOption = ({ option }: { option: { label: string; infoText?: string } }) => (
     <OptionLabel label={option.label} infoText={option.infoText} />
   );
@@ -42,12 +45,12 @@ export function DropdownInput({
         disabled={disabled}
         label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
-        placeholder={answer.value.length === 0 ? placeholder : undefined}
+        placeholder={Array.isArray(normalizedValue) && normalizedValue.length === 0 ? placeholder : undefined}
         data={optionsAsStringOptions}
         radius="md"
         size="md"
         {...answer}
-        value={answer.value === '' ? [] : Array.isArray(answer.value) ? answer.value : [answer.value]}
+        value={Array.isArray(normalizedValue) ? normalizedValue : []}
         error={generateErrorMessage(response, answer, optionsAsStringOptions, showUnanswered)}
         withErrorStyles={required}
         errorProps={{ c: required ? 'red' : 'orange', size: 'sm' }}
@@ -67,7 +70,7 @@ export function DropdownInput({
         radius="md"
         size="md"
         {...answer}
-        value={answer.value === '' ? null : answer.value}
+        value={normalizedValue === '' ? null : normalizedValue as string}
         error={generateErrorMessage(response, answer, optionsAsStringOptions, showUnanswered)}
         withErrorStyles={required}
         errorProps={{ c: required ? 'red' : 'orange', size: 'sm' }}

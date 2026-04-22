@@ -1,10 +1,10 @@
 import {
-  Alert, Box, Button,
+  Box, Button, Group, Text,
 } from '@mantine/core';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertTriangle } from '@tabler/icons-react';
 
 import React, {
-  useEffect, useMemo, useState, useCallback,
+  useEffect, useMemo, useState, useCallback, useRef,
 } from 'react';
 import isEqual from 'lodash.isequal';
 import { useNavigate } from 'react-router';
@@ -21,10 +21,9 @@ import {
 
 import { NextButton } from '../NextButton';
 import {
-  countRequiredUnansweredResponses,
-  generateCustomResponseErrorMessage,
+  countBlockedResponses,
   generateInitFields,
-  isRequiredResponseUnanswered,
+  getResponseBlockingDetails,
   mergeReactiveAnswers,
   useAnswerField,
   usesStandaloneDontKnowField,
@@ -38,6 +37,7 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
 import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
+import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 type Props = {
   status?: StoredAnswer;
@@ -54,6 +54,17 @@ function findMatchingStrings(arr1: string[], arr2: string[]): string[] {
     }
   }
   return matches;
+}
+
+function applyDefaultRequired(response: Response): Response {
+  if (response.type === 'textOnly' || response.type === 'divider') {
+    return response;
+  }
+
+  return {
+    ...response,
+    required: response.required === undefined ? true : response.required,
+  };
 }
 
 export function ResponseBlock({
@@ -85,25 +96,13 @@ export function ResponseBlock({
 
   const responses = useMemo(() => allResponses.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')), [allResponses, location]);
 
-  const responsesWithDefaults = useMemo(() => responses.map((response) => {
-    if (response.type !== 'textOnly' && response.type !== 'divider') {
-      return {
-        ...response,
-        required: response.required === undefined ? true : response.required,
-      };
-    }
-    return response;
-  }), [responses]);
+  const responsesWithDefaults = useMemo(() => responses.map(applyDefaultRequired), [responses]);
 
-  const allResponsesWithDefaults = useMemo(() => allResponses.map((response) => {
-    if (response.type !== 'textOnly' && response.type !== 'divider') {
-      return {
-        ...response,
-        required: response.required === undefined ? true : response.required,
-      };
-    }
-    return response;
-  }), [allResponses]);
+  const allResponsesWithDefaults = useMemo(() => allResponses.map(applyDefaultRequired), [allResponses]);
+  const feedbackResponses = useMemo(
+    () => allResponsesWithDefaults.filter((response) => response.type !== 'textOnly' && response.type !== 'divider'),
+    [allResponsesWithDefaults],
+  );
 
   // Set up trrack to store provenance graph of the answerValidator status
   const { actions, trrack } = useMemo(() => {
@@ -145,8 +144,14 @@ export function ResponseBlock({
   const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
+  const completed = useStoreSelector((state) => state.completed);
   const showUnanswered = useStoreSelector((state) => state.showUnanswered);
-  const { setShowUnanswered } = useStoreActions();
+  const showStimulusValidation = useStoreSelector((state) => state.showStimulusValidation);
+  const { setShowStimulusValidation, setShowUnanswered } = useStoreActions();
+  const isAnalysis = useIsAnalysis();
+  const effectiveShowUnanswered = showUnanswered && !isAnalysis && !completed;
+  const effectiveShowStimulusValidation = showStimulusValidation && !isAnalysis && !completed;
+  const shouldScrollToBlockedRef = useRef(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
@@ -154,9 +159,9 @@ export function ResponseBlock({
   const identifier = useCurrentIdentifier();
 
   const customResponses = useMemo(
-    () => responsesWithDefaults
-      .filter((response): response is Extract<(typeof responsesWithDefaults)[number], { type: 'custom' }> => response.type === 'custom'),
-    [responsesWithDefaults],
+    () => allResponsesWithDefaults
+      .filter((response): response is Extract<(typeof allResponsesWithDefaults)[number], { type: 'custom' }> => response.type === 'custom'),
+    [allResponsesWithDefaults],
   );
 
   const customResponseModules = useMemo(() => Object.fromEntries(
@@ -262,7 +267,7 @@ export function ResponseBlock({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answerValidator.values, bypassValidationForFailedTraining, identifier, location, storeDispatch, updateResponseBlockValidation]);
-  const [alertConfig, setAlertConfig] = useState(Object.fromEntries(allResponsesWithDefaults.map((response) => ([response.id, {
+  const [alertConfig, setAlertConfig] = useState(Object.fromEntries(feedbackResponses.map((response) => ([response.id, {
     visible: false,
     title: 'Correct Answer',
     message: 'The correct answer is: ',
@@ -291,7 +296,7 @@ export function ResponseBlock({
       return acc;
     }, {}) : {}) as StoredAnswer['answer'];
 
-    const correctAnswers = Object.fromEntries(allResponsesWithDefaults.map((response) => {
+    const correctAnswers = Object.fromEntries(feedbackResponses.map((response) => {
       const configCorrectAnswer = config?.correctAnswer?.find((answer) => answer.id === response.id);
       const suppliedAnswer = allAnswers[response.id];
 
@@ -305,7 +310,7 @@ export function ResponseBlock({
     }));
 
     if (hasCorrectAnswerFeedback) {
-      allResponsesWithDefaults.forEach((response) => {
+      feedbackResponses.forEach((response) => {
         if (correctAnswers[response.id] && !alertConfig[response.id]?.message.includes('You\'ve failed to answer this question correctly')) {
           updateAlertConfig(response.id, true, 'Correct Answer', 'You have answered the question correctly.', 'green');
         } else {
@@ -351,7 +356,7 @@ export function ResponseBlock({
         ),
       );
     }
-  }, [attemptsUsed, allResponsesWithDefaults, config, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, navigate, identifier, storeDispatch, alertConfig, saveIncorrectAnswer, trialValidation]);
+  }, [attemptsUsed, feedbackResponses, config, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, navigate, identifier, storeDispatch, alertConfig, saveIncorrectAnswer, trialValidation]);
 
   const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 
@@ -372,6 +377,11 @@ export function ResponseBlock({
   }, [checkAnswerProvideFeedback, nextOnEnter]);
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
+  const currentValidation = useMemo(
+    () => trialValidation[identifier],
+    [identifier, trialValidation],
+  );
+  const isStimulusInvalid = !!currentValidation && !currentValidation.stimulus.valid;
 
   const allCurrentAnswers = useMemo(() => {
     const blockAnswers = trialValidation[identifier]
@@ -390,20 +400,164 @@ export function ResponseBlock({
     };
   }, [trialValidation, identifier, answerValidator.values]);
 
-  const totalUnansweredCount = useMemo(
-    () => countRequiredUnansweredResponses(allResponsesWithDefaults, allCurrentAnswers),
-    [allResponsesWithDefaults, allCurrentAnswers],
+  const responseBlockingDetailsById = useMemo(
+    () => Object.fromEntries(
+      allResponsesWithDefaults.map((response) => [
+        response.id,
+        getResponseBlockingDetails(
+          response,
+          allCurrentAnswers,
+          customResponseValidators[response.id],
+          customResponseLoadErrors[response.id],
+        ),
+      ]),
+    ) as Record<string, ReturnType<typeof getResponseBlockingDetails>>,
+    [allResponsesWithDefaults, allCurrentAnswers, customResponseLoadErrors, customResponseValidators],
   );
 
-  const unansweredCount = useMemo(() => {
-    if (!showUnanswered) return 0;
-    return totalUnansweredCount;
-  }, [showUnanswered, totalUnansweredCount]);
+  const blockedCounts = useMemo(
+    () => countBlockedResponses(
+      allResponsesWithDefaults,
+      allCurrentAnswers,
+      customResponseValidators,
+      customResponseLoadErrors,
+    ),
+    [allResponsesWithDefaults, allCurrentAnswers, customResponseLoadErrors, customResponseValidators],
+  );
+  const { unansweredCount, invalidCount } = blockedCounts;
+  const totalBlockedCount = unansweredCount + invalidCount;
+  const showBlockedResponses = effectiveShowUnanswered && !isStimulusInvalid && totalBlockedCount > 0;
+  const showNextQuestionAction = showBlockedResponses && totalBlockedCount > 1;
+  const blockedReviewMessage = useMemo(() => {
+    const parts: string[] = [];
+
+    if (unansweredCount > 0) {
+      parts.push(`${unansweredCount} unanswered ${unansweredCount === 1 ? 'question' : 'questions'}`);
+    }
+
+    if (invalidCount > 0) {
+      parts.push(`${invalidCount} invalid ${invalidCount === 1 ? 'question' : 'questions'}`);
+    }
+
+    return parts.length > 0 ? `Please review ${parts.join(' and ')} to continue.` : '';
+  }, [invalidCount, unansweredCount]);
+  const focusFirstInteractiveElement = useCallback((element: HTMLElement) => {
+    // Wait for the smooth scroll and any layout updates to settle before moving focus.
+    window.setTimeout(() => {
+      const focusTarget = element.querySelector<HTMLElement>(
+        'input:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      focusTarget?.focus({ preventScroll: true });
+    }, 200);
+  }, []);
+  const scrollBlockedElementIntoView = useCallback((element: HTMLElement) => {
+    const elementRect = element.getBoundingClientRect();
+    const targetScrollTop = Math.max(
+      0,
+      window.scrollY + elementRect.top - ((window.innerHeight - elementRect.height) / 2),
+    );
+
+    window.scrollTo({
+      top: targetScrollTop,
+      behavior: 'smooth',
+    });
+  }, []);
+  const goToBlockedStimulus = useCallback(() => {
+    const blockedStimulus = document.querySelector<HTMLElement>('[data-blocked-stimulus="true"]');
+
+    if (!blockedStimulus) {
+      return false;
+    }
+
+    scrollBlockedElementIntoView(blockedStimulus);
+
+    return true;
+  }, [scrollBlockedElementIntoView]);
+  const goToNextBlockedQuestion = useCallback(() => {
+    const blockedElements = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-blocked-response="true"]'),
+    );
+
+    if (blockedElements.length === 0) {
+      return;
+    }
+
+    const nextBlocked = blockedElements[0];
+
+    scrollBlockedElementIntoView(nextBlocked);
+    focusFirstInteractiveElement(nextBlocked);
+  }, [focusFirstInteractiveElement, scrollBlockedElementIntoView]);
+  const goToFirstBlockedTarget = useCallback(() => {
+    if (goToBlockedStimulus()) {
+      return;
+    }
+
+    goToNextBlockedQuestion();
+  }, [goToBlockedStimulus, goToNextBlockedQuestion]);
+  const revealStimulusValidation = useCallback(() => {
+    shouldScrollToBlockedRef.current = true;
+    storeDispatch(setShowStimulusValidation(true));
+  }, [setShowStimulusValidation, storeDispatch]);
+  const revealResponseValidation = useCallback(() => {
+    shouldScrollToBlockedRef.current = true;
+    storeDispatch(setShowUnanswered(true));
+  }, [setShowUnanswered, storeDispatch]);
+  const handleBlockedNavigation = useCallback(() => {
+    if (isStimulusInvalid) {
+      if (effectiveShowStimulusValidation) {
+        goToBlockedStimulus();
+      } else {
+        revealStimulusValidation();
+      }
+      return true;
+    }
+
+    if (totalBlockedCount > 0) {
+      if (showBlockedResponses) {
+        goToNextBlockedQuestion();
+      } else {
+        revealResponseValidation();
+      }
+      return true;
+    }
+
+    return false;
+  }, [
+    effectiveShowStimulusValidation,
+    goToBlockedStimulus,
+    goToNextBlockedQuestion,
+    isStimulusInvalid,
+    revealResponseValidation,
+    revealStimulusValidation,
+    showBlockedResponses,
+    totalBlockedCount,
+  ]);
+
+  useEffect(() => {
+    const hasRevealedBlockedTarget = (effectiveShowStimulusValidation && isStimulusInvalid)
+      || (showBlockedResponses && totalBlockedCount > 0);
+
+    if (!showBtnsInLocation || !hasRevealedBlockedTarget || !shouldScrollToBlockedRef.current) {
+      return undefined;
+    }
+
+    shouldScrollToBlockedRef.current = false;
+    const animationFrameId = window.requestAnimationFrame(() => {
+      goToFirstBlockedTarget();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [effectiveShowStimulusValidation, goToFirstBlockedTarget, isStimulusInvalid, showBlockedResponses, showBtnsInLocation, totalBlockedCount]);
 
   let index = 0;
   return (
     <>
-      <Box className={`responseBlock responseBlock-${location}`} style={style}>
+      <Box
+        className={`responseBlock responseBlock-${location}`}
+        style={style}
+      >
         {allResponsesWithDefaults.map((response) => {
           const configCorrectAnswer = config.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
           const correctAnswer = configCorrectAnswer === undefined
@@ -447,25 +601,14 @@ export function ResponseBlock({
                         } as CustomResponseField
                         : undefined}
                       customError={response.type === 'custom'
-                        ? (
-                          generateCustomResponseErrorMessage(
-                            response,
-                            allCurrentAnswers[response.id],
-                            allCurrentAnswers,
-                            customResponseValidators[response.id],
-                            customResponseLoadErrors[response.id],
-                          ) ?? (
-                            showUnanswered && isRequiredResponseUnanswered(response, allCurrentAnswers)
-                              ? 'Please answer this question to continue.'
-                              : undefined
-                          )
-                        )
+                        ? (responseBlockingDetailsById[response.id]?.message ?? undefined)
                         : undefined}
+                      blockingStatus={responseBlockingDetailsById[response.id]?.status ?? 'satisfied'}
                       response={response}
                       index={index}
                       config={config}
                       disabled={disabledAttempts}
-                      showUnanswered={showUnanswered}
+                      showUnanswered={showBlockedResponses}
                     />
                     <FeedbackAlert
                       response={response}
@@ -477,42 +620,56 @@ export function ResponseBlock({
                     />
                   </>
                 )
-              ) : (
-                <FeedbackAlert
-                  response={response}
-                  correctAnswer={correctAnswer}
-                  alertConfig={alertConfig}
-                  identifier={identifier}
-                  attemptsUsed={attemptsUsed}
-                  trainingAttempts={trainingAttempts}
-                />
-              )}
+              ) : null}
             </React.Fragment>
           );
         })}
       </Box>
 
-      {showBtnsInLocation && showUnanswered && unansweredCount > 0 && (
-        <Alert mt="sm" color="red" icon={<IconAlertCircle />}>
-          {`Please answer ${unansweredCount} required ${unansweredCount === 1 ? 'question' : 'questions'} to continue.`}
-        </Alert>
-      )}
       {showBtnsInLocation && (
         <NextButton
-          disabled={(hasCorrectAnswerFeedback && !enableNextButton)
-            || (!bypassValidationForFailedTraining && !answerValidator.isValid())}
+          disabled={hasCorrectAnswerFeedback && !enableNextButton}
           label={nextButtonText}
           config={config}
           location={location}
+          sticky={showBlockedResponses}
+          helperAction={showNextQuestionAction ? (
+            <Button
+              variant="subtle"
+              color="orange"
+              size="compact-sm"
+              onClick={goToFirstBlockedTarget}
+            >
+              Next question
+            </Button>
+          ) : null}
+          helperContent={showBlockedResponses ? (
+            <Group gap="sm" wrap="nowrap" align="flex-start">
+              <Box pt={2}>
+                <IconAlertTriangle size={18} color="var(--mantine-color-orange-6)" />
+              </Box>
+              <Box style={{ minWidth: 0 }}>
+                <Text size="sm" lh={1.4}>
+                  {blockedReviewMessage}
+                </Text>
+              </Box>
+            </Group>
+          ) : null}
           onNextAttempted={() => {
-            if (totalUnansweredCount > 0 && !bypassValidationForFailedTraining) {
-              storeDispatch(setShowUnanswered(true));
+            if (!bypassValidationForFailedTraining && !isAnalysis) {
+              handleBlockedNavigation();
             }
           }}
           checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
             <Button
               disabled={hasCorrectAnswer || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
-              onClick={() => checkAnswerProvideFeedback()}
+              onClick={() => {
+                if (handleBlockedNavigation()) {
+                  return;
+                }
+
+                checkAnswerProvideFeedback();
+              }}
               px={location === 'sidebar' ? 8 : undefined}
             >
               Check Answer

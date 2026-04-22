@@ -6,12 +6,16 @@ import type {
 } from '../../parser/types';
 import type { CustomResponseValidate } from '../../store/types';
 import {
+  countBlockedResponses,
   countRequiredUnansweredResponses,
   checkCheckboxResponseForValidation,
+  GENERIC_UNANSWERED_MESSAGE,
+  OTHER_FIELD_REQUIRED_MESSAGE,
   generateCustomResponseErrorMessage,
   generateErrorMessage,
   generateInitFields,
   generateValidation,
+  getResponseBlockingDetails,
   isRequiredResponseUnanswered,
   mergeReactiveAnswers,
   normalizeCheckboxDontKnowValue,
@@ -360,6 +364,18 @@ describe('mergeReactiveAnswers', () => {
   });
 });
 
+describe('generateValidation reactive responses', () => {
+  it('does not treat reactive responses as form-validation blockers', () => {
+    const validation = generateValidation([{
+      id: 'reactive-answer',
+      prompt: 'Reactive answer',
+      type: 'reactive',
+    }]);
+
+    expect(validation).toEqual({});
+  });
+});
+
 describe('generateErrorMessage checkbox', () => {
   it('validates checkbox selections when checkbox group value is an array', () => {
     const checkboxResponse: Response = {
@@ -540,6 +556,18 @@ describe('generateErrorMessage showUnanswered', () => {
     expect(error).toBe('Please answer this question to continue.');
   });
 
+  it('returns prompt when showUnanswered=true, required numerical value is NaN', () => {
+    const numericalResponse: Response = {
+      id: 'required-numerical',
+      prompt: 'Required numerical',
+      type: 'numerical',
+      required: true,
+    };
+
+    const error = generateErrorMessage(numericalResponse, { value: Number.NaN }, undefined, true);
+    expect(error).toBe('Please answer this question to continue.');
+  });
+
   it('returns null when showUnanswered=false even if required and empty', () => {
     const error = generateErrorMessage(shortTextResponse, { value: '' }, undefined, false);
     expect(error).toBeNull();
@@ -593,6 +621,60 @@ describe('generateErrorMessage showUnanswered', () => {
 
     const error = generateErrorMessage(dropdownResponse, { value: ['A'] }, undefined, false);
     expect(error).toBe('Please select at least 2 options');
+  });
+
+  it('shows an invalid message when radio Other is selected without text', () => {
+    const radioResponse: Response = {
+      id: 'radio-with-other',
+      prompt: 'Radio with other',
+      type: 'radio',
+      required: true,
+      withOther: true,
+      options: ['A', 'B'],
+    };
+
+    const error = generateErrorMessage(radioResponse, {
+      value: 'other',
+      otherValue: '',
+    }, undefined, false);
+
+    expect(error).toBe(OTHER_FIELD_REQUIRED_MESSAGE);
+  });
+
+  it('shows an invalid message when checkbox Other is selected without text', () => {
+    const checkboxResponse: Response = {
+      id: 'checkbox-with-other',
+      prompt: 'Checkbox with other',
+      type: 'checkbox',
+      required: true,
+      withOther: true,
+      options: ['A', 'B'],
+    };
+
+    const error = generateErrorMessage(checkboxResponse, {
+      value: ['__other'],
+      otherValue: '',
+    }, undefined, false);
+
+    expect(error).toBe(OTHER_FIELD_REQUIRED_MESSAGE);
+  });
+
+  it('does not show an Other error when the Other field has text', () => {
+    const radioResponse: Response = {
+      id: 'radio-with-other',
+      prompt: 'Radio with other',
+      type: 'radio',
+      required: true,
+      withOther: true,
+      options: ['A', 'B'],
+    };
+
+    const error = generateErrorMessage(radioResponse, {
+      value: 'other',
+      otherValue: 'Something else',
+    }, undefined, false);
+
+    expect(error).toBeNull();
   });
 });
 
@@ -665,5 +747,178 @@ describe('countRequiredUnansweredResponses', () => {
       'sidebar-required': '',
       'optional-response': '',
     })).toBe(2);
+  });
+});
+
+describe('getResponseBlockingDetails', () => {
+  it('treats an untouched multiselect dropdown as unanswered', () => {
+    const response: Response = {
+      id: 'multi-select-dropdown',
+      prompt: 'Dropdown',
+      type: 'dropdown',
+      required: true,
+      options: ['A', 'B', 'C'],
+      minSelections: 2,
+    };
+
+    expect(getResponseBlockingDetails(response, {
+      [response.id]: '',
+    })).toEqual({
+      status: 'unanswered',
+      message: GENERIC_UNANSWERED_MESSAGE,
+    });
+  });
+
+  it('treats a partially filled multiselect dropdown as invalid', () => {
+    const response: Response = {
+      id: 'multi-select-dropdown',
+      prompt: 'Dropdown',
+      type: 'dropdown',
+      required: true,
+      options: ['A', 'B', 'C'],
+      minSelections: 2,
+    };
+
+    expect(getResponseBlockingDetails(response, {
+      [response.id]: ['A'],
+    })).toEqual({
+      status: 'invalid',
+      message: 'Please select at least 2 options',
+    });
+  });
+
+  it('treats a partially answered matrix as invalid instead of unanswered', () => {
+    const response: MatrixResponse = {
+      id: 'matrix-response',
+      prompt: 'Matrix prompt',
+      type: 'matrix-radio',
+      required: true,
+      answerOptions: ['0', '1'],
+      questionOptions: ['q1', 'q2'],
+    };
+
+    expect(getResponseBlockingDetails(response, {
+      [response.id]: { q1: '0', q2: '' },
+    })).toEqual({
+      status: 'invalid',
+      message: 'Please answer all questions in the matrix to continue.',
+    });
+  });
+
+  it('treats standalone dont-know as satisfied', () => {
+    const response: Response = {
+      id: 'dont-know-response',
+      prompt: 'Required numerical',
+      type: 'numerical',
+      required: true,
+      withDontKnow: true,
+    };
+
+    expect(getResponseBlockingDetails(response, {
+      [response.id]: '',
+      [`${response.id}-dontKnow`]: true,
+    })).toEqual({
+      status: 'satisfied',
+      message: null,
+    });
+  });
+
+  it('uses custom validation messages for partially filled custom responses', () => {
+    const response: CustomResponse = {
+      id: 'custom-response-demo',
+      prompt: 'Custom response',
+      type: 'custom',
+      path: 'custom-response/Example.tsx',
+    };
+
+    const customValidate: CustomResponseValidate = (value) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return 'Select a chart type to continue.';
+      }
+
+      return typeof value.confidence === 'number' && value.confidence >= 70
+        ? null
+        : 'Set confidence to at least 70 to continue.';
+    };
+
+    expect(getResponseBlockingDetails(
+      response,
+      {
+        [response.id]: {
+          chartType: 'Bar',
+          confidence: 50,
+        },
+      },
+      customValidate,
+    )).toEqual({
+      status: 'invalid',
+      message: 'Set confidence to at least 70 to continue.',
+    });
+  });
+
+  it('treats a selected Other option without text as invalid', () => {
+    const response: Response = {
+      id: 'radio-with-other',
+      prompt: 'Radio with other',
+      type: 'radio',
+      required: true,
+      withOther: true,
+      options: ['A', 'B'],
+    };
+
+    expect(getResponseBlockingDetails(response, {
+      [response.id]: 'other',
+      [`${response.id}-other`]: '',
+    })).toEqual({
+      status: 'invalid',
+      message: OTHER_FIELD_REQUIRED_MESSAGE,
+    });
+  });
+});
+
+describe('countBlockedResponses', () => {
+  it('counts unanswered and invalid responses separately', () => {
+    const responses: Response[] = [
+      {
+        id: 'short-text',
+        prompt: 'Required text',
+        type: 'shortText',
+        required: true,
+      },
+      {
+        id: 'multi-select-dropdown',
+        prompt: 'Dropdown',
+        type: 'dropdown',
+        required: true,
+        options: ['A', 'B', 'C'],
+        minSelections: 2,
+      },
+      {
+        id: 'matrix-response',
+        prompt: 'Matrix prompt',
+        type: 'matrix-radio',
+        required: true,
+        answerOptions: ['0', '1'],
+        questionOptions: ['q1', 'q2'],
+      },
+      {
+        id: 'dont-know-response',
+        prompt: 'Required numerical',
+        type: 'numerical',
+        required: true,
+        withDontKnow: true,
+      },
+    ];
+
+    expect(countBlockedResponses(responses, {
+      'short-text': '',
+      'multi-select-dropdown': ['A'],
+      'matrix-response': { q1: '0', q2: '' },
+      'dont-know-response': '',
+      'dont-know-response-dontKnow': true,
+    })).toEqual({
+      unansweredCount: 1,
+      invalidCount: 2,
+    });
   });
 });

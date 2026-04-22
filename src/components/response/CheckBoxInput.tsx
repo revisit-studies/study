@@ -1,7 +1,7 @@
 import {
   Box, Checkbox, Input, Text,
 } from '@mantine/core';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { CheckboxResponse, ParsedStringOption } from '../../parser/types';
 import { DONT_KNOW_DEFAULT_VALUE, generateErrorMessage, normalizeCheckboxDontKnowValue } from './utils';
 import { HorizontalHandler } from './HorizontalHandler';
@@ -49,39 +49,66 @@ export function CheckBoxInput({
     [optionOrders, options, response.id],
   );
 
-  const [otherSelected, setOtherSelected] = useState(false);
+  const otherSelected = useMemo(
+    () => Array.isArray(answer.value) && answer.value.includes('__other'),
+    [answer.value],
+  );
 
   const error = useMemo(
-    () => generateErrorMessage(response, { ...answer, dontKnowChecked: !!dontKnowCheckbox?.checked }, orderedOptions, showUnanswered),
-    [response, answer, orderedOptions, dontKnowCheckbox?.checked, showUnanswered],
+    () => generateErrorMessage(
+      response,
+      {
+        ...answer,
+        dontKnowChecked: !!dontKnowCheckbox?.checked,
+        otherValue: (otherValue as { value?: string } | undefined)?.value,
+      },
+      orderedOptions,
+      showUnanswered,
+    ),
+    [response, answer, orderedOptions, dontKnowCheckbox?.checked, showUnanswered, otherValue],
   );
   const selectedValues = useMemo(() => (Array.isArray(answer.value) ? answer.value : []), [answer.value]);
+  const answerOnChange = answer.onChange;
+  const dontKnowChecked = dontKnowCheckbox?.checked;
+  const dontKnowOnChange = dontKnowCheckbox?.onChange;
+  const handleGroupChange = useCallback((nextValues: string[]) => {
+    answerOnChange?.(nextValues);
+
+    if (dontKnowChecked && nextValues.length > 0) {
+      dontKnowOnChange?.(false);
+    }
+  }, [answerOnChange, dontKnowChecked, dontKnowOnChange]);
 
   useEffect(() => {
-    if (!response.withDontKnow || selectedValues.length === 0) {
+    if (!response.withDontKnow) {
       return;
     }
 
     const containsDontKnowDefault = selectedValues.includes(DONT_KNOW_DEFAULT_VALUE);
-    if (!containsDontKnowDefault) {
+    if (containsDontKnowDefault) {
+      const normalizedValues = normalizeCheckboxDontKnowValue(selectedValues);
+      if (normalizedValues !== selectedValues) {
+        answerOnChange?.(normalizedValues);
+      }
+
+      if (!dontKnowChecked) {
+        dontKnowOnChange?.(true);
+      }
       return;
     }
 
-    const normalizedValues = normalizeCheckboxDontKnowValue(selectedValues);
-    if (normalizedValues !== selectedValues) {
-      answer.onChange?.(normalizedValues);
+    if (dontKnowChecked && selectedValues.length > 0) {
+      dontKnowOnChange?.(false);
     }
-
-    if (!dontKnowCheckbox?.checked) {
-      dontKnowCheckbox?.onChange?.(true);
-    }
-  }, [response.withDontKnow, selectedValues, answer, dontKnowCheckbox]);
+  }, [response.withDontKnow, selectedValues, answerOnChange, dontKnowChecked, dontKnowOnChange]);
 
   return (
     <Checkbox.Group
       label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       {...answer}
+      value={selectedValues}
+      onChange={handleGroupChange}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Box mt="xs">
@@ -101,7 +128,6 @@ export function CheckBoxInput({
               disabled={disabled}
               value="__other"
               checked={otherSelected}
-              onClick={(event) => setOtherSelected(event.currentTarget.checked)}
               label={horizontal ? 'Other' : (
                 <Input
                   mt={-8}

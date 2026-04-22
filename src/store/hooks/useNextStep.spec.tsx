@@ -42,7 +42,7 @@ let mockStoredAnswer: {
 };
 
 let mockAnswers: Record<string, unknown>;
-let capturedGoToNextStep: ((collectData?: boolean) => Promise<void>) | undefined;
+let capturedGoToNextStep: ((collectData?: boolean) => void) | undefined;
 
 const mockDispatch = vi.fn((action) => {
   if (action.type === 'saveTrialAnswer') {
@@ -75,10 +75,29 @@ vi.mock('../store', () => ({
   }) => unknown) => selector({
     trialValidation: {
       intro_0: {
-        response: {
+        aboveStimulus: {
+          valid: true,
+          values: {},
+        },
+        belowStimulus: {
+          valid: true,
           values: {
             response: 'saved-answer',
           },
+        },
+        sidebar: {
+          valid: true,
+          values: {},
+        },
+        stimulus: {
+          valid: true,
+          values: {},
+        },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
         },
       },
     },
@@ -99,6 +118,7 @@ vi.mock('../store', () => ({
     setMatrixAnswersRadio: mockSetMatrixAnswersRadio,
     setMatrixAnswersCheckbox: mockSetMatrixAnswersCheckbox,
     setRankingAnswers: mockSetRankingAnswers,
+    setShowStimulusValidation: vi.fn((payload: boolean) => ({ type: 'setShowStimulusValidation', payload })),
     setShowUnanswered: vi.fn((payload: boolean) => ({ type: 'setShowUnanswered', payload })),
   }),
   useStoreDispatch: () => mockDispatch,
@@ -108,6 +128,7 @@ vi.mock('../store', () => ({
 
 vi.mock('../../routes/utils', () => ({
   useCurrentIdentifier: () => 'intro_0',
+  useCurrentComponent: () => 'intro',
   useCurrentStep: () => 0,
   useStudyId: () => 'study-1',
 }));
@@ -131,7 +152,10 @@ vi.mock('./useWindowEvents', () => ({
 vi.mock('./useStudyConfig', () => ({
   useStudyConfig: () => ({
     components: {
-      intro: {},
+      intro: {
+        type: 'questionnaire',
+        response: [],
+      },
     },
   }),
 }));
@@ -204,7 +228,7 @@ describe('useNextStep', () => {
 
     expect(capturedGoToNextStep).toBeDefined();
 
-    await capturedGoToNextStep?.();
+    capturedGoToNextStep?.();
     await Promise.resolve();
 
     expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
@@ -217,7 +241,7 @@ describe('useNextStep', () => {
     });
     expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
 
-    await capturedGoToNextStep?.();
+    capturedGoToNextStep?.();
 
     expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
     expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);

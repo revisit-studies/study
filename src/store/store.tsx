@@ -136,6 +136,7 @@ export async function studyStoreCreator(
     isSubmittingFinal: false,
     clickedPrevious: false,
     showUnanswered: false,
+    showStimulusValidation: false,
     storageEngineFailedToConnect,
     isStalledConfig,
   };
@@ -379,6 +380,9 @@ export async function studyStoreCreator(
       },
       setShowUnanswered(state, { payload }: PayloadAction<boolean>) {
         state.showUnanswered = payload;
+      },
+      setShowStimulusValidation(state, { payload }: PayloadAction<boolean>) {
+        state.showStimulusValidation = payload;
       },
     },
   });

@@ -1,8 +1,8 @@
 import {
-  Alert, Button, Group,
+  Alert, Box, Button, Group, Paper,
 } from '@mantine/core';
 import {
-  JSX, useEffect, useMemo, useState,
+  JSX, ReactNode, useEffect, useMemo, useState,
 } from 'react';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
@@ -17,7 +17,10 @@ type Props = {
   config?: IndividualComponent;
   location?: ResponseBlockLocation;
   checkAnswer: JSX.Element | null;
+  helperAction?: ReactNode;
+  helperContent?: ReactNode;
   onNextAttempted?: () => void;
+  sticky?: boolean;
 };
 
 export function NextButton({
@@ -26,9 +29,17 @@ export function NextButton({
   config,
   location,
   checkAnswer,
+  helperAction,
+  helperContent,
   onNextAttempted,
+  sticky = false,
 }: Props) {
-  const { isNextDisabled, goToNextStep } = useNextStep();
+  const {
+    goToNextStep,
+    isNextHardDisabled,
+    isNextSoftBlocked,
+    hardDisabledReason,
+  } = useNextStep();
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
 
@@ -70,12 +81,31 @@ export function NextButton({
   );
 
   const nextOnEnter = useMemo(() => config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter, [config, studyConfig]);
-  const nextButtonDisabled = useMemo(() => disabled || isNextDisabled || !buttonTimerSatisfied, [disabled, isNextDisabled, buttonTimerSatisfied]);
+  const canAttemptStimulusValidation = useMemo(
+    () => !disabled && buttonTimerSatisfied && hardDisabledReason === 'stimulus',
+    [buttonTimerSatisfied, disabled, hardDisabledReason],
+  );
+  const nextButtonDisabled = useMemo(
+    () => disabled || isNextHardDisabled || !buttonTimerSatisfied,
+    [disabled, isNextHardDisabled, buttonTimerSatisfied],
+  );
+  const nextButtonNativelyDisabled = useMemo(
+    () => nextButtonDisabled && !canAttemptStimulusValidation,
+    [canAttemptStimulusValidation, nextButtonDisabled],
+  );
+  const nextButtonBlockedOnAttempt = useMemo(
+    () => (!nextButtonNativelyDisabled && isNextSoftBlocked) || canAttemptStimulusValidation,
+    [canAttemptStimulusValidation, isNextSoftBlocked, nextButtonNativelyDisabled],
+  );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter') {
-        if (nextButtonDisabled) {
+        if (nextButtonNativelyDisabled) {
+          return;
+        }
+
+        if (nextButtonBlockedOnAttempt) {
           onNextAttempted?.();
         } else {
           goToNextStep();
@@ -90,35 +120,68 @@ export function NextButton({
       };
     }
     return () => { };
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, nextOnEnter, nextButtonDisabled, onNextAttempted]);
+  }, [goToNextStep, nextOnEnter, nextButtonBlockedOnAttempt, nextButtonNativelyDisabled, onNextAttempted]);
 
   const previousButtonText = useMemo(() => config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous', [config, studyConfig]);
+  const buttonControls = (
+    <Group justify="right" gap="xs" mt="sm">
+      {config?.previousButton && (
+        <PreviousButton
+          label={previousButtonText}
+          px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+        />
+      )}
+      {checkAnswer}
+      <Button
+        aria-disabled={nextButtonDisabled}
+        data-disabled={nextButtonDisabled}
+        disabled={nextButtonNativelyDisabled}
+        onClick={() => {
+          if (nextButtonNativelyDisabled) {
+            return;
+          }
+
+          if (nextButtonBlockedOnAttempt) {
+            onNextAttempted?.();
+          } else {
+            goToNextStep();
+          }
+        }}
+        px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+      >
+        {label}
+      </Button>
+    </Group>
+  );
 
   return (
     <>
-      <Group justify="right" gap="xs" mt="sm">
-        {config?.previousButton && (
-          <PreviousButton
-            label={previousButtonText}
-            px={location === 'sidebar' && checkAnswer ? 8 : undefined}
-          />
-        )}
-        {checkAnswer}
-        <Button
-          aria-disabled={nextButtonDisabled}
-          data-disabled={nextButtonDisabled}
-          onClick={() => {
-            if (nextButtonDisabled) {
-              onNextAttempted?.();
-            } else {
-              goToNextStep();
-            }
-          }}
-          px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+      {helperContent ? (
+        <Box
+          mt="md"
+          style={sticky ? {
+            position: 'sticky',
+            bottom: 'var(--mantine-spacing-md)',
+            zIndex: 4,
+          } : undefined}
         >
-          {label}
-        </Button>
-      </Group>
+          <Paper
+            withBorder
+            radius="md"
+            p="sm"
+            shadow="sm"
+            style={{ backgroundColor: 'var(--mantine-color-body)' }}
+          >
+            <Group justify="space-between" align="center" gap="sm" wrap="wrap">
+              <Box style={{ flex: '1 1 260px', minWidth: 0 }}>
+                {helperContent}
+              </Box>
+              {helperAction}
+            </Group>
+          </Paper>
+        </Box>
+      ) : null}
+      {buttonControls}
       {timer !== undefined && (
         <>
           {nextButtonEnableTime > 0 && timer < nextButtonEnableTime && (

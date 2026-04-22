@@ -1,7 +1,7 @@
 import {
   Group, Input, Radio, rem, Text,
 } from '@mantine/core';
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ParsedStringOption, RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { HorizontalHandler } from './HorizontalHandler';
@@ -52,9 +52,24 @@ export function RadioInput({
     [optionOrders, options, response.id],
   );
 
-  const [otherSelected, setOtherSelected] = useState(false);
+  const answerValue = (answer as { value?: string }).value;
+  const otherSelected = useMemo(
+    () => answerValue === 'other',
+    [answerValue],
+  );
 
-  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions, showUnanswered), [response, answer, orderedOptions, showUnanswered]);
+  const error = useMemo(
+    () => generateErrorMessage(
+      response,
+      {
+        ...(answer as { value?: string }),
+        otherValue: (otherValue as { value?: string } | undefined)?.value,
+      },
+      orderedOptions,
+      showUnanswered,
+    ),
+    [response, answer, orderedOptions, showUnanswered, otherValue],
+  );
   const label = useMemo(() => ((horizontal && labelLocation) ? labelLocation : 'inline'), [labelLocation, horizontal]);
 
   return (
@@ -94,7 +109,6 @@ export function RadioInput({
                 styles={{
                   label: { display: !horizontal ? 'initial' : 'none' },
                 }}
-                onChange={() => setOtherSelected(false)}
                 classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
               />
             </div>
@@ -114,7 +128,6 @@ export function RadioInput({
                 disabled={disabled}
                 value="other"
                 checked={otherSelected}
-                onClick={(event) => setOtherSelected(event.currentTarget.checked)}
                 label={!horizontal && (
                   <Input
                     mt={-8}

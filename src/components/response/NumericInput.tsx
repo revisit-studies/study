@@ -11,6 +11,7 @@ export function NumericInput({
   index,
   enumerateQuestions,
   showUnanswered,
+  hideErrorMessage,
 }: {
   response: NumericalResponse;
   disabled: boolean;
@@ -18,6 +19,7 @@ export function NumericInput({
   index: number;
   enumerateQuestions: boolean;
   showUnanswered?: boolean;
+  hideErrorMessage?: boolean;
 }) {
   const {
     prompt,
@@ -26,6 +28,7 @@ export function NumericInput({
     secondaryText,
     infoText,
   } = response;
+  const error = generateErrorMessage(response, answer, undefined, showUnanswered);
 
   return (
     <NumberInput
@@ -36,9 +39,13 @@ export function NumericInput({
       radius="md"
       size="md"
       {...answer}
-      error={generateErrorMessage(response, answer, undefined, showUnanswered)}
+      error={error}
       withErrorStyles={required}
-      errorProps={{ c: required ? 'red' : 'orange', size: 'sm' }}
+      // Standalone "I don't know" responses render the unanswered message below the checkbox
+      // so the input keeps its error styling without duplicating the same text inline.
+      errorProps={hideErrorMessage && error
+        ? { style: { display: 'none' } }
+        : { c: required ? 'red' : 'orange', size: 'sm' }}
       classNames={{ input: classes.fixDisabled }}
     />
   );

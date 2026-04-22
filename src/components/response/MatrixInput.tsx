@@ -28,7 +28,7 @@ function CheckboxComponent({
   _n: number,
   idx: number,
   question: string,
-  answer: { value: Record<string, string> },
+  answer: { value: Record<string, string> | undefined },
   onChange: (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: ParsedStringOption) => void
   disabled: boolean
 }) {
@@ -45,7 +45,7 @@ function CheckboxComponent({
         <Checkbox
           disabled={disabled}
           key={`${checkbox.label}-${idx}`}
-          checked={(answer.value[question] || '').split('|').includes(checkbox.value)}
+          checked={(answer.value?.[question] || '').split('|').includes(checkbox.value)}
           onChange={(event) => onChange(event, question, checkbox)}
           value={checkbox.value}
           classNames={{ input: checkboxClasses.fixDisabled, icon: checkboxClasses.fixDisabledIcon }}
@@ -69,7 +69,7 @@ function RadioGroupComponent({
   idx: number,
   question: string,
   response: MatrixResponse,
-  answer: { value: Record<string, string> },
+  answer: { value: Record<string, string> | undefined },
   onChange: (val: string, questionKey: string) => void,
   disabled: boolean
 }) {
@@ -82,7 +82,7 @@ function RadioGroupComponent({
         flex: 1,
       }}
       onChange={(val) => onChange(val, question)}
-      value={answer.value[question]}
+      value={answer.value?.[question] ?? ''}
     >
       <div
         style={{
@@ -114,7 +114,7 @@ export function MatrixInput({
   showUnanswered,
 }: {
   response: MatrixResponse;
-  answer: { value: Record<string, string> };
+  answer: { value: Record<string, string> | undefined };
   index: number;
   disabled: boolean;
   enumerateQuestions: boolean;
@@ -160,7 +160,7 @@ export function MatrixInput({
 
   const onChangeCheckbox = (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: ParsedStringOption) => {
     const isChecked = event.target.checked;
-    const currentValues = (answer.value[questionKey] || '').split('|').filter((entry) => entry !== '');
+    const currentValues = (answer.value?.[questionKey] || '').split('|').filter((entry) => entry !== '');
     const dispatchCheckboxUpdate = (value: string, checked: boolean) => storeDispatch(setMatrixAnswersCheckbox({
       questionKey,
       responseId: response.id,

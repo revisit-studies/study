@@ -30,8 +30,9 @@ import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue } from '../../utils/stringOptions';
 import {
+  GENERIC_UNANSWERED_MESSAGE,
   getDefaultFieldValue,
-  isRequiredResponseUnanswered,
+  ResponseBlockingStatus,
   usesStandaloneDontKnowField,
 } from './utils';
 import { CustomResponseField } from '../../store/types';
@@ -48,6 +49,7 @@ export function ResponseSwitcher({
   showUnanswered,
   field,
   customError,
+  blockingStatus = 'satisfied',
 }: {
   response: Response;
   form: GetInputPropsReturnType;
@@ -60,6 +62,7 @@ export function ResponseSwitcher({
   showUnanswered?: boolean;
   field?: CustomResponseField;
   customError?: string | null;
+  blockingStatus?: ResponseBlockingStatus;
 }) {
   const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
@@ -159,27 +162,25 @@ export function ResponseSwitcher({
   const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
   const customResponseValue = useMemo<JsonValue | null>(() => (ans.value ?? null) as JsonValue | null, [ans.value]);
 
-  const isUnansweredRequired = useMemo(() => {
-    if (!showUnanswered) return false;
-    const { value } = (ans as { value?: StoredAnswer['answer'][string] });
-    return isRequiredResponseUnanswered(response, {
-      [response.id]: value,
-      [`${response.id}-dontKnow`]: dontKnowChecked,
-    });
-  }, [showUnanswered, response, dontKnowChecked, ans]);
+  const isBlockedResponse = useMemo(
+    () => !!showUnanswered && blockingStatus !== 'satisfied',
+    [showUnanswered, blockingStatus],
+  );
 
-  const highlightStyle = isUnansweredRequired ? {
-    borderLeft: '3px solid var(--mantine-color-red-5)',
-    padding: 'var(--mantine-spacing-sm)',
-    paddingLeft: 'var(--mantine-spacing-md)',
+  const highlightStyle = isBlockedResponse ? {
+    boxShadow: '0 0 0 6px var(--mantine-color-red-0), 0 0 0 7px var(--mantine-color-red-2)',
     backgroundColor: 'var(--mantine-color-red-0)',
     borderRadius: 'var(--mantine-radius-sm)',
   } : {};
-  const responseLevelUnansweredMessage = usesStandaloneDontKnow && isUnansweredRequired
-    ? 'Please answer this question to continue.'
+  const responseLevelUnansweredMessage = usesStandaloneDontKnow
+    && !!showUnanswered
+    && !dontKnowChecked
+    && blockingStatus === 'unanswered'
+    ? GENERIC_UNANSWERED_MESSAGE
     : null;
-  const childShowUnanswered = responseLevelUnansweredMessage ? false : showUnanswered;
-  const customResponseError = responseLevelUnansweredMessage && customError === 'Please answer this question to continue.'
+  const childShowUnanswered = dontKnowChecked ? false : showUnanswered;
+  const customResponseError = (!showUnanswered && blockingStatus === 'unanswered')
+    || (responseLevelUnansweredMessage && customError === GENERIC_UNANSWERED_MESSAGE)
     ? undefined
     : customError;
 
@@ -188,7 +189,9 @@ export function ResponseSwitcher({
       mb={responseDividers ? 'xl' : 'lg'}
       className="response"
       id={response.id}
-      data-unanswered-required={isUnansweredRequired ? 'true' : undefined}
+      data-blocked-response={isBlockedResponse ? 'true' : undefined}
+      data-response-blocking-status={isBlockedResponse ? blockingStatus : undefined}
+      data-unanswered-required={showUnanswered && blockingStatus === 'unanswered' ? 'true' : undefined}
       style={{ ...responseStyle, ...highlightStyle }}
     >
       {response.type === 'numerical' && (
@@ -199,6 +202,7 @@ export function ResponseSwitcher({
           index={index}
           enumerateQuestions={enumerateQuestions}
           showUnanswered={childShowUnanswered}
+          hideErrorMessage={!!responseLevelUnansweredMessage}
         />
       )}
       {response.type === 'shortText' && (
@@ -265,7 +269,7 @@ export function ResponseSwitcher({
       {response.type === 'checkbox' && (
         <CheckBoxInput
           response={response}
-          disabled={isDisabled || dontKnowChecked}
+          disabled={isDisabled}
           answer={ans as { value: string[] }}
           index={index}
           enumerateQuestions={enumerateQuestions}
@@ -313,15 +317,15 @@ export function ResponseSwitcher({
         />
       )}
       {response.type === 'custom' && field && (
-      <CustomResponseInput
-        response={response as CustomResponse}
-        disabled={isDisabled || dontKnowChecked}
-        value={customResponseValue}
-        error={customResponseError || undefined}
-        index={index}
-        enumerateQuestions={enumerateQuestions}
-        field={field}
-      />
+        <CustomResponseInput
+          response={response as CustomResponse}
+          disabled={isDisabled || dontKnowChecked}
+          value={customResponseValue}
+          error={customResponseError || undefined}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          field={field}
+        />
       )}
       {response.type === 'textOnly' && (
         <TextOnlyInput response={response} />
@@ -329,9 +333,10 @@ export function ResponseSwitcher({
       {usesStandaloneDontKnow && (
         <>
           <Checkbox
-            mt="xs"
+            mt="md"
             disabled={isDisabled}
             label="I don't know"
+            styles={{ body: { alignItems: 'center' } }}
             classNames={{ input: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
             {...dontKnowCheckbox}
             checked={dontKnowValue.checked}

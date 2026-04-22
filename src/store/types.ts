@@ -213,6 +213,7 @@ export interface StoreState {
   isSubmittingFinal: boolean;
   clickedPrevious: boolean;
   showUnanswered: boolean;
+  showStimulusValidation: boolean;
   storageEngineFailedToConnect: boolean;
   isStalledConfig: boolean;
 }

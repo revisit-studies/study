@@ -33,7 +33,7 @@ const STUDY_BROWSER_WIDTH = 360;
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
   const dispatch = useStoreDispatch();
-  const { toggleStudyBrowser, setShowUnanswered } = useStoreActions();
+  const { toggleStudyBrowser, setShowUnanswered, setShowStimulusValidation } = useStoreActions();
 
   const isAnalysis = useIsAnalysis();
   const studyConfig = useStudyConfig();
@@ -61,7 +61,8 @@ export function StepRenderer() {
 
   useEffect(() => {
     dispatch(setShowUnanswered(false));
-  }, [currentComponent, currentStep, dispatch, setShowUnanswered]);
+    dispatch(setShowStimulusValidation(false));
+  }, [currentComponent, currentStep, dispatch, isAnalysis, setShowStimulusValidation, setShowUnanswered]);
 
   // Attach event listeners
   useEffect(() => {
