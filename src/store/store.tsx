@@ -90,10 +90,10 @@ export async function studyStoreCreator(
     {},
     ...flatSequence.map((id, idx) => ({
       [`${id}_${idx}`]: {
-        aboveStimulus: true,
-        belowStimulus: true,
-        sidebar: true,
-        stimulus: true,
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: {} },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
         provenanceGraph: {
           aboveStimulus: undefined,
           belowStimulus: undefined,

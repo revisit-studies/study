@@ -512,7 +512,17 @@ export function generateErrorMessage(
   } else if (answer.value !== null && answer.value !== undefined && typeof answer.value === 'object' && !Array.isArray(answer.value) && (response.type === 'matrix-radio' || response.type === 'matrix-checkbox')) {
     error = checkMatrixResponseForMessage(response, answer.value);
   } else {
-    error = answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.` : null;
+    const answerValue = answer.value;
+    const hasAnswerValue = answerValue !== null && answerValue !== undefined && answerValue !== '';
+    const hasRequiredValue = requiredValue !== null && requiredValue !== undefined && requiredValue !== '';
+
+    if (hasAnswerValue && hasRequiredValue) {
+      error = requiredValue.toString() !== answerValue.toString()
+        ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.`
+        : null;
+    } else {
+      error = null;
+    }
   }
 
   if (!error) {
@@ -522,7 +532,7 @@ export function generateErrorMessage(
   // If no existing error was found and the field is required and unanswered, show a prompt when showUnanswered is true
   if (!error && showUnanswered && response.required) {
     if (requiredAnswerIsEmpty(answer.value)) {
-      error = 'Please answer this question to continue.';
+      error = GENERIC_UNANSWERED_MESSAGE;
     }
   }
 
