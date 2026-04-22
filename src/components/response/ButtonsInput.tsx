@@ -51,6 +51,8 @@ export function ButtonsInput({
         description={secondaryText}
         key={response.id}
         {...answer}
+        error={error}
+        errorProps={{ style: { display: 'none' } }}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
         <Flex justify="space-between" align="center" gap="xl" mt="xs">

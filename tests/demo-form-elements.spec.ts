@@ -134,8 +134,11 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Custom Response page
   await expect(page.getByText('Custom Response')).toBeVisible();
   const customResponseNextButton = page.getByRole('button', { name: 'Next', exact: true });
-  await expect(customResponseNextButton).toBeDisabled();
+  await expect(customResponseNextButton).toBeEnabled();
+  await customResponseNextButton.click();
+  await expect(page.getByRole('heading', { name: 'Custom Response' })).toBeVisible();
   await page.getByRole('button', { name: 'Bar', exact: true }).click();
+  await customResponseNextButton.click();
   await expect(page.getByText('Set confidence to at least 70 to continue.')).toBeVisible();
   await page.getByLabel('Confidence').fill('80');
   await page.getByLabel('Rationale').fill('Useful for comparing categories');

@@ -107,6 +107,8 @@ export function CheckBoxInput({
       label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       {...answer}
+      error={error}
+      errorProps={{ style: { display: 'none' } }}
       value={selectedValues}
       onChange={handleGroupChange}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}

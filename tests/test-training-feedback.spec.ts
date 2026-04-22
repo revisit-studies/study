@@ -37,10 +37,14 @@ async function answerTrainingTrialCorrectly(page: Page) {
   await nextClick(page);
 }
 
-async function answerSimpleDropboxIncorrectly(page: Page) {
+async function exhaustSimpleDropboxIncorrectAttempts(page: Page, attempts: number) {
   await page.getByPlaceholder('Choose mark').click();
   await page.getByRole('option', { name: 'Bubble', exact: true }).click();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
+
+  const checkAnswerButton = page.getByRole('button', { name: 'Check Answer' });
+  for (let i = 0; i < attempts; i += 1) {
+    await checkAnswerButton.click();
+  }
 }
 
 async function exhaustSimpleDropboxAttemptsWithoutAnswer(page: Page, attempts: number) {
@@ -63,10 +67,7 @@ test('allowFailedTraining=true enables Next after max failed attempts', async ({
 
   await expect(nextButton).toBeDisabled();
 
-  await answerSimpleDropboxIncorrectly(page);
-  await answerSimpleDropboxIncorrectly(page);
-  await answerSimpleDropboxIncorrectly(page);
-  await answerSimpleDropboxIncorrectly(page);
+  await exhaustSimpleDropboxIncorrectAttempts(page, 4);
 
   await expect(page.getByText('You didn\'t answer this question correctly after 4 attempts. You can continue to the next question.')).toBeVisible();
   await expect(page.getByText('The correct answer was: Bar.')).toBeVisible();
@@ -75,7 +76,7 @@ test('allowFailedTraining=true enables Next after max failed attempts', async ({
   await expect(page.getByPlaceholder('Choose mark')).toBeDisabled();
 });
 
-test('allowFailedTraining=true enables Next after max failed invalid attempts', async ({ page }) => {
+test('allowFailedTraining=true does not consume attempts for unanswered required responses', async ({ page }) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'How To Do Training Demo');
 
@@ -88,13 +89,14 @@ test('allowFailedTraining=true enables Next after max failed invalid attempts', 
 
   await expect(nextButton).toBeDisabled();
 
-  // Leave the required dropdown unanswered and consume all attempts.
+  // Leave the required dropdown unanswered. Validation should block progression
+  // without consuming training attempts.
   await exhaustSimpleDropboxAttemptsWithoutAnswer(page, 4);
 
-  await expect(page.getByText('You didn\'t answer this question correctly after 4 attempts. You can continue to the next question.')).toBeVisible();
-  await expect(page.getByText('The correct answer was: Bar.')).toBeVisible();
-  await expect(nextButton).toBeEnabled();
-  await expect(checkAnswerButton).toBeDisabled();
+  await expect(page.getByText('Please answer this question to continue.')).toBeVisible();
+  await expect(page.getByText('Please review 1 unanswered question to continue.')).toBeVisible();
+  await expect(nextButton).toBeDisabled();
+  await expect(checkAnswerButton).toBeEnabled();
 });
 
 test('test', async ({ page }) => {

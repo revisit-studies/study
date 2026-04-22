@@ -79,6 +79,8 @@ export function RadioInput({
       description={secondaryText}
       key={response.id}
       {...answer}
+      error={error}
+      errorProps={{ style: { display: 'none' } }}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       {horizontal && label === 'above' && (leftLabel || rightLabel) && (

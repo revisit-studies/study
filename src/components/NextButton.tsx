@@ -133,7 +133,7 @@ export function NextButton({
       )}
       {checkAnswer}
       <Button
-        aria-disabled={nextButtonDisabled}
+        aria-disabled={nextButtonNativelyDisabled || undefined}
         data-disabled={nextButtonDisabled}
         disabled={nextButtonNativelyDisabled}
         onClick={() => {
