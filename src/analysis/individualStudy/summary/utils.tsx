@@ -8,6 +8,16 @@ import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { getMatrixAnswerOptions } from '../../../utils/responseOptions';
 
+type ConfigScopedStudyConfig = {
+  configHash: string;
+  configLabel: string;
+  studyConfig: StudyConfig;
+};
+
+function mergeConfigLabels(existing: string[] | undefined, next: string) {
+  return [...new Set([...(existing ?? []), next])];
+}
+
 function getParticipantStudyConfig(
   participantConfigHash: string,
   studyConfig?: StudyConfig,
@@ -256,6 +266,56 @@ export function getComponentStats(
   return componentData;
 }
 
+export function getComponentStatsForConfigs(
+  visibleParticipants: ParticipantDataWithStatus[],
+  configs: ConfigScopedStudyConfig[],
+  allConfigs: Record<string, StudyConfig> = {},
+): ComponentData[] {
+  const rows = configs.flatMap(({ configHash, configLabel, studyConfig }) => {
+    const configParticipants = visibleParticipants.filter((participant) => participant.participantConfigHash === configHash);
+    return getComponentStats(configParticipants, studyConfig, allConfigs).map((row) => ({
+      ...row,
+      configs: [configLabel],
+      studyConfig,
+    }));
+  });
+
+  const mergedRows: Array<ComponentData & { studyConfig: StudyConfig }> = [];
+
+  rows.forEach((row) => {
+    const existingRow = mergedRows.find((candidate) => candidate.component === row.component);
+    if (!existingRow) {
+      mergedRows.push(row);
+      return;
+    }
+
+    const totalParticipants = existingRow.participants + row.participants;
+    const correctness = totalParticipants > 0
+      ? (((Number.isNaN(existingRow.correctness) ? 0 : existingRow.correctness) * existingRow.participants)
+        + ((Number.isNaN(row.correctness) ? 0 : row.correctness) * row.participants)) / totalParticipants
+      : NaN;
+
+    Object.assign(existingRow, {
+      ...existingRow,
+      participants: totalParticipants,
+      avgTime: totalParticipants > 0
+        ? ((Number.isNaN(existingRow.avgTime) ? 0 : existingRow.avgTime) * existingRow.participants
+          + (Number.isNaN(row.avgTime) ? 0 : row.avgTime) * row.participants) / totalParticipants
+        : NaN,
+      avgCleanTime: totalParticipants > 0
+        ? ((Number.isNaN(existingRow.avgCleanTime) ? 0 : existingRow.avgCleanTime) * existingRow.participants
+          + (Number.isNaN(row.avgCleanTime) ? 0 : row.avgCleanTime) * row.participants) / totalParticipants
+        : NaN,
+      correctness,
+      configs: row.configs?.[0] === undefined
+        ? existingRow.configs
+        : mergeConfigLabels(existingRow.configs, row.configs[0]),
+    });
+  });
+
+  return mergedRows.map(({ studyConfig: _studyConfig, ...row }) => row);
+}
+
 export function getResponseStats(
   visibleParticipants: ParticipantDataWithStatus[],
   studyConfig: StudyConfig,
@@ -269,6 +329,7 @@ export function getResponseStats(
     const correctness = calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs);
 
     return responses.map((response) => ({
+      responseId: response.id,
       component: name,
       type: response.type,
       question: response.prompt ?? 'N/A',
@@ -278,4 +339,55 @@ export function getResponseStats(
   });
 
   return responseData;
+}
+
+export function getResponseStatsForConfigs(
+  visibleParticipants: ParticipantDataWithStatus[],
+  configs: ConfigScopedStudyConfig[],
+  allConfigs: Record<string, StudyConfig> = {},
+): ResponseData[] {
+  const rows = configs.flatMap(({ configHash, configLabel, studyConfig }) => {
+    const configParticipants = visibleParticipants.filter((participant) => participant.participantConfigHash === configHash);
+    const responseEntries = Object.entries(studyConfig.components).flatMap(([name, componentConfig]) => {
+      const component = studyComponentToIndividualComponent(componentConfig, studyConfig);
+      const responses = component.response ?? [];
+      if (responses.length === 0) return [];
+      const correctness = calculateCorrectnessStats(configParticipants, name, studyConfig, allConfigs);
+
+      return responses.map((response) => ({
+        responseId: response.id,
+        component: name,
+        type: response.type,
+        question: response.prompt ?? 'N/A',
+        options: getResponseOptions(response),
+        correctness,
+        configs: [configLabel],
+      }));
+    });
+
+    return responseEntries;
+  });
+
+  const mergedRows: ResponseData[] = [];
+
+  rows.forEach((row) => {
+    const existingRow = mergedRows.find((candidate) => (
+      candidate.component === row.component
+      && candidate.responseId === row.responseId
+    ));
+    if (!existingRow) {
+      mergedRows.push(row);
+      return;
+    }
+
+    Object.assign(existingRow, {
+      ...existingRow,
+      configs: !row.configs || row.configs.length === 0
+        ? existingRow.configs
+        : mergeConfigLabels(existingRow.configs, row.configs[0]),
+      correctness: Number.isNaN(existingRow.correctness) ? row.correctness : existingRow.correctness,
+    });
+  });
+
+  return mergedRows;
 }

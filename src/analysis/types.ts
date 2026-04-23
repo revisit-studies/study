@@ -16,6 +16,7 @@ export interface OverviewData {
 }
 
 export interface ComponentData {
+  configs?: string[];
   component: string;
   participants: number;
   avgTime: number;
@@ -24,6 +25,8 @@ export interface ComponentData {
 }
 
 export interface ResponseData {
+  configs?: string[];
+  responseId?: string;
   component: string;
   type: string;
   question: string;

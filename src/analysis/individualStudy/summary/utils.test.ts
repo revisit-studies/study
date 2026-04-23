@@ -5,7 +5,9 @@ import {
   convertNumberToString,
   getOverviewStats,
   getComponentStats,
+  getComponentStatsForConfigs,
   getResponseStats,
+  getResponseStatsForConfigs,
 } from './utils';
 import { ParticipantDataWithStatus } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
@@ -1889,6 +1891,59 @@ describe('utils.tsx', () => {
       expect(comp1Stats.avgTime).toBe(10);
       expect(comp1Stats.correctness).toBe(100);
     });
+
+    it('should merge matching component rows across selected configs and collect config labels', () => {
+      const participants = [
+        createMockParticipant({
+          participantId: '1',
+          participantConfigHash: 'config-a',
+          completed: true,
+          answers: {
+            intro_1: createMockAnswer({
+              componentName: 'introduction',
+              startTime: 1,
+              endTime: 1001,
+            }),
+          },
+        }),
+        createMockParticipant({
+          participantId: '2',
+          participantConfigHash: 'config-b',
+          completed: true,
+          answers: {
+            intro_1: createMockAnswer({
+              componentName: 'introduction',
+              startTime: 1,
+              endTime: 2001,
+            }),
+          },
+        }),
+      ];
+
+      const configA = {
+        components: {
+          introduction: { response: [] },
+        },
+      } as unknown as StudyConfig;
+
+      const configB = {
+        components: {
+          introduction: { response: [] },
+        },
+      } as unknown as StudyConfig;
+
+      const result = getComponentStatsForConfigs(participants, [
+        { configHash: 'config-a', configLabel: 'pilot - aaaaaa', studyConfig: configA },
+        { configHash: 'config-b', configLabel: 'pilot - bbbbbb', studyConfig: configB },
+      ], {
+        'config-a': configA,
+        'config-b': configB,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].component).toBe('introduction');
+      expect(result[0].configs).toEqual(['pilot - aaaaaa', 'pilot - bbbbbb']);
+    });
   });
 
   // ============================================
@@ -2003,6 +2058,40 @@ describe('utils.tsx', () => {
         const result = getResponseStats(participants, studyConfig);
 
         expect(result[0].correctness).toBe(100);
+      });
+
+      it('should merge matching response rows across selected configs and collect config labels', () => {
+        const configA = {
+          components: {
+            survey: {
+              response: [
+                { type: 'radio', prompt: 'Q1', options: ['A', 'B'] },
+              ],
+            },
+          },
+        } as unknown as StudyConfig;
+
+        const configB = {
+          components: {
+            survey: {
+              response: [
+                { type: 'radio', prompt: 'Q1', options: ['A', 'B'] },
+              ],
+            },
+          },
+        } as unknown as StudyConfig;
+
+        const result = getResponseStatsForConfigs([], [
+          { configHash: 'config-a', configLabel: 'pilot - aaaaaa', studyConfig: configA },
+          { configHash: 'config-b', configLabel: 'pilot - bbbbbb', studyConfig: configB },
+        ], {
+          'config-a': configA,
+          'config-b': configB,
+        });
+
+        expect(result).toHaveLength(1);
+        expect(result[0].component).toBe('survey');
+        expect(result[0].configs).toEqual(['pilot - aaaaaa', 'pilot - bbbbbb']);
       });
     });
 

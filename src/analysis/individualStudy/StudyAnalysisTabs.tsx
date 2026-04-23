@@ -1,5 +1,5 @@
 import {
-  Alert, AppShell, Center, Checkbox, Container, Flex, Group, LoadingOverlay, Stack, Tabs, Text, Title, MultiSelect,
+  Alert, AppShell, Badge, Center, Checkbox, Container, Flex, Group, LoadingOverlay, Stack, Tabs, Text, Title, MultiSelect, Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router';
 import {
@@ -53,6 +53,10 @@ function sortByStartTime(a: ParticipantDataWithStatus, b: ParticipantDataWithSta
   return bStartTimes[0] - aStartTimes[0];
 }
 
+function getParticipantConditions(participant: Pick<ParticipantDataWithStatus, 'conditions' | 'searchParams'>) {
+  return parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
+}
+
 async function getParticipantsData(
   studyConfig: StudyConfig | undefined,
   storageEngine: StorageEngine | undefined,
@@ -65,6 +69,14 @@ async function getParticipantsData(
   if (!studyConfig || !storageEngine || !studyId) return [];
 
   return await storageEngine.getAllParticipantsData(studyId);
+}
+
+async function getCurrentConfigHashForStudy(
+  storageEngine: StorageEngine | undefined,
+  studyId: string | undefined,
+): Promise<string | null> {
+  if (!storageEngine || !studyId) return null;
+  return storageEngine.getCurrentConfigHash(studyId);
 }
 
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
@@ -102,6 +114,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   // 0-1 percentage of scroll height
 
   const { value: expData, execute, status } = useAsync(getParticipantsData, [studyConfig, storageEngine, canonicalStudyId ?? undefined]);
+  const { value: currentConfigHashValue } = useAsync(
+    getCurrentConfigHashForStudy,
+    storageEngine && canonicalStudyId ? [storageEngine, canonicalStudyId] : null,
+  );
 
   const participantCounts = useMemo(() => {
     if (!expData) return { completed: 0, inprogress: 0, rejected: 0 };
@@ -121,7 +137,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const conditionFiltered = selectedConditions.includes('ALL')
       ? stageFiltered
       : stageFiltered.filter((d) => {
-        const conds = parseConditionParam(d.conditions ?? d.searchParams?.condition);
+        const conds = getParticipantConditions(d);
         const normalizedConds = conds.length > 0 ? conds : ['default'];
         return normalizedConds.some((c) => selectedConditions.includes(c));
       });
@@ -160,6 +176,34 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     rejected: participantCounts.rejected,
   }), [participantCounts]);
 
+  const currentConfigHash = currentConfigHashValue ?? undefined;
+  const isFirebaseEngine = storageEngine?.getEngine() === 'firebase';
+  const codingEnabled = isFirebaseEngine && hasAudioRecording;
+  const liveMonitorEnabled = isFirebaseEngine;
+
+  const currentConfigLabel = useMemo(() => {
+    if (!currentConfigHash) return undefined;
+    const currentConfig = allConfigs[currentConfigHash];
+    if (!currentConfig) return undefined;
+    return `${currentConfig.studyMetadata.version} - ${currentConfigHash.slice(0, 6)}`;
+  }, [allConfigs, currentConfigHash]);
+
+  const configSelectData = useMemo(() => {
+    const decoratedOptions = availableConfigs.map((configOption) => ({
+      ...configOption,
+    }));
+
+    const allOption = decoratedOptions.find((configOption) => configOption.value === 'ALL');
+    const currentOption = decoratedOptions.find((configOption) => configOption.value === currentConfigHash);
+    const remainingOptions = decoratedOptions.filter((configOption) => configOption.value !== 'ALL' && configOption.value !== currentConfigHash);
+
+    return [
+      ...(allOption ? [allOption] : []),
+      ...(currentOption ? [currentOption] : []),
+      ...remainingOptions,
+    ];
+  }, [availableConfigs, currentConfigHash]);
+
   const visibleParticipants = useMemo(() => {
     if (!expData) return [];
     const expList = Object.values(expData);
@@ -184,7 +228,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const conditionFiltered = selectedConditions.includes('ALL')
       ? stageFiltered
       : stageFiltered.filter((d) => {
-        const conds = parseConditionParam(d.conditions ?? d.searchParams?.condition);
+        const conds = getParticipantConditions(d);
         const normalizedConds = conds.length > 0 ? conds : ['default'];
         return normalizedConds.some((c) => selectedConditions.includes(c));
       });
@@ -224,9 +268,13 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       const participantData = expData ? Object.values(expData) : [];
       const participantConfig = [...new Set(
         participantData.map((participant) => participant.participantConfigHash),
-      )];
+      )].filter((hash): hash is string => Boolean(hash));
 
-      const fetchedConfigs = await storageEngine.getAllConfigsFromHash(participantConfig, canonicalStudyId);
+      const configHashesToLoad = currentConfigHash
+        ? [...new Set([currentConfigHash, ...participantConfig])]
+        : participantConfig;
+
+      const fetchedConfigs = await storageEngine.getAllConfigsFromHash(configHashesToLoad, canonicalStudyId);
 
       const configOptions = Object.entries(fetchedConfigs)
         .map(([hash, config]) => ({
@@ -240,15 +288,14 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       setAvailableConfigs([{ value: 'ALL', label: 'ALL' }]);
       setAllConfigs({});
     }
-  }, [canonicalStudyId, storageEngine, expData]);
+  }, [canonicalStudyId, storageEngine, expData, currentConfigHash]);
 
   const allConditions = useMemo(() => {
     if (!expData) return [];
     const conditionSet = new Set<string>();
     Object.values(expData).forEach((participant) => {
-      const parsedConditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
-      const normalizedConditions = parsedConditions.length > 0 ? parsedConditions : ['default'];
-      normalizedConditions.forEach((condition) => conditionSet.add(condition));
+      const participantConditions = getParticipantConditions(participant);
+      participantConditions.forEach((condition) => conditionSet.add(condition));
     });
     return Array.from(conditionSet).sort();
   }, [expData]);
@@ -375,8 +422,35 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               <Flex direction="row" align="center" gap="xs">
                 <Text size="sm" fw={500}>Config:</Text>
                 <MultiSelect
-                  data={availableConfigs}
+                  data={configSelectData}
                   value={selectedConfigs}
+                  renderOption={({ option }) => (
+                    <Flex align="center" gap="xs" wrap="nowrap" w="100%">
+                      <Text
+                        size="sm"
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {option.label}
+                      </Text>
+                      {option.value === currentConfigHash && (
+                        <Badge
+                          size="xs"
+                          variant="light"
+                          px={6}
+                          py={0}
+                          style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+                        >
+                          Current
+                        </Badge>
+                      )}
+                    </Flex>
+                  )}
                   onChange={(values) => {
                     if (values.includes('ALL') && !selectedConfigs.includes('ALL')) {
                       setSelectedConfigs(['ALL']);
@@ -479,10 +553,24 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 <Tabs.Tab value="summary" leftSection={<IconChartPie size={16} />}>Study Summary</Tabs.Tab>
                 <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Participant View</Tabs.Tab>
                 <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
-                <Tabs.Tab value="tagging" leftSection={<IconTags size={16} />}>Coding</Tabs.Tab>
-                {storageEngine?.getEngine() === 'firebase' && (
-                  <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />}>Live Monitor</Tabs.Tab>
-                )}
+                <Tooltip
+                  label={!isFirebaseEngine
+                    ? 'Coding is only available when using Firebase and when audio recording is enabled in your study config.'
+                    : 'Coding is only available for studies with audio recording enabled in your study config.'}
+                  disabled={codingEnabled}
+                >
+                  <span>
+                    <Tabs.Tab value="tagging" leftSection={<IconTags size={16} />} disabled={!codingEnabled}>Coding</Tabs.Tab>
+                  </span>
+                </Tooltip>
+                <Tooltip
+                  label="Live Monitor is only available when using Firebase."
+                  disabled={liveMonitorEnabled}
+                >
+                  <span>
+                    <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />} disabled={!liveMonitorEnabled}>Live Monitor</Tabs.Tab>
+                  </span>
+                </Tooltip>
                 <Tabs.Tab value="config" leftSection={<IconFileCode size={16} />}>Config</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
               </Tabs.List>
@@ -495,6 +583,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                     studyId={canonicalStudyId ?? undefined}
                     showStoredCountMismatch={showStoredCountMismatch}
                     comparisonParticipantCounts={mismatchComparisonParticipantCounts}
+                    currentConfigLabel={currentConfigLabel}
                   />
                 )}
               </Tabs.Panel>
@@ -505,15 +594,29 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} allConfigs={allConfigs} studyId={canonicalStudyId ?? undefined} />}
               </Tabs.Panel>
               <Tabs.Panel value="tagging" pt="xs">
-                {studyConfig && storageEngine?.getEngine() === 'firebase' ? <ThinkAloudAnalysis visibleParticipants={visibleParticipants} storageEngine={storageEngine as FirebaseStorageEngine} /> : <Center>Think aloud coding is only available when using Firebase.</Center>}
+                {studyConfig && codingEnabled
+                  ? <ThinkAloudAnalysis visibleParticipants={visibleParticipants} storageEngine={storageEngine as FirebaseStorageEngine} />
+                  : (
+                    <Center>
+                      <Text c="dimmed">
+                        {!isFirebaseEngine
+                          ? 'Think aloud coding is only available when using Firebase and when audio recording is enabled in your study config.'
+                          : 'Think aloud coding is only available for studies with audio recording enabled in your study config.'}
+                      </Text>
+                    </Center>
+                  )}
               </Tabs.Panel>
-              {storageEngine?.getEngine() === 'firebase' && (
-                <Tabs.Panel style={{ overflow: 'auto' }} value="live-monitor" pt="xs">
-                  {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} includedParticipants={includedParticipants} selectedStages={selectedStages} />}
-                </Tabs.Panel>
-              )}
+              <Tabs.Panel style={{ overflow: 'auto' }} value="live-monitor" pt="xs">
+                {studyConfig && liveMonitorEnabled
+                  ? <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} includedParticipants={includedParticipants} selectedStages={selectedStages} />
+                  : (
+                    <Center>
+                      <Text c="dimmed">Live Monitor is only available when using Firebase.</Text>
+                    </Center>
+                  )}
+              </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="config" pt="xs">
-                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} />}
+                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
                 {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}

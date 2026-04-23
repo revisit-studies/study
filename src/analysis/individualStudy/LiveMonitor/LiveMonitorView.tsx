@@ -235,7 +235,7 @@ export function LiveMonitorView({
             </Text>
             <Group gap="xs">
               <Badge color="green" variant="light" size="sm">
-                {filteredParticipantProgress.filter((p) => p.isCompleted).length}
+                {filteredParticipantProgress.filter((p) => p.isCompleted && !p.isRejected).length}
                 {' '}
                 Completed
               </Badge>
