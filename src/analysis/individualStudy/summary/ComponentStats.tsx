@@ -91,7 +91,6 @@ export function ComponentStats({
       {
         accessorKey: 'component',
         header: 'Component',
-        size: 200,
         Cell: ({ row }) => renderComponentNameCell(row, currentConfigLabel),
       },
       {

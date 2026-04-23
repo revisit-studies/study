@@ -29,7 +29,7 @@ import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
-import { parseConditionParam } from '../../utils/handleConditionLogic';
+import { getSequenceConditions, parseConditionParam } from '../../utils/handleConditionLogic';
 import { ParticipantCounts } from '../types';
 import 'mantine-react-table/styles.css';
 import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
@@ -118,6 +118,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     getCurrentConfigHashForStudy,
     storageEngine && canonicalStudyId ? [storageEngine, canonicalStudyId] : null,
   );
+  const studyUsesConditions = useMemo(
+    () => (studyConfig ? getSequenceConditions(studyConfig.sequence).length > 0 : false),
+    [studyConfig],
+  );
 
   const participantCounts = useMemo(() => {
     if (!expData) return { completed: 0, inprogress: 0, rejected: 0 };
@@ -138,8 +142,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       ? stageFiltered
       : stageFiltered.filter((d) => {
         const conds = getParticipantConditions(d);
-        const normalizedConds = conds.length > 0 ? conds : ['default'];
-        return normalizedConds.some((c) => selectedConditions.includes(c));
+        if (studyUsesConditions && selectedConditions.includes('default') && conds.length === 0) {
+          return true;
+        }
+        return conds.some((c) => selectedConditions.includes(c));
       });
 
     return {
@@ -147,7 +153,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       inprogress: conditionFiltered.filter((d) => !d.rejected && !d.completed).length,
       rejected: conditionFiltered.filter((d) => d.rejected).length,
     };
-  }, [expData, selectedStages, selectedConfigs, selectedConditions]);
+  }, [expData, selectedStages, selectedConfigs, selectedConditions, studyUsesConditions]);
 
   const selectedParticipantCounts = useMemo(() => {
     if (selectedParticipants.length === 0) return { completed: 0, inprogress: 0, rejected: 0 };
@@ -229,12 +235,14 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       ? stageFiltered
       : stageFiltered.filter((d) => {
         const conds = getParticipantConditions(d);
-        const normalizedConds = conds.length > 0 ? conds : ['default'];
-        return normalizedConds.some((c) => selectedConditions.includes(c));
+        if (studyUsesConditions && selectedConditions.includes('default') && conds.length === 0) {
+          return true;
+        }
+        return conds.some((c) => selectedConditions.includes(c));
       });
 
     return conditionFiltered.sort(sortByStartTime);
-  }, [expData, includedParticipants, selectedStages, selectedConfigs, selectedConditions]);
+  }, [expData, includedParticipants, selectedStages, selectedConfigs, selectedConditions, studyUsesConditions]);
 
   // Load available stages
   const loadStages = useCallback(async () => {
@@ -295,10 +303,13 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const conditionSet = new Set<string>();
     Object.values(expData).forEach((participant) => {
       const participantConditions = getParticipantConditions(participant);
+      if (studyUsesConditions && participantConditions.length === 0) {
+        conditionSet.add('default');
+      }
       participantConditions.forEach((condition) => conditionSet.add(condition));
     });
     return Array.from(conditionSet).sort();
-  }, [expData]);
+  }, [expData, studyUsesConditions]);
 
   // Load configs and clear selection when dependencies change
   useEffect(() => {

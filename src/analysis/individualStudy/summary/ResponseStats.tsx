@@ -90,7 +90,6 @@ export function ResponseStats({
     {
       accessorKey: 'component',
       header: 'Component',
-      size: 200,
       Cell: ({ row }) => renderResponseComponentCell(row, currentConfigLabel),
     },
     {

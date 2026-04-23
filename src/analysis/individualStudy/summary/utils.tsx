@@ -84,7 +84,18 @@ function calculateDateStats(visibleParticipants: ParticipantDataWithStatus[], co
   };
 }
 
-function calculateTimeStats(visibleParticipants: ParticipantDataWithStatus[], componentName?: string): { avgTime: number; avgCleanTime: number; participantsWithInvalidCleanTimeCount: number } {
+function calculateTimeStats(
+  visibleParticipants: ParticipantDataWithStatus[],
+  componentName?: string,
+): {
+  avgTime: number;
+  avgCleanTime: number;
+  participantsWithInvalidCleanTimeCount: number;
+  totalTimeSum: number;
+  totalTimeCount: number;
+  totalCleanTimeSum: number;
+  totalCleanTimeCount: number;
+} {
   // Time stats use any non-rejected participant who has finished the relevant answer(s).
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
 
@@ -131,6 +142,10 @@ function calculateTimeStats(visibleParticipants: ParticipantDataWithStatus[], co
     avgTime: time.count > 0 ? time.totalTimeSum / time.count : NaN,
     avgCleanTime: time.cleanCount > 0 ? time.cleanTimeSum / time.cleanCount : NaN,
     participantsWithInvalidCleanTimeCount,
+    totalTimeSum: time.totalTimeSum,
+    totalTimeCount: time.count,
+    totalCleanTimeSum: time.cleanTimeSum,
+    totalCleanTimeCount: time.cleanCount,
   };
 }
 
@@ -139,7 +154,7 @@ function calculateCorrectnessStats(
   componentName?: string,
   studyConfig?: StudyConfig,
   allConfigs: Record<string, StudyConfig> = {},
-): number {
+): { correctness: number; correctCount: number; totalQuestionCount: number } {
   // Filter out rejected participants and filter by component if provided
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
   const participantAnswers = filteredParticipants.flatMap((participant) => Object.values(participant.answers)
@@ -148,7 +163,11 @@ function calculateCorrectnessStats(
 
   const hasCorrectAnswer = participantAnswers.some(({ answer }) => answer.correctAnswer && answer.correctAnswer.length > 0);
   if (!hasCorrectAnswer) {
-    return NaN;
+    return {
+      correctness: NaN,
+      correctCount: 0,
+      totalQuestionCount: 0,
+    };
   }
 
   let totalQuestions = 0;
@@ -172,7 +191,11 @@ function calculateCorrectnessStats(
     }
   });
 
-  return totalQuestions > 0 ? (correctSum / totalQuestions) * 100 : NaN;
+  return {
+    correctness: totalQuestions > 0 ? (correctSum / totalQuestions) * 100 : NaN,
+    correctCount: correctSum,
+    totalQuestionCount: totalQuestions,
+  };
 }
 
 function getResponseOptions(response: Response): string {
@@ -238,7 +261,7 @@ export function getOverviewStats(
     avgTime: timeStats.avgTime,
     avgCleanTime: timeStats.avgCleanTime,
     participantsWithInvalidCleanTimeCount: timeStats.participantsWithInvalidCleanTimeCount,
-    correctness: calculateCorrectnessStats(visibleParticipants, componentName, studyConfig, allConfigs),
+    correctness: calculateCorrectnessStats(visibleParticipants, componentName, studyConfig, allConfigs).correctness,
   };
 
   return overviewData;
@@ -248,18 +271,39 @@ export function getComponentStats(
   visibleParticipants: ParticipantDataWithStatus[],
   studyConfig: StudyConfig,
   allConfigs: Record<string, StudyConfig> = {},
-): ComponentData[] {
+): Array<ComponentData & {
+  timeSum: number;
+  timeCount: number;
+  cleanTimeSum: number;
+  cleanTimeCount: number;
+  correctCount: number;
+  totalQuestionCount: number;
+}> {
   // Get all component names from the current study
   const componentNames = Object.keys(studyConfig.components);
-  const componentData: ComponentData[] = componentNames.map((name) => {
+  const componentData: Array<ComponentData & {
+    timeSum: number;
+    timeCount: number;
+    cleanTimeSum: number;
+    cleanTimeCount: number;
+    correctCount: number;
+    totalQuestionCount: number;
+  }> = componentNames.map((name) => {
     const timeStats = calculateTimeStats(visibleParticipants, name);
+    const correctnessStats = calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs);
 
     return {
       component: name,
       participants: calculateParticipantCounts(visibleParticipants, name).total,
       avgTime: timeStats.avgTime,
       avgCleanTime: timeStats.avgCleanTime,
-      correctness: calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs),
+      correctness: correctnessStats.correctness,
+      timeSum: timeStats.totalTimeSum,
+      timeCount: timeStats.totalTimeCount,
+      cleanTimeSum: timeStats.totalCleanTimeSum,
+      cleanTimeCount: timeStats.totalCleanTimeCount,
+      correctCount: correctnessStats.correctCount,
+      totalQuestionCount: correctnessStats.totalQuestionCount,
     };
   });
 
@@ -280,7 +324,15 @@ export function getComponentStatsForConfigs(
     }));
   });
 
-  const mergedRows: Array<ComponentData & { studyConfig: StudyConfig }> = [];
+  const mergedRows: Array<ComponentData & {
+    timeSum: number;
+    timeCount: number;
+    cleanTimeSum: number;
+    cleanTimeCount: number;
+    correctCount: number;
+    totalQuestionCount: number;
+    studyConfig: StudyConfig;
+  }> = [];
 
   rows.forEach((row) => {
     const existingRow = mergedRows.find((candidate) => candidate.component === row.component);
@@ -290,23 +342,31 @@ export function getComponentStatsForConfigs(
     }
 
     const totalParticipants = existingRow.participants + row.participants;
-    const correctness = totalParticipants > 0
-      ? (((Number.isNaN(existingRow.correctness) ? 0 : existingRow.correctness) * existingRow.participants)
-        + ((Number.isNaN(row.correctness) ? 0 : row.correctness) * row.participants)) / totalParticipants
-      : NaN;
+    const totalTimeSum = (existingRow.timeSum ?? 0) + (row.timeSum ?? 0);
+    const totalTimeCount = (existingRow.timeCount ?? 0) + (row.timeCount ?? 0);
+    const totalCleanTimeSum = (existingRow.cleanTimeSum ?? 0) + (row.cleanTimeSum ?? 0);
+    const totalCleanTimeCount = (existingRow.cleanTimeCount ?? 0) + (row.cleanTimeCount ?? 0);
+    const totalCorrectCount = (existingRow.correctCount ?? 0) + (row.correctCount ?? 0);
+    const totalQuestionCount = (existingRow.totalQuestionCount ?? 0) + (row.totalQuestionCount ?? 0);
 
     Object.assign(existingRow, {
       ...existingRow,
       participants: totalParticipants,
-      avgTime: totalParticipants > 0
-        ? ((Number.isNaN(existingRow.avgTime) ? 0 : existingRow.avgTime) * existingRow.participants
-          + (Number.isNaN(row.avgTime) ? 0 : row.avgTime) * row.participants) / totalParticipants
+      avgTime: totalTimeCount > 0
+        ? totalTimeSum / totalTimeCount
         : NaN,
-      avgCleanTime: totalParticipants > 0
-        ? ((Number.isNaN(existingRow.avgCleanTime) ? 0 : existingRow.avgCleanTime) * existingRow.participants
-          + (Number.isNaN(row.avgCleanTime) ? 0 : row.avgCleanTime) * row.participants) / totalParticipants
+      avgCleanTime: totalCleanTimeCount > 0
+        ? totalCleanTimeSum / totalCleanTimeCount
         : NaN,
-      correctness,
+      correctness: totalQuestionCount > 0
+        ? (totalCorrectCount / totalQuestionCount) * 100
+        : NaN,
+      timeSum: totalTimeSum,
+      timeCount: totalTimeCount,
+      cleanTimeSum: totalCleanTimeSum,
+      cleanTimeCount: totalCleanTimeCount,
+      correctCount: totalCorrectCount,
+      totalQuestionCount,
       configs: row.configs?.[0] === undefined
         ? existingRow.configs
         : mergeConfigLabels(existingRow.configs, row.configs[0]),
@@ -320,13 +380,21 @@ export function getResponseStats(
   visibleParticipants: ParticipantDataWithStatus[],
   studyConfig: StudyConfig,
   allConfigs: Record<string, StudyConfig> = {},
-): ResponseData[] {
+): Array<ResponseData & {
+  responseId?: string;
+  correctCount: number;
+  totalQuestionCount: number;
+}> {
   // Get all responses for each component
-  const responseData: ResponseData[] = Object.entries(studyConfig.components).flatMap(([name, componentConfig]) => {
+  const responseData: Array<ResponseData & {
+    responseId?: string;
+    correctCount: number;
+    totalQuestionCount: number;
+  }> = Object.entries(studyConfig.components).flatMap(([name, componentConfig]) => {
     const component = studyComponentToIndividualComponent(componentConfig, studyConfig);
     const responses = component.response ?? [];
     if (responses.length === 0) return [];
-    const correctness = calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs);
+    const correctnessStats = calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs);
 
     return responses.map((response) => ({
       responseId: response.id,
@@ -334,7 +402,9 @@ export function getResponseStats(
       type: response.type,
       question: response.prompt ?? 'N/A',
       options: getResponseOptions(response),
-      correctness,
+      correctness: correctnessStats.correctness,
+      correctCount: correctnessStats.correctCount,
+      totalQuestionCount: correctnessStats.totalQuestionCount,
     }));
   });
 
@@ -352,7 +422,7 @@ export function getResponseStatsForConfigs(
       const component = studyComponentToIndividualComponent(componentConfig, studyConfig);
       const responses = component.response ?? [];
       if (responses.length === 0) return [];
-      const correctness = calculateCorrectnessStats(configParticipants, name, studyConfig, allConfigs);
+      const correctnessStats = calculateCorrectnessStats(configParticipants, name, studyConfig, allConfigs);
 
       return responses.map((response) => ({
         responseId: response.id,
@@ -360,7 +430,9 @@ export function getResponseStatsForConfigs(
         type: response.type,
         question: response.prompt ?? 'N/A',
         options: getResponseOptions(response),
-        correctness,
+        correctness: correctnessStats.correctness,
+        correctCount: correctnessStats.correctCount,
+        totalQuestionCount: correctnessStats.totalQuestionCount,
         configs: [configLabel],
       }));
     });
@@ -368,7 +440,11 @@ export function getResponseStatsForConfigs(
     return responseEntries;
   });
 
-  const mergedRows: ResponseData[] = [];
+  const mergedRows: Array<ResponseData & {
+    responseId?: string;
+    correctCount: number;
+    totalQuestionCount: number;
+  }> = [];
 
   rows.forEach((row) => {
     const existingRow = mergedRows.find((candidate) => (
@@ -385,9 +461,18 @@ export function getResponseStatsForConfigs(
       configs: !row.configs || row.configs.length === 0
         ? existingRow.configs
         : mergeConfigLabels(existingRow.configs, row.configs[0]),
-      correctness: Number.isNaN(existingRow.correctness) ? row.correctness : existingRow.correctness,
+      correctCount: (existingRow.correctCount ?? 0) + (row.correctCount ?? 0),
+      totalQuestionCount: (existingRow.totalQuestionCount ?? 0) + (row.totalQuestionCount ?? 0),
     });
+    existingRow.correctness = (existingRow.totalQuestionCount ?? 0) > 0
+      ? ((existingRow.correctCount ?? 0) / (existingRow.totalQuestionCount ?? 0)) * 100
+      : NaN;
   });
 
-  return mergedRows;
+  return mergedRows.map(({
+    responseId: _responseId,
+    correctCount: _correctCount,
+    totalQuestionCount: _totalQuestionCount,
+    ...row
+  }) => row);
 }
