@@ -557,6 +557,161 @@
         }
       ]
     },
+    "Default Values - Optional Invalid Defaults": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "optional-invalid-defaults-title",
+          "type": "textOnly",
+          "prompt": "# Default Values - Optional Invalid Defaults\n\nThis page intentionally pre-fills optional responses with invalid values so they should show orange warnings instead of red required errors.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "optional-invalid-numerical",
+          "type": "numerical",
+          "prompt": "Optional numerical with out-of-range default",
+          "secondaryText": "This is optional, but the default value is outside the allowed range.",
+          "min": 0,
+          "max": 10,
+          "required": false,
+          "default": 25
+        },
+        {
+          "id": "optional-invalid-dropdown",
+          "type": "dropdown",
+          "prompt": "Optional multiselect dropdown with too few defaults",
+          "secondaryText": "This is optional, but the default selection violates the minimum selection rule.",
+          "options": [
+            "Bar",
+            "Line",
+            "Scatter"
+          ],
+          "minSelections": 2,
+          "maxSelections": 3,
+          "required": false,
+          "default": [
+            "Bar"
+          ]
+        },
+        {
+          "id": "optional-invalid-radio",
+          "type": "radio",
+          "prompt": "Optional radio with a requiredValue mismatch",
+          "secondaryText": "This is optional, but the prefilled answer intentionally does not match the configured requiredValue.",
+          "options": [
+            "Bar",
+            "Line",
+            "Scatter"
+          ],
+          "required": false,
+          "requiredValue": "Scatter",
+          "default": "Bar"
+        },
+        {
+          "id": "optional-invalid-checkbox",
+          "type": "checkbox",
+          "prompt": "Optional checkbox with a requiredValue mismatch",
+          "secondaryText": "This is optional, but the default selection intentionally does not match the requiredValue.",
+          "options": [
+            "Alpha",
+            "Beta",
+            "Gamma"
+          ],
+          "required": false,
+          "requiredValue": [
+            "Alpha",
+            "Gamma"
+          ],
+          "default": [
+            "Alpha"
+          ]
+        }
+      ]
+    },
+    "Default Values - Optional Mixed Valid And Invalid": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "optional-mixed-defaults-title",
+          "type": "textOnly",
+          "prompt": "# Default Values - Optional Mixed Valid And Invalid\n\nThis page mixes optional responses that start invalid because of their defaults with optional responses left blank, which should remain clean.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "optional-mixed-invalid-numerical",
+          "type": "numerical",
+          "prompt": "Optional numerical with invalid default",
+          "secondaryText": "This should show an orange invalid state because the default is outside the allowed range.",
+          "min": 1,
+          "max": 5,
+          "required": false,
+          "default": 12
+        },
+        {
+          "id": "optional-mixed-valid-blank-short-text",
+          "type": "shortText",
+          "prompt": "Optional short text left blank",
+          "secondaryText": "This is optional and blank, so it should not show any warning.",
+          "placeholder": "Optional answer",
+          "required": false
+        },
+        {
+          "id": "optional-mixed-invalid-dropdown",
+          "type": "dropdown",
+          "prompt": "Optional multiselect dropdown with invalid default",
+          "secondaryText": "This should show an orange invalid state because the default misses the minimum selection count.",
+          "options": [
+            "Bar",
+            "Line",
+            "Scatter"
+          ],
+          "minSelections": 2,
+          "maxSelections": 3,
+          "required": false,
+          "default": [
+            "Line"
+          ]
+        },
+        {
+          "id": "optional-mixed-valid-blank-radio",
+          "type": "radio",
+          "prompt": "Optional radio left blank",
+          "secondaryText": "This is optional and unanswered, so it should stay neutral.",
+          "options": [
+            "Alpha",
+            "Beta"
+          ],
+          "required": false
+        },
+        {
+          "id": "optional-mixed-invalid-checkbox",
+          "type": "checkbox",
+          "prompt": "Optional checkbox with invalid default",
+          "secondaryText": "This should show an orange invalid state because the default does not match requiredValue.",
+          "options": [
+            "Alpha",
+            "Beta",
+            "Gamma"
+          ],
+          "required": false,
+          "requiredValue": [
+            "Alpha",
+            "Gamma"
+          ],
+          "default": [
+            "Alpha"
+          ]
+        },
+        {
+          "id": "optional-mixed-valid-blank-long-text",
+          "type": "longText",
+          "prompt": "Optional long text left blank",
+          "secondaryText": "This is optional and blank, so it should not be counted as invalid.",
+          "placeholder": "Optional notes",
+          "required": false
+        }
+      ]
+    },
     "Custom Response": {
       "type": "questionnaire",
       "response": [
@@ -1357,6 +1512,8 @@
       "Introduction",
       "Form Elements",
       "Default Values",
+      "Default Values - Optional Invalid Defaults",
+      "Default Values - Optional Mixed Valid And Invalid",
       "Custom Response",
       "Randomizing Options",
       "Randomizing Questions",

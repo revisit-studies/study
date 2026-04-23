@@ -8,8 +8,12 @@ import { parseStringOptionValue } from '../../utils/stringOptions';
 export const REQUIRED_ERROR_MESSAGE = 'Please answer this question to continue.';
 export type ResponseIssueType = 'unanswered' | 'invalid';
 export type ResponseIssueSummary = { unansweredCount: number; invalidCount: number };
+export type EvaluatedResponseIssue =
+  | { type: 'none' }
+  | { type: 'unanswered' }
+  | { type: 'invalid'; message?: string; reason?: 'requiredValueMismatch' };
 
-export function isEmptyCustomResponseValue(value: StoredAnswer['answer'][string]): boolean {
+export function isEmptyCustomResponseValue(value: StoredAnswer['answer'][string] | undefined): boolean {
   if (value === null || value === undefined || value === '') {
     return true;
   }
@@ -98,22 +102,30 @@ export function checkMatrixResponse(response: MatrixResponse, value: Record<stri
   return null;
 }
 
-function checkMatrixResponseForMessage(response: MatrixResponse, value: Record<string, string>) {
-  const hasAnsweredAtLeastOne = Object.values(value).some((val) => val !== '');
-  if (!hasAnsweredAtLeastOne) {
-    return null;
-  }
-
-  return checkMatrixResponse(response, value);
-}
-
 function hasOtherText(value: StoredAnswer['answer'][string] | undefined) {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function getRequiredValueMismatchMessage(
+  response: Response,
+  options?: (StringOption | NumberOption)[],
+) {
+  const { requiredValue, requiredLabel } = response;
+
+  if (requiredValue == null) {
+    return null;
+  }
+
+  if (Array.isArray(requiredValue)) {
+    return `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.`;
+  }
+
+  return `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.`;
+}
+
 export function isOtherSelectionIncomplete(
   response: Response,
-  value: StoredAnswer['answer'][string],
+  value: StoredAnswer['answer'][string] | undefined,
   values: StoredAnswer['answer'],
 ) {
   if (!('withOther' in response) || !response.withOther) {
@@ -132,7 +144,6 @@ export function isOtherSelectionIncomplete(
   return false;
 }
 
-// Matrix questions with "Don't know" option require a separate field to properly handle the "Don't know" state
 export const usesStandaloneDontKnowField = (response: Response) => !!response.withDontKnow
   && response.type !== 'matrix-radio'
   && response.type !== 'matrix-checkbox';
@@ -140,6 +151,130 @@ export const usesStandaloneDontKnowField = (response: Response) => !!response.wi
 export const shouldBypassValidationForStandaloneDontKnow = (response: Response, dontKnowChecked: boolean) => (
   usesStandaloneDontKnowField(response) && dontKnowChecked
 );
+
+export function evaluateResponseIssue(
+  response: Response,
+  value: StoredAnswer['answer'][string] | undefined,
+  values: StoredAnswer['answer'],
+  customValidate?: CustomResponseValidate,
+  loadError?: string,
+): EvaluatedResponseIssue {
+  const dontKnowChecked = !!values[`${response.id}-dontKnow`];
+
+  if (response.type === 'textOnly' || response.type === 'divider' || response.type === 'reactive') {
+    return { type: 'none' };
+  }
+
+  if (response.type === 'custom') {
+    if (loadError) {
+      return { type: 'invalid', message: loadError };
+    }
+
+    if (shouldBypassValidationForStandaloneDontKnow(response, dontKnowChecked)) {
+      return { type: 'none' };
+    }
+
+    if (response.required === false && isEmptyCustomResponseValue(value)) {
+      return { type: 'none' };
+    }
+
+    if (isEmptyCustomResponseValue(value)) {
+      return response.required === false ? { type: 'none' } : { type: 'unanswered' };
+    }
+
+    const customValue = value as StoredAnswer['answer'][string];
+
+    if (response.requiredValue !== undefined && !isEqual(customValue, response.requiredValue)) {
+      return { type: 'invalid', message: 'Incorrect input' };
+    }
+
+    if (!customValidate) {
+      return { type: 'none' };
+    }
+
+    const customValidationMessage = customValidate(customValue, values, response);
+    return customValidationMessage
+      ? { type: 'invalid', message: customValidationMessage }
+      : { type: 'none' };
+  }
+
+  if (shouldBypassValidationForStandaloneDontKnow(response, dontKnowChecked)) {
+    return { type: 'none' };
+  }
+
+  // Selecting "Other" without filling its companion input is invalid
+  if (isOtherSelectionIncomplete(response, value, values)) {
+    return { type: 'invalid', message: 'Please fill in Other to continue.' };
+  }
+
+  if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+    if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
+      const matrixValue = value as Record<string, string>;
+      const hasAnsweredAtLeastOne = Object.values(matrixValue).some((entry) => entry !== '');
+
+      if (!hasAnsweredAtLeastOne) {
+        return response.required ? { type: 'unanswered' } : { type: 'none' };
+      }
+
+      // A partially answered matrix is invalid
+      const matrixError = checkMatrixResponse(response, matrixValue);
+      return matrixError ? { type: 'invalid', message: matrixError } : { type: 'none' };
+    }
+
+    if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+      return Object.keys(value).length === 0 && response.required ? { type: 'unanswered' } : { type: 'none' };
+    }
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return response.required ? { type: 'unanswered' } : { type: 'none' };
+    }
+
+    if (Array.isArray(response.requiredValue)) {
+      const sortedRequired = [...response.requiredValue].sort();
+      const sortedValue = [...value].sort();
+      const matches = sortedRequired.length === sortedValue.length
+        && sortedRequired.every((entry, idx) => entry === sortedValue[idx]);
+
+      // Array inputs are invalid when they do not exactly match the configured requiredValue
+      if (!matches) {
+        return { type: 'invalid', reason: 'requiredValueMismatch' };
+      }
+    }
+
+    // Checkbox answers can be present but still invalid if they miss selection-count rule
+    if (response.type === 'checkbox') {
+      const checkboxError = checkCheckboxResponseForValidation(response, value as string[], dontKnowChecked);
+      return checkboxError ? { type: 'invalid', message: checkboxError } : { type: 'none' };
+    }
+
+    // Dropdown answers can be present but still invalid if they miss selection-count rules
+    if (response.type === 'dropdown') {
+      const dropdownError = checkDropdownResponse(response, value as string[]);
+      return dropdownError ? { type: 'invalid', message: dropdownError } : { type: 'none' };
+    }
+
+    return { type: 'none' };
+  }
+
+  if (value === null || value === undefined || value === '') {
+    return response.required ? { type: 'unanswered' } : { type: 'none' };
+  }
+
+  // Single-value inputs (e.g. shortText, longText, numerical, radio, buttons, likert and single-select dropdown) are invalid when they do not match the configured requiredValue.
+  if (response.requiredValue != null && value.toString() !== response.requiredValue.toString()) {
+    return { type: 'invalid', reason: 'requiredValueMismatch' };
+  }
+
+  // Numerical answers can be present but still invalid when they fall outside the allowed range
+  if (response.type === 'numerical') {
+    const numericalError = checkNumericalResponse(response, value as unknown as number);
+    return numericalError ? { type: 'invalid', message: numericalError } : { type: 'none' };
+  }
+
+  return { type: 'none' };
+}
 
 export function generateCustomResponseErrorMessage(
   response: CustomResponse,
@@ -149,34 +284,22 @@ export function generateCustomResponseErrorMessage(
   loadError?: string,
   options?: { showRequiredErrors?: boolean },
 ) {
-  if (loadError) {
-    return loadError;
+  const issue = evaluateResponseIssue(
+    response,
+    value,
+    {
+      ...values,
+      [response.id]: value,
+    },
+    customValidate,
+    loadError,
+  );
+
+  if (issue.type === 'unanswered') {
+    return options?.showRequiredErrors ? REQUIRED_ERROR_MESSAGE : null;
   }
 
-  if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
-    return null;
-  }
-
-  if (response.required === false && isEmptyCustomResponseValue(value)) {
-    return null;
-  }
-
-  if (isEmptyCustomResponseValue(value)) {
-    if (options?.showRequiredErrors) {
-      return REQUIRED_ERROR_MESSAGE;
-    }
-    return null;
-  }
-
-  if (response.requiredValue !== undefined && !isEqual(value, response.requiredValue)) {
-    return 'Incorrect input';
-  }
-
-  if (!customValidate) {
-    return null;
-  }
-
-  return customValidate(value, values, response);
+  return issue.type === 'invalid' ? issue.message ?? null : null;
 }
 
 export function generateErrorMessage(
@@ -191,65 +314,35 @@ export function generateErrorMessage(
     values?: StoredAnswer['answer'];
   },
 ) {
-  const { requiredValue, requiredLabel } = response;
-  const showRequiredErrors = !!errorOptions?.showRequiredErrors;
-  const values = errorOptions?.values || {};
-  const dontKnowChecked = !!values[`${response.id}-dontKnow`];
-  const otherValue = values[`${response.id}-other`];
-
-  if (shouldBypassValidationForStandaloneDontKnow(response, dontKnowChecked)) {
-    return null;
-  }
-
-  let error: string | null = '';
-  const checkboxValues = Array.isArray(answer.checked)
+  const responseValue = Array.isArray(answer.checked)
     ? answer.checked
-    : (Array.isArray(answer.value) ? answer.value : undefined);
-  const isEmptyMatrixResponse = typeof answer.value === 'object'
-    && !Array.isArray(answer.value)
-    && answer.value !== null
-    && Object.values(answer.value).every((val) => val === '');
+    : answer.value;
+  const values = errorOptions?.values || {};
+  const issueValues = responseValue === undefined
+    ? values
+    : {
+      ...values,
+      [response.id]: responseValue,
+    };
+  const issue = evaluateResponseIssue(
+    response,
+    responseValue,
+    issueValues,
+  );
 
-  if (showRequiredErrors && response.required) {
-    if (checkboxValues && checkboxValues.length === 0) {
-      return REQUIRED_ERROR_MESSAGE;
-    }
-
-    if ((response.type === 'matrix-radio' || response.type === 'matrix-checkbox') && isEmptyMatrixResponse) {
-      return REQUIRED_ERROR_MESSAGE;
-    }
-
-    if ((answer.value === null || answer.value === undefined || answer.value === '')
-      && !dontKnowChecked) {
-      return REQUIRED_ERROR_MESSAGE;
-    }
+  if (issue.type === 'unanswered') {
+    return errorOptions?.showRequiredErrors ? REQUIRED_ERROR_MESSAGE : null;
   }
 
-  if ('withOther' in response && response.withOther) {
-    if (response.type === 'radio' && answer.value === 'other' && !hasOtherText(otherValue)) {
-      return 'Please fill in Other to continue.';
+  if (issue.type === 'invalid') {
+    if (issue.reason === 'requiredValueMismatch') {
+      return getRequiredValueMismatchMessage(response, options);
     }
 
-    if (response.type === 'checkbox' && checkboxValues?.includes('__other') && !hasOtherText(otherValue)) {
-      return 'Please fill in Other to continue.';
-    }
+    return issue.message ?? null;
   }
 
-  if (checkboxValues && Array.isArray(requiredValue)) {
-    error = requiredValue && [...requiredValue].sort().toString() !== [...checkboxValues].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
-  } else if (checkboxValues && response.required && response.type === 'checkbox') {
-    error = checkCheckboxResponseForValidation(response, checkboxValues, dontKnowChecked);
-  } else if (answer.value && response.type === 'dropdown') {
-    error = checkDropdownResponse(response, answer.value as string[]);
-  } else if (answer.value && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalResponse(response, answer.value)) {
-    error = checkNumericalResponse(response, answer.value);
-  } else if (answer.value && typeof answer.value === 'object' && !Array.isArray(answer.value) && (response.type === 'matrix-radio' || response.type === 'matrix-checkbox')) {
-    return checkMatrixResponseForMessage(response, answer.value);
-  } else {
-    error = answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.` : null;
-  }
-
-  return error;
+  return null;
 }
 
 // Checks whether a response has an issue that should block progression, and if so, what type of issue it is (unanswered vs. invalid)
@@ -259,114 +352,15 @@ export function getResponseIssueType(
   customValidate?: CustomResponseValidate,
   loadError?: string,
 ): ResponseIssueType | null {
-  const value = values[response.id];
-  const dontKnowChecked = !!values[`${response.id}-dontKnow`];
+  const issue = evaluateResponseIssue(
+    response,
+    values[response.id],
+    values,
+    customValidate,
+    loadError,
+  );
 
-  // No need to validate
-  if (response.type === 'textOnly' || response.type === 'divider' || response.type === 'reactive') {
-    return null;
-  }
-
-  if (response.type === 'custom') {
-    if (loadError) {
-      return 'invalid';
-    }
-
-    if (shouldBypassValidationForStandaloneDontKnow(response, dontKnowChecked)) {
-      return null;
-    }
-
-    if (response.required === false && isEmptyCustomResponseValue(value)) {
-      return null;
-    }
-
-    if (isEmptyCustomResponseValue(value)) {
-      return response.required === false ? null : 'unanswered';
-    }
-
-    if (response.requiredValue !== undefined && !isEqual(value, response.requiredValue)) {
-      return 'invalid';
-    }
-
-    if (!customValidate) {
-      return null;
-    }
-
-    return customValidate(value, values, response) ? 'invalid' : null;
-  }
-
-  if (shouldBypassValidationForStandaloneDontKnow(response, dontKnowChecked)) {
-    return null;
-  }
-
-  // If the "Other" option is selected but the accompanying text input is not filled out, consider the response invalid
-  if (isOtherSelectionIncomplete(response, value, values)) {
-    return 'invalid';
-  }
-
-  if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-    if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
-      const matrixValue = value as Record<string, string>;
-      const hasAnsweredAtLeastOne = Object.values(matrixValue).some((entry) => entry !== '');
-
-      if (!hasAnsweredAtLeastOne) {
-        return response.required ? 'unanswered' : null;
-      }
-
-      // If at least one question in the matrix has been answered, but not all questions have been answered, consider it invalid
-      return checkMatrixResponse(response, matrixValue) ? 'invalid' : null;
-    }
-
-    if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
-      return Object.keys(value).length === 0 && response.required ? 'unanswered' : null;
-    }
-  }
-
-  if (Array.isArray(value)) {
-    if (value.length === 0) {
-      return response.required ? 'unanswered' : null;
-    }
-
-    if (Array.isArray(response.requiredValue)) {
-      const sortedRequired = [...response.requiredValue].sort();
-      const sortedValue = [...value].sort();
-      const matches = sortedRequired.length === sortedValue.length
-        && sortedRequired.every((entry, idx) => entry === sortedValue[idx]);
-
-      // If there is a requiredValue and the array value doesn't match it, consider it invalid
-      if (!matches) {
-        return 'invalid';
-      }
-    }
-
-    // For checkboxes, if there is a value but it doesn't meet min/max selection criteria, consider it invalid
-    if (response.type === 'checkbox') {
-      return checkCheckboxResponseForValidation(response, value as string[], dontKnowChecked) ? 'invalid' : null;
-    }
-
-    // For dropdowns, if there is a value but it doesn't meet min/max selection criteria, consider it invalid
-    if (response.type === 'dropdown') {
-      return checkDropdownResponse(response, value as string[]) ? 'invalid' : null;
-    }
-
-    return null;
-  }
-
-  if (value === null || value === undefined || value === '') {
-    return response.required ? 'unanswered' : null;
-  }
-
-  // If there is a value but it doesn't match the requiredValue, consider it invalid
-  if (response.requiredValue != null && value.toString() !== response.requiredValue.toString()) {
-    return 'invalid';
-  }
-
-  // For numerical responses, if there is a value but it doesn't meet min/max criteria, consider it invalid
-  if (response.type === 'numerical') {
-    return checkNumericalResponse(response, value as unknown as number) ? 'invalid' : null;
-  }
-
-  return null;
+  return issue.type === 'none' ? null : issue.type;
 }
 
 export function summarizeResponseIssues(
