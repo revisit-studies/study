@@ -1,6 +1,5 @@
 import { MultiSelect, Select } from '@mantine/core';
 import { DropdownResponse } from '../../parser/types';
-import { generateErrorMessage } from './utils';
 import classes from './css/Input.module.css';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
@@ -10,12 +9,14 @@ export function DropdownInput({
   response,
   disabled,
   answer,
+  error,
   index,
   enumerateQuestions,
 }: {
   response: DropdownResponse;
   disabled: boolean;
   answer: { value: string };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -46,9 +47,9 @@ export function DropdownInput({
         size="md"
         {...answer}
         value={answer.value === '' ? [] : Array.isArray(answer.value) ? answer.value : [answer.value]}
-        error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+        error={error}
         withErrorStyles={required}
-        errorProps={{ c: required ? 'red' : 'orange' }}
+        errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
         clearable
@@ -66,9 +67,9 @@ export function DropdownInput({
         size="md"
         {...answer}
         value={answer.value === '' ? null : answer.value}
-        error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+        error={error}
         withErrorStyles={required}
-        errorProps={{ c: required ? 'red' : 'orange' }}
+        errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
         renderOption={renderOption}

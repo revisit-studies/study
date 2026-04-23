@@ -26,8 +26,10 @@ import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
-import { parseStringOptionValue } from '../../utils/stringOptions';
-import { getDefaultFieldValue, usesStandaloneDontKnowField } from './utils';
+import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
+import {
+  generateErrorMessage, getDefaultFieldValue, REQUIRED_ERROR_MESSAGE, usesStandaloneDontKnowField,
+} from './utils';
 import { CustomResponseField } from '../../store/types';
 
 export function ResponseSwitcher({
@@ -41,6 +43,7 @@ export function ResponseSwitcher({
   disabled,
   field,
   customError,
+  errors,
 }: {
   response: Response;
   form: GetInputPropsReturnType;
@@ -52,6 +55,7 @@ export function ResponseSwitcher({
   disabled?: boolean;
   field?: CustomResponseField;
   customError?: string | null;
+  errors?: boolean;
 }) {
   const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
@@ -150,6 +154,63 @@ export function ResponseSwitcher({
   const responseStyle = response.style || {};
   const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
   const customResponseValue = useMemo<JsonValue | null>(() => (ans.value ?? null) as JsonValue | null, [ans.value]);
+  const validationValues = useMemo(() => ({
+    [response.id]: ans.value,
+    [`${response.id}-dontKnow`]: dontKnowChecked,
+    [`${response.id}-other`]: otherValue.value,
+  }), [response.id, ans.value, dontKnowChecked, otherValue.value]);
+  const errorOptions = useMemo(() => {
+    if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons' || response.type === 'dropdown') {
+      return parseStringOptions(response.options);
+    }
+
+    if (response.type === 'likert') {
+      const startValue = response.start ?? 1;
+      const spacingValue = response.spacing ?? 1;
+      return Array.from({ length: Number(response.numItems) }, (_, idx) => {
+        const value = startValue + (idx * spacingValue);
+        return { label: `${value}`, value: `${value}` };
+      });
+    }
+
+    return undefined;
+  }, [response]);
+  const responseError = useMemo(() => {
+    if (
+      response.type === 'reactive'
+      || response.type === 'custom'
+      || response.type === 'textOnly'
+      || response.type === 'divider'
+      || response.type === 'ranking-sublist'
+      || response.type === 'ranking-categorical'
+      || response.type === 'ranking-pairwise'
+    ) {
+      return null;
+    }
+
+    return generateErrorMessage(
+      response,
+      ans as { value?: number | string | string[] | Record<string, string>; checked?: string[] },
+      errorOptions,
+      { showRequiredErrors: errors, values: validationValues },
+    );
+  }, [response, ans, errorOptions, errors, validationValues]);
+  const rankingError = useMemo(() => {
+    if (
+      response.type !== 'ranking-sublist'
+      && response.type !== 'ranking-categorical'
+      && response.type !== 'ranking-pairwise'
+    ) {
+      return null;
+    }
+
+    return errors
+      && response.required
+      && !dontKnowChecked
+      && Object.keys((ans.value as Record<string, string>) || {}).length === 0
+      ? REQUIRED_ERROR_MESSAGE
+      : null;
+  }, [response, errors, dontKnowChecked, ans.value]);
 
   return (
     <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseStyle}>
@@ -158,6 +219,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: number }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -167,6 +229,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -176,6 +239,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -185,6 +249,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -194,6 +259,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -203,6 +269,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: number }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -212,6 +279,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
         otherValue={otherValue}
@@ -222,6 +290,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string[] }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
         otherValue={otherValue}
@@ -233,6 +302,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: Record<string, string> }}
+        error={rankingError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -250,6 +320,7 @@ export function ResponseSwitcher({
         disabled={isDisabled}
         response={response}
         answer={ans as { value: Record<string, string> }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -259,6 +330,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />

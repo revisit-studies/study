@@ -6,6 +6,7 @@ import type {
 } from '../../parser/types';
 import type { CustomResponseValidate } from '../../store/types';
 import {
+  REQUIRED_ERROR_MESSAGE,
   checkCheckboxResponseForValidation,
   generateCustomResponseErrorMessage,
   generateErrorMessage,
@@ -222,7 +223,7 @@ describe('generateValidation custom', () => {
     const validation = generateValidation([response], { [response.id]: customValidate });
     const error = validation[response.id]({}, {});
 
-    expect(error).toBe('Empty input');
+    expect(error).toBe(REQUIRED_ERROR_MESSAGE);
   });
 
   it('treats nested empty string structures as missing required input', () => {
@@ -236,7 +237,7 @@ describe('generateValidation custom', () => {
       tags: ['', ''],
     }, {});
 
-    expect(error).toBe('Empty input');
+    expect(error).toBe(REQUIRED_ERROR_MESSAGE);
   });
 
   it('does not treat 0 or false as empty custom values', () => {
@@ -317,6 +318,10 @@ describe('generateCustomResponseErrorMessage', () => {
     expect(generateCustomResponseErrorMessage(response, null, {}, customValidate)).toBeNull();
   });
 
+  it('shows the required message for untouched required custom responses after submit', () => {
+    expect(generateCustomResponseErrorMessage(response, null, {}, customValidate, undefined, { showRequiredErrors: true })).toBe('Please answer this question to continue.');
+  });
+
   it('shows validation feedback once the response is partially filled', () => {
     expect(generateCustomResponseErrorMessage(response, {
       chartType: 'Bar',
@@ -358,6 +363,40 @@ describe('mergeReactiveAnswers', () => {
 });
 
 describe('generateErrorMessage checkbox', () => {
+  it('treats checkbox other without text as invalid', () => {
+    const checkboxResponse: Response = {
+      id: 'checkbox-response',
+      prompt: 'Checkbox response',
+      type: 'checkbox',
+      required: true,
+      options: ['Option 1', 'Option 2'],
+      withOther: true,
+    };
+
+    const error = generateErrorMessage(checkboxResponse, {
+      value: ['__other'],
+    }, undefined, { values: { 'checkbox-response-other': '' } });
+
+    expect(error).toBe('Please fill in Other to continue.');
+  });
+
+  it('removes required error when dont-know is checked', () => {
+    const checkboxResponse: Response = {
+      id: 'checkbox-response',
+      prompt: 'Checkbox response',
+      type: 'checkbox',
+      required: true,
+      options: ['Option 1', 'Option 2', 'Option 3'],
+      withDontKnow: true,
+    };
+
+    const error = generateErrorMessage(checkboxResponse, {
+      value: [],
+    }, undefined, { showRequiredErrors: true, values: { 'checkbox-response-dontKnow': true } });
+
+    expect(error).toBeNull();
+  });
+
   it('validates checkbox selections when checkbox group value is an array', () => {
     const checkboxResponse: Response = {
       id: 'checkbox-response',
@@ -384,9 +423,66 @@ describe('generateErrorMessage checkbox', () => {
       withDontKnow: true,
     };
 
-    const error = generateErrorMessage(checkboxResponse, { value: [], dontKnowChecked: true });
+    const error = generateErrorMessage(checkboxResponse, { value: [] }, undefined, { values: { 'checkbox-response-dontKnow': true } });
 
     expect(error).toBeNull();
+  });
+});
+
+describe('generateErrorMessage radio', () => {
+  it('treats radio other without text as invalid', () => {
+    const radioResponse: Response = {
+      id: 'radio-response',
+      prompt: 'Radio response',
+      type: 'radio',
+      required: true,
+      options: ['Option 1', 'Option 2'],
+      withOther: true,
+    };
+
+    const error = generateErrorMessage(radioResponse, {
+      value: 'other',
+    }, undefined, { values: { 'radio-response-other': '' } });
+
+    expect(error).toBe('Please fill in Other to continue.');
+  });
+});
+
+describe('generateValidation other inputs', () => {
+  it('treats radio other without text as empty input', () => {
+    const response: Response = {
+      id: 'radio-response',
+      prompt: 'Radio response',
+      type: 'radio',
+      required: true,
+      options: ['Option 1', 'Option 2'],
+      withOther: true,
+    };
+
+    const validation = generateValidation([response]);
+
+    expect(validation[response.id]('other', {
+      [response.id]: 'other',
+      [`${response.id}-other`]: '',
+    })).toBe(REQUIRED_ERROR_MESSAGE);
+  });
+
+  it('treats checkbox other without text as empty input', () => {
+    const response: Response = {
+      id: 'checkbox-response',
+      prompt: 'Checkbox response',
+      type: 'checkbox',
+      required: true,
+      options: ['Option 1', 'Option 2'],
+      withOther: true,
+    };
+
+    const validation = generateValidation([response]);
+
+    expect(validation[response.id](['__other'], {
+      [response.id]: ['__other'],
+      [`${response.id}-other`]: '',
+    })).toBe(REQUIRED_ERROR_MESSAGE);
   });
 });
 
@@ -456,8 +552,7 @@ describe('generateErrorMessage requiredValue with dont-know', () => {
 
     const error = generateErrorMessage(numericalResponse, {
       value: '',
-      dontKnowChecked: true,
-    });
+    }, undefined, { values: { 'required-value-response-dontKnow': true } });
 
     expect(error).toBeNull();
   });

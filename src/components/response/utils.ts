@@ -11,6 +11,7 @@ type ResponseDefault = JsonValue;
 type ResponseWithDefault = Response & { default?: ResponseDefault };
 
 export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
+export const REQUIRED_ERROR_MESSAGE = 'Please answer this question to continue.';
 
 function isEmptyCustomResponseValue(value: JsonValue | undefined): boolean {
   if (value === null || value === undefined || value === '') {
@@ -113,6 +114,31 @@ function checkMatrixResponseForMessage(response: MatrixResponse, value: Record<s
   }
 
   return checkMatrixResponse(response, value);
+}
+
+function hasOtherText(value: StoredAnswer['answer'][string] | undefined) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isOtherSelectionIncomplete(
+  response: Response,
+  value: StoredAnswer['answer'][string],
+  values: StoredAnswer['answer'],
+) {
+  if (!('withOther' in response) || !response.withOther) {
+    return false;
+  }
+
+  const otherInputValue = values[`${response.id}-other`];
+  if (response.type === 'radio') {
+    return value === 'other' && !hasOtherText(otherInputValue);
+  }
+
+  if (response.type === 'checkbox') {
+    return Array.isArray(value) && value.includes('__other') && !hasOtherText(otherInputValue);
+  }
+
+  return false;
 }
 
 const getQueryParameters = () => {
@@ -270,7 +296,7 @@ function validateCustomResponse(
   }
 
   if (response.required !== false && isEmptyCustomResponseValue(value)) {
-    return 'Empty input';
+    return REQUIRED_ERROR_MESSAGE;
   }
 
   if (response.requiredValue !== undefined && !isEmptyCustomResponseValue(value) && !isEqual(value, response.requiredValue)) {
@@ -294,6 +320,7 @@ export function generateCustomResponseErrorMessage(
   values: StoredAnswer['answer'],
   customValidate?: CustomResponseValidate,
   loadError?: string,
+  options?: { showRequiredErrors?: boolean },
 ) {
   if (loadError) {
     return loadError;
@@ -308,6 +335,9 @@ export function generateCustomResponseErrorMessage(
   }
 
   if (isEmptyCustomResponseValue(value)) {
+    if (options?.showRequiredErrors) {
+      return REQUIRED_ERROR_MESSAGE;
+    }
     return null;
   }
 
@@ -347,14 +377,18 @@ export const generateValidation = (
             return null;
           }
 
+          if (isOtherSelectionIncomplete(response, value, values)) {
+            return REQUIRED_ERROR_MESSAGE;
+          }
+
           if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
             if (response.type === 'matrix-checkbox' || response.type === 'matrix-radio') {
               return checkMatrixResponse(response, value as Record<string, string>);
             }
             if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
-              return Object.keys(value).length > 0 ? null : 'Empty Input';
+              return Object.keys(value).length > 0 ? null : REQUIRED_ERROR_MESSAGE;
             }
-            return Object.values(value).every((val) => val !== '') ? null : 'Empty Input';
+            return Object.values(value).every((val) => val !== '') ? null : REQUIRED_ERROR_MESSAGE;
           }
           if (Array.isArray(value)) {
             if (response.requiredValue != null && !Array.isArray(response.requiredValue)) {
@@ -375,7 +409,7 @@ export const generateValidation = (
             if (response.type === 'dropdown') {
               return checkDropdownResponse(response, value as string[]);
             }
-            return value.length === 0 ? 'Empty input' : null;
+            return value.length === 0 ? REQUIRED_ERROR_MESSAGE : null;
           }
 
           if (response.required && response.requiredValue != null && value != null) {
@@ -383,15 +417,14 @@ export const generateValidation = (
           }
           if (response.required) {
             if ((value === null || value === undefined || value === '') && !values[`${response.id}-dontKnow`]) {
-              return 'Empty input';
+              return REQUIRED_ERROR_MESSAGE;
             }
             if (response.type === 'numerical') {
               return checkNumericalResponse(response, value as unknown as number);
-              // return 'Empty input';
             }
           }
 
-          return value === null ? 'Empty input' : null;
+          return value === null ? REQUIRED_ERROR_MESSAGE : null;
         },
       };
     }
@@ -425,12 +458,23 @@ export function useAnswerField(
 
 export function generateErrorMessage(
   response: Response,
-  answer: { value?: number | string | string[] | Record<string, string>; checked?: string[]; dontKnowChecked?: boolean },
+  answer: {
+    value?: number | string | string[] | Record<string, string>;
+    checked?: string[];
+  },
   options?: (StringOption | NumberOption)[],
+  errorOptions?: {
+    showRequiredErrors?: boolean;
+    values?: StoredAnswer['answer'];
+  },
 ) {
   const { requiredValue, requiredLabel } = response;
+  const showRequiredErrors = !!errorOptions?.showRequiredErrors;
+  const values = errorOptions?.values || {};
+  const dontKnowChecked = !!values[`${response.id}-dontKnow`];
+  const otherValue = values[`${response.id}-other`];
 
-  if (shouldBypassValidationForStandaloneDontKnow(response, !!answer.dontKnowChecked)) {
+  if (shouldBypassValidationForStandaloneDontKnow(response, dontKnowChecked)) {
     return null;
   }
 
@@ -438,11 +482,40 @@ export function generateErrorMessage(
   const checkboxValues = Array.isArray(answer.checked)
     ? answer.checked
     : (Array.isArray(answer.value) ? answer.value : undefined);
+  const isEmptyMatrixResponse = typeof answer.value === 'object'
+    && !Array.isArray(answer.value)
+    && answer.value !== null
+    && Object.values(answer.value).every((val) => val === '');
+
+  if (showRequiredErrors && response.required) {
+    if (checkboxValues && checkboxValues.length === 0) {
+      return REQUIRED_ERROR_MESSAGE;
+    }
+
+    if ((response.type === 'matrix-radio' || response.type === 'matrix-checkbox') && isEmptyMatrixResponse) {
+      return REQUIRED_ERROR_MESSAGE;
+    }
+
+    if ((answer.value === null || answer.value === undefined || answer.value === '')
+      && !dontKnowChecked) {
+      return REQUIRED_ERROR_MESSAGE;
+    }
+  }
+
+  if ('withOther' in response && response.withOther) {
+    if (response.type === 'radio' && answer.value === 'other' && !hasOtherText(otherValue)) {
+      return 'Please fill in Other to continue.';
+    }
+
+    if (response.type === 'checkbox' && checkboxValues?.includes('__other') && !hasOtherText(otherValue)) {
+      return 'Please fill in Other to continue.';
+    }
+  }
 
   if (checkboxValues && Array.isArray(requiredValue)) {
     error = requiredValue && [...requiredValue].sort().toString() !== [...checkboxValues].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
   } else if (checkboxValues && response.required && response.type === 'checkbox') {
-    error = checkCheckboxResponseForValidation(response, checkboxValues, !!answer.dontKnowChecked);
+    error = checkCheckboxResponseForValidation(response, checkboxValues, dontKnowChecked);
   } else if (answer.value && response.type === 'dropdown') {
     error = checkDropdownResponse(response, answer.value as string[]);
   } else if (answer.value && typeof answer.value === 'number' && response.type === 'numerical' && checkNumericalResponse(response, answer.value)) {

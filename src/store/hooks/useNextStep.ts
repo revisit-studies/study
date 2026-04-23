@@ -4,7 +4,6 @@ import {
   useStoreSelector,
   useStoreActions,
   useStoreDispatch,
-  useAreResponsesValid,
   useFlatSequence,
 } from '../store';
 import {
@@ -46,11 +45,13 @@ export function useNextStep() {
 
   const dataCollectionEnabled = useMemo(() => modes.dataCollectionEnabled, [modes]);
 
-  const areResponsesValid = useAreResponsesValid(identifier);
-
   // Status of the next button. If false, the next button should be disabled
   const isAnalysis = useIsAnalysis();
-  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || !areResponsesValid;
+  const isStimulusValid = useMemo(() => {
+    const validationForStep = trialValidation[identifier];
+    return validationForStep?.stimulus?.valid ?? true;
+  }, [identifier, trialValidation]);
+  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || !isStimulusValid;
 
   const storedAnswer = useStoredAnswer();
 

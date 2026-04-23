@@ -29,6 +29,7 @@ import {
 } from '../../store/types';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
+import { useNextStep } from '../../store/hooks/useNextStep';
 import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
 import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
 
@@ -128,6 +129,7 @@ export function ResponseBlock({
   const rankingAnswers = useStoreSelector((state) => state.rankingAnswers);
 
   const trialValidation = useStoreSelector((state) => state.trialValidation);
+  const { goToNextStep } = useNextStep();
 
   const studyConfig = useStudyConfig();
 
@@ -138,6 +140,7 @@ export function ResponseBlock({
   const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
+  const [errors, setErrors] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
@@ -364,6 +367,20 @@ export function ResponseBlock({
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
+  useEffect(() => {
+    setErrors(false);
+  }, [identifier]);
+
+  const handleNextClick = useCallback(() => {
+    if (bypassValidationForFailedTraining || answerValidator.isValid()) {
+      goToNextStep();
+      return;
+    }
+
+    setErrors(true);
+    answerValidator.validate();
+  }, [answerValidator, bypassValidationForFailedTraining, goToNextStep]);
+
   let index = 0;
   return (
     <>
@@ -417,12 +434,14 @@ export function ResponseBlock({
                           answerValidator.values,
                           customResponseValidators[response.id],
                           customResponseLoadErrors[response.id],
+                          { showRequiredErrors: errors },
                         )
                         : undefined}
                       response={response}
                       index={index}
                       config={config}
                       disabled={disabledAttempts}
+                      errors={errors}
                     />
                     <FeedbackAlert
                       response={response}
@@ -451,11 +470,11 @@ export function ResponseBlock({
 
       {showBtnsInLocation && (
       <NextButton
-        disabled={(hasCorrectAnswerFeedback && !enableNextButton)
-          || (!bypassValidationForFailedTraining && !answerValidator.isValid())}
+        disabled={(hasCorrectAnswerFeedback && !enableNextButton)}
         label={nextButtonText}
         config={config}
         location={location}
+        onNext={handleNextClick}
         checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
           <Button
             disabled={hasCorrectAnswer || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}

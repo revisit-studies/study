@@ -11,7 +11,6 @@ import radioClasses from './css/Radio.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
-import { generateErrorMessage } from './utils';
 import { parseStringOptions } from '../../utils/stringOptions';
 import { getMatrixAnswerOptions, isMatrixDontKnowValue, MATRIX_DONT_KNOW_OPTION } from '../../utils/responseOptions';
 
@@ -110,12 +109,14 @@ export function MatrixInput({
   answer,
   index,
   disabled,
+  error,
   enumerateQuestions,
 }: {
   response: MatrixResponse;
   answer: { value: Record<string, string> };
   index: number;
   disabled: boolean;
+  error?: string | null;
   enumerateQuestions: boolean;
 }) {
   const { setMatrixAnswersRadio, setMatrixAnswersCheckbox } = useStoreActions();
@@ -178,8 +179,6 @@ export function MatrixInput({
 
     dispatchCheckboxUpdate(option.value, isChecked);
   };
-
-  const error = generateErrorMessage(response, answer);
 
   const _n = _choices.length;
   const _m = orderedQuestions.length;

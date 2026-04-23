@@ -393,7 +393,10 @@
           ],
           "minSelections": 1,
           "maxSelections": 3,
-          "default": ["Line", "test"]
+          "default": [
+            "Line",
+            "test"
+          ]
         },
         {
           "id": "default-radio",
@@ -778,7 +781,7 @@
             "Grapes"
           ],
           "numItems": 2,
-          "required": false
+          "required": true
         },
         {
           "id": "ranking-categorical",
@@ -792,7 +795,7 @@
             "Dancing",
             "Photography"
           ],
-          "required": false
+          "required": true
         },
         {
           "id": "ranking-pairwise",
@@ -807,7 +810,7 @@
             "Salad",
             "Tacos"
           ],
-          "required": false
+          "required": true
         }
       ]
     },
@@ -988,6 +991,212 @@
           "location": "sidebar"
         }
       ]
+    },
+    "Unanswered Highlights - Mixed Layout": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "mixed-layout-title",
+          "type": "textOnly",
+          "prompt": "# Unanswered Highlights - Mixed Layout\n\nThis page keeps Next enabled. Clicking it should reveal unanswered required responses across `aboveStimulus`, `belowStimulus`, and `sidebar` together.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "mixed-layout-above",
+          "type": "shortText",
+          "prompt": "Above stimulus question",
+          "placeholder": "Type something here",
+          "location": "aboveStimulus"
+        },
+        {
+          "id": "mixed-layout-main",
+          "type": "dropdown",
+          "prompt": "Main-column dropdown",
+          "placeholder": "Choose a chart type",
+          "options": [
+            "Bar",
+            "Line",
+            "Scatter"
+          ],
+          "location": "belowStimulus"
+        },
+        {
+          "id": "mixed-layout-sidebar",
+          "type": "radio",
+          "prompt": "Sidebar radio question",
+          "options": [
+            "Option A",
+            "Option B"
+          ],
+          "location": "sidebar"
+        }
+      ]
+    },
+    "Unanswered Highlights - Grouped Inputs": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "grouped-inputs-title",
+          "type": "textOnly",
+          "prompt": "# Unanswered Highlights - Grouped Inputs\n\nGrouped responses should use the same warning size and spacing while still revealing only after a blocked Next attempt.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "grouped-checkbox",
+          "type": "checkbox",
+          "prompt": "Checkbox question",
+          "minSelections": 2,
+          "options": [
+            "Alpha",
+            "Beta",
+            "Gamma"
+          ]
+        },
+        {
+          "id": "grouped-radio",
+          "type": "radio",
+          "prompt": "Radio question",
+          "options": [
+            "First",
+            "Second"
+          ]
+        },
+        {
+          "id": "grouped-buttons",
+          "type": "buttons",
+          "prompt": "Buttons question",
+          "options": [
+            "One",
+            "Two",
+            "Three"
+          ]
+        },
+        {
+          "id": "grouped-likert",
+          "type": "likert",
+          "prompt": "Likert question",
+          "numItems": 5,
+          "leftLabel": "Low",
+          "rightLabel": "High"
+        }
+      ]
+    },
+    "Unanswered Highlights - Sidebar Only With Main Next": {
+      "type": "questionnaire",
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "sidebar-only-title",
+          "type": "textOnly",
+          "prompt": "# Unanswered Highlights - Sidebar Only With Main Next\n\nThe required response is only in the sidebar, but the Next button stays in the main column.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "sidebar-only-question",
+          "type": "shortText",
+          "prompt": "Sidebar-only required question",
+          "placeholder": "Answer from the sidebar",
+          "location": "sidebar"
+        }
+      ]
+    },
+    "Stimulus Validation - Forced Video Only": {
+      "type": "video",
+      "path": "demo-video/assets/venice.mp4",
+      "forceCompletion": true,
+      "response": [
+        {
+          "id": "forced-video-only-title",
+          "type": "textOnly",
+          "prompt": "# Stimulus Validation - Forced Video Only\n\nNext should remain disabled until the video finishes, without showing unanswered form warnings."
+        }
+      ]
+    },
+    "Stimulus Validation - Forced Video With Form Elements": {
+      "type": "video",
+      "path": "demo-video/assets/venice.mp4",
+      "forceCompletion": true,
+      "response": [
+        {
+          "id": "forced-video-form-title",
+          "type": "textOnly",
+          "prompt": "# Stimulus Validation - Forced Video With Form Elements\n\nThe video keeps Next disabled at first. After completion, Next becomes enabled and reveals unanswered form fields if needed.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "forced-video-form-main",
+          "type": "shortText",
+          "prompt": "Main-column question after the stimulus",
+          "placeholder": "Describe what you noticed"
+        },
+        {
+          "id": "forced-video-form-sidebar",
+          "type": "radio",
+          "prompt": "Sidebar follow-up",
+          "options": [
+            "Yes",
+            "No"
+          ],
+          "location": "sidebar"
+        }
+      ]
+    },
+    "Stimulus Validation - React Component Gate": {
+      "type": "react-component",
+      "path": "demo-form-elements/assets/StimulusGate.tsx",
+      "parameters": {
+        "title": "Stimulus validation with a React component",
+        "description": "This mock stimulus calls setAnswer and keeps Next disabled until you click Complete stimulus."
+      },
+      "response": [
+        {
+          "id": "react-stimulus-status",
+          "type": "reactive",
+          "prompt": "Stimulus gate status"
+        }
+      ]
+    },
+    "Training Validation - Check Answer Required": {
+      "type": "questionnaire",
+      "provideFeedback": true,
+      "allowFailedTraining": false,
+      "trainingAttempts": 2,
+      "correctAnswer": [
+        {
+          "id": "training-chart-choice",
+          "answer": "Bar"
+        }
+      ],
+      "response": [
+        {
+          "id": "training-title",
+          "type": "textOnly",
+          "prompt": "# Training Validation - Check Answer Required\n\nThis page keeps Next disabled until the participant checks the answer and satisfies the training rule.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "training-chart-choice",
+          "type": "dropdown",
+          "prompt": "Which chart type is correct?",
+          "placeholder": "Choose mark",
+          "options": [
+            "Bar",
+            "Line",
+            "Scatter"
+          ]
+        }
+      ]
+    },
+    "Timer Validation - Next Button Enable Time": {
+      "type": "questionnaire",
+      "nextButtonEnableTime": 3000,
+      "response": [
+        {
+          "id": "timer-title",
+          "type": "textOnly",
+          "prompt": "# Timer Validation - Next Button Enable Time\n\nNext should be truly disabled for three seconds and then enable without any required response."
+        }
+      ]
     }
   },
   "sequence": {
@@ -1000,7 +1209,15 @@
       "Randomizing Options",
       "Randomizing Questions",
       "Ranking Widgets",
-      "Sidebar Form Elements"
+      "Sidebar Form Elements",
+      "Unanswered Highlights - Mixed Layout",
+      "Unanswered Highlights - Grouped Inputs",
+      "Unanswered Highlights - Sidebar Only With Main Next",
+      "Stimulus Validation - Forced Video Only",
+      "Stimulus Validation - Forced Video With Form Elements",
+      "Stimulus Validation - React Component Gate",
+      "Training Validation - Check Answer Required",
+      "Timer Validation - Next Button Enable Time"
     ]
   }
 }
