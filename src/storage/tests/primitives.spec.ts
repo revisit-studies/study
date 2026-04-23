@@ -8,8 +8,6 @@ import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { StorageEngine, cleanupModes } from '../engines/types';
 import { hash } from '../engines/utils/storageEngineHelpers';
 
-// import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
-
 const studyId = 'test-study';
 const configSimple = testConfigSimple as StudyConfig;
 const participantMetadata: ParticipantMetadata = {
@@ -21,8 +19,6 @@ const participantMetadata: ParticipantMetadata = {
 
 describe.each([
   { TestEngine: LocalStorageEngine },
-  // { TestEngine: SupabaseStorageEngine }, // Uncomment to test with Supabase
-  // { TestEngine: FirebaseStorageEngine }, TODO
 ])('describe object $TestEngine', ({ TestEngine }) => {
   let storageEngine: StorageEngine;
 

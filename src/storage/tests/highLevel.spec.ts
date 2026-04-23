@@ -12,7 +12,6 @@ import { Sequence, StoredAnswer } from '../../store/types';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { StorageEngine, StorageObject, StorageObjectType } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
-// import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
 
 const studyId = 'test-study';
 const configSimple = testConfigSimple as StudyConfig;
@@ -31,7 +30,7 @@ const conditionalLatinSquareConfig: StudyConfig = {
     version: '1.0.0',
     authors: ['Test Author'],
     description: 'A study config for testing conditional latin square balancing.',
-    date: '2026-02-23',
+    date: '2026-04-08',
     organizations: ['Test Organization'],
   },
   uiConfig: {
@@ -236,8 +235,6 @@ class DelayedLocalStorageEngine extends LocalStorageEngine {
 
 describe.each([
   { TestEngine: LocalStorageEngine },
-  // { TestEngine: SupabaseStorageEngine }, // Uncomment to test with Supabase
-  // { TestEngine: FirebaseStorageEngine }, TODO
 ])('describe object $TestEngine', ({ TestEngine }) => {
   let storageEngine: StorageEngine;
   let sequenceArray: Sequence[];
