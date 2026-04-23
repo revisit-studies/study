@@ -1100,6 +1100,158 @@
         }
       ]
     },
+    "Unanswered Highlights - Above Stimulus Only With Main Next": {
+      "type": "questionnaire",
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "above-only-title",
+          "type": "textOnly",
+          "prompt": "# Unanswered Highlights - Above Stimulus Only With Main Next\n\nThe only required response lives above the stimulus area, while the Next button stays in the main column below.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "above-only-question",
+          "type": "longText",
+          "prompt": "Above-stimulus required question",
+          "secondaryText": "This should still block Next and reveal its error state even though no required response is below the stimulus.",
+          "placeholder": "Answer from above the stimulus",
+          "location": "aboveStimulus"
+        }
+      ]
+    },
+    "Unanswered Highlights - Styled Form Mix": {
+      "type": "questionnaire",
+      "stylesheetPath": "demo-style/assets/style/form.css",
+      "response": [
+        {
+          "id": "styled-mix-title",
+          "type": "textOnly",
+          "prompt": "# Unanswered Highlights - Styled Form Mix\n\nThis page borrows the `demo-style` form stylesheet and mixes required and optional responses across locations.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "styled-mix-required-main",
+          "type": "radio",
+          "prompt": "Required main-column question",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "id": "styled-mix-optional-main",
+          "type": "shortText",
+          "prompt": "Optional comment in the main column",
+          "placeholder": "Optional comment",
+          "required": false
+        },
+        {
+          "id": "styled-mix-required-above",
+          "type": "dropdown",
+          "prompt": "Required above-stimulus dropdown",
+          "placeholder": "Choose a chart type",
+          "options": [
+            "Bar",
+            "Line",
+            "Scatter"
+          ],
+          "location": "aboveStimulus"
+        },
+        {
+          "id": "styled-mix-optional-sidebar",
+          "type": "checkbox",
+          "prompt": "Optional sidebar checkbox",
+          "secondaryText": "This should not count toward the unanswered summary.",
+          "options": [
+            "Alpha",
+            "Beta",
+            "Gamma"
+          ],
+          "required": false,
+          "location": "sidebar"
+        }
+      ]
+    },
+    "Unanswered Highlights - Optional Only": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "optional-only-title",
+          "type": "textOnly",
+          "prompt": "# Unanswered Highlights - Optional Only\n\nAll responses on this page are optional, so Next should continue without showing summary or inline error states.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "optional-only-main",
+          "type": "shortText",
+          "prompt": "Optional short text",
+          "placeholder": "Leave blank if you want",
+          "required": false
+        },
+        {
+          "id": "optional-only-above",
+          "type": "radio",
+          "prompt": "Optional above-stimulus radio",
+          "options": [
+            "One",
+            "Two"
+          ],
+          "required": false,
+          "location": "aboveStimulus"
+        },
+        {
+          "id": "optional-only-sidebar",
+          "type": "buttons",
+          "prompt": "Optional sidebar buttons",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ],
+          "required": false,
+          "location": "sidebar"
+        }
+      ]
+    },
+    "Unanswered Highlights - Website / Iframe Validation Mix": {
+      "type": "website",
+      "path": "https://revisit.dev/docs/introduction/",
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "website-validation-title",
+          "type": "textOnly",
+          "prompt": "# Unanswered Highlights - Website / Iframe Validation Mix\n\nThis page uses a `website` stimulus and keeps the required responses outside the stimulus frame to verify the summary and inline errors still appear correctly.",
+          "restartEnumeration": true,
+          "location": "aboveStimulus"
+        },
+        {
+          "id": "website-validation-above",
+          "type": "shortText",
+          "prompt": "Required question above the iframe",
+          "placeholder": "Summarize something you noticed",
+          "location": "aboveStimulus"
+        },
+        {
+          "id": "website-validation-sidebar",
+          "type": "radio",
+          "prompt": "Required sidebar follow-up",
+          "options": [
+            "Helpful",
+            "Not helpful"
+          ],
+          "location": "sidebar"
+        },
+        {
+          "id": "website-validation-optional-main",
+          "type": "longText",
+          "prompt": "Optional main-column note",
+          "placeholder": "Optional notes about the site",
+          "required": false
+        }
+      ]
+    },
     "Stimulus Validation - Forced Video Only": {
       "type": "video",
       "path": "demo-video/assets/venice.mp4",
@@ -1213,6 +1365,10 @@
       "Unanswered Highlights - Mixed Layout",
       "Unanswered Highlights - Grouped Inputs",
       "Unanswered Highlights - Sidebar Only With Main Next",
+      "Unanswered Highlights - Above Stimulus Only With Main Next",
+      "Unanswered Highlights - Styled Form Mix",
+      "Unanswered Highlights - Optional Only",
+      "Unanswered Highlights - Website / Iframe Validation Mix",
       "Stimulus Validation - Forced Video Only",
       "Stimulus Validation - Forced Video With Form Elements",
       "Stimulus Validation - React Component Gate",

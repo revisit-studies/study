@@ -28,8 +28,13 @@ import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
 import {
-  generateErrorMessage, getDefaultFieldValue, REQUIRED_ERROR_MESSAGE, usesStandaloneDontKnowField,
+  getDefaultFieldValue,
 } from './utils';
+import {
+  generateErrorMessage,
+  REQUIRED_ERROR_MESSAGE,
+  usesStandaloneDontKnowField,
+} from './responseErrors';
 import { CustomResponseField } from '../../store/types';
 
 export function ResponseSwitcher({

@@ -21,8 +21,13 @@ import {
 
 import { NextButton } from '../NextButton';
 import {
-  generateCustomResponseErrorMessage, generateInitFields, mergeReactiveAnswers, summarizeResponseIssues, useAnswerField, usesStandaloneDontKnowField,
+  generateInitFields, mergeReactiveAnswers, useAnswerField,
 } from './utils';
+import {
+  generateCustomResponseErrorMessage,
+  summarizeResponseIssues,
+  usesStandaloneDontKnowField,
+} from './responseErrors';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
 import {
@@ -260,6 +265,10 @@ export function ResponseBlock({
 
     return `Please review ${parts.join(' and ')} to continue.`;
   }, [responseIssueSummary.invalidCount, responseIssueSummary.unansweredCount]);
+  const hasResponseIssues = useMemo(
+    () => responseIssueSummary.unansweredCount > 0 || responseIssueSummary.invalidCount > 0,
+    [responseIssueSummary.invalidCount, responseIssueSummary.unansweredCount],
+  );
 
   const answerValidator = useAnswerField(
     responsesWithDefaults,
@@ -377,6 +386,12 @@ export function ResponseBlock({
     }));
   };
   const checkAnswerProvideFeedback = useCallback(() => {
+    if (hasResponseIssues) {
+      storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
+      answerValidator.validate();
+      return;
+    }
+
     const newAttemptsUsed = attemptsUsed + 1;
     setAttemptsUsed(newAttemptsUsed);
 
@@ -448,7 +463,7 @@ export function ResponseBlock({
         ),
       );
     }
-  }, [attemptsUsed, allResponsesWithDefaults, config, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, navigate, identifier, storeDispatch, alertConfig, saveIncorrectAnswer, trialValidation]);
+  }, [answerValidator, attemptsUsed, allResponsesWithDefaults, allowFailedTraining, alertConfig, config, hasCorrectAnswerFeedback, hasResponseIssues, identifier, navigate, saveIncorrectAnswer, setResponseSubmitAttempt, storeDispatch, trainingAttempts, trialValidation]);
 
   const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 
@@ -479,14 +494,14 @@ export function ResponseBlock({
   }, [currentSubmitAttempt, identifier, isAnalysis, savedSubmitAttempt, setResponseSubmitAttempt, storeDispatch]);
 
   const handleNextClick = useCallback(() => {
-    if (bypassValidationForFailedTraining || answerValidator.isValid()) {
+    if (bypassValidationForFailedTraining || !hasResponseIssues) {
       goToNextStep();
       return;
     }
 
     storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
     answerValidator.validate();
-  }, [answerValidator, bypassValidationForFailedTraining, goToNextStep, identifier, setResponseSubmitAttempt, storeDispatch]);
+  }, [answerValidator, bypassValidationForFailedTraining, goToNextStep, hasResponseIssues, identifier, setResponseSubmitAttempt, storeDispatch]);
 
   let index = 0;
   return (

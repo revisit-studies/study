@@ -6,17 +6,19 @@ import type {
 } from '../../parser/types';
 import type { CustomResponseValidate } from '../../store/types';
 import {
+  generateInitFields,
+  generateValidation,
+  mergeReactiveAnswers,
+  normalizeCheckboxDontKnowValue,
+} from './utils';
+import {
   REQUIRED_ERROR_MESSAGE,
   checkCheckboxResponseForValidation,
   generateCustomResponseErrorMessage,
   generateErrorMessage,
-  generateInitFields,
-  summarizeResponseIssues,
-  generateValidation,
-  mergeReactiveAnswers,
-  normalizeCheckboxDontKnowValue,
   shouldBypassValidationForStandaloneDontKnow,
-} from './utils';
+  summarizeResponseIssues,
+} from './responseErrors';
 
 describe('generateInitFields', () => {
   const originalWindow = globalThis.window;
