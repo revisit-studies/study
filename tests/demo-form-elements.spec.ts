@@ -68,6 +68,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   const ageInput = page.getByPlaceholder('Enter your age here, range from 0 - 100');
   await expect(ageInput).toBeVisible({ timeout: 10000 });
   await ageInput.fill('120');
+  await ageInput.press('Tab');
   await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();
   await ageInput.fill('12');
 
@@ -93,11 +94,11 @@ test('Test questionnaire component with responses and randomizing questions and 
 
   // Vertical Checkbox
   await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();
-  const minSelectionsText = await page.getByText('Please select at least 2 options');
+  const minSelectionsText = page.getByText('Please select at least 2 options').first();
   await expect(minSelectionsText).toBeVisible();
   await page.getByRole('checkbox', { name: 'Option 1' }).nth(0).click();
   await page.getByRole('checkbox', { name: 'Option 3' }).nth(0).click();
-  const maxSelectionsText = await page.getByText('Please select at most 2 options');
+  const maxSelectionsText = page.getByText('Please select at most 2 options').first();
   await expect(maxSelectionsText).toBeVisible();
   await page.getByRole('checkbox', { name: 'Option 1' }).nth(0).click();
 
