@@ -31,17 +31,22 @@ export function SummaryView({
   );
 
   const selectedConfigRows = useMemo(() => {
-    const visibleConfigHashes = [...new Set(visibleParticipants.map((participant) => participant.participantConfigHash))]
-      .filter((hash) => hash in allConfigs);
+    const visibleConfigHashes = [...new Set(visibleParticipants.map((participant) => participant.participantConfigHash))];
 
-    return visibleConfigHashes.map((configHash) => {
+    return visibleConfigHashes.flatMap((configHash) => {
       const config = allConfigs[configHash];
-      const version = config?.studyMetadata?.version;
-      return {
-        configHash,
-        configLabel: version ? `${version} - ${configHash.slice(0, 6)}` : configHash.slice(0, 6),
-        studyConfig: config,
-      };
+      if (!config) {
+        return [];
+      }
+
+      const version = config.studyMetadata?.version;
+      return [
+        {
+          configHash,
+          configLabel: version ? `${version} - ${configHash.slice(0, 6)}` : configHash.slice(0, 6),
+          studyConfig: config,
+        },
+      ];
     });
   }, [visibleParticipants, allConfigs]);
 
