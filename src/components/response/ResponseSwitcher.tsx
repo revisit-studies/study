@@ -151,7 +151,7 @@ export function ResponseSwitcher({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
 
-  const responseStyle = response.style || {};
+  const responseStyle = useMemo(() => response.style || {}, [response.style]);
   const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
   const customResponseValue = useMemo<JsonValue | null>(() => (ans.value ?? null) as JsonValue | null, [ans.value]);
   const validationValues = useMemo(() => ({
@@ -211,9 +211,31 @@ export function ResponseSwitcher({
       ? REQUIRED_ERROR_MESSAGE
       : null;
   }, [response, errors, dontKnowChecked, ans.value]);
+  const displayError = response.type === 'custom' ? customError : (
+    response.type === 'ranking-sublist'
+    || response.type === 'ranking-categorical'
+    || response.type === 'ranking-pairwise'
+      ? rankingError
+      : responseError
+  );
+  const responseWrapperStyle = useMemo(() => {
+    if (!displayError) {
+      return responseStyle;
+    }
+
+    const errorColor = response.required === false ? 'orange' : 'red';
+
+    return {
+      ...responseStyle,
+      border: `1px solid var(--mantine-color-${errorColor}-3)`,
+      backgroundColor: `var(--mantine-color-${errorColor}-0)`,
+      borderRadius: 'var(--mantine-radius-md)',
+      padding: 'var(--mantine-spacing-sm)',
+    };
+  }, [displayError, response.required, responseStyle]);
 
   return (
-    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseStyle}>
+    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseWrapperStyle}>
       {response.type === 'numerical' && (
       <NumericInput
         response={response}

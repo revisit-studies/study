@@ -129,6 +129,8 @@ export interface StoredAnswer {
   questionOrders: Record<string, string[]>;
   /** The order of the form elements in a base response. */
   formOrder?: Record<string, string[]>;
+  /** Whether required-response errors were revealed for this trial after a Next attempt. */
+  responseSubmitAttempted?: boolean;
 }
 
 export interface JumpFunctionParameters<T> {
@@ -185,7 +187,10 @@ export interface Sequence {
   conditional?: boolean;
 }
 
-export type FormElementProvenance = { form: StoredAnswer['answer'] };
+export type FormElementProvenance = {
+  form: StoredAnswer['answer'];
+  showResponseErrors?: boolean;
+};
 export interface StoreState {
   studyId: string;
   participantId: string;
@@ -196,6 +201,8 @@ export interface StoreState {
   showHelpText: boolean;
   alertModal: { show: boolean, message: string, title: string };
   trialValidation: TrialValidation;
+  // This is a record of whether the participant has attempted to submit an answer for each response block. This is used to determine whether to show required response errors for each block.
+  responseSubmitAttempted: Record<string, boolean>;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;
   analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };

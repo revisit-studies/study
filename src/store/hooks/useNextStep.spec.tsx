@@ -39,6 +39,7 @@ let mockStoredAnswer: {
   correctAnswer: never[];
   optionOrders: Record<string, string>;
   questionOrders: Record<string, string>;
+  responseSubmitAttempted?: boolean;
 };
 
 let mockAnswers: Record<string, unknown>;
@@ -74,6 +75,7 @@ vi.mock('../store', () => ({
     answers: Record<string, unknown>;
     modes: { dataCollectionEnabled: boolean };
     clickedPrevious: boolean;
+    responseSubmitAttempted: Record<string, boolean>;
   }) => unknown) => selector({
     trialValidation: mockTrialValidation,
     sequence: {
@@ -86,6 +88,7 @@ vi.mock('../store', () => ({
     answers: mockAnswers,
     modes: { dataCollectionEnabled: true },
     clickedPrevious: false,
+    responseSubmitAttempted: { intro_0: true },
   }),
   useStoreActions: () => ({
     saveTrialAnswer: mockSaveTrialAnswer,
@@ -191,6 +194,7 @@ describe('useNextStep', () => {
       correctAnswer: [],
       optionOrders: {},
       questionOrders: {},
+      responseSubmitAttempted: false,
     };
     capturedGoToNextStep = undefined;
     capturedIsNextDisabled = undefined;
@@ -218,6 +222,9 @@ describe('useNextStep', () => {
 
     expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
     expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
+    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
+      responseSubmitAttempted: true,
+    }));
     expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(mockShowNotification).toHaveBeenCalledWith({
       title: 'Failed to Save Response',

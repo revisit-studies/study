@@ -11,6 +11,7 @@ import {
   generateCustomResponseErrorMessage,
   generateErrorMessage,
   generateInitFields,
+  summarizeResponseIssues,
   generateValidation,
   mergeReactiveAnswers,
   normalizeCheckboxDontKnowValue,
@@ -590,5 +591,66 @@ describe('generateErrorMessage matrix', () => {
     });
 
     expect(error).toBeNull();
+  });
+});
+
+describe('summarizeResponseIssues', () => {
+  it('counts unanswered and invalid responses separately', () => {
+    const responses: Response[] = [
+      {
+        id: 'missing-text',
+        prompt: 'Missing text',
+        type: 'shortText',
+        required: true,
+      },
+      {
+        id: 'invalid-number',
+        prompt: 'Invalid number',
+        type: 'numerical',
+        required: true,
+        min: 0,
+        max: 10,
+      },
+      {
+        id: 'invalid-radio-other',
+        prompt: 'Invalid other',
+        type: 'radio',
+        required: true,
+        options: ['A', 'B'],
+        withOther: true,
+      },
+    ];
+
+    const summary = summarizeResponseIssues(responses, {
+      'missing-text': '',
+      'invalid-number': 99,
+      'invalid-radio-other': 'other',
+      'invalid-radio-other-other': '',
+    });
+
+    expect(summary).toEqual({
+      unansweredCount: 1,
+      invalidCount: 2,
+    });
+  });
+
+  it('treats untouched required matrix responses as unanswered', () => {
+    const responses: Response[] = [{
+      id: 'matrix-response',
+      prompt: 'Matrix',
+      type: 'matrix-radio',
+      required: true,
+      answerOptions: ['A', 'B'],
+      questionOptions: ['Q1', 'Q2'],
+    }];
+
+    const summary = summarizeResponseIssues(responses, {
+      'matrix-response': { Q1: '', Q2: '' },
+    });
+
+    expect(summary).toEqual({
+      unansweredCount: 1,
+      invalidCount: 0,
+    });
   });
 });

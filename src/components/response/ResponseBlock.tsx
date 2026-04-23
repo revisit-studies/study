@@ -1,11 +1,12 @@
 import {
-  Box, Button,
+  Box, Button, Group, Text, ThemeIcon,
 } from '@mantine/core';
 
 import React, {
-  useEffect, useMemo, useState, useCallback,
+  useEffect, useMemo, useState, useCallback, useRef,
 } from 'react';
 import isEqual from 'lodash.isequal';
+import { IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { Registry, initializeTrrack } from '@trrack/core';
 import {
@@ -20,7 +21,7 @@ import {
 
 import { NextButton } from '../NextButton';
 import {
-  generateCustomResponseErrorMessage, generateInitFields, mergeReactiveAnswers, useAnswerField, usesStandaloneDontKnowField,
+  generateCustomResponseErrorMessage, generateInitFields, mergeReactiveAnswers, summarizeResponseIssues, useAnswerField, usesStandaloneDontKnowField,
 } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
@@ -30,6 +31,7 @@ import {
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { useNextStep } from '../../store/hooks/useNextStep';
+import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
 import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
 
@@ -58,7 +60,7 @@ export function ResponseBlock({
 }: Props) {
   const storeDispatch = useStoreDispatch();
   const {
-    updateResponseBlockValidation, saveIncorrectAnswer,
+    updateResponseBlockValidation, saveIncorrectAnswer, setResponseSubmitAttempt,
   } = useStoreActions();
 
   const currentStep = useCurrentStep();
@@ -107,17 +109,23 @@ export function ResponseBlock({
       state.form = payload;
       return state;
     });
+    const updateShowResponseErrorsAction = reg.register('show-response-errors', (state, payload: boolean) => {
+      state.showResponseErrors = payload;
+      return state;
+    });
 
     const trrackInst = initializeTrrack({
       registry: reg,
       initialState: {
         form: null,
+        showResponseErrors: false,
       },
     });
 
     return {
       actions: {
         updateFormAction,
+        updateShowResponseErrorsAction,
       },
       trrack: trrackInst,
     };
@@ -129,7 +137,9 @@ export function ResponseBlock({
   const rankingAnswers = useStoreSelector((state) => state.rankingAnswers);
 
   const trialValidation = useStoreSelector((state) => state.trialValidation);
+  const analysisProvState = useStoreSelector((state) => state.analysisProvState);
   const { goToNextStep } = useNextStep();
+  const isAnalysis = useIsAnalysis();
 
   const studyConfig = useStudyConfig();
 
@@ -140,17 +150,34 @@ export function ResponseBlock({
   const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
-  const [errors, setErrors] = useState(false);
+  const identifier = useCurrentIdentifier();
+  const savedSubmitAttempt = storedAnswerData?.responseSubmitAttempted ?? status?.responseSubmitAttempted ?? false;
+  const currentSubmitAttempt = useStoreSelector((state) => state.responseSubmitAttempted[identifier]);
+  const liveErrors = currentSubmitAttempt ?? savedSubmitAttempt;
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
   const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
-  const identifier = useCurrentIdentifier();
+  const analysisErrors = useMemo(
+    () => ['aboveStimulus', 'belowStimulus', 'sidebar'].some((responseLocation) => (
+      (analysisProvState[responseLocation as ResponseBlockLocation] as FormElementProvenance | undefined)?.showResponseErrors
+    )),
+    [analysisProvState],
+  );
+  const hasAnalysisResponseProvenance = useMemo(
+    () => ['aboveStimulus', 'belowStimulus', 'sidebar'].some((responseLocation) => (
+      !!analysisProvState[responseLocation as ResponseBlockLocation]
+    )),
+    [analysisProvState],
+  );
+  const errors = isAnalysis
+    ? (hasAnalysisResponseProvenance ? analysisErrors : savedSubmitAttempt)
+    : liveErrors;
 
   const customResponses = useMemo(
-    () => responsesWithDefaults
-      .filter((response): response is Extract<(typeof responsesWithDefaults)[number], { type: 'custom' }> => response.type === 'custom'),
-    [responsesWithDefaults],
+    () => allResponsesWithDefaults
+      .filter((response): response is Extract<(typeof allResponsesWithDefaults)[number], { type: 'custom' }> => response.type === 'custom'),
+    [allResponsesWithDefaults],
   );
 
   const customResponseModules = useMemo(() => Object.fromEntries(
@@ -180,6 +207,59 @@ export function ResponseBlock({
     ),
     [customResponseModules],
   );
+  const combinedLiveValues = useMemo(() => {
+    const validationForStep = trialValidation[identifier];
+    if (!validationForStep) {
+      return {};
+    }
+
+    return Object.values(validationForStep).reduce((acc, curr) => {
+      if (Object.hasOwn(curr, 'values')) {
+        return { ...acc, ...(curr as ValidationStatus).values };
+      }
+      return acc;
+    }, {}) as StoredAnswer['answer'];
+  }, [identifier, trialValidation]);
+  const combinedAnalysisValues = useMemo(
+    () => ['aboveStimulus', 'belowStimulus', 'sidebar'].reduce((acc, responseLocation) => {
+      const locationProv = analysisProvState[responseLocation as ResponseBlockLocation] as FormElementProvenance | undefined;
+      return {
+        ...acc,
+        ...(locationProv?.form || {}),
+      };
+    }, { ...(status?.answer || {}) } as StoredAnswer['answer']),
+    [analysisProvState, status],
+  );
+  const combinedValues = useMemo(
+    () => (isAnalysis ? combinedAnalysisValues : combinedLiveValues),
+    [combinedAnalysisValues, combinedLiveValues, isAnalysis],
+  );
+  const responseIssueSummary = useMemo(
+    () => summarizeResponseIssues(
+      allResponsesWithDefaults.filter((response) => !response.hidden),
+      combinedValues,
+      customResponseValidators,
+      customResponseLoadErrors,
+    ),
+    [allResponsesWithDefaults, combinedValues, customResponseLoadErrors, customResponseValidators],
+  );
+  const summaryMessage = useMemo(() => {
+    const parts: string[] = [];
+
+    if (responseIssueSummary.unansweredCount > 0) {
+      parts.push(`${responseIssueSummary.unansweredCount} unanswered ${responseIssueSummary.unansweredCount === 1 ? 'question' : 'questions'}`);
+    }
+
+    if (responseIssueSummary.invalidCount > 0) {
+      parts.push(`${responseIssueSummary.invalidCount} invalid ${responseIssueSummary.invalidCount === 1 ? 'answer' : 'answers'}`);
+    }
+
+    if (parts.length === 0) {
+      return null;
+    }
+
+    return `Please review ${parts.join(' and ')} to continue.`;
+  }, [responseIssueSummary.invalidCount, responseIssueSummary.unansweredCount]);
 
   const answerValidator = useAnswerField(
     responsesWithDefaults,
@@ -188,6 +268,12 @@ export function ResponseBlock({
     customResponseValidators,
     customResponseLoadErrors,
   );
+  const hasRecordedShowErrorsRef = useRef(savedSubmitAttempt);
+
+  useEffect(() => {
+    hasRecordedShowErrorsRef.current = savedSubmitAttempt;
+  }, [identifier, location, savedSubmitAttempt]);
+
   useEffect(() => {
     if (storedAnswer) {
       answerValidator.setInitialValues(generateInitFields(responses, storedAnswer));
@@ -256,6 +342,23 @@ export function ResponseBlock({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answerValidator.values, bypassValidationForFailedTraining, identifier, location, storeDispatch, updateResponseBlockValidation]);
+  useEffect(() => {
+    if (isAnalysis || !liveErrors || hasRecordedShowErrorsRef.current) {
+      return;
+    }
+
+    hasRecordedShowErrorsRef.current = true;
+    trrack.apply('Show response errors', actions.updateShowResponseErrorsAction(true));
+    storeDispatch(
+      updateResponseBlockValidation({
+        location,
+        identifier,
+        status: answerValidator.isValid() || bypassValidationForFailedTraining,
+        values: structuredClone(answerValidator.values),
+        provenanceGraph: trrack.graph.backend,
+      }),
+    );
+  }, [actions, answerValidator, bypassValidationForFailedTraining, identifier, isAnalysis, liveErrors, location, storeDispatch, trrack, updateResponseBlockValidation]);
   const [alertConfig, setAlertConfig] = useState(Object.fromEntries(allResponsesWithDefaults.map((response) => ([response.id, {
     visible: false,
     title: 'Correct Answer',
@@ -368,8 +471,12 @@ export function ResponseBlock({
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
   useEffect(() => {
-    setErrors(false);
-  }, [identifier]);
+    if (isAnalysis || currentSubmitAttempt !== undefined) {
+      return;
+    }
+
+    storeDispatch(setResponseSubmitAttempt({ identifier, attempted: savedSubmitAttempt }));
+  }, [currentSubmitAttempt, identifier, isAnalysis, savedSubmitAttempt, setResponseSubmitAttempt, storeDispatch]);
 
   const handleNextClick = useCallback(() => {
     if (bypassValidationForFailedTraining || answerValidator.isValid()) {
@@ -377,9 +484,9 @@ export function ResponseBlock({
       return;
     }
 
-    setErrors(true);
+    storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
     answerValidator.validate();
-  }, [answerValidator, bypassValidationForFailedTraining, goToNextStep]);
+  }, [answerValidator, bypassValidationForFailedTraining, goToNextStep, identifier, setResponseSubmitAttempt, storeDispatch]);
 
   let index = 0;
   return (
@@ -467,6 +574,31 @@ export function ResponseBlock({
           );
         })}
       </Box>
+
+      {showBtnsInLocation && errors && summaryMessage && (
+        <Box
+          mt="sm"
+          p="sm"
+          style={{
+            position: 'sticky',
+            bottom: 12,
+            zIndex: 10,
+            border: '1px solid var(--mantine-color-gray-2)',
+            backgroundColor: 'white',
+            borderRadius: 'var(--mantine-radius-md)',
+            boxShadow: 'var(--mantine-shadow-sm)',
+          }}
+        >
+          <Group gap="sm" wrap="nowrap" align="flex-start">
+            <ThemeIcon variant="transparent" color="orange" size="md" mt={2}>
+              <IconAlertTriangle size={16} />
+            </ThemeIcon>
+            <Text c="black" size="sm">
+              {summaryMessage}
+            </Text>
+          </Group>
+        </Box>
+      )}
 
       {showBtnsInLocation && (
       <NextButton
