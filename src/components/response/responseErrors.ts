@@ -8,10 +8,11 @@ import { parseStringOptionValue } from '../../utils/stringOptions';
 export const REQUIRED_ERROR_MESSAGE = 'Please answer this question to continue.';
 export type ResponseIssueType = 'unanswered' | 'invalid';
 export type ResponseIssueSummary = { unansweredCount: number; invalidCount: number };
-export type EvaluatedResponseIssue =
-  | { type: 'none' }
-  | { type: 'unanswered' }
-  | { type: 'invalid'; message?: string; reason?: 'requiredValueMismatch' };
+export type ResponseValidationIssue = {
+  type: 'none' | 'unanswered' | 'invalid';
+  message?: string;
+  reason?: 'requiredValueMismatch';
+};
 
 export function isEmptyCustomResponseValue(value: StoredAnswer['answer'][string] | undefined): boolean {
   if (value === null || value === undefined || value === '') {
@@ -158,7 +159,7 @@ export function evaluateResponseIssue(
   values: StoredAnswer['answer'],
   customValidate?: CustomResponseValidate,
   loadError?: string,
-): EvaluatedResponseIssue {
+): ResponseValidationIssue {
   const dontKnowChecked = !!values[`${response.id}-dontKnow`];
 
   if (response.type === 'textOnly' || response.type === 'divider' || response.type === 'reactive') {

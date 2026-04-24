@@ -40,12 +40,14 @@ let mockStoredAnswer: {
   optionOrders: Record<string, string>;
   questionOrders: Record<string, string>;
   responseSubmitAttempted?: boolean;
+  stimulusSubmitAttempted?: boolean;
 };
 
 let mockAnswers: Record<string, unknown>;
-let capturedGoToNextStep: ((collectData?: boolean) => Promise<void>) | undefined;
+let capturedGoToNextStep: ((collectData?: boolean) => void) | undefined;
 let capturedIsNextDisabled: boolean | undefined;
 let mockTrialValidation: Record<string, unknown>;
+let mockStimulusSubmitAttempted: Record<string, boolean>;
 
 const mockDispatch = vi.fn((action) => {
   if (action.type === 'saveTrialAnswer') {
@@ -76,6 +78,7 @@ vi.mock('../store', () => ({
     modes: { dataCollectionEnabled: boolean };
     clickedPrevious: boolean;
     responseSubmitAttempted: Record<string, boolean>;
+    stimulusSubmitAttempted: Record<string, boolean>;
   }) => unknown) => selector({
     trialValidation: mockTrialValidation,
     sequence: {
@@ -89,6 +92,7 @@ vi.mock('../store', () => ({
     modes: { dataCollectionEnabled: true },
     clickedPrevious: false,
     responseSubmitAttempted: { intro_0: true },
+    stimulusSubmitAttempted: mockStimulusSubmitAttempted,
   }),
   useStoreActions: () => ({
     saveTrialAnswer: mockSaveTrialAnswer,
@@ -159,6 +163,7 @@ describe('useNextStep', () => {
     mockSetRankingAnswers.mockClear();
     mockDispatch.mockClear();
     mockAnswers = {};
+    mockStimulusSubmitAttempted = {};
     mockTrialValidation = {
       intro_0: {
         aboveStimulus: { valid: false, values: {} },
@@ -195,6 +200,7 @@ describe('useNextStep', () => {
       optionOrders: {},
       questionOrders: {},
       responseSubmitAttempted: false,
+      stimulusSubmitAttempted: false,
     };
     capturedGoToNextStep = undefined;
     capturedIsNextDisabled = undefined;
@@ -224,6 +230,7 @@ describe('useNextStep', () => {
     expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
     expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
       responseSubmitAttempted: true,
+      stimulusSubmitAttempted: false,
     }));
     expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(mockShowNotification).toHaveBeenCalledWith({
@@ -241,7 +248,7 @@ describe('useNextStep', () => {
     expect(mockNavigate).toHaveBeenCalledTimes(2);
   });
 
-  test('only disables next when stimulus validation fails', () => {
+  test('does not disable next when stimulus validation fails', () => {
     renderToStaticMarkup(<HookHarness />);
 
     expect(capturedIsNextDisabled).toBe(false);
@@ -260,9 +267,8 @@ describe('useNextStep', () => {
         },
       },
     };
-
     renderToStaticMarkup(<HookHarness />);
 
-    expect(capturedIsNextDisabled).toBe(true);
+    expect(capturedIsNextDisabled).toBe(false);
   });
 });

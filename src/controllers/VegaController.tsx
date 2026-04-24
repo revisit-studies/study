@@ -63,6 +63,8 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     status,
     provenanceGraph,
     answers,
+    reason,
+    message,
   }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
     storeDispatch(
       updateResponseBlockValidation({
@@ -71,6 +73,8 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
         status,
         values: answers,
         provenanceGraph,
+        reason,
+        message,
       }),
     );
 

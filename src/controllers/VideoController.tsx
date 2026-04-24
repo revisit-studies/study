@@ -198,6 +198,8 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
           identifier: `${currentComponent}_${currentStep}`,
           status: false,
           values: {},
+          reason: 'forceCompletion',
+          message: 'Please finish the video to continue.',
         }),
       );
     }

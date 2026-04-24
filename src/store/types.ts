@@ -5,6 +5,7 @@ import type {
   Answer, ComponentBlock, ConfigResponseBlockLocation, CustomResponse, InterruptionBlock, JsonValue, ParsedStringOption, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
 } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/types';
+import type { StimulusIssueReason } from '../components/response/stimulusErrors';
 
 /**
  * The ParticipantMetadata object contains metadata about the participant. This includes the user agent, resolution, language, and IP address. This object is used to store information about the participant that is not directly related to the study itself.
@@ -35,7 +36,12 @@ type ScrollEvent = [number, 'scroll', number[]];
 type VisibilityEvent = [number, 'visibility', string];
 export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeydownEvent | KeyupEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent;
 
-export type ValidationStatus = { valid: boolean, values: object }
+export type ValidationStatus = {
+  valid: boolean;
+  values: object;
+  reason?: StimulusIssueReason;
+  message?: string;
+}
 export type TrialValidation = Record<
   string,
   {
@@ -131,6 +137,8 @@ export interface StoredAnswer {
   formOrder?: Record<string, string[]>;
   /** Whether required-response errors were revealed for this trial after a Next attempt. */
   responseSubmitAttempted?: boolean;
+  /** Whether stimulus errors were revealed for this trial after a Next attempt. */
+  stimulusSubmitAttempted?: boolean;
 }
 
 export interface JumpFunctionParameters<T> {
@@ -150,7 +158,19 @@ export interface StimulusParams<T, S = never> {
   parameters: T;
   provenanceState?: S;
   answers: ParticipantData['answers'];
-  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: StoredAnswer['answer'] }) => void
+  setAnswer: ({
+    status,
+    provenanceGraph,
+    answers,
+    reason,
+    message,
+  }: {
+    status: boolean,
+    provenanceGraph?: TrrackedProvenance,
+    answers: StoredAnswer['answer'],
+    reason?: StimulusIssueReason,
+    message?: string,
+  }) => void
 }
 
 export interface CustomResponseField<TValue extends JsonValue = JsonValue> {
@@ -203,6 +223,7 @@ export interface StoreState {
   trialValidation: TrialValidation;
   // This is a record of whether the participant has attempted to submit an answer for each response block. This is used to determine whether to show required response errors for each block.
   responseSubmitAttempted: Record<string, boolean>;
+  stimulusSubmitAttempted: Record<string, boolean>;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;
   analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };

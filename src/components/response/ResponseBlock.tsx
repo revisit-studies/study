@@ -28,6 +28,7 @@ import {
   summarizeResponseIssues,
   usesStandaloneDontKnowField,
 } from './responseErrors';
+import { shouldUseStimulusValidation } from './stimulusErrors';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
 import {
@@ -39,6 +40,7 @@ import { useNextStep } from '../../store/hooks/useNextStep';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
 import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
+import { appendStimulusShowErrorsToGraph } from './stimulusProvenance';
 
 type Props = {
   status?: StoredAnswer;
@@ -65,7 +67,7 @@ export function ResponseBlock({
 }: Props) {
   const storeDispatch = useStoreDispatch();
   const {
-    updateResponseBlockValidation, saveIncorrectAnswer, setResponseSubmitAttempt,
+    updateResponseBlockValidation, saveIncorrectAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt,
   } = useStoreActions();
 
   const currentStep = useCurrentStep();
@@ -269,6 +271,37 @@ export function ResponseBlock({
     () => responseIssueSummary.unansweredCount > 0 || responseIssueSummary.invalidCount > 0,
     [responseIssueSummary.invalidCount, responseIssueSummary.unansweredCount],
   );
+  const stimulusValidation = useMemo(
+    () => trialValidation[identifier]?.stimulus,
+    [identifier, trialValidation],
+  );
+  const usesStimulusValidation = useMemo(
+    () => shouldUseStimulusValidation(config),
+    [config],
+  );
+  const hasStimulusIssue = useMemo(
+    () => usesStimulusValidation
+      && !!stimulusValidation
+      && !stimulusValidation.valid
+      && !!stimulusValidation.reason,
+    [usesStimulusValidation, stimulusValidation],
+  );
+  const revealStimulusErrors = useCallback(() => {
+    storeDispatch(setStimulusSubmitAttempt({ identifier, attempted: true }));
+
+    const currentStimulusValidation = trialValidation[identifier]?.stimulus;
+    if (!currentStimulusValidation) {
+      return;
+    }
+
+    updateResponseBlockValidation({
+      location: 'stimulus',
+      identifier,
+      status: currentStimulusValidation.valid,
+      values: {},
+      provenanceGraph: appendStimulusShowErrorsToGraph(trialValidation[identifier]?.provenanceGraph.stimulus),
+    });
+  }, [identifier, setStimulusSubmitAttempt, storeDispatch, trialValidation, updateResponseBlockValidation]);
 
   const answerValidator = useAnswerField(
     responsesWithDefaults,
@@ -386,6 +419,11 @@ export function ResponseBlock({
     }));
   };
   const checkAnswerProvideFeedback = useCallback(() => {
+    if (hasStimulusIssue) {
+      revealStimulusErrors();
+      return;
+    }
+
     if (hasResponseIssues) {
       storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
       answerValidator.validate();
@@ -463,7 +501,7 @@ export function ResponseBlock({
         ),
       );
     }
-  }, [answerValidator, attemptsUsed, allResponsesWithDefaults, allowFailedTraining, alertConfig, config, hasCorrectAnswerFeedback, hasResponseIssues, identifier, navigate, saveIncorrectAnswer, setResponseSubmitAttempt, storeDispatch, trainingAttempts, trialValidation]);
+  }, [alertConfig, allResponsesWithDefaults, allowFailedTraining, answerValidator, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, navigate, revealStimulusErrors, saveIncorrectAnswer, setResponseSubmitAttempt, storeDispatch, trainingAttempts, trialValidation]);
 
   const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 
@@ -494,6 +532,11 @@ export function ResponseBlock({
   }, [currentSubmitAttempt, identifier, isAnalysis, savedSubmitAttempt, setResponseSubmitAttempt, storeDispatch]);
 
   const handleNextClick = useCallback(() => {
+    if (hasStimulusIssue) {
+      revealStimulusErrors();
+      return;
+    }
+
     if (bypassValidationForFailedTraining || !hasResponseIssues) {
       goToNextStep();
       return;
@@ -501,7 +544,7 @@ export function ResponseBlock({
 
     storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
     answerValidator.validate();
-  }, [answerValidator, bypassValidationForFailedTraining, goToNextStep, hasResponseIssues, identifier, setResponseSubmitAttempt, storeDispatch]);
+  }, [answerValidator, bypassValidationForFailedTraining, goToNextStep, hasResponseIssues, hasStimulusIssue, identifier, revealStimulusErrors, setResponseSubmitAttempt, storeDispatch]);
 
   let index = 0;
   return (
