@@ -359,11 +359,11 @@ export function ResponseBlock({
   const stickyVisibleRef = useRef(false);
   const stickyVisible = showBtnsInLocation && errors && !!summaryMessage;
   useEffect(() => {
-    if (stickyVisible && !stickyVisibleRef.current) {
+    if (stickyVisible && !stickyVisibleRef.current && !isAnalysis) {
       scrollToFirstUnresolvedQuestion();
     }
     stickyVisibleRef.current = stickyVisible;
-  }, [stickyVisible, scrollToFirstUnresolvedQuestion]);
+  }, [stickyVisible, scrollToFirstUnresolvedQuestion, isAnalysis]);
 
   const answerValidator = useAnswerField(
     responsesWithDefaults,
@@ -518,6 +518,10 @@ export function ResponseBlock({
 
     if (hasCorrectAnswerFeedback) {
       allResponsesWithDefaults.forEach((response) => {
+        // Do not show feedback for textOnly or divider responses
+        if (response.type === 'textOnly' || response.type === 'divider') {
+          return;
+        }
         if (correctAnswers[response.id] && !alertConfig[response.id]?.message.includes('You\'ve failed to answer this question correctly')) {
           updateAlertConfig(response.id, true, 'Correct Answer', 'You have answered the question correctly.', 'green');
         } else {
@@ -580,7 +584,7 @@ export function ResponseBlock({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-    return () => {};
+    return () => { };
   }, [checkAnswerProvideFeedback, nextOnEnter]);
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
@@ -722,6 +726,7 @@ export function ResponseBlock({
                 size="xs"
                 variant="subtle"
                 color="yellow"
+                disabled={isAnalysis}
                 onClick={scrollToFirstUnresolvedQuestion}
               >
                 Next question
@@ -732,22 +737,22 @@ export function ResponseBlock({
       )}
 
       {showBtnsInLocation && (
-      <NextButton
-        disabled={(hasCorrectAnswerFeedback && !enableNextButton)}
-        label={nextButtonText}
-        config={config}
-        location={location}
-        onNext={handleNextClick}
-        checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
-          <Button
-            disabled={hasCorrectAnswer || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
-            onClick={() => checkAnswerProvideFeedback()}
-            px={location === 'sidebar' ? 8 : undefined}
-          >
-            Check Answer
-          </Button>
-        ) : null}
-      />
+        <NextButton
+          disabled={(hasCorrectAnswerFeedback && !enableNextButton)}
+          label={nextButtonText}
+          config={config}
+          location={location}
+          onNext={handleNextClick}
+          checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
+            <Button
+              disabled={hasCorrectAnswer || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
+              onClick={() => checkAnswerProvideFeedback()}
+              px={location === 'sidebar' ? 8 : undefined}
+            >
+              Check Answer
+            </Button>
+          ) : null}
+        />
       )}
     </>
   );

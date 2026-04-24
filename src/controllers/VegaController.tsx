@@ -11,6 +11,7 @@ import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StimulusParams } from '../store/types';
 import { useCurrentIdentifier } from '../routes/utils';
 import { useEvent } from '../store/hooks/useEvent';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 
 type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
 
@@ -34,6 +35,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const identifier = useCurrentIdentifier();
 
   const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
+  const isAnalysis = useIsAnalysis();
   const [view, setView] = useState<View>();
 
   const { actions, trrack } = useMemo(() => {
@@ -66,6 +68,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     reason,
     message,
   }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
+    if (isAnalysis) return;
     storeDispatch(
       updateResponseBlockValidation({
         location: 'stimulus',
@@ -81,7 +84,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     if (Object.keys(answers).length > 0) {
       storeDispatch(setReactiveAnswers(answers));
     }
-  }, [storeDispatch, updateResponseBlockValidation, identifier, setReactiveAnswers]);
+  }, [isAnalysis, storeDispatch, updateResponseBlockValidation, identifier, setReactiveAnswers]);
 
   const handleSignalEvt = useEvent((key: string, value: unknown) => {
     trrack.apply(key, actions.signalAction({
@@ -154,6 +157,22 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       view!.signal(provState.event.key, structuredClone(provState.event.value)).run();
     }
   }, [view, provState]);
+
+  // If the vega spec can't be fetched (404) or parsed (invalid JSON), clear
+  // stimulus validation so the participant isn't stuck on a trial that can
+  // never load. Skipped in analysis mode so replay doesn't mutate validation.
+  useEffect(() => {
+    if (isAnalysis) return;
+    if (!loading && 'path' in currentConfig && !vegaConfig) {
+      console.error(`Vega spec at "${currentConfig.path}" could not be loaded or parsed. Clearing stimulus validation so the participant is not stuck.`);
+      storeDispatch(updateResponseBlockValidation({
+        location: 'stimulus',
+        identifier,
+        status: true,
+        values: {},
+      }));
+    }
+  }, [isAnalysis, loading, vegaConfig, currentConfig, identifier, storeDispatch, updateResponseBlockValidation]);
 
   if (loading) {
     return <div>Loading...</div>;

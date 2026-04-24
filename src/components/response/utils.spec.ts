@@ -325,12 +325,20 @@ describe('generateCustomResponseErrorMessage', () => {
     expect(generateCustomResponseErrorMessage(response, null, {}, customValidate, undefined, { showRequiredErrors: true })).toBe('Please answer this question to continue.');
   });
 
-  it('shows validation feedback once the response is partially filled', () => {
+  it('shows validation feedback once the response is partially filled and errors are revealed', () => {
     expect(generateCustomResponseErrorMessage(response, {
       chartType: 'Bar',
       confidence: null,
       rationale: '',
-    }, {}, customValidate)).toBe('Set confidence to at least 70 to continue.');
+    }, {}, customValidate, undefined, { showRequiredErrors: true })).toBe('Set confidence to at least 70 to continue.');
+  });
+
+  it('stays quiet for invalid responses until errors are revealed', () => {
+    expect(generateCustomResponseErrorMessage(response, {
+      chartType: 'Bar',
+      confidence: null,
+      rationale: '',
+    }, {}, customValidate)).toBeNull();
   });
 
   it('shows no feedback once the current value is valid', () => {
@@ -378,7 +386,7 @@ describe('generateErrorMessage checkbox', () => {
 
     const error = generateErrorMessage(checkboxResponse, {
       value: ['__other'],
-    }, undefined, { values: { 'checkbox-response-other': '' } });
+    }, undefined, { showRequiredErrors: true, values: { 'checkbox-response-other': '' } });
 
     expect(error).toBe('Please fill in Other to continue.');
   });
@@ -410,7 +418,7 @@ describe('generateErrorMessage checkbox', () => {
       options: ['Option 1', 'Option 2', 'Option 3'],
     };
 
-    const error = generateErrorMessage(checkboxResponse, { value: ['Option 1'] });
+    const error = generateErrorMessage(checkboxResponse, { value: ['Option 1'] }, undefined, { showRequiredErrors: true });
 
     expect(error).toBe('Please select at least 2 options');
   });
@@ -445,7 +453,7 @@ describe('generateErrorMessage radio', () => {
 
     const error = generateErrorMessage(radioResponse, {
       value: 'other',
-    }, undefined, { values: { 'radio-response-other': '' } });
+    }, undefined, { showRequiredErrors: true, values: { 'radio-response-other': '' } });
 
     expect(error).toBe('Please fill in Other to continue.');
   });
@@ -579,10 +587,10 @@ describe('generateErrorMessage matrix', () => {
     expect(error).toBeNull();
   });
 
-  it('shows matrix incomplete message after at least one answer is selected', () => {
+  it('shows matrix incomplete message after at least one answer is selected and errors are revealed', () => {
     const error = generateErrorMessage(matrixResponse, {
       value: { q1: '0', q2: '' },
-    });
+    }, undefined, { showRequiredErrors: true });
 
     expect(error).toBe('Please answer all questions in the matrix to continue.');
   });

@@ -168,10 +168,15 @@ export function ComponentController() {
     [analysisStimulusProvState],
   );
   const stimulusMessage = useMemo(
-    () => (currentConfig
-      ? generateStimulusErrorMessage(currentConfig, stimulusValidation, { showStimulusErrors })
-      : null),
-    [currentConfig, showStimulusErrors, stimulusValidation],
+    () => {
+      if (isAnalysis) {
+        return null;
+      }
+      return currentConfig
+        ? generateStimulusErrorMessage(currentConfig, stimulusValidation, { showStimulusErrors })
+        : null;
+    },
+    [currentConfig, isAnalysis, showStimulusErrors, stimulusValidation],
   );
   const hasStimulusIssue = useMemo(
     () => !!stimulusMessage,

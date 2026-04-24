@@ -41,12 +41,12 @@ export function DropdownInput({
         disabled={disabled}
         label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
-        placeholder={answer.value.length === 0 ? placeholder : undefined}
+        placeholder={!answer.value || answer.value.length === 0 ? placeholder : undefined}
         data={optionsAsStringOptions}
         radius="md"
         size="md"
         {...answer}
-        value={answer.value === '' ? [] : Array.isArray(answer.value) ? answer.value : [answer.value]}
+        value={Array.isArray(answer.value) ? answer.value : answer.value ? [answer.value] : []}
         error={error}
         withErrorStyles={required}
         errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
@@ -66,7 +66,7 @@ export function DropdownInput({
         radius="md"
         size="md"
         {...answer}
-        value={answer.value === '' ? null : answer.value}
+        value={answer.value || null}
         error={error}
         withErrorStyles={required}
         errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}

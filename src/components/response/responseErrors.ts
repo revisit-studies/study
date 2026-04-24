@@ -118,7 +118,7 @@ function getRequiredValueMismatchMessage(
   }
 
   if (Array.isArray(requiredValue)) {
-    return `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.`;
+    return `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.join(', ')} to continue.`;
   }
 
   return `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.`;
@@ -300,7 +300,16 @@ export function generateCustomResponseErrorMessage(
     return options?.showRequiredErrors ? REQUIRED_ERROR_MESSAGE : null;
   }
 
-  return issue.type === 'invalid' ? issue.message ?? null : null;
+  if (issue.type === 'invalid') {
+    // Keep validation styling quiet until the participant attempts to submit,
+    // so typing/selecting answers in order just shows the question text.
+    if (!options?.showRequiredErrors) {
+      return null;
+    }
+    return issue.message ?? null;
+  }
+
+  return null;
 }
 
 export function generateErrorMessage(
@@ -336,6 +345,12 @@ export function generateErrorMessage(
   }
 
   if (issue.type === 'invalid') {
+    // Keep validation styling quiet until the participant attempts to submit,
+    // so typing/selecting answers in order just shows the question text.
+    if (!errorOptions?.showRequiredErrors) {
+      return null;
+    }
+
     if (issue.reason === 'requiredValueMismatch') {
       return getRequiredValueMismatchMessage(response, options);
     }

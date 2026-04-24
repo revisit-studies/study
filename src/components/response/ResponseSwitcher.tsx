@@ -75,7 +75,7 @@ export function ResponseSwitcher({
   const usesStandaloneDontKnow = usesStandaloneDontKnowField(response);
 
   // Don't update if we're in analysis mode
-  const ans = useMemo(() => (isAnalysis || (Object.keys(storedAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed ? { value: storedAnswer![response.id] } : form) || { value: undefined }, [isAnalysis, storedAnswer, response.id, form, nextConfig?.previousButton, completed]);
+  const ans = useMemo(() => (isAnalysis || (Object.keys(storedAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed ? { value: storedAnswer![response.id], readOnly: true } : form) || { value: undefined }, [isAnalysis, storedAnswer, response.id, form, nextConfig?.previousButton, completed]);
   const dontKnowValue = usesStandaloneDontKnow
     ? ((Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined })
     : { checked: undefined };

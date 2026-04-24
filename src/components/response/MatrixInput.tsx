@@ -44,7 +44,7 @@ function CheckboxComponent({
         <Checkbox
           disabled={disabled}
           key={`${checkbox.label}-${idx}`}
-          checked={(answer.value[question] || '').split('|').includes(checkbox.value)}
+          checked={(answer.value?.[question] || '').split('|').includes(checkbox.value)}
           onChange={(event) => onChange(event, question, checkbox)}
           value={checkbox.value}
           classNames={{ input: checkboxClasses.fixDisabled, icon: checkboxClasses.fixDisabledIcon }}
@@ -81,7 +81,7 @@ function RadioGroupComponent({
         flex: 1,
       }}
       onChange={(val) => onChange(val, question)}
-      value={answer.value[question]}
+      value={answer.value?.[question]}
     >
       <div
         style={{
