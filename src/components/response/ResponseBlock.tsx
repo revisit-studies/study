@@ -25,6 +25,7 @@ import {
 } from './utils';
 import {
   generateCustomResponseErrorMessage,
+  getResponseIssueType,
   summarizeResponseIssues,
   usesStandaloneDontKnowField,
 } from './responseErrors';
@@ -251,25 +252,56 @@ export function ResponseBlock({
     [allResponsesWithDefaults, combinedValues, customResponseLoadErrors, customResponseValidators],
   );
   const summaryMessage = useMemo(() => {
-    const parts: string[] = [];
+    const unanswered = responseIssueSummary.unansweredCount;
+    const invalid = responseIssueSummary.invalidCount;
 
-    if (responseIssueSummary.unansweredCount > 0) {
-      parts.push(`${responseIssueSummary.unansweredCount} unanswered ${responseIssueSummary.unansweredCount === 1 ? 'question' : 'questions'}`);
-    }
-
-    if (responseIssueSummary.invalidCount > 0) {
-      parts.push(`${responseIssueSummary.invalidCount} invalid ${responseIssueSummary.invalidCount === 1 ? 'answer' : 'answers'}`);
-    }
-
-    if (parts.length === 0) {
+    if (unanswered === 0 && invalid === 0) {
       return null;
     }
 
-    return `Please review ${parts.join(' and ')} to continue.`;
+    const unansweredPart = unanswered > 0 ? (
+      <>
+        <strong>{unanswered}</strong>
+        {' '}
+        {unanswered === 1 ? 'unanswered question' : 'unanswered questions'}
+      </>
+    ) : null;
+
+    const invalidPart = invalid > 0 ? (
+      <>
+        <strong>{invalid}</strong>
+        {' '}
+        {invalid === 1 ? 'invalid answer' : 'invalid answers'}
+      </>
+    ) : null;
+
+    return (
+      <>
+        Please review
+        {' '}
+        {unansweredPart}
+        {unansweredPart && invalidPart && ' and '}
+        {invalidPart}
+        {' '}
+        to continue.
+      </>
+    );
   }, [responseIssueSummary.invalidCount, responseIssueSummary.unansweredCount]);
   const hasResponseIssues = useMemo(
     () => responseIssueSummary.unansweredCount > 0 || responseIssueSummary.invalidCount > 0,
     [responseIssueSummary.invalidCount, responseIssueSummary.unansweredCount],
+  );
+  const unresolvedResponseIds = useMemo(
+    () => allResponsesWithDefaults
+      .filter((response) => !response.hidden)
+      .filter((response) => getResponseIssueType(
+        response,
+        combinedValues,
+        customResponseValidators[response.id],
+        customResponseLoadErrors[response.id],
+      ) !== null)
+      .map((response) => response.id),
+    [allResponsesWithDefaults, combinedValues, customResponseLoadErrors, customResponseValidators],
   );
   const stimulusValidation = useMemo(
     () => trialValidation[identifier]?.stimulus,
@@ -302,6 +334,36 @@ export function ResponseBlock({
       provenanceGraph: appendStimulusShowErrorsToGraph(trialValidation[identifier]?.provenanceGraph.stimulus),
     });
   }, [identifier, setStimulusSubmitAttempt, storeDispatch, trialValidation, updateResponseBlockValidation]);
+
+  const scrollToFirstUnresolvedQuestion = useCallback(() => {
+    if (unresolvedResponseIds.length === 0) {
+      return;
+    }
+    // Pick the unresolved question that is visually topmost on the page — this
+    // is robust across multiple response blocks (aboveStimulus / belowStimulus
+    // / sidebar) whose config order may not match DOM order.
+    let topmostElement: HTMLElement | null = null;
+    let topmostOffset = Number.POSITIVE_INFINITY;
+    unresolvedResponseIds.forEach((id) => {
+      const el = document.querySelector(`[data-question-id="${CSS.escape(id)}"]`);
+      if (el instanceof HTMLElement) {
+        const { top } = el.getBoundingClientRect();
+        if (top < topmostOffset) {
+          topmostElement = el;
+          topmostOffset = top;
+        }
+      }
+    });
+    (topmostElement as HTMLElement | null)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [unresolvedResponseIds]);
+  const stickyVisibleRef = useRef(false);
+  const stickyVisible = showBtnsInLocation && errors && !!summaryMessage;
+  useEffect(() => {
+    if (stickyVisible && !stickyVisibleRef.current) {
+      scrollToFirstUnresolvedQuestion();
+    }
+    stickyVisibleRef.current = stickyVisible;
+  }, [stickyVisible, scrollToFirstUnresolvedQuestion]);
 
   const answerValidator = useAnswerField(
     responsesWithDefaults,
@@ -571,7 +633,7 @@ export function ResponseBlock({
             <React.Fragment key={`${response.id}-${currentStep}`}>
               {isInCurrentLocation ? (
                 response.hidden ? '' : (
-                  <>
+                  <div data-question-id={response.id}>
                     <ResponseSwitcher
                       storedAnswer={storedAnswer}
                       form={{
@@ -616,7 +678,7 @@ export function ResponseBlock({
                       attemptsUsed={attemptsUsed}
                       trainingAttempts={trainingAttempts}
                     />
-                  </>
+                  </div>
                 )
               ) : (
                 <FeedbackAlert
@@ -647,13 +709,24 @@ export function ResponseBlock({
             boxShadow: 'var(--mantine-shadow-sm)',
           }}
         >
-          <Group gap="sm" wrap="nowrap" align="flex-start">
-            <ThemeIcon variant="transparent" color="orange" size="md" mt={2}>
+          <Group gap="sm" wrap="nowrap" align="center">
+            <ThemeIcon variant="transparent" color="orange" size="md">
               <IconAlertTriangle size={16} />
             </ThemeIcon>
             <Text c="black" size="sm">
               {summaryMessage}
             </Text>
+            {unresolvedResponseIds.length >= 2 && (
+              <Button
+                ml="auto"
+                size="xs"
+                variant="subtle"
+                color="yellow"
+                onClick={scrollToFirstUnresolvedQuestion}
+              >
+                Next question
+              </Button>
+            )}
           </Group>
         </Box>
       )}
