@@ -650,10 +650,9 @@
         {
           "id": "optional-mixed-valid-blank-short-text",
           "type": "shortText",
-          "prompt": "Optional short text left blank",
-          "secondaryText": "This is optional and blank, so it should not show any warning.",
-          "placeholder": "Optional answer",
-          "required": false
+          "prompt": "Required short text left blank",
+          "secondaryText": "This starts blank and required, so it should show the red required state after validation is revealed.",
+          "placeholder": "Required answer"
         },
         {
           "id": "optional-mixed-invalid-dropdown",
@@ -675,13 +674,12 @@
         {
           "id": "optional-mixed-valid-blank-radio",
           "type": "radio",
-          "prompt": "Optional radio left blank",
-          "secondaryText": "This is optional and unanswered, so it should stay neutral.",
+          "prompt": "Required radio left blank",
+          "secondaryText": "This starts blank and required, so it should show the red required state after validation is revealed.",
           "options": [
             "Alpha",
             "Beta"
-          ],
-          "required": false
+          ]
         },
         {
           "id": "optional-mixed-invalid-checkbox",
