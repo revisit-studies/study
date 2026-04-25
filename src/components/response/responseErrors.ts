@@ -31,7 +31,7 @@ export function isEmptyCustomResponseValue(value: StoredAnswer['answer'][string]
   return false;
 }
 
-function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
+export function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
   const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
   const maxNotSelected = dropdownResponse.maxSelections && value.length > dropdownResponse.maxSelections;
 
@@ -72,7 +72,7 @@ export function checkCheckboxResponseForValidation(
   return checkCheckboxResponse(response, value);
 }
 
-function checkNumericalResponse(response: NumericalResponse, value: number) {
+export function checkNumericalResponse(response: NumericalResponse, value: number) {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
 
   const { min, max } = response;

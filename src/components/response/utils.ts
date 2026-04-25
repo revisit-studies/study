@@ -8,7 +8,9 @@ import { CustomResponseValidate, StoredAnswer } from '../../store/types';
 import { parseStringOptionValue } from '../../utils/stringOptions';
 import {
   checkCheckboxResponseForValidation,
+  checkDropdownResponse,
   checkMatrixResponse,
+  checkNumericalResponse,
   isEmptyCustomResponseValue,
   isOtherSelectionIncomplete,
   REQUIRED_ERROR_MESSAGE,
@@ -23,37 +25,6 @@ export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
 
 export function normalizeCheckboxDontKnowValue(value: string[]) {
   return value.includes(DONT_KNOW_DEFAULT_VALUE) ? [] : value;
-}
-
-function checkDropdownResponse(dropdownResponse: { minSelections?: number; maxSelections?: number }, value: string[]) {
-  // Check max and min selections
-  const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
-  const maxNotSelected = dropdownResponse.maxSelections && value.length > dropdownResponse.maxSelections;
-
-  if (minNotSelected) {
-    return `Please select at least ${dropdownResponse.minSelections} options`;
-  }
-  if (maxNotSelected) {
-    return `Please select at most ${dropdownResponse.maxSelections} options`;
-  }
-  return null;
-}
-
-function checkNumericalResponse(response: { min?: number; max?: number }, value: number) {
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
-
-  const { min, max } = response;
-
-  if (min !== undefined && max !== undefined && (numValue < min || numValue > max)) {
-    return `Please enter a value between ${min} and ${max}`;
-  }
-  if (min !== undefined && numValue < min) {
-    return `Please enter a value of ${min} or greater`;
-  }
-  if (max !== undefined && numValue > max) {
-    return `Please enter a value of ${max} or less`;
-  }
-  return null;
 }
 
 const getQueryParameters = () => {
@@ -214,44 +185,6 @@ function validateCustomResponse(
   }
 
   if (response.required === false && isEmptyCustomResponseValue(value)) {
-    return null;
-  }
-
-  return customValidate(value, values, response);
-}
-
-export function generateCustomResponseErrorMessage(
-  response: CustomResponse,
-  value: StoredAnswer['answer'][string],
-  values: StoredAnswer['answer'],
-  customValidate?: CustomResponseValidate,
-  loadError?: string,
-  options?: { showRequiredErrors?: boolean },
-) {
-  if (loadError) {
-    return loadError;
-  }
-
-  if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
-    return null;
-  }
-
-  if (response.required === false && isEmptyCustomResponseValue(value)) {
-    return null;
-  }
-
-  if (isEmptyCustomResponseValue(value)) {
-    if (options?.showRequiredErrors) {
-      return REQUIRED_ERROR_MESSAGE;
-    }
-    return null;
-  }
-
-  if (response.requiredValue !== undefined && !isEqual(value, response.requiredValue)) {
-    return 'Incorrect input';
-  }
-
-  if (!customValidate) {
     return null;
   }
 

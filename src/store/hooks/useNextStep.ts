@@ -35,7 +35,6 @@ export function useNextStep() {
   const { funcIndex } = useParams();
   const identifier = useCurrentIdentifier();
   const responseSubmitAttempted = useStoreSelector((state) => state.responseSubmitAttempted[identifier] ?? false);
-  const stimulusSubmitAttempted = useStoreSelector((state) => state.stimulusSubmitAttempted[identifier] ?? false);
 
   const storeDispatch = useStoreDispatch();
   const {
@@ -88,7 +87,6 @@ export function useNextStep() {
           windowEvents: currentWindowEvents,
           timedOut: !collectData,
           responseSubmitAttempted,
-          stimulusSubmitAttempted,
         };
         const answersToPersist = { ...answers, [identifier]: toSave };
 
@@ -132,7 +130,6 @@ export function useNextStep() {
           provenanceGraph,
           windowEvents: currentWindowEvents,
           responseSubmitAttempted,
-          stimulusSubmitAttempted,
         },
       };
 
@@ -214,7 +211,7 @@ export function useNextStep() {
         color: 'red',
       });
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, stimulusSubmitAttempted]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted]);
 
   return {
     isNextDisabled,

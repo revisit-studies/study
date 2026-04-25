@@ -115,7 +115,6 @@ export async function studyStoreCreator(
     alertModal: { show: false, message: '', title: '' },
     trialValidation: Object.keys(answers).length > 0 ? allValid : emptyValidation,
     responseSubmitAttempted: {},
-    stimulusSubmitAttempted: {},
     reactiveAnswers: {},
     metadata,
     analysisProvState: {
@@ -334,9 +333,6 @@ export async function studyStoreCreator(
       },
       setResponseSubmitAttempt(state, { payload }: PayloadAction<{ identifier: string; attempted: boolean }>) {
         state.responseSubmitAttempted[payload.identifier] = payload.attempted;
-      },
-      setStimulusSubmitAttempt(state, { payload }: PayloadAction<{ identifier: string; attempted: boolean }>) {
-        state.stimulusSubmitAttempted[payload.identifier] = payload.attempted;
       },
       saveTrialAnswer(state, { payload }: PayloadAction<{ identifier: string } & StoredAnswer>) {
         state.answers[payload.identifier] = { ...payload };

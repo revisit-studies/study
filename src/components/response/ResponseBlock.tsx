@@ -68,7 +68,7 @@ export function ResponseBlock({
 }: Props) {
   const storeDispatch = useStoreDispatch();
   const {
-    updateResponseBlockValidation, saveIncorrectAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt,
+    updateResponseBlockValidation, saveIncorrectAnswer, setResponseSubmitAttempt,
   } = useStoreActions();
 
   const currentStep = useCurrentStep();
@@ -178,9 +178,25 @@ export function ResponseBlock({
     )),
     [analysisProvState],
   );
-  const errors = isAnalysis
+  const stimulusValidation = useMemo(
+    () => trialValidation[identifier]?.stimulus,
+    [identifier, trialValidation],
+  );
+  const usesStimulusValidation = useMemo(
+    () => shouldUseStimulusValidation(config),
+    [config],
+  );
+  const hasStimulusIssue = useMemo(
+    () => usesStimulusValidation
+      && !!stimulusValidation
+      && !stimulusValidation.valid
+      && !!stimulusValidation.reason,
+    [usesStimulusValidation, stimulusValidation],
+  );
+  // Submit attempt flag, but gated so response errors stay hidden while the stimulus is still invalid
+  const errors = (isAnalysis
     ? (hasAnalysisResponseProvenance ? analysisErrors : savedSubmitAttempt)
-    : liveErrors;
+    : liveErrors) && !hasStimulusIssue;
 
   const customResponses = useMemo(
     () => allResponsesWithDefaults
@@ -303,24 +319,7 @@ export function ResponseBlock({
       .map((response) => response.id),
     [allResponsesWithDefaults, combinedValues, customResponseLoadErrors, customResponseValidators],
   );
-  const stimulusValidation = useMemo(
-    () => trialValidation[identifier]?.stimulus,
-    [identifier, trialValidation],
-  );
-  const usesStimulusValidation = useMemo(
-    () => shouldUseStimulusValidation(config),
-    [config],
-  );
-  const hasStimulusIssue = useMemo(
-    () => usesStimulusValidation
-      && !!stimulusValidation
-      && !stimulusValidation.valid
-      && !!stimulusValidation.reason,
-    [usesStimulusValidation, stimulusValidation],
-  );
   const revealStimulusErrors = useCallback(() => {
-    storeDispatch(setStimulusSubmitAttempt({ identifier, attempted: true }));
-
     const currentStimulusValidation = trialValidation[identifier]?.stimulus;
     if (!currentStimulusValidation) {
       return;
@@ -333,7 +332,7 @@ export function ResponseBlock({
       values: {},
       provenanceGraph: appendStimulusShowErrorsToGraph(trialValidation[identifier]?.provenanceGraph.stimulus),
     });
-  }, [identifier, setStimulusSubmitAttempt, storeDispatch, trialValidation, updateResponseBlockValidation]);
+  }, [identifier, trialValidation, updateResponseBlockValidation]);
 
   const scrollToFirstUnresolvedQuestion = useCallback(() => {
     if (unresolvedResponseIds.length === 0) {
@@ -482,6 +481,7 @@ export function ResponseBlock({
   };
   const checkAnswerProvideFeedback = useCallback(() => {
     if (hasStimulusIssue) {
+      storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
       revealStimulusErrors();
       return;
     }
@@ -599,6 +599,9 @@ export function ResponseBlock({
 
   const handleNextClick = useCallback(() => {
     if (hasStimulusIssue) {
+      // Mark the submit attempt so once the stimulus is satisfied, the
+      // response errors below it become visible without a second click.
+      storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
       revealStimulusErrors();
       return;
     }
