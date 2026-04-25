@@ -219,8 +219,8 @@ export interface StoreState {
   showHelpText: boolean;
   alertModal: { show: boolean, message: string, title: string };
   trialValidation: TrialValidation;
-  // This is a record of whether the participant has attempted to submit an answer for each response block. This is used to determine whether to show required response errors and stimulus errors for each block.
   responseSubmitAttempted: Record<string, boolean>;
+  stimulusSubmitAttempted: Record<string, boolean>;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;
   analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };

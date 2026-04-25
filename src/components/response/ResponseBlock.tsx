@@ -68,7 +68,7 @@ export function ResponseBlock({
 }: Props) {
   const storeDispatch = useStoreDispatch();
   const {
-    updateResponseBlockValidation, saveIncorrectAnswer, setResponseSubmitAttempt,
+    updateResponseBlockValidation, saveIncorrectAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt,
   } = useStoreActions();
 
   const currentStep = useCurrentStep();
@@ -320,6 +320,8 @@ export function ResponseBlock({
     [allResponsesWithDefaults, combinedValues, customResponseLoadErrors, customResponseValidators],
   );
   const revealStimulusErrors = useCallback(() => {
+    storeDispatch(setStimulusSubmitAttempt({ identifier, attempted: true }));
+
     const currentStimulusValidation = trialValidation[identifier]?.stimulus;
     if (!currentStimulusValidation) {
       return;
@@ -332,7 +334,7 @@ export function ResponseBlock({
       values: {},
       provenanceGraph: appendStimulusShowErrorsToGraph(trialValidation[identifier]?.provenanceGraph.stimulus),
     });
-  }, [identifier, trialValidation, updateResponseBlockValidation]);
+  }, [identifier, setStimulusSubmitAttempt, storeDispatch, trialValidation, updateResponseBlockValidation]);
 
   const scrollToFirstUnresolvedQuestion = useCallback(() => {
     if (unresolvedResponseIds.length === 0) {
@@ -481,7 +483,6 @@ export function ResponseBlock({
   };
   const checkAnswerProvideFeedback = useCallback(() => {
     if (hasStimulusIssue) {
-      storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
       revealStimulusErrors();
       return;
     }
@@ -599,9 +600,6 @@ export function ResponseBlock({
 
   const handleNextClick = useCallback(() => {
     if (hasStimulusIssue) {
-      // Mark the submit attempt so once the stimulus is satisfied, the
-      // response errors below it become visible without a second click.
-      storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
       revealStimulusErrors();
       return;
     }

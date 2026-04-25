@@ -68,8 +68,7 @@ export function ComponentController() {
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
-  const savedSubmitAttempted = status?.responseSubmitAttempted ?? false;
-  const currentSubmitAttempted = useStoreSelector((state) => state.responseSubmitAttempted[currentIdentifier]);
+  const currentStimulusSubmitAttempted = useStoreSelector((state) => state.stimulusSubmitAttempted[currentIdentifier]);
   const sequence = useStoreSelector((state) => state.sequence);
   const modes = useStoreSelector((state) => state.modes);
 
@@ -153,14 +152,13 @@ export function ComponentController() {
   );
   const showStimulusErrors = useMemo(
     () => (isAnalysis
-      ? (hasAnalysisStimulusProvenance ? analysisStimulusErrors : savedSubmitAttempted)
-      : (currentSubmitAttempted ?? savedSubmitAttempted)),
+      ? (hasAnalysisStimulusProvenance ? analysisStimulusErrors : false)
+      : !!currentStimulusSubmitAttempted),
     [
       analysisStimulusErrors,
-      currentSubmitAttempted,
+      currentStimulusSubmitAttempted,
       hasAnalysisStimulusProvenance,
       isAnalysis,
-      savedSubmitAttempted,
     ],
   );
   const stimulusProvState = useMemo(
