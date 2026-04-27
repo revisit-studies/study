@@ -558,8 +558,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
                 <Tooltip
                   label={!isFirebaseEngine
-                    ? 'Coding is only available when using Firebase with audio recording enabled.'
-                    : 'Coding is only available for studies with audio recording enabled.'}
+                    ? 'Think aloud coding is only available when using Firebase and when audio recording is enabled in your study config'
+                    : 'Think aloud coding is only available for studies with audio recording enabled in your study config'}
                   disabled={codingEnabled}
                 >
                   <span>
@@ -567,7 +567,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   </span>
                 </Tooltip>
                 <Tooltip
-                  label="Live Monitor is only available when using Firebase."
+                  label="Live Monitor is only available when using Firebase"
                   disabled={liveMonitorEnabled}
                 >
                   <span>
@@ -603,8 +603,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                     <Center>
                       <Text c="dimmed">
                         {!isFirebaseEngine
-                          ? 'Think aloud coding is only available when using Firebase and when audio recording is enabled in your study config.'
-                          : 'Think aloud coding is only available for studies with audio recording enabled in your study config.'}
+                          ? 'Think aloud coding is only available when using Firebase and when audio recording is enabled in your study config'
+                          : 'Think aloud coding is only available for studies with audio recording enabled in your study config'}
                       </Text>
                     </Center>
                   )}
@@ -614,7 +614,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   ? <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} includedParticipants={includedParticipants} selectedStages={selectedStages} />
                   : (
                     <Center>
-                      <Text c="dimmed">Live Monitor is only available when using Firebase.</Text>
+                      <Text c="dimmed">Live Monitor is only available when using Firebase</Text>
                     </Center>
                   )}
               </Tabs.Panel>
