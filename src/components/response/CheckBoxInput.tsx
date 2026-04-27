@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { CheckboxResponse, ParsedStringOption } from '../../parser/types';
-import { DONT_KNOW_DEFAULT_VALUE, generateErrorMessage, normalizeCheckboxDontKnowValue } from './utils';
+import { DONT_KNOW_DEFAULT_VALUE, normalizeCheckboxDontKnowValue } from './utils';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Checkbox.module.css';
 import inputClasses from './css/Input.module.css';
@@ -16,6 +16,7 @@ export function CheckBoxInput({
   response,
   disabled,
   answer,
+  error,
   index,
   enumerateQuestions,
   otherValue,
@@ -24,6 +25,7 @@ export function CheckBoxInput({
   response: CheckboxResponse;
   disabled: boolean;
   answer: { value?: string[]; onChange?: (value: string[]) => void };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
   otherValue?: object;
@@ -48,11 +50,6 @@ export function CheckBoxInput({
   );
 
   const [otherSelected, setOtherSelected] = useState(false);
-
-  const error = useMemo(
-    () => generateErrorMessage(response, { ...answer, dontKnowChecked: !!dontKnowCheckbox?.checked }, orderedOptions),
-    [response, answer, orderedOptions, dontKnowCheckbox?.checked],
-  );
   const selectedValues = useMemo(() => (Array.isArray(answer.value) ? answer.value : []), [answer.value]);
 
   useEffect(() => {
@@ -81,7 +78,7 @@ export function CheckBoxInput({
       description={secondaryText}
       {...answer}
       error={error}
-      errorProps={{ c: required ? 'red' : 'orange' }}
+      errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Box mt="xs">

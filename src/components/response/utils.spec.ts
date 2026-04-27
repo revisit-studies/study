@@ -6,15 +6,19 @@ import type {
 } from '../../parser/types';
 import type { CustomResponseValidate } from '../../store/types';
 import {
-  checkCheckboxResponseForValidation,
-  generateCustomResponseErrorMessage,
-  generateErrorMessage,
   generateInitFields,
   generateValidation,
   mergeReactiveAnswers,
   normalizeCheckboxDontKnowValue,
-  shouldBypassValidationForStandaloneDontKnow,
 } from './utils';
+import {
+  REQUIRED_ERROR_MESSAGE,
+  checkCheckboxResponseForValidation,
+  generateCustomResponseErrorMessage,
+  generateErrorMessage,
+  shouldBypassValidationForStandaloneDontKnow,
+  summarizeResponseIssues,
+} from './responseErrors';
 
 describe('generateInitFields', () => {
   const originalWindow = globalThis.window;
@@ -222,7 +226,7 @@ describe('generateValidation custom', () => {
     const validation = generateValidation([response], { [response.id]: customValidate });
     const error = validation[response.id]({}, {});
 
-    expect(error).toBe('Empty input');
+    expect(error).toBe(REQUIRED_ERROR_MESSAGE);
   });
 
   it('treats nested empty string structures as missing required input', () => {
@@ -236,7 +240,7 @@ describe('generateValidation custom', () => {
       tags: ['', ''],
     }, {});
 
-    expect(error).toBe('Empty input');
+    expect(error).toBe(REQUIRED_ERROR_MESSAGE);
   });
 
   it('does not treat 0 or false as empty custom values', () => {
@@ -317,12 +321,24 @@ describe('generateCustomResponseErrorMessage', () => {
     expect(generateCustomResponseErrorMessage(response, null, {}, customValidate)).toBeNull();
   });
 
-  it('shows validation feedback once the response is partially filled', () => {
+  it('shows the required message for untouched required custom responses after submit', () => {
+    expect(generateCustomResponseErrorMessage(response, null, {}, customValidate, undefined, { showRequiredErrors: true })).toBe('Please answer this question to continue.');
+  });
+
+  it('shows validation feedback once the response is partially filled and errors are revealed', () => {
     expect(generateCustomResponseErrorMessage(response, {
       chartType: 'Bar',
       confidence: null,
       rationale: '',
-    }, {}, customValidate)).toBe('Set confidence to at least 70 to continue.');
+    }, {}, customValidate, undefined, { showRequiredErrors: true })).toBe('Set confidence to at least 70 to continue.');
+  });
+
+  it('stays quiet for invalid responses until errors are revealed', () => {
+    expect(generateCustomResponseErrorMessage(response, {
+      chartType: 'Bar',
+      confidence: null,
+      rationale: '',
+    }, {}, customValidate)).toBeNull();
   });
 
   it('shows no feedback once the current value is valid', () => {
@@ -358,6 +374,40 @@ describe('mergeReactiveAnswers', () => {
 });
 
 describe('generateErrorMessage checkbox', () => {
+  it('treats checkbox other without text as invalid', () => {
+    const checkboxResponse: Response = {
+      id: 'checkbox-response',
+      prompt: 'Checkbox response',
+      type: 'checkbox',
+      required: true,
+      options: ['Option 1', 'Option 2'],
+      withOther: true,
+    };
+
+    const error = generateErrorMessage(checkboxResponse, {
+      value: ['__other'],
+    }, undefined, { showRequiredErrors: true, values: { 'checkbox-response-other': '' } });
+
+    expect(error).toBe('Please fill in Other to continue.');
+  });
+
+  it('removes required error when dont-know is checked', () => {
+    const checkboxResponse: Response = {
+      id: 'checkbox-response',
+      prompt: 'Checkbox response',
+      type: 'checkbox',
+      required: true,
+      options: ['Option 1', 'Option 2', 'Option 3'],
+      withDontKnow: true,
+    };
+
+    const error = generateErrorMessage(checkboxResponse, {
+      value: [],
+    }, undefined, { showRequiredErrors: true, values: { 'checkbox-response-dontKnow': true } });
+
+    expect(error).toBeNull();
+  });
+
   it('validates checkbox selections when checkbox group value is an array', () => {
     const checkboxResponse: Response = {
       id: 'checkbox-response',
@@ -368,7 +418,7 @@ describe('generateErrorMessage checkbox', () => {
       options: ['Option 1', 'Option 2', 'Option 3'],
     };
 
-    const error = generateErrorMessage(checkboxResponse, { value: ['Option 1'] });
+    const error = generateErrorMessage(checkboxResponse, { value: ['Option 1'] }, undefined, { showRequiredErrors: true });
 
     expect(error).toBe('Please select at least 2 options');
   });
@@ -384,9 +434,66 @@ describe('generateErrorMessage checkbox', () => {
       withDontKnow: true,
     };
 
-    const error = generateErrorMessage(checkboxResponse, { value: [], dontKnowChecked: true });
+    const error = generateErrorMessage(checkboxResponse, { value: [] }, undefined, { values: { 'checkbox-response-dontKnow': true } });
 
     expect(error).toBeNull();
+  });
+});
+
+describe('generateErrorMessage radio', () => {
+  it('treats radio other without text as invalid', () => {
+    const radioResponse: Response = {
+      id: 'radio-response',
+      prompt: 'Radio response',
+      type: 'radio',
+      required: true,
+      options: ['Option 1', 'Option 2'],
+      withOther: true,
+    };
+
+    const error = generateErrorMessage(radioResponse, {
+      value: 'other',
+    }, undefined, { showRequiredErrors: true, values: { 'radio-response-other': '' } });
+
+    expect(error).toBe('Please fill in Other to continue.');
+  });
+});
+
+describe('generateValidation other inputs', () => {
+  it('treats radio other without text as empty input', () => {
+    const response: Response = {
+      id: 'radio-response',
+      prompt: 'Radio response',
+      type: 'radio',
+      required: true,
+      options: ['Option 1', 'Option 2'],
+      withOther: true,
+    };
+
+    const validation = generateValidation([response]);
+
+    expect(validation[response.id]('other', {
+      [response.id]: 'other',
+      [`${response.id}-other`]: '',
+    })).toBe(REQUIRED_ERROR_MESSAGE);
+  });
+
+  it('treats checkbox other without text as empty input', () => {
+    const response: Response = {
+      id: 'checkbox-response',
+      prompt: 'Checkbox response',
+      type: 'checkbox',
+      required: true,
+      options: ['Option 1', 'Option 2'],
+      withOther: true,
+    };
+
+    const validation = generateValidation([response]);
+
+    expect(validation[response.id](['__other'], {
+      [response.id]: ['__other'],
+      [`${response.id}-other`]: '',
+    })).toBe(REQUIRED_ERROR_MESSAGE);
   });
 });
 
@@ -456,8 +563,7 @@ describe('generateErrorMessage requiredValue with dont-know', () => {
 
     const error = generateErrorMessage(numericalResponse, {
       value: '',
-      dontKnowChecked: true,
-    });
+    }, undefined, { values: { 'required-value-response-dontKnow': true } });
 
     expect(error).toBeNull();
   });
@@ -481,10 +587,10 @@ describe('generateErrorMessage matrix', () => {
     expect(error).toBeNull();
   });
 
-  it('shows matrix incomplete message after at least one answer is selected', () => {
+  it('shows matrix incomplete message after at least one answer is selected and errors are revealed', () => {
     const error = generateErrorMessage(matrixResponse, {
       value: { q1: '0', q2: '' },
-    });
+    }, undefined, { showRequiredErrors: true });
 
     expect(error).toBe('Please answer all questions in the matrix to continue.');
   });
@@ -495,5 +601,66 @@ describe('generateErrorMessage matrix', () => {
     });
 
     expect(error).toBeNull();
+  });
+});
+
+describe('summarizeResponseIssues', () => {
+  it('counts unanswered and invalid responses separately', () => {
+    const responses: Response[] = [
+      {
+        id: 'missing-text',
+        prompt: 'Missing text',
+        type: 'shortText',
+        required: true,
+      },
+      {
+        id: 'invalid-number',
+        prompt: 'Invalid number',
+        type: 'numerical',
+        required: true,
+        min: 0,
+        max: 10,
+      },
+      {
+        id: 'invalid-radio-other',
+        prompt: 'Invalid other',
+        type: 'radio',
+        required: true,
+        options: ['A', 'B'],
+        withOther: true,
+      },
+    ];
+
+    const summary = summarizeResponseIssues(responses, {
+      'missing-text': '',
+      'invalid-number': 99,
+      'invalid-radio-other': 'other',
+      'invalid-radio-other-other': '',
+    });
+
+    expect(summary).toEqual({
+      unansweredCount: 1,
+      invalidCount: 2,
+    });
+  });
+
+  it('treats untouched required matrix responses as unanswered', () => {
+    const responses: Response[] = [{
+      id: 'matrix-response',
+      prompt: 'Matrix',
+      type: 'matrix-radio',
+      required: true,
+      answerOptions: ['A', 'B'],
+      questionOptions: ['Q1', 'Q2'],
+    }];
+
+    const summary = summarizeResponseIssues(responses, {
+      'matrix-response': { Q1: '', Q2: '' },
+    });
+
+    expect(summary).toEqual({
+      unansweredCount: 1,
+      invalidCount: 0,
+    });
   });
 });

@@ -11,6 +11,7 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import 'plyr-react/plyr.css';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 // eslint-disable-next-line import/order
 import { Box, LoadingOverlay } from '@mantine/core';
 
@@ -48,7 +49,7 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
 
     useEffect(() => {
       let animationFrameId: number | undefined;
-      let cleanup = () => {};
+      let cleanup = () => { };
 
       const registerEndedHandler = () => {
         const plyr = (ref as RefObject<APITypes>).current?.plyr;
@@ -69,7 +70,7 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
             }
           };
         } catch {
-          cleanup = () => {};
+          cleanup = () => { };
         }
       };
 
@@ -189,22 +190,46 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
   const currentStep = useCurrentStep();
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation } = useStoreActions();
-  // Set the validation to invalid if forceCompletion is true
+  const isAnalysis = useIsAnalysis();
+  // Set the validation to invalid if forceCompletion is true — unless the
+  // asset is missing (404), in which case clear the gate so the participant
+  // isn't stuck on a trial that can never complete. Skipped in analysis mode
+  // so replay doesn't mutate stimulus validation.
   useEffect(() => {
+    if (loading || isAnalysis) return;
+
+    const identifier = `${currentComponent}_${currentStep}`;
+
+    if (!assetFound) {
+      console.error(`Video asset at "${currentConfig.path}" could not be loaded. Clearing stimulus validation so the participant is not stuck.`);
+      storeDispatch(
+        updateResponseBlockValidation({
+          location: 'stimulus',
+          identifier,
+          status: true,
+          values: {},
+        }),
+      );
+      return;
+    }
+
     if (currentConfig.forceCompletion) {
       storeDispatch(
         updateResponseBlockValidation({
           location: 'stimulus',
-          identifier: `${currentComponent}_${currentStep}`,
+          identifier,
           status: false,
           values: {},
+          reason: 'forceCompletion',
+          message: 'Please finish the video to continue.',
         }),
       );
     }
-  }, [currentComponent, currentConfig.forceCompletion, currentStep, storeDispatch, updateResponseBlockValidation]);
+  }, [currentComponent, currentConfig.forceCompletion, currentConfig.path, currentStep, storeDispatch, updateResponseBlockValidation, loading, assetFound, isAnalysis]);
 
   // Set the validation to valid if forceCompletion is true and the video is played
   const endedCallback = useCallback(() => {
+    if (isAnalysis) return;
     if (currentConfig.forceCompletion) {
       storeDispatch(
         updateResponseBlockValidation({
@@ -215,7 +240,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
         }),
       );
     }
-  }, [currentComponent, currentConfig.forceCompletion, currentStep, storeDispatch, updateResponseBlockValidation]);
+  }, [currentComponent, currentConfig.forceCompletion, currentStep, isAnalysis, storeDispatch, updateResponseBlockValidation]);
 
   const ref = useRef<APITypes>(null);
 

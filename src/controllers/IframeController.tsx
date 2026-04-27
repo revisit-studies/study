@@ -6,6 +6,7 @@ import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { ParticipantData, WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -16,6 +17,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
+  const isAnalysis = useIsAnalysis();
 
   const ref = useRef<HTMLIFrameElement>(null);
 
@@ -67,6 +69,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
           case `${PREFIX}/READY`:
             break;
           case `${PREFIX}/ANSWERS`:
+            if (isAnalysis) return;
             storeDispatch(setReactiveAnswers(data.message));
             storeDispatch(updateResponseBlockValidation({
               location: 'stimulus',
@@ -76,6 +79,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             }));
             break;
           case `${PREFIX}/PROVENANCE`:
+            if (isAnalysis) return;
             storeDispatch(updateResponseBlockValidation({
               location: 'stimulus',
               identifier,
@@ -93,7 +97,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateResponseBlockValidation, identifier]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateResponseBlockValidation, identifier, isAnalysis]);
 
   return (
     <iframe

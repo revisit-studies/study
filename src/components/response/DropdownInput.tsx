@@ -1,6 +1,5 @@
 import { MultiSelect, Select } from '@mantine/core';
 import { DropdownResponse } from '../../parser/types';
-import { generateErrorMessage } from './utils';
 import classes from './css/Input.module.css';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
@@ -10,12 +9,14 @@ export function DropdownInput({
   response,
   disabled,
   answer,
+  error,
   index,
   enumerateQuestions,
 }: {
   response: DropdownResponse;
   disabled: boolean;
   answer: { value: string };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -40,15 +41,15 @@ export function DropdownInput({
         disabled={disabled}
         label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
-        placeholder={answer.value.length === 0 ? placeholder : undefined}
+        placeholder={!answer.value || answer.value.length === 0 ? placeholder : undefined}
         data={optionsAsStringOptions}
         radius="md"
         size="md"
         {...answer}
-        value={answer.value === '' ? [] : Array.isArray(answer.value) ? answer.value : [answer.value]}
-        error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+        value={Array.isArray(answer.value) ? answer.value : answer.value ? [answer.value] : []}
+        error={error}
         withErrorStyles={required}
-        errorProps={{ c: required ? 'red' : 'orange' }}
+        errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
         clearable
@@ -65,10 +66,10 @@ export function DropdownInput({
         radius="md"
         size="md"
         {...answer}
-        value={answer.value === '' ? null : answer.value}
-        error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+        value={answer.value || null}
+        error={error}
         withErrorStyles={required}
-        errorProps={{ c: required ? 'red' : 'orange' }}
+        errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
         renderOption={renderOption}

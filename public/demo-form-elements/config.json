@@ -393,7 +393,10 @@
           ],
           "minSelections": 1,
           "maxSelections": 3,
-          "default": ["Line", "test"]
+          "default": [
+            "Line",
+            "test"
+          ]
         },
         {
           "id": "default-radio",

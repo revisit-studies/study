@@ -5,12 +5,14 @@ export function LikertInput({
   response,
   disabled,
   answer,
+  error,
   index,
   enumerateQuestions,
 }: {
   response: LikertResponse;
   disabled: boolean;
-  answer: object;
+  answer: { value?: string };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -38,6 +40,7 @@ export function LikertInput({
       disabled={disabled}
       response={radioResponse}
       answer={answer}
+      error={error}
       index={index}
       enumerateQuestions={enumerateQuestions}
       stretch

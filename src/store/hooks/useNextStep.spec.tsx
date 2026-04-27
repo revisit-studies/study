@@ -39,10 +39,13 @@ let mockStoredAnswer: {
   correctAnswer: never[];
   optionOrders: Record<string, string>;
   questionOrders: Record<string, string>;
+  responseSubmitAttempted?: boolean;
 };
 
 let mockAnswers: Record<string, unknown>;
-let capturedGoToNextStep: ((collectData?: boolean) => Promise<void>) | undefined;
+let capturedGoToNextStep: ((collectData?: boolean) => void) | undefined;
+let capturedIsNextDisabled: boolean | undefined;
+let mockTrialValidation: Record<string, unknown>;
 
 const mockDispatch = vi.fn((action) => {
   if (action.type === 'saveTrialAnswer') {
@@ -72,16 +75,9 @@ vi.mock('../store', () => ({
     answers: Record<string, unknown>;
     modes: { dataCollectionEnabled: boolean };
     clickedPrevious: boolean;
+    responseSubmitAttempted: Record<string, boolean>;
   }) => unknown) => selector({
-    trialValidation: {
-      intro_0: {
-        response: {
-          values: {
-            response: 'saved-answer',
-          },
-        },
-      },
-    },
+    trialValidation: mockTrialValidation,
     sequence: {
       id: 'root',
       orderPath: 'root',
@@ -92,6 +88,7 @@ vi.mock('../store', () => ({
     answers: mockAnswers,
     modes: { dataCollectionEnabled: true },
     clickedPrevious: false,
+    responseSubmitAttempted: { intro_0: true },
   }),
   useStoreActions: () => ({
     saveTrialAnswer: mockSaveTrialAnswer,
@@ -101,7 +98,6 @@ vi.mock('../store', () => ({
     setRankingAnswers: mockSetRankingAnswers,
   }),
   useStoreDispatch: () => mockDispatch,
-  useAreResponsesValid: () => true,
   useFlatSequence: () => ['intro'],
 }));
 
@@ -144,7 +140,9 @@ vi.mock('../../utils/notifications', () => ({
 }));
 
 function HookHarness() {
-  capturedGoToNextStep = useNextStep().goToNextStep;
+  const { goToNextStep, isNextDisabled } = useNextStep();
+  capturedGoToNextStep = goToNextStep;
+  capturedIsNextDisabled = isNextDisabled;
   return null;
 }
 
@@ -161,6 +159,20 @@ describe('useNextStep', () => {
     mockSetRankingAnswers.mockClear();
     mockDispatch.mockClear();
     mockAnswers = {};
+    mockTrialValidation = {
+      intro_0: {
+        aboveStimulus: { valid: false, values: {} },
+        belowStimulus: { valid: false, values: {} },
+        sidebar: { valid: false, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          stimulus: undefined,
+          sidebar: undefined,
+        },
+      },
+    };
     mockStoredAnswer = {
       answer: {},
       componentName: 'intro',
@@ -182,8 +194,10 @@ describe('useNextStep', () => {
       correctAnswer: [],
       optionOrders: {},
       questionOrders: {},
+      responseSubmitAttempted: false,
     };
     capturedGoToNextStep = undefined;
+    capturedIsNextDisabled = undefined;
 
     vi.stubGlobal('window', {
       location: { search: '' },
@@ -208,6 +222,9 @@ describe('useNextStep', () => {
 
     expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
     expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
+    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
+      responseSubmitAttempted: true,
+    }));
     expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(mockShowNotification).toHaveBeenCalledWith({
       title: 'Failed to Save Response',
@@ -222,5 +239,29 @@ describe('useNextStep', () => {
     expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
     expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
     expect(mockNavigate).toHaveBeenCalledTimes(2);
+  });
+
+  test('does not disable next when stimulus validation fails', () => {
+    renderToStaticMarkup(<HookHarness />);
+
+    expect(capturedIsNextDisabled).toBe(false);
+
+    mockTrialValidation = {
+      intro_0: {
+        aboveStimulus: { valid: false, values: {} },
+        belowStimulus: { valid: false, values: {} },
+        sidebar: { valid: false, values: {} },
+        stimulus: { valid: false, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          stimulus: undefined,
+          sidebar: undefined,
+        },
+      },
+    };
+    renderToStaticMarkup(<HookHarness />);
+
+    expect(capturedIsNextDisabled).toBe(false);
   });
 });

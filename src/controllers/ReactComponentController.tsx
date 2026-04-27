@@ -1,5 +1,5 @@
 import {
-  Suspense, useCallback,
+  Suspense, useCallback, useEffect,
 } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ParticipantData, ReactComponent } from '../parser/types';
@@ -7,6 +7,7 @@ import { StimulusParams } from '../store/types';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentIdentifier } from '../routes/utils';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { ErrorBoundary } from './ErrorBoundary';
 
 const modules = import.meta.glob(
@@ -24,23 +25,57 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
-  const setAnswer = useCallback(({ status, provenanceGraph, answers: stimulusAnswers }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
+  const isAnalysis = useIsAnalysis();
+  const setAnswer = useCallback(({
+    status,
+    provenanceGraph,
+    answers: stimulusAnswers,
+    reason,
+    message,
+  }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
+    if (isAnalysis) return;
     storeDispatch(updateResponseBlockValidation({
       location: 'stimulus',
       identifier,
       status,
       values: stimulusAnswers,
       provenanceGraph,
+      reason,
+      message,
     }));
 
     storeDispatch(setReactiveAnswers(stimulusAnswers));
-  }, [setReactiveAnswers, storeDispatch, updateResponseBlockValidation, identifier]);
+  }, [isAnalysis, setReactiveAnswers, storeDispatch, updateResponseBlockValidation, identifier]);
+
+  const clearStimulusValidation = useCallback(() => {
+    if (isAnalysis) return;
+    storeDispatch(updateResponseBlockValidation({
+      location: 'stimulus',
+      identifier,
+      status: true,
+      values: {},
+    }));
+  }, [isAnalysis, identifier, storeDispatch, updateResponseBlockValidation]);
+
+  // If the stimulus component file can't be resolved (404), clear stimulus
+  // validation so the participant isn't stuck on a trial that can never load.
+  useEffect(() => {
+    if (!StimulusComponent) {
+      console.error(`Stimulus component not found at "${currentConfig.path}". Clearing stimulus validation so the participant is not stuck.`);
+      clearStimulusValidation();
+    }
+  }, [StimulusComponent, currentConfig.path, clearStimulusValidation]);
+
+  const handleRuntimeError = useCallback((error: unknown) => {
+    console.error(`Stimulus component "${currentConfig.path}" threw at runtime. Clearing stimulus validation so the participant is not stuck.`, error);
+    clearStimulusValidation();
+  }, [currentConfig.path, clearStimulusValidation]);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
       {StimulusComponent
         ? (
-          <ErrorBoundary>
+          <ErrorBoundary onError={handleRuntimeError}>
             <StimulusComponent
               parameters={currentConfig.parameters}
               setAnswer={setAnswer}
