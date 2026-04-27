@@ -4,7 +4,7 @@ import {
   ComponentData, OverviewData, ParticipantCounts, ResponseData,
 } from '../../types';
 import { MatrixResponse, Response, StudyConfig } from '../../../parser/types';
-import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
+import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { getMatrixAnswerOptions } from '../../../utils/responseOptions';
 
@@ -16,22 +16,6 @@ type ConfigScopedStudyConfig = {
 
 function mergeConfigLabels(existing: string[] | undefined, next: string) {
   return [...new Set([...(existing ?? []), next])];
-}
-
-function getParticipantStudyConfig(
-  participantConfigHash: string,
-  studyConfig?: StudyConfig,
-  allConfigs: Record<string, StudyConfig> = {},
-) {
-  if (!participantConfigHash) {
-    return studyConfig;
-  }
-  const participantStudyConfig = allConfigs[participantConfigHash];
-  if (!participantStudyConfig) {
-    console.warn(`Missing study config for participant config hash "${participantConfigHash}". Correctness stats should not be computed against the current study config.`);
-    return undefined;
-  }
-  return participantStudyConfig;
 }
 
 function filterParticipants(
@@ -152,43 +136,38 @@ function calculateTimeStats(
 function calculateCorrectnessStats(
   visibleParticipants: ParticipantDataWithStatus[],
   componentName?: string,
-  studyConfig?: StudyConfig,
-  allConfigs: Record<string, StudyConfig> = {},
+  responseId?: string,
 ): { correctness: number; correctCount: number; totalQuestionCount: number } {
   // Filter out rejected participants and filter by component if provided
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
-  const participantAnswers = filteredParticipants.flatMap((participant) => Object.values(participant.answers)
-    .filter((answer) => (!componentName || answer.componentName === componentName) && answer.endTime !== -1)
-    .map((answer) => ({ answer, participant })));
-
-  const hasCorrectAnswer = participantAnswers.some(({ answer }) => answer.correctAnswer && answer.correctAnswer.length > 0);
-  if (!hasCorrectAnswer) {
-    return {
-      correctness: NaN,
-      correctCount: 0,
-      totalQuestionCount: 0,
-    };
-  }
+  const answers = filteredParticipants.flatMap((participant) => Object.values(participant.answers)
+    .filter((answer) => (!componentName || answer.componentName === componentName) && answer.endTime !== -1));
 
   let totalQuestions = 0;
   let correctSum = 0;
 
-  participantAnswers.forEach(({ answer, participant }) => {
-    const correctCount = answer.correctAnswer.length;
-    if (!correctCount) return;
-    const participantStudyConfig = getParticipantStudyConfig(participant.participantConfigHash, studyConfig, allConfigs);
-    const component = participantStudyConfig?.components[answer.componentName]
-      ? studyComponentToIndividualComponent(
-        participantStudyConfig.components[answer.componentName],
-        participantStudyConfig,
-      )
-      : undefined;
+  answers.forEach((answer) => {
+    if (!answer.correctAnswer || answer.correctAnswer.length === 0) return;
 
-    totalQuestions += correctCount;
-    const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer, component?.response);
-    if (isCorrect) {
-      correctSum += correctCount;
-    }
+    answer.correctAnswer.forEach((correctEntry) => {
+      if (responseId !== undefined && correctEntry.id !== responseId) return;
+
+      totalQuestions += 1;
+
+      const userAnswer = answer.answer[correctEntry.id];
+      if (userAnswer === undefined) return;
+
+      const isCorrect = responseAnswerIsCorrect(
+        userAnswer,
+        correctEntry.answer,
+        correctEntry.acceptableLow,
+        correctEntry.acceptableHigh,
+      );
+
+      if (isCorrect) {
+        correctSum += 1;
+      }
+    });
   });
 
   return {
@@ -247,8 +226,6 @@ export function convertNumberToString(number: number | Date | null, type: 'date'
 export function getOverviewStats(
   visibleParticipants: ParticipantDataWithStatus[],
   componentName?: string,
-  studyConfig?: StudyConfig,
-  allConfigs: Record<string, StudyConfig> = {},
 ): OverviewData {
   const timeStats = calculateTimeStats(visibleParticipants, componentName);
   const dateStats = calculateDateStats(visibleParticipants, componentName);
@@ -261,7 +238,7 @@ export function getOverviewStats(
     avgTime: timeStats.avgTime,
     avgCleanTime: timeStats.avgCleanTime,
     participantsWithInvalidCleanTimeCount: timeStats.participantsWithInvalidCleanTimeCount,
-    correctness: calculateCorrectnessStats(visibleParticipants, componentName, studyConfig, allConfigs).correctness,
+    correctness: calculateCorrectnessStats(visibleParticipants, componentName).correctness,
   };
 
   return overviewData;
@@ -270,7 +247,6 @@ export function getOverviewStats(
 export function getComponentStats(
   visibleParticipants: ParticipantDataWithStatus[],
   studyConfig: StudyConfig,
-  allConfigs: Record<string, StudyConfig> = {},
 ): Array<ComponentData & {
   timeSum: number;
   timeCount: number;
@@ -290,7 +266,7 @@ export function getComponentStats(
     totalQuestionCount: number;
   }> = componentNames.map((name) => {
     const timeStats = calculateTimeStats(visibleParticipants, name);
-    const correctnessStats = calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs);
+    const correctnessStats = calculateCorrectnessStats(visibleParticipants, name);
 
     return {
       component: name,
@@ -313,11 +289,10 @@ export function getComponentStats(
 export function getComponentStatsForConfigs(
   visibleParticipants: ParticipantDataWithStatus[],
   configs: ConfigScopedStudyConfig[],
-  allConfigs: Record<string, StudyConfig> = {},
 ): ComponentData[] {
   const rows = configs.flatMap(({ configHash, configLabel, studyConfig }) => {
     const configParticipants = visibleParticipants.filter((participant) => participant.participantConfigHash === configHash);
-    return getComponentStats(configParticipants, studyConfig, allConfigs).map((row) => ({
+    return getComponentStats(configParticipants, studyConfig).map((row) => ({
       ...row,
       configs: [configLabel],
       studyConfig,
@@ -379,7 +354,6 @@ export function getComponentStatsForConfigs(
 export function getResponseStats(
   visibleParticipants: ParticipantDataWithStatus[],
   studyConfig: StudyConfig,
-  allConfigs: Record<string, StudyConfig> = {},
 ): Array<ResponseData & {
   responseId?: string;
   correctCount: number;
@@ -394,37 +368,10 @@ export function getResponseStats(
     const component = studyComponentToIndividualComponent(componentConfig, studyConfig);
     const responses = component.response ?? [];
     if (responses.length === 0) return [];
-    const correctnessStats = calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs);
 
-    return responses.map((response) => ({
-      responseId: response.id,
-      component: name,
-      type: response.type,
-      question: response.prompt ?? 'N/A',
-      options: getResponseOptions(response),
-      correctness: correctnessStats.correctness,
-      correctCount: correctnessStats.correctCount,
-      totalQuestionCount: correctnessStats.totalQuestionCount,
-    }));
-  });
-
-  return responseData;
-}
-
-export function getResponseStatsForConfigs(
-  visibleParticipants: ParticipantDataWithStatus[],
-  configs: ConfigScopedStudyConfig[],
-  allConfigs: Record<string, StudyConfig> = {},
-): ResponseData[] {
-  const rows = configs.flatMap(({ configHash, configLabel, studyConfig }) => {
-    const configParticipants = visibleParticipants.filter((participant) => participant.participantConfigHash === configHash);
-    const responseEntries = Object.entries(studyConfig.components).flatMap(([name, componentConfig]) => {
-      const component = studyComponentToIndividualComponent(componentConfig, studyConfig);
-      const responses = component.response ?? [];
-      if (responses.length === 0) return [];
-      const correctnessStats = calculateCorrectnessStats(configParticipants, name, studyConfig, allConfigs);
-
-      return responses.map((response) => ({
+    return responses.map((response) => {
+      const correctnessStats = calculateCorrectnessStats(visibleParticipants, name, response.id);
+      return {
         responseId: response.id,
         component: name,
         type: response.type,
@@ -433,8 +380,38 @@ export function getResponseStatsForConfigs(
         correctness: correctnessStats.correctness,
         correctCount: correctnessStats.correctCount,
         totalQuestionCount: correctnessStats.totalQuestionCount,
-        configs: [configLabel],
-      }));
+      };
+    });
+  });
+
+  return responseData;
+}
+
+export function getResponseStatsForConfigs(
+  visibleParticipants: ParticipantDataWithStatus[],
+  configs: ConfigScopedStudyConfig[],
+): ResponseData[] {
+  const rows = configs.flatMap(({ configHash, configLabel, studyConfig }) => {
+    const configParticipants = visibleParticipants.filter((participant) => participant.participantConfigHash === configHash);
+    const responseEntries = Object.entries(studyConfig.components).flatMap(([name, componentConfig]) => {
+      const component = studyComponentToIndividualComponent(componentConfig, studyConfig);
+      const responses = component.response ?? [];
+      if (responses.length === 0) return [];
+
+      return responses.map((response) => {
+        const correctnessStats = calculateCorrectnessStats(configParticipants, name, response.id);
+        return {
+          responseId: response.id,
+          component: name,
+          type: response.type,
+          question: response.prompt ?? 'N/A',
+          options: getResponseOptions(response),
+          correctness: correctnessStats.correctness,
+          correctCount: correctnessStats.correctCount,
+          totalQuestionCount: correctnessStats.totalQuestionCount,
+          configs: [configLabel],
+        };
+      });
     });
 
     return responseEntries;

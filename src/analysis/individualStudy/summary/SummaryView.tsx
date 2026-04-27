@@ -6,7 +6,6 @@ import { OverviewStats } from './OverviewStats';
 import { ComponentStats } from './ComponentStats';
 import { ResponseStats } from './ResponseStats';
 import { getOverviewStats } from './utils';
-import { ParticipantCounts } from '../../types';
 
 export function SummaryView({
   visibleParticipants,
@@ -14,7 +13,7 @@ export function SummaryView({
   allConfigs,
   studyId,
   showStoredCountMismatch,
-  comparisonParticipantCounts,
+  includedParticipants,
   currentConfigLabel,
 }: {
   visibleParticipants: ParticipantDataWithStatus[];
@@ -22,12 +21,12 @@ export function SummaryView({
   allConfigs: Record<string, StudyConfig>;
   studyId?: string;
   showStoredCountMismatch: boolean;
-  comparisonParticipantCounts?: ParticipantCounts;
+  includedParticipants: string[];
   currentConfigLabel?: string;
 }) {
   const overviewData = useMemo(
-    () => getOverviewStats(visibleParticipants, undefined, studyConfig, allConfigs),
-    [visibleParticipants, studyConfig, allConfigs],
+    () => getOverviewStats(visibleParticipants),
+    [visibleParticipants],
   );
 
   const selectedConfigRows = useMemo(() => {
@@ -56,20 +55,18 @@ export function SummaryView({
         overviewData={overviewData}
         studyId={studyId}
         showStoredCountMismatch={showStoredCountMismatch}
-        comparisonParticipantCounts={comparisonParticipantCounts}
+        includedParticipants={includedParticipants}
       />
       <Group align="flex-start" gap="md" grow>
         <ComponentStats
           visibleParticipants={visibleParticipants}
           studyConfig={studyConfig}
-          allConfigs={allConfigs}
           selectedConfigRows={selectedConfigRows}
           currentConfigLabel={currentConfigLabel}
         />
         <ResponseStats
           visibleParticipants={visibleParticipants}
           studyConfig={studyConfig}
-          allConfigs={allConfigs}
           selectedConfigRows={selectedConfigRows}
           currentConfigLabel={currentConfigLabel}
         />

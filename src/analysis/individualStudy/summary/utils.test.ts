@@ -26,26 +26,30 @@ vi.mock('../../../utils/getCleanedDuration', () => ({
 }));
 
 vi.mock('../../../utils/correctAnswer', () => ({
-  componentAnswersAreCorrect: vi.fn((
-    userAnswers: Record<string, unknown>,
-    correctAnswers: Array<{ id: string; answer: unknown }>,
-    responses?: Array<{ id: string; type?: string }>,
+  responseAnswerIsCorrect: vi.fn((
+    userAnswer: unknown,
+    correctAnswer: unknown,
+    acceptableLow?: number,
+    acceptableHigh?: number,
+    options?: { ignoreArrayOrder?: boolean },
   ) => {
-    if (!correctAnswers || correctAnswers.length === 0) return true;
-    return correctAnswers.every((ca) => {
-      const userAnswer = userAnswers[ca.id];
-      const response = responses?.find((entry) => entry.id === ca.id);
-
-      if (Array.isArray(userAnswer) && Array.isArray(ca.answer)) {
-        if (response?.type === 'checkbox' || response?.type === 'dropdown') {
-          return [...userAnswer].sort().join('|') === [...ca.answer].sort().join('|');
-        }
-
-        return userAnswer.join('|') === ca.answer.join('|');
+    if (Array.isArray(userAnswer) && Array.isArray(correctAnswer)) {
+      // Match real responseAnswerIsCorrect: default is sort-and-compare unless caller opts out.
+      if ((options?.ignoreArrayOrder ?? true) === false) {
+        return userAnswer.join('|') === correctAnswer.join('|');
       }
+      return [...userAnswer].sort().join('|') === [...correctAnswer].sort().join('|');
+    }
 
-      return userAnswer === ca.answer;
-    });
+    if (acceptableLow !== undefined || acceptableHigh !== undefined) {
+      const num = Number(userAnswer);
+      if (Number.isNaN(num)) return userAnswer === correctAnswer;
+      if (acceptableLow !== undefined && num < acceptableLow) return false;
+      if (acceptableHigh !== undefined && num > acceptableHigh) return false;
+      return true;
+    }
+
+    return userAnswer === correctAnswer;
   }),
 }));
 
@@ -910,8 +914,8 @@ describe('utils.tsx', () => {
 
         const result = getOverviewStats(participants);
 
-        // Mock returns false for component (all-or-nothing), so 0%
-        expect(result.correctness).toBe(0);
+        // Per-response evaluation: q1 and q3 correct, q2 wrong → 2 correct out of 3
+        expect(result.correctness).toBeCloseTo((2 / 3) * 100, 5);
       });
 
       it('should aggregate correctness across multiple participants with multiple questions', () => {
@@ -1683,22 +1687,11 @@ describe('utils.tsx', () => {
         },
       } as unknown as StudyConfig;
 
-      const allConfigs = {
-        'config-a': {
-          components: {
-            comp1: { response: [{ id: 'q1', type: 'checkbox' }] },
-          },
-        },
-        'config-b': {
-          components: {
-            comp1: { response: [{ id: 'q1', type: 'radio' }] },
-          },
-        },
-      } as unknown as Record<string, StudyConfig>;
+      const result = getComponentStats(participants, studyConfig);
 
-      const result = getComponentStats(participants, studyConfig, allConfigs);
-
-      expect(result[0].correctness).toBe(50);
+      // Both participants submit ['b', 'a'] vs correct ['a', 'b']. Array comparison
+      // defaults to sort-and-compare → both count as correct → 100%.
+      expect(result[0].correctness).toBe(100);
     });
 
     it('should return NaN stats for components with no participant data', () => {
@@ -1935,10 +1928,7 @@ describe('utils.tsx', () => {
       const result = getComponentStatsForConfigs(participants, [
         { configHash: 'config-a', configLabel: 'pilot - aaaaaa', studyConfig: configA },
         { configHash: 'config-b', configLabel: 'pilot - bbbbbb', studyConfig: configB },
-      ], {
-        'config-a': configA,
-        'config-b': configB,
-      });
+      ]);
 
       expect(result).toHaveLength(1);
       expect(result[0].component).toBe('introduction');
@@ -2084,10 +2074,7 @@ describe('utils.tsx', () => {
         const result = getResponseStatsForConfigs([], [
           { configHash: 'config-a', configLabel: 'pilot - aaaaaa', studyConfig: configA },
           { configHash: 'config-b', configLabel: 'pilot - bbbbbb', studyConfig: configB },
-        ], {
-          'config-a': configA,
-          'config-b': configB,
-        });
+        ]);
 
         expect(result).toHaveLength(1);
         expect(result[0].component).toBe('survey');

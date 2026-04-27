@@ -38,7 +38,7 @@ export function getFilteredParticipantProgress(
       };
     })
     .filter(({ isCompleted, isRejected, assignment }) => {
-      const status = isRejected ? 'rejected' : (isCompleted ? 'completed' : 'inprogress');
+      const status = isRejected ? 'rejected' : (isCompleted ? 'completed' : 'inProgress');
       const statusMatch = includedParticipants.includes(status);
       const stageMatch = selectedStages.includes('ALL') || selectedStages.includes(assignment.stage || '');
 

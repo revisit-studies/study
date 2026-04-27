@@ -55,7 +55,7 @@ function getParticipantViewIds(
   selectedStages: string[],
 ): string[] {
   const completed = includedParticipants.includes('completed') ? participants.filter((participant) => !participant.rejected && participant.completed) : [];
-  const inProgress = includedParticipants.includes('inprogress') ? participants.filter((participant) => !participant.rejected && !participant.completed) : [];
+  const inProgress = includedParticipants.includes('inProgress') ? participants.filter((participant) => !participant.rejected && !participant.completed) : [];
   const rejected = includedParticipants.includes('rejected') ? participants.filter((participant) => participant.rejected) : [];
 
   const statusFiltered = [...completed, ...inProgress, ...rejected];
@@ -80,7 +80,7 @@ describe('analysis live monitor', () => {
       }),
     ];
 
-    const filtered = getFilteredParticipantProgress(assignments, ['completed', 'inprogress', 'rejected'], ['ALL']);
+    const filtered = getFilteredParticipantProgress(assignments, ['completed', 'inProgress', 'rejected'], ['ALL']);
     const grouped = groupParticipantProgress(filtered);
 
     expect(filtered).toHaveLength(3);
@@ -124,7 +124,7 @@ describe('analysis live monitor', () => {
       }),
     ];
 
-    const includedParticipants = ['completed', 'inprogress'];
+    const includedParticipants = ['completed', 'inProgress'];
     const selectedStages = ['S1'];
 
     const liveMonitorIds = getFilteredParticipantProgress(assignments, includedParticipants, selectedStages)

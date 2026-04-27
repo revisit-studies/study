@@ -107,13 +107,11 @@ function renderResponseConfigListCell(
 export function ResponseStats({
   visibleParticipants,
   studyConfig,
-  allConfigs,
   selectedConfigRows,
   currentConfigLabel,
 }: {
   visibleParticipants: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
-  allConfigs: Record<string, StudyConfig>;
   selectedConfigRows: Array<{ configHash: string; configLabel: string; studyConfig: StudyConfig }>;
   currentConfigLabel?: string;
 }) {
@@ -122,8 +120,8 @@ export function ResponseStats({
   const responseData: ResponseData[] = useMemo(
     () => {
       const rows = useSelectedConfigRows
-        ? getResponseStatsForConfigs(visibleParticipants, selectedConfigRows, allConfigs)
-        : getResponseStats(visibleParticipants, studyConfig, allConfigs);
+        ? getResponseStatsForConfigs(visibleParticipants, selectedConfigRows)
+        : getResponseStats(visibleParticipants, studyConfig);
       // Outdated rows are always pinned below current rows; user sort applies within each group
       return [...rows].sort((a, b) => {
         const aOutdated = isResponseOutdated(a, currentConfigLabel) ? 1 : 0;
@@ -141,7 +139,7 @@ export function ResponseStats({
         return 0;
       });
     },
-    [visibleParticipants, studyConfig, allConfigs, useSelectedConfigRows, selectedConfigRows, currentConfigLabel, sorting],
+    [visibleParticipants, studyConfig, useSelectedConfigRows, selectedConfigRows, currentConfigLabel, sorting],
   );
 
   const columns = useMemo<MrtColumnDef<ResponseData>[]>(() => [
@@ -177,6 +175,7 @@ export function ResponseStats({
     ...(useSelectedConfigRows ? [{
       accessorKey: 'configs',
       header: 'Configs',
+      enableSorting: false,
       Cell: ({ row }) => renderResponseConfigListCell(row, currentConfigLabel),
     } satisfies MrtColumnDef<ResponseData>] : []),
   ], [useSelectedConfigRows, currentConfigLabel]);

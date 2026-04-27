@@ -4,7 +4,7 @@ import {
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { convertNumberToString } from './utils';
-import { OverviewData, ParticipantCounts } from '../../types';
+import { OverviewData } from '../../types';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { useAsync } from '../../../store/hooks/useAsync';
 import { StorageEngine } from '../../../storage/engines/types';
@@ -18,12 +18,12 @@ export function OverviewStats({
   overviewData,
   studyId,
   showStoredCountMismatch = false,
-  comparisonParticipantCounts,
+  includedParticipants = ['completed', 'inProgress', 'rejected'],
 }: {
   overviewData: OverviewData;
   studyId?: string;
   showStoredCountMismatch?: boolean;
-  comparisonParticipantCounts?: ParticipantCounts;
+  includedParticipants?: string[];
 }) {
   // Check if there are participants with invalid clean time (e.g. due to a window events bug)
   const hasExcluded = overviewData && overviewData.participantsWithInvalidCleanTimeCount > 0;
@@ -36,25 +36,23 @@ export function OverviewStats({
     showStoredCountMismatch && storageEngine && studyId ? [storageEngine, studyId] : null,
   );
 
-  const mismatchComparisonCounts = comparisonParticipantCounts ?? overviewData.participantCounts;
-
   const mismatchDetails = useMemo(() => {
     if (!showStoredCountMismatch || !storedCounts) return null;
     return {
       completed: {
-        current: storedCounts.completed,
-        calculated: mismatchComparisonCounts.completed,
+        current: includedParticipants.includes('completed') ? storedCounts.completed : 0,
+        calculated: overviewData.participantCounts.completed,
       },
       inProgress: {
-        current: storedCounts.inProgress,
-        calculated: mismatchComparisonCounts.inProgress,
+        current: includedParticipants.includes('inProgress') ? storedCounts.inProgress : 0,
+        calculated: overviewData.participantCounts.inProgress,
       },
       rejected: {
-        current: storedCounts.rejected,
-        calculated: mismatchComparisonCounts.rejected,
+        current: includedParticipants.includes('rejected') ? storedCounts.rejected : 0,
+        calculated: overviewData.participantCounts.rejected,
       },
     };
-  }, [mismatchComparisonCounts, showStoredCountMismatch, storedCounts]);
+  }, [overviewData.participantCounts, showStoredCountMismatch, storedCounts, includedParticipants]);
 
   // Check if the stored participant counts match the calculated participant counts
   const hasMismatch = (type: 'completed' | 'inProgress' | 'rejected') => {

@@ -30,7 +30,6 @@ import { StorageEngine } from '../../storage/engines/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import { getSequenceConditions, parseConditionParam } from '../../utils/handleConditionLogic';
-import { ParticipantCounts } from '../types';
 import 'mantine-react-table/styles.css';
 import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
@@ -83,7 +82,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const { studyId: routeStudyId } = useParams();
   const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
 
-  const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inprogress', 'rejected']);
+  const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inProgress', 'rejected']);
 
   const [selectedStages, setSelectedStages] = useState<string[]>(['ALL']);
   const [availableStages, setAvailableStages] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
@@ -124,7 +123,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   );
 
   const participantCounts = useMemo(() => {
-    if (!expData) return { completed: 0, inprogress: 0, rejected: 0 };
+    if (!expData) return { completed: 0, inProgress: 0, rejected: 0 };
     const expList = Object.values(expData);
 
     // Apply config filter before counting
@@ -150,17 +149,17 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
     return {
       completed: conditionFiltered.filter((d) => !d.rejected && d.completed).length,
-      inprogress: conditionFiltered.filter((d) => !d.rejected && !d.completed).length,
+      inProgress: conditionFiltered.filter((d) => !d.rejected && !d.completed).length,
       rejected: conditionFiltered.filter((d) => d.rejected).length,
     };
   }, [expData, selectedStages, selectedConfigs, selectedConditions, studyUsesConditions]);
 
   const selectedParticipantCounts = useMemo(() => {
-    if (selectedParticipants.length === 0) return { completed: 0, inprogress: 0, rejected: 0 };
+    if (selectedParticipants.length === 0) return { completed: 0, inProgress: 0, rejected: 0 };
 
     return {
       completed: selectedParticipants.filter((d) => !d.rejected && d.completed).length,
-      inprogress: selectedParticipants.filter((d) => !d.rejected && !d.completed).length,
+      inProgress: selectedParticipants.filter((d) => !d.rejected && !d.completed).length,
       rejected: selectedParticipants.filter((d) => d.rejected).length,
     };
   }, [selectedParticipants]);
@@ -169,24 +168,11 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const hasStageFilter = !(selectedStages.length === 1 && selectedStages[0] === 'ALL');
     const hasConfigFilter = !(selectedConfigs.length === 1 && selectedConfigs[0] === 'ALL');
     const hasConditionFilter = availableConditions.length > 0 && !(selectedConditions.length === 1 && selectedConditions[0] === 'ALL');
-    const hasParticipantStatusFilter = !(
-      includedParticipants.includes('completed')
-      && includedParticipants.includes('inprogress')
-      && includedParticipants.includes('rejected')
-    );
 
     return !hasStageFilter
       && !hasConfigFilter
-      && !hasConditionFilter
-      && !hasParticipantStatusFilter;
-  }, [selectedStages, selectedConfigs, selectedConditions, availableConditions.length, includedParticipants]);
-
-  const mismatchComparisonParticipantCounts = useMemo((): ParticipantCounts => ({
-    total: participantCounts.completed + participantCounts.inprogress + participantCounts.rejected,
-    completed: participantCounts.completed,
-    inProgress: participantCounts.inprogress,
-    rejected: participantCounts.rejected,
-  }), [participantCounts]);
+      && !hasConditionFilter;
+  }, [selectedStages, selectedConfigs, selectedConditions, availableConditions.length]);
 
   const currentConfigHash = currentConfigHashValue ?? undefined;
   const isFirebaseEngine = storageEngine?.getEngine() === 'firebase';
@@ -221,7 +207,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const expList = Object.values(expData);
 
     const comp = includedParticipants.includes('completed') ? expList.filter((d) => !d.rejected && d.completed) : [];
-    const prog = includedParticipants.includes('inprogress') ? expList.filter((d) => !d.rejected && !d.completed) : [];
+    const prog = includedParticipants.includes('inProgress') ? expList.filter((d) => !d.rejected && !d.completed) : [];
     const rej = includedParticipants.includes('rejected') ? expList.filter((d) => d.rejected) : [];
 
     const statusFiltered = [...comp, ...prog, ...rej];
@@ -536,10 +522,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                       size="sm"
                     />
                     <Checkbox
-                      value="inprogress"
+                      value="inProgress"
                       label={selectedParticipants.length > 0
-                        ? `In Progress (${selectedParticipantCounts.inprogress} of ${participantCounts.inprogress})`
-                        : `In Progress (${participantCounts.inprogress})`}
+                        ? `In Progress (${selectedParticipantCounts.inProgress} of ${participantCounts.inProgress})`
+                        : `In Progress (${participantCounts.inProgress})`}
                       size="sm"
                     />
                     <Checkbox
@@ -572,8 +558,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
                 <Tooltip
                   label={!isFirebaseEngine
-                    ? 'Coding is only available when using Firebase and when audio recording is enabled in your study config.'
-                    : 'Coding is only available for studies with audio recording enabled in your study config.'}
+                    ? 'Coding is only available when using Firebase with audio recording enabled.'
+                    : 'Coding is only available for studies with audio recording enabled.'}
                   disabled={codingEnabled}
                 >
                   <span>
@@ -599,7 +585,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                     allConfigs={allConfigs}
                     studyId={canonicalStudyId ?? undefined}
                     showStoredCountMismatch={showStoredCountMismatch}
-                    comparisonParticipantCounts={mismatchComparisonParticipantCounts}
+                    includedParticipants={includedParticipants}
                     currentConfigLabel={currentConfigLabel}
                   />
                 )}
@@ -608,7 +594,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {studyConfig && <TableView width={width} stageColors={stageColors} visibleParticipants={visibleParticipants} studyConfig={studyConfig} allConfigs={allConfigs} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId ?? undefined)} selectedParticipants={selectedParticipants} onSelectionChange={setSelectedParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="stats" pt="xs">
-                {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} allConfigs={allConfigs} studyId={canonicalStudyId ?? undefined} />}
+                {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} />}
               </Tabs.Panel>
               <Tabs.Panel value="tagging" pt="xs">
                 {studyConfig && codingEnabled
