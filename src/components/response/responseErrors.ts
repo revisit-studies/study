@@ -376,7 +376,10 @@ export function getResponseIssueType(
     loadError,
   );
 
-  return issue.type === 'none' ? null : issue.type;
+  if (issue.type === 'none') return null;
+  // Optional responses with invalid values still display an orange warning but they should not block progression — only required issues gate the Next button
+  if (issue.type === 'invalid' && response.required === false) return null;
+  return issue.type;
 }
 
 export function summarizeResponseIssues(

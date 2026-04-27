@@ -487,12 +487,6 @@ export function ResponseBlock({
       return;
     }
 
-    if (hasResponseIssues) {
-      storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
-      answerValidator.validate();
-      return;
-    }
-
     const newAttemptsUsed = attemptsUsed + 1;
     setAttemptsUsed(newAttemptsUsed);
 
@@ -504,23 +498,25 @@ export function ResponseBlock({
       return acc;
     }, {}) : {}) as StoredAnswer['answer'];
 
-    const correctAnswers = Object.fromEntries(allResponsesWithDefaults.map((response) => {
-      const configCorrectAnswer = config?.correctAnswer?.find((answer) => answer.id === response.id);
-      const suppliedAnswer = allAnswers[response.id];
+    const correctAnswers = Object.fromEntries(
+      (config?.correctAnswer ?? []).map((configCorrectAnswer) => {
+        const response = allResponsesWithDefaults.find((r) => r.id === configCorrectAnswer.id);
+        const suppliedAnswer = allAnswers[configCorrectAnswer.id];
 
-      return [response.id, responseAnswerIsCorrect(
-        suppliedAnswer,
-        configCorrectAnswer?.answer,
-        configCorrectAnswer?.acceptableLow,
-        configCorrectAnswer?.acceptableHigh,
-        { ignoreArrayOrder: response.type === 'checkbox' || response.type === 'dropdown' },
-      )];
-    }));
+        return [configCorrectAnswer.id, responseAnswerIsCorrect(
+          suppliedAnswer,
+          configCorrectAnswer.answer,
+          configCorrectAnswer.acceptableLow,
+          configCorrectAnswer.acceptableHigh,
+          { ignoreArrayOrder: response?.type === 'checkbox' || response?.type === 'dropdown' },
+        )];
+      }),
+    );
 
     if (hasCorrectAnswerFeedback) {
-      allResponsesWithDefaults.forEach((response) => {
-        // Do not show feedback for textOnly or divider responses
-        if (response.type === 'textOnly' || response.type === 'divider') {
+      (config?.correctAnswer ?? []).forEach((configCorrectAnswer) => {
+        const response = allResponsesWithDefaults.find((r) => r.id === configCorrectAnswer.id);
+        if (!response || response.type === 'textOnly' || response.type === 'divider') {
           return;
         }
         if (correctAnswers[response.id] && !alertConfig[response.id]?.message.includes('You\'ve failed to answer this question correctly')) {
@@ -568,7 +564,7 @@ export function ResponseBlock({
         ),
       );
     }
-  }, [alertConfig, allResponsesWithDefaults, allowFailedTraining, answerValidator, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, navigate, revealStimulusErrors, saveIncorrectAnswer, setResponseSubmitAttempt, storeDispatch, trainingAttempts, trialValidation]);
+  }, [alertConfig, allResponsesWithDefaults, allowFailedTraining, attemptsUsed, config, hasCorrectAnswerFeedback, hasStimulusIssue, identifier, navigate, revealStimulusErrors, saveIncorrectAnswer, storeDispatch, trainingAttempts, trialValidation]);
 
   const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 

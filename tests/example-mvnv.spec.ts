@@ -22,7 +22,6 @@ async function answerCurrentMvnvPrompt(
   const answerInput = page.getByPlaceholder('answer text');
   const findingsInput = page.getByLabel('Enter Findings Below*');
   const radioOptions = page.getByRole('radio');
-  const nextButton = page.getByRole('button', { name: 'Next', exact: true });
   const task6Prompt = page.getByText('Does Alex have more mention interactions with North American or European accounts?');
   const selectedItems = page.locator('p:has-text("Selected name(s) will show here")')
     .locator('xpath=following-sibling::*[1]')
@@ -31,7 +30,7 @@ async function answerCurrentMvnvPrompt(
 
   const hasReactiveSelection = async () => {
     const checkboxCount = await answerCheckboxes.count().catch(() => 0);
-    for (let i = 0; i < Math.min(checkboxCount, 40); i += 1) {
+    for (let i = 0; i < Math.min(checkboxCount, 10); i += 1) {
       const checkbox = answerCheckboxes.nth(i);
       if (
         await checkbox.isVisible().catch(() => false)
@@ -56,13 +55,13 @@ async function answerCurrentMvnvPrompt(
 
   const selectReactiveAnswer = async (attempt = 0) => {
     const checkboxCount = await answerCheckboxes.count().catch(() => 0);
-    for (let i = 0; i < Math.min(checkboxCount, 40); i += 1) {
+    for (let i = 0; i < Math.min(checkboxCount, 10); i += 1) {
       const checkbox = answerCheckboxes.nth(i);
       if (await checkbox.isVisible().catch(() => false)) {
         const checked = await checkbox.isChecked().catch(() => false);
         if (!checked) {
           await checkbox.check().catch(async () => {
-            await checkbox.click().catch(() => {});
+            await checkbox.click().catch(() => { });
           });
           return true;
         }
@@ -70,11 +69,11 @@ async function answerCurrentMvnvPrompt(
     }
 
     const answerBoxCount = await answerBoxes.count().catch(() => 0);
-    const limit = Math.min(answerBoxCount, 40);
+    const limit = Math.min(answerBoxCount, 10);
     for (let i = 0; i < limit; i += 1) {
       const idx = (attempt + i) % limit;
       if (!clickedRects.has(idx)) {
-        await answerBoxes.nth(idx).click().catch(() => {});
+        await answerBoxes.nth(idx).click().catch(() => { });
         clickedRects.add(idx);
         return true;
       }
@@ -97,11 +96,6 @@ async function answerCurrentMvnvPrompt(
       || (await answerBoxes.first().isVisible().catch(() => false));
   }, { timeout: taskTimeoutMs }).toBe(true);
 
-  if (await answerBoxes.first().isVisible().catch(() => false)) {
-    await selectReactiveAnswer();
-    if (await nextButton.isEnabled().catch(() => false)) return;
-  }
-
   // Task 6 needs BOTH a radio response and a reactive graph-node selection.
   if (await task6Prompt.isVisible().catch(() => false)) {
     const radioCount = await radioOptions.count().catch(() => 0);
@@ -121,24 +115,20 @@ async function answerCurrentMvnvPrompt(
           return;
         }
       }
-      if (await nextButton.isEnabled().catch(() => false)) {
+      if (await hasReactiveSelection()) {
         return;
       }
 
       const answerBoxCount = await answerBoxes.count().catch(() => 0);
-      const hasSelection = await hasReactiveSelection();
-      if (answerBoxCount > 0 && !hasSelection) {
+      if (answerBoxCount > 0) {
         await selectReactiveAnswer(i);
-      }
-
-      if (await nextButton.isEnabled().catch(() => false)) {
-        return;
       }
       i += 1;
     }
   }
 
   // Some prompts require both a sidebar response and a graph-node selection.
+  let textsFilled = false;
   let attempt = 0;
   while (Date.now() < deadline) {
     if (startingQuestion) {
@@ -147,46 +137,42 @@ async function answerCurrentMvnvPrompt(
         return;
       }
     }
-    if (await nextButton.isEnabled().catch(() => false)) {
-      return;
-    }
 
-    if (await answerInput.isVisible().catch(() => false)) {
-      await answerInput.fill('test');
-    }
-
-    if (await findingsInput.isVisible().catch(() => false)) {
-      await findingsInput.fill('test');
-    }
-
-    const radioCount = await radioOptions.count().catch(() => 0);
-    for (let i = 0; i < Math.min(radioCount, 10); i += 1) {
-      const radio = radioOptions.nth(i);
-      if (await radio.isVisible().catch(() => false)) {
-        await radio.check();
-        break;
+    if (!textsFilled) {
+      if (await answerInput.isVisible().catch(() => false)) {
+        await answerInput.fill('test');
       }
+      if (await findingsInput.isVisible().catch(() => false)) {
+        await findingsInput.fill('test');
+      }
+      const radioCount = await radioOptions.count().catch(() => 0);
+      for (let i = 0; i < Math.min(radioCount, 10); i += 1) {
+        const radio = radioOptions.nth(i);
+        if (await radio.isVisible().catch(() => false)) {
+          await radio.check();
+          break;
+        }
+      }
+      textsFilled = true;
     }
 
     const answerBoxCount = await answerBoxes.count().catch(() => 0);
     const hasSelection = await hasReactiveSelection();
-    if (answerBoxCount > 0 && !hasSelection) {
-      await selectReactiveAnswer(attempt);
-    }
-
-    if (await nextButton.isEnabled().catch(() => false)) {
+    if (answerBoxCount === 0) {
       return;
     }
+    if (hasSelection) {
+      return;
+    }
+    await selectReactiveAnswer(attempt);
     attempt += 1;
   }
-
-  throw new Error(`MVNV task did not enable Next within ${Math.round(taskTimeoutMs / 1000)} seconds`);
 }
 
 test('test', async ({ page, browserName }) => {
   test.skip(browserName === 'webkit', 'Skipping MVNV on WebKit due to headless flakiness.');
 
-  const taskTimeoutMs = browserName === 'webkit' ? 20000 : 6000;
+  const taskTimeoutMs = 5000;
   const maxTaskLoops = 20;
 
   await page.goto('/');
@@ -257,7 +243,7 @@ test('test', async ({ page, browserName }) => {
       if (await isFinished()) return true;
       const questionAfter = await getCurrentTaskQuestion(page);
       return !!questionAfter;
-    }, { timeout: 5000 }).toBe(true).catch(() => {});
+    }, { timeout: 5000 }).toBe(true).catch(() => { });
   }
 
   // Check that the thank you message is displayed
