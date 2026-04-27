@@ -169,11 +169,17 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const hasStageFilter = !(selectedStages.length === 1 && selectedStages[0] === 'ALL');
     const hasConfigFilter = !(selectedConfigs.length === 1 && selectedConfigs[0] === 'ALL');
     const hasConditionFilter = availableConditions.length > 0 && !(selectedConditions.length === 1 && selectedConditions[0] === 'ALL');
+    const hasParticipantStatusFilter = !(
+      includedParticipants.includes('completed')
+      && includedParticipants.includes('inprogress')
+      && includedParticipants.includes('rejected')
+    );
 
     return !hasStageFilter
       && !hasConfigFilter
-      && !hasConditionFilter;
-  }, [selectedStages, selectedConfigs, selectedConditions, availableConditions.length]);
+      && !hasConditionFilter
+      && !hasParticipantStatusFilter;
+  }, [selectedStages, selectedConfigs, selectedConditions, availableConditions.length, includedParticipants]);
 
   const mismatchComparisonParticipantCounts = useMemo((): ParticipantCounts => ({
     total: participantCounts.completed + participantCounts.inprogress + participantCounts.rejected,

@@ -158,7 +158,7 @@ function calculateCorrectnessStats(
   // Filter out rejected participants and filter by component if provided
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
   const participantAnswers = filteredParticipants.flatMap((participant) => Object.values(participant.answers)
-    .filter((answer) => (!componentName || answer.componentName === componentName))
+    .filter((answer) => (!componentName || answer.componentName === componentName) && answer.endTime !== -1)
     .map((answer) => ({ answer, participant })));
 
   const hasCorrectAnswer = participantAnswers.some(({ answer }) => answer.correctAnswer && answer.correctAnswer.length > 0);
