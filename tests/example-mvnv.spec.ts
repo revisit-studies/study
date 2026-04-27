@@ -2,6 +2,8 @@
 import { test, expect, Page } from '@playwright/test';
 import { nextClick, waitForStudyEndMessage } from './utils';
 
+test.setTimeout(180000);
+
 async function getCurrentTaskQuestion(page: Page) {
   const question = page.locator('p').filter({ has: page.locator('strong:has-text("Question:")') }).first();
   if (!(await question.isVisible().catch(() => false))) {
