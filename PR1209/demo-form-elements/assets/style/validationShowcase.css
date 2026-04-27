@@ -1,0 +1,58 @@
+/*
+ * Flashy stylesheet applied via `stylesheetPath`.
+ * Goal: prove that our red/orange validation highlighting, sticky error bar,
+ * and Next-question button still look reasonable when the component is wrapped
+ * in a highly opinionated CSS skin.
+ */
+
+.responseBlock {
+  max-width: 680px;
+  margin: 24px auto;
+  padding: 28px;
+  background: radial-gradient(circle at top left, #0f172a 0%, #1e293b 45%, #334155 100%);
+  border: 2px solid #38bdf8;
+  border-radius: 16px;
+  color: #e0f2fe;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  box-shadow: 0 12px 40px rgba(56, 189, 248, 0.25);
+}
+
+.responseBlock > div {
+  background: rgba(255, 255, 255, 0.04);
+  padding: 14px 16px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.responseBlock > div:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+#showcase-title p {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+#showcase-required-short-text label,
+#showcase-optional-invalid-numerical label,
+#showcase-required-checkbox label {
+  color: #bae6fd;
+  font-weight: 500;
+}
+
+/* keep inputs readable against the dark background */
+#showcase-required-short-text input,
+#showcase-optional-invalid-numerical input {
+  background: #0f172a;
+  color: #f1f5f9;
+  border: 1px solid #475569;
+}
+
+#showcase-required-short-text input:focus,
+#showcase-optional-invalid-numerical input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+}

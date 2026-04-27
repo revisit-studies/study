@@ -934,7 +934,7 @@
             "Grapes"
           ],
           "numItems": 2,
-          "required": true
+          "required": false
         },
         {
           "id": "ranking-categorical",
@@ -948,7 +948,7 @@
             "Dancing",
             "Photography"
           ],
-          "required": true
+          "required": false
         },
         {
           "id": "ranking-pairwise",
@@ -963,7 +963,7 @@
             "Salad",
             "Tacos"
           ],
-          "required": true
+          "required": false
         }
       ]
     },
@@ -1500,6 +1500,192 @@
           "id": "timer-title",
           "type": "textOnly",
           "prompt": "# Timer Validation - Next Button Enable Time\n\nNext should be truly disabled for three seconds and then enable without any required response."
+        }
+      ]
+    },
+    "Styled Validation - Neon Card": {
+      "type": "questionnaire",
+      "style": {
+        "maxWidth": "720px",
+        "margin": "24px auto",
+        "padding": "28px",
+        "background": "linear-gradient(135deg, #1f1c3a 0%, #3c2a70 50%, #812886 100%)",
+        "border": "2px solid #ff4ecd",
+        "borderRadius": "18px",
+        "color": "#f7e9ff"
+      },
+      "response": [
+        {
+          "id": "neon-title",
+          "type": "textOnly",
+          "prompt": "# Styled Validation — Neon Card\n\nThis page uses a heavily styled container (gradient background, neon border, shadow). Our validation highlighting should still show correctly: try clicking Next without filling in fields to see red required errors, and enter an out-of-range number to see an orange invalid error once errors are revealed.",
+          "restartEnumeration": true,
+          "style": {
+            "backgroundColor": "rgba(255, 255, 255, 0.08)",
+            "padding": "12px 16px",
+            "borderRadius": "10px"
+          }
+        },
+        {
+          "id": "neon-required-text",
+          "type": "shortText",
+          "prompt": "Your neon vibe (required)",
+          "secondaryText": "Leave blank and hit Next to see the red required highlight.",
+          "placeholder": "e.g. electric mango",
+          "style": {
+            "padding": "12px",
+            "borderRadius": "10px",
+            "backgroundColor": "rgba(0, 0, 0, 0.25)"
+          }
+        },
+        {
+          "id": "neon-bounded-number",
+          "type": "numerical",
+          "prompt": "Glow intensity (0 — 10, optional)",
+          "secondaryText": "The default is intentionally out of range; after clicking Next it should show an orange invalid error.",
+          "min": 0,
+          "max": 10,
+          "required": false,
+          "default": 42,
+          "style": {
+            "padding": "12px",
+            "borderRadius": "10px",
+            "backgroundColor": "rgba(0, 0, 0, 0.25)"
+          }
+        },
+        {
+          "id": "neon-required-radio",
+          "type": "radio",
+          "prompt": "Pick a palette (required)",
+          "options": [
+            "Synthwave",
+            "Vaporwave",
+            "Cyberpunk"
+          ],
+          "style": {
+            "padding": "12px",
+            "borderRadius": "10px",
+            "backgroundColor": "rgba(0, 0, 0, 0.25)"
+          }
+        }
+      ]
+    },
+    "Styled Validation - External Stylesheet": {
+      "type": "questionnaire",
+      "stylesheetPath": "demo-form-elements/assets/style/validationShowcase.css",
+      "response": [
+        {
+          "id": "showcase-title",
+          "type": "textOnly",
+          "prompt": "# Styled Validation — External Stylesheet\n\nThis page uses `stylesheetPath` instead of inline `style`. The dark gradient card, hover lift on each question, and custom input colors come from the CSS file. Click Next without filling the required fields to verify red highlights still appear, and watch the numeric field flag orange once errors are revealed.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "showcase-required-short-text",
+          "type": "shortText",
+          "prompt": "Codename (required)",
+          "placeholder": "e.g. Nebula"
+        },
+        {
+          "id": "showcase-optional-invalid-numerical",
+          "type": "numerical",
+          "prompt": "Voltage (1 — 9, optional)",
+          "secondaryText": "Default is out of range — orange invalid should appear after Next.",
+          "min": 1,
+          "max": 9,
+          "required": false,
+          "default": 99
+        },
+        {
+          "id": "showcase-required-checkbox",
+          "type": "checkbox",
+          "prompt": "Pick 2+ modules (required, minSelections 2)",
+          "options": [
+            "Reactor",
+            "Navigator",
+            "Lifesupport",
+            "Shield"
+          ],
+          "minSelections": 2,
+          "maxSelections": 4
+        }
+      ]
+    },
+    "Styled Validation - Magazine Layout": {
+      "type": "questionnaire",
+      "style": {
+        "maxWidth": "760px",
+        "margin": "28px auto",
+        "padding": "40px 48px",
+        "backgroundColor": "#fdf6ec",
+        "border": "4px solid #111",
+        "borderRadius": "2px",
+        "fontFamily": "Georgia, 'Times New Roman', serif",
+        "color": "#1a1a1a"
+      },
+      "response": [
+        {
+          "id": "magazine-title",
+          "type": "textOnly",
+          "prompt": "# THE DAILY QUESTIONNAIRE\n\n*An editorial on styled validation — proving that our red, orange, and sticky highlights cohabit gracefully with bespoke typography.*",
+          "restartEnumeration": true,
+          "style": {
+            "border": "3px double #111",
+            "padding": "12px",
+            "margin": "0 0 16px 0",
+            "letterSpacing": "0.5px"
+          }
+        },
+        {
+          "id": "magazine-required-longtext",
+          "type": "longText",
+          "prompt": "Editor's note (required)",
+          "secondaryText": "Required — leaving this blank after Next should highlight it red.",
+          "placeholder": "Write a short editorial…",
+          "style": {
+            "padding": "14px",
+            "backgroundColor": "#fff",
+            "border": "1px dashed #111"
+          }
+        },
+        {
+          "id": "magazine-optional-invalid-checkbox",
+          "type": "checkbox",
+          "prompt": "Preferred sections (optional, must pick at least 2 if any)",
+          "secondaryText": "Default selects only one; our orange invalid highlight should appear once Next is clicked.",
+          "options": [
+            "Op-Ed",
+            "Features",
+            "Letters",
+            "Crossword"
+          ],
+          "minSelections": 2,
+          "maxSelections": 3,
+          "required": false,
+          "default": [
+            "Op-Ed"
+          ],
+          "style": {
+            "padding": "14px",
+            "backgroundColor": "#fff",
+            "border": "1px dashed #111"
+          }
+        },
+        {
+          "id": "magazine-required-dropdown",
+          "type": "dropdown",
+          "prompt": "Masthead typeface (required)",
+          "placeholder": "Choose a typeface",
+          "options": [
+            "Didot",
+            "Garamond",
+            "Baskerville"
+          ],
+          "style": {
+            "padding": "14px",
+            "backgroundColor": "#fff",
+            "border": "1px dashed #111"
+          }
         }
       ]
     }
