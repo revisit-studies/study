@@ -327,13 +327,13 @@ export function ResponseBlock({
       return;
     }
 
-    updateResponseBlockValidation({
+    storeDispatch(updateResponseBlockValidation({
       location: 'stimulus',
       identifier,
       status: currentStimulusValidation.valid,
       values: {},
       provenanceGraph: appendStimulusShowErrorsToGraph(trialValidation[identifier]?.provenanceGraph.stimulus),
-    });
+    }));
   }, [identifier, setStimulusSubmitAttempt, storeDispatch, trialValidation, updateResponseBlockValidation]);
 
   const scrollToFirstUnresolvedQuestion = useCallback(() => {

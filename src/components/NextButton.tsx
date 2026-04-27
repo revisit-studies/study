@@ -15,7 +15,7 @@ type Props = {
   config?: IndividualComponent;
   location?: ResponseBlockLocation;
   checkAnswer: JSX.Element | null;
-  onNext?: () => void;
+  onNext: () => void;
 };
 
 export function NextButton({
@@ -72,7 +72,7 @@ export function NextButton({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter' && !disabled && !isNextDisabled && buttonTimerSatisfied) {
-        onNext?.();
+        onNext();
       }
     };
 
@@ -101,7 +101,7 @@ export function NextButton({
         <Button
           type="submit"
           disabled={nextButtonDisabled}
-          onClick={() => onNext?.()}
+          onClick={() => onNext()}
           px={location === 'sidebar' && checkAnswer ? 8 : undefined}
         >
           {label}
