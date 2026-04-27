@@ -161,7 +161,7 @@
           "type": "shortText",
           "location": "belowStimulus",
           "placeholder": "Enter your favorite color",
-          "required": true,
+          "required": false,
           "style": {
             "fontFamily": "'Courier New', monospace",
             "margin": "20px auto",
@@ -178,7 +178,7 @@
           "min": 1,
           "max": 999,
           "placeholder": "Enter number",
-          "required": true,
+          "required": false,
           "style": {
             "width": "700px",
             "margin": "10px auto",
@@ -196,7 +196,7 @@
           "secondaryText": "width: 700px; margin: 25px auto; padding: 15px; border: 3px dashed #dc3545; border-radius: 10px; background-color: #fff5f5; color: #721c24; fontStyle: italic; fontWeight: 600; textTransform: lowercase",
           "location": "belowStimulus",
           "placeholder": "Enter your answer",
-          "required": true,
+          "required": false,
           "style": {
             "width": "700px",
             "margin": "25px auto",
@@ -219,7 +219,7 @@
           "numItems": 7,
           "leftLabel": "Not enjoyable at all",
           "rightLabel": "Extremely enjoyable",
-          "required": true,
+          "required": false,
           "style": {
             "width": "700px",
             "margin": "30px auto",
@@ -246,7 +246,7 @@
             "Fonts",
             "Colors"
           ],
-          "required": true,
+          "required": false,
           "style": {
             "width": "700px",
             "margin": "15px auto",
@@ -273,7 +273,7 @@
             "Maybe",
             "Definitely"
           ],
-          "required": true,
+          "required": false,
           "style": {
             "width": "700px",
             "margin": "25px auto",
@@ -307,7 +307,7 @@
           "numItems": 5,
           "leftLabel": "Needs improvement",
           "rightLabel": "Excellent design",
-          "required": true,
+          "required": false,
           "stylesheetPath": "demo-style/assets/style/responseStylesheet.css"
         },
         {
@@ -315,7 +315,7 @@
           "prompt": "Try hovering on this response block.",
           "type": "shortText",
           "location": "belowStimulus",
-          "required": true,
+          "required": false,
           "stylesheetPath": "demo-style/assets/style/responseStylesheet.css"
         },
         {
@@ -324,7 +324,7 @@
           "type": "longText",
           "location": "belowStimulus",
           "placeholder": "Your feedback",
-          "required": true,
+          "required": false,
           "stylesheetPath": "demo-style/assets/style/responseStylesheet.css"
         }
       ]
@@ -342,7 +342,7 @@
         },
         {
           "id": "form-gender",
-          "required": true,
+          "required": false,
           "prompt": "What is your gender?",
           "type": "radio",
           "location": "belowStimulus",
@@ -354,7 +354,7 @@
         },
         {
           "id": "form-age",
-          "required": true,
+          "required": false,
           "prompt": "How old are you?",
           "type": "radio",
           "location": "belowStimulus",
@@ -371,7 +371,7 @@
         },
         {
           "id": "form-education",
-          "required": true,
+          "required": false,
           "prompt": "What is your highest level of education?",
           "type": "radio",
           "location": "belowStimulus",
@@ -384,14 +384,14 @@
         },
         {
           "id": "form-occupation",
-          "required": true,
+          "required": false,
           "prompt": "What is your occupation?",
           "type": "shortText",
           "location": "belowStimulus"
         },
         {
           "id": "form-comment",
-          "required": true,
+          "required": false,
           "prompt": "Please give us any feedback on this survey.",
           "type": "longText",
           "location": "belowStimulus"
@@ -410,7 +410,7 @@
         },
         {
           "id": "large-text-age",
-          "required": true,
+          "required": false,
           "prompt": "How old are you?",
           "type": "radio",
           "horizontal": true,
@@ -428,7 +428,7 @@
         },
         {
           "id": "large-text-readability",
-          "required": true,
+          "required": false,
           "prompt": "How readable is this text?",
           "type": "radio",
           "horizontal": true,
@@ -443,7 +443,7 @@
         },
         {
           "id": "large-text-fit",
-          "required": true,
+          "required": false,
           "prompt": "Did the text fit well on your screen?",
           "type": "radio",
           "horizontal": true,
@@ -455,7 +455,7 @@
         },
         {
           "id": "large-text-comment",
-          "required": true,
+          "required": false,
           "prompt": "Do you have any comments or suggestions about the large text styling?",
           "type": "longText",
           "location": "belowStimulus",
@@ -475,7 +475,7 @@
         },
         {
           "id": "layout-color",
-          "required": true,
+          "required": false,
           "prompt": "What is your favorite color?",
           "placeholder": "Enter your favorite color",
           "type": "shortText",
@@ -483,7 +483,7 @@
         },
         {
           "id": "layout-website",
-          "required": true,
+          "required": false,
           "prompt": "How many websites do you visit daily?",
           "type": "numerical",
           "location": "belowStimulus",
@@ -493,7 +493,7 @@
         },
         {
           "id": "layout-web-enjoyment",
-          "required": true,
+          "required": false,
           "prompt": "Do you enjoy interactive web elements?",
           "type": "radio",
           "location": "belowStimulus",
@@ -504,7 +504,7 @@
         },
         {
           "id": "layout-website-design",
-          "required": true,
+          "required": false,
           "prompt": "What makes a website design effective and visually appealing?",
           "type": "longText",
           "location": "belowStimulus",
@@ -512,7 +512,7 @@
         },
         {
           "id": "layout-preference",
-          "required": true,
+          "required": false,
           "prompt": "Would you use this styling approach in your own projects?",
           "type": "buttons",
           "location": "belowStimulus",
@@ -525,7 +525,7 @@
         },
         {
           "id": "layout-opinion",
-          "required": true,
+          "required": false,
           "prompt": "What is your overall opinion on the use of the following CSS styles?",
           "type": "matrix-radio",
           "location": "belowStimulus",
