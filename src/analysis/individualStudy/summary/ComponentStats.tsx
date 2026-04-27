@@ -69,6 +69,13 @@ function renderConfigListCell(
   row: { original: ComponentData },
   currentConfigLabel?: string,
 ) {
+  // Pin the current config to the front; preserve relative order otherwise.
+  const sortedConfigs = (row.original.configs ?? []).slice().sort((a, b) => {
+    if (a === currentConfigLabel) return -1;
+    if (b === currentConfigLabel) return 1;
+    return 0;
+  });
+
   return (
     <Flex
       align="center"
@@ -76,7 +83,7 @@ function renderConfigListCell(
       wrap="nowrap"
       style={{ whiteSpace: 'nowrap', minWidth: 'max-content' }}
     >
-      {(row.original.configs ?? []).map((config, index, configs) => (
+      {sortedConfigs.map((config, index, configs) => (
         <Flex
           key={config}
           align="center"
@@ -107,11 +114,13 @@ function renderConfigListCell(
 export function ComponentStats({
   visibleParticipants,
   studyConfig,
+  allConfigs,
   selectedConfigRows,
   currentConfigLabel,
 }: {
   visibleParticipants: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
+  allConfigs: Record<string, StudyConfig>;
   selectedConfigRows: Array<{ configHash: string; configLabel: string; studyConfig: StudyConfig }>;
   currentConfigLabel?: string;
 }) {
@@ -120,8 +129,8 @@ export function ComponentStats({
   const componentData: ComponentData[] = useMemo(
     () => {
       const rows = useSelectedConfigRows
-        ? getComponentStatsForConfigs(visibleParticipants, selectedConfigRows)
-        : getComponentStats(visibleParticipants, studyConfig);
+        ? getComponentStatsForConfigs(visibleParticipants, selectedConfigRows, allConfigs)
+        : getComponentStats(visibleParticipants, studyConfig, allConfigs);
       // Outdated rows are always pinned below current rows; user sort applies within each group
       return [...rows].sort((a, b) => {
         const aOutdated = isComponentOutdated(a, currentConfigLabel) ? 1 : 0;
@@ -139,7 +148,7 @@ export function ComponentStats({
         return 0;
       });
     },
-    [visibleParticipants, studyConfig, useSelectedConfigRows, selectedConfigRows, currentConfigLabel, sorting],
+    [visibleParticipants, studyConfig, allConfigs, useSelectedConfigRows, selectedConfigRows, currentConfigLabel, sorting],
   );
 
   const columns = useMemo<MrtColumnDef<ComponentData>[]>(

@@ -25,27 +25,28 @@ export function SummaryView({
   currentConfigLabel?: string;
 }) {
   const overviewData = useMemo(
-    () => getOverviewStats(visibleParticipants),
-    [visibleParticipants],
+    () => getOverviewStats(visibleParticipants, undefined, studyConfig, allConfigs),
+    [visibleParticipants, studyConfig, allConfigs],
   );
 
   const selectedConfigRows = useMemo(() => {
     const visibleConfigHashes = [...new Set(visibleParticipants.map((participant) => participant.participantConfigHash))];
 
-    return visibleConfigHashes.flatMap((configHash) => {
-      const config = allConfigs[configHash];
-      if (!config) {
-        return [];
-      }
+    const resolved = visibleConfigHashes.map((configHash) => ({
+      configHash,
+      config: allConfigs[configHash],
+    }));
+    if (resolved.some(({ config }) => !config)) {
+      return [];
+    }
 
+    return resolved.map(({ configHash, config }) => {
       const version = config.studyMetadata?.version;
-      return [
-        {
-          configHash,
-          configLabel: version ? `${version} - ${configHash.slice(0, 6)}` : configHash.slice(0, 6),
-          studyConfig: config,
-        },
-      ];
+      return {
+        configHash,
+        configLabel: version ? `${version} - ${configHash.slice(0, 6)}` : configHash.slice(0, 6),
+        studyConfig: config,
+      };
     });
   }, [visibleParticipants, allConfigs]);
 
@@ -61,12 +62,14 @@ export function SummaryView({
         <ComponentStats
           visibleParticipants={visibleParticipants}
           studyConfig={studyConfig}
+          allConfigs={allConfigs}
           selectedConfigRows={selectedConfigRows}
           currentConfigLabel={currentConfigLabel}
         />
         <ResponseStats
           visibleParticipants={visibleParticipants}
           studyConfig={studyConfig}
+          allConfigs={allConfigs}
           selectedConfigRows={selectedConfigRows}
           currentConfigLabel={currentConfigLabel}
         />

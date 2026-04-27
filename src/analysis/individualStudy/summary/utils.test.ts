@@ -26,6 +26,7 @@ vi.mock('../../../utils/getCleanedDuration', () => ({
 }));
 
 vi.mock('../../../utils/correctAnswer', () => ({
+  shouldIgnoreArrayOrder: vi.fn((response?: { type?: string }) => response?.type === 'checkbox' || response?.type === 'dropdown'),
   responseAnswerIsCorrect: vi.fn((
     userAnswer: unknown,
     correctAnswer: unknown,
@@ -1687,11 +1688,25 @@ describe('utils.tsx', () => {
         },
       } as unknown as StudyConfig;
 
-      const result = getComponentStats(participants, studyConfig);
+      const allConfigs = {
+        'config-a': {
+          components: {
+            comp1: { response: [{ id: 'q1', type: 'checkbox' }] },
+          },
+        },
+        'config-b': {
+          components: {
+            comp1: { response: [{ id: 'q1', type: 'radio' }] },
+          },
+        },
+      } as unknown as Record<string, StudyConfig>;
 
-      // Both participants submit ['b', 'a'] vs correct ['a', 'b']. Array comparison
-      // defaults to sort-and-compare → both count as correct → 100%.
-      expect(result[0].correctness).toBe(100);
+      const result = getComponentStats(participants, studyConfig, allConfigs);
+
+      // P1 (config-a, checkbox): array order ignored → ['b','a'] sorted == ['a','b'] sorted → correct
+      // P2 (config-b, radio): array order strict → ['b','a'] !== ['a','b'] → wrong
+      // → 1/2 = 50%
+      expect(result[0].correctness).toBe(50);
     });
 
     it('should return NaN stats for components with no participant data', () => {
@@ -1928,7 +1943,10 @@ describe('utils.tsx', () => {
       const result = getComponentStatsForConfigs(participants, [
         { configHash: 'config-a', configLabel: 'pilot - aaaaaa', studyConfig: configA },
         { configHash: 'config-b', configLabel: 'pilot - bbbbbb', studyConfig: configB },
-      ]);
+      ], {
+        'config-a': configA,
+        'config-b': configB,
+      });
 
       expect(result).toHaveLength(1);
       expect(result[0].component).toBe('introduction');
@@ -2074,7 +2092,10 @@ describe('utils.tsx', () => {
         const result = getResponseStatsForConfigs([], [
           { configHash: 'config-a', configLabel: 'pilot - aaaaaa', studyConfig: configA },
           { configHash: 'config-b', configLabel: 'pilot - bbbbbb', studyConfig: configB },
-        ]);
+        ], {
+          'config-a': configA,
+          'config-b': configB,
+        });
 
         expect(result).toHaveLength(1);
         expect(result[0].component).toBe('survey');

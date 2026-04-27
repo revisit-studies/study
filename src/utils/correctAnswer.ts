@@ -3,7 +3,7 @@ import {
   Answer, IndividualComponent, Response, StoredAnswer,
 } from '../parser/types';
 
-function shouldIgnoreArrayOrder(response?: Response) {
+export function shouldIgnoreArrayOrder(response?: Response) {
   return response?.type === 'checkbox' || response?.type === 'dropdown';
 }
 
