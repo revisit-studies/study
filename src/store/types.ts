@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
+import type { GetInputPropsReturnType } from '@mantine/form/lib/types';
 import type {
-  Answer, ComponentBlock, ConfigResponseBlockLocation, InterruptionBlock, ParsedStringOption, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
+  Answer, ComponentBlock, ConfigResponseBlockLocation, CustomResponse, InterruptionBlock, JsonValue, ParsedStringOption, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
 } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/types';
 
@@ -69,7 +70,7 @@ export type TrialValidation = Record<
  */
 export interface StoredAnswer {
   /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is the inputted value from the participant. */
-  answer: Record<string, string | number | boolean | string[]>;
+  answer: Record<string, JsonValue>;
   identifier: string;
   componentName: string;
   /** The order of the trial in the sequence. */
@@ -150,6 +151,30 @@ export interface StimulusParams<T, S = never> {
   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: StoredAnswer['answer'] }) => void
 }
 
+export interface CustomResponseField<TValue extends JsonValue = JsonValue> {
+  getInputProps: () => GetInputPropsReturnType;
+  setValue: (value: TValue) => void;
+  onBlur: () => void;
+}
+
+export interface CustomResponseParams<TParameters = Record<string, unknown>, TValue extends JsonValue = JsonValue> {
+  response: CustomResponse;
+  parameters?: TParameters;
+  value: TValue | null;
+  error?: string;
+  disabled: boolean;
+  isAnalysis: boolean;
+  index: number;
+  enumerateQuestions: boolean;
+  field: CustomResponseField<TValue>;
+}
+
+export type CustomResponseValidate<TValue extends JsonValue = JsonValue> = (
+  value: TValue | null,
+  values: StoredAnswer['answer'],
+  response: CustomResponse,
+) => string | null;
+
 export interface Sequence {
   id?: string;
   orderPath: string;
@@ -185,6 +210,7 @@ export interface StoreState {
   rankingAnswers: Record<string, Record<string, string>>;
   funcSequence: Record<string, string[]>;
   completed: boolean;
+  isSubmittingFinal: boolean;
   clickedPrevious: boolean;
   storageEngineFailedToConnect: boolean;
   isStalledConfig: boolean;

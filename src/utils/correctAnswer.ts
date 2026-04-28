@@ -1,18 +1,30 @@
 import isEqual from 'lodash.isequal';
-import { Answer, IndividualComponent, StoredAnswer } from '../parser/types';
+import {
+  Answer, IndividualComponent, Response, StoredAnswer,
+} from '../parser/types';
 
-export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer'][string], responseCorrectAnswer: Answer['answer'], acceptableLow?: number, acceptableHigh?: number) {
+export function shouldIgnoreArrayOrder(response?: Response) {
+  return response?.type === 'checkbox' || response?.type === 'dropdown';
+}
+
+export function responseAnswerIsCorrect(
+  responseUserAnswer: StoredAnswer['answer'][string],
+  responseCorrectAnswer: Answer['answer'],
+  acceptableLow?: number,
+  acceptableHigh?: number,
+  options: { ignoreArrayOrder?: boolean } = {},
+) {
   // Handle numeric-string comparison for likert and slider responses
   if ((typeof responseUserAnswer === 'number' || typeof responseUserAnswer === 'string')
     && (typeof responseCorrectAnswer === 'string' || typeof responseCorrectAnswer === 'number')) {
     const userAnswerNumber = Number(responseUserAnswer);
 
-    if (userAnswerNumber) {
-      if (acceptableLow && acceptableHigh) {
+    if (!Number.isNaN(userAnswerNumber)) {
+      if (acceptableLow !== undefined && acceptableHigh !== undefined) {
         return userAnswerNumber >= acceptableLow && userAnswerNumber <= acceptableHigh;
-      } if (acceptableLow) {
+      } if (acceptableLow !== undefined) {
         return userAnswerNumber >= acceptableLow;
-      } if (acceptableHigh) {
+      } if (acceptableHigh !== undefined) {
         return userAnswerNumber <= acceptableHigh;
       }
     }
@@ -22,6 +34,10 @@ export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer
 
   // Ignore order for checkbox answers by sorting
   if (Array.isArray(responseUserAnswer) && Array.isArray(responseCorrectAnswer)) {
+    if (!(options.ignoreArrayOrder ?? true)) {
+      return isEqual(responseUserAnswer, responseCorrectAnswer);
+    }
+
     if (responseUserAnswer.length !== responseCorrectAnswer.length) return false;
     const sortedUserAnswer = [...responseUserAnswer].sort();
     const sortedCorrectAnswer = [...responseCorrectAnswer].sort();
@@ -56,12 +72,28 @@ export function responseAnswerIsCorrect(responseUserAnswer: StoredAnswer['answer
   return isEqual(responseUserAnswer, responseCorrectAnswer);
 }
 
-export function componentAnswersAreCorrect(componentUserAnswers: StoredAnswer['answer'], componentCorrectAnswers: IndividualComponent['correctAnswer']) {
+export function componentAnswersAreCorrect(
+  componentUserAnswers: StoredAnswer['answer'],
+  componentCorrectAnswers: IndividualComponent['correctAnswer'],
+  responses?: Response[],
+) {
   let allCorrect = true;
+  const responsesById = new Map((responses || []).map((response) => [response.id, response]));
 
   (componentCorrectAnswers || []).forEach((correctAnswer) => {
     const userAnswer = componentUserAnswers[correctAnswer.id];
-    if (userAnswer === undefined || !responseAnswerIsCorrect(userAnswer, correctAnswer.answer, correctAnswer.acceptableLow, correctAnswer.acceptableHigh)) {
+    const response = responsesById.get(correctAnswer.id);
+
+    if (
+      userAnswer === undefined
+      || !responseAnswerIsCorrect(
+        userAnswer,
+        correctAnswer.answer,
+        correctAnswer.acceptableLow,
+        correctAnswer.acceptableHigh,
+        { ignoreArrayOrder: shouldIgnoreArrayOrder(response) },
+      )
+    ) {
       allCorrect = false;
     }
   });

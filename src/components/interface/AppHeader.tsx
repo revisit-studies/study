@@ -32,12 +32,16 @@ import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
 } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { calculateProgressData } from '../../storage/engines/utils';
+import { calculateProgressData } from '../../storage/engines/utils/storageEngineHelpers';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { useRecordingContext } from '../../store/hooks/useRecording';
+import { hideNotification, showNotification } from '../../utils/notifications';
+import { getMutedInstruction } from '../../utils/recordingWarnings';
+import classes from './AppHeader.module.css';
+import { useDeviceRules } from '../../utils/useDeviceRules';
 
 export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
@@ -86,8 +90,26 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   const lastProgressRef = useRef<number>(0);
 
   const {
-    isScreenRecording, isAudioRecording, setIsMuted, isMuted, clickToRecord,
+    isScreenRecording, isAudioRecording, setIsMuted, isMuted, clickToRecord, isSpeakingWhileMuted, showMutedWarning,
   } = useRecordingContext();
+  const {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  } = useDeviceRules(studyConfig.studyRules);
+  const hasUnmetDeviceRequirement = developmentModeEnabled
+    && (!isBrowserAllowed || !isDeviceAllowed || !isInputAllowed || !isDisplayAllowed);
+
+  useEffect(() => {
+    if (!(isMuted && isSpeakingWhileMuted)) return undefined;
+
+    const notificationId = showNotification({ title: 'You are muted', message: getMutedInstruction(clickToRecord), color: 'red' });
+
+    return () => {
+      hideNotification(notificationId);
+    };
+  }, [clickToRecord, isMuted, isSpeakingWhileMuted]);
 
   const { funcIndex } = useParams();
 
@@ -184,14 +206,14 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
                 </Text>
                 {isAudioRecording && !isMuted && <RecordingAudioWaveform />}
                 {clickToRecord ? (
-                  <Tooltip label="Press and hold to unmute">
-                    <ActionIcon variant="light" size="md" aria-label="Press and hold to unmute" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
+                  <Tooltip label={showMutedWarning ? 'You are still muted. Press and hold to unmute.' : 'Press and hold to unmute.'} opened={showMutedWarning || undefined}>
+                    <ActionIcon className={showMutedWarning ? classes.micBlink : undefined} variant="light" size="md" aria-label="Click and hold to unmute microphone" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
                       {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
                     </ActionIcon>
                   </Tooltip>
                 ) : (
-                  <Tooltip label={`Press to ${isMuted ? 'unmute' : 'mute'}`}>
-                    <ActionIcon variant="light" size="md" aria-label="Press and hold to unmute" onClick={() => setIsMuted(!isMuted)}>
+                  <Tooltip label={showMutedWarning ? 'You are still muted. Press to unmute.' : `Press to ${isMuted ? 'unmute' : 'mute'}`} opened={showMutedWarning || undefined}>
+                    <ActionIcon className={showMutedWarning ? classes.micBlink : undefined} variant="light" size="md" aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'} onClick={() => setIsMuted(!isMuted)}>
                       {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
                     </ActionIcon>
                   </Tooltip>
@@ -200,6 +222,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
             )}
             {storageEngineFailedToConnect && <Tooltip multiline withArrow arrowSize={6} w={300} label="Failed to connect to the storage engine. Study data will not be saved. Check your connection or restart the app."><Badge size="lg" color="red">Storage Disconnected</Badge></Tooltip>}
             {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
+            {hasUnmetDeviceRequirement && developmentModeEnabled && <Tooltip multiline withArrow arrowSize={6} w={420} label="Your device does not meet this study's requirements. You are still able to explore this study while in debug mode."><Badge size="lg" color="red">Device Requirement Not Met</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"

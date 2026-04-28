@@ -1,11 +1,10 @@
 /* eslint-disable react/no-unstable-nested-components */
 import {
-  Button, Flex, Space, Text, Tooltip, Group, Modal, ActionIcon, Loader, Stack, Paper, Box,
+  Badge, Button, Flex, Space, Text, Tooltip, Group, Modal, ActionIcon, Loader, Stack, Paper, Box,
 } from '@mantine/core';
 import {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
-import { useParams } from 'react-router';
 import {
   MantineReactTable, MRT_Cell as MrtCell, MRT_ColumnDef as MrtColumnDef, MRT_RowSelectionState as MrtRowSelectionState, useMantineReactTable,
 } from 'mantine-react-table';
@@ -20,10 +19,13 @@ import { ConfigDiffModal } from './ConfigDiffModal';
 
 export function ConfigView({
   visibleParticipants,
+  studyId,
+  currentConfigHash,
 }: {
   visibleParticipants: ParticipantData[];
+  studyId?: string;
+  currentConfigHash?: string;
 }) {
-  const { studyId } = useParams();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
   const { storageEngine } = useStorageEngine();
   const [configs, setConfigs] = useState<ConfigInfo[]>([]);
@@ -41,7 +43,12 @@ export function ConfigView({
 
     const fetchConfigs = async () => {
       try {
-        const allConfigHashes = [...new Set(visibleParticipants.map((participant) => participant.participantConfigHash))];
+        const participantConfigHashes = visibleParticipants
+          .map((participant) => participant.participantConfigHash)
+          .filter((hash): hash is string => Boolean(hash));
+        const allConfigHashes = currentConfigHash
+          ? [...new Set([currentConfigHash, ...participantConfigHashes])]
+          : [...new Set(participantConfigHashes)];
         const fetchedConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
         const rows = buildConfigRows(fetchedConfigs, visibleParticipants);
         setConfigs(rows);
@@ -53,7 +60,7 @@ export function ConfigView({
     };
 
     fetchConfigs();
-  }, [visibleParticipants, storageEngine, studyId]);
+  }, [visibleParticipants, storageEngine, studyId, currentConfigHash]);
 
   const handleViewConfig = useCallback((hash: string) => {
     const selectedConfig = configs.find((config) => config.hash === hash) || null;
@@ -110,7 +117,12 @@ export function ConfigView({
       header: 'Version',
       size: 70,
       Cell: ({ row }: { row: { original: ConfigInfo } }) => (
-        <Text>{row.original.version}</Text>
+        <Group gap="xs">
+          <Text size="sm">{row.original.version}</Text>
+          {row.original.hash === currentConfigHash && (
+            <Badge size="xs" variant="light">Current</Badge>
+          )}
+        </Group>
       ),
     },
     {
@@ -119,7 +131,7 @@ export function ConfigView({
       size: 70,
       Cell: ({ row }: { row: { original: ConfigInfo } }) => (
         <Flex align="center" gap="xs">
-          <Text>
+          <Text size="sm">
             {row.original.hash.slice(0, 6)}
             ...
           </Text>
@@ -179,7 +191,7 @@ export function ConfigView({
         </Flex>
       ),
     },
-  ], [handleDownloadConfig, handleViewConfig, handleCopyHash, copied]);
+  ], [handleDownloadConfig, handleViewConfig, handleCopyHash, copied, currentConfigHash]);
 
   const table = useMantineReactTable({
     columns,

@@ -5,9 +5,11 @@ import {
   convertNumberToString,
   getOverviewStats,
   getComponentStats,
+  getComponentStatsForConfigs,
   getResponseStats,
+  getResponseStatsForConfigs,
 } from './utils';
-import { ParticipantData } from '../../../storage/types';
+import { ParticipantDataWithStatus } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
@@ -24,9 +26,31 @@ vi.mock('../../../utils/getCleanedDuration', () => ({
 }));
 
 vi.mock('../../../utils/correctAnswer', () => ({
-  componentAnswersAreCorrect: vi.fn((userAnswers: Record<string, unknown>, correctAnswers: Array<{ id: string; answer: unknown }>) => {
-    if (!correctAnswers || correctAnswers.length === 0) return true;
-    return correctAnswers.every((ca) => userAnswers[ca.id] === ca.answer);
+  shouldIgnoreArrayOrder: vi.fn((response?: { type?: string }) => response?.type === 'checkbox' || response?.type === 'dropdown'),
+  responseAnswerIsCorrect: vi.fn((
+    userAnswer: unknown,
+    correctAnswer: unknown,
+    acceptableLow?: number,
+    acceptableHigh?: number,
+    options?: { ignoreArrayOrder?: boolean },
+  ) => {
+    if (Array.isArray(userAnswer) && Array.isArray(correctAnswer)) {
+      // Match real responseAnswerIsCorrect: default is sort-and-compare unless caller opts out.
+      if ((options?.ignoreArrayOrder ?? true) === false) {
+        return userAnswer.join('|') === correctAnswer.join('|');
+      }
+      return [...userAnswer].sort().join('|') === [...correctAnswer].sort().join('|');
+    }
+
+    if (acceptableLow !== undefined || acceptableHigh !== undefined) {
+      const num = Number(userAnswer);
+      if (Number.isNaN(num)) return userAnswer === correctAnswer;
+      if (acceptableLow !== undefined && num < acceptableLow) return false;
+      if (acceptableHigh !== undefined && num > acceptableHigh) return false;
+      return true;
+    }
+
+    return userAnswer === correctAnswer;
   }),
 }));
 
@@ -35,7 +59,7 @@ vi.mock('../../../utils/handleComponentInheritance', () => ({
 }));
 
 // Helper function to create mock participant data
-function createMockParticipant(overrides: Partial<ParticipantData> & { participantId: string }): ParticipantData {
+function createMockParticipant(overrides: Partial<ParticipantDataWithStatus> & { participantId: string }): ParticipantDataWithStatus {
   const { participantId, ...rest } = overrides;
   return {
     participantId,
@@ -553,6 +577,38 @@ describe('utils.tsx', () => {
         expect(result.avgTime).toBe(10);
       });
 
+      it('should include finished answers from in-progress participants in overview time calculations', () => {
+        const participants = [
+          createMockParticipant({
+            participantId: '1',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({
+                componentName: 'comp1',
+                startTime: 0,
+                endTime: 10000,
+              }),
+            },
+          }),
+          createMockParticipant({
+            participantId: '2',
+            completed: false,
+            answers: {
+              comp1_1: createMockAnswer({
+                componentName: 'comp1',
+                startTime: 0,
+                endTime: 40000,
+              }),
+            },
+          }),
+        ];
+
+        const result = getOverviewStats(participants);
+
+        expect(result.participantCounts.inProgress).toBe(1);
+        expect(result.avgTime).toBe(25);
+      });
+
       it('should count participants with invalid clean time', () => {
         const participants = [
           createMockParticipant({
@@ -583,6 +639,39 @@ describe('utils.tsx', () => {
         const result = getOverviewStats(participants);
 
         expect(result.participantsWithInvalidCleanTimeCount).toBe(1);
+      });
+
+      it('should exclude participants with invalid clean time from avgCleanTime', () => {
+        const participants = [
+          createMockParticipant({
+            participantId: '1',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({
+                componentName: 'comp1',
+                startTime: 0,
+                endTime: 10000,
+                invalidCleanTime: true,
+              }),
+            },
+          }),
+          createMockParticipant({
+            participantId: '2',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({
+                componentName: 'comp1',
+                startTime: 0,
+                endTime: 10000,
+              }),
+            },
+          }),
+        ];
+
+        const result = getOverviewStats(participants);
+
+        expect(result.participantsWithInvalidCleanTimeCount).toBe(1);
+        expect(result.avgCleanTime).toBe(9);
       });
 
       it('should return NaN for avgTime when no valid answers exist', () => {
@@ -826,8 +915,8 @@ describe('utils.tsx', () => {
 
         const result = getOverviewStats(participants);
 
-        // Mock returns false for component (all-or-nothing), so 0%
-        expect(result.correctness).toBe(0);
+        // Per-response evaluation: q1 and q3 correct, q2 wrong → 2 correct out of 3
+        expect(result.correctness).toBeCloseTo((2 / 3) * 100, 5);
       });
 
       it('should aggregate correctness across multiple participants with multiple questions', () => {
@@ -1135,6 +1224,47 @@ describe('utils.tsx', () => {
         expect(result.avgTime).toBe(15);
       });
 
+      it('should use total study duration per participant in study overview stats', () => {
+        const participants = [
+          createMockParticipant({
+            participantId: '1',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({
+                componentName: 'comp1',
+                startTime: 1,
+                endTime: 10001,
+              }),
+              comp2_1: createMockAnswer({
+                componentName: 'comp2',
+                startTime: 10001,
+                endTime: 30001,
+              }),
+            },
+          }),
+          createMockParticipant({
+            participantId: '2',
+            completed: true,
+            answers: {
+              comp1_1: createMockAnswer({
+                componentName: 'comp1',
+                startTime: 1,
+                endTime: 5001,
+              }),
+              comp2_1: createMockAnswer({
+                componentName: 'comp2',
+                startTime: 5001,
+                endTime: 15001,
+              }),
+            },
+          }),
+        ];
+
+        const result = getOverviewStats(participants);
+
+        expect(result.avgTime).toBe(22.5);
+      });
+
       it('should handle all participants being rejected', () => {
         const participants = [
           createMockParticipant({
@@ -1393,6 +1523,44 @@ describe('utils.tsx', () => {
       expect(comp2Stats?.avgTime).toBe(5);
     });
 
+    it('should include finished component answers from in-progress participants in component time calculations', () => {
+      const participants = [
+        createMockParticipant({
+          participantId: '1',
+          completed: true,
+          answers: {
+            comp1_1: createMockAnswer({
+              componentName: 'comp1',
+              startTime: 1,
+              endTime: 10001,
+            }),
+          },
+        }),
+        createMockParticipant({
+          participantId: '2',
+          completed: false,
+          answers: {
+            comp1_1: createMockAnswer({
+              componentName: 'comp1',
+              startTime: 1,
+              endTime: 30001,
+            }),
+          },
+        }),
+      ];
+
+      const studyConfig = {
+        components: {
+          comp1: { response: [] },
+        },
+      } as unknown as StudyConfig;
+
+      const result = getComponentStats(participants, studyConfig);
+
+      expect(result[0].participants).toBe(2);
+      expect(result[0].avgTime).toBe(20);
+    });
+
     it('should return participant count for each component', () => {
       const participants = [
         createMockParticipant({
@@ -1480,6 +1648,65 @@ describe('utils.tsx', () => {
       const result = getComponentStats(participants, studyConfig);
 
       expect(result[0].correctness).toBe(100);
+    });
+
+    it('should use each participant config hash when calculating correctness', () => {
+      const participants = [
+        createMockParticipant({
+          participantId: '1',
+          participantConfigHash: 'config-a',
+          completed: true,
+          answers: {
+            comp1_1: createMockAnswer({
+              componentName: 'comp1',
+              startTime: 1,
+              endTime: 10000,
+              answer: { q1: ['b', 'a'] },
+              correctAnswer: [{ id: 'q1', answer: ['a', 'b'] }],
+            }),
+          },
+        }),
+        createMockParticipant({
+          participantId: '2',
+          participantConfigHash: 'config-b',
+          completed: true,
+          answers: {
+            comp1_1: createMockAnswer({
+              componentName: 'comp1',
+              startTime: 1,
+              endTime: 10000,
+              answer: { q1: ['b', 'a'] },
+              correctAnswer: [{ id: 'q1', answer: ['a', 'b'] }],
+            }),
+          },
+        }),
+      ];
+
+      const studyConfig = {
+        components: {
+          comp1: { response: [{ id: 'q1', type: 'radio' }] },
+        },
+      } as unknown as StudyConfig;
+
+      const allConfigs = {
+        'config-a': {
+          components: {
+            comp1: { response: [{ id: 'q1', type: 'checkbox' }] },
+          },
+        },
+        'config-b': {
+          components: {
+            comp1: { response: [{ id: 'q1', type: 'radio' }] },
+          },
+        },
+      } as unknown as Record<string, StudyConfig>;
+
+      const result = getComponentStats(participants, studyConfig, allConfigs);
+
+      // P1 (config-a, checkbox): array order ignored → ['b','a'] sorted == ['a','b'] sorted → correct
+      // P2 (config-b, radio): array order strict → ['b','a'] !== ['a','b'] → wrong
+      // → 1/2 = 50%
+      expect(result[0].correctness).toBe(50);
     });
 
     it('should return NaN stats for components with no participant data', () => {
@@ -1672,6 +1899,59 @@ describe('utils.tsx', () => {
       expect(comp1Stats.avgTime).toBe(10);
       expect(comp1Stats.correctness).toBe(100);
     });
+
+    it('should merge matching component rows across selected configs and collect config labels', () => {
+      const participants = [
+        createMockParticipant({
+          participantId: '1',
+          participantConfigHash: 'config-a',
+          completed: true,
+          answers: {
+            intro_1: createMockAnswer({
+              componentName: 'introduction',
+              startTime: 1,
+              endTime: 1001,
+            }),
+          },
+        }),
+        createMockParticipant({
+          participantId: '2',
+          participantConfigHash: 'config-b',
+          completed: true,
+          answers: {
+            intro_1: createMockAnswer({
+              componentName: 'introduction',
+              startTime: 1,
+              endTime: 2001,
+            }),
+          },
+        }),
+      ];
+
+      const configA = {
+        components: {
+          introduction: { response: [] },
+        },
+      } as unknown as StudyConfig;
+
+      const configB = {
+        components: {
+          introduction: { response: [] },
+        },
+      } as unknown as StudyConfig;
+
+      const result = getComponentStatsForConfigs(participants, [
+        { configHash: 'config-a', configLabel: 'pilot - aaaaaa', studyConfig: configA },
+        { configHash: 'config-b', configLabel: 'pilot - bbbbbb', studyConfig: configB },
+      ], {
+        'config-a': configA,
+        'config-b': configB,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].component).toBe('introduction');
+      expect(result[0].configs).toEqual(['pilot - aaaaaa', 'pilot - bbbbbb']);
+    });
   });
 
   // ============================================
@@ -1786,6 +2066,40 @@ describe('utils.tsx', () => {
         const result = getResponseStats(participants, studyConfig);
 
         expect(result[0].correctness).toBe(100);
+      });
+
+      it('should merge matching response rows across selected configs and collect config labels', () => {
+        const configA = {
+          components: {
+            survey: {
+              response: [
+                { type: 'radio', prompt: 'Q1', options: ['A', 'B'] },
+              ],
+            },
+          },
+        } as unknown as StudyConfig;
+
+        const configB = {
+          components: {
+            survey: {
+              response: [
+                { type: 'radio', prompt: 'Q1', options: ['A', 'B'] },
+              ],
+            },
+          },
+        } as unknown as StudyConfig;
+
+        const result = getResponseStatsForConfigs([], [
+          { configHash: 'config-a', configLabel: 'pilot - aaaaaa', studyConfig: configA },
+          { configHash: 'config-b', configLabel: 'pilot - bbbbbb', studyConfig: configB },
+        ], {
+          'config-a': configA,
+          'config-b': configB,
+        });
+
+        expect(result).toHaveLength(1);
+        expect(result[0].component).toBe('survey');
+        expect(result[0].configs).toEqual(['pilot - aaaaaa', 'pilot - bbbbbb']);
       });
     });
 
@@ -2028,6 +2342,28 @@ describe('utils.tsx', () => {
         const result = getResponseStats([], studyConfig);
 
         expect(result[0].options).toBe('Questions: Q1, Q2 \n Answers: satisfaction5');
+      });
+
+      it('should include synthetic dont-know in matrix response options', () => {
+        const studyConfig = {
+          components: {
+            matrix: {
+              response: [
+                {
+                  type: 'matrix-radio',
+                  prompt: 'Rate these',
+                  questionOptions: ['Q1', 'Q2'],
+                  answerOptions: ['0', '1'],
+                  withDontKnow: true,
+                },
+              ],
+            },
+          },
+        } as unknown as StudyConfig;
+
+        const result = getResponseStats([], studyConfig);
+
+        expect(result[0].options).toBe("Questions: Q1, Q2 \n Answers: 0, 1, I don't know");
       });
 
       it('should format matrix response with mixed string and StringOption entries', () => {

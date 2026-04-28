@@ -20,7 +20,7 @@ import { fetchStudyConfigs } from './utils/fetchConfig';
 import { initializeStorageEngine } from './storage/initialize';
 import { useStorageEngine } from './storage/storageEngineHooks';
 import { PageTitle } from './utils/PageTitle';
-import { isCloudStorageEngine } from './storage/engines/utils';
+import { shouldProtectAnalysisRoute } from './utils/analysisRouteAccess';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -62,16 +62,11 @@ export function GlobalConfigParser() {
   }, [setStorageEngine, storageEngine]);
 
   const analysisProtectedCallback = async (studyId: string) => {
-    if (storageEngine && isCloudStorageEngine(storageEngine)) {
-      const modes = await storageEngine.getModes(studyId);
-      if (modes.dataSharingEnabled) {
-        // If accessible, disable
-        return false;
-      }
-      // If not accessible, enable protection
-      return true;
+    if (!globalConfig) {
+      return false;
     }
-    return false;
+
+    return shouldProtectAnalysisRoute(studyId, globalConfig, storageEngine);
   };
 
   return globalConfig ? (

@@ -48,6 +48,7 @@ export function StepRenderer() {
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
   const modes = useStoreSelector((state) => state.modes);
   const isCompleted = useStoreSelector((state) => state.completed);
+  const isSubmittingFinal = useStoreSelector((state) => state.isSubmittingFinal);
 
   const screenRecording = useRecording();
   const replay = useReplay();
@@ -148,8 +149,9 @@ export function StepRenderer() {
       developmentModeEnabled,
       isCompleted,
       dataCollectionEnabled,
+      isSubmittingFinal,
     ),
-    [isAnalysis, currentComponent, developmentModeEnabled, isCompleted, dataCollectionEnabled],
+    [isAnalysis, currentComponent, developmentModeEnabled, isCompleted, dataCollectionEnabled, isSubmittingFinal],
   );
 
   const [hasAudio, setHasAudio] = useState<boolean>();
@@ -184,7 +186,7 @@ export function StepRenderer() {
             {showTitleBar && (
             <AppHeader developmentModeEnabled={developmentModeEnabled} dataCollectionEnabled={dataCollectionEnabled} />
             )}
-            <DeviceWarning />
+            <DeviceWarning developmentModeEnabled={developmentModeEnabled} />
             {isScreenRecordingUserRejected && <ScreenRecordingRejection />}
             <HelpModal />
             <AlertModal />

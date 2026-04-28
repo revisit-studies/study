@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { Answer, StoredAnswer } from '../parser/types';
+import {
+  Answer, Response, StoredAnswer,
+} from '../parser/types';
 import { componentAnswersAreCorrect, responseAnswerIsCorrect } from './correctAnswer';
 
 // Test responseAnswerIsCorrect function and componentAnswersAreCorrect function
@@ -32,6 +34,16 @@ describe('correctAnswer utilities', () => {
       expect(responseAnswerIsCorrect(6, 0, undefined, 5)).toBe(false);
     });
 
+    test('supports zero-value acceptable bounds', () => {
+      expect(responseAnswerIsCorrect(0, 5, 0, 2)).toBe(true);
+      expect(responseAnswerIsCorrect(2, 5, 0, 2)).toBe(true);
+      expect(responseAnswerIsCorrect(3, 5, 0, 2)).toBe(false);
+      expect(responseAnswerIsCorrect(0, 5, 0)).toBe(true);
+      expect(responseAnswerIsCorrect(-1, 5, 0)).toBe(false);
+      expect(responseAnswerIsCorrect(0, 5, undefined, 0)).toBe(true);
+      expect(responseAnswerIsCorrect(1, 5, undefined, 0)).toBe(false);
+    });
+
     test('treats numeric strings consistently with acceptable bounds', () => {
       expect(responseAnswerIsCorrect('8', 0, 7, 10)).toBe(true);
       expect(responseAnswerIsCorrect('6', 0, 7, 10)).toBe(false);
@@ -41,6 +53,23 @@ describe('correctAnswer utilities', () => {
       expect(responseAnswerIsCorrect(['b', 'a'], ['a', 'b'])).toBe(true);
       expect(responseAnswerIsCorrect(['a'], ['a', 'b'])).toBe(false);
       expect(responseAnswerIsCorrect(['a', 'c'], ['a', 'b'])).toBe(false);
+    });
+
+    test('can preserve array order when requested', () => {
+      expect(responseAnswerIsCorrect(
+        asStoredAnswer(['b', 'a']),
+        asCorrectAnswer(['a', 'b']),
+        undefined,
+        undefined,
+        { ignoreArrayOrder: false },
+      )).toBe(false);
+      expect(responseAnswerIsCorrect(
+        asStoredAnswer(['a', 'b']),
+        asCorrectAnswer(['a', 'b']),
+        undefined,
+        undefined,
+        { ignoreArrayOrder: false },
+      )).toBe(true);
     });
 
     test('handles duplicate checkbox options correctly', () => {
@@ -108,6 +137,10 @@ describe('correctAnswer utilities', () => {
     test('falls back to deep equality for non-special types', () => {
       expect(responseAnswerIsCorrect(true, true)).toBe(true);
       expect(responseAnswerIsCorrect(true, false)).toBe(false);
+      expect(responseAnswerIsCorrect(
+        asStoredAnswer({ chartType: 'Bar', confidence: 80, rationale: 'Looks good' }),
+        asCorrectAnswer({ chartType: 'Bar', confidence: 80, rationale: 'Looks good' }),
+      )).toBe(true);
       expect(responseAnswerIsCorrect(
         asStoredAnswer(null),
         asCorrectAnswer(null),
@@ -186,6 +219,20 @@ describe('correctAnswer utilities', () => {
 
       expect(componentAnswersAreCorrect(userAnswers, correctAnswers)).toBe(true);
       expect(componentAnswersAreCorrect({ q1: 'A', slider1: 11 }, correctAnswers)).toBe(false);
+    });
+
+    test('preserves order for custom arrays when response definitions are provided', () => {
+      const userAnswers = { customSequence: ['B', 'A'] };
+      const correctAnswers = [{ id: 'customSequence', answer: ['A', 'B'] }];
+      const responses: Response[] = [{
+        id: 'customSequence',
+        prompt: 'Order the items',
+        type: 'custom',
+        path: 'demo-form-elements/assets/CustomResponseCard.tsx',
+      }];
+
+      expect(componentAnswersAreCorrect(userAnswers, correctAnswers, responses)).toBe(false);
+      expect(componentAnswersAreCorrect({ customSequence: ['A', 'B'] }, correctAnswers, responses)).toBe(true);
     });
   });
 });
