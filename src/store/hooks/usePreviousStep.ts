@@ -19,7 +19,7 @@ export function usePreviousStep() {
   const answers = useStoreSelector((state) => state.answers);
 
   // Status of the previous button. If false, the previous button should be disabled
-  const isPreviousDisabled = typeof currentStep !== 'number' || isAnalysis || currentStep <= 0;
+  const isPreviousDisabled = typeof currentStep !== 'number' || currentStep <= 0;
 
   const goToPreviousStep = useCallback(() => {
     if (typeof currentStep !== 'number') {
@@ -31,8 +31,10 @@ export function usePreviousStep() {
 
     // Dynamic block component
     if (funcIndex) {
-      // Delete current dynamic block component and go to previous
-      storeDispatch(deleteDynamicBlockAnswers({ currentStep, funcIndex: decryptIndex(funcIndex), funcName: flatSequence[currentStep] }));
+      if (!isAnalysis) {
+        // Delete current dynamic block component and go to previous during participant flow.
+        storeDispatch(deleteDynamicBlockAnswers({ currentStep, funcIndex: decryptIndex(funcIndex), funcName: flatSequence[currentStep] }));
+      }
 
       // If we're at the first element of a dynamic block, exit the dynamic block
       if (decryptIndex(funcIndex) !== 0) {
@@ -53,7 +55,7 @@ export function usePreviousStep() {
     } else {
       navigate(`/${studyId}/${encryptIndex(previousStep)}${window.location.search}`);
     }
-  }, [currentStep, funcIndex, navigate, studyId, studyConfig, storeDispatch, deleteDynamicBlockAnswers, answers]);
+  }, [answers, currentStep, deleteDynamicBlockAnswers, funcIndex, isAnalysis, navigate, storeDispatch, studyConfig, studyId]);
 
   return {
     isPreviousDisabled,
