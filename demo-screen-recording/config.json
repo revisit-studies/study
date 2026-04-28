@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Screen Recording",
     "version": "pilot",
@@ -38,6 +38,7 @@
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
+      "instruction": "On this page, only audio recording is enabled.",
       "recordAudio": true,
       "recordScreen": false
     },
@@ -45,8 +46,10 @@
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
+      "instruction": "On this page, screen recording is enabled, and audio recording is only enabled while clicking and holding the mic icon.",
       "recordAudio": true,
-      "recordScreen": true
+      "recordScreen": true,
+      "clickToRecord": true
     },
     "barChart_audio_screen": {
       "type": "website",
@@ -55,7 +58,7 @@
         "difficulty": "hard"
       },
       "description": "Question that asks users to count the number of bars that have a value greater than 1.",
-      "instruction": "How many bars have a value greater than 1?",
+      "instruction": "How many bars have a value greater than 1? (Both audio and screen recording are enabled on this page)",
       "path": "demo-screen-recording/assets/bar-chart.html",
       "response": [
         {

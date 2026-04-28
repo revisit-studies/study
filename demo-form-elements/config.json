@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Form Elements Demo",
     "version": "pilot",
@@ -554,6 +554,32 @@
         }
       ]
     },
+    "Custom Response": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "custom-response-title",
+          "type": "textOnly",
+          "prompt": "# Custom Response\n\nThis page demonstrates a `custom` response implemented with React code from `src/public`. The widget below writes a structured JSON value into a single response id and contributes its own validation.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "custom-response-demo",
+          "type": "custom",
+          "prompt": "Pick a chart type and set your confidence.",
+          "secondaryText": "The answer is stored as an object with `chartType`, `confidence`, and `rationale`.",
+          "path": "demo-form-elements/assets/CustomResponseCard.tsx",
+          "parameters": {
+            "chartOptions": [
+              "Bar",
+              "Line",
+              "Scatter"
+            ],
+            "minimumConfidence": 70
+          }
+        }
+      ]
+    },
     "Randomizing Options": {
       "type": "questionnaire",
       "response": [
@@ -970,6 +996,7 @@
       "Introduction",
       "Form Elements",
       "Default Values",
+      "Custom Response",
       "Randomizing Options",
       "Randomizing Questions",
       "Ranking Widgets",

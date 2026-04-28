@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Using audio recording",
     "version": "pilot",
@@ -431,8 +431,9 @@
       ]
     },
     "survey": {
-      "type": "markdown",
-      "path": "example-VLAT-mini-randomized/assets/survey.md",
+      "type": "questionnaire",
+      "instruction": "Thanks for completing the study! We are testing our survey tool and we could use your valuable feedback in the questions below:",
+      "instructionLocation": "aboveStimulus",
       "response": [
         {
           "id": "surveyExperience",
