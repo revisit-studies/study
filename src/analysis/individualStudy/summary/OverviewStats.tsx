@@ -17,9 +17,13 @@ async function getStoredParticipantCounts(storageEngine: StorageEngine, studyId:
 export function OverviewStats({
   overviewData,
   studyId,
+  showStoredCountMismatch = false,
+  includedParticipants = ['completed', 'inProgress', 'rejected'],
 }: {
   overviewData: OverviewData;
   studyId?: string;
+  showStoredCountMismatch?: boolean;
+  includedParticipants?: string[];
 }) {
   // Check if there are participants with invalid clean time (e.g. due to a window events bug)
   const hasExcluded = overviewData && overviewData.participantsWithInvalidCleanTimeCount > 0;
@@ -27,25 +31,28 @@ export function OverviewStats({
   const { storageEngine } = useStorageEngine();
 
   // Get the stored participant counts from the storage engine
-  const { value: storedCounts } = useAsync(getStoredParticipantCounts, storageEngine && studyId ? [storageEngine, studyId] : null);
+  const { value: storedCounts } = useAsync(
+    getStoredParticipantCounts,
+    showStoredCountMismatch && storageEngine && studyId ? [storageEngine, studyId] : null,
+  );
 
   const mismatchDetails = useMemo(() => {
-    if (!storedCounts) return null;
+    if (!showStoredCountMismatch || !storedCounts) return null;
     return {
       completed: {
-        current: storedCounts.completed,
+        current: includedParticipants.includes('completed') ? storedCounts.completed : 0,
         calculated: overviewData.participantCounts.completed,
       },
       inProgress: {
-        current: storedCounts.inProgress,
+        current: includedParticipants.includes('inProgress') ? storedCounts.inProgress : 0,
         calculated: overviewData.participantCounts.inProgress,
       },
       rejected: {
-        current: storedCounts.rejected,
+        current: includedParticipants.includes('rejected') ? storedCounts.rejected : 0,
         calculated: overviewData.participantCounts.rejected,
       },
     };
-  }, [overviewData, storedCounts]);
+  }, [overviewData.participantCounts, showStoredCountMismatch, storedCounts, includedParticipants]);
 
   // Check if the stored participant counts match the calculated participant counts
   const hasMismatch = (type: 'completed' | 'inProgress' | 'rejected') => {

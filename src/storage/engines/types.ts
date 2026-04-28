@@ -154,8 +154,8 @@ export abstract class StorageEngine {
   protected participantDataWriteDelayMs = 3000;
 
   private pendingParticipantDataWrite:
-  | { participantId: string; snapshot: ParticipantData; cache: boolean }
-  | undefined;
+    | { participantId: string; snapshot: ParticipantData; cache: boolean }
+    | undefined;
 
   private pendingParticipantDataWriteTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -692,6 +692,11 @@ export abstract class StorageEngine {
     const allConfigs = tempHashes.map(async (singleHash) => [singleHash, await this._getFromStorage(`configs/${singleHash}`, 'config', studyId)]);
     const configs = (await Promise.all(allConfigs)) as [string, StudyConfig][];
     return Object.fromEntries(configs);
+  }
+
+  async getCurrentConfigHash(studyId: string) {
+    await this.initializeStudyDb(studyId);
+    return this._getCurrentConfigHash();
   }
 
   // Gets the current participant ID from the URL, local persistence, or generates a new one if none exists.
