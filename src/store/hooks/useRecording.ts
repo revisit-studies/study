@@ -26,6 +26,7 @@ export function useRecording() {
 
   const recordVideoRef = useRef<HTMLVideoElement>(null);
   const [screenRecordingError, setRecordingError] = useState<string | null>(null);
+  const [audioRecordingError, setAudioRecordingError] = useState<string | null>(null);
   const [isScreenRecording, setIsScreenRecording] = useState(false);
   const [isAudioRecording, setIsAudioRecording] = useState(false);
   const [screenWithAudioRecording, setScreenWithAudioRecording] = useState(false);
@@ -152,7 +153,7 @@ export function useRecording() {
     const audioRecorder = (currentComponentHasAudioRecording && audioMediaStream.current) ? new MediaRecorder(audioMediaStream.current) : null;
     audioMediaRecorder.current = audioRecorder;
 
-    let chunks : Blob[] = [];
+    let chunks: Blob[] = [];
     mediaRecorder.addEventListener('dataavailable', (event: BlobEvent) => {
       if (event.data && event.data.size > 0) {
         chunks.push(event.data);
@@ -266,7 +267,7 @@ export function useRecording() {
       const recorder = new MediaRecorder(s);
       audioMediaRecorder.current = recorder;
 
-      let chunks : Blob[] = [];
+      let chunks: Blob[] = [];
 
       recorder.addEventListener('start', () => {
         chunks = [];
@@ -287,9 +288,13 @@ export function useRecording() {
       });
 
       recorder.start();
+      setAudioRecordingError(null);
+      setIsAudioRecording(true);
+    }).catch((err) => {
+      console.error('Error accessing microphone:', err);
+      setAudioRecordingError('Microphone permission denied or not supported.');
+      setIsAudioRecording(false);
     });
-
-    setIsAudioRecording(true);
   }, [storageEngine, isMuted]);
 
   // For study with just audio recording
@@ -315,7 +320,7 @@ export function useRecording() {
       startAudioRecording(identifier);
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentComponent, identifier, currentComponentHasAudioRecording]);
 
   // For study with screen recording
@@ -483,6 +488,8 @@ export function useRecording() {
   return {
     recordVideoRef,
     studyHasScreenRecording,
+    studyHasAudioRecording,
+    currentComponentHasAudioRecording,
     isMuted,
     setIsMuted,
     recordAudio,
@@ -491,6 +498,7 @@ export function useRecording() {
     startScreenRecording,
     stopScreenRecording,
     screenRecordingError,
+    audioRecordingError,
     isScreenRecording,
     isAudioRecording,
     isScreenCapturing,
@@ -503,6 +511,13 @@ export function useRecording() {
     isRejected,
     isSpeakingWhileMuted,
     showMutedWarning,
+    audioStatus: audioRecordingError
+      ? 'denied'
+      : isAudioRecording
+        ? 'recording'
+        : currentComponentHasAudioRecording
+          ? 'pending'
+          : 'idle',
   };
 }
 

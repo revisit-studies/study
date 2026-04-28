@@ -8,6 +8,7 @@
       "path": "libraries/mic-check/assets/AudioTest.tsx",
       "nextButtonLocation": "belowStimulus",
       "nextButtonText": "Continue",
+      "recordAudio": true,
       "response": [
         {
           "id": "audioTest",
