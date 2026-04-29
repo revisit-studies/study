@@ -4,7 +4,7 @@
   "definitions": {
     "Answer": {
       "additionalProperties": false,
-      "description": "The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.\n\nAnswers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (these are currently only used for training). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.\n\nHere's an example of how to use the Answer interface to define the correct answer to a question:\n\n```js { \"type\": \"markdown\", \"path\": \"<study-name>/assets/question.md\", \"response\": [  {    \"id\": \"response1\",    \"prompt\": \"What is 2 + 2?\",    \"location\": \"belowStimulus\",    \"type\": \"numerical\"  } ] \"correctAnswer\": [{  \"id\": \"response1\",  \"answer\": 4 }] } ```\n\nIn this example, the correct answer to the question \"What is 2 + 2?\" is 4. If the participant answers 4, they will be considered correct. If they answer anything other than 4, they will be considered incorrect.",
+      "description": "The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.\n\nAnswers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (these are currently only used for training). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.\n\nHere's an example of how to use the Answer interface to define the correct answer to a question:\n\n```json {   \"type\": \"markdown\",   \"path\": \"<study-name>/assets/question.md\",   \"response\": [     {       \"id\": \"response1\",       \"prompt\": \"What is 2 + 2?\",       \"location\": \"belowStimulus\",       \"type\": \"numerical\"     }   ],   \"correctAnswer\": [{       \"id\": \"response1\",       \"answer\": 4     }]   } ```\n\nIn this example, the correct answer to the question \"What is 2 + 2?\" is 4. If the participant answers 4, they will be considered correct. If they answer anything other than 4, they will be considered incorrect.",
       "properties": {
         "acceptableHigh": {
           "description": "The acceptable high value for the answer. This is used to define a range of acceptable answers.",
@@ -34,6 +34,10 @@
         "properties": {
           "allowFailedTraining": {
             "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+            "type": "boolean"
+          },
+          "clickToRecord": {
+            "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
             "type": "boolean"
           },
           "config": {
@@ -157,7 +161,7 @@
             "type": "boolean"
           },
           "recordScreen": {
-            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+            "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
             "type": "boolean"
           },
           "response": {
@@ -238,13 +242,21 @@
         },
         "type": "object"
       },
-      "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```js \"baseComponents\": { \"my-image-component\": { \"instructionLocation\": \"sidebar\", \"nextButtonLocation\": \"sidebar\", \"path\": \"<study-name>/assets/my-image.jpg\", \"response\": [   {     \"id\": \"my-image-id\",     \"options\": [\"Europe\", \"Japan\", \"USA\"],     \"prompt\": \"Your Selected Answer:\",     \"type\": \"dropdown\"   } ], \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```js \"components\": { \"q1\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with largest GDP\", \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with lowest GDP\", \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with highest exports of Wheat\", \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
+      "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```json \"baseComponents\": {  \"my-image-component\": {    \"instructionLocation\": \"sidebar\",    \"nextButtonLocation\": \"sidebar\",    \"path\": \"<study-name>/assets/my-image.jpg\",    \"response\": [      {        \"id\": \"my-image-id\",        \"options\": [\"Europe\", \"Japan\", \"USA\"],        \"prompt\": \"Your Selected Answer:\",        \"type\": \"dropdown\"      }    ],    \"type\": \"image\"  } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```json \"components\": {  \"q1\": {    \"baseComponent\": \"my-image-component\",    \"description\": \"Choosing section with largest GDP\",    \"instruction\": \"Which region has the largest GDP?\"  },  \"q2\": {    \"baseComponent\": \"my-image-component\",    \"description\": \"Choosing section with lowest GDP\",    \"instruction\": \"Which region has the lowest GDP?\"  },  \"q3\": {    \"baseComponent\": \"my-image-component\",    \"description\": \"Choosing section with highest exports of Wheat\",    \"instruction\": \"Which region had the most Wheat exported in 2022?\"  } } ```",
       "type": "object"
     },
     "ButtonsResponse": {
       "additionalProperties": false,
-      "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys.\n\nExample: ```js {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
+      "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys. ```json {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"default\": \"Option 2\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
       "properties": {
+        "default": {
+          "description": "The default value of the response. Specify one option value as a string.",
+          "type": "string"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -283,7 +295,7 @@
           "type": "array"
         },
         "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "prompt": {
@@ -318,7 +330,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -336,8 +348,19 @@
     },
     "CheckboxResponse": {
       "additionalProperties": false,
-      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```js { \"id\": \"q7\", \"prompt\": \"Checkbox example (not required)\", \"location\": \"aboveStimulus\", \"type\": \"checkbox\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] } ```",
+      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options. ```json {   \"id\": \"q7\",   \"prompt\": \"Checkbox example (not required)\",   \"location\": \"aboveStimulus\",   \"type\": \"checkbox\",   \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"],   \"withDontKnow\": true,   \"default\": [\"Option 1\", \"I don't know\"] } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response. Specify an array of option values. To preselect the \"I don't know\" checkbox, include `\"I don't know\"`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -389,7 +412,7 @@
           "type": "array"
         },
         "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "prompt": {
@@ -424,7 +447,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -446,7 +469,7 @@
     },
     "ComponentBlock": {
       "additionalProperties": false,
-      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```js { \"order\": \"random\", \"components\": [ \"component1\", \"component2\", \"component3\" ] } ``` This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```js [ [\"component2\", \"component3\", \"component1\"], [\"component1\", \"component3\", \"component2\"], [\"component3\", \"component1\", \"component2\"], ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```js { \"order\": \"latinSquare\", \"components\": [ \"component1\", \"component2\", \"component3\" ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```js [ [\"component1\", \"component2\", \"component3\"], [\"component2\", \"component3\", \"component1\"], [\"component3\", \"component1\", \"component2\"], ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```js { \"order\": \"fixed\", \"components\": [ \"component1\", \"component2\", \"component3\" ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```js [ [\"component1\", \"component2\", \"component3\"], [\"component1\", \"component2\", \"component3\"], [\"component1\", \"component2\", \"component3\"], ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```js { \"order\": \"latinSquare\", \"components\": [ \"component1\", \"component2\", \"component3\" ], \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```js [ [\"component1\", \"component2\"], [\"component2\", \"component3\"], [\"component3\", \"component1\"], ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.",
+      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```json {  \"order\": \"random\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ``` This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```json [  [\"component2\", \"component3\", \"component1\"],  [\"component1\", \"component3\", \"component2\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component2\", \"component3\", \"component1\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ],  \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\"],  [\"component2\", \"component3\"],  [\"component3\", \"component1\"],  ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.",
       "properties": {
         "components": {
           "description": "The components that are included in the order.",
@@ -467,6 +490,10 @@
             ]
           },
           "type": "array"
+        },
+        "conditional": {
+          "description": "The conditional property shows the block only when the URL condition matches its `id`.",
+          "type": "boolean"
         },
         "id": {
           "description": "The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property.",
@@ -505,7 +532,7 @@
     },
     "ComponentBlockCondition": {
       "additionalProperties": false,
-      "description": "The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.\n\nAnswers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](../Answer). If no correct answers are defined, the component is considered correct by default.\n\nYou might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:\n\n```js { ... \"skip\": [ {   \"check\": \"block\",   \"condition\": \"numIncorrect\",   \"value\": 2,   \"to\": \"end\" } ] ... } ```\n\nIn this example, when the number of components with incorrect responses in the block is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.\n\nWhen the condition is met, the participant will immediately be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.",
+      "description": "The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.\n\nAnswers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](../Answer). If no correct answers are defined, the component is considered correct by default.\n\nYou might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:\n\n```json {  ...  \"skip\": [    {      \"check\": \"block\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of components with incorrect responses in the block is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.\n\nWhen the condition is met, the participant will immediately be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.",
       "properties": {
         "check": {
           "const": "block",
@@ -545,9 +572,98 @@
       ],
       "type": "string"
     },
+    "CustomResponse": {
+      "additionalProperties": false,
+      "description": "The CustomResponse interface is used to define the properties of a response rendered by React code in `src/public`. This is useful when built-in response types do not fit the interaction you need, but you still want the response to participate in the standard form, validation, provenance, and answer-saving flow.\n\nUnlike other response assets, the path for a custom response is relative to the `src/public/` folder. Similar to React stimulus components, we suggest creating a folder named `src/public/{studyName}/assets` to house custom response files for a particular study. The React component must be the default export from the file. You may also optionally export a named `validate` function from the same module.\n\nExample: ```json {   \"id\": \"custom-chart-response\",   \"type\": \"custom\",   \"prompt\": \"Use the custom response to select a chart and confidence.\",   \"path\": \"my_study/assets/CustomChartResponse.tsx\",   \"parameters\": {     \"chartOptions\": [\"Bar\", \"Line\", \"Scatter\"]   },   \"default\": {     \"chartType\": \"Bar\",     \"confidence\": 70   } } ```",
+      "properties": {
+        "default": {
+          "$ref": "#/definitions/JsonValue",
+          "description": "The default value of the response. Must be JSON-serializable."
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "Parameters passed to the custom response component.",
+          "type": "object"
+        },
+        "path": {
+          "description": "The path to the react component. This should be a relative path from the src/public folder.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "custom",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
     "DeterministicInterruption": {
       "additionalProperties": false,
-      "description": "The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.\n\nFor example, if you want to show an interruption after the second component in the block, you would set firstLocation to 2. If you want to show an interruption after every 3 components, you would set spacing to 3. If you want to show an interruption after the second component and then every 3 components, you would set firstLocation to 2 and spacing to 3.\n\nThe components property is an array of the components that will be inserted at the location specified by firstLocation and spacing. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the DeterministicInterruption:\n\n```js { \"order\": \"fixed\", \"components\": [ \"component1\", \"component2\", \"component3\", \"component4\", \"component5\", \"component6\" ], \"interruptions\": [ {   \"firstLocation\": 2,   \"spacing\": 3,   \"components\": [     \"interruption1\",     \"interruption2\"   ] } ] } ```\n\nThe resulting sequence array could be:\n\n```js [ [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"], [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"], [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"], ... ] ```",
+      "description": "The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.\n\nFor example, if you want to show an interruption after the second component in the block, you would set firstLocation to 2. If you want to show an interruption after every 3 components, you would set spacing to 3. If you want to show an interruption after the second component and then every 3 components, you would set firstLocation to 2 and spacing to 3.\n\nThe components property is an array of the components that will be inserted at the location specified by firstLocation and spacing. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the DeterministicInterruption:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\",    \"component4\",    \"component5\",    \"component6\"  ],  \"interruptions\": [    {      \"firstLocation\": 2,      \"spacing\": 3,      \"components\": [        \"interruption1\",        \"interruption2\"      ]    }  ] } ```\n\nThe resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"],  [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"],  [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"],  ... ] ```",
       "properties": {
         "components": {
           "description": "The components that are included in the interruption. These reference components in the StudyConfig.components section of the config.",
@@ -572,10 +688,93 @@
       ],
       "type": "object"
     },
+    "DividerResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "not": {}
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "not": {}
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "not": {}
+        },
+        "prompt": {
+          "not": {}
+        },
+        "required": {
+          "not": {}
+        },
+        "requiredLabel": {
+          "not": {}
+        },
+        "requiredValue": {
+          "not": {}
+        },
+        "secondaryText": {
+          "not": {}
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "divider",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "not": {}
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "type": "object"
+    },
     "DropdownResponse": {
       "additionalProperties": false,
-      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.\n\nExample: ```js { \"id\": \"q-color\", \"prompt\": \"What is your favorite color?\", \"location\": \"aboveStimulus\", \"type\": \"dropdown\", \"placeholder\": \"Please choose your favorite color\", \"options\": [\"Red\", \"Blue\"] } ```",
+      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options. ```json {   \"id\": \"q-color\",   \"prompt\": \"What is your favorite color?\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": \"Blue\",   \"placeholder\": \"Please choose your favorite color\",   \"options\": [\"Red\", \"Blue\"] } ```\n\nHere's an example of a multiselect dropdown with minimum and maximum selections:\n\n```json {   \"id\": \"q-multiselect-dropdown\",   \"prompt\": \"Select the fruits you like.\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": [\"Banana\", \"Orange\"],   \"placeholder\": \"Select your favorite fruits\",   \"options\": [\"Apple\", \"Banana\", \"Cherry\", \"Grape\", \"Orange\", \"Strawberry\", \"Watermelon\", \"Pineapple\"],   \"minSelections\": 2,   \"maxSelections\": 4 } ```",
       "properties": {
+        "default": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The default value of the response. Use a string for single-select dropdowns and a string array for multiselect dropdowns."
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -615,7 +814,7 @@
           "type": "array"
         },
         "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "placeholder": {
@@ -654,7 +853,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -672,8 +871,12 @@
     },
     "DynamicBlock": {
       "additionalProperties": false,
-      "description": "The DynamicBlock interface is used to define a block where displayed components are controlled by a function. This is useful when you want to generate the sequence based on answers to previous questions or other factors.\n\nThe functionPath property is a path to the function that generates the components. This should be a relative path from the src/public folder.\n\nHere's an example of how to use the DynamicBlock:\n\n```js {   \"id\": \"funcBlock\",   \"order\": \"dynamic\",   \"functionPath\": \"<study-name>/assets/function.js\",   \"parameters\": {     \"param1\": \"value1\",     \"param2\": \"value2\"   } } ```",
+      "description": "The DynamicBlock interface is used to define a block where displayed components are controlled by a function. This is useful when you want to generate the sequence based on answers to previous questions or other factors.\n\nThe functionPath property is a path to the function that generates the components. This should be a relative path from the src/public folder.\n\nHere's an example of how to use the DynamicBlock:\n\n```json {   \"id\": \"funcBlock\",   \"order\": \"dynamic\",   \"functionPath\": \"<study-name>/assets/function.js\",   \"parameters\": {     \"param1\": \"value1\",     \"param2\": \"value2\"   } } ```",
       "properties": {
+        "conditional": {
+          "description": "The conditional property shows the block only when the URL condition matches its `id`.",
+          "type": "boolean"
+        },
         "functionPath": {
           "description": "The path to the function that generates the components. This should be a relative path from the src/public folder.",
           "type": "string"
@@ -759,10 +962,14 @@
     },
     "ImageComponent": {
       "additionalProperties": false,
-      "description": "The ImageComponent interface is used to define the properties of an image component. This component is used to render an image with optional styling.\n\nFor example, to render an image with a path of `path/to/study/assets/image.jpg` and a max width of 50%, you would use the following snippet: ```js { \"type\": \"image\", \"path\": \"<study-name>/assets/image.jpg\", \"style\": { \"maxWidth\": \"50%\" } } ```",
+      "description": "The ImageComponent interface is used to define the properties of an image component. This component is used to render an image with optional styling.\n\nFor example, to render an image with a path of `path/to/study/assets/image.jpg` and a max width of 50%, you would use the following snippet: ```json {   \"type\": \"image\",   \"path\": \"<study-name>/assets/image.jpg\",   \"style\": {     \"maxWidth\": \"50%\"   } } ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -838,7 +1045,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -935,7 +1142,7 @@
     },
     "IndividualComponentAllResponsesCondition": {
       "additionalProperties": false,
-      "description": "The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on all answers to a specific component. The skip logic will be checked for every component in the block that has the specified name.\n\n:::info\n\nIf you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition.\n\n:::\n\n\nHere's an example of how to use the IndividualComponentAllResponsesCondition:\n\n```js { ... \"skip\": [ {   \"name\": \"attentionCheck\",   \"check\": \"responses\",   \"to\": \"end\" } ] ... } ```\n\nIn this example, if all responses to the component with the ID \"attentionCheck\" are correct, the participant will be redirected to the end of the study. If any response is incorrect, the participant will continue to the next component in the sequence.",
+      "description": "The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on all answers to a specific component. The skip logic will be checked for every component in the block that has the specified name.\n\n:::info If you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition. :::\n\nHere's an example of how to use the IndividualComponentAllResponsesCondition:\n\n```json {  ...  \"skip\": [    {      \"name\": \"attentionCheck\",      \"check\": \"responses\",      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, if all responses to the component with the ID \"attentionCheck\" are correct, the participant will be redirected to the end of the study. If any response is incorrect, the participant will continue to the next component in the sequence.",
       "properties": {
         "check": {
           "const": "responses",
@@ -960,7 +1167,7 @@
     },
     "IndividualComponentSingleResponseCondition": {
       "additionalProperties": false,
-      "description": "The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. The skip logic will be checked for every component in the block that has the specified name.\n\n:::info\n\nIf you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition.\n\n:::\n\nFor example, if you want to skip to a different component based on a response to a specific component, you would use the IndividualComponentSingleResponseCondition. Here's an example of how to use the IndividualComponentSingleResponseCondition:\n\n```js { ... \"skip\": [ {   \"name\": \"attentionCheck\",   \"check\": \"response\",   \"responseId\": \"attentionCheckResponse\",   \"value\": \"the right answer\",   \"comparison\": \"equal\",   \"to\": \"end\" } ] ... } ```\n\nIn this example, we assign our skip logic to the component whose ID is \"attentionCheck\". If the answer given to the response \"attentionCheckResponse\" is equal to \"the right answer\", then the user will be redirected to the end of the study. If the response is _not_ equal to \"the right answer\", then the participant will continue to the next component in the sequence.",
+      "description": "The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. The skip logic will be checked for every component in the block that has the specified name.\n\n:::info If you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition. :::\n\nFor example, if you want to skip to a different component based on a response to a specific component, you would use the IndividualComponentSingleResponseCondition. Here's an example of how to use the IndividualComponentSingleResponseCondition:\n\n```json {  ...  \"skip\": [    {      \"name\": \"attentionCheck\",      \"check\": \"response\",      \"responseId\": \"attentionCheckResponse\",      \"value\": \"the right answer\",      \"comparison\": \"equal\",      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, we assign our skip logic to the component whose ID is \"attentionCheck\". If the answer given to the response \"attentionCheckResponse\" is equal to \"the right answer\", then the user will be redirected to the end of the study. If the response is _not_ equal to \"the right answer\", then the participant will continue to the next component in the sequence.",
       "properties": {
         "check": {
           "const": "response",
@@ -1015,6 +1222,10 @@
         },
         "baseComponent": {
           "type": "string"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
+          "type": "boolean"
         },
         "config": {
           "description": "The vega or vega-lite configuration.",
@@ -1137,7 +1348,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1232,9 +1443,42 @@
       ],
       "description": "The InterruptionBlock interface is used to define interruptions in a block. These can be used for breaks or attention checks. Interruptions can be deterministic or random."
     },
+    "JsonArray": {
+      "items": {
+        "$ref": "#/definitions/JsonValue"
+      },
+      "type": "array"
+    },
+    "JsonObject": {
+      "additionalProperties": {
+        "$ref": "#/definitions/JsonValue"
+      },
+      "type": "object"
+    },
+    "JsonPrimitive": {
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/JsonPrimitive"
+        },
+        {
+          "$ref": "#/definitions/JsonObject"
+        },
+        {
+          "$ref": "#/definitions/JsonArray"
+        }
+      ]
+    },
     "LibraryConfig": {
       "additionalProperties": false,
-      "description": "LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.\n\nBelow is the general template that should be followed when constructing a Library configuration file.\n\n```js {  \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/LibraryConfigSchema.json\",  \"baseComponents\": {    // BaseComponents here are defined exactly as is in the StudyConfig  },  \"components\": {    // Components here are defined exactly as is in the StudyConfig  },  \"sequences\": {   // Sequences here are defined as \"key\": \"value\" pairs where the key is the name of the sequence and the value is a ComponentBlock, just like in the StudyConfig  } } ```",
+      "description": "LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.\n\nBelow is the general template that should be followed when constructing a Library configuration file.\n\n```json {  \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/LibraryConfigSchema.json\",  \"baseComponents\": {    // BaseComponents here are defined exactly as is in the StudyConfig  },  \"components\": {    // Components here are defined exactly as is in the StudyConfig  },  \"sequences\": {    // Sequences here are defined as \"key\": \"value\" pairs where the key is the name of the sequence and the value is a ComponentBlock, just like in the StudyConfig  } } ```",
       "properties": {
         "$schema": {
           "description": "A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information",
@@ -1306,8 +1550,19 @@
     },
     "LikertResponse": {
       "additionalProperties": false,
-      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"numItems\": 5, \"start\": 1, \"spacing\": 1 } ```",
+      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, `\"numItems\": 5` will render 5 radio buttons, and `\"numItems\": 7` will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale: ```json {   \"id\": \"q-satisfaction\",   \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\",   \"location\": \"aboveStimulus\",   \"type\": \"likert\",   \"leftLabel\": \"Not Enjoyable\",   \"rightLabel\": \"Very Enjoyable\",   \"labelLocation\": \"inline\",   \"numItems\": 5,   \"default\": 4,   \"start\": 1,   \"spacing\": 1 } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response. Specify a rendered option value as a number or string (for example `4` or `\"4\"`).",
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1318,6 +1573,15 @@
         },
         "infoText": {
           "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "labelLocation": {
+          "description": "The location of the labels. Defaults to inline.",
+          "enum": [
+            "above",
+            "inline",
+            "below"
+          ],
           "type": "string"
         },
         "leftLabel": {
@@ -1333,7 +1597,7 @@
           "type": "number"
         },
         "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "prompt": {
@@ -1380,7 +1644,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -1398,8 +1662,16 @@
     },
     "LongTextResponse": {
       "additionalProperties": false,
-      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```js { \"id\": \"q-name\", \"prompt\": \"What is your first name?\", \"location\": \"aboveStimulus\", \"type\": \"longText\", \"placeholder\": \"Please enter your first name\" } ```",
+      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-name\",   \"prompt\": \"What is your first name?\",   \"location\": \"aboveStimulus\",   \"type\": \"longText\",   \"default\": \"I enjoyed this study because...\",   \"placeholder\": \"Please enter your first name\" } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response. Specify a string such as `\"I enjoyed this study because...\"`.",
+          "type": "string"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1417,7 +1689,7 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "placeholder": {
@@ -1456,7 +1728,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -1473,10 +1745,14 @@
     },
     "MarkdownComponent": {
       "additionalProperties": false,
-      "description": "The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text. Markdown components can have responses (e.g. in a consent form), or no responses (e.g. in a help text file). Here's an example with no responses for a simple help text file:\n\n```js { \"type\": \"markdown\", \"path\": \"<study-name>/assets/help.md\", \"response\": [] } ```",
+      "description": "The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text. Markdown components can have responses (e.g. in a consent form), or no responses (e.g. in a help text file). Here's an example with no responses for a simple help text file:\n\n```json {   \"type\": \"markdown\",   \"path\": \"<study-name>/assets/help.md\",   \"response\": [] } ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -1552,7 +1828,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1622,15 +1898,22 @@
       ],
       "type": "object"
     },
-    "MatrixResponse": {
+    "MatrixCheckboxResponse": {
       "additionalProperties": false,
-      "description": "The MatrixResponse interface is used to define the properties of a matrix radio or matrix checkbox response. Question options are rendered as rows of the matrix, each row containing its own radio/checkbox group. Answer options are rendered as column headers of the matrix. These can be customized by passing in the custom strings into the answer options. Alternatively, `answerOptions` can be set to one of the following custom strings: 'satisfaction5','satisfaction7', 'likely5', 'likely7'. This will automatically generate the appropriate headers for the matrix.\n\nExample for a 5-scale satisfaction matrix with three questions:\n\n```js { \"id\": \"multi-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.\", \"location\": \"aboveStimulus\", \"type\": \"matrix-radio\", \"answerOptions\": \"satisfaction5\", \"questionOptions\": [  \"The tool we created\",  \"The technique we developed\",  \"The authors of the tools\" ] } ```\n\nHere's an example using custom columns (answerOptions):\n\n```js { \"id\": \"multi-custom\", \"prompt\": \"Which categories do the following items belong to?\", \"location\": \"aboveStimulus\", \"type\": \"matrix-checkbox\", \"answerOptions\": [  \"Has Legs\",  \"Has Wings\",  \"Can Swim\" ], \"questionOptions\": [  \"Dog\",  \"Snake\",  \"Eagle\",  \"Salmon\",  \"Platypus\" ]\n\n} ```",
+      "description": "The MatrixCheckboxResponse interface defines a matrix where each row can select multiple options. `questionOptions` are rendered as rows, and `answerOptions` are rendered as columns. Defaults are specified per-row as arrays of selected answer option values.\n\nExample using custom columns (`answerOptions`): ```json {   \"id\": \"multi-custom\",   \"prompt\": \"Which categories do the following items belong to?\",   \"location\": \"aboveStimulus\",   \"type\": \"matrix-checkbox\",   \"answerOptions\": [     \"Has Legs\",     \"Has Wings\",     \"Can Swim\"   ],   \"questionOptions\": [     \"Dog\",     \"Snake\",     \"Eagle\",     \"Salmon\",     \"Platypus\"   ],   \"default\": {     \"Dog\": [\"Has Legs\"],     \"Snake\": [],     \"Eagle\": [\"Has Wings\"],     \"Salmon\": [\"Can Swim\"],     \"Platypus\": [\"Has Legs\", \"Can Swim\"]   } } ```",
       "properties": {
         "answerOptions": {
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/StringOption"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "type": "array"
             },
@@ -1653,6 +1936,20 @@
           ],
           "description": "The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from."
         },
+        "default": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": "The default value of the response by question key. Provide an object where each key is a question value and each value is an array of selected answer option values.",
+          "type": "object"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1670,7 +1967,7 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "prompt": {
@@ -1680,7 +1977,14 @@
         "questionOptions": {
           "description": "The question options (rows) are the prompts for each response you'd like to record.",
           "items": {
-            "type": "string"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },
@@ -1716,14 +2020,11 @@
           "type": "string"
         },
         "type": {
-          "enum": [
-            "matrix-radio",
-            "matrix-checkbox"
-          ],
+          "const": "matrix-checkbox",
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -1739,6 +2040,156 @@
         "type"
       ],
       "type": "object"
+    },
+    "MatrixRadioResponse": {
+      "additionalProperties": false,
+      "description": "The MatrixRadioResponse interface defines a matrix where each row accepts exactly one selected option. `questionOptions` are rendered as rows, and `answerOptions` are rendered as columns. `answerOptions` can be custom labels/values or one of the built-in shortcuts: `satisfaction5`, `satisfaction7`, `likely5`, `likely7`.\n\nExample: ```json {   \"id\": \"multi-satisfaction\",   \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.\",   \"location\": \"aboveStimulus\",   \"type\": \"matrix-radio\",   \"answerOptions\": \"satisfaction5\",   \"questionOptions\": [     \"The tool we created\",     \"The technique we developed\",     \"The authors of the tools\"   ],   \"default\": {     \"The tool we created\": \"Highly Satisfied\",     \"The technique we developed\": \"Satisfied\",     \"The authors of the tools\": \"Neutral\"   },   \"questionOrder\": \"random\" } ```",
+      "properties": {
+        "answerOptions": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/StringOption"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "const": "likely5",
+              "type": "string"
+            },
+            {
+              "const": "likely7",
+              "type": "string"
+            },
+            {
+              "const": "satisfaction5",
+              "type": "string"
+            },
+            {
+              "const": "satisfaction7",
+              "type": "string"
+            }
+          ],
+          "description": "The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from."
+        },
+        "default": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The default value of the response by question key. Provide an object where each key is a question value and each value is one answer option value.",
+          "type": "object"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "questionOptions": {
+          "description": "The question options (rows) are the prompts for each response you'd like to record.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "questionOrder": {
+          "description": "The order in which the questions are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "matrix-radio",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "answerOptions",
+        "id",
+        "prompt",
+        "questionOptions",
+        "type"
+      ],
+      "type": "object"
+    },
+    "MatrixResponse": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/MatrixRadioResponse"
+        },
+        {
+          "$ref": "#/definitions/MatrixCheckboxResponse"
+        }
+      ]
     },
     "NumberOption": {
       "additionalProperties": false,
@@ -1761,8 +2212,16 @@
     },
     "NumericalResponse": {
       "additionalProperties": false,
-      "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.\n\nExample: ```js { \"id\": \"q-numerical\", \"prompt\": \"Numerical example\", \"location\": \"aboveStimulus\", \"type\": \"numerical\", \"placeholder\": \"Enter your age, range from 0 - 120\", \"max\": 120, \"min\": 0 } ```",
+      "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder. ```json {   \"id\": \"q-numerical\",   \"prompt\": \"Numerical example\",   \"location\": \"aboveStimulus\",   \"type\": \"numerical\",   \"default\": 25,   \"placeholder\": \"Enter your age, range from 0 - 120\",   \"max\": 120,   \"min\": 0 } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response. Specify a numeric value such as `25` or `3.14`.",
+          "type": "number"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1788,7 +2247,7 @@
           "type": "number"
         },
         "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "placeholder": {
@@ -1827,7 +2286,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -1844,10 +2303,14 @@
     },
     "QuestionnaireComponent": {
       "additionalProperties": false,
-      "description": "A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:\n\n```js { \"type\": \"questionnaire\", \"response\": [  {    \"id\": \"gender\",    \"prompt\": \"Gender:\",    \"location\": \"belowStimulus\",    \"type\": \"checkbox\",    \"options\": [\"Man\", \"Woman\", \"Genderqueer\", \"Third-gender\", ...]  } ] } ```",
+      "description": "A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:\n\n```json {   \"type\": \"questionnaire\",   \"response\": [     {       \"id\": \"gender\",       \"prompt\": \"Gender:\",       \"location\": \"belowStimulus\",       \"type\": \"checkbox\",       \"options\": [\"Man\", \"Woman\", \"Genderqueer\", \"Third-gender\", ...]     }   ] } ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -1919,7 +2382,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -1990,8 +2453,16 @@
     },
     "RadioResponse": {
       "additionalProperties": false,
-      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [\"Option 1\", \"Option 2\"] } ```",
+      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels. ```json {   \"id\": \"q-radio\",   \"prompt\": \"Radio button example\",   \"location\": \"aboveStimulus\",   \"type\": \"radio\",   \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"],   \"default\": \"Option 2\",   \"optionOrder\": \"random\",   \"leftLabel\": \"Left\",   \"rightLabel\": \"Right\",   \"labelLocation\": \"inline\",   \"horizontal\": true,   \"withOther\": true } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response. Specify one option value as a string.",
+          "type": "string"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -2006,6 +2477,15 @@
         },
         "infoText": {
           "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "labelLocation": {
+          "description": "The location of the labels. This only works when horizontal is true. Defaults to inline.",
+          "enum": [
+            "above",
+            "inline",
+            "below"
+          ],
           "type": "string"
         },
         "leftLabel": {
@@ -2039,7 +2519,7 @@
           "type": "array"
         },
         "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "prompt": {
@@ -2078,7 +2558,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -2100,7 +2580,7 @@
     },
     "RandomInterruption": {
       "additionalProperties": false,
-      "description": "The RandomInterruption interface is used to define an interruption that will be shown randomly in the block.\n\nFor example, if you want to show a single interruption randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 1. If you want to show 3 interruptions randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 3.\n\nThe components property is an array of the components that will be inserted randomly in the block. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the RandomInterruption:\n\n```js { \"order\": \"fixed\", \"components\": [ \"component1\", \"component2\", \"component3\", \"component4\", \"component5\", \"component6\" ], \"interruptions\": [ {   \"spacing\": \"random\",   \"numInterruptions\": 3,   \"components\": [     \"interruption1\",     \"interruption2\"   ] } ] } ```\n\nThe resulting sequence array could be:\n\n```js [ [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6\"], [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"interruption1\", \"interruption2\", \"component5\", \"component6\"], [\"component1\", \"component2\" \"interruption1\", \"interruption2\", \"component3\", \"interruption1\", \"interruption2\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6\"], ... ] ```",
+      "description": "The RandomInterruption interface is used to define an interruption that will be shown randomly in the block.\n\nFor example, if you want to show a single interruption randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 1. If you want to show 3 interruptions randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 3.\n\nThe components property is an array of the components that will be inserted randomly in the block. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the RandomInterruption:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\",    \"component4\",    \"component5\",    \"component6\"  ],  \"interruptions\": [    {      \"spacing\": \"random\",      \"numInterruptions\": 3,      \"components\": [        \"interruption1\",        \"interruption2\"      ]    }  ] } ```\n\nThe resulting sequence array could be:\n\n```json [  [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6\"],  [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"interruption1\", \"interruption2\", \"component5\", \"component6\"],  [\"component1\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"interruption1\", \"interruption2\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6\"],  ... ] ```",
       "properties": {
         "components": {
           "description": "The components that are included in the interruption. These reference components in the StudyConfig.components section of the config.",
@@ -2128,8 +2608,19 @@
     },
     "RankingResponse": {
       "additionalProperties": false,
-      "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options.\n\nThere are three types of ranking widgets: Ranking Sublist: The participant is asked to rank a subset of items from a larger list. Ranking Categorical: The participant is asked to rank items within categories: HIGH, MEDIUM, and LOW. Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.\n\n```js { \"id\": \"ranking-sublist\", \"type\": \"ranking-sublist\", \"prompt\": \"Rank your top 2 favorite fruits from the list below\", \"location\": \"belowStimulus\", \"options\": [\"Apple\", \"Banana\", \"Orange\", \"Strawberry\", \"Grapes\"], \"numItems\": 2 }, { \"id\": \"ranking-categorical\", \"type\": \"ranking-categorical\", \"prompt\": \"Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.\", \"location\": \"belowStimulus\", \"options\": [\"Drawing\", \"Singing\", \"Hiking\", \"Dancing\", \"Photography\"] }, { \"id\": \"ranking-pairwise\", \"type\": \"ranking-pairwise\", \"prompt\": \"Which meal would you prefer\", \"location\": \"belowStimulus\", \"options\": [\"Pizza\", \"Sushi\", \"Burger\", \"Pasta\", \"Salad\", \"Tacos\"] } ```",
+      "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options.\n\nThere are three types of ranking widgets: Ranking Sublist: The participant is asked to rank a subset of items from a larger list. Ranking Categorical: The participant is asked to rank items within categories: HIGH, MEDIUM, and LOW. Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.\n\n```json {   \"id\": \"ranking-sublist\",   \"type\": \"ranking-sublist\",   \"prompt\": \"Rank your top 2 favorite fruits from the list below\",   \"location\": \"belowStimulus\",   \"options\": [\"Apple\", \"Banana\", \"Orange\", \"Strawberry\", \"Grapes\"],   \"default\": {\"Orange\": \"0\", \"Apple\": \"1\"},   \"numItems\": 2 }, {   \"id\": \"ranking-categorical\",   \"type\": \"ranking-categorical\",   \"prompt\": \"Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.\",   \"location\": \"belowStimulus\",   \"options\": [\"Drawing\", \"Singing\", \"Hiking\", \"Dancing\", \"Photography\"],   \"default\": {\"Drawing\": \"HIGH\", \"Hiking\": \"MEDIUM\", \"Singing\": \"LOW\"} }, {   \"id\": \"ranking-pairwise\",   \"type\": \"ranking-pairwise\",   \"prompt\": \"Which meal would you prefer\",   \"location\": \"belowStimulus\",   \"options\": [\"Pizza\", \"Sushi\", \"Burger\", \"Pasta\", \"Salad\", \"Tacos\"],   \"default\": {\"Pizza\": \"pair-0-high\", \"Sushi\": \"pair-0-low\"} } ```",
       "properties": {
+        "default": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `\"0\"`), category labels for categorical (`\"HIGH\"`, `\"MEDIUM\"`, `\"LOW\"`), and pairwise slots (`\"pair-<n>-high\"` / `\"pair-<n>-low\"`).",
+          "type": "object"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -2165,7 +2656,7 @@
           "type": "array"
         },
         "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "prompt": {
@@ -2204,7 +2695,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -2222,10 +2713,14 @@
     },
     "ReactComponent": {
       "additionalProperties": false,
-      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts { parameters: T; setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\nparameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config ```js { type: 'react-component'; path: 'my_study/CoolComponent.tsx'; parameters: {  name: 'Zach';  age: 26; } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) { // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v2.3.1/src/public/demo-click-accuracy-test/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.3.1/src/public/example-brush-interactions/assets)",
+      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts {   parameters: T;   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\n`parameters` is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config: ```json {   \"type\": \"react-component\",   \"path\": \"my_study/CoolComponent.tsx\",   \"parameters\": {     \"name\": \"Zach\",     \"age\": 26   } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this:\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) {   // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.1/src/public/demo-react-trrack/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.4.1/src/public/example-brush-interactions/assets)",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -2306,7 +2801,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -2378,8 +2873,12 @@
     },
     "ReactiveResponse": {
       "additionalProperties": false,
-      "description": "The ReactiveResponse interface is used to define the properties of a reactive response. ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list.\n\n```js { \"id\": \"reactiveResponse\", \"prompt\": \"Answer clicked in the stimulus\", \"location\": \"aboveStimulus\", \"type\": \"reactive\" } ```",
+      "description": "The ReactiveResponse interface is used to define the properties of a reactive response. ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list. ```json {   \"id\": \"reactiveResponse\",   \"prompt\": \"Answer clicked in the stimulus\",   \"location\": \"aboveStimulus\",   \"type\": \"reactive\" } ```",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -2397,7 +2896,7 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "prompt": {
@@ -2432,7 +2931,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -2449,7 +2948,7 @@
     },
     "RepeatedComponentBlockCondition": {
       "additionalProperties": false,
-      "description": "The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](../ComponentBlockCondition), but it only checks a specific repeated component.\n\nHere's an example of how to use the RepeatedComponentBlockCondition:\n\n```js { ... \"skip\": [ {   \"name\": \"attentionCheck\",   \"check\": \"repeatedComponent\",   \"condition\": \"numIncorrect\",   \"value\": 2,   \"to\": \"end\" } ] ... } ```\n\nIn this example, when the number of incorrect responses to the repeated component with the name \"attentionCheck\" is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.",
+      "description": "The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](../ComponentBlockCondition), but it only checks a specific repeated component.\n\nHere's an example of how to use the RepeatedComponentBlockCondition:\n\n```json {  ...  \"skip\": [    {      \"name\": \"attentionCheck\",      \"check\": \"repeatedComponent\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of incorrect responses to the repeated component with the name \"attentionCheck\" is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.",
       "properties": {
         "check": {
           "const": "repeatedComponent",
@@ -2519,6 +3018,9 @@
           "$ref": "#/definitions/ReactiveResponse"
         },
         {
+          "$ref": "#/definitions/CustomResponse"
+        },
+        {
           "$ref": "#/definitions/MatrixResponse"
         },
         {
@@ -2526,13 +3028,24 @@
         },
         {
           "$ref": "#/definitions/TextOnlyResponse"
+        },
+        {
+          "$ref": "#/definitions/DividerResponse"
         }
       ]
     },
     "ShortTextResponse": {
       "additionalProperties": false,
-      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.\n\n```js { \"id\": \"q-short-text\", \"prompt\": \"Short text example\", \"location\": \"aboveStimulus\", \"type\": \"shortText\", \"placeholder\": \"Enter your answer here\" } ```",
+      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"Jane Doe\",   \"placeholder\": \"Enter your answer here\" } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response. Specify a string such as `\"Jane Doe\"`.",
+          "type": "string"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -2550,7 +3063,7 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "placeholder": {
@@ -2589,7 +3102,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -2626,8 +3139,16 @@
     },
     "SliderResponse": {
       "additionalProperties": false,
-      "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.\n\nExample: ```js { \"id\": \"q-slider\", \"prompt\": \"How are you feeling?\", \"location\": \"aboveStimulus\", \"type\": \"slider\", \"options\": [  {    \"label\": \"Bad\",    \"value\": 0  },  {    \"label\": \"OK\",    \"value\": 50  },  {    \"label\": \"Good\",    \"value\": 100  } ] } ```",
+      "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100. ```json {   \"id\": \"q-slider\",   \"prompt\": \"How are you feeling?\",   \"location\": \"aboveStimulus\",   \"type\": \"slider\",   \"default\": 50,   \"options\": [     {       \"label\": \"Bad\",       \"value\": 0     },     {       \"label\": \"OK\",       \"value\": 50     },     {       \"label\": \"Good\",       \"value\": 100     }   ] } ```",
       "properties": {
+        "default": {
+          "description": "The default value of the response. Specify a numeric value that falls within the slider range.",
+          "type": "number"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -2652,7 +3173,7 @@
           "type": "array"
         },
         "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "prompt": {
@@ -2683,7 +3204,7 @@
           "type": "boolean"
         },
         "spacing": {
-          "description": "The spacing between the ticks. If not provided, the spacing is calculated as the range of the slider divided by power of 10.",
+          "description": "The spacing between the ticks. If not provided, the spacing is the largest power of 10 smaller than the slider range.",
           "type": "number"
         },
         "startingValue": {
@@ -2715,7 +3236,7 @@
           "type": "boolean"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -2733,20 +3254,23 @@
     },
     "StringOption": {
       "additionalProperties": false,
-      "description": "The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
+      "description": "The StringOption interface is used to define the options for a dropdown, radio, buttons, checkbox, matrix, and ranking response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
       "properties": {
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown.",
+          "type": "string"
+        },
         "label": {
           "description": "The label displayed to participants. Markdown is supported.",
           "type": "string"
         },
         "value": {
-          "description": "The value stored in the participant's data.",
+          "description": "The value stored in the participant's data. Defaults to label.",
           "type": "string"
         }
       },
       "required": [
-        "label",
-        "value"
+        "label"
       ],
       "type": "object"
     },
@@ -2908,8 +3432,12 @@
     },
     "TextOnlyResponse": {
       "additionalProperties": false,
-      "description": "The TextOnlyResponse interface is used to define the properties of a text only response. TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information. It does not accept any input from the user.\n\nExample: ```js {   \"id\": \"textOnlyResponse\",   \"type\": \"textOnly\",   \"prompt\": \"This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.\",   \"location\": \"belowStimulus\",   \"restartEnumeration\": true } ```\n\nIn this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.",
+      "description": "The TextOnlyResponse interface is used to define the properties of a text only response. TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information. It does not accept any input from the user. ```json {   \"id\": \"textOnlyResponse\",   \"type\": \"textOnly\",   \"prompt\": \"This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.\",   \"location\": \"belowStimulus\",   \"restartEnumeration\": true } ```\n\nIn this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.",
       "properties": {
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
         "hidden": {
           "not": {}
         },
@@ -2961,7 +3489,7 @@
           "type": "string"
         },
         "withDivider": {
-          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or uiConfig.",
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
@@ -2987,10 +3515,14 @@
     },
     "VegaComponentConfig": {
       "additionalProperties": false,
-      "description": "The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component by adding Vega/Vega-Lite specs within the reVISit config itself.\n\nTo do this, would use the following snippet: ```js { \"type\": \"vega\", \"config\": { ... vega specs here ...}, }\n\nIIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section: ```js { \"signals\": [  {    \"name\": \"revisitAnswer\",    \"value\": {},    \"on\": [      {        \"events\": \"rect:click\",        \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"      }    ]  } ] } In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. ```",
+      "description": "The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component by adding Vega/Vega-Lite specs within the reVISit config itself.\n\nTo do this, you would use the following snippet: ```json {   \"type\": \"vega\",   \"config\": { ... vega specs here ...} } ```\n\nIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section: ```json {   \"signals\": [     {       \"name\": \"revisitAnswer\",       \"value\": {},       \"on\": [         {           \"events\": \"rect:click\",           \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"         }       ]     }   ] } ``` In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response.",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "config": {
@@ -3066,7 +3598,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3142,10 +3674,14 @@
     },
     "VegaComponentPath": {
       "additionalProperties": false,
-      "description": "The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.\n\nFor example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet: ```js { \"type\": \"vega\", \"path\": \"<study-name>/assets/vega.spec.json\", } ```\n\nIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section: ```js { \"signals\": [  {    \"name\": \"revisitAnswer\",    \"value\": {},    \"on\": [      {        \"events\": \"rect:click\",        \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"      }    ]  } ] } In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response. ```",
+      "description": "The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.\n\nFor example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet: ```json {   \"type\": \"vega\",   \"path\": \"<study-name>/assets/vega.spec.json\", } ```\n\nIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section: ```json {   \"signals\": [     {       \"name\": \"revisitAnswer\",       \"value\": {},       \"on\": [         {           \"events\": \"rect:click\",           \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"         }       ]     }   ] } ```  In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3221,7 +3757,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3297,10 +3833,14 @@
     },
     "VideoComponent": {
       "additionalProperties": false,
-      "description": "The VideoComponent interface is used to define the properties of a video component. This component is used to render a video with optional controls.\n\nMost often, video components will be used for trainings, and will have a `forceCompletion` field set to true. This will prevent the participant from moving on until the video has finished playing.\n\nAs such, the `forceCompletion` field is set to true by default, and the `withTimeline` field is set to false by default.\n\nFor example, to render a training video with a path of `<study-name>/assets/video.mp4`, you would use the following snippet: ```js {   \"type\": \"video\",   \"path\": \"<study-name>/assets/video.mp4\", } ```",
+      "description": "The VideoComponent interface is used to define the properties of a video component. This component is used to render a video with optional controls.\n\nMost often, video components will be used for trainings, and will have a `forceCompletion` field set to true. This will prevent the participant from moving on until the video has finished playing.\n\nAs such, the `forceCompletion` field is set to true by default, and the `withTimeline` field is set to false by default.\n\nFor example, to render a training video with a path of `<study-name>/assets/video.mp4`, you would use the following snippet: ```json {   \"type\": \"video\",   \"path\": \"<study-name>/assets/video.mp4\", } ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3380,7 +3920,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {
@@ -3456,10 +3996,14 @@
     },
     "WebsiteComponent": {
       "additionalProperties": false,
-      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/assets/website.html\", } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/website.html\", \"parameters\": {  \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3] }, \"response\": [  {    \"id\": \"barChart\",    \"prompt\": \"Your selected answer:\",    \"location\": \"belowStimulus\",    \"type\": \"reactive\"  } ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {  const barData = data['barData'];  ... });\n\n// Call out that 'barChart' needs to match ID in 'response' object Revisit.postAnswers({ barChart: userAnswer }); </script> ```\n\n If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```js const trrack = initializeTrrack({ initialState, registry });\n\n... Revisit.postProvenance(trrack.graph.backend); ```",
+      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder. ```json {   \"type\": \"website\",   \"path\": \"<study-name>/assets/website.html\" } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```json {   \"type\": \"website\",   \"path\": \"<study-name>/website.html\",   \"parameters\": {     \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]   },   \"response\": [     {       \"id\": \"barChart\",       \"prompt\": \"Your selected answer:\",       \"location\": \"belowStimulus\",       \"type\": \"reactive\"     }   ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {     const barData = data['barData'];     ...   });\n\n  // Call out that 'barChart' needs to match ID in 'response' object   Revisit.postAnswers({ barChart: userAnswer });   </script> ```\n\nIf the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenance` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```ts const trrack = initializeTrrack({     initialState,     registry   });\n\n  ...   Revisit.postProvenance(trrack.graph.backend); ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "clickToRecord": {
+          "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
         },
         "correctAnswer": {
@@ -3540,7 +4084,7 @@
           "type": "boolean"
         },
         "recordScreen": {
-          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.co.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
         "response": {

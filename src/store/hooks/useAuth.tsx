@@ -6,7 +6,7 @@ import {
 import { LoadingOverlay } from '@mantine/core';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StoredUser, UserWrapped } from '../../storage/engines/types';
-import { isCloudStorageEngine } from '../../storage/engines/utils';
+import { isCloudStorageEngine } from '../../storage/engines/utils/storageEngineHelpers';
 import { SupabaseStorageEngine } from '../../storage/engines/SupabaseStorageEngine';
 
 // Defines default AuthContextValue
@@ -138,11 +138,12 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     // Determine authentication listener based on storageEngine and authEnabled variable
     const determineAuthentication = async () => {
       if (storageEngine && isCloudStorageEngine(storageEngine)) {
-        const authInfo = await storageEngine?.getUserManagementData('authentication');
+        const authInfo = await storageEngine.getUserManagementData('authentication');
         if (authInfo?.isEnabled) {
-          storageEngine?.unsubscribe(handleAuthStateChanged);
+          storageEngine.unsubscribe(handleAuthStateChanged);
+        } else {
+          setUser(nonAuthUser);
         }
-        setUser(nonAuthUser);
       } else if (storageEngine) {
         setUser(nonAuthUser);
       }

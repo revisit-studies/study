@@ -3,11 +3,12 @@ import { useSearchParams } from 'react-router';
 import { useMemo } from 'react';
 import { GetInputPropsReturnType } from '@mantine/form/lib/types';
 import {
-  IndividualComponent, MatrixResponse, Response, SliderResponse, StoredAnswer,
+  CustomResponse, IndividualComponent, JsonValue, MatrixResponse, Response, SliderResponse, StoredAnswer,
 } from '../../parser/types';
 import { CheckBoxInput } from './CheckBoxInput';
+import { CustomResponseInput } from './CustomResponseInput';
 import { DropdownInput } from './DropdownInput';
-import { Reactive } from './ReactiveInput';
+import { ReactiveInput } from './ReactiveInput';
 import { LikertInput } from './LikertInput';
 import { NumericInput } from './NumericInput';
 import { RadioInput } from './RadioInput';
@@ -25,6 +26,9 @@ import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
+import { parseStringOptionValue } from '../../utils/stringOptions';
+import { getDefaultFieldValue, usesStandaloneDontKnowField } from './utils';
+import { CustomResponseField } from '../../store/types';
 
 export function ResponseSwitcher({
   response,
@@ -35,6 +39,8 @@ export function ResponseSwitcher({
   dontKnowCheckbox,
   otherInput,
   disabled,
+  field,
+  customError,
 }: {
   response: Response;
   form: GetInputPropsReturnType;
@@ -44,6 +50,8 @@ export function ResponseSwitcher({
   dontKnowCheckbox?: GetInputPropsReturnType;
   otherInput?: GetInputPropsReturnType;
   disabled?: boolean;
+  field?: CustomResponseField;
+  customError?: string | null;
 }) {
   const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
@@ -55,12 +63,16 @@ export function ResponseSwitcher({
   const nextConfig = useMemo(() => (nextComponent ? studyConfig.components[nextComponent] : undefined), [nextComponent, studyConfig]);
 
   const completed = useStoreSelector((state) => state.completed);
+  const usesStandaloneDontKnow = usesStandaloneDontKnowField(response);
 
   // Don't update if we're in analysis mode
   const ans = useMemo(() => (isAnalysis || (Object.keys(storedAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed ? { value: storedAnswer![response.id] } : form) || { value: undefined }, [isAnalysis, storedAnswer, response.id, form, nextConfig?.previousButton, completed]);
-  const dontKnowValue = (Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined };
+  const dontKnowValue = usesStandaloneDontKnow
+    ? ((Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined })
+    : { checked: undefined };
+  const dontKnowChecked = !!dontKnowValue.checked;
   const otherValue = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
-  const inputDisabled = Object.keys(storedAnswer || {}).length > 0 || disabled || completed;
+  const inputDisabled = !!(Object.keys(storedAnswer || {}).length > 0 || disabled || completed);
 
   const [searchParams] = useSearchParams();
 
@@ -102,12 +114,17 @@ export function ResponseSwitcher({
       const responseParam = searchParams.get(response.paramCapture);
       return inputDisabled || !!responseParam;
     }
-    return inputDisabled || disabled;
-  }, [completed, currentStep, flatSequence, response.paramCapture, inputDisabled, disabled, sequence.components, nextConfig?.previousButton, searchParams]);
+    return inputDisabled;
+  }, [completed, currentStep, flatSequence, response.paramCapture, inputDisabled, sequence.components, nextConfig?.previousButton, searchParams]);
 
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {
       return searchParams.get(response.paramCapture) || '';
+    }
+
+    const defaultFieldValue = getDefaultFieldValue(response);
+    if (defaultFieldValue !== null) {
+      return defaultFieldValue;
     }
 
     if (response.type === 'reactive' || response.type === 'checkbox') {
@@ -115,11 +132,15 @@ export function ResponseSwitcher({
     }
 
     if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
-      return Object.fromEntries(response.questionOptions.map((entry) => [entry, '']));
+      return Object.fromEntries(response.questionOptions.map((entry) => [parseStringOptionValue(entry), '']));
     }
 
     if (response.type === 'slider' && response.startingValue) {
       return response.startingValue.toString();
+    }
+
+    if (response.type === 'custom') {
+      return null;
     }
 
     return '';
@@ -128,13 +149,14 @@ export function ResponseSwitcher({
 
   const responseStyle = response.style || {};
   const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
+  const customResponseValue = useMemo<JsonValue | null>(() => (ans.value ?? null) as JsonValue | null, [ans.value]);
 
   return (
     <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseStyle}>
       {response.type === 'numerical' && (
       <NumericInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: number }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -143,7 +165,7 @@ export function ResponseSwitcher({
       {response.type === 'shortText' && (
       <StringInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -152,7 +174,7 @@ export function ResponseSwitcher({
       {response.type === 'longText' && (
       <TextAreaInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -161,7 +183,7 @@ export function ResponseSwitcher({
       {response.type === 'likert' && (
       <LikertInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -170,7 +192,7 @@ export function ResponseSwitcher({
       {response.type === 'dropdown' && (
       <DropdownInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -179,7 +201,7 @@ export function ResponseSwitcher({
       {response.type === 'slider' && (
       <SliderInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: number }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -188,7 +210,7 @@ export function ResponseSwitcher({
       {response.type === 'radio' && (
       <RadioInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -198,24 +220,25 @@ export function ResponseSwitcher({
       {response.type === 'checkbox' && (
       <CheckBoxInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string[] }}
         index={index}
         enumerateQuestions={enumerateQuestions}
         otherValue={otherValue}
+        dontKnowCheckbox={dontKnowCheckbox as { checked?: boolean; onChange?: (value: boolean) => void }}
       />
       )}
       {(response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') && (
       <RankingInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: Record<string, string> }}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
       )}
       {response.type === 'reactive' && (
-      <Reactive
+      <ReactiveInput
         response={response}
         answer={ans as { value: string[] }}
         index={index}
@@ -224,7 +247,7 @@ export function ResponseSwitcher({
       )}
       {(response.type === 'matrix-radio' || response.type === 'matrix-checkbox') && (
       <MatrixInput
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled}
         response={response}
         answer={ans as { value: Record<string, string> }}
         index={index}
@@ -234,16 +257,27 @@ export function ResponseSwitcher({
       {response.type === 'buttons' && (
       <ButtonsInput
         response={response}
-        disabled={isDisabled || dontKnowCheckbox?.checked}
+        disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
       )}
+      {response.type === 'custom' && field && (
+      <CustomResponseInput
+        response={response as CustomResponse}
+        disabled={isDisabled || dontKnowChecked}
+        value={customResponseValue}
+        error={customError || undefined}
+        index={index}
+        enumerateQuestions={enumerateQuestions}
+        field={field}
+      />
+      )}
       {response.type === 'textOnly' && (
       <TextOnlyInput response={response} />
       )}
-      {response.withDontKnow && (
+      {usesStandaloneDontKnow && (
       <Checkbox
         mt="xs"
         disabled={isDisabled}
@@ -254,7 +288,7 @@ export function ResponseSwitcher({
         onChange={(event) => { dontKnowCheckbox?.onChange(event.currentTarget.checked); form.onChange(fieldInitialValue); }}
       />
       )}
-      {responseDividers && <Divider mt="xl" mb="xs" />}
+      {(response.type === 'divider' || responseDividers) && <Divider mt="xl" mb="xs" />}
     </Box>
   );
 }

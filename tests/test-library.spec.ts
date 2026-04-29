@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
+import {
+  nextClick,
+  resetClientStudyState,
+} from './utils';
 
 test('parser errors are shown correctly', async ({ page }) => {
+  await resetClientStudyState(page);
   await page.goto('/');
 
   await page.getByRole('tab', { name: 'Tests' }).click();
@@ -9,46 +14,46 @@ test('parser errors are shown correctly', async ({ page }) => {
     .getByText('Go to Study')
     .click();
 
-  await page.waitForSelector('text=test md file', { state: 'visible', timeout: 5000 });
-  const testText = await page.getByText('test md file');
-  expect(testText).toBeVisible({ timeout: 5000 });
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.waitForSelector('text=test md file', { state: 'visible', timeout: 15000 });
+  const testText = page.getByText('test md file');
+  await expect(testText).toBeVisible({ timeout: 15000 });
+  await nextClick(page);
   await page.waitForTimeout(100);
 
-  expect(await page.getByText('test react file')).toBeVisible();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('test react file')).toBeVisible();
+  await nextClick(page);
   await page.waitForTimeout(100);
 
-  expect(await page.getByText('test md file')).toBeVisible();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('test md file')).toBeVisible();
+  await nextClick(page);
   await page.waitForTimeout(100);
 
-  expect(await page.getByText('test md file')).toBeVisible();
-  expect(await page.getByText('What did you think of the')).toBeVisible();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('test md file')).toBeVisible();
+  await expect(page.getByText('What did you think of the')).toBeVisible();
+  await nextClick(page);
   await page.waitForTimeout(100);
 
-  expect(await page.getByText('test md file')).toBeVisible();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('test md file')).toBeVisible();
+  await nextClick(page);
   await page.waitForTimeout(100);
 
-  expect(await page.getByText('test react file')).toBeVisible();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('test react file')).toBeVisible();
+  await nextClick(page);
   await page.waitForTimeout(100);
 
-  expect(await page.getByText('test md file')).toBeVisible();
-  expect(await page.getByText('What did you think of the')).toBeVisible();
+  await expect(page.getByText('test md file')).toBeVisible();
+  await expect(page.getByText('What did you think of the')).toBeVisible();
   await page.getByLabel('What did you think of the').fill('123');
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
   await page.waitForTimeout(100);
 
-  expect(await page.getByText('test md file')).toBeVisible();
-  expect(await page.getByText('What did you think of the')).toBeVisible();
+  await expect(page.getByText('test md file')).toBeVisible();
+  await expect(page.getByText('What did you think of the')).toBeVisible();
   await page.getByLabel('What did you think of the').fill('123');
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
   await page.waitForTimeout(100);
 
-  expect(await page.getByText('test md file')).toBeVisible();
-  expect(await page.getByText('What did you think of the')).toBeVisible();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('test md file')).toBeVisible();
+  await expect(page.getByText('What did you think of the')).toBeVisible();
+  await nextClick(page);
 });

@@ -287,7 +287,7 @@ var Model = /** @class */ (function () {
                     provenance.importProvenanceGraph(JSON.stringify(graph));
                     provenance.goToNode(provenance.graph().nodes[provenance.graph().root].children[0]);
                     window.onmessage = function (e) {
-                        console.log('message recieved!', e.data);
+                        console.log('message received!', e.data);
                         console.log(provenance.graph());
                         if (provenance.graph().nodes[e.data]) {
                             provenance.goToNode(e.data);

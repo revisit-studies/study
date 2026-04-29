@@ -8,7 +8,7 @@ import { useAuth } from '../../store/hooks/useAuth';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StoredUser } from '../../storage/engines/types';
 import { signIn } from '../../Login';
-import { isCloudStorageEngine } from '../../storage/engines/utils';
+import { isCloudStorageEngine } from '../../storage/engines/utils/storageEngineHelpers';
 import { SupabaseStorageEngine } from '../../storage/engines/SupabaseStorageEngine';
 
 export function GlobalSettings() {
@@ -165,7 +165,7 @@ export function GlobalSettings() {
                   (storedUser: string) => (
                     <Flex key={storedUser} justify="space-between" mb={10}>
                       <Text>{storedUser}</Text>
-                      {storedUser === user.user?.email ? <Text color="blue" size="xs">You</Text>
+                      {storedUser === user.user?.email ? <Text c="blue" size="xs">You</Text>
                         : <ActionIcon variant="subtle" onClick={() => handleRemoveUser(storedUser)}><IconTrashX color="red" /></ActionIcon>}
                     </Flex>
                   ),
@@ -273,7 +273,7 @@ export function GlobalSettings() {
         <Text mt={40}>
           An error has occurred when trying to enable authentication. Please consult the
           {' '}
-          <a href="https://revisit.dev/docs/data-and-deployment/authentication-authorization/adding-removing-ui/" target="_blank" rel="noreferrer">documentation</a>
+          <a href="https://revisit.dev/docs/data-and-deployment/firebase/enabling-authentication/" target="_blank" rel="noreferrer">documentation</a>
           {' '}
           for more information.
         </Text>

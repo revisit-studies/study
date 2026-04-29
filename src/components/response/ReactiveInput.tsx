@@ -2,7 +2,7 @@ import { Input, List } from '@mantine/core';
 import { ReactiveResponse } from '../../parser/types';
 import { InputLabel } from './InputLabel';
 
-export function Reactive({
+export function ReactiveInput({
   response,
   answer,
   index,
@@ -28,7 +28,11 @@ export function Reactive({
     >
       {answer.value && (
       <List>
-        {Array.isArray(answer.value) ? (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>) : <List.Item>{answer.value}</List.Item>}
+        {Array.isArray(answer.value)
+          ? (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>)
+          : typeof answer.value === 'object'
+            ? Object.entries(answer.value).map(([key, val]) => <List.Item key={key}>{`${key}: ${typeof val === 'object' ? JSON.stringify(val) : val}`}</List.Item>)
+            : <List.Item>{answer.value}</List.Item>}
       </List>
       )}
     </Input.Wrapper>

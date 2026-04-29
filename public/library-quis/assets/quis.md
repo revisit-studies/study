@@ -1,9 +1,9 @@
 
-# quis
+# QUIS: Questionnaire for User Interface Satisfaction
 
 
 
-This is an example study of the library `quis`.
+This is a demo of the library `quis`.
 
 The Questionnaire for User Interaction Satisfaction (QUIS) is a measurement tool designed to assess a computer user's subjective satisfaction with the human-computer interface. The QUIS contains measures of overall system satisfaction and specific interface factors such as screen visibility, terminology and system information, learning factors, and system capabilities. This library includes six components, one for each individual dimension, as well as a sequence containing all dimensions.
 

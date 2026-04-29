@@ -5,6 +5,7 @@ import {
 import React, {
   useEffect, useMemo, useState, useCallback,
 } from 'react';
+import isEqual from 'lodash.isequal';
 import { useNavigate } from 'react-router';
 import { Registry, initializeTrrack } from '@trrack/core';
 import {
@@ -18,14 +19,18 @@ import {
 } from '../../store/store';
 
 import { NextButton } from '../NextButton';
-import { generateInitFields, useAnswerField } from './utils';
+import {
+  generateCustomResponseErrorMessage, generateInitFields, mergeReactiveAnswers, useAnswerField, usesStandaloneDontKnowField,
+} from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
-import { FormElementProvenance, StoredAnswer, ValidationStatus } from '../../store/types';
-import { useStorageEngine } from '../../storage/storageEngineHooks';
+import {
+  CustomResponseField, FormElementProvenance, StoredAnswer, ValidationStatus,
+} from '../../store/types';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
+import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
 
 type Props = {
   status?: StoredAnswer;
@@ -50,7 +55,6 @@ export function ResponseBlock({
   status,
   style,
 }: Props) {
-  const { storageEngine } = useStorageEngine();
   const storeDispatch = useStoreDispatch();
   const {
     updateResponseBlockValidation, saveIncorrectAnswer,
@@ -75,7 +79,7 @@ export function ResponseBlock({
   const responses = useMemo(() => allResponses.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')), [allResponses, location]);
 
   const responsesWithDefaults = useMemo(() => responses.map((response) => {
-    if (response.type !== 'textOnly') {
+    if (response.type !== 'textOnly' && response.type !== 'divider') {
       return {
         ...response,
         required: response.required === undefined ? true : response.required,
@@ -85,7 +89,7 @@ export function ResponseBlock({
   }), [responses]);
 
   const allResponsesWithDefaults = useMemo(() => allResponses.map((response) => {
-    if (response.type !== 'textOnly') {
+    if (response.type !== 'textOnly' && response.type !== 'divider') {
       return {
         ...response,
         required: response.required === undefined ? true : response.required,
@@ -128,18 +132,59 @@ export function ResponseBlock({
   const studyConfig = useStudyConfig();
 
   const provideFeedback = useMemo(() => config?.provideFeedback ?? studyConfig.uiConfig.provideFeedback, [config, studyConfig]);
-  const hasCorrectAnswerFeedback = provideFeedback && ((config?.correctAnswer?.length || 0) > 0);
+  const hasCorrectAnswerFeedback = !!provideFeedback && ((config?.correctAnswer?.length || 0) > 0);
   const allowFailedTraining = useMemo(() => config?.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [config, studyConfig]);
   const [attemptsUsed, setAttemptsUsed] = useState(0);
   const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
+  const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
   const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
   const identifier = useCurrentIdentifier();
 
-  const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
+  const customResponses = useMemo(
+    () => responsesWithDefaults
+      .filter((response): response is Extract<(typeof responsesWithDefaults)[number], { type: 'custom' }> => response.type === 'custom'),
+    [responsesWithDefaults],
+  );
+
+  const customResponseModules = useMemo(() => Object.fromEntries(
+    customResponses.map((response) => [response.id, {
+      response,
+      module: getCustomResponseModule(response),
+    }]),
+  ) as Record<string, {
+    response: (typeof customResponses)[number];
+    module: ReturnType<typeof getCustomResponseModule>;
+  }>, [customResponses]);
+
+  const customResponseValidators = useMemo(
+    () => Object.fromEntries(
+      Object.entries(customResponseModules)
+        .filter(([, customResponseModule]) => !!customResponseModule.module?.default)
+        .map(([responseId, customResponseModule]) => [responseId, customResponseModule.module?.validate]),
+    ),
+    [customResponseModules],
+  );
+
+  const customResponseLoadErrors = useMemo(
+    () => Object.fromEntries(
+      Object.entries(customResponseModules)
+        .filter(([, customResponseModule]) => !customResponseModule.module?.default)
+        .map(([responseId, customResponseModule]) => [responseId, getCustomResponseModuleLoadError(customResponseModule.response)]),
+    ),
+    [customResponseModules],
+  );
+
+  const answerValidator = useAnswerField(
+    responsesWithDefaults,
+    currentStep,
+    storedAnswer || {},
+    customResponseValidators,
+    customResponseLoadErrors,
+  );
   useEffect(() => {
     if (storedAnswer) {
       answerValidator.setInitialValues(generateInitFields(responses, storedAnswer));
@@ -156,10 +201,11 @@ export function ResponseBlock({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [responses, storedAnswer]);
   useEffect(() => {
-    const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
-    if (reactiveAnswers && ReactiveResponse) {
-      const answerId = ReactiveResponse.id;
-      answerValidator.setValues({ ...answerValidator.values, [answerId]: reactiveAnswers[answerId] as string[] });
+    if (reactiveAnswers) {
+      const mergedValues = mergeReactiveAnswers(responsesWithDefaults, answerValidator.values, reactiveAnswers);
+      if (!isEqual(mergedValues, answerValidator.values)) {
+        answerValidator.setValues(mergedValues);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reactiveAnswers]);
@@ -194,19 +240,19 @@ export function ResponseBlock({
   }, [matrixAnswers, rankingAnswers]);
 
   useEffect(() => {
-    trrack.apply('update', actions.updateFormAction(structuredClone(answerValidator.values)));
+    trrack.apply('Update form field', actions.updateFormAction(structuredClone(answerValidator.values)));
 
     storeDispatch(
       updateResponseBlockValidation({
         location,
         identifier,
-        status: answerValidator.isValid(),
+        status: answerValidator.isValid() || bypassValidationForFailedTraining,
         values: structuredClone(answerValidator.values),
         provenanceGraph: trrack.graph.backend,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values, identifier, location, storeDispatch, updateResponseBlockValidation]);
+  }, [answerValidator.values, bypassValidationForFailedTraining, identifier, location, storeDispatch, updateResponseBlockValidation]);
   const [alertConfig, setAlertConfig] = useState(Object.fromEntries(allResponsesWithDefaults.map((response) => ([response.id, {
     visible: false,
     title: 'Correct Answer',
@@ -237,10 +283,16 @@ export function ResponseBlock({
     }, {}) : {}) as StoredAnswer['answer'];
 
     const correctAnswers = Object.fromEntries(allResponsesWithDefaults.map((response) => {
-      const configCorrectAnswer = config?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+      const configCorrectAnswer = config?.correctAnswer?.find((answer) => answer.id === response.id);
       const suppliedAnswer = allAnswers[response.id];
 
-      return [response.id, responseAnswerIsCorrect(suppliedAnswer, configCorrectAnswer)];
+      return [response.id, responseAnswerIsCorrect(
+        suppliedAnswer,
+        configCorrectAnswer?.answer,
+        configCorrectAnswer?.acceptableLow,
+        configCorrectAnswer?.acceptableHigh,
+        { ignoreArrayOrder: response.type === 'checkbox' || response.type === 'dropdown' },
+      )];
     }));
 
     if (hasCorrectAnswerFeedback) {
@@ -256,19 +308,10 @@ export function ResponseBlock({
             message = `You didn't answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;
 
             // If the user has failed the training, wait 5 seconds and redirect to a fail page
-            if (!allowFailedTraining && storageEngine) {
-              storageEngine.rejectCurrentParticipant('Failed training')
-                .then(() => {
-                  setTimeout(() => {
-                    navigate('./../__trainingFailed');
-                  }, 5000);
-                })
-                .catch(() => {
-                  console.error('Failed to reject participant who failed training');
-                  setTimeout(() => {
-                    navigate('./../__trainingFailed');
-                  }, 5000);
-                });
+            if (!allowFailedTraining) {
+              setTimeout(() => {
+                navigate(`./../__trainingFailed${window.location.search}`);
+              }, 5000);
             }
           } else if (trainingAttempts - newAttemptsUsed === 1) {
             message = 'Please try again. You have 1 attempt left.';
@@ -299,7 +342,7 @@ export function ResponseBlock({
         ),
       );
     }
-  }, [attemptsUsed, allResponsesWithDefaults, config, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, navigate, identifier, storeDispatch, alertConfig, saveIncorrectAnswer, trialValidation]);
+  }, [attemptsUsed, allResponsesWithDefaults, config, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, navigate, identifier, storeDispatch, alertConfig, saveIncorrectAnswer, trialValidation]);
 
   const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 
@@ -327,7 +370,9 @@ export function ResponseBlock({
       <Box className={`responseBlock responseBlock-${location}`} style={style}>
         {allResponsesWithDefaults.map((response) => {
           const configCorrectAnswer = config.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
-          const correctAnswer = Array.isArray(configCorrectAnswer) && configCorrectAnswer.length > 0 ? JSON.stringify(configCorrectAnswer) : configCorrectAnswer;
+          const correctAnswer = configCorrectAnswer === undefined
+            ? undefined
+            : (typeof configCorrectAnswer === 'object' ? JSON.stringify(configCorrectAnswer) : `${configCorrectAnswer}`);
           // Check if this response is in the current location
           const isInCurrentLocation = responses.some((r) => r.id === response.id);
 
@@ -348,16 +393,32 @@ export function ResponseBlock({
                     <ResponseSwitcher
                       storedAnswer={storedAnswer}
                       form={{
-                        ...answerValidator.getInputProps(response.id, {
-                          type: response.type === 'checkbox' ? 'checkbox' : 'input',
-                        }),
+                        ...answerValidator.getInputProps(response.id),
                       }}
-                      dontKnowCheckbox={{
-                        ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
-                      }}
+                      dontKnowCheckbox={usesStandaloneDontKnowField(response)
+                        ? {
+                          ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
+                        }
+                        : undefined}
                       otherInput={{
                         ...answerValidator.getInputProps(`${response.id}-other`),
                       }}
+                      field={response.type === 'custom'
+                        ? {
+                          getInputProps: () => answerValidator.getInputProps(response.id),
+                          setValue: (value) => answerValidator.setFieldValue(response.id, value),
+                          onBlur: () => answerValidator.getInputProps(response.id).onBlur?.(),
+                        } as CustomResponseField
+                        : undefined}
+                      customError={response.type === 'custom'
+                        ? generateCustomResponseErrorMessage(
+                          response,
+                          answerValidator.values[response.id],
+                          answerValidator.values,
+                          customResponseValidators[response.id],
+                          customResponseLoadErrors[response.id],
+                        )
+                        : undefined}
                       response={response}
                       index={index}
                       config={config}
@@ -390,7 +451,8 @@ export function ResponseBlock({
 
       {showBtnsInLocation && (
       <NextButton
-        disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
+        disabled={(hasCorrectAnswerFeedback && !enableNextButton)
+          || (!bypassValidationForFailedTraining && !answerValidator.isValid())}
         label={nextButtonText}
         config={config}
         location={location}

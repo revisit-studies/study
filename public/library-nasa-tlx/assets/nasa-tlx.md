@@ -1,9 +1,6 @@
+# NASA-TLX: NASA Task Load Index
 
-# nasa-tlx
-
-
-
-This is an example study of the library `nasa-tlx`.
+This is a demo of the library `nasa-tlx`.
 
 The NASA-TLX is a widely used subjective workload assessment tool. It consists of six subscales: Mental Demand, Physical Demand, Temporal Demand, Performance, Effort, and Frustration. The NASA-TLX is designed to assess the perceived workload of a task and is commonly used in human factors and ergonomics research. We provide a component of the NASA-TLX itself, and a sequence that includes a source of load evaluation. The source of load evaluation is based on the pairwise weighting procedure described in the NASA-TLX manual.
 

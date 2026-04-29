@@ -1,18 +1,17 @@
-import type { ComponentBlockWithOrderPath } from '../components/interface/StepsPanel';
 import { DynamicBlock, FactorBlock, StudyConfig } from '../parser/types';
 import { isDynamicBlock, isFactorBlock } from '../parser/utils';
 import { Sequence } from '../store/types';
 
 export function getSequenceFlatMap<T extends Sequence | StudyConfig['sequence']>(sequence: T): string[] {
-  return isDynamicBlock(sequence) ? [sequence.id] : sequence.components.flatMap((component) => (typeof component === 'string' ? component : getSequenceFlatMap(component)));
+  return isDynamicBlock(sequence) || isFactorBlock(sequence) ? [sequence.id] : sequence.components.flatMap((component) => (typeof component === 'string' ? component : getSequenceFlatMap(component)));
 }
 
 function findAllFuncBlocks(sequence: StudyConfig['sequence']): DynamicBlock[] {
-  return isDynamicBlock(sequence) ? [sequence] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
+  return isDynamicBlock(sequence) ? [sequence] : isFactorBlock(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
 }
 
 export function findAllFactorBlocks(sequence: StudyConfig['sequence']): FactorBlock[] {
-  return isFactorBlock(sequence) ? [sequence] : isDynamicBlock(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFactorBlocks(component)));
+  return isFactorBlock(sequence) ? [sequence] : isDynamicBlock(sequence) || isFactorBlock(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFactorBlocks(component)));
 }
 
 export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): (DynamicBlock | undefined) {
@@ -21,12 +20,12 @@ export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): 
 }
 
 export function getSequenceFlatMapWithInterruptions(sequence: StudyConfig['sequence']): string[] {
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return [];
   }
 
   return [
-    ...sequence.components.flatMap((component) => (typeof component === 'string' ? component : (isDynamicBlock(component) ? [] : getSequenceFlatMapWithInterruptions(component)))),
+    ...sequence.components.flatMap((component) => (typeof component === 'string' ? component : (isDynamicBlock(component) || isFactorBlock(component) ? [] : getSequenceFlatMapWithInterruptions(component)))),
     ...sequence.interruptions?.flatMap((interruption) => interruption.components) || [],
   ];
 }
@@ -100,14 +99,21 @@ export function findIndexOfBlock(sequence: Sequence, to: string): number {
   return toReturn.found ? toReturn.distance : -1;
 }
 
-export function addPathToComponentBlock(order: StudyConfig['sequence'] | ComponentBlockWithOrderPath | string, orderPath: string): ComponentBlockWithOrderPath | string {
+export function addPathToComponentBlock(order: StudyConfig['sequence'] | Sequence | string, orderPath: string): Sequence | string {
   if (typeof order === 'string') {
     return order;
   }
-  if (isDynamicBlock(order)) {
-    return { ...order, orderPath, components: [] };
+  if (isDynamicBlock(order) || isFactorBlock(order)) {
+    return {
+      ...order, orderPath, components: [], skip: [], interruptions: [],
+    };
   }
   return {
-    ...order, orderPath, order: order.order, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)),
+    ...order,
+    orderPath,
+    order: order.order,
+    components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)),
+    skip: order.skip || [],
+    interruptions: order.interruptions || [],
   };
 }

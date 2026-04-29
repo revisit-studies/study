@@ -1,10 +1,6 @@
-import {
-  useEffect, useMemo, useRef, useState,
-} from 'react';
+import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
-import {
-  Box, LoadingOverlay,
-} from '@mantine/core';
+import { Box } from '@mantine/core';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import {
   useStoreActions,
@@ -13,6 +9,7 @@ import {
 } from '../../store/store';
 import { useCurrentIdentifier } from '../../routes/utils';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { useReplayContext } from '../../store/hooks/useReplay';
 
 export function ScreenRecordingReplay() {
   const [searchParams] = useSearchParams();
@@ -21,14 +18,13 @@ export function ScreenRecordingReplay() {
     [searchParams],
   );
 
-  const [isReady, setIsReady] = useState(false);
+  const { videoRef, updateReplayRef, isPlaying } = useReplayContext();
 
-  const [isPlaying, setIsPlaying] = useState(false);
+  useEffect(() => {
+    updateReplayRef();
+  }, [updateReplayRef]);
 
-  const analysisIsPlaying = useStoreSelector((state) => state.analysisIsPlaying);
-  const provenanceJumpTime = useStoreSelector((state) => state.provenanceJumpTime);
-
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
 
   const { storageEngine } = useStorageEngine();
 
@@ -39,36 +35,6 @@ export function ScreenRecordingReplay() {
   const isAnalysis = useIsAnalysis();
 
   const identifier = useCurrentIdentifier();
-
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = (0 + provenanceJumpTime) / 1000;
-      if (analysisIsPlaying) {
-        videoRef.current.play();
-      } else {
-        videoRef.current.pause();
-      }
-    }
-  }, [analysisIsPlaying, provenanceJumpTime]);
-
-  // Add events for the video so that it plays between the stimulus start time and end time.
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video) {
-      video.currentTime = 0;
-      video.onpause = () => {
-        setIsPlaying(false);
-      };
-
-      video.onplay = () => {
-        setIsPlaying(true);
-      };
-
-      setTimeout(() => {
-        setIsReady(true);
-      }, 300);
-    }
-  }, [setAnalysisCanPlayScreenRecording, storeDispatch]);
 
   // Load and show the video
   useEffect(
@@ -91,6 +57,7 @@ export function ScreenRecordingReplay() {
               video.preload = 'metadata';
               if (url) {
                 videoRef.current.src = url;
+                updateReplayRef();
               }
             }
           } catch (error) {
@@ -106,6 +73,7 @@ export function ScreenRecordingReplay() {
 
       getVideoURL();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       isAnalysis,
       identifier,
@@ -119,7 +87,7 @@ export function ScreenRecordingReplay() {
 
   return (
     <Box pos="relative">
-      <LoadingOverlay visible={!isReady} zIndex={1000} overlayProps={{ blur: 5, bg: 'rgba(255, 255, 255, .98)' }} />
+      {analysisCanPlayScreenRecording && (
       <video
         ref={videoRef}
         width="100%"
@@ -129,13 +97,14 @@ export function ScreenRecordingReplay() {
           maxHeight: 'calc(100vh - 270px)',
           display: 'block',
           margin: '20px auto',
-          height: isReady ? 'auto' : 200,
+          height: 'auto',
           border: `5px solid ${isPlaying ? '#ccc' : 'black'}`,
         }}
       >
         <source type="video/mp4" />
         Your browser does not support the video tag.
       </video>
+      )}
     </Box>
   );
 }

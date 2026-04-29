@@ -7,17 +7,17 @@ import {
 import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { DownloadTidy, download } from './DownloadTidy';
-import { ParticipantData } from '../../storage/types';
+import { ParticipantDataWithStatus } from '../../storage/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { downloadParticipantsAudioZip, downloadParticipantsScreenRecordingZip } from '../../utils/handleDownloadAudio';
+import { downloadParticipantsAudioZip, downloadParticipantsScreenRecordingZip } from '../../utils/handleDownloadFiles';
 
-type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData[]>);
+type ParticipantDataFetcher = ParticipantDataWithStatus[] | (() => Promise<ParticipantDataWithStatus[]>);
 
 export function DownloadButtons({
   visibleParticipants, studyId, gap, fileName, hasAudio, hasScreenRecording,
 }: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null; hasAudio?: boolean; hasScreenRecording?: boolean; }) {
   const [openDownload, { open, close }] = useDisclosure(false);
-  const [participants, setParticipants] = useState<ParticipantData[]>([]);
+  const [participants, setParticipants] = useState<ParticipantDataWithStatus[]>([]);
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [loadingScreenRecording, setLoadingScreenRecording] = useState(false);
   const { storageEngine } = useStorageEngine();
@@ -135,6 +135,7 @@ export function DownloadButtons({
           filename={fileName ? `${fileName}_tidy.csv` : `${studyId}_all_tidy.csv`}
           data={participants}
           studyId={studyId}
+          hasAudio={hasAudio}
         />
       )}
     </>

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
+import type { GetInputPropsReturnType } from '@mantine/form/lib/types';
 import type {
-  Answer, ConfigResponseBlockLocation, ParticipantData, ResponseBlockLocation, SkipConditions, StringOption, StudyConfig, ValueOf,
+  Answer, ComponentBlock, ConfigResponseBlockLocation, CustomResponse, InterruptionBlock, JsonValue, ParsedStringOption, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
 } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/types';
 
@@ -9,11 +10,11 @@ import { type REVISIT_MODE } from '../storage/engines/types';
  * The ParticipantMetadata object contains metadata about the participant. This includes the user agent, resolution, language, and IP address. This object is used to store information about the participant that is not directly related to the study itself.
  */
 export interface ParticipantMetadata {
-  /** The user agent of the participant. This is a string that contains information about the participants browser and operating system. */
+  /** The user agent of the participant. This is a string that contains information about the participant's browser and operating system. */
   userAgent: string;
-  /** The resolution of the participants screen. This is an object with two keys, "width" and "height". The values are the width and height of the participants screen in pixels. */
+  /** The resolution of the participant's screen. This is an object with two keys, "width" and "height". The values are the width and height of the participant's screen in pixels. */
   resolution: Record<string, string | number>;
-  /** The language of the participants browser. */
+  /** The language of the participant's browser. */
   language: string;
   /** The IP address of the participant. */
   ip: string | null;
@@ -47,29 +48,29 @@ export type TrialValidation = Record<
 >;
 
 /**
-The StoredAnswer object is a data structure describing the participants interaction with an individual component. It is the data structure used as values of the `answers` object of [ParticipantData](../ParticipantData). The general structure for this is below:
-
-```js
-{
-  "answer": {
-    "barChart": [
-      1.3
-    ]
-  },
-  "startTime": 1711641174858,
-  "endTime": 1711641178836,
-  "windowEvents": [
-    ...
-  ]
-}
-```
-The `answer` object here uses the "id" in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig) as its keys. It then contains a list of the answers given. You are also given a start and end time for the participants interaction with the component. Lastly, a set of windowEvents is given. Below is an example of the windowEvents list.
-
-Each item in the window event is given a time, a position an event name, and some extra information for the event (for mouse events, this is the location).
-*/
+ * The StoredAnswer object is a data structure describing the participant's interaction with an individual component. It is the data structure used as values of the `answers` object of [ParticipantData](../ParticipantData). The general structure for this is below:
+ *
+ * ```json
+ * {
+ *   "answer": {
+ *     "barChart": [
+ *       1.3
+ *     ]
+ *   },
+ *   "startTime": 1711641174858,
+ *   "endTime": 1711641178836,
+ *   "windowEvents": [
+ *     ...
+ *   ]
+ * }
+ * ```
+ * The `answer` object here uses the "id" in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig) as its keys. It then contains a list of the answers given. You are also given a start and end time for the participant's interaction with the component. Lastly, a set of windowEvents is given. Below is an example of the windowEvents list.
+ *
+ * Each item in the window event is given a time, a position an event name, and some extra information for the event (for mouse events, this is the location).
+ */
 export interface StoredAnswer {
   /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is the inputted value from the participant. */
-  answer: Record<string, string | number | boolean | string[]>;
+  answer: Record<string, JsonValue>;
   identifier: string;
   componentName: string;
   /** The order of the trial in the sequence. */
@@ -82,34 +83,36 @@ export interface StoredAnswer {
   endTime: number;
   /** The entire provenance graph exported from a Trrack instance from a React component. This will only be present if you are using React components and you're utilizing [Trrack](https://apps.vdl.sci.utah.edu/trrack) */
   provenanceGraph: Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
-  /** A list containing the time (in epoch milliseconds), the action (focus, input, kepress, mousedown, mouseup, mousemove, resize, scroll or visibility), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
-```js
-"windowEvents": [
-  [
-    1711641174878,
-    "mousedown",
-    [ 1843, 286 ]
-  ],
-  [
-    1711641174878,
-    "focus",
-    "BUTTON"
-  ],
-  [
-    1711641174935,
-    "mouseup",
-    [ 1843, 286 ]
-  ],
-  .
-  .
-  .
-  [
-    1711641178706,
-    "mousemove",
-    [ 1868, 728 ]
-  ]
-]
-```
+  /**
+   * A list containing the time (in epoch milliseconds), the action (focus, input, keypress, mousedown, mouseup, mousemove, resize, scroll or visibility), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
+   *
+   * ```json
+   * "windowEvents": [
+   *   [
+   *     1711641174878,
+   *     "mousedown",
+   *     [ 1843, 286 ]
+   *   ],
+   *   [
+   *     1711641174878,
+   *     "focus",
+   *     "BUTTON"
+   *   ],
+   *   [
+   *     1711641174935,
+   *     "mouseup",
+   *     [ 1843, 286 ]
+   *   ],
+   *   .
+   *   .
+   *   .
+   *   [
+   *     1711641178706,
+   *     "mousemove",
+   *     [ 1868, 728 ]
+   *   ]
+   * ]
+   * ```
    */
   windowEvents: EventType[];
   /** A boolean value that indicates whether the participant timed out on this question. */
@@ -121,7 +124,7 @@ export interface StoredAnswer {
   /** The correct answer for the component. */
   correctAnswer: Answer[];
   /** The order of question options in the component. */
-  optionOrders: Record<string, StringOption[]>;
+  optionOrders: Record<string, ParsedStringOption[]>;
   /** The order of the questions in a matrix component. */
   questionOrders: Record<string, string[]>;
   /** The order of the form elements in a base response. */
@@ -148,25 +151,50 @@ export interface StimulusParams<T, S = never> {
   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: StoredAnswer['answer'] }) => void
 }
 
+export interface CustomResponseField<TValue extends JsonValue = JsonValue> {
+  getInputProps: () => GetInputPropsReturnType;
+  setValue: (value: TValue) => void;
+  onBlur: () => void;
+}
+
+export interface CustomResponseParams<TParameters = Record<string, unknown>, TValue extends JsonValue = JsonValue> {
+  response: CustomResponse;
+  parameters?: TParameters;
+  value: TValue | null;
+  error?: string;
+  disabled: boolean;
+  isAnalysis: boolean;
+  index: number;
+  enumerateQuestions: boolean;
+  field: CustomResponseField<TValue>;
+}
+
+export type CustomResponseValidate<TValue extends JsonValue = JsonValue> = (
+  value: TValue | null,
+  values: StoredAnswer['answer'],
+  response: CustomResponse,
+) => string | null;
+
 export interface Sequence {
   id?: string;
   orderPath: string;
-  order: string;
+  order: ComponentBlock['order'] | 'dynamic';
   components: (string | Sequence)[];
-  skip?: SkipConditions;
+  skip: SkipConditions;
+  interruptions?: InterruptionBlock[];
+  conditional?: boolean;
 }
 
 export type FormElementProvenance = { form: StoredAnswer['answer'] };
 export interface StoreState {
   studyId: string;
   participantId: string;
-  isRecording: boolean;
   answers: ParticipantData['answers'];
   sequence: Sequence;
   config: StudyConfig;
   showStudyBrowser: boolean;
   showHelpText: boolean;
-  alertModal: { show: boolean, message: string };
+  alertModal: { show: boolean, message: string, title: string };
   trialValidation: TrialValidation;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;
@@ -182,6 +210,8 @@ export interface StoreState {
   rankingAnswers: Record<string, Record<string, string>>;
   funcSequence: Record<string, string[]>;
   completed: boolean;
+  isSubmittingFinal: boolean;
   clickedPrevious: boolean;
   storageEngineFailedToConnect: boolean;
+  isStalledConfig: boolean;
 }

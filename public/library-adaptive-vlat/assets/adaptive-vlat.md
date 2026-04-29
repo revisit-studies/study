@@ -1,9 +1,7 @@
 
-# adaptive-vlat
+# A-VLAT: Adaptive Visualization Literacy Assessment Test
 
-
-
-This is an example study of the library `adaptive-vlat`.
+This is a demo of the library `adaptive-vlat`.
 
 A-VLAT is a short, adaptive visualization literacy test, which are built upon the existing static assessments VLAT. 
 

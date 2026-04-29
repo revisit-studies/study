@@ -1,15 +1,15 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Interactive Selections in Scatterplots",
     "version": "pilot",
     "authors": ["The reVISit Team"],
-    "date": "2023-11-03",
+    "date": "2026-02-23",
     "description": "A study comparing different selection mechanisms on scatterplots.",
-    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+    "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
-    "contactEmail": "cnobre@cs.toronto.edu",
+    "contactEmail": "contact@revisit.dev",
     "helpTextPath": "example-brush-interactions/assets/tutorial.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
@@ -17,8 +17,7 @@
     "withSidebar": true,
     "studyEndMsg": "Thank you for completing the study. You may click this link and return to Prolific: [https://app.prolific.com/submissions/complete?cc=CE96X7ST&PROLIFIC_ID={PARTICIPANT_ID}](https://app.prolific.com/submissions/complete?cc=CE96X7ST&PROLIFIC_ID={PARTICIPANT_ID})",
     "urlParticipantIdParam": "PROLIFIC_PID",
-    "participantNameField": "introduction.prolificId",
-    "recordAudio": true
+    "participantNameField": "introduction.prolificId"
   },
   "baseComponents": {
     "scatterPlot": {
@@ -388,8 +387,9 @@
       ]
     },
     "survey": {
-      "type": "markdown",
-      "path": "example-VLAT-mini-randomized/assets/survey.md",
+      "type": "questionnaire",
+      "instruction": "Thanks for completing the study! We are testing our survey tool and we could use your valuable feedback in the questions below:",
+      "instructionLocation": "aboveStimulus",
       "response": [
         {
           "id": "surveyExperience",

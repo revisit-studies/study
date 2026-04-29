@@ -1,9 +1,6 @@
+# Mini-VLAT: A Short and Effective Measure of Visualization Literacy
 
-# mini-vlat
-
-
-
-This is an example study of the library `mini-vlat`.
+This is a demo of the library `mini-vlat`.
 
 Mini-VLAT is a short and effective measure of visualization literacy. Mini-VLAT has 12 questions and participants should answer each question within 25 seconds. This library contains 12 components. Each component contains one question of the Mini-VLAT. This library also contains a sequence of all 12 components (the full Mini-VLAT).
 

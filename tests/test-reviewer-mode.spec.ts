@@ -1,29 +1,35 @@
 import { test, expect } from '@playwright/test';
+import {
+  openStudyFromLanding,
+  resetClientStudyState,
+  waitForStudyEndMessage,
+} from './utils';
 
-test('test', async ({ browser }) => {
-  const page = await browser.newPage();
+test('test', async ({ page }) => {
   await page.setViewportSize({
     width: 1200,
     height: 800,
   });
 
-  await page.goto('/');
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
 
-  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'HTML as a Stimulus' })
-    .nth(0)
-    .getByText('Go to Study')
-    .click();
-  await page.getByRole('tab', { name: 'All Trials View' }).click();
+  const browseComponentsTab = page.getByRole('tab', { name: 'Browse Components' });
+  await expect(browseComponentsTab).toBeVisible();
+  await browseComponentsTab.click();
 
-  await page.getByLabel('All Trials View').locator('a').filter({ hasText: 'barChart' }).click();
-  const iframe = await page.frameLocator('iframe').getByRole('img');
+  await page.getByLabel('Browse Components').locator('a').filter({ hasText: 'barChart' }).click();
+  const iframe = page.frameLocator('iframe').getByRole('img');
   await expect(iframe).toBeVisible();
 
-  await page.getByLabel('All Trials View').locator('a').filter({ hasText: 'introduction' }).click();
-  const introText = await page.getByText('Welcome to our study. This is');
+  await page.getByLabel('Browse Components').locator('a').filter({ hasText: 'introduction' }).click();
+  const introText = page.getByText(/example study.*embed html elements/i);
   await expect(introText).toBeVisible();
 
-  await page.getByLabel('All Trials View').locator('a').filter({ hasText: 'end' }).click();
-  const endText = await page.getByText('Please wait');
-  await expect(endText).toBeVisible();
+  const participantViewTab = page.getByRole('tab', { name: 'Participant View' });
+  await expect(participantViewTab).toBeVisible();
+  await participantViewTab.click();
+
+  await page.getByLabel('Participant View').locator('a').filter({ hasText: 'end' }).click();
+  await waitForStudyEndMessage(page);
 });

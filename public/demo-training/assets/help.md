@@ -1,1 +1,0 @@
-Provide help text here to help participants pass the training. 

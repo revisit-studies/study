@@ -1,11 +1,16 @@
 import { AuthError, createClient } from '@supabase/supabase-js';
+import localforage from 'localforage';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
-  CloudStorageEngine,
+  CloudStorageEngine, cleanupModes,
 } from './types';
 
 export class SupabaseStorageEngine extends CloudStorageEngine {
   private supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
+
+  protected participantStore = localforage.createInstance({
+    name: 'revisit-supabase',
+  });
 
   constructor(testing: boolean = false) {
     super('supabase', testing);
@@ -164,6 +169,60 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${participantId}`);
+  }
+
+  protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {
+    await this.verifyStudyDatabase();
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentPath = `sequenceAssignment_${participantId}`;
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', sequenceAssignmentPath)
+      .single();
+
+    if (error || !data) {
+      throw new Error('Failed to retrieve sequence assignment for update');
+    }
+
+    const updatedData = { ...data.data, ...updatedFields };
+    if (Object.hasOwn(updatedFields, 'conditions') && updatedFields.conditions === undefined) {
+      delete updatedData.conditions;
+    }
+
+    await this.supabase
+      .from('revisit')
+      .update({ data: updatedData })
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', sequenceAssignmentPath);
+  }
+
+  protected async _getSequenceAssignment(participantId: string) {
+    await this.verifyStudyDatabase();
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data, createdAt')
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', `sequenceAssignment_${participantId}`)
+      .single();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return {
+      ...data.data,
+      timestamp: data.data.withServerTimestamp ? new Date(data.createdAt).getTime() : data.data.timestamp,
+      createdTime: new Date(data.createdAt).getTime(),
+    } as SequenceAssignment;
   }
 
   protected async _completeCurrentParticipantRealtime() {
@@ -347,14 +406,27 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       // get the metadata field from the data object
       const metadata = data[0].data;
       if (metadata) {
-        return metadata;
+        const modes = metadata as Record<string, boolean>;
+        const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
+
+        if (needsUpdate) {
+          const cleanedModes = cleanupModes(modes);
+          await this.supabase
+            .from('revisit')
+            .update({ data: cleanedModes })
+            .eq('studyId', `${this.collectionPrefix}${studyId}`)
+            .eq('docId', 'metadata');
+          return cleanedModes;
+        }
+
+        return modes;
       }
     }
 
     const defaultModes = {
       dataCollectionEnabled: true,
-      studyNavigatorEnabled: true,
-      analyticsInterfacePubliclyAccessible: true,
+      developmentModeEnabled: true,
+      dataSharingEnabled: true,
     };
     await this.supabase
       .from('revisit')
@@ -727,6 +799,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
   unsubscribe(callback: (cloudUser: StoredUser | null) => Promise<void>) {
     let lastUid: string | null = null;
+    let count = 0;
 
     const { data: listener } = this.supabase.auth.onAuthStateChange(async (_event, session) => {
       const user = session?.user
@@ -736,8 +809,15 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         } as StoredUser)
         : null;
 
-      // Only invoke callback if the user actually changed
       const uid = user?.uid ?? null;
+      // If first time and no user, just call back with null
+      if (user === null && count === 0) {
+        count += 1;
+        callback(null);
+        return;
+      }
+
+      // Only invoke callback if the user actually changed
       if (uid === lastUid) return;
       lastUid = uid;
 

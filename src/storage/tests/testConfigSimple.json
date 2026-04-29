@@ -1,12 +1,16 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.3.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Test Study",
     "version": "1.0.0",
-    "authors": ["Test Author"],
+    "authors": [
+      "Test Author"
+    ],
     "description": "A test study configuration",
-    "date": "2025-06-02",
-    "organizations": ["Test Organization"]
+    "date": "2026-02-23",
+    "organizations": [
+      "Test Organization"
+    ]
   },
   "uiConfig": {
     "contactEmail": "test@test.com",
@@ -22,6 +26,8 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": ["testComponent"]
+    "components": [
+      "testComponent"
+    ]
   }
 }

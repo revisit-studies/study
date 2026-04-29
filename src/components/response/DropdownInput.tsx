@@ -3,6 +3,8 @@ import { DropdownResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import classes from './css/Input.module.css';
 import { InputLabel } from './InputLabel';
+import { OptionLabel } from './OptionLabel';
+import { parseStringOptions } from '../../utils/stringOptions';
 
 export function DropdownInput({
   response,
@@ -26,8 +28,11 @@ export function DropdownInput({
     infoText,
   } = response;
 
-  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const optionsAsStringOptions = parseStringOptions(options);
   const isMultiselect = (response.minSelections && response.minSelections >= 1) || (response.maxSelections && response.maxSelections > 1);
+  const renderOption = ({ option }: { option: { label: string; infoText?: string } }) => (
+    <OptionLabel label={option.label} infoText={option.infoText} />
+  );
 
   return (
     isMultiselect ? (
@@ -48,6 +53,7 @@ export function DropdownInput({
         maxDropdownHeight={200}
         clearable
         searchable
+        renderOption={renderOption}
       />
     ) : (
       <Select
@@ -65,6 +71,7 @@ export function DropdownInput({
         errorProps={{ c: required ? 'red' : 'orange' }}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
+        renderOption={renderOption}
       />
     )
   );
