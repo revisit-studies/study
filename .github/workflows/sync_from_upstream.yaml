@@ -1,0 +1,161 @@
+name: Sync from Upstream
+
+# Manually triggered sync from revisit-studies/study (the main framework repo).
+# Resets the template branch to exactly match upstream, then restores
+# template-specific files on top and force-pushes. This keeps the template
+# from falling behind upstream in git history.
+#
+# Note: deploy_website.yaml is synced from upstream but the deployment base
+# path (/template/) is controlled by GitHub Environment secrets, not the
+# workflow file itself, so syncing it is safe.
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: 'Upstream branch or tag to sync from (e.g. main, v2.3.2)'
+        required: false
+        default: 'main'
+
+# Uses the org-level PAT secret for checkout so that git push can update
+# .github/workflows/ files. GITHUB_TOKEN cannot push workflow file changes;
+# a PAT with 'repo' and 'workflow' scopes is required.
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout template repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
+
+      - name: Fetch upstream and reset to match it
+        run: |
+          # Save the current template HEAD so we can restore template-specific
+          # files after the reset.
+          echo "TEMPLATE_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+          git remote add upstream https://github.com/revisit-studies/study.git
+          UPSTREAM_REF="${{ github.event.inputs.upstream_ref }}"
+          git fetch upstream "${UPSTREAM_REF:-main}"
+          UPSTREAM_SHA=$(git rev-parse FETCH_HEAD)
+          echo "UPSTREAM_SHA=$UPSTREAM_SHA" >> "$GITHUB_ENV"
+          echo "Syncing from upstream @ $UPSTREAM_SHA"
+
+          # Reset the working tree to exactly match upstream. This handles
+          # additions, modifications, and deletions in one step, and aligns
+          # the branch history so the template is no longer "behind" upstream.
+          git reset --hard FETCH_HEAD
+
+      - name: Restore template-specific files
+        run: |
+          # These files are intentionally different in the template and must
+          # be restored from before the reset.
+          # Note: public/global.json is handled separately below so the $schema
+          # version is always taken from upstream rather than frozen in TEMPLATE_HEAD.
+          git checkout "$TEMPLATE_HEAD" -- \
+            README.md \
+            .github/workflows/sync_from_upstream.yaml \
+            .github/workflows/sync_from_upstream_test.yaml
+
+      - name: Reset global.json to template state with upstream schema version
+        run: |
+          # After the reset, public/global.json is upstream's full study list.
+          # Extract only the $schema URL from it, then write back the template
+          # version (empty study list) so the schema version always stays current.
+          node -e "
+            const fs = require('fs');
+            const upstream = JSON.parse(fs.readFileSync('public/global.json', 'utf8'));
+            const template = { '\$schema': upstream['\$schema'], configsList: [], configs: {} };
+            fs.writeFileSync('public/global.json', JSON.stringify(template, null, 2) + '\n');
+          "
+
+      - name: Remove study/demo folders not included in template
+        run: |
+          # Top-level public/: keep only shared assets and utilities.
+          # All studies and other extras brought in by the reset are removed.
+          KEEP_PUBLIC=("libraries" "revisitAssets" "revisitUtilities" "404.html" "vite.svg" "global.json" "README.md")
+          for item in public/*; do
+            name=$(basename "$item")
+            keep=false
+            for k in "${KEEP_PUBLIC[@]}"; do
+              [[ "$name" == "$k" ]] && keep=true && break
+            done
+            if [[ "$keep" == false ]]; then
+              echo "Removing non-template item: $item"
+              rm -rf "$item"
+            fi
+          done
+
+          # src/public/: keep library React components only.
+          KEEP_SRC_PUBLIC=("libraries")
+          for item in src/public/*; do
+            [[ -e "$item" ]] || continue  # skip if glob matched nothing
+            name=$(basename "$item")
+            keep=false
+            for k in "${KEEP_SRC_PUBLIC[@]}"; do
+              [[ "$name" == "$k" ]] && keep=true && break
+            done
+            if [[ "$keep" == false ]]; then
+              echo "Removing non-template item: $item"
+              rm -rf "$item"
+            fi
+          done
+
+      - name: Remove unused dependencies from package.json
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+
+            // Packages only used in example studies removed from this template.
+            const unusedDeps = [
+              '@visdesignlab/upset2-react', // UpSet2 example study only
+              'arquero',                    // src/public/tutorial/ brush components only
+              'topojson-client',            // src/public/demo-choropleth-map/ only
+              // MUI packages — not imported anywhere in src/ on dev branch
+              '@emotion/react',
+              '@emotion/styled',
+              '@mui/icons-material',
+              '@mui/material',
+              '@mui/system',
+              '@mui/x-data-grid',
+              'recoil',                     // not imported anywhere in src/
+            ];
+            unusedDeps.forEach((dep) => {
+              if (pkg.dependencies && dep in pkg.dependencies) {
+                console.log('Removing unused dep:', dep);
+                delete pkg.dependencies[dep];
+              }
+            });
+
+            // devDependencies only needed for removed example studies
+            const unusedDevDeps = [
+              '@types/topojson-client',        // only for demo-choropleth-map
+              '@types/topojson-specification', // only for demo-choropleth-map
+            ];
+            unusedDevDeps.forEach((dep) => {
+              if (pkg.devDependencies && dep in pkg.devDependencies) {
+                console.log('Removing unused devDep:', dep);
+                delete pkg.devDependencies[dep];
+              }
+            });
+
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      - name: Commit and force push to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes detected — template is already up to date with upstream."
+          else
+            SHORT_SHA="${UPSTREAM_SHA:0:7}"
+            git commit -m "chore: sync from upstream revisit-studies/study@${SHORT_SHA}"
+            git push --force origin main
+            echo "Force-pushed sync commit to main."
+          fi
