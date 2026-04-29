@@ -1,6 +1,7 @@
 import BrushPlotWrapper from './BrushPlotWrapper';
 
 export default function ReactExample() {
+  return <div>hi</div>
   return (
     <BrushPlotWrapper
       params={{
