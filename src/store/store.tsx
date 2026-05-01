@@ -146,6 +146,9 @@ export async function studyStoreCreator(
       setConfig(state, { payload }: PayloadAction<StudyConfig>) {
         state.config = payload;
       },
+      setMetadata(state, { payload }: PayloadAction<ParticipantMetadata>) {
+        state.metadata = payload;
+      },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       pushToFuncSequence(state, { payload }: PayloadAction<{ component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined }>) {
         if (!state.funcSequence[payload.funcName]) {
