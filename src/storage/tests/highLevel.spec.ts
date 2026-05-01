@@ -278,6 +278,35 @@ describe.each([
     expect(storedHashes[configComplexHash]).toEqual(configSimple2);
   });
 
+  test('saveConfig skips storage writes when the config hash is unchanged', async () => {
+    await storageEngine.saveConfig(configSimple);
+
+    const pushSpy = vi.spyOn(
+      storageEngine as unknown as {
+        _pushToStorage: StorageEngine['_pushToStorage'];
+      },
+      '_pushToStorage',
+    );
+    const deleteSpy = vi.spyOn(
+      storageEngine as unknown as {
+        _deleteFromStorage: StorageEngine['_deleteFromStorage'];
+      },
+      '_deleteFromStorage',
+    );
+    const setHashSpy = vi.spyOn(
+      storageEngine as unknown as {
+        _setCurrentConfigHash: StorageEngine['_setCurrentConfigHash'];
+      },
+      '_setCurrentConfigHash',
+    );
+
+    await storageEngine.saveConfig(configSimple);
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    expect(deleteSpy).not.toHaveBeenCalled();
+    expect(setHashSpy).not.toHaveBeenCalled();
+  });
+
   test('getCurrentParticipantId returns the current participant ID', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;
@@ -316,6 +345,14 @@ describe.each([
     expect(participantData!.metadata).toEqual(participantMetadata);
     expect(participantData!.rejected).toBe(false);
     expect(participantData!.participantTags).toEqual([]);
+  });
+
+  test('initializeParticipantSession reads modes only once for a new participant', async () => {
+    const getModesSpy = vi.spyOn(storageEngine, 'getModes');
+
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    expect(getModesSpy).toHaveBeenCalledTimes(1);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {
@@ -443,6 +480,24 @@ describe.each([
     expect(sequenceAssignment).toBeDefined();
     expect(sequenceAssignment!.conditions).toBeUndefined();
     expect(Object.hasOwn(sequenceAssignment!, 'conditions')).toBe(false);
+  });
+
+  test('updateParticipantMetadata updates participant metadata', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const updatedMetadata = {
+      ...participantMetadata,
+      ip: '8.8.8.8',
+    };
+
+    await storageEngine.updateParticipantMetadata(updatedMetadata);
+
+    expect(storageEngine.getCurrentParticipantDataSnapshot()!.metadata).toEqual(updatedMetadata);
+
+    await storageEngine.flushPendingParticipantData();
+
+    const participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData).toBeDefined();
+    expect(participantData!.metadata).toEqual(updatedMetadata);
   });
 
   test('getConditionData includes default when participants have no explicit condition', async () => {

@@ -66,6 +66,11 @@ interface StageData {
   allStages: StageInfo[];
 }
 
+type ModesAndStageData = {
+  modes: Record<REVISIT_MODE, boolean>;
+  stageData: StageData;
+};
+
 export interface ConditionData {
   allConditions: string[];
   conditionCounts: Record<string, number>;
@@ -186,6 +191,10 @@ export abstract class StorageEngine {
 
   isCloudEngine() {
     return this.cloudEngine;
+  }
+
+  protected shouldDeferInitialParticipantDataPersistence() {
+    return false;
   }
 
   /*
@@ -369,6 +378,33 @@ export abstract class StorageEngine {
       console.warn('Failed to read cached participant data:', error);
       return null;
     }
+  }
+
+  private async getModesAndStageData(studyId: string): Promise<ModesAndStageData> {
+    const modesDoc = await this.getModes(studyId);
+    const { stage, ...modeValues } = modesDoc;
+
+    if (stage) {
+      return {
+        modes: modeValues as Record<REVISIT_MODE, boolean>,
+        stageData: stage,
+      };
+    }
+
+    const defaultStageData: StageData = {
+      currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
+      allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
+    };
+
+    await this._setModesDocument(studyId, {
+      ...(modeValues as Record<REVISIT_MODE, boolean>),
+      stage: defaultStageData,
+    });
+
+    return {
+      modes: modeValues as Record<REVISIT_MODE, boolean>,
+      stageData: defaultStageData,
+    };
   }
 
   private clearPendingParticipantDataWriteTimer() {
@@ -566,19 +602,8 @@ export abstract class StorageEngine {
   }
 
   async getStageData(studyId: string): Promise<StageData> {
-    const modesDoc = await this.getModes(studyId);
-
-    if (modesDoc && modesDoc.stage) {
-      return modesDoc.stage as StageData;
-    }
-
-    // Set default stage data if it doesn't exist
-    const defaultStageData: StageData = {
-      currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
-      allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
-    };
-    await this.setCurrentStage(studyId, 'DEFAULT', defaultStageColor);
-    return defaultStageData;
+    const { stageData } = await this.getModesAndStageData(studyId);
+    return stageData;
   }
 
   async getConditionData(studyId: string): Promise<ConditionData> {
@@ -665,6 +690,10 @@ export abstract class StorageEngine {
     // Hash the provided config
     const configHash = await hash(JSON.stringify(config));
 
+    if (currentConfigHash === configHash) {
+      return;
+    }
+
     // Push the config to storage and cache it, since it won't change
     await this._pushToStorage(
       `configs/${configHash}`,
@@ -741,7 +770,7 @@ export abstract class StorageEngine {
   // This function is one of the most critical functions in the storage engine.
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
-  protected async _getSequence(conditions?: string[]) {
+  protected async _getSequence(conditions?: string[], bootstrapData?: ModesAndStageData) {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
@@ -750,8 +779,7 @@ export abstract class StorageEngine {
     }
     let sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
-    const modes = await this.getModes(this.studyId);
-    const stageData = await this.getStageData(this.studyId);
+    const { modes, stageData } = bootstrapData ?? await this.getModesAndStageData(this.studyId);
     const currentStage = stageData.currentStage.stageName;
 
     // Find all rejected documents
@@ -849,29 +877,24 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
+    const cachedParticipant = await this.getCachedParticipantDataSnapshot(this.currentParticipantId);
+    if (cachedParticipant) {
+      this.participantData = cachedParticipant;
+      return cachedParticipant;
+    }
+
     // Check if the participant has already been initialized
     const participant = await this._getFromStorage(
       `participants/${this.currentParticipantId}`,
       'participantData',
     );
-    const cachedParticipant = await this.getCachedParticipantDataSnapshot(this.currentParticipantId);
 
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
 
-    // Get modes
-    const modes = await this.getModes(this.studyId);
-    const stageData = await this.getStageData(this.studyId);
+    const { modes, stageData } = await this.getModesAndStageData(this.studyId);
     const currentStage = stageData.currentStage.stageName;
-
-    if (
-      cachedParticipant
-      && (!isParticipantData(participant) || shouldPreferCachedParticipantData(cachedParticipant, participant))
-    ) {
-      this.participantData = cachedParticipant;
-      return cachedParticipant;
-    }
 
     if (isParticipantData(participant)) {
       // Participant already initialized
@@ -883,7 +906,7 @@ export abstract class StorageEngine {
     const participantConfigHash = await hash(JSON.stringify(config));
     const parsedConditions = parseConditionParam(searchParams.condition);
     const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
-    const { currentRow, creationIndex } = await this._getSequence(conditions);
+    const { currentRow, creationIndex } = await this._getSequence(conditions, { modes, stageData });
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
@@ -900,7 +923,7 @@ export abstract class StorageEngine {
     };
 
     if (modes.dataCollectionEnabled) {
-      await this.persistCurrentParticipantData({ immediate: true });
+      await this.persistCurrentParticipantData({ immediate: !this.shouldDeferInitialParticipantDataPersistence() });
     } else {
       await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
     }
@@ -1035,6 +1058,18 @@ export abstract class StorageEngine {
     this.participantData.searchParams = searchParams;
 
     await this.persistCurrentParticipantData({ immediate: true });
+  }
+
+  async updateParticipantMetadata(metadata: ParticipantMetadata) {
+    await this.verifyStudyDatabase();
+
+    if (!this.participantData) {
+      throw new Error('Participant data not initialized');
+    }
+
+    this.participantData.metadata = metadata;
+
+    await this.persistCurrentParticipantData({ immediate: false });
   }
 
   async updateStudyCondition(condition: string | string[]) {
@@ -1695,6 +1730,10 @@ export abstract class CloudStorageEngine extends StorageEngine {
   protected cloudEngine = true;
 
   protected userManagementData: UserManagementData = {};
+
+  protected shouldDeferInitialParticipantDataPersistence() {
+    return true;
+  }
 
   /*
   * PRIMITIVE METHODS
