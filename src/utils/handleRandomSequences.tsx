@@ -3,12 +3,20 @@ import isEqual from 'lodash.isequal';
 import {
   ComponentBlock,
   DynamicBlock,
+  Factor,
   FactorBlock,
+  FactorBlockDefinition,
+  FactorBlockFactor,
+  FactorBlockReference,
   RandomInterruption,
   StudyConfig,
 } from '../parser/types';
 import { Sequence } from '../store/types';
-import { isDynamicBlock, isFactorBlock } from '../parser/utils';
+import { isDynamicBlock, isFactorBlock, isFactorBlockReference } from '../parser/utils';
+
+type SequenceBlock = ComponentBlock | DynamicBlock | FactorBlock | FactorBlockReference;
+export type FactorCombination = [string, Record<string, string>];
+type FactorValue = string | FactorCombination;
 
 function shuffle<T>(array: T[]) {
   let currentIndex = array.length;
@@ -25,8 +33,53 @@ function shuffle<T>(array: T[]) {
   }
 }
 
-export function combineFactors(depth: number, factors: string[][], currentComponent: string, depthToFactorMap: Record<number, string>, currentParams: Record<string, string>): [string, Record<string, string>][] {
-  const newComponents: [string, Record<string, string>][] = factors[depth].map((f) => [`${currentComponent}_${f}`, { ...currentParams, [depthToFactorMap[depth]]: f }]);
+function isFactorBlockFactor(factor: Factor): factor is FactorBlockFactor {
+  return 'factorBlock' in factor;
+}
+
+function isFactorCombination(value: FactorValue): value is FactorCombination {
+  return Array.isArray(value);
+}
+
+function factorValueName(value: FactorValue): string {
+  return isFactorCombination(value) ? value[0] : value;
+}
+
+function factorValueParameters(
+  value: FactorValue,
+  depth: number,
+  depthToFactorMap: Record<number, string>,
+): Record<string, string> {
+  if (isFactorCombination(value)) {
+    return value[1];
+  }
+
+  const factorName = depthToFactorMap[depth];
+  return factorName !== undefined ? { [factorName]: value } : {};
+}
+
+function appendFactorValueName(currentComponent: string, valueName: string): string {
+  const normalizedValueName = valueName.startsWith('_') ? valueName.slice(1) : valueName;
+  return `${currentComponent}_${normalizedValueName}`;
+}
+
+function factorBlockDefinitionToBlock(id: string, definition: FactorBlockDefinition): FactorBlock {
+  return {
+    type: 'factors',
+    id,
+    action: definition.action,
+    order: definition.order,
+    factorsToCross: definition.factorsToCross,
+    component: definition.component,
+    ...(definition.parameters !== undefined ? { parameters: definition.parameters } : {}),
+  };
+}
+
+export function combineFactors(depth: number, factors: FactorValue[][], currentComponent: string, depthToFactorMap: Record<number, string>, currentParams: Record<string, string>): FactorCombination[] {
+  const newComponents: FactorCombination[] = factors[depth].map((f) => [
+    appendFactorValueName(currentComponent, factorValueName(f)),
+    { ...currentParams, ...factorValueParameters(f, depth, depthToFactorMap) },
+  ]);
 
   if (factors.length - 1 > depth) {
     const nextComponents = newComponents.map((c) => combineFactors(depth + 1, factors, c[0], depthToFactorMap, c[1])).flat();
@@ -37,10 +90,151 @@ export function combineFactors(depth: number, factors: string[][], currentCompon
   return newComponents;
 }
 
-type UniqueComponentEntry = { component: ComponentBlock | DynamicBlock | FactorBlock; indices: number[] };
+function combineIndexDimensions(lengths: number[]): number[][] {
+  if (lengths.length === 0) {
+    return [[]];
+  }
+
+  return Array.from({ length: lengths[0] }, (_, index) => (
+    combineIndexDimensions(lengths.slice(1)).map((rest) => [index, ...rest])
+  )).flat();
+}
+
+function factorCombinationFromIndices(
+  factors: FactorValue[][],
+  indices: number[],
+  depthToFactorMap: Record<number, string>,
+): FactorCombination {
+  const values = indices.map((index, depth) => factors[depth][index]);
+  const params = values.reduce<Record<string, string>>((acc, value, depth) => ({
+    ...acc,
+    ...factorValueParameters(value, depth, depthToFactorMap),
+  }), {});
+
+  return [
+    values.reduce<string>((componentName, value) => (
+      appendFactorValueName(componentName, factorValueName(value))
+    ), ''),
+    params,
+  ];
+}
+
+export function combineCrossFactors(
+  factors: FactorValue[][],
+  depthToFactorMap: Record<number, string>,
+): FactorCombination[] {
+  if (factors.length === 0 || factors.some((factor) => factor.length === 0)) {
+    return [];
+  }
+
+  const firstFactorIndices = Array.from({ length: factors[0].length }, (_, index) => index);
+  const offsets = combineIndexDimensions(factors.slice(1).map((factor) => factor.length));
+
+  return offsets.flatMap((offset, offsetIndex) => {
+    const orderedFirstFactorIndices = offsetIndex % 2 === 0
+      ? firstFactorIndices
+      : [...firstFactorIndices].reverse();
+
+    return orderedFirstFactorIndices.map((firstFactorIndex) => {
+      const indices = [
+        firstFactorIndex,
+        ...offset.map((factorOffset, index) => (
+          (firstFactorIndex + factorOffset) % factors[index + 1].length
+        )),
+      ];
+
+      return factorCombinationFromIndices(factors, indices, depthToFactorMap);
+    });
+  });
+}
+
+export function combineZipFactors(
+  factors: FactorValue[][],
+  depthToFactorMap: Record<number, string>,
+): FactorCombination[] {
+  if (factors.length === 0 || factors.some((factor) => factor.length === 0)) {
+    return [];
+  }
+
+  const zipLength = Math.min(...factors.map((factor) => factor.length));
+  return Array.from({ length: zipLength }, (_, index) => (
+    factorCombinationFromIndices(
+      factors,
+      factors.map(() => index),
+      depthToFactorMap,
+    )
+  ));
+}
+
+export function combineFactorsByAction(
+  action: FactorBlock['action'],
+  factors: FactorValue[][],
+  depthToFactorMap: Record<number, string>,
+): FactorCombination[] {
+  if (factors.length === 0 || factors.some((factor) => factor.length === 0)) {
+    return [];
+  }
+
+  if (action === 'cross') {
+    return combineCrossFactors(factors, depthToFactorMap);
+  }
+
+  if (action === 'zip') {
+    return combineZipFactors(factors, depthToFactorMap);
+  }
+
+  return combineFactors(0, factors, '', depthToFactorMap, {});
+}
+
+export function getFactorBlockCombinations(
+  block: FactorBlock,
+  factors: Record<string, string[]>,
+  factorBlocks: Record<string, FactorBlockDefinition> = {},
+  onError?: (message: string) => void,
+  stack: string[] = [],
+): FactorCombination[] {
+  if (stack.includes(block.id)) {
+    onError?.(`Circular factor block reference: ${[...stack, block.id].join(' -> ')}`);
+    return [];
+  }
+
+  const depthToFactorMap: Record<number, string> = {};
+  const nextStack = [...stack, block.id];
+  const factorValues = block.factorsToCross.map((factor, depth): FactorValue[] => {
+    if (isFactorBlockFactor(factor)) {
+      const factorBlockDefinition = factorBlocks[factor.factorBlock];
+
+      if (!factorBlockDefinition) {
+        onError?.(`Factor block \`${factor.factorBlock}\` is not defined in factorBlocks`);
+        return [];
+      }
+
+      return getFactorBlockCombinations(
+        factorBlockDefinitionToBlock(factor.factorBlock, factorBlockDefinition),
+        factors,
+        factorBlocks,
+        onError,
+        nextStack,
+      );
+    }
+
+    const factorLevels = factors[factor.factor];
+    if (!factorLevels) {
+      onError?.(`Factor \`${factor.factor}\` is not defined in factors`);
+      return [];
+    }
+
+    depthToFactorMap[depth] = factor.factor;
+    return factorLevels;
+  });
+
+  return combineFactorsByAction(block.action, factorValues, depthToFactorMap);
+}
+
+type UniqueComponentEntry = { component: SequenceBlock; indices: number[] };
 
 function findMatchingUnique(
-  component: ComponentBlock | DynamicBlock | FactorBlock,
+  component: SequenceBlock,
   uniqueComponents: UniqueComponentEntry[],
 ): UniqueComponentEntry | null {
   for (const unique of uniqueComponents) {
@@ -52,7 +246,7 @@ function findMatchingUnique(
 }
 
 function findUniqueComponents(
-  components: (string | ComponentBlock | DynamicBlock | FactorBlock)[],
+  components: (string | SequenceBlock)[],
   includeDynamicBlocks = true,
 ): UniqueComponentEntry[] {
   const uniqueComponents: UniqueComponentEntry[] = [];
@@ -74,19 +268,30 @@ function findUniqueComponents(
 function generateLatinSquare(config: StudyConfig, path: string) {
   const pathArr = path.split('-');
 
-  let locationInSequence: Partial<ComponentBlock> | Partial<DynamicBlock> | string = {};
+  let locationInSequence: StudyConfig['sequence'] | string = config.sequence;
   pathArr.forEach((p) => {
     if (p === 'root') {
       locationInSequence = config.sequence;
     } else {
-      if (isDynamicBlock(locationInSequence as StudyConfig['sequence'])) {
+      if (
+        typeof locationInSequence === 'string'
+        || isDynamicBlock(locationInSequence)
+        || isFactorBlock(locationInSequence)
+        || isFactorBlockReference(locationInSequence)
+      ) {
         return;
       }
-      locationInSequence = (locationInSequence as ComponentBlock).components[+p];
+      locationInSequence = locationInSequence.components[+p];
     }
   });
 
-  const options = (locationInSequence as ComponentBlock).components.map((c: unknown, i: number) => (typeof c === 'string' ? c : `_componentBlock${i}`));
+  const options = isFactorBlock(locationInSequence)
+    ? getFactorBlockCombinations(
+      locationInSequence,
+      config.factors || {},
+      config.factorBlocks || {},
+    ).map((combination) => combination[0])
+    : (locationInSequence as ComponentBlock).components.map((c: unknown, i: number) => (typeof c === 'string' ? c : `_componentBlock${i}`));
   shuffle(options);
   const newSquare: string[][] = latinSquare<string>(options, true);
   return newSquare;
@@ -101,7 +306,7 @@ function generateLatinSquareRows(config: StudyConfig, path: string, count: numbe
 }
 
 function insertRandomInterruptions(
-  components: (string | ComponentBlock | DynamicBlock | FactorBlock)[],
+  components: (string | SequenceBlock)[],
   randomInterruptions: RandomInterruption[],
 ) {
   const totalInterruptions = randomInterruptions
@@ -132,7 +337,7 @@ function insertRandomInterruptions(
     }
   });
 
-  const newComponents: (string | ComponentBlock | DynamicBlock | FactorBlock)[] = [];
+  const newComponents: (string | SequenceBlock)[] = [];
   for (let i = 0; i < components.length; i += 1) {
     interruptionsByLocation.get(i)?.forEach((interruptionComponents) => {
       newComponents.push(...interruptionComponents);
@@ -148,6 +353,7 @@ function _componentBlockToSequence(
   latinSquareObject: Record<string, string[][]>,
   path: string,
   factors: Record<string, string[]>,
+  factorBlocks: StudyConfig['factorBlocks'],
 ): Sequence {
   if (isDynamicBlock(order)) {
     return {
@@ -162,16 +368,43 @@ function _componentBlockToSequence(
   }
 
   if (isFactorBlock(order)) {
-    const depthMap = {};
-    const newComponents = order.factorsToCross.map((c) => factors[c.factor]);
-    const componentsToCross = combineFactors(0, newComponents, '', depthMap, {});
+    const componentsToCross = getFactorBlockCombinations(order, factors, factorBlocks);
+    const factorOrder = order.order ?? 'fixed';
+    let computedComponents = componentsToCross.map((c) => c[0]);
+
+    if (factorOrder === 'random') {
+      computedComponents = structuredClone(computedComponents);
+      shuffle(computedComponents);
+    } else if (factorOrder === 'latinSquare') {
+      const latinSquareRow = latinSquareObject[path]?.pop();
+
+      if (!latinSquareRow) {
+        throw new Error(
+          `Latin square exhausted for path: ${path}. `
+          + 'This should not happen as we pre-generate enough rows. Please report this issue.',
+        );
+      }
+
+      computedComponents = latinSquareRow;
+    }
 
     return {
       id: order.id,
       orderPath: path,
-      order: order.order,
-      components: componentsToCross.map((c) => c[0]),
+      order: factorOrder,
+      components: computedComponents,
       skip: [],
+    };
+  }
+
+  if (isFactorBlockReference(order)) {
+    return {
+      id: order.id ?? order.factorBlock,
+      orderPath: path,
+      order: 'fixed',
+      components: [],
+      skip: [],
+      interruptions: [],
     };
   }
 
@@ -209,13 +442,11 @@ function _componentBlockToSequence(
   const uniqueComponents = findUniqueComponents(order.components);
 
   // Track how many times we've seen each unique component
-  const seenCounts = new Map<ComponentBlock | DynamicBlock | FactorBlock, number>();
+  const seenCounts = new Map<SequenceBlock, number>();
 
   for (let i = 0; i < computedComponents.length; i += 1) {
     const curr = computedComponents[i];
     if (typeof curr !== 'string' && !Array.isArray(curr)) {
-      const index = order.components.findIndex((c) => isEqual(c, curr));
-      computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${index}`, factors) as unknown as ComponentBlock;
       const matchedUnique = findMatchingUnique(curr, uniqueComponents);
 
       if (matchedUnique) {
@@ -223,7 +454,7 @@ function _componentBlockToSequence(
         const actualIndex = matchedUnique.indices[seenCount] ?? matchedUnique.indices[0];
         seenCounts.set(matchedUnique.component, seenCount + 1);
 
-        computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${actualIndex}`, factors) as unknown as ComponentBlock;
+        computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${actualIndex}`, factors, factorBlocks) as unknown as ComponentBlock;
       } else {
         // This should never happen - all component blocks should be in uniqueComponents
         throw new Error(`Unexpected: component block not found in uniqueComponents map at path ${path}`);
@@ -235,7 +466,7 @@ function _componentBlockToSequence(
   if (order.interruptions) {
     for (let interruptionIndex = 0; interruptionIndex < order.interruptions.length; interruptionIndex += 1) {
       const interruption = order.interruptions[interruptionIndex];
-      const newComponents: (string | ComponentBlock | DynamicBlock | FactorBlock)[] = [];
+      const newComponents: (string | SequenceBlock)[] = [];
       if (interruption.spacing !== 'random') {
         for (let i = 0; i < computedComponents.length; i += 1) {
           if (
@@ -278,24 +509,32 @@ function componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
   factors: Record<string, string[]>,
+  factorBlocks: StudyConfig['factorBlocks'],
 ): Sequence {
   const orderCopy = structuredClone(order);
 
-  return _componentBlockToSequence(orderCopy, latinSquareObject, 'root', factors);
+  return _componentBlockToSequence(orderCopy, latinSquareObject, 'root', factors, factorBlocks);
 }
 
 function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], path: string, index: number) {
   const newPath = path.length > 0 ? `${path}-${index}` : 'root';
+  if (isDynamicBlock(order) || isFactorBlockReference(order)) {
+    return;
+  }
+
+  if (isFactorBlock(order)) {
+    if (order.order === 'latinSquare') {
+      paths.push(newPath);
+    }
+    return;
+  }
+
   if (order.order === 'latinSquare') {
     paths.push(newPath);
   }
 
-  if (isDynamicBlock(order) || isFactorBlock(order)) {
-    return;
-  }
-
   order.components.forEach((comp, i) => {
-    if (typeof comp !== 'string' && !isDynamicBlock(comp) && !isFactorBlock(comp)) {
+    if (typeof comp !== 'string' && !isDynamicBlock(comp) && !isFactorBlock(comp) && !isFactorBlockReference(comp)) {
       _createRandomOrders(comp, paths, newPath, i);
     }
   });
@@ -319,7 +558,14 @@ function _countPathUsage(
   pathCounts: Record<string, number>,
   path: string,
 ): void {
-  if (isDynamicBlock(order) || isFactorBlock(order)) {
+  if (isDynamicBlock(order) || isFactorBlockReference(order)) {
+    return;
+  }
+
+  if (isFactorBlock(order)) {
+    if (order.order === 'latinSquare') {
+      pathCounts[path] = (pathCounts[path] || 0) + 1;
+    }
     return;
   }
 
@@ -340,11 +586,17 @@ function _countPathUsage(
   const uniqueComponents = findUniqueComponents(order.components, false);
 
   // Track how many times we've seen each unique component
-  const seenCounts = new Map<ComponentBlock | DynamicBlock | FactorBlock, number>();
+  const seenCounts = new Map<SequenceBlock, number>();
 
   for (let i = 0; i < computedComponents.length; i += 1) {
     const curr = computedComponents[i];
-    if (typeof curr !== 'string' && !Array.isArray(curr) && !isDynamicBlock(curr) && !isFactorBlock(curr)) {
+    if (
+      typeof curr !== 'string'
+      && !Array.isArray(curr)
+      && !isDynamicBlock(curr)
+      && !isFactorBlock(curr)
+      && !isFactorBlockReference(curr)
+    ) {
       const matchedUnique = findMatchingUnique(curr, uniqueComponents);
 
       if (matchedUnique) {
@@ -385,7 +637,12 @@ export function generateSequenceArray(config: StudyConfig): Sequence[] {
   const sequenceArray: Sequence[] = [];
   Array.from({ length: numSequences }).forEach(() => {
     // Generate a sequence
-    const sequence = componentBlockToSequence(config.sequence, latinSquareObject, config.factors || {});
+    const sequence = componentBlockToSequence(
+      config.sequence,
+      latinSquareObject,
+      config.factors || {},
+      config.factorBlocks || {},
+    );
     sequence.components.push('end');
 
     // Add the sequence to the array

@@ -2,11 +2,13 @@ import Ajv from 'ajv';
 import merge from 'lodash.merge';
 import librarySchema from './LibraryConfigSchema.json';
 import {
-  ComponentBlock, IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
+  ComponentBlock, FactorBlock, FactorBlockDefinition, FactorBlockReference, IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
 } from './types';
-import { isDynamicBlock, isFactorBlock, isInheritedComponent } from './utils';
+import {
+  isDynamicBlock, isFactorBlock, isFactorBlockReference, isInheritedComponent,
+} from './utils';
 import { PREFIX } from '../utils/Prefix';
-import { combineFactors } from '../utils/handleRandomSequences';
+import { getFactorBlockCombinations } from '../utils/handleRandomSequences';
 import { findAllFactorBlocks, getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 
 const ajv = new Ajv({ allowUnionTypes: true });
@@ -53,7 +55,7 @@ function normalizeSkipTargets(skipConditions?: ComponentBlock['skip']): Componen
 }
 
 function namespaceLibrarySequenceComponents(sequence: StudyConfig['sequence'], libraryName: string): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence) || isFactorBlockReference(sequence)) {
     return sequence;
   }
   return {
@@ -105,6 +107,76 @@ export function deepFillTemplate<T>(value: T, vars: Record<string, string>): T {
   return value;
 }
 
+function factorBlockFromReference(
+  reference: FactorBlockReference,
+  definition: FactorBlockDefinition,
+): FactorBlock {
+  const parameters = reference.parameters ?? definition.parameters;
+  const factorBlock: FactorBlock = {
+    type: 'factors',
+    id: reference.id ?? reference.factorBlock,
+    action: definition.action,
+    order: reference.order ?? definition.order,
+    factorsToCross: definition.factorsToCross,
+    component: definition.component,
+  };
+
+  if (parameters !== undefined) {
+    factorBlock.parameters = parameters;
+  }
+
+  return factorBlock;
+}
+
+export function resolveFactorBlockReferences(
+  sequence: StudyConfig['sequence'],
+  factorBlocks: StudyConfig['factorBlocks'] = {},
+  errors: ParserErrorWarning[] = [],
+): StudyConfig['sequence'] {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+    return sequence;
+  }
+
+  if (isFactorBlockReference(sequence)) {
+    const factorBlockDefinition = factorBlocks[sequence.factorBlock];
+
+    if (!factorBlockDefinition) {
+      errors.push({
+        message: `Factor block \`${sequence.factorBlock}\` is not defined in factorBlocks`,
+        instancePath: '/sequence/',
+        params: { action: 'Add the factor block to factorBlocks or update the reference name' },
+        category: 'sequence-validation',
+      });
+
+      return {
+        id: sequence.id ?? sequence.factorBlock,
+        order: 'fixed',
+        components: [],
+      };
+    }
+
+    return factorBlockFromReference(sequence, factorBlockDefinition);
+  }
+
+  return {
+    ...sequence,
+    components: sequence.components.map((component) => (
+      typeof component === 'object'
+        ? resolveFactorBlockReferences(component, factorBlocks, errors)
+        : component
+    )),
+  };
+}
+
+function addFactorBlockError(errors: ParserErrorWarning[], message: string) {
+  errors.push({
+    message,
+    instancePath: '/factorBlocks/',
+    params: { action: 'Check that referenced factors and factorBlocks are defined and do not form cycles' },
+    category: 'sequence-validation',
+  });
+}
+
 export function createFactorComponents(config: StudyConfig): Record<string, IndividualComponent> {
   const factorBlocks = findAllFactorBlocks(config.sequence);
 
@@ -117,17 +189,17 @@ export function createFactorComponents(config: StudyConfig): Record<string, Indi
   factorBlocks.forEach((block) => {
     const baseComponent = config.baseComponents![block.component];
 
-    const factors = block.factorsToCross.map((c) => config.factors![c.factor]);
-    const depthToFactorsMap: Record<number, string> = {};
-    block.factorsToCross.forEach((f, i) => { depthToFactorsMap[i] = f.factor; });
-
-    const allCombs = combineFactors(0, factors, '', depthToFactorsMap, {});
+    const allCombs = getFactorBlockCombinations(block, config.factors!, config.factorBlocks);
 
     allCombs.forEach((c) => {
+      const baseParameters = baseComponent && 'parameters' in baseComponent && baseComponent.parameters
+        ? baseComponent.parameters
+        : {};
+      const parameters = block.parameters ?? { ...baseParameters, ...c[1] };
       const component = merge(
         {},
         baseComponent,
-        { parameters: block.parameters },
+        { parameters },
       );
       newComponents[c[0]] = deepFillTemplate(component, c[1]) as IndividualComponent;
     });
@@ -136,19 +208,28 @@ export function createFactorComponents(config: StudyConfig): Record<string, Indi
   return newComponents;
 }
 
-export function expandFactorSequences(sequence: StudyConfig['sequence'], importedLibrariesData: Record<string, LibraryConfig>, factors: Record<string, string[]>): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence)) {
+export function expandFactorSequences(
+  sequence: StudyConfig['sequence'],
+  importedLibrariesData: Record<string, LibraryConfig>,
+  factors: Record<string, string[]>,
+  factorBlocks: StudyConfig['factorBlocks'] = {},
+  errors: ParserErrorWarning[] = [],
+): StudyConfig['sequence'] {
+  if (isDynamicBlock(sequence) || isFactorBlockReference(sequence)) {
     return sequence;
   }
 
   if (isFactorBlock(sequence)) {
-    const depthMap = {};
-    const newComponents = sequence.factorsToCross.map((c) => factors[c.factor]);
-    const componentsToCross = combineFactors(0, newComponents, '', depthMap, {});
+    const componentsToCross = getFactorBlockCombinations(
+      sequence,
+      factors,
+      factorBlocks,
+      (message) => addFactorBlockError(errors, message),
+    );
 
     return {
       id: sequence.id,
-      order: sequence.order,
+      order: sequence.order ?? 'fixed',
       components: componentsToCross.map((c) => c[0]),
       skip: [],
     };
@@ -158,7 +239,7 @@ export function expandFactorSequences(sequence: StudyConfig['sequence'], importe
     ...sequence,
     components: (sequence.components || []).map((component) => {
       if (typeof component === 'object') {
-        return expandFactorSequences(component, importedLibrariesData, factors);
+        return expandFactorSequences(component, importedLibrariesData, factors, factorBlocks, errors);
       }
 
       return component;
@@ -168,7 +249,7 @@ export function expandFactorSequences(sequence: StudyConfig['sequence'], importe
 
 // Recursively iterate through sequences (sequence.components) and replace any library sequence references with the actual library sequence
 export function expandLibrarySequences(sequence: StudyConfig['sequence'], importedLibrariesData: Record<string, LibraryConfig>, errors: ParserErrorWarning[] = []): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence) || isFactorBlockReference(sequence)) {
     return sequence;
   }
   return {

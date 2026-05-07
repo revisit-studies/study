@@ -1,7 +1,9 @@
 import {
   describe, expect, test, vi,
 } from 'vitest';
-import { expandLibrarySequences, verifyLibraryUsage, loadLibrariesParseNamespace } from './libraryParser';
+import {
+  expandFactorSequences, expandLibrarySequences, verifyLibraryUsage, loadLibrariesParseNamespace, resolveFactorBlockReferences,
+} from './libraryParser';
 import {
   ComponentBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
 } from './types';
@@ -11,6 +13,177 @@ import { isDynamicBlock } from './utils';
 function isComponentBlock(value: unknown): value is ComponentBlock {
   return typeof value === 'object' && value !== null && 'components' in value && !isDynamicBlock(value as StudyConfig['sequence']);
 }
+
+describe('Factor Block Expansion', () => {
+  test('resolves reusable top-level factor block references', () => {
+    const sequence: StudyConfig['sequence'] = {
+      order: 'fixed',
+      components: [
+        {
+          type: 'factorBlock',
+          factorBlock: 'sharedFactors',
+          id: 'sharedFactorsFirstUse',
+        },
+      ],
+    };
+
+    const result = resolveFactorBlockReferences(sequence, {
+      sharedFactors: {
+        action: 'zip',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    });
+
+    expect(isComponentBlock(result)).toBe(true);
+    if (isComponentBlock(result)) {
+      expect(result.components[0]).toMatchObject({
+        type: 'factors',
+        id: 'sharedFactorsFirstUse',
+        action: 'zip',
+        component: 'factorComponent',
+      });
+    }
+  });
+
+  test('expands a factor block used as a factor inside another factor block', () => {
+    const sequence: StudyConfig['sequence'] = {
+      type: 'factors',
+      action: 'nest',
+      order: 'random',
+      id: 'zipThenTask',
+      factorsToCross: [
+        { factorBlock: 'zipDataVis' },
+        { factor: 'task' },
+      ],
+      component: 'factorComponent',
+    };
+
+    const result = expandFactorSequences(
+      sequence,
+      {},
+      {
+        data: ['d1', 'd2'],
+        visType: ['v1', 'v2', 'v3'],
+        task: ['t1', 't2'],
+      },
+      {
+        zipDataVis: {
+          action: 'zip',
+          order: 'random',
+          factorsToCross: [
+            { factor: 'data' },
+            { factor: 'visType' },
+          ],
+          component: 'factorComponent',
+        },
+      },
+    );
+
+    expect(isComponentBlock(result)).toBe(true);
+    if (isComponentBlock(result)) {
+      expect(result.order).toBe('random');
+      expect(result.components).toEqual([
+        '_d1_v1_t1',
+        '_d1_v1_t2',
+        '_d2_v2_t1',
+        '_d2_v2_t2',
+      ]);
+    }
+  });
+
+  test('expands nest action into nested component combinations with fixed sequence ordering', () => {
+    const sequence: StudyConfig['sequence'] = {
+      type: 'factors',
+      action: 'nest',
+      id: 'nestedFactors',
+      factorsToCross: [
+        { factor: 'm' },
+        { factor: 'n' },
+      ],
+      component: 'factorComponent',
+      parameters: {},
+    };
+
+    const result = expandFactorSequences(sequence, {}, {
+      m: ['m1', 'm2'],
+      n: ['n1', 'n2', 'n3'],
+    });
+
+    expect(isComponentBlock(result)).toBe(true);
+    if (isComponentBlock(result)) {
+      expect(result.order).toBe('fixed');
+      expect(result.components).toEqual([
+        '_m1_n1',
+        '_m1_n2',
+        '_m1_n3',
+        '_m2_n1',
+        '_m2_n2',
+        '_m2_n3',
+      ]);
+    }
+  });
+
+  test('expands cross action into crossed component combinations with fixed sequence ordering', () => {
+    const sequence: StudyConfig['sequence'] = {
+      type: 'factors',
+      action: 'cross',
+      id: 'crossedFactors',
+      factorsToCross: [
+        { factor: 'm' },
+        { factor: 'n' },
+      ],
+      component: 'factorComponent',
+      parameters: {},
+    };
+
+    const result = expandFactorSequences(sequence, {}, {
+      m: ['m1', 'm2'],
+      n: ['n1', 'n2'],
+    });
+
+    expect(isComponentBlock(result)).toBe(true);
+    if (isComponentBlock(result)) {
+      expect(result.order).toBe('fixed');
+      expect(result.components).toEqual([
+        '_m1_n1',
+        '_m2_n2',
+        '_m2_n1',
+        '_m1_n2',
+      ]);
+    }
+  });
+
+  test('expands zip action into zipped component combinations with fixed sequence ordering', () => {
+    const sequence: StudyConfig['sequence'] = {
+      type: 'factors',
+      action: 'zip',
+      id: 'zippedFactors',
+      factorsToCross: [
+        { factor: 'm' },
+        { factor: 'n' },
+      ],
+      component: 'factorComponent',
+    };
+
+    const result = expandFactorSequences(sequence, {}, {
+      m: ['m1', 'm2'],
+      n: ['n1', 'n2', 'n3'],
+    });
+
+    expect(isComponentBlock(result)).toBe(true);
+    if (isComponentBlock(result)) {
+      expect(result.order).toBe('fixed');
+      expect(result.components).toEqual([
+        '_m1_n1',
+        '_m2_n2',
+      ]);
+    }
+  });
+});
 
 describe('Library Macro Expansion', () => {
   // Mock library data for testing

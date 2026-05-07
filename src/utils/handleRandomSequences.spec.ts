@@ -37,6 +37,200 @@ const testRandomizationConfigUrl = new URL('../../public/test-randomization/conf
 const randomizationDistributionTest = existsSync(testRandomizationConfigUrl) ? test : test.skip;
 
 describe('Generating sequences works as expected', () => {
+  test('generateSequenceArray preserves nested ordering for nest factor blocks', () => {
+    const nestedFactorConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 1,
+      },
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2', 'n3'],
+      },
+      sequence: {
+        type: 'factors',
+        action: 'nest',
+        id: 'nestedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(nestedFactorConfig);
+
+    expect(sequenceArray).toHaveLength(1);
+    expect(sequenceArray[0].order).toBe('fixed');
+    expect(sequenceArray[0].components).toEqual([
+      '_m1_n1',
+      '_m1_n2',
+      '_m1_n3',
+      '_m2_n1',
+      '_m2_n2',
+      '_m2_n3',
+      'end',
+    ]);
+  });
+
+  test('generateSequenceArray preserves crossed ordering for cross factor blocks', () => {
+    const crossFactorConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 1,
+      },
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2'],
+      },
+      sequence: {
+        type: 'factors',
+        action: 'cross',
+        id: 'crossedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(crossFactorConfig);
+
+    expect(sequenceArray).toHaveLength(1);
+    expect(sequenceArray[0].order).toBe('fixed');
+    expect(sequenceArray[0].components).toEqual([
+      '_m1_n1',
+      '_m2_n2',
+      '_m2_n1',
+      '_m1_n2',
+      'end',
+    ]);
+  });
+
+  test('generateSequenceArray preserves zipped ordering for zip factor blocks', () => {
+    const zipFactorConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 1,
+      },
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2', 'n3'],
+      },
+      sequence: {
+        type: 'factors',
+        action: 'zip',
+        id: 'zippedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(zipFactorConfig);
+
+    expect(sequenceArray).toHaveLength(1);
+    expect(sequenceArray[0].order).toBe('fixed');
+    expect(sequenceArray[0].components).toEqual([
+      '_m1_n1',
+      '_m2_n2',
+      'end',
+    ]);
+  });
+
+  test('generateSequenceArray preserves ordering when a factor block is used as a factor', () => {
+    const nestedFactorBlockConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 1,
+      },
+      factors: {
+        data: ['d1', 'd2'],
+        visType: ['v1', 'v2', 'v3'],
+        task: ['t1', 't2'],
+      },
+      factorBlocks: {
+        zipDataVis: {
+          action: 'zip',
+          order: 'random',
+          factorsToCross: [
+            { factor: 'data' },
+            { factor: 'visType' },
+          ],
+          component: 'factorComponent',
+        },
+      },
+      sequence: {
+        type: 'factors',
+        action: 'nest',
+        id: 'zipThenTask',
+        factorsToCross: [
+          { factorBlock: 'zipDataVis' },
+          { factor: 'task' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(nestedFactorBlockConfig);
+
+    expect(sequenceArray).toHaveLength(1);
+    expect(sequenceArray[0].order).toBe('fixed');
+    expect(sequenceArray[0].components).toEqual([
+      '_d1_v1_t1',
+      '_d1_v1_t2',
+      '_d2_v2_t1',
+      '_d2_v2_t2',
+      'end',
+    ]);
+  });
+
+  test('generateSequenceArray applies factor block order after combinations are created', () => {
+    const orderedFactorConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 1,
+      },
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2'],
+      },
+      sequence: {
+        type: 'factors',
+        action: 'nest',
+        order: 'random',
+        id: 'randomizedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(orderedFactorConfig);
+    const generatedComponents = sequenceArray[0].components.filter((component) => component !== 'end');
+
+    expect(sequenceArray).toHaveLength(1);
+    expect(sequenceArray[0].order).toBe('random');
+    expect(generatedComponents).toHaveLength(4);
+    expect(new Set(generatedComponents)).toEqual(new Set([
+      '_m1_n1',
+      '_m1_n2',
+      '_m2_n1',
+      '_m2_n2',
+    ]));
+  });
+
   test('generateSequenceArray defaults to 1000 sequences when numSequences is omitted', () => {
     const defaultCountConfig: StudyConfig = {
       ...config,

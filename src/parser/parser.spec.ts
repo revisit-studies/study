@@ -1,11 +1,20 @@
 import {
   describe, expect, test, vi,
 } from 'vitest';
+import { ComponentBlock, StudyConfig } from './types';
 import { parseStudyConfig } from './parser';
 import { isDynamicBlock, isFactorBlock } from './utils';
 
 // Mock the fetch function for library loading
 global.fetch = vi.fn();
+
+function isComponentBlock(value: unknown): value is ComponentBlock {
+  return typeof value === 'object'
+    && value !== null
+    && 'components' in value
+    && !isDynamicBlock(value as StudyConfig['sequence'])
+    && !isFactorBlock(value as StudyConfig['sequence']);
+}
 
 describe('BaseComponent Macro Expansion', () => {
   describe('.co. macro expansion in baseComponent references', () => {
@@ -378,8 +387,8 @@ describe('BaseComponent Macro Expansion', () => {
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
       // Check sequence expansion - the .co. should have been expanded to .components.
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence) && !isFactorBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components).toContain('$testLib.components.directComp');
       }
 
@@ -445,17 +454,12 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence) && !isFactorBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components).toHaveLength(1);
         const inlinedSequence = result.sequence.components[0];
         expect(typeof inlinedSequence).toBe('object');
-        if (
-          typeof inlinedSequence === 'object'
-          && inlinedSequence !== null
-          && !isDynamicBlock(inlinedSequence)
-          && !isFactorBlock(inlinedSequence)
-        ) {
+        if (isComponentBlock(inlinedSequence)) {
           expect(inlinedSequence.id).toBe('$testLib.sequences.sequenceFromLibrary');
           expect(inlinedSequence.components).toEqual(['$testLib.components.sequenceComp']);
         }
@@ -514,17 +518,12 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence) && !isFactorBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components).toHaveLength(1);
         const inlinedSequence = result.sequence.components[0];
         expect(typeof inlinedSequence).toBe('object');
-        if (
-          typeof inlinedSequence === 'object'
-          && inlinedSequence !== null
-          && !isDynamicBlock(inlinedSequence)
-          && !isFactorBlock(inlinedSequence)
-        ) {
+        if (isComponentBlock(inlinedSequence)) {
           expect(inlinedSequence.id).toBe('$testLib.sequences.sequenceFromLibrary');
           expect(inlinedSequence.components).toEqual(['$testLib.components.sequenceComp']);
         }
@@ -612,17 +611,12 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence) && !isFactorBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components[1]).toBe('$testLib.components.target');
         const firstComponent = result.sequence.components[0];
         expect(typeof firstComponent).toBe('object');
-        if (
-          typeof firstComponent === 'object'
-          && firstComponent !== null
-          && !isDynamicBlock(firstComponent)
-          && !isFactorBlock(firstComponent)
-        ) {
+        if (isComponentBlock(firstComponent)) {
           expect(firstComponent.interruptions?.[0].components).toEqual(['$testLib.components.breakComp']);
           expect(firstComponent.skip?.[0].to).toBe('$testLib.components.target');
         }
@@ -1504,5 +1498,404 @@ describe('Parser Warnings', () => {
     );
 
     expect(contactEmailWarning).toBeUndefined();
+  });
+
+  test('accepts nest order for factor blocks and expands to nested fixed sequence', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          parameters: { label: `$${'{m}'}/$${'{n}'}` },
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2', 'n3'],
+      },
+      sequence: {
+        type: 'factors',
+        action: 'nest',
+        id: 'nestedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(isComponentBlock(result.sequence)).toBe(true);
+    if (isComponentBlock(result.sequence)) {
+      expect(result.sequence.order).toBe('fixed');
+      expect(result.sequence.components).toEqual([
+        '_m1_n1',
+        '_m1_n2',
+        '_m1_n3',
+        '_m2_n1',
+        '_m2_n2',
+        '_m2_n3',
+      ]);
+    }
+    expect(result.components._m1_n1).toMatchObject({
+      parameters: { label: 'm1/n1' },
+    });
+  });
+
+  test('accepts cross action for factor blocks and expands to crossed fixed sequence', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          parameters: { label: `$${'{m}'}/$${'{n}'}` },
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2'],
+      },
+      sequence: {
+        type: 'factors',
+        action: 'cross',
+        id: 'crossedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+        parameters: { label: `$${'{m}'}/$${'{n}'}` },
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(isComponentBlock(result.sequence)).toBe(true);
+    if (isComponentBlock(result.sequence)) {
+      expect(result.sequence.order).toBe('fixed');
+      expect(result.sequence.components).toEqual([
+        '_m1_n1',
+        '_m2_n2',
+        '_m2_n1',
+        '_m1_n2',
+      ]);
+    }
+    expect(result.components._m2_n2).toMatchObject({
+      parameters: { label: 'm2/n2' },
+    });
+  });
+
+  test('accepts zip action for factor blocks and expands to zipped fixed sequence', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2', 'n3'],
+      },
+      sequence: {
+        type: 'factors',
+        action: 'zip',
+        id: 'zippedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(isComponentBlock(result.sequence)).toBe(true);
+    if (isComponentBlock(result.sequence)) {
+      expect(result.sequence.order).toBe('fixed');
+      expect(result.sequence.components).toEqual([
+        '_m1_n1',
+        '_m2_n2',
+      ]);
+    }
+    expect(result.components._m2_n2).toMatchObject({
+      parameters: { m: 'm2', n: 'n2' },
+    });
+  });
+
+  test('accepts reusable top-level factor blocks referenced from the sequence', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2', 'n3'],
+      },
+      factorBlocks: {
+        zippedFactors: {
+          action: 'zip',
+          order: 'random',
+          factorsToCross: [
+            { factor: 'm' },
+            { factor: 'n' },
+          ],
+          component: 'factorComponent',
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          {
+            type: 'factorBlock',
+            factorBlock: 'zippedFactors',
+          },
+        ],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(isComponentBlock(result.sequence)).toBe(true);
+    if (isComponentBlock(result.sequence)) {
+      expect(result.sequence.components).toEqual([
+        {
+          id: 'zippedFactors',
+          order: 'random',
+          components: [
+            '_m1_n1',
+            '_m2_n2',
+          ],
+          skip: [],
+        },
+      ]);
+    }
+    expect(result.components._m1_n1).toMatchObject({
+      parameters: { m: 'm1', n: 'n1' },
+    });
+  });
+
+  test('accepts a factor block as a factor of another reusable factor block', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        data: ['d1', 'd2'],
+        visType: ['v1', 'v2', 'v3'],
+        task: ['t1', 't2'],
+      },
+      factorBlocks: {
+        zipDataVis: {
+          action: 'zip',
+          order: 'random',
+          factorsToCross: [
+            { factor: 'data' },
+            { factor: 'visType' },
+          ],
+          component: 'factorComponent',
+        },
+        zipThenTask: {
+          action: 'nest',
+          order: 'latinSquare',
+          factorsToCross: [
+            { factorBlock: 'zipDataVis' },
+            { factor: 'task' },
+          ],
+          component: 'factorComponent',
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          {
+            type: 'factorBlock',
+            factorBlock: 'zipThenTask',
+          },
+        ],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(isComponentBlock(result.sequence)).toBe(true);
+    if (isComponentBlock(result.sequence)) {
+      expect(result.sequence.components).toEqual([
+        {
+          id: 'zipThenTask',
+          order: 'latinSquare',
+          components: [
+            '_d1_v1_t1',
+            '_d1_v1_t2',
+            '_d2_v2_t1',
+            '_d2_v2_t2',
+          ],
+          skip: [],
+        },
+      ]);
+    }
+    expect(result.components._d2_v2_t2).toMatchObject({
+      parameters: { data: 'd2', visType: 'v2', task: 't2' },
+    });
+  });
+
+  test('uses factor values as parameters when factor block and base component omit parameters', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2'],
+      },
+      sequence: {
+        type: 'factors',
+        action: 'cross',
+        id: 'crossedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.components._m2_n2).toMatchObject({
+      parameters: { m: 'm2', n: 'n2' },
+    });
   });
 });
