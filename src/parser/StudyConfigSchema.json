@@ -523,6 +523,9 @@
               },
               {
                 "$ref": "#/definitions/FactorBlock"
+              },
+              {
+                "$ref": "#/definitions/FactorBlockReference"
               }
             ]
           },
@@ -1000,11 +1003,19 @@
         },
         "factorsToCross": {
           "items": {
-            "$ref": "#/definitions/FactorObj"
+            "$ref": "#/definitions/Factor"
           },
           "type": "array"
         },
         "id": {
+          "type": "string"
+        },
+        "action": {
+          "enum": [
+            "nest",
+            "cross",
+            "zip"
+          ],
           "type": "string"
         },
         "order": {
@@ -1028,9 +1039,105 @@
         "type",
         "factorsToCross",
         "id",
-        "order",
-        "component",
-        "parameters"
+        "action",
+        "component"
+      ],
+      "type": "object"
+    },
+    "FactorBlockDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "type": "string"
+        },
+        "factorsToCross": {
+          "items": {
+            "$ref": "#/definitions/Factor"
+          },
+          "type": "array"
+        },
+        "action": {
+          "enum": [
+            "nest",
+            "cross",
+            "zip"
+          ],
+          "type": "string"
+        },
+        "order": {
+          "enum": [
+            "random",
+            "latinSquare",
+            "fixed"
+          ],
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      },
+      "required": [
+        "factorsToCross",
+        "action",
+        "component"
+      ],
+      "type": "object"
+    },
+    "Factor": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FactorObj"
+        },
+        {
+          "$ref": "#/definitions/FactorBlockFactor"
+        }
+      ]
+    },
+    "FactorBlockFactor": {
+      "additionalProperties": false,
+      "properties": {
+        "factorBlock": {
+          "type": "string"
+        },
+        "numSamples": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "factorBlock"
+      ],
+      "type": "object"
+    },
+    "FactorBlockReference": {
+      "additionalProperties": false,
+      "properties": {
+        "factorBlock": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "order": {
+          "enum": [
+            "random",
+            "latinSquare",
+            "fixed"
+          ],
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "type": {
+          "const": "factorBlock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "factorBlock"
       ],
       "type": "object"
     },
@@ -3466,6 +3573,13 @@
           "description": "The order of the components in the study. This might include some randomness.",
           "type": "object"
         },
+        "factorBlocks": {
+          "additionalProperties": {
+            "$ref": "#/definitions/FactorBlockDefinition"
+          },
+          "description": "Reusable factor block definitions that can be referenced from the sequence.",
+          "type": "object"
+        },
         "importedLibraries": {
           "description": "A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later.",
           "items": {
@@ -3483,6 +3597,9 @@
             },
             {
               "$ref": "#/definitions/FactorBlock"
+            },
+            {
+              "$ref": "#/definitions/FactorBlockReference"
             }
           ]
         },

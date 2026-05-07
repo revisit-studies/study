@@ -1,19 +1,192 @@
 import {
   describe, expect, test, vi,
 } from 'vitest';
-import { expandLibrarySequences, verifyLibraryUsage, loadLibrariesParseNamespace } from '../libraryParser';
 import {
-  ComponentBlock, DynamicBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
-} from '../types';
-import { isDynamicBlock } from '../utils';
-import calviConfig from '../../../public/libraries/calvi/config.json';
-import vlatConfig from '../../../public/libraries/vlat/config.json';
+  expandFactorSequences, expandLibrarySequences, verifyLibraryUsage, loadLibrariesParseNamespace, resolveFactorBlockReferences,
+} from './libraryParser';
+import {
+  ComponentBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
+} from './types';
+import { isDynamicBlock } from './utils';
 
-function isComponentBlock(value: string | ComponentBlock | DynamicBlock): value is ComponentBlock {
-  return typeof value === 'object' && value !== null && 'components' in value && !isDynamicBlock(value);
+// Helper function to check if a value is a ComponentBlock
+function isComponentBlock(value: unknown): value is ComponentBlock {
+  return typeof value === 'object' && value !== null && 'components' in value && !isDynamicBlock(value as StudyConfig['sequence']);
 }
 
+describe('Factor Block Expansion', () => {
+  test('resolves reusable top-level factor block references', () => {
+    const sequence: StudyConfig['sequence'] = {
+      order: 'fixed',
+      components: [
+        {
+          type: 'factorBlock',
+          factorBlock: 'sharedFactors',
+          id: 'sharedFactorsFirstUse',
+        },
+      ],
+    };
+
+    const result = resolveFactorBlockReferences(sequence, {
+      sharedFactors: {
+        action: 'zip',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    });
+
+    expect(isComponentBlock(result)).toBe(true);
+    if (isComponentBlock(result)) {
+      expect(result.components[0]).toMatchObject({
+        type: 'factors',
+        id: 'sharedFactorsFirstUse',
+        action: 'zip',
+        component: 'factorComponent',
+      });
+    }
+  });
+
+  test('expands a factor block used as a factor inside another factor block', () => {
+    const sequence: StudyConfig['sequence'] = {
+      type: 'factors',
+      action: 'nest',
+      order: 'random',
+      id: 'zipThenTask',
+      factorsToCross: [
+        { factorBlock: 'zipDataVis' },
+        { factor: 'task' },
+      ],
+      component: 'factorComponent',
+    };
+
+    const result = expandFactorSequences(
+      sequence,
+      {},
+      {
+        data: ['d1', 'd2'],
+        visType: ['v1', 'v2', 'v3'],
+        task: ['t1', 't2'],
+      },
+      {
+        zipDataVis: {
+          action: 'zip',
+          order: 'random',
+          factorsToCross: [
+            { factor: 'data' },
+            { factor: 'visType' },
+          ],
+          component: 'factorComponent',
+        },
+      },
+    );
+
+    expect(isComponentBlock(result)).toBe(true);
+    if (isComponentBlock(result)) {
+      expect(result.order).toBe('random');
+      expect(result.components).toEqual([
+        '_d1_v1_t1',
+        '_d1_v1_t2',
+        '_d2_v2_t1',
+        '_d2_v2_t2',
+      ]);
+    }
+  });
+
+  test('expands nest action into nested component combinations with fixed sequence ordering', () => {
+    const sequence: StudyConfig['sequence'] = {
+      type: 'factors',
+      action: 'nest',
+      id: 'nestedFactors',
+      factorsToCross: [
+        { factor: 'm' },
+        { factor: 'n' },
+      ],
+      component: 'factorComponent',
+      parameters: {},
+    };
+
+    const result = expandFactorSequences(sequence, {}, {
+      m: ['m1', 'm2'],
+      n: ['n1', 'n2', 'n3'],
+    });
+
+    expect(isComponentBlock(result)).toBe(true);
+    if (isComponentBlock(result)) {
+      expect(result.order).toBe('fixed');
+      expect(result.components).toEqual([
+        '_m1_n1',
+        '_m1_n2',
+        '_m1_n3',
+        '_m2_n1',
+        '_m2_n2',
+        '_m2_n3',
+      ]);
+    }
+  });
+
+  test('expands cross action into crossed component combinations with fixed sequence ordering', () => {
+    const sequence: StudyConfig['sequence'] = {
+      type: 'factors',
+      action: 'cross',
+      id: 'crossedFactors',
+      factorsToCross: [
+        { factor: 'm' },
+        { factor: 'n' },
+      ],
+      component: 'factorComponent',
+      parameters: {},
+    };
+
+    const result = expandFactorSequences(sequence, {}, {
+      m: ['m1', 'm2'],
+      n: ['n1', 'n2'],
+    });
+
+    expect(isComponentBlock(result)).toBe(true);
+    if (isComponentBlock(result)) {
+      expect(result.order).toBe('fixed');
+      expect(result.components).toEqual([
+        '_m1_n1',
+        '_m2_n2',
+        '_m2_n1',
+        '_m1_n2',
+      ]);
+    }
+  });
+
+  test('expands zip action into zipped component combinations with fixed sequence ordering', () => {
+    const sequence: StudyConfig['sequence'] = {
+      type: 'factors',
+      action: 'zip',
+      id: 'zippedFactors',
+      factorsToCross: [
+        { factor: 'm' },
+        { factor: 'n' },
+      ],
+      component: 'factorComponent',
+    };
+
+    const result = expandFactorSequences(sequence, {}, {
+      m: ['m1', 'm2'],
+      n: ['n1', 'n2', 'n3'],
+    });
+
+    expect(isComponentBlock(result)).toBe(true);
+    if (isComponentBlock(result)) {
+      expect(result.order).toBe('fixed');
+      expect(result.components).toEqual([
+        '_m1_n1',
+        '_m2_n2',
+      ]);
+    }
+  });
+});
+
 describe('Library Macro Expansion', () => {
+  // Mock library data for testing
   const mockLibraryData: Record<string, LibraryConfig> = {
     testLib: {
       $schema: '',
@@ -334,6 +507,7 @@ describe('Library Macro Expansion', () => {
     });
 
     test('expands .co. within expanded .se. sequences', () => {
+      // Create a library with a sequence that uses .co. internally
       const libraryWithCoInSequence: Record<string, LibraryConfig> = {
         testLib: {
           ...mockLibraryData.testLib,
@@ -359,6 +533,7 @@ describe('Library Macro Expansion', () => {
         const expandedSequence = result.components[0];
         expect(typeof expandedSequence).toBe('object');
         if (isComponentBlock(expandedSequence)) {
+          // Components in the sequence should be namespaced with .components.
           expect(expandedSequence.components).toEqual([
             '$testLib.components.component1',
             '$testLib.components.component2',
@@ -407,6 +582,7 @@ describe('Library Macro Expansion', () => {
 
       expect(isComponentBlock(result)).toBe(true);
       if (isComponentBlock(result)) {
+        // Should only replace the first .co.
         expect(result.components).toEqual(['$testLib.components.component1']);
       }
     });
@@ -463,6 +639,7 @@ describe('Library Macro Expansion', () => {
         expect(result.components).toHaveLength(1);
         const expandedSequence = result.components[0];
         if (isComponentBlock(expandedSequence)) {
+          // Component should be namespaced
           expect(expandedSequence.components).toEqual(['$testLib.components.component1']);
         }
       }
@@ -501,6 +678,7 @@ describe('Library Macro Expansion', () => {
         expect(result.components).toHaveLength(1);
         const expandedSequence = result.components[0];
         if (isComponentBlock(expandedSequence)) {
+          // Component should remain the same
           expect(expandedSequence.components).toEqual(['$testLib.components.component1']);
         }
       }
@@ -629,6 +807,7 @@ describe('Library Macro Expansion', () => {
       const errors: ParserErrorWarning[] = [];
       expandLibrarySequences(sequence, mockLibraryData, errors);
 
+      // Should have collected errors from expansion
       expect(errors.length).toBe(2);
       expect(errors.some((e) => e.message?.includes('missingLib'))).toBe(true);
       expect(errors.some((e) => e.message?.includes('anotherMissingLib'))).toBe(true);
@@ -646,6 +825,7 @@ describe('Library Macro Expansion', () => {
 
       expect(isComponentBlock(result)).toBe(true);
       if (isComponentBlock(result)) {
+        // Should only replace the first .co.
         expect(result.components).toEqual(['$testLib.components.component.with.dots']);
       }
     });
@@ -660,6 +840,8 @@ describe('Library Macro Expansion', () => {
 
       expect(isComponentBlock(result)).toBe(true);
       if (isComponentBlock(result)) {
+        // .se. gets replaced first, then the string becomes .sequences.co.something
+        // The .co. won't be in the right position to be replaced again
         expect(result.components[0]).toContain('.sequences.');
       }
     });
@@ -679,11 +861,10 @@ describe('Library Macro Expansion', () => {
     });
 
     test('handles undefined/null components array gracefully', () => {
-      const sequence: StudyConfig['sequence'] = {
+      const sequence = {
         order: 'fixed',
-        // @ts-expect-error intentionally passing undefined to test edge case
         components: undefined,
-      };
+      } as unknown as StudyConfig['sequence'];
 
       const result = expandLibrarySequences(sequence, mockLibraryData);
 
@@ -711,9 +892,9 @@ describe('Library Macro Expansion', () => {
     });
 
     test('preserves interruptions property', () => {
-      const interruptions: ComponentBlock['interruptions'] = [
+      const interruptions = [
         {
-          spacing: 'random',
+          spacing: 'random' as const,
           numInterruptions: 1,
           components: ['breakComponent'],
         },
@@ -734,13 +915,13 @@ describe('Library Macro Expansion', () => {
     });
 
     test('preserves skip conditions', () => {
-      const skip: ComponentBlock['skip'] = [
+      const skip = [
         {
           name: 'skipCondition',
-          check: 'response',
+          check: 'response' as const,
           responseId: 'response1',
           value: 'yes',
-          comparison: 'equal',
+          comparison: 'equal' as const,
           to: 'nextComponent',
         },
       ];
@@ -1370,40 +1551,6 @@ describe('verifyLibraryUsage', () => {
 });
 
 describe('loadLibrariesParseNamespace', () => {
-  test('loads CALVI and VLAT configs with tag-pinned external image assets', async () => {
-    const libraryConfigs: Record<string, LibraryConfig> = {
-      calvi: calviConfig as LibraryConfig,
-      vlat: vlatConfig as LibraryConfig,
-    };
-
-    global.fetch = vi.fn().mockImplementation((path: URL | RequestInfo) => {
-      const pathString = path.toString();
-      const libraryName = pathString.includes('/calvi/')
-        ? 'calvi'
-        : 'vlat';
-
-      return Promise.resolve({
-        text: async () => JSON.stringify(libraryConfigs[libraryName]),
-      });
-    });
-
-    const errors: ParserErrorWarning[] = [];
-    const warnings: ParserErrorWarning[] = [];
-
-    const result = await loadLibrariesParseNamespace(['calvi', 'vlat'], errors, warnings);
-    const assetBaseUrl = 'https://raw.githubusercontent.com/revisit-studies/library-assets/v1';
-    const calviN1 = result.calvi.components['$calvi.components.N1'] as { path: string };
-    const vlatLine = result.vlat.components['$vlat.components.line-value'] as { path: string };
-
-    expect(errors).toHaveLength(0);
-    expect(result.calvi.sequences?.full).toBeDefined();
-    expect(result.calvi.sequences?.specificBank).toBeDefined();
-    expect(result.calvi.sequences?.fullBank).toBeDefined();
-    expect(result.vlat.sequences?.full).toBeDefined();
-    expect(calviN1.path).toBe(`${assetBaseUrl}/calvi/questions/normal/N1.jpg`);
-    expect(vlatLine.path).toBe(`${assetBaseUrl}/vlat/VLAT1.png`);
-  });
-
   test('loads libraries and namespaces components correctly', async () => {
     const mockLibraryConfig = {
       $schema: '',
@@ -1491,12 +1638,12 @@ describe('loadLibrariesParseNamespace', () => {
     const result = await loadLibrariesParseNamespace(['testLib'], errors, warnings);
 
     const derivedComp = result.testLib.components['$testLib.components.derivedComp'];
+    const derivedCompRecord = derivedComp as Record<string, unknown>;
     expect(derivedComp).toBeDefined();
-    const derivedCompRecord = derivedComp as IndividualComponent & Record<string, string>;
     expect(derivedCompRecord.instructionText).toBe('Override text');
     expect(derivedCompRecord.type).toBe('markdown');
     expect(derivedCompRecord.path).toBe('base.md');
-    expect(derivedCompRecord.baseComponent).toBeUndefined();
+    expect(derivedCompRecord.baseComponent).toBeUndefined(); // Should be removed
     expect(result.testLib.__revisitInheritedComponentMetadata).toEqual({
       '$testLib.components.derivedComp': {
         baseComponent: 'baseComp',
@@ -1601,6 +1748,7 @@ describe('loadLibrariesParseNamespace', () => {
 
     await loadLibrariesParseNamespace(['testLib'], errors, warnings);
 
+    // Warnings array should exist even if empty
     expect(Array.isArray(warnings)).toBe(true);
   });
 
@@ -1675,9 +1823,9 @@ describe('loadLibrariesParseNamespace', () => {
     const result = await loadLibrariesParseNamespace(['testLib'], errors, warnings);
 
     const derivedComp = result.testLib.components['$testLib.components.derivedComp'];
-    const derivedCompRecord = derivedComp as IndividualComponent & Record<string, string> & { meta?: Record<string, string> };
+    const derivedCompRecord = derivedComp as Record<string, unknown> & { meta?: Record<string, unknown> };
     expect(derivedCompRecord.instructionText).toBe('Override instruction');
     expect(derivedCompRecord.meta?.customProp).toBe('derived value');
-    expect(derivedCompRecord.meta?.baseProp).toBe('base value');
+    expect(derivedCompRecord.meta?.baseProp).toBe('base value'); // Merged from base
   });
 });

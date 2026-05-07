@@ -1,6 +1,6 @@
 import { Sequence } from '../store/types';
 import {
-  DynamicBlock, FactorBlock, IndividualComponent, InheritedComponent, StudyConfig,
+  DynamicBlock, FactorBlock, FactorBlockReference, IndividualComponent, InheritedComponent, StudyConfig,
 } from './types';
 
 export function isInheritedComponent(comp: IndividualComponent | InheritedComponent) : comp is InheritedComponent {
@@ -13,4 +13,8 @@ export function isDynamicBlock(comp: StudyConfig['sequence'] | Sequence) : comp 
 
 export function isFactorBlock(comp: StudyConfig['sequence'] | Sequence) : comp is FactorBlock {
   return (<FactorBlock>comp).factorsToCross !== undefined;
+}
+
+export function isFactorBlockReference(comp: StudyConfig['sequence'] | Sequence) : comp is FactorBlockReference {
+  return (<FactorBlockReference>comp).type === 'factorBlock';
 }

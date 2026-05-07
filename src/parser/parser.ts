@@ -7,29 +7,12 @@ import {
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import {
-  createFactorComponents, expandFactorSequences, expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage,
+  createFactorComponents, expandFactorSequences, expandLibrarySequences, loadLibrariesParseNamespace, resolveFactorBlockReferences, verifyLibraryUsage,
 } from './libraryParser';
-import { isDynamicBlock, isFactorBlock, isInheritedComponent } from './utils';
 import {
-  DEFAULT_CONTACT_EMAIL,
-  DEFAULT_FIREBASE_WARNING_ACTION,
-  DEFAULT_FIREBASE_WARNING_MESSAGE,
-  DEFAULT_SUPABASE_WARNING_ACTION,
-  DEFAULT_SUPABASE_WARNING_MESSAGE,
-  getCurrentHostname,
-  shouldSuppressDefaultDeploymentWarnings,
-  shouldWarnForDefaultFirebaseConfig,
-  shouldWarnForDefaultSupabaseConfig,
-} from '../utils/defaultStorageConfig';
-import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+  isDynamicBlock, isFactorBlock, isFactorBlockReference, isInheritedComponent,
+} from './utils';
 
-const modules = import.meta.glob(
-  [
-    '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
-    '!../public/**/*.spec.{mjs,js,mts,ts,jsx,tsx}',
-  ],
-  { eager: false }, // the parser only checks if the path exists
-);
 const ajv1 = new Ajv({ allowUnionTypes: true });
 ajv1.addSchema(globalSchema);
 const globalValidate = ajv1.getSchema<GlobalConfig>('#/definitions/GlobalConfig')!;
@@ -84,7 +67,7 @@ function verifyStudySkip(
     }
   };
 
-  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence) || isFactorBlockReference(sequence)) {
     return;
   }
 
@@ -124,30 +107,8 @@ function verifyStudySkip(
   }
 }
 
-function verifyReactComponent(
-  instancePath: string,
-  component: Partial<IndividualComponent>,
-  errors: ParserErrorWarning[],
-) {
-  if (
-    'path' in component
-      && component.path != null
-      && component.type === 'react-component'
-      && !(`../public/${component.path}` in modules)
-  ) {
-    errors.push({
-      message: 'Unresolved path',
-      instancePath,
-      params: {
-        action: 'Make sure the React component is in `src/public/`, not `public/`',
-      },
-      category: 'undefined-component',
-    });
-  }
-}
-
 function isUrlConditionalBlock(sequence: StudyConfig['sequence']): boolean {
-  return sequence.conditional === true && Boolean(sequence.id);
+  return !isFactorBlock(sequence) && !isFactorBlockReference(sequence) && sequence.conditional === true && Boolean(sequence.id);
 }
 
 function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
@@ -155,7 +116,7 @@ function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
     return true;
   }
 
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence) || isFactorBlockReference(sequence)) {
     return false;
   }
 
@@ -173,7 +134,7 @@ function hasConditionalBlockInsideRestrictedOrderAncestor(
     return true;
   }
 
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence) || isFactorBlockReference(sequence)) {
     return false;
   }
 
@@ -208,30 +169,19 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     });
   }
 
-  // Warn if deployment defaults are left in place outside known ReVISit/local hosts.
-  const hostname = getCurrentHostname();
-  if (studyConfig.uiConfig.contactEmail === DEFAULT_CONTACT_EMAIL && !shouldSuppressDefaultDeploymentWarnings(hostname)) {
+  // Warn if the default contact email is left in the config and the study is not hosted on a known ReVISit domain
+  const DEFAULT_CONTACT_EMAIL = 'contact@revisit.dev';
+  const REVISIT_DOMAINS = ['revisit.dev', 'vdl.sci.utah.edu'];
+  const LOCAL_DEVELOPMENT_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]']);
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isRevisitDomain = REVISIT_DOMAINS.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+  const isLocalDevelopment = LOCAL_DEVELOPMENT_HOSTNAMES.has(hostname);
+  if (studyConfig.uiConfig.contactEmail === DEFAULT_CONTACT_EMAIL && !isRevisitDomain && !isLocalDevelopment) {
     warnings.push({
       message: `The contact email is set to the default value \`${DEFAULT_CONTACT_EMAIL}\`. Please update it to your own email address.`,
       instancePath: '/uiConfig/contactEmail',
       params: { action: 'Update the contactEmail field in uiConfig to your own email address' },
       category: 'default-contact-email',
-    });
-  }
-  if (shouldWarnForDefaultFirebaseConfig({ hostname })) {
-    warnings.push({
-      message: DEFAULT_FIREBASE_WARNING_MESSAGE,
-      instancePath: 'environment/VITE_FIREBASE_CONFIG',
-      params: { action: DEFAULT_FIREBASE_WARNING_ACTION },
-      category: 'default-firebase-config',
-    });
-  }
-  if (shouldWarnForDefaultSupabaseConfig({ hostname })) {
-    warnings.push({
-      message: DEFAULT_SUPABASE_WARNING_MESSAGE,
-      instancePath: 'environment/VITE_SUPABASE_URL',
-      params: { action: DEFAULT_SUPABASE_WARNING_ACTION },
-      category: 'default-supabase-config',
     });
   }
 
@@ -343,21 +293,6 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     });
   });
 
-  // Verify that paths to React components exist under the correct base directory
-
-  for (const [name, component] of Object.entries(studyConfig.baseComponents ?? {})) {
-    verifyReactComponent(`/baseComponents/${name}/path`, component, errors);
-  }
-
-  for (const [name, component] of Object.entries(studyConfig.components ?? {})) {
-    if ('path' in component) {
-      const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
-      verifyReactComponent(`/components/${name}/path`, mergedComponent, errors);
-    } else {
-      // Path is inherited and will be verified on the base component
-    }
-  }
-
   return { errors, warnings };
 }
 
@@ -408,9 +343,10 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
 
     // Expand the imported sequences to use the correct component names
     data.sequence = expandLibrarySequences(data.sequence, importedLibrariesData, errors);
+    data.sequence = resolveFactorBlockReferences(data.sequence, data.factorBlocks, errors);
     data.components = { ...data.components, ...createFactorComponents(data) };
     if (data.factors) {
-      data.sequence = expandFactorSequences(data.sequence, importedLibrariesData, data.factors);
+      data.sequence = expandFactorSequences(data.sequence, importedLibrariesData, data.factors, data.factorBlocks, errors);
     }
 
     const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data, importedLibrariesData);

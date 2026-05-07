@@ -502,6 +502,9 @@
               },
               {
                 "$ref": "#/definitions/FactorBlock"
+              },
+              {
+                "$ref": "#/definitions/FactorBlockReference"
               }
             ]
           },
@@ -927,11 +930,19 @@
         },
         "factorsToCross": {
           "items": {
-            "$ref": "#/definitions/FactorObj"
+            "$ref": "#/definitions/Factor"
           },
           "type": "array"
         },
         "id": {
+          "type": "string"
+        },
+        "action": {
+          "enum": [
+            "nest",
+            "cross",
+            "zip"
+          ],
           "type": "string"
         },
         "order": {
@@ -955,9 +966,105 @@
         "type",
         "factorsToCross",
         "id",
-        "order",
-        "component",
-        "parameters"
+        "action",
+        "component"
+      ],
+      "type": "object"
+    },
+    "FactorBlockDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "type": "string"
+        },
+        "factorsToCross": {
+          "items": {
+            "$ref": "#/definitions/Factor"
+          },
+          "type": "array"
+        },
+        "action": {
+          "enum": [
+            "nest",
+            "cross",
+            "zip"
+          ],
+          "type": "string"
+        },
+        "order": {
+          "enum": [
+            "random",
+            "latinSquare",
+            "fixed"
+          ],
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      },
+      "required": [
+        "factorsToCross",
+        "action",
+        "component"
+      ],
+      "type": "object"
+    },
+    "Factor": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FactorObj"
+        },
+        {
+          "$ref": "#/definitions/FactorBlockFactor"
+        }
+      ]
+    },
+    "FactorBlockFactor": {
+      "additionalProperties": false,
+      "properties": {
+        "factorBlock": {
+          "type": "string"
+        },
+        "numSamples": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "factorBlock"
+      ],
+      "type": "object"
+    },
+    "FactorBlockReference": {
+      "additionalProperties": false,
+      "properties": {
+        "factorBlock": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "order": {
+          "enum": [
+            "random",
+            "latinSquare",
+            "fixed"
+          ],
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "type": {
+          "const": "factorBlock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "factorBlock"
       ],
       "type": "object"
     },
@@ -1581,6 +1688,9 @@
               },
               {
                 "$ref": "#/definitions/FactorBlock"
+              },
+              {
+                "$ref": "#/definitions/FactorBlockReference"
               }
             ]
           },

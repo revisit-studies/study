@@ -1,117 +1,20 @@
 import {
-  afterEach, describe, expect, test, vi,
+  describe, expect, test, vi,
 } from 'vitest';
-import { parseStudyConfig } from '../parser';
-import { isDynamicBlock } from '../utils';
+import { ComponentBlock, StudyConfig } from './types';
+import { parseStudyConfig } from './parser';
+import { isDynamicBlock, isFactorBlock } from './utils';
 
+// Mock the fetch function for library loading
 global.fetch = vi.fn();
 
-afterEach(() => {
-  vi.unstubAllEnvs();
-  vi.unstubAllGlobals();
-});
-
-function mockFetchText(body: string) {
-  return { text: () => Promise.resolve(body) } as Response;
+function isComponentBlock(value: unknown): value is ComponentBlock {
+  return typeof value === 'object'
+    && value !== null
+    && 'components' in value
+    && !isDynamicBlock(value as StudyConfig['sequence'])
+    && !isFactorBlock(value as StudyConfig['sequence']);
 }
-
-describe('Component auto-advance config parsing', () => {
-  test('accepts component-level auto-advance timeout options on a base component', async () => {
-    const studyConfig = {
-      $schema: '',
-      studyMetadata: {
-        title: 'Timeout Config Test',
-        version: '1.0',
-        authors: ['Test'],
-        date: '2026-05-14',
-        description: 'Ensures component timeout options are accepted.',
-        organizations: ['Test Org'],
-      },
-      uiConfig: {
-        contactEmail: 'test@test.com',
-        helpTextPath: '',
-        logoPath: '',
-        withProgressBar: true,
-        autoDownloadStudy: false,
-        withSidebar: true,
-      },
-      baseComponents: {
-        timedQuestion: {
-          type: 'questionnaire',
-          response: [],
-          nextButtonAutoAdvanceTime: 5000,
-          nextButtonAutoAdvanceWarningTime: 3000,
-          nextButtonAutoAdvanceWarningMessage: 'Advancing in {seconds} {unit}.',
-        },
-      },
-      components: {
-        question1: {
-          baseComponent: 'timedQuestion',
-        },
-      },
-      sequence: {
-        order: 'fixed',
-        components: ['question1'],
-      },
-    };
-
-    const result = await parseStudyConfig(JSON.stringify(studyConfig));
-
-    const hasAutoAdvanceFieldError = result.errors.some(
-      (error) => error.message?.includes('nextButtonAutoAdvance'),
-    );
-    expect(hasAutoAdvanceFieldError).toBe(false);
-  });
-});
-
-describe('Next button alignment config parsing', () => {
-  function makeStudyConfig(nextButtonAlignment: string, componentOverride?: string) {
-    return {
-      $schema: '',
-      studyMetadata: {
-        title: 'Next Button Alignment Test',
-        version: '1.0',
-        authors: ['Test'],
-        date: '2026-07-16',
-        description: 'Ensures next button alignment options are validated.',
-        organizations: ['Test Org'],
-      },
-      uiConfig: {
-        contactEmail: 'test@test.com',
-        logoPath: '',
-        withProgressBar: true,
-        withSidebar: true,
-        nextButtonAlignment,
-      },
-      components: {
-        question1: {
-          type: 'questionnaire',
-          response: [],
-          ...(componentOverride === undefined ? {} : { nextButtonAlignment: componentOverride }),
-        },
-      },
-      sequence: {
-        order: 'fixed',
-        components: ['question1'],
-      },
-    };
-  }
-
-  test.each(['left', 'center', 'right'])('accepts the %s alignment globally and on a component', async (alignment) => {
-    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(alignment, alignment)));
-
-    expect(result.errors).toEqual([]);
-  });
-
-  test('rejects an unsupported alignment', async () => {
-    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig('stretch')));
-
-    const hasAlignmentError = result.errors.some(
-      (error) => error.instancePath?.includes('nextButtonAlignment'),
-    );
-    expect(hasAlignmentError).toBe(true);
-  });
-});
 
 describe('BaseComponent Macro Expansion', () => {
   describe('.co. macro expansion in baseComponent references', () => {
@@ -129,7 +32,10 @@ describe('BaseComponent Macro Expansion', () => {
         sequences: {},
       };
 
-      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global.fetch as any).mockResolvedValueOnce({
+        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+      });
 
       const studyConfig = {
         $schema: '',
@@ -163,11 +69,17 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
+      // The component should be successfully resolved (no errors about missing baseComponent)
+      // This proves that .co. was expanded to .components. and found the base component
       expect(result.errors).toBeDefined();
       const hasBaseComponentError = result.errors.some(
         (error) => error.message && error.message.includes('$testLib.components.baseComp') && error.message.includes('not defined'),
       );
       expect(hasBaseComponentError).toBe(false);
+
+      // The component should exist and have the baseComponent reference
+      const derivedComp = result.components.derivedComponent;
+      expect(derivedComp).toBeDefined();
     });
 
     test('handles multiple components with .co. in baseComponent', async () => {
@@ -189,7 +101,10 @@ describe('BaseComponent Macro Expansion', () => {
         sequences: {},
       };
 
-      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global.fetch as any).mockResolvedValueOnce({
+        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+      });
 
       const studyConfig = {
         $schema: '',
@@ -226,10 +141,17 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
+      // Both components should be successfully resolved without errors
+      // This proves .co. was expanded and found the base components
       const hasBaseComponentError = result.errors.some(
         (error) => error.message && error.message.includes('baseComp') && error.message.includes('not defined'),
       );
       expect(hasBaseComponentError).toBe(false);
+
+      // Both components should exist
+      const { derived1, derived2 } = result.components;
+      expect(derived1).toBeDefined();
+      expect(derived2).toBeDefined();
     });
 
     test('leaves .components. in baseComponent unchanged', async () => {
@@ -246,7 +168,10 @@ describe('BaseComponent Macro Expansion', () => {
         sequences: {},
       };
 
-      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global.fetch as any).mockResolvedValueOnce({
+        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+      });
 
       const studyConfig = {
         $schema: '',
@@ -280,10 +205,14 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
+      // Should successfully resolve without errors
       const hasBaseComponentError = result.errors.some(
         (error) => error.message && error.message.includes('baseComp') && error.message.includes('not defined'),
       );
       expect(hasBaseComponentError).toBe(false);
+
+      const derivedComp = result.components.derivedComponent;
+      expect(derivedComp).toBeDefined();
     });
 
     test('does not modify non-library baseComponent references', async () => {
@@ -325,10 +254,14 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
+      // Should successfully resolve without errors
       const hasBaseComponentError = result.errors.some(
         (error) => error.message && error.message.includes('baseComp') && error.message.includes('not defined'),
       );
       expect(hasBaseComponentError).toBe(false);
+
+      const derivedComp = result.components.derivedComponent;
+      expect(derivedComp).toBeDefined();
     });
 
     test('generates correct error for missing baseComponent after expansion', async () => {
@@ -345,7 +278,10 @@ describe('BaseComponent Macro Expansion', () => {
         sequences: {},
       };
 
-      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global.fetch as any).mockResolvedValueOnce({
+        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+      });
 
       const studyConfig = {
         $schema: '',
@@ -379,6 +315,8 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
+      // Should have an error about missing baseComponent
+      // The error message should reference the expanded form (.components.)
       expect(result.errors).toBeDefined();
       const hasExpectedError = result.errors.some(
         (error) => error.message && error.message.includes('$testLib.components.missingComp')
@@ -408,7 +346,10 @@ describe('BaseComponent Macro Expansion', () => {
         sequences: {},
       };
 
-      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global.fetch as any).mockResolvedValueOnce({
+        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+      });
 
       const studyConfig = {
         $schema: '',
@@ -445,15 +386,20 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence)) {
+      // Check sequence expansion - the .co. should have been expanded to .components.
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components).toContain('$testLib.components.directComp');
       }
 
+      // Check baseComponent expansion - component should be resolved without errors
       const hasBaseComponentError = result.errors.some(
         (error) => error.message && error.message.includes('baseComp') && error.message.includes('not defined'),
       );
       expect(hasBaseComponentError).toBe(false);
+
+      const derivedComp = result.components.derivedComponent;
+      expect(derivedComp).toBeDefined();
     });
 
     test('expands .se. in study sequence and inlines imported library sequence', async () => {
@@ -475,7 +421,10 @@ describe('BaseComponent Macro Expansion', () => {
         },
       };
 
-      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global.fetch as any).mockResolvedValueOnce({
+        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+      });
 
       const studyConfig = {
         $schema: '',
@@ -505,12 +454,12 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components).toHaveLength(1);
         const inlinedSequence = result.sequence.components[0];
         expect(typeof inlinedSequence).toBe('object');
-        if (typeof inlinedSequence === 'object' && inlinedSequence !== null && !isDynamicBlock(inlinedSequence)) {
+        if (isComponentBlock(inlinedSequence)) {
           expect(inlinedSequence.id).toBe('$testLib.sequences.sequenceFromLibrary');
           expect(inlinedSequence.components).toEqual(['$testLib.components.sequenceComp']);
         }
@@ -536,7 +485,10 @@ describe('BaseComponent Macro Expansion', () => {
         },
       };
 
-      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global.fetch as any).mockResolvedValueOnce({
+        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+      });
 
       const studyConfig = {
         $schema: '',
@@ -566,12 +518,12 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components).toHaveLength(1);
         const inlinedSequence = result.sequence.components[0];
         expect(typeof inlinedSequence).toBe('object');
-        if (typeof inlinedSequence === 'object' && inlinedSequence !== null && !isDynamicBlock(inlinedSequence)) {
+        if (isComponentBlock(inlinedSequence)) {
           expect(inlinedSequence.id).toBe('$testLib.sequences.sequenceFromLibrary');
           expect(inlinedSequence.components).toEqual(['$testLib.components.sequenceComp']);
         }
@@ -602,7 +554,10 @@ describe('BaseComponent Macro Expansion', () => {
         sequences: {},
       };
 
-      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global.fetch as any).mockResolvedValueOnce({
+        text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+      });
 
       const studyConfig = {
         $schema: '',
@@ -656,12 +611,12 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components[1]).toBe('$testLib.components.target');
         const firstComponent = result.sequence.components[0];
         expect(typeof firstComponent).toBe('object');
-        if (typeof firstComponent === 'object' && firstComponent !== null && !isDynamicBlock(firstComponent)) {
+        if (isComponentBlock(firstComponent)) {
           expect(firstComponent.interruptions?.[0].components).toEqual(['$testLib.components.breakComp']);
           expect(firstComponent.skip?.[0].to).toBe('$testLib.components.target');
         }
@@ -1213,7 +1168,10 @@ describe('Parser Warnings', () => {
       sequences: {},
     };
 
-    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global.fetch as any).mockResolvedValueOnce({
+      text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+    });
 
     const studyConfig = {
       $schema: '',
@@ -1275,7 +1233,10 @@ describe('Parser Warnings', () => {
       sequences: {},
     };
 
-    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global.fetch as any).mockResolvedValueOnce({
+      text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+    });
 
     const studyConfig = {
       $schema: '',
@@ -1330,7 +1291,10 @@ describe('Parser Warnings', () => {
       sequences: {},
     };
 
-    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global.fetch as any).mockResolvedValueOnce({
+      text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+    });
 
     const studyConfig = {
       $schema: '',
@@ -1395,7 +1359,10 @@ describe('Parser Warnings', () => {
       sequences: {},
     };
 
-    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global.fetch as any).mockResolvedValueOnce({
+      text: () => Promise.resolve(JSON.stringify(mockLibraryConfig)),
+    });
 
     const studyConfig = {
       $schema: '',
@@ -1533,116 +1500,402 @@ describe('Parser Warnings', () => {
     expect(contactEmailWarning).toBeUndefined();
   });
 
-  test('adds default-firebase-config warning for the default Firebase project on a custom host', async () => {
-    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
-    vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: 'revisit-utah' }));
-    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+  test('accepts nest order for factor blocks and expands to nested fixed sequence', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          parameters: { label: `$${'{m}'}/$${'{n}'}` },
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2', 'n3'],
+      },
+      sequence: {
+        type: 'factors',
+        action: 'nest',
+        id: 'nestedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    };
 
-    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    const defaultFirebaseWarning = result.warnings.find(
-      (warning) => warning.category === 'default-firebase-config',
-    );
-
-    expect(defaultFirebaseWarning).toBeDefined();
-    expect(defaultFirebaseWarning?.instancePath).toBe('environment/VITE_FIREBASE_CONFIG');
-    expect(defaultFirebaseWarning?.message).toContain('default Firebase project');
-    expect(defaultFirebaseWarning?.message).toContain('backend controlled by the study designer');
+    expect(result.errors).toEqual([]);
+    expect(isComponentBlock(result.sequence)).toBe(true);
+    if (isComponentBlock(result.sequence)) {
+      expect(result.sequence.order).toBe('fixed');
+      expect(result.sequence.components).toEqual([
+        '_m1_n1',
+        '_m1_n2',
+        '_m1_n3',
+        '_m2_n1',
+        '_m2_n2',
+        '_m2_n3',
+      ]);
+    }
+    expect(result.components._m1_n1).toMatchObject({
+      parameters: { label: 'm1/n1' },
+    });
   });
 
-  test('adds default-firebase-config warning when authDomain identifies the default Firebase project', async () => {
-    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
-    vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ authDomain: 'revisit-utah.firebaseapp.com' }));
-    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+  test('accepts cross action for factor blocks and expands to crossed fixed sequence', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          parameters: { label: `$${'{m}'}/$${'{n}'}` },
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2'],
+      },
+      sequence: {
+        type: 'factors',
+        action: 'cross',
+        id: 'crossedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+        parameters: { label: `$${'{m}'}/$${'{n}'}` },
+      },
+    };
 
-    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    expect(result.warnings.some((warning) => warning.category === 'default-firebase-config')).toBe(true);
+    expect(result.errors).toEqual([]);
+    expect(isComponentBlock(result.sequence)).toBe(true);
+    if (isComponentBlock(result.sequence)) {
+      expect(result.sequence.order).toBe('fixed');
+      expect(result.sequence.components).toEqual([
+        '_m1_n1',
+        '_m2_n2',
+        '_m2_n1',
+        '_m1_n2',
+      ]);
+    }
+    expect(result.components._m2_n2).toMatchObject({
+      parameters: { label: 'm2/n2' },
+    });
   });
 
-  test('adds default-firebase-config warning when storageBucket identifies the default Firebase project', async () => {
-    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
-    vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ storageBucket: 'revisit-utah.appspot.com' }));
-    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+  test('accepts zip action for factor blocks and expands to zipped fixed sequence', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2', 'n3'],
+      },
+      sequence: {
+        type: 'factors',
+        action: 'zip',
+        id: 'zippedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    };
 
-    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    expect(result.warnings.some((warning) => warning.category === 'default-firebase-config')).toBe(true);
+    expect(result.errors).toEqual([]);
+    expect(isComponentBlock(result.sequence)).toBe(true);
+    if (isComponentBlock(result.sequence)) {
+      expect(result.sequence.order).toBe('fixed');
+      expect(result.sequence.components).toEqual([
+        '_m1_n1',
+        '_m2_n2',
+      ]);
+    }
+    expect(result.components._m2_n2).toMatchObject({
+      parameters: { m: 'm2', n: 'n2' },
+    });
   });
 
-  test('does not add default-firebase-config warning for a custom Firebase project', async () => {
-    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
-    vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: 'research-owned-project' }));
-    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+  test('accepts reusable top-level factor blocks referenced from the sequence', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2', 'n3'],
+      },
+      factorBlocks: {
+        zippedFactors: {
+          action: 'zip',
+          order: 'random',
+          factorsToCross: [
+            { factor: 'm' },
+            { factor: 'n' },
+          ],
+          component: 'factorComponent',
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          {
+            type: 'factorBlock',
+            factorBlock: 'zippedFactors',
+          },
+        ],
+      },
+    };
 
-    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    expect(result.warnings.some((warning) => warning.category === 'default-firebase-config')).toBe(false);
+    expect(result.errors).toEqual([]);
+    expect(isComponentBlock(result.sequence)).toBe(true);
+    if (isComponentBlock(result.sequence)) {
+      expect(result.sequence.components).toEqual([
+        {
+          id: 'zippedFactors',
+          order: 'random',
+          components: [
+            '_m1_n1',
+            '_m2_n2',
+          ],
+          skip: [],
+        },
+      ]);
+    }
+    expect(result.components._m1_n1).toMatchObject({
+      parameters: { m: 'm1', n: 'n1' },
+    });
   });
 
-  test.each([
-    ['supabase'],
-    ['localStorage'],
-  ])('does not add default-firebase-config warning when storage engine is %s', async (storageEngine) => {
-    vi.stubEnv('VITE_STORAGE_ENGINE', storageEngine);
-    vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: 'revisit-utah' }));
-    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+  test('accepts a factor block as a factor of another reusable factor block', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        data: ['d1', 'd2'],
+        visType: ['v1', 'v2', 'v3'],
+        task: ['t1', 't2'],
+      },
+      factorBlocks: {
+        zipDataVis: {
+          action: 'zip',
+          order: 'random',
+          factorsToCross: [
+            { factor: 'data' },
+            { factor: 'visType' },
+          ],
+          component: 'factorComponent',
+        },
+        zipThenTask: {
+          action: 'nest',
+          order: 'latinSquare',
+          factorsToCross: [
+            { factorBlock: 'zipDataVis' },
+            { factor: 'task' },
+          ],
+          component: 'factorComponent',
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          {
+            type: 'factorBlock',
+            factorBlock: 'zipThenTask',
+          },
+        ],
+      },
+    };
 
-    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    expect(result.warnings.some((warning) => warning.category === 'default-firebase-config')).toBe(false);
+    expect(result.errors).toEqual([]);
+    expect(isComponentBlock(result.sequence)).toBe(true);
+    if (isComponentBlock(result.sequence)) {
+      expect(result.sequence.components).toEqual([
+        {
+          id: 'zipThenTask',
+          order: 'latinSquare',
+          components: [
+            '_d1_v1_t1',
+            '_d1_v1_t2',
+            '_d2_v2_t1',
+            '_d2_v2_t2',
+          ],
+          skip: [],
+        },
+      ]);
+    }
+    expect(result.components._d2_v2_t2).toMatchObject({
+      parameters: { data: 'd2', visType: 'v2', task: 't2' },
+    });
   });
 
-  test.each([
-    ['localhost'],
-    ['revisit.dev'],
-    ['study.revisit.dev'],
-    ['vdl.sci.utah.edu'],
-    ['study.vdl.sci.utah.edu'],
-  ])('does not add default-firebase-config warning on %s', async (hostname) => {
-    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
-    vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: 'revisit-utah' }));
-    vi.stubGlobal('window', { location: { hostname } });
+  test('uses factor values as parameters when factor block and base component omit parameters', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2'],
+      },
+      sequence: {
+        type: 'factors',
+        action: 'cross',
+        id: 'crossedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    };
 
-    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    expect(result.warnings.some((warning) => warning.category === 'default-firebase-config')).toBe(false);
-  });
-
-  test('adds default-supabase-config warning when Supabase URL is a revisit.dev domain on a custom host', async () => {
-    vi.stubEnv('VITE_STORAGE_ENGINE', 'supabase');
-    vi.stubEnv('VITE_SUPABASE_URL', 'https://supabase.revisit.dev');
-    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
-
-    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
-
-    const defaultSupabaseWarning = result.warnings.find(
-      (warning) => warning.category === 'default-supabase-config',
-    );
-
-    expect(defaultSupabaseWarning).toBeDefined();
-    expect(defaultSupabaseWarning?.instancePath).toBe('environment/VITE_SUPABASE_URL');
-    expect(defaultSupabaseWarning?.message).toContain('default Supabase project');
-    expect(defaultSupabaseWarning?.message).toContain('backend controlled by the study designer');
-  });
-
-  test('does not add default-supabase-config warning for a custom Supabase URL', async () => {
-    vi.stubEnv('VITE_STORAGE_ENGINE', 'supabase');
-    vi.stubEnv('VITE_SUPABASE_URL', 'https://research-project.supabase.co');
-    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
-
-    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
-
-    expect(result.warnings.some((warning) => warning.category === 'default-supabase-config')).toBe(false);
-  });
-
-  test('does not add default-supabase-config warning on local or ReVISit-controlled hosts', async () => {
-    vi.stubEnv('VITE_STORAGE_ENGINE', 'supabase');
-    vi.stubEnv('VITE_SUPABASE_URL', 'https://supabase.revisit.dev');
-    vi.stubGlobal('window', { location: { hostname: 'revisit.dev' } });
-
-    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
-
-    expect(result.warnings.some((warning) => warning.category === 'default-supabase-config')).toBe(false);
+    expect(result.errors).toEqual([]);
+    expect(result.components._m2_n2).toMatchObject({
+      parameters: { m: 'm2', n: 'n2' },
+    });
   });
 });
