@@ -1069,6 +1069,16 @@ export abstract class StorageEngine {
 
     this.participantData.metadata = metadata;
 
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const modes = await this.getModes(this.studyId);
+    if (!modes.dataCollectionEnabled) {
+      await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
+      return;
+    }
+
     await this.persistCurrentParticipantData({ immediate: false });
   }
 

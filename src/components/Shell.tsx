@@ -239,25 +239,27 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         setStore(newStore);
 
-        fetchParticipantIp().then(async (ip) => {
-          if (isCancelled || !ip.ip || participantSession.metadata.ip === ip.ip) {
-            return;
-          }
+        if (modes.dataCollectionEnabled) {
+          fetchParticipantIp().then(async (ip) => {
+            if (isCancelled || !ip.ip || participantSession.metadata.ip === ip.ip) {
+              return;
+            }
 
-          const metadataWithIp = createParticipantMetadata(ip.ip);
-          participantSession = {
-            ...participantSession,
-            metadata: metadataWithIp,
-          };
+            const metadataWithIp = createParticipantMetadata(ip.ip);
+            participantSession = {
+              ...participantSession,
+              metadata: metadataWithIp,
+            };
 
-          await storageEngine.updateParticipantMetadata(metadataWithIp);
+            await storageEngine.updateParticipantMetadata(metadataWithIp);
 
-          if (!isCancelled) {
-            newStore.store.dispatch(newStore.actions.setMetadata(metadataWithIp));
-          }
-        }).catch((error) => {
-          console.error('Error fetching participant IP:', error);
-        });
+            if (!isCancelled) {
+              newStore.store.dispatch(newStore.actions.setMetadata(metadataWithIp));
+            }
+          }).catch((error) => {
+            console.error('Error fetching participant IP:', error);
+          });
+        }
 
         storageEngine.getParticipantCompletionStatus(participantSession.participantId).then((participantCompleted) => {
           if (!isCancelled) {

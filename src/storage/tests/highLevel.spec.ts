@@ -500,6 +500,32 @@ describe.each([
     expect(participantData!.metadata).toEqual(updatedMetadata);
   });
 
+  test('updateParticipantMetadata stays local when data collection is disabled', async () => {
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
+
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const updatedMetadata = {
+      ...participantMetadata,
+      ip: '8.8.8.8',
+    };
+
+    const pushSpy = vi.spyOn(
+      storageEngine as unknown as {
+        _pushToStorage: StorageEngine['_pushToStorage'];
+      },
+      '_pushToStorage',
+    );
+
+    await storageEngine.updateParticipantMetadata(updatedMetadata);
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    expect(storageEngine.getCurrentParticipantDataSnapshot()!.metadata).toEqual(updatedMetadata);
+
+    const participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData).toBeDefined();
+    expect(participantData!.metadata).toEqual(updatedMetadata);
+  });
+
   test('getConditionData includes default when participants have no explicit condition', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     await storageEngine.clearCurrentParticipantId();
