@@ -509,7 +509,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const storage = getStorage();
 
     // Fetches webm converted by firebase function
-    const screenRecordingRef = ref(storage, `${this.collectionPrefix}${this.studyId}/screenRecording/${participantId}_${task}.webm`);
+    const screenRecordingRef = ref(storage, `${this.collectionPrefix}${this.studyId}/screenRecording/${participantId}_${task}`);
 
     try {
       return await getDownloadURL(screenRecordingRef);
