@@ -27,18 +27,20 @@ export const convertScreenRecording = onObjectFinalized(
 
     if (!SCREEN_RECORDING_PATH.test(filePath)) return;
 
-    // Prevent re-trigger loop by skipping already-converted files
-    if (filePath.endsWith('.webm')) {
-      logger.info(`Skipping .webm: ${filePath}`);
+    if (event.data.contentType === 'video/mp4') {
+      logger.info(`Skipping MP4 (unsupported for WebM stream copy): ${filePath}`);
+      return;
+    }
+
+    // Prevent re-trigger loop: uploading back to the same path fires onObjectFinalized again
+    if (event.data.metadata?.converted === 'true') {
+      logger.info(`Skipping already-converted: ${filePath}`);
       return;
     }
 
     const fileName = path.basename(filePath);
-    const directory = path.dirname(filePath);
     const tmpInput = path.join(os.tmpdir(), fileName);
-    const outputName = `${fileName}.webm`;
-    const tmpOutput = path.join(os.tmpdir(), outputName);
-    const outputStoragePath = `${directory}/${outputName}`;
+    const tmpOutput = path.join(os.tmpdir(), `${fileName}.tmp`);
     const bucket = admin.storage().bucket(BUCKET);
 
     try {
@@ -48,20 +50,20 @@ export const convertScreenRecording = onObjectFinalized(
       logger.info('Converting to webm');
       await new Promise<void>((resolve, reject) => {
         ffmpeg(tmpInput)
-          .outputOptions('-c', 'copy')
+          .outputOptions('-c', 'copy', '-f', 'webm')
           .output(tmpOutput)
           .on('end', () => resolve())
           .on('error', (err: Error) => reject(err))
           .run();
       });
 
-      logger.info(`Uploading ${outputStoragePath}`);
+      logger.info(`Uploading ${filePath}`);
       await bucket.upload(tmpOutput, {
-        destination: outputStoragePath,
-        metadata: { contentType: 'video/webm' },
+        destination: filePath,
+        metadata: { contentType: 'video/webm', metadata: { converted: 'true' } },
       });
 
-      logger.info(`Done: ${outputStoragePath}`);
+      logger.info(`Done: ${filePath}`);
     } catch (err) {
       logger.error(`Conversion failed for ${filePath}`, err);
       throw err;
