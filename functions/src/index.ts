@@ -17,6 +17,20 @@ setGlobalOptions({ maxInstances: 5 });
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 const SCREEN_RECORDING_PATH = /^[^/]+\/screenRecording\//;
+const WEBM_COMPATIBLE_CODECS = new Set(['vp8', 'vp9', 'av1', 'opus', 'vorbis']);
+
+function isWebmCopyCompatible(filePath: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    ffmpeg.ffprobe(filePath, (err, metadata) => {
+      if (err) {
+        resolve(false);
+        return;
+      }
+      const streams = metadata.streams ?? [];
+      resolve(streams.every((s) => !s.codec_name || WEBM_COMPATIBLE_CODECS.has(s.codec_name)));
+    });
+  });
+}
 
 export const convertScreenRecording = onObjectFinalized(
   {
@@ -26,11 +40,6 @@ export const convertScreenRecording = onObjectFinalized(
     const filePath = event.data.name;
 
     if (!SCREEN_RECORDING_PATH.test(filePath)) return;
-
-    if (event.data.contentType === 'video/mp4') {
-      logger.info(`Skipping MP4 (unsupported for WebM stream copy): ${filePath}`);
-      return;
-    }
 
     // Prevent re-trigger loop: uploading back to the same path fires onObjectFinalized again
     if (event.data.metadata?.converted === 'true') {
@@ -46,6 +55,11 @@ export const convertScreenRecording = onObjectFinalized(
     try {
       logger.info(`Downloading ${filePath}`);
       await bucket.file(filePath).download({ destination: tmpInput });
+
+      if (!await isWebmCopyCompatible(tmpInput)) {
+        logger.info(`Skipping: codecs not compatible with WebM stream copy: ${filePath}`);
+        return;
+      }
 
       logger.info('Converting to webm');
       await new Promise<void>((resolve, reject) => {
