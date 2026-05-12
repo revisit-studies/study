@@ -43,13 +43,6 @@ async function answerSimpleDropboxIncorrectly(page: Page) {
   await page.getByRole('button', { name: 'Check Answer' }).click();
 }
 
-async function exhaustSimpleDropboxAttemptsWithoutAnswer(page: Page, attempts: number) {
-  const checkAnswerButton = page.getByRole('button', { name: 'Check Answer' });
-  for (let i = 0; i < attempts; i += 1) {
-    await checkAnswerButton.click();
-  }
-}
-
 test('allowFailedTraining=true enables Next after max failed attempts', async ({ page }) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'How To Do Training Demo');
@@ -75,7 +68,7 @@ test('allowFailedTraining=true enables Next after max failed attempts', async ({
   await expect(page.getByPlaceholder('Choose mark')).toBeDisabled();
 });
 
-test('allowFailedTraining=true enables Next after max failed invalid attempts', async ({ page }) => {
+test('Check Answer reveals unanswered validation without consuming training attempts', async ({ page }) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'How To Do Training Demo');
 
@@ -88,13 +81,14 @@ test('allowFailedTraining=true enables Next after max failed invalid attempts', 
 
   await expect(nextButton).toBeDisabled();
 
-  // Leave the required dropdown unanswered and consume all attempts.
-  await exhaustSimpleDropboxAttemptsWithoutAnswer(page, 4);
+  // Leave the required dropdown unanswered. Check Answer should reveal validation
+  // instead of consuming training attempts.
+  await checkAnswerButton.click();
 
-  await expect(page.getByText('You didn\'t answer this question correctly after 4 attempts. You can continue to the next question.')).toBeVisible();
-  await expect(page.getByText('The correct answer was: Bar.')).toBeVisible();
-  await expect(nextButton).toBeEnabled();
-  await expect(checkAnswerButton).toBeDisabled();
+  await expect(page.getByText('Please review 1 unanswered question to continue.')).toBeVisible();
+  await expect(page.getByText('Please answer this question to continue.')).toBeVisible();
+  await expect(nextButton).toBeDisabled();
+  await expect(checkAnswerButton).toBeEnabled();
 });
 
 test('test', async ({ page }) => {

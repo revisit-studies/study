@@ -373,6 +373,10 @@ export function ResponseBlock({
     customResponseValidators,
     customResponseLoadErrors,
   );
+  const revealResponseErrors = useCallback(() => {
+    storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
+    answerValidator.validate();
+  }, [answerValidator, identifier, setResponseSubmitAttempt, storeDispatch]);
   const hasRecordedShowErrorsRef = useRef(savedSubmitAttempt);
 
   useEffect(() => {
@@ -487,6 +491,11 @@ export function ResponseBlock({
       return;
     }
 
+    if (hasResponseIssues) {
+      revealResponseErrors();
+      return;
+    }
+
     const newAttemptsUsed = attemptsUsed + 1;
     setAttemptsUsed(newAttemptsUsed);
 
@@ -564,7 +573,7 @@ export function ResponseBlock({
         ),
       );
     }
-  }, [alertConfig, allResponsesWithDefaults, allowFailedTraining, attemptsUsed, config, hasCorrectAnswerFeedback, hasStimulusIssue, identifier, navigate, revealStimulusErrors, saveIncorrectAnswer, storeDispatch, trainingAttempts, trialValidation]);
+  }, [alertConfig, allResponsesWithDefaults, allowFailedTraining, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, navigate, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, storeDispatch, trainingAttempts, trialValidation]);
 
   const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 
@@ -605,9 +614,8 @@ export function ResponseBlock({
       return;
     }
 
-    storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
-    answerValidator.validate();
-  }, [answerValidator, bypassValidationForFailedTraining, goToNextStep, hasResponseIssues, hasStimulusIssue, identifier, revealStimulusErrors, setResponseSubmitAttempt, storeDispatch]);
+    revealResponseErrors();
+  }, [bypassValidationForFailedTraining, goToNextStep, hasResponseIssues, hasStimulusIssue, revealResponseErrors, revealStimulusErrors]);
 
   let index = 0;
   return (
