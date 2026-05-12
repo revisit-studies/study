@@ -48,6 +48,7 @@ vi.mock('@mantine/core', () => ({
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Tooltip: ({ label, children }: { label: string; children: ReactNode }) => <div title={label}>{children}</div>,
   Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Modal: ({ opened, children }: { opened: boolean; children: ReactNode }) => (opened ? <div>{children}</div> : null),
   ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>{children}</button>

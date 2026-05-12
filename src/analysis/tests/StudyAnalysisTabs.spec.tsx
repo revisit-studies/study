@@ -16,6 +16,7 @@ import { makeGlobalConfig } from '../../tests/utils';
 
 let mockParams: Record<string, string | undefined> = { studyId: 'test-study', analysisTab: 'summary' };
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | undefined;
+let mockStudyRecordings = { hasAudioRecording: false, hasScreenRecording: false };
 
 // Stable result returned by the useAsync mock. Reset in beforeEach so each test
 // gets its own stable reference, avoiding infinite re-render loops that would
@@ -53,7 +54,7 @@ vi.mock('../../store/hooks/useAsync', () => ({
 }));
 
 vi.mock('../../utils/useStudyRecordings', () => ({
-  useStudyRecordings: () => ({ hasAudioRecording: false, hasScreenRecording: false }),
+  useStudyRecordings: () => mockStudyRecordings,
 }));
 
 vi.mock('../../utils/fetchConfig', () => ({
@@ -63,6 +64,7 @@ vi.mock('../../utils/fetchConfig', () => ({
 
 vi.mock('../../utils/handleConditionLogic', () => ({
   parseConditionParam: vi.fn(() => []),
+  getSequenceConditions: vi.fn(() => []),
 }));
 
 vi.mock('../../storage/engines/FirebaseStorageEngine', () => ({
@@ -154,6 +156,7 @@ vi.mock('@mantine/core', () => ({
   ),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h5>{children}</h5>,
+  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   MultiSelect: ({ onChange }: { onChange?: (v: string[]) => void }) => (
     <select onChange={(e) => onChange?.(e.target.value !== '' ? [e.target.value] : [])} />
   ),
@@ -180,6 +183,7 @@ describe('StudyAnalysisTabs', () => {
   beforeEach(() => {
     mockParams = { studyId: 'test-study', analysisTab: 'summary' };
     mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
+    mockStudyRecordings = { hasAudioRecording: false, hasScreenRecording: false };
     vi.mocked(getStudyConfig).mockResolvedValue(null);
     currentStable = {
       value: {}, status: 'success', execute: () => Promise.resolve(), error: null,
@@ -208,9 +212,10 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Manage');
   });
 
-  test('does not render Live Monitor tab when not Firebase', () => {
+  test('renders disabled Live Monitor tab and Firebase-only message when not Firebase', () => {
     const html = renderToStaticMarkup(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
-    expect(html).not.toContain('Live Monitor');
+    expect(html).toContain('Live Monitor');
+    expect(html).toContain('Live Monitor is only available when using Firebase');
   });
 
   test('renders Live Monitor tab when Firebase', () => {
@@ -221,7 +226,7 @@ describe('StudyAnalysisTabs', () => {
 
   test('renders "Firebase only" message in Coding panel when not Firebase', () => {
     const html = renderToStaticMarkup(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
-    expect(html).toContain('Think aloud coding is only available when using Firebase.');
+    expect(html).toContain('Think aloud coding is only available when using Firebase and when audio recording is enabled in your study config');
   });
 
   test('selectedParticipants > 0 shows "X of Y" labels in checkboxes', async () => {
@@ -250,6 +255,7 @@ describe('StudyAnalysisTabs', () => {
   });
 
   test('renders ThinkAloudAnalysis in Coding panel when Firebase and studyConfig is loaded', async () => {
+    mockStudyRecordings = { hasAudioRecording: true, hasScreenRecording: false };
     vi.mocked(getStudyConfig).mockResolvedValue({
       studyMetadata: { version: '1' },
       components: {},

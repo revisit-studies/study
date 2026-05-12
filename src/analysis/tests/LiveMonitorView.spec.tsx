@@ -71,18 +71,18 @@ function makeAssignment(overrides: Partial<SequenceAssignment> = {}): SequenceAs
 
 describe('getFilteredParticipantProgress', () => {
   test('returns empty array when no assignments', () => {
-    expect(getFilteredParticipantProgress([], ['inprogress'], ['ALL'])).toEqual([]);
+    expect(getFilteredParticipantProgress([], ['inProgress'], ['ALL'])).toEqual([]);
   });
 
   test('maps progress as percentage of answered/total', () => {
     const a = makeAssignment({ answered: ['q1', 'q2'], total: 4 });
-    const [result] = getFilteredParticipantProgress([a], ['inprogress'], ['ALL']);
+    const [result] = getFilteredParticipantProgress([a], ['inProgress'], ['ALL']);
     expect(result.progress).toBe(50);
   });
 
   test('progress is 0 when total is 0', () => {
     const a = makeAssignment({ answered: [], total: 0 });
-    const [result] = getFilteredParticipantProgress([a], ['inprogress'], ['ALL']);
+    const [result] = getFilteredParticipantProgress([a], ['inProgress'], ['ALL']);
     expect(result.progress).toBe(0);
   });
 
@@ -99,21 +99,21 @@ describe('getFilteredParticipantProgress', () => {
   });
 
   test('filters out participants whose status is not in includedParticipants', () => {
-    const a = makeAssignment(); // inprogress
+    const a = makeAssignment(); // inProgress
     const result = getFilteredParticipantProgress([a], ['completed'], ['ALL']);
     expect(result).toHaveLength(0);
   });
 
   test('selectedStages ALL passes any stage', () => {
     const a = makeAssignment({ stage: 'STAGE_B' });
-    const result = getFilteredParticipantProgress([a], ['inprogress'], ['ALL']);
+    const result = getFilteredParticipantProgress([a], ['inProgress'], ['ALL']);
     expect(result).toHaveLength(1);
   });
 
   test('selectedStages filters by specific stage', () => {
     const a1 = makeAssignment({ participantId: 'p1', stage: 'STAGE_A' });
     const a2 = makeAssignment({ participantId: 'p2', stage: 'STAGE_B' });
-    const result = getFilteredParticipantProgress([a1, a2], ['inprogress'], ['STAGE_A']);
+    const result = getFilteredParticipantProgress([a1, a2], ['inProgress'], ['STAGE_A']);
     expect(result).toHaveLength(1);
     expect(result[0].assignment.participantId).toBe('p1');
   });
@@ -121,7 +121,7 @@ describe('getFilteredParticipantProgress', () => {
   test('sorts by createdTime descending (newest first)', () => {
     const a1 = makeAssignment({ participantId: 'old', createdTime: 1_000 });
     const a2 = makeAssignment({ participantId: 'new', createdTime: 2_000 });
-    const result = getFilteredParticipantProgress([a1, a2], ['inprogress'], ['ALL']);
+    const result = getFilteredParticipantProgress([a1, a2], ['inProgress'], ['ALL']);
     expect(result[0].assignment.participantId).toBe('new');
   });
 });
@@ -167,7 +167,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 describe('LiveMonitorView', () => {
   const baseProps = {
     studyConfig: {} as Parameters<typeof LiveMonitorView>[0]['studyConfig'],
-    includedParticipants: ['inprogress', 'completed', 'rejected'],
+    includedParticipants: ['inProgress', 'completed', 'rejected'],
     selectedStages: ['ALL'],
   };
 
@@ -320,7 +320,7 @@ describe('ParticipantSection', () => {
 describe('LiveMonitorView interactive', () => {
   const baseProps = {
     studyConfig: {} as Parameters<typeof LiveMonitorView>[0]['studyConfig'],
-    includedParticipants: ['inprogress', 'completed', 'rejected'],
+    includedParticipants: ['inProgress', 'completed', 'rejected'],
     selectedStages: ['ALL'],
     studyId: 'test-study',
   };

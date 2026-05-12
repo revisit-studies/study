@@ -298,7 +298,7 @@ export function useReplay() {
           );
           lastTickTime = now;
           emitterRef.current.emit('timeupdate', timerValue.current);
-          if (timerValue.current >= internalDuration.current) {
+          if (internalDuration.current > 0 && timerValue.current >= internalDuration.current) {
             if (timer.current) {
               clearInterval(timer.current);
               timer.current = null;

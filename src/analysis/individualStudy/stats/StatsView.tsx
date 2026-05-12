@@ -14,47 +14,49 @@ export function StatsView(
   {
     studyConfig,
     visibleParticipants,
+    allConfigs = {},
     studyId,
   }: {
     studyConfig: StudyConfig;
     visibleParticipants: ParticipantDataWithStatus[];
+    allConfigs?: Record<string, StudyConfig>;
     studyId?: string;
   },
 ) {
   const { trialId } = useParams();
 
   const overviewData = useMemo(
-    () => (trialId && trialId !== 'end' ? getOverviewStats(visibleParticipants, trialId, studyConfig) : null),
-    [studyConfig, visibleParticipants, trialId],
+    () => (trialId && trialId !== 'end' ? getOverviewStats(visibleParticipants, trialId, studyConfig, allConfigs) : null),
+    [studyConfig, visibleParticipants, trialId, allConfigs],
   );
 
   return (
     <>
       {overviewData && (
-        <OverviewStats overviewData={overviewData} studyId={studyId} />
+        <OverviewStats overviewData={overviewData} studyId={studyId} showStoredCountMismatch={false} />
       )}
       <Paper shadow="sm" p="md" mt="md" withBorder>
         {
-        (visibleParticipants.length === 0)
-          ? (
-            <Flex justify="center" align="center" pt="lg" pb="md">
-              <Text>No data available.</Text>
-            </Flex>
-          )
-          : (
-            <Flex direction="row">
-              {/* Trial selection sidebar */}
-              <Box w={340}>
-                <StepsPanel participantAnswers={{}} studyConfig={studyConfig} isAnalysis />
-              </Box>
+          (visibleParticipants.length === 0)
+            ? (
+              <Flex justify="center" align="center" pt="lg" pb="md">
+                <Text>No data available.</Text>
+              </Flex>
+            )
+            : (
+              <Flex direction="row">
+                {/* Trial selection sidebar */}
+                <Box w={340}>
+                  <StepsPanel participantAnswers={{}} studyConfig={studyConfig} isAnalysis />
+                </Box>
 
-              <Divider orientation="vertical" mx="md" />
+                <Divider orientation="vertical" mx="md" />
 
-              {/* Visualization and metadata */}
-              <TrialVisualization participantData={visibleParticipants} studyConfig={studyConfig} trialId={trialId} />
-            </Flex>
-          )
-      }
+                {/* Visualization and metadata */}
+                <TrialVisualization participantData={visibleParticipants} studyConfig={studyConfig} trialId={trialId} />
+              </Flex>
+            )
+        }
       </Paper>
     </>
   );

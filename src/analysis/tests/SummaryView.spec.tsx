@@ -41,6 +41,7 @@ vi.mock('@mantine/core', () => ({
   Title: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Tooltip: ({ children, label }: { children: ReactNode; label?: string }) => (
     <div title={label}>{children}</div>
   ),
@@ -134,6 +135,7 @@ describe('OverviewStats', () => {
           },
         })}
         studyId="test-study"
+        showStoredCountMismatch
       />,
     );
     // Alert triangle appears for the mismatched field
@@ -150,6 +152,7 @@ describe('OverviewStats', () => {
       <OverviewStats
         overviewData={makeOverviewData()}
         studyId="test-study"
+        showStoredCountMismatch
       />,
     );
     expect(html).not.toContain('alert');
