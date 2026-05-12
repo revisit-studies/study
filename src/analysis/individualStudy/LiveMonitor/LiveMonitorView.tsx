@@ -38,7 +38,7 @@ export function getFilteredParticipantProgress(
       };
     })
     .filter(({ isCompleted, isRejected, assignment }) => {
-      const status = isRejected ? 'rejected' : (isCompleted ? 'completed' : 'inprogress');
+      const status = isRejected ? 'rejected' : (isCompleted ? 'completed' : 'inProgress');
       const statusMatch = includedParticipants.includes(status);
       const stageMatch = selectedStages.includes('ALL') || selectedStages.includes(assignment.stage || '');
 
@@ -235,7 +235,7 @@ export function LiveMonitorView({
             </Text>
             <Group gap="xs">
               <Badge color="green" variant="light" size="sm">
-                {filteredParticipantProgress.filter((p) => p.isCompleted).length}
+                {filteredParticipantProgress.filter((p) => p.isCompleted && !p.isRejected).length}
                 {' '}
                 Completed
               </Badge>
