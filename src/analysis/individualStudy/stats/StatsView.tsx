@@ -14,24 +14,26 @@ export function StatsView(
   {
     studyConfig,
     visibleParticipants,
+    allConfigs,
     studyId,
   }: {
     studyConfig: StudyConfig;
     visibleParticipants: ParticipantDataWithStatus[];
+    allConfigs: Record<string, StudyConfig>;
     studyId?: string;
   },
 ) {
   const { trialId } = useParams();
 
   const overviewData = useMemo(
-    () => (trialId && trialId !== 'end' ? getOverviewStats(visibleParticipants, trialId, studyConfig) : null),
-    [studyConfig, visibleParticipants, trialId],
+    () => (trialId && trialId !== 'end' ? getOverviewStats(visibleParticipants, trialId, studyConfig, allConfigs) : null),
+    [studyConfig, visibleParticipants, trialId, allConfigs],
   );
 
   return (
     <>
       {overviewData && (
-        <OverviewStats overviewData={overviewData} studyId={studyId} />
+        <OverviewStats overviewData={overviewData} studyId={studyId} showStoredCountMismatch={false} />
       )}
       <Paper shadow="sm" p="md" mt="md" withBorder>
         {
