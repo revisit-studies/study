@@ -18,7 +18,7 @@ export function usePreviousStep() {
   const { deleteDynamicBlockAnswers } = useStoreActions();
   const answers = useStoreSelector((state) => state.answers);
 
-  // Status of the previous button. If false, the previous button should be disabled
+  // Status of the previous button. If true, the previous button should be disabled
   const isPreviousDisabled = typeof currentStep !== 'number' || currentStep <= 0;
 
   const goToPreviousStep = useCallback(() => {

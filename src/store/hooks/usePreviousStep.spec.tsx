@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
+  afterEach,
   beforeEach,
   describe,
   expect,
@@ -81,6 +82,10 @@ describe('usePreviousStep', () => {
     vi.stubGlobal('window', {
       location: { search: '?participantId=p-1' },
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   test('keeps the previous button enabled during analysis replay', () => {
