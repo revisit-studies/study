@@ -13,6 +13,7 @@ let mockedRecordingContext = {
   clickToRecord: false,
   isSpeakingWhileMuted: false,
   showMutedWarning: false,
+  screenRecordingError: null as string | null,
   audioRecordingError: null as string | null,
   currentComponentHasAudioRecording: false,
   audioStatus: 'idle' as 'idle' | 'pending' | 'recording' | 'denied',
@@ -150,6 +151,7 @@ describe('AppHeader', () => {
       clickToRecord: false,
       isSpeakingWhileMuted: false,
       showMutedWarning: false,
+      screenRecordingError: null,
       audioRecordingError: null,
       currentComponentHasAudioRecording: false,
       audioStatus: 'idle',
@@ -159,21 +161,23 @@ describe('AppHeader', () => {
   test('shows disabled mic state when audio permission is denied before recording starts', () => {
     mockedRecordingContext = {
       ...mockedRecordingContext,
+      clickToRecord: true,
       currentComponentHasAudioRecording: true,
-      audioRecordingError: 'Microphone permission denied or not supported.',
+      audioRecordingError: 'Microphone permission denied',
       audioStatus: 'denied',
     };
 
     const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
 
     expect(html).toContain('Microphone error');
-    expect(html).toContain('Microphone permission denied or not supported.');
+    expect(html).toContain('Microphone permission denied');
     expect(html).toContain('mic-off');
   });
 
   test('shows pending mic state before audio permission is granted', () => {
     mockedRecordingContext = {
       ...mockedRecordingContext,
+      clickToRecord: true,
       currentComponentHasAudioRecording: true,
       audioStatus: 'pending',
     };
@@ -183,5 +187,16 @@ describe('AppHeader', () => {
     expect(html).toContain('Microphone pending');
     expect(html).toContain('Microphone not enabled yet');
     expect(html).toContain('mic-off');
+  });
+
+  test('shows screen recording error in the header', () => {
+    mockedRecordingContext = {
+      ...mockedRecordingContext,
+      screenRecordingError: 'Recording permission denied',
+    };
+
+    const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
+
+    expect(html).toContain('Recording permission denied');
   });
 });

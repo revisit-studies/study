@@ -292,7 +292,7 @@ export function useRecording() {
       setIsAudioRecording(true);
     }).catch((err) => {
       console.error('Error accessing microphone:', err);
-      setAudioRecordingError('Microphone permission denied or not supported.');
+      setAudioRecordingError('Microphone permission denied');
       setIsAudioRecording(false);
     });
   }, [storageEngine, isMuted]);
@@ -352,6 +352,9 @@ export function useRecording() {
       document.title = `RECORD THIS TAB: ${pageTitle}`;
 
       try {
+        setRecordingError(null);
+        setAudioRecordingError(null);
+
         const screenStream = studyHasScreenRecording ? await navigator.mediaDevices.getDisplayMedia({
           video: { displaySurface: 'browser', ...(recordScreenFPS ? { frameRate: { ideal: recordScreenFPS } } : {}) },
           audio: false,
@@ -363,10 +366,18 @@ export function useRecording() {
 
         screenMediaStream.current = screenStream;
 
-        const micStream = studyHasAudioRecording ? await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: false,
-        }) : null;
+        let micStream: MediaStream | null = null;
+        if (studyHasAudioRecording) {
+          try {
+            micStream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+              video: false,
+            });
+          } catch (err) {
+            console.error('Error accessing microphone:', err);
+            setAudioRecordingError('Microphone permission denied');
+          }
+        }
 
         audioMediaStream.current = micStream;
 
@@ -398,11 +409,10 @@ export function useRecording() {
         setIsAudioCapturing(micStream !== null);
         setIsMediaCapturing(screenStream !== null || micStream !== null);
         setScreenCaptureStarted(true);
-        setScreenWithAudioRecording(!!recordAudio);
-        setRecordingError(null);
+        setScreenWithAudioRecording(micStream !== null && !!recordAudio);
       } catch (err) {
         console.error('Error accessing screen:', err);
-        setRecordingError('Recording permission denied or not supported.');
+        setRecordingError('Recording permission denied');
       } finally {
         document.title = pageTitle;
       }

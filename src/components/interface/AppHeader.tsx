@@ -97,6 +97,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
     clickToRecord,
     isSpeakingWhileMuted,
     showMutedWarning,
+    screenRecordingError,
     audioRecordingError,
     currentComponentHasAudioRecording,
     audioStatus,
@@ -110,7 +111,16 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   const hasUnmetDeviceRequirement = developmentModeEnabled
     && (!isBrowserAllowed || !isDeviceAllowed || !isInputAllowed || !isDisplayAllowed);
   const showAudioStatus = currentComponentHasAudioRecording || isAudioRecording || audioStatus !== 'idle';
-  const showRecordingStatus = showAudioStatus || isScreenRecording;
+  const showRecordingStatus = showAudioStatus || isScreenRecording || !!screenRecordingError;
+  const isAudioActivelyRecording = audioStatus === 'recording' && !isMuted;
+  let recordingLabel = '';
+  if (isScreenRecording && isAudioActivelyRecording) {
+    recordingLabel = 'Recording screen and audio';
+  } else if (isScreenRecording) {
+    recordingLabel = 'Recording screen';
+  } else if (isAudioActivelyRecording) {
+    recordingLabel = 'Recording audio';
+  }
 
   useEffect(() => {
     if (!(isMuted && isSpeakingWhileMuted)) return undefined;
@@ -209,34 +219,23 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
             {showRecordingStatus && (
 
               <Group ml="xl" gap={20} wrap="nowrap">
-                <Text c="red">
-                  {((audioStatus === 'recording' && !isMuted) || (isScreenRecording)) && 'Recording'}
-                  {isScreenRecording && ' screen'}
-                  {isScreenRecording && audioStatus === 'recording' && !isMuted && ' and'}
-                  {audioStatus === 'recording' && !isMuted && ' audio'}
-                </Text>
+                {recordingLabel && <Text c="red" size="sm">{recordingLabel}</Text>}
+                {screenRecordingError && <Text c="red" size="sm" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{screenRecordingError}</Text>}
+                {audioStatus === 'denied' && audioRecordingError && <Text c="red" size="sm" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{audioRecordingError}</Text>}
                 {audioStatus === 'recording' && !isMuted && <RecordingAudioWaveform />}
-                {showAudioStatus && (audioStatus === 'denied' ? (
-                  <Tooltip label={audioRecordingError}>
-                    <ActionIcon color="red" variant="light" size="md" aria-label="Microphone error" data-disabled aria-disabled tabIndex={-1}>
-                      <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} />
-                    </ActionIcon>
-                  </Tooltip>
+                {clickToRecord && showAudioStatus && (audioStatus === 'denied' ? (
+                  <ActionIcon color="red" variant="light" size="md" aria-label="Microphone error" data-disabled aria-disabled tabIndex={-1}>
+                    <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} />
+                  </ActionIcon>
                 ) : audioStatus === 'pending' ? (
                   <Tooltip label="Microphone not enabled yet">
                     <ActionIcon color="gray" variant="light" size="md" aria-label="Microphone pending" data-disabled aria-disabled tabIndex={-1}>
                       <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} />
                     </ActionIcon>
                   </Tooltip>
-                ) : clickToRecord ? (
+                ) : (
                   <Tooltip label={showMutedWarning ? 'You are still muted. Press and hold to unmute.' : 'Press and hold to unmute.'} opened={showMutedWarning || undefined}>
                     <ActionIcon className={showMutedWarning ? classes.micBlink : undefined} color="blue" variant="light" size="md" aria-label="Click and hold to unmute microphone" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
-                      {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
-                    </ActionIcon>
-                  </Tooltip>
-                ) : (
-                  <Tooltip label={showMutedWarning ? 'You are still muted. Press to unmute.' : `Press to ${isMuted ? 'unmute' : 'mute'}`} opened={showMutedWarning || undefined}>
-                    <ActionIcon className={showMutedWarning ? classes.micBlink : undefined} color="blue" variant="light" size="md" aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'} onClick={() => setIsMuted(!isMuted)}>
                       {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
                     </ActionIcon>
                   </Tooltip>

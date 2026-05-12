@@ -14,8 +14,6 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
     stopScreenCapture: stopCapture,
     isScreenCapturing: screenCapturing,
     isAudioCapturing: audioCapturing,
-    screenRecordingError: error,
-    audioRecordingError,
     audioMediaStream,
   } = useRecordingContext();
 
@@ -115,8 +113,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
                 muted
                 style={{ width: '400px', border: '1px solid #ccc', marginTop: '1rem' }}
               />
-              {(error || audioRecordingError) && <p style={{ color: 'red' }}>{error || audioRecordingError}</p>}
-              <p><i>Note: Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
+              <p><i>Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
 
             </li>
             <li>
@@ -160,8 +157,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
             muted
             style={{ width: '400px', border: '1px solid #ccc', marginTop: '1rem' }}
           />
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          <p><i>Note: Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
+          <p><i>Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
 
           <strong>Note:</strong>
           <ul>
