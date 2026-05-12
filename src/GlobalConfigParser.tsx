@@ -28,27 +28,10 @@ async function fetchGlobalConfigArray() {
   return parseGlobalConfig(configs);
 }
 
-function isHomeRoute() {
-  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
-  const basePath = PREFIX.replace(/\/+$/, '') || '/';
-
-  return pathname === basePath || pathname === `${basePath}/`;
-}
-
-export function GlobalConfigParser() {
-  const [globalConfig, setGlobalConfig] = useState<Nullable<GlobalConfig>>(null);
+function HomeRoute({ globalConfig }: { globalConfig: GlobalConfig }) {
   const [studyConfigs, setStudyConfigs] = useState<Record<string, ParsedConfig<StudyConfig> | null>>({});
 
   useEffect(() => {
-    if (!globalConfig) {
-      return undefined;
-    }
-
-    if (!isHomeRoute()) {
-      setStudyConfigs({});
-      return undefined;
-    }
-
     let cancelled = false;
 
     async function fetchData(currentGlobalConfig: GlobalConfig) {
@@ -64,6 +47,26 @@ export function GlobalConfigParser() {
       cancelled = true;
     };
   }, [globalConfig]);
+
+  return (
+    <>
+      <PageTitle title="ReVISit | Home" />
+      <AppShell
+        padding="md"
+        header={{ height: 70 }}
+      >
+        <AppHeader studyIds={globalConfig.configsList} />
+        <ConfigSwitcher
+          globalConfig={globalConfig}
+          studyConfigs={studyConfigs}
+        />
+      </AppShell>
+    </>
+  );
+}
+
+export function GlobalConfigParser() {
+  const [globalConfig, setGlobalConfig] = useState<Nullable<GlobalConfig>>(null);
 
   useEffect(() => {
     if (globalConfig) {
@@ -108,21 +111,7 @@ export function GlobalConfigParser() {
           <Routes>
             <Route
               path="/"
-              element={(
-                <>
-                  <PageTitle title="ReVISit | Home" />
-                  <AppShell
-                    padding="md"
-                    header={{ height: 70 }}
-                  >
-                    <AppHeader studyIds={globalConfig.configsList} />
-                    <ConfigSwitcher
-                      globalConfig={globalConfig}
-                      studyConfigs={studyConfigs}
-                    />
-                  </AppShell>
-                </>
-              )}
+              element={<HomeRoute globalConfig={globalConfig} />}
             />
             <Route
               path="/:studyId/*"
