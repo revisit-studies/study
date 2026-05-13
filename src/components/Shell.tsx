@@ -288,7 +288,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         const generatedSequences = await generateSequenceArray(activeConfig);
 
         const matchingSequence = generatedSequences[0];
-        const fallbackSequence = await filterSequenceByCondition(
+        const fallbackSequence = filterSequenceByCondition(
           matchingSequence,
           studyCondition,
         );
