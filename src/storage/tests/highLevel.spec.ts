@@ -501,6 +501,7 @@ describe.each([
   });
 
   test('updateParticipantMetadata stays local when data collection is disabled', async () => {
+    await storageEngine.getModes(studyId);
     await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
 
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);

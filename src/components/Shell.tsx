@@ -6,7 +6,7 @@ import {
 } from 'react';
 import { Provider } from 'react-redux';
 import { RouteObject, useRoutes, useSearchParams } from 'react-router';
-import { LoadingOverlay, Title } from '@mantine/core';
+import { Box, LoadingOverlay, Title } from '@mantine/core';
 import {
   GlobalConfig,
   Nullable,
@@ -125,6 +125,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   const [routes, setRoutes] = useState<RouteObject[]>([]);
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
+  const [isCompletionCheckResolved, setIsCompletionCheckResolved] = useState(false);
   const { storageEngine } = useStorageEngine();
   const [searchParams] = useSearchParams();
 
@@ -152,6 +153,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
     async function initializeUserStoreRouting() {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
       if (!storageEngine || !activeConfig || !canonicalStudyId) return;
+      setIsCompletionCheckResolved(false);
 
       try {
         // Make sure that we have a study database and that the study database has a sequence array
@@ -261,13 +263,21 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           });
         }
 
-        storageEngine.getParticipantCompletionStatus(participantSession.participantId).then((participantCompleted) => {
-          if (!isCancelled) {
-            newStore.store.dispatch(newStore.actions.setParticipantCompleted(participantCompleted));
-          }
-        }).catch((error) => {
-          console.error('Error fetching participant completion status:', error);
-        });
+        if (!modes.dataCollectionEnabled) {
+          setIsCompletionCheckResolved(true);
+        } else {
+          storageEngine.getParticipantCompletionStatus(participantSession.participantId).then((participantCompleted) => {
+            if (!isCancelled) {
+              newStore.store.dispatch(newStore.actions.setParticipantCompleted(participantCompleted));
+              setIsCompletionCheckResolved(true);
+            }
+          }).catch((error) => {
+            console.error('Error fetching participant completion status:', error);
+            if (!isCancelled) {
+              setIsCompletionCheckResolved(true);
+            }
+          });
+        }
       } catch (error) {
         console.error('Error initializing user store routing:', error);
         // Fallback: initialize the store with empty data
@@ -296,6 +306,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         }
 
         setStore(emptyStore);
+        setIsCompletionCheckResolved(true);
       }
 
       if (isCancelled) {
@@ -339,6 +350,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
+  const isInteractionLocked = routes.length > 0 && store !== null && !isCompletionCheckResolved;
 
   let toRender: ReactNode = null;
 
@@ -350,9 +362,19 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   } else {
     // If routing is null, we didn't match any routes
     toRender = routing && store ? (
-      <StudyStoreContext.Provider value={store}>
-        <Provider store={store.store}>{routing}</Provider>
-      </StudyStoreContext.Provider>
+      <Box pos="relative" style={{ minHeight: '100vh' }}>
+        <LoadingOverlay
+          visible={isInteractionLocked}
+          zIndex={1000}
+          overlayProps={{ blur: 1 }}
+          loaderProps={{ size: 'sm' }}
+        />
+        <Box style={{ pointerEvents: isInteractionLocked ? 'none' : undefined }}>
+          <StudyStoreContext.Provider value={store}>
+            <Provider store={store.store}>{routing}</Provider>
+          </StudyStoreContext.Provider>
+        </Box>
+      </Box>
     ) : (
       <ResourceNotFound />
     );
