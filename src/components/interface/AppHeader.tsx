@@ -110,7 +110,10 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   } = useDeviceRules(studyConfig.studyRules);
   const hasUnmetDeviceRequirement = developmentModeEnabled
     && (!isBrowserAllowed || !isDeviceAllowed || !isInputAllowed || !isDisplayAllowed);
-  const showAudioStatus = currentComponentHasAudioRecording || isAudioRecording || audioStatus !== 'idle';
+  const isScreenRecordingPermission = currentComponent === '$screen-recording.components.screenRecordingPermission';
+  const showAudioStatus = currentComponentHasAudioRecording
+    || isAudioRecording
+    || (isScreenRecordingPermission && audioStatus !== 'idle');
   const showRecordingStatus = showAudioStatus || isScreenRecording || !!screenRecordingError;
   const isAudioActivelyRecording = audioStatus === 'recording' && !isMuted;
   let recordingLabel = '';

@@ -5,6 +5,8 @@ import {
 } from 'vitest';
 import { AppHeader } from './AppHeader';
 
+let mockedCurrentComponent = 'componentA';
+
 let mockedRecordingContext = {
   isScreenRecording: false,
   isAudioRecording: false,
@@ -78,7 +80,7 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('../../routes/utils', () => ({
-  useCurrentComponent: () => 'componentA',
+  useCurrentComponent: () => mockedCurrentComponent,
   useCurrentStep: () => 0,
   useStudyId: () => 'test-study',
 }));
@@ -143,6 +145,7 @@ vi.mock('./RecordingAudioWaveform', () => ({
 
 describe('AppHeader', () => {
   beforeEach(() => {
+    mockedCurrentComponent = 'componentA';
     mockedRecordingContext = {
       isScreenRecording: false,
       isAudioRecording: false,
@@ -187,6 +190,32 @@ describe('AppHeader', () => {
     expect(html).toContain('Microphone pending');
     expect(html).toContain('Microphone not enabled yet');
     expect(html).toContain('mic-off');
+  });
+
+  test('hides stale mic error outside audio and permission pages', () => {
+    mockedRecordingContext = {
+      ...mockedRecordingContext,
+      audioRecordingError: 'Microphone permission denied',
+      audioStatus: 'denied',
+    };
+
+    const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
+
+    expect(html).not.toContain('Microphone error');
+    expect(html).not.toContain('Microphone permission denied');
+  });
+
+  test('shows mic error on the screen recording permission page', () => {
+    mockedCurrentComponent = '$screen-recording.components.screenRecordingPermission';
+    mockedRecordingContext = {
+      ...mockedRecordingContext,
+      audioRecordingError: 'Microphone permission denied',
+      audioStatus: 'denied',
+    };
+
+    const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
+
+    expect(html).toContain('Microphone permission denied');
   });
 
   test('shows screen recording error in the header', () => {
