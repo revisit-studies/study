@@ -210,8 +210,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       let modes: Record<REVISIT_MODE, boolean> | null = null;
       let storageOperationFailed = false;
       const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
-        ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
-        || undefined
+        ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) ?? undefined
         : undefined;
       try {
         // Make sure that we have a study database and that the study database has a sequence array
