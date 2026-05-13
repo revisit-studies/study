@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { useIsAnalysis } from './useIsAnalysis';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
+import { parseTrialOrder } from '../../utils/parseTrialOrder';
 import { useStudyConfig } from './useStudyConfig';
 import { getSequenceFlatMap, findFuncBlock } from '../../utils/getSequenceFlatMap';
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store';
@@ -21,6 +22,26 @@ export function usePreviousStep() {
   // Status of the previous button. If true, the previous button should be disabled
   const isPreviousDisabled = typeof currentStep !== 'number' || currentStep <= 0;
 
+  const buildSearch = useCallback((targetTrialOrder?: string) => {
+    if (!isAnalysis) {
+      return window.location.search;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const matchingAnswerIdentifier = targetTrialOrder
+      ? Object.entries(answers).find(([, answer]) => answer.trialOrder === targetTrialOrder)?.[0]
+      : undefined;
+
+    if (matchingAnswerIdentifier) {
+      params.set('currentTrial', matchingAnswerIdentifier);
+    } else {
+      params.delete('currentTrial');
+    }
+
+    const search = params.toString();
+    return search ? `?${search}` : '';
+  }, [answers, isAnalysis]);
+
   const goToPreviousStep = useCallback(() => {
     if (typeof currentStep !== 'number') {
       return;
@@ -38,24 +59,34 @@ export function usePreviousStep() {
 
       // If we're at the first element of a dynamic block, exit the dynamic block
       if (decryptIndex(funcIndex) !== 0) {
-        navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(decryptIndex(funcIndex) - 1)}${window.location.search}`);
+        const previousFuncIndex = decryptIndex(funcIndex) - 1;
+        navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(previousFuncIndex)}${buildSearch(`${currentStep}_${previousFuncIndex}`)}`);
         return;
       }
     }
-    const previousComponentId = flatSequence[previousStep];
-    // Check if previous component is a dynamic block
-    const isDynamicBlock = findFuncBlock(previousComponentId, studyConfig.sequence);
 
-    if (isDynamicBlock) {
-      // Find the last component that has been answered in the dynamic block
-      const dynamicBlockAnswers = Object.keys(answers).filter((key) => key.startsWith(`${previousComponentId}_${previousStep}_`));
-      const previousDynamicBlockIndex = dynamicBlockAnswers.length - 1;
-      // Navigate to the last answered index in the dynamic block
-      navigate(`/${studyId}/${encryptIndex(previousStep)}/${encryptIndex(previousDynamicBlockIndex)}${window.location.search}`);
-    } else {
-      navigate(`/${studyId}/${encryptIndex(previousStep)}${window.location.search}`);
+    for (let stepIndex = previousStep; stepIndex >= 0; stepIndex -= 1) {
+      const previousComponentId = flatSequence[stepIndex];
+      const isDynamicBlock = findFuncBlock(previousComponentId, studyConfig.sequence);
+
+      if (!isDynamicBlock) {
+        navigate(`/${studyId}/${encryptIndex(stepIndex)}${buildSearch(`${stepIndex}`)}`);
+        return;
+      }
+
+      const previousDynamicBlockIndex = Object.entries(answers)
+        .filter(([key]) => key.startsWith(`${previousComponentId}_${stepIndex}_`))
+        .reduce((maxIndex, [, answer]) => {
+          const { funcIndex: answerFuncIndex } = parseTrialOrder(answer.trialOrder);
+          return answerFuncIndex !== null ? Math.max(maxIndex, answerFuncIndex) : maxIndex;
+        }, -1);
+
+      if (previousDynamicBlockIndex >= 0) {
+        navigate(`/${studyId}/${encryptIndex(stepIndex)}/${encryptIndex(previousDynamicBlockIndex)}${buildSearch(`${stepIndex}_${previousDynamicBlockIndex}`)}`);
+        return;
+      }
     }
-  }, [answers, currentStep, deleteDynamicBlockAnswers, funcIndex, isAnalysis, navigate, storeDispatch, studyConfig, studyId]);
+  }, [answers, buildSearch, currentStep, deleteDynamicBlockAnswers, funcIndex, isAnalysis, navigate, storeDispatch, studyConfig, studyId]);
 
   return {
     isPreviousDisabled,

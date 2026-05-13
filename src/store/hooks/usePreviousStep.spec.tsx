@@ -16,6 +16,7 @@ const mockDispatch = vi.fn();
 let mockCurrentStep = 1;
 let mockFuncIndex: string | undefined;
 let mockIsAnalysis = false;
+let mockAnswers: Record<string, { trialOrder: string }>;
 let capturedHook: ReturnType<typeof usePreviousStep> | undefined;
 
 vi.mock('react-router', () => ({
@@ -57,10 +58,7 @@ vi.mock('../store', () => ({
     deleteDynamicBlockAnswers: mockDeleteDynamicBlockAnswers,
   }),
   useStoreSelector: (selector: (state: { answers: Record<string, { trialOrder: string }> }) => unknown) => selector({
-    answers: {
-      dynamicBlock_1_component_0: { trialOrder: '1_0' },
-      dynamicBlock_1_component_1: { trialOrder: '1_1' },
-    },
+    answers: mockAnswers,
   }),
 }));
 
@@ -77,6 +75,10 @@ describe('usePreviousStep', () => {
     mockCurrentStep = 1;
     mockFuncIndex = undefined;
     mockIsAnalysis = false;
+    mockAnswers = {
+      dynamicBlock_1_component_0: { trialOrder: '1_0' },
+      dynamicBlock_1_component_1: { trialOrder: '1_1' },
+    };
     capturedHook = undefined;
 
     vi.stubGlobal('window', {
@@ -99,12 +101,32 @@ describe('usePreviousStep', () => {
   test('does not delete dynamic replay answers when moving backward in analysis replay', () => {
     mockIsAnalysis = true;
     mockFuncIndex = '1';
+    vi.stubGlobal('window', {
+      location: { search: '?participantId=p-1&currentTrial=dynamicBlock_1_component_1' },
+    });
 
     renderToStaticMarkup(<HookHarness />);
 
     capturedHook?.goToPreviousStep();
 
     expect(mockDispatch).not.toHaveBeenCalled();
-    expect(mockNavigate).toHaveBeenCalledWith('/study-1/enc-1/enc-0?participantId=p-1');
+    expect(mockNavigate).toHaveBeenCalledWith('/study-1/enc-1/enc-0?participantId=p-1&currentTrial=dynamicBlock_1_component_0');
+  });
+
+  test('skips unanswered dynamic blocks when moving backward in analysis replay', () => {
+    mockIsAnalysis = true;
+    mockCurrentStep = 2;
+    mockAnswers = {
+      intro_0: { trialOrder: '0' },
+    };
+    vi.stubGlobal('window', {
+      location: { search: '?participantId=p-1&currentTrial=end_2' },
+    });
+
+    renderToStaticMarkup(<HookHarness />);
+
+    capturedHook?.goToPreviousStep();
+
+    expect(mockNavigate).toHaveBeenCalledWith('/study-1/enc-0?participantId=p-1&currentTrial=intro_0');
   });
 });
