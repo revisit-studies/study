@@ -53,13 +53,8 @@ export function getScreenOrientationType(screen: Screen) {
 export function isStorageStartupFailure(
   storageEngine: StartupStorageStatus,
   configuredEngine: string,
-  storageOperationFailed: boolean = false,
 ) {
-  if (!storageEngine.isConnected() || storageEngine.getEngine() !== configuredEngine) {
-    return true;
-  }
-
-  return storageOperationFailed && configuredEngine !== 'localStorage';
+  return !storageEngine.isConnected() || storageEngine.getEngine() !== configuredEngine;
 }
 
 export function getStartupErrorMessage(error: unknown) {
@@ -208,7 +203,6 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       setCompletionCheckError(null);
 
       let modes: Record<REVISIT_MODE, boolean> | null = null;
-      let storageOperationFailed = false;
       const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
         ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) ?? undefined
         : undefined;
@@ -335,12 +329,10 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           });
         }
       } catch (error) {
-        storageOperationFailed = true;
         console.error('Error initializing user store routing:', error);
         const isStorageFailure = isStorageStartupFailure(
           storageEngine,
           import.meta.env.VITE_STORAGE_ENGINE,
-          storageOperationFailed,
         );
         const resolvedModes = modes ?? await storageEngine.getModes(canonicalStudyId).catch(() => null);
         const developmentModeEnabledForAlert = resolvedModes?.developmentModeEnabled ?? false;
