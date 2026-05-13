@@ -1,8 +1,0 @@
-.response {
-    display: flex;
-    justify-content: space-between;
-}
-
-.response img {
-    max-width: 110px;
-}
