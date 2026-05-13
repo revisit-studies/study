@@ -234,6 +234,12 @@ class DelayedLocalStorageEngine extends LocalStorageEngine {
   }
 }
 
+class DeferredInitialWriteLocalStorageEngine extends DelayedLocalStorageEngine {
+  protected override shouldDeferInitialParticipantDataPersistence() {
+    return true;
+  }
+}
+
 describe.each([
   { TestEngine: LocalStorageEngine },
   // { TestEngine: SupabaseStorageEngine }, // Uncomment to test with Supabase
@@ -353,6 +359,38 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
     expect(getModesSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('initializeParticipantSession starts deferred initial participant writes immediately in the background', async () => {
+    const deferredStorageEngine = new DeferredInitialWriteLocalStorageEngine(true);
+    await deferredStorageEngine.connect();
+    await deferredStorageEngine.initializeStudyDb(studyId);
+    await deferredStorageEngine.setSequenceArray(sequenceArray);
+    deferredStorageEngine.holdNextParticipantDataWrite();
+
+    const participantSessionPromise = deferredStorageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    await deferredStorageEngine.waitForHeldParticipantDataWrite();
+
+    const participantSession = await participantSessionPromise;
+
+    const observerEngine = new LocalStorageEngine(true);
+    await observerEngine.connect();
+    await observerEngine.initializeStudyDb(studyId);
+
+    expect(await observerEngine.getParticipantData(participantSession.participantId)).toBeNull();
+
+    deferredStorageEngine.releaseHeldParticipantDataWrite();
+    await deferredStorageEngine.flushPendingParticipantData();
+
+    const persistedParticipantData = await observerEngine.getParticipantData(participantSession.participantId);
+    expect(persistedParticipantData).toBeDefined();
+    expect(persistedParticipantData?.participantId).toBe(participantSession.participantId);
+
+    // @ts-expect-error using protected method for testing
+    await deferredStorageEngine._testingReset(studyId);
+    // @ts-expect-error using protected method for testing
+    await observerEngine._testingReset(studyId);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {

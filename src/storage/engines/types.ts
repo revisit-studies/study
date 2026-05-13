@@ -923,7 +923,11 @@ export abstract class StorageEngine {
     };
 
     if (modes.dataCollectionEnabled) {
-      await this.persistCurrentParticipantData({ immediate: !this.shouldDeferInitialParticipantDataPersistence() });
+      if (this.shouldDeferInitialParticipantDataPersistence()) {
+        this.persistCurrentParticipantData({ immediate: true }).catch(() => undefined);
+      } else {
+        await this.persistCurrentParticipantData({ immediate: true });
+      }
     } else {
       await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
     }

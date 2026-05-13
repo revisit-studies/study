@@ -6,7 +6,9 @@ import {
 } from 'react';
 import { Provider } from 'react-redux';
 import { RouteObject, useRoutes, useSearchParams } from 'react-router';
-import { Box, LoadingOverlay, Title } from '@mantine/core';
+import {
+  Box, Button, LoadingOverlay, Stack, Text, Title,
+} from '@mantine/core';
 import {
   GlobalConfig,
   Nullable,
@@ -126,6 +128,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const [routes, setRoutes] = useState<RouteObject[]>([]);
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
   const [isCompletionCheckResolved, setIsCompletionCheckResolved] = useState(false);
+  const [completionCheckError, setCompletionCheckError] = useState<string | null>(null);
   const { storageEngine } = useStorageEngine();
   const [searchParams] = useSearchParams();
 
@@ -154,6 +157,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
       if (!storageEngine || !activeConfig || !canonicalStudyId) return;
       setIsCompletionCheckResolved(false);
+      setCompletionCheckError(null);
 
       try {
         // Make sure that we have a study database and that the study database has a sequence array
@@ -274,7 +278,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           }).catch((error) => {
             console.error('Error fetching participant completion status:', error);
             if (!isCancelled) {
-              setIsCompletionCheckResolved(true);
+              setCompletionCheckError('We could not verify whether this study session was already completed. Please reload this page and try again.');
             }
           });
         }
@@ -369,6 +373,26 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           overlayProps={{ blur: 1 }}
           loaderProps={{ size: 'sm' }}
         />
+        {isInteractionLocked && completionCheckError && (
+          <Stack
+            align="center"
+            gap="sm"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 1001,
+              maxWidth: 420,
+              textAlign: 'center',
+            }}
+          >
+            <Text>{completionCheckError}</Text>
+            <Button onClick={() => window.location.reload()}>
+              Reload
+            </Button>
+          </Stack>
+        )}
         <Box style={{ pointerEvents: isInteractionLocked ? 'none' : undefined }}>
           <StudyStoreContext.Provider value={store}>
             <Provider store={store.store}>{routing}</Provider>
