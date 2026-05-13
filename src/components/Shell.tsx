@@ -28,17 +28,60 @@ import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig, resolveConfigKey } from '../utils/fetchConfig';
-import { ParticipantMetadata } from '../store/types';
+import type { AlertModalState, ParticipantMetadata } from '../store/types';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
 import { hash } from '../storage/engines/utils/storageEngineHelpers';
+import type { StorageEngine, REVISIT_MODE } from '../storage/engines/types';
 import {
   filterSequenceByCondition,
   parseConditionParam,
   resolveParticipantConditions,
 } from '../utils/handleConditionLogic';
+
+type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
+
+const GENERIC_STARTUP_ERROR = 'There was a problem loading the study.';
+const RESUME_STARTUP_ERROR = 'This study session could not be resumed.';
+
+export function getScreenOrientationType(screen: Screen) {
+  return screen.orientation?.type ?? '';
+}
+
+export function isStorageStartupFailure(
+  storageEngine: StartupStorageStatus,
+  configuredEngine: string,
+) {
+  return !storageEngine.isConnected() || storageEngine.getEngine() !== configuredEngine;
+}
+
+export function getStartupErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  if (typeof error === 'string' && error.trim().length > 0) {
+    return error;
+  }
+
+  return GENERIC_STARTUP_ERROR;
+}
+
+export function getInitialStartupAlert(
+  error: unknown,
+  developmentModeEnabled: boolean,
+  resumeParticipantId?: string | null,
+): AlertModalState {
+  return {
+    show: true,
+    title: 'Problem loading the study',
+    message: developmentModeEnabled
+      ? getStartupErrorMessage(error)
+      : (resumeParticipantId ? RESUME_STARTUP_ERROR : GENERIC_STARTUP_ERROR),
+  };
+}
 
 function createParticipantMetadata(ip: string = ''): ParticipantMetadata {
   return {
@@ -50,7 +93,7 @@ function createParticipantMetadata(ip: string = ''): ParticipantMetadata {
       availHeight: window.screen.availHeight,
       availWidth: window.screen.availWidth,
       colorDepth: window.screen.colorDepth,
-      orientation: window.screen.orientation.type,
+      orientation: getScreenOrientationType(window.screen),
       pixelDepth: window.screen.pixelDepth,
     },
     ip,
@@ -159,11 +202,14 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       setIsCompletionCheckResolved(false);
       setCompletionCheckError(null);
 
+      let modes: Record<REVISIT_MODE, boolean> | null = null;
+      const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
+        ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) ?? undefined
+        : undefined;
       try {
         // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(canonicalStudyId);
 
-        const modesPromise = storageEngine.getModes(canonicalStudyId);
         const activeHashPromise = hash(JSON.stringify(activeConfig));
 
         await storageEngine.saveConfig(activeConfig);
@@ -177,16 +223,13 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         }
 
         // Get or generate participant session
-        const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
-          ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
-          || undefined
-          : undefined;
         const searchParamsObject = Object.fromEntries(searchParams.entries());
 
-        const [modes, activeHash] = await Promise.all([
-          modesPromise,
+        const [resolvedModes, activeHash] = await Promise.all([
+          storageEngine.getModes(canonicalStudyId),
           activeHashPromise,
         ]);
+        modes = resolvedModes;
 
         const initialMetadata = createParticipantMetadata();
 
@@ -197,7 +240,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantId || urlParticipantId,
         );
 
-        if (studyCondition.length > 0 && modes.developmentModeEnabled) {
+        if (studyCondition.length > 0 && resolvedModes.developmentModeEnabled) {
           const updatedSearchParams = {
             ...participantSession.searchParams,
             condition: studyCondition.join(','),
@@ -210,18 +253,19 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             conditions: studyCondition,
           };
         }
-
         let participantConfig = activeConfig;
-
         if (participantSession.participantConfigHash !== activeHash) {
-          participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], canonicalStudyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
+          participantConfig = (await storageEngine.getAllConfigsFromHash(
+            [participantSession.participantConfigHash],
+            canonicalStudyId,
+          ))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
         }
 
         const resolvedCondition = resolveParticipantConditions({
           urlCondition: studyCondition,
           participantConditions: participantSession.conditions,
           participantSearchParamCondition: participantSession.searchParams?.condition,
-          allowUrlOverride: modes.developmentModeEnabled,
+          allowUrlOverride: resolvedModes.developmentModeEnabled,
         });
         const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, resolvedCondition);
 
@@ -232,7 +276,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           filteredParticipantSequence,
           participantSession.metadata,
           participantSession.answers,
-          modes,
+          resolvedModes,
           participantSession.participantId,
           false,
           false,
@@ -245,7 +289,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         setStore(newStore);
 
-        if (modes.dataCollectionEnabled) {
+        if (resolvedModes.dataCollectionEnabled) {
           fetchParticipantIp().then(async (ip) => {
             if (isCancelled || !ip.ip || participantSession.metadata.ip === ip.ip) {
               return;
@@ -267,7 +311,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           });
         }
 
-        if (!modes.dataCollectionEnabled) {
+        if (!resolvedModes.dataCollectionEnabled) {
           setIsCompletionCheckResolved(true);
         } else {
           storageEngine.getParticipantCompletionStatus(participantSession.participantId).then((participantCompleted) => {
@@ -286,6 +330,24 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         }
       } catch (error) {
         console.error('Error initializing user store routing:', error);
+        const isStorageFailure = isStorageStartupFailure(
+          storageEngine,
+          import.meta.env.VITE_STORAGE_ENGINE,
+        );
+        const resolvedModes = modes ?? await storageEngine.getModes(canonicalStudyId).catch(() => null);
+        const developmentModeEnabledForAlert = resolvedModes?.developmentModeEnabled ?? false;
+        const fallbackModes = {
+          developmentModeEnabled: resolvedModes?.developmentModeEnabled ?? true,
+          dataSharingEnabled: resolvedModes?.dataSharingEnabled ?? true,
+          dataCollectionEnabled: false,
+        };
+        const resumeParticipantId = participantId
+          || urlParticipantId
+          || await storageEngine.peekCurrentParticipantId(canonicalStudyId).catch(() => undefined);
+        const initialAlertModal = !isStorageFailure
+          ? getInitialStartupAlert(error, developmentModeEnabledForAlert, resumeParticipantId)
+          : undefined;
+
         // Fallback: initialize the store with empty data
         const generatedSequences = await generateSequenceArray(activeConfig);
 
@@ -301,10 +363,12 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           fallbackSequence,
           createEmptyParticipantMetadata(),
           {},
-          { developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: false },
+          fallbackModes,
           '',
           false,
-          true,
+          isStorageFailure,
+          false,
+          initialAlertModal,
         );
 
         if (isCancelled) {
