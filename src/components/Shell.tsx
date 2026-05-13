@@ -279,6 +279,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             console.error('Error fetching participant completion status:', error);
             if (!isCancelled) {
               setCompletionCheckError('We could not verify whether this study session was already completed. Please reload this page and try again.');
+              // A transient completion-status lookup failure should not block study entry.
+              setIsCompletionCheckResolved(true);
             }
           });
         }
