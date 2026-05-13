@@ -7,7 +7,7 @@ import {
 import { Provider } from 'react-redux';
 import { RouteObject, useRoutes, useSearchParams } from 'react-router';
 import {
-  Box, Button, LoadingOverlay, Stack, Text, Title,
+  Button, LoadingOverlay, Stack, Text, Title,
 } from '@mantine/core';
 import {
   GlobalConfig,
@@ -223,7 +223,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantSearchParamCondition: participantSession.searchParams?.condition,
           allowUrlOverride: modes.developmentModeEnabled,
         });
-        const filteredParticipantSequence = await filterSequenceByCondition(participantSession.sequence, resolvedCondition);
+        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, resolvedCondition);
 
         // Initialize the redux stores
         const newStore = await studyStoreCreator(
@@ -354,54 +354,46 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
-  const isInteractionLocked = routes.length > 0 && store !== null && !isCompletionCheckResolved;
+  const isLoading = isValidStudyId && (routes.length === 0 || store === null || !isCompletionCheckResolved);
 
-  let toRender: ReactNode = null;
+  let content: ReactNode = null;
 
-  // Definitely a 404
   if (!isValidStudyId) {
-    toRender = <ResourceNotFound />;
-  } else if (routes.length === 0) {
-    toRender = <LoadingOverlay visible />;
-  } else {
-    // If routing is null, we didn't match any routes
-    toRender = routing && store ? (
-      <Box pos="relative" style={{ minHeight: '100vh' }}>
-        <LoadingOverlay
-          visible={isInteractionLocked}
-          zIndex={1000}
-          overlayProps={{ blur: 1 }}
-          loaderProps={{ size: 'sm' }}
-        />
-        {isInteractionLocked && completionCheckError && (
-          <Stack
-            align="center"
-            gap="sm"
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 1001,
-              maxWidth: 420,
-              textAlign: 'center',
-            }}
-          >
-            <Text>{completionCheckError}</Text>
-            <Button onClick={() => window.location.reload()}>
-              Reload
-            </Button>
-          </Stack>
-        )}
-        <Box style={{ pointerEvents: isInteractionLocked ? 'none' : undefined }}>
-          <StudyStoreContext.Provider value={store}>
-            <Provider store={store.store}>{routing}</Provider>
-          </StudyStoreContext.Provider>
-        </Box>
-      </Box>
-    ) : (
-      <ResourceNotFound />
+    content = <ResourceNotFound />;
+  } else if (routing && store) {
+    content = (
+      <StudyStoreContext.Provider value={store}>
+        <Provider store={store.store}>{routing}</Provider>
+      </StudyStoreContext.Provider>
     );
+  } else if (!isLoading) {
+    content = <ResourceNotFound />;
   }
-  return toRender;
+
+  return (
+    <>
+      <LoadingOverlay visible={isLoading} />
+      {isLoading && completionCheckError && (
+        <Stack
+          align="center"
+          gap="sm"
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 1001,
+            maxWidth: 420,
+            textAlign: 'center',
+          }}
+        >
+          <Text>{completionCheckError}</Text>
+          <Button onClick={() => window.location.reload()}>
+            Reload
+          </Button>
+        </Stack>
+      )}
+      {content}
+    </>
+  );
 }
