@@ -61,8 +61,6 @@ export interface ParticipantData {
   searchParams: Record<string, string>;
   /** Metadata of a participant's browser, resolution, language, and IP. */
   metadata: ParticipantMetadata
-  /** Whether the participant has completed the study. */
-  completed: boolean;
   /** Whether the participant has been rejected and the reason. */
   rejected: {
     reason: string;
@@ -76,4 +74,9 @@ export interface ParticipantData {
   conditions?: string[];
   /** Time that the participant registered for the study in epoch milliseconds. */
   createdTime?: number;
+}
+
+export interface ParticipantDataWithStatus extends ParticipantData {
+  /** Whether the participant has completed the study. Derived from sequence assignment status. */
+  completed: boolean;
 }

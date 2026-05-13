@@ -8,7 +8,7 @@ import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { showNotification, RevisitNotification } from '../../../utils/notifications';
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 import { ActionResponse, SnapshotDocContent } from '../../../storage/engines/types';
-import { ParticipantData } from '../../../storage/types';
+import { ParticipantDataWithStatus } from '../../../storage/types';
 
 type SnapshotAction =
   | { type: 'create', archive: boolean }
@@ -17,7 +17,7 @@ type SnapshotAction =
   | { type: 'deleteSnapshot', snapshot: string }
   | { type: 'deleteLive' };
 
-export function DataManagementItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<Record<number, ParticipantData>> }) {
+export function DataManagementItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<ParticipantDataWithStatus[]> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
   const [modalDeleteSnapshotOpened, setModalDeleteSnapshotOpened] = useState<boolean>(false);
   const [modalRenameSnapshotOpened, setModalRenameSnapshotOpened] = useState<boolean>(false);

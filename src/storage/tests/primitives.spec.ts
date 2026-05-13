@@ -6,7 +6,7 @@ import testConfigSimple from './testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { StorageEngine, cleanupModes } from '../engines/types';
-import { hash } from '../engines/utils';
+import { hash } from '../engines/utils/storageEngineHelpers';
 
 // import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
 

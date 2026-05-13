@@ -8,7 +8,7 @@ import { useAuth } from '../../store/hooks/useAuth';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StoredUser } from '../../storage/engines/types';
 import { signIn } from '../../Login';
-import { isCloudStorageEngine } from '../../storage/engines/utils';
+import { isCloudStorageEngine } from '../../storage/engines/utils/storageEngineHelpers';
 import { SupabaseStorageEngine } from '../../storage/engines/SupabaseStorageEngine';
 
 export function GlobalSettings() {

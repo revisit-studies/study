@@ -3,9 +3,10 @@ import { useSearchParams } from 'react-router';
 import { useMemo } from 'react';
 import { GetInputPropsReturnType } from '@mantine/form/lib/types';
 import {
-  IndividualComponent, MatrixResponse, Response, SliderResponse, StoredAnswer,
+  CustomResponse, IndividualComponent, JsonValue, MatrixResponse, Response, SliderResponse, StoredAnswer,
 } from '../../parser/types';
 import { CheckBoxInput } from './CheckBoxInput';
+import { CustomResponseInput } from './CustomResponseInput';
 import { DropdownInput } from './DropdownInput';
 import { ReactiveInput } from './ReactiveInput';
 import { LikertInput } from './LikertInput';
@@ -27,6 +28,7 @@ import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue } from '../../utils/stringOptions';
 import { getDefaultFieldValue, usesStandaloneDontKnowField } from './utils';
+import { CustomResponseField } from '../../store/types';
 
 export function ResponseSwitcher({
   response,
@@ -37,6 +39,8 @@ export function ResponseSwitcher({
   dontKnowCheckbox,
   otherInput,
   disabled,
+  field,
+  customError,
 }: {
   response: Response;
   form: GetInputPropsReturnType;
@@ -46,6 +50,8 @@ export function ResponseSwitcher({
   dontKnowCheckbox?: GetInputPropsReturnType;
   otherInput?: GetInputPropsReturnType;
   disabled?: boolean;
+  field?: CustomResponseField;
+  customError?: string | null;
 }) {
   const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
@@ -133,12 +139,17 @@ export function ResponseSwitcher({
       return response.startingValue.toString();
     }
 
+    if (response.type === 'custom') {
+      return null;
+    }
+
     return '';
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
 
   const responseStyle = response.style || {};
   const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
+  const customResponseValue = useMemo<JsonValue | null>(() => (ans.value ?? null) as JsonValue | null, [ans.value]);
 
   return (
     <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseStyle}>
@@ -250,6 +261,17 @@ export function ResponseSwitcher({
         answer={ans as { value: string }}
         index={index}
         enumerateQuestions={enumerateQuestions}
+      />
+      )}
+      {response.type === 'custom' && field && (
+      <CustomResponseInput
+        response={response as CustomResponse}
+        disabled={isDisabled || dontKnowChecked}
+        value={customResponseValue}
+        error={customError || undefined}
+        index={index}
+        enumerateQuestions={enumerateQuestions}
+        field={field}
       />
       )}
       {response.type === 'textOnly' && (

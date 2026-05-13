@@ -4,9 +4,10 @@ import {
   useCallback,
 } from 'react';
 import { LoadingOverlay } from '@mantine/core';
+import { useLocation, useMatch } from 'react-router';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StoredUser, UserWrapped } from '../../storage/engines/types';
-import { isCloudStorageEngine } from '../../storage/engines/utils';
+import { isCloudStorageEngine } from '../../storage/engines/utils/storageEngineHelpers';
 import { SupabaseStorageEngine } from '../../storage/engines/SupabaseStorageEngine';
 
 // Defines default AuthContextValue
@@ -65,6 +66,8 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   const [user, setUser] = useState(loadingNullUser);
   const [enableAuthTrigger, setEnableAuthTrigger] = useState(false);
   const { storageEngine } = useStorageEngine();
+  const location = useLocation();
+  const studyRouteMatch = useMatch('/:studyId/*');
 
   // Logs the user out by removing the user and navigating to '/login'
   const logout = async () => {
@@ -166,9 +169,11 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [user]);
 
+  const allowChildrenWhileDeterminingStatus = Boolean(studyRouteMatch) && !location.pathname.startsWith('/analysis');
+
   return (
     <AuthContext.Provider value={value}>
-      {user.determiningStatus ? <LoadingOverlay visible /> : children }
+      {user.determiningStatus && !allowChildrenWhileDeterminingStatus ? <LoadingOverlay visible /> : children }
     </AuthContext.Provider>
   );
 }

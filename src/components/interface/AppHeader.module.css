@@ -1,0 +1,9 @@
+@keyframes blink {
+  0% {  }
+  50% { background: var(--mantine-color-red-6); color: var(--mantine-color-white); }
+  100% {  }
+}
+
+.micBlink {
+  animation: blink 2s linear infinite;
+}

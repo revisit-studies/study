@@ -16,7 +16,7 @@ export default function Feedback({ answers }: StimulusParams<any>) {
 
   const [currentCheck, setCurrentCheck] = useState<number>(0);
 
-  const score = +topAnswer[topAnswer.length - 1][1].answer.score;
+  const score = +(topAnswer[topAnswer.length - 1]?.[1].answer.score || 0);
   let correctNum = 0;
 
   const openTrialCheck = (idx: number) => {

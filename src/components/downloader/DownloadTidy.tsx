@@ -17,7 +17,7 @@ import {
   IconBrandPython, IconLayoutColumns, IconTableExport, IconX,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
-import { ParticipantData } from '../../storage/types';
+import { ParticipantDataWithStatus } from '../../storage/types';
 import { Prettify, StudyConfig } from '../../parser/types';
 import { StorageEngine } from '../../storage/engines/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -99,7 +99,12 @@ export function download(graph: string, filename: string) {
   downloadAnchorNode.remove();
 }
 
-function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig, transcripts?: Record<string, string | null>): [TidyRow[], string[]] {
+function participantDataToRows(
+  participant: ParticipantDataWithStatus,
+  properties: Property[],
+  studyConfig: StudyConfig,
+  transcripts?: Record<string, string | null>,
+): [TidyRow[], string[]] {
   const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (Object.entries(participant.answers).length)) * 100).toFixed(2);
   const newHeaders = new Set<string>();
   const participantConditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
@@ -237,7 +242,7 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
 
 async function getTableData(
   selectedProperties: Property[],
-  data: ParticipantData[],
+  data: ParticipantDataWithStatus[],
   storageEngine: StorageEngine | undefined,
   studyId: string,
   hasAudio?: boolean,
@@ -303,7 +308,7 @@ export function DownloadTidy({
   opened: boolean;
   close: () => void;
   filename: string;
-  data: ParticipantData[];
+  data: ParticipantDataWithStatus[];
   studyId: string;
   hasAudio?: boolean;
 }) {

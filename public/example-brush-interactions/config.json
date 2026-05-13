@@ -431,8 +431,9 @@
       ]
     },
     "survey": {
-      "type": "markdown",
-      "path": "example-VLAT-mini-randomized/assets/survey.md",
+      "type": "questionnaire",
+      "instruction": "Thanks for completing the study! We are testing our survey tool and we could use your valuable feedback in the questions below:",
+      "instructionLocation": "aboveStimulus",
       "response": [
         {
           "id": "surveyExperience",

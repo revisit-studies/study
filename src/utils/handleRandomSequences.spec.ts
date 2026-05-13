@@ -297,6 +297,6 @@ describe('Generating sequences works as expected', () => {
       },
     };
 
-    expect(() => generateSequenceArray(invalidInterruptionConfig)).toThrow('Number of interruptions cannot be greater than the number of components');
+    expect(() => generateSequenceArray(invalidInterruptionConfig)).toThrow('Number of interruptions cannot be greater than the number of available interruption slots');
   });
 });

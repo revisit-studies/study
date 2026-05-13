@@ -9,7 +9,7 @@ import { useAuth } from './store/hooks/useAuth';
 import { useStorageEngine } from './storage/storageEngineHooks';
 import { StorageEngine } from './storage/engines/types';
 import { showNotification } from './utils/notifications';
-import { isCloudStorageEngine } from './storage/engines/utils';
+import { isCloudStorageEngine } from './storage/engines/utils/storageEngineHelpers';
 
 export async function signIn(storageEngine: StorageEngine | undefined, setLoading: (val: boolean) => void) {
   if (storageEngine && isCloudStorageEngine(storageEngine)) {

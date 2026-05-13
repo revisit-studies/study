@@ -201,6 +201,30 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .eq('docId', sequenceAssignmentPath);
   }
 
+  protected async _getSequenceAssignment(participantId: string) {
+    await this.verifyStudyDatabase();
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data, createdAt')
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', `sequenceAssignment_${participantId}`)
+      .single();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return {
+      ...data.data,
+      timestamp: data.data.withServerTimestamp ? new Date(data.createdAt).getTime() : data.data.timestamp,
+      createdTime: new Date(data.createdAt).getTime(),
+    } as SequenceAssignment;
+  }
+
   protected async _completeCurrentParticipantRealtime() {
     await this.verifyStudyDatabase();
     if (!this.currentParticipantId) {

@@ -353,10 +353,12 @@ export function ThinkAloudFooter({
     return buildProvenanceLegendEntries(Object.values(answer.provenanceGraph));
   }, [participant, currentTrial]);
 
-  const tasksList = useMemo(() => orderedAnswers.map((answer) => ({
-    label: answer.componentName,
-    value: answer.identifier,
-  })), [orderedAnswers]);
+  const tasksList = useMemo(() => orderedAnswers
+    .filter((answer) => answer.identifier && answer.componentName)
+    .map((answer) => ({
+      label: answer.componentName,
+      value: answer.identifier,
+    })), [orderedAnswers]);
 
   const transcriptHref = useMemo(() => `${PREFIX}analysis/stats/${studyId}/tagging${currentTrial ? `/${encodeURIComponent(currentTrial)}` : ''}?participantId=${participantId}&revisitPageId=${revisitPageId}`, [currentTrial, participantId, studyId]);
 

@@ -1,11 +1,15 @@
-// eslint-disable-next-line import/no-unresolved
 import latinSquare from '@quentinroy/latin-square';
 import isEqual from 'lodash.isequal';
-import { ComponentBlock, DynamicBlock, StudyConfig } from '../parser/types';
+import {
+  ComponentBlock,
+  DynamicBlock,
+  RandomInterruption,
+  StudyConfig,
+} from '../parser/types';
 import { Sequence } from '../store/types';
 import { isDynamicBlock } from '../parser/utils';
 
-function shuffle(array: (string | ComponentBlock | DynamicBlock)[]) {
+function shuffle<T>(array: T[]) {
   let currentIndex = array.length;
 
   // While there remain elements to shuffle...
@@ -83,6 +87,49 @@ function generateLatinSquareRows(config: StudyConfig, path: string, count: numbe
   return rows;
 }
 
+function insertRandomInterruptions(
+  components: (string | ComponentBlock | DynamicBlock)[],
+  randomInterruptions: RandomInterruption[],
+) {
+  const totalInterruptions = randomInterruptions
+    .reduce((count, interruption) => count + interruption.numInterruptions, 0);
+
+  if (totalInterruptions > components.length - 1) {
+    throw new Error('Number of interruptions cannot be greater than the number of available interruption slots');
+  }
+
+  const availableLocations = Array.from(
+    { length: components.length - 1 },
+    (_, index) => index + 1,
+  );
+  shuffle(availableLocations);
+
+  const interruptionsByLocation = new Map<number, string[][]>();
+  randomInterruptions.forEach((interruption) => {
+    for (let i = 0; i < interruption.numInterruptions; i += 1) {
+      const randomLocation = availableLocations.pop();
+
+      if (randomLocation === undefined) {
+        throw new Error('Number of interruptions cannot be greater than the number of available interruption slots');
+      }
+
+      const interruptionsAtLocation = interruptionsByLocation.get(randomLocation) || [];
+      interruptionsAtLocation.push(interruption.components);
+      interruptionsByLocation.set(randomLocation, interruptionsAtLocation);
+    }
+  });
+
+  const newComponents: (string | ComponentBlock | DynamicBlock)[] = [];
+  for (let i = 0; i < components.length; i += 1) {
+    interruptionsByLocation.get(i)?.forEach((interruptionComponents) => {
+      newComponents.push(...interruptionComponents);
+    });
+    newComponents.push(components[i]);
+  }
+
+  return newComponents;
+}
+
 function _componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
@@ -157,8 +204,9 @@ function _componentBlockToSequence(
 
   // If we have a break, insert it into the sequence at the correct intervals
   if (order.interruptions) {
-    order.interruptions.forEach((interruption) => {
-      const newComponents = [];
+    for (let interruptionIndex = 0; interruptionIndex < order.interruptions.length; interruptionIndex += 1) {
+      const interruption = order.interruptions[interruptionIndex];
+      const newComponents: (string | ComponentBlock | DynamicBlock)[] = [];
       if (interruption.spacing !== 'random') {
         for (let i = 0; i < computedComponents.length; i += 1) {
           if (
@@ -169,32 +217,21 @@ function _componentBlockToSequence(
           }
           newComponents.push(computedComponents[i]);
         }
-      }
 
-      // Handle random interruptions
-      if (interruption.spacing === 'random') {
-        // Generate the random locations
-        const randomInterruptionLocations = new Set<number>();
-        if (interruption.numInterruptions > computedComponents.length - 1) {
-          throw new Error('Number of interruptions cannot be greater than the number of components');
+        computedComponents = newComponents;
+      } else {
+        const groupedRandomInterruptions: RandomInterruption[] = [interruption];
+        while (
+          interruptionIndex + 1 < order.interruptions.length
+          && order.interruptions[interruptionIndex + 1].spacing === 'random'
+        ) {
+          interruptionIndex += 1;
+          groupedRandomInterruptions.push(order.interruptions[interruptionIndex] as RandomInterruption);
         }
-        while (randomInterruptionLocations.size < interruption.numInterruptions) {
-          const randomLocation = Math.floor(Math.random() * computedComponents.length - 1) + 1;
-          randomInterruptionLocations.add(randomLocation);
-        }
-        const sortedRandomInterruptionLocations = Array.from(randomInterruptionLocations).sort((a, b) => a - b);
 
-        let j = 0;
-        for (let i = 0; i < computedComponents.length; i += 1) {
-          if (i === sortedRandomInterruptionLocations[j]) {
-            newComponents.push(...interruption.components);
-            j += 1;
-          }
-          newComponents.push(computedComponents[i]);
-        }
+        computedComponents = insertRandomInterruptions(computedComponents, groupedRandomInterruptions);
       }
-      computedComponents = newComponents;
-    });
+    }
   }
 
   return {

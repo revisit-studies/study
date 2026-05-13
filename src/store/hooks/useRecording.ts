@@ -7,6 +7,12 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useRecordingConfig } from './useRecordingConfig';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useIsAnalysis } from './useIsAnalysis';
+import {
+  getRmsLevel,
+  isSpeakingAtLevel,
+  shouldMonitorMutedAudio,
+  SPEECH_DETECTION_HOLD_MS,
+} from '../../utils/recordingWarnings';
 
 /**
  * Captures and records the screen and audio.
@@ -29,6 +35,10 @@ export function useRecording() {
   const [isMediaCapturing, setIsMediaCapturing] = useState(false);
   const [isRejected, setIsRejected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const analysisAudioStream = useRef<MediaStream | null>(null);
+  const [isSpeakingWhileMuted, setIsSpeakingWhileMuted] = useState(false);
+  const [analysisStreamReady, setAnalysisStreamReady] = useState(false);
+  const [showMutedWarning, setShowMutedWarning] = useState(false);
 
   // currentMediaStream and recorder can be just screen, just audio, or screen and audio combined.
   const currentMediaStream = useRef<MediaStream>(null);
@@ -83,6 +93,10 @@ export function useRecording() {
       });
       audioMediaStream.current = null;
     }
+
+    analysisAudioStream.current?.getTracks().forEach((t) => t.stop());
+    analysisAudioStream.current = null;
+    setAnalysisStreamReady(false);
 
     if (screenMediaStream.current) {
       screenMediaStream.current.getTracks().forEach((track) => {
@@ -221,6 +235,9 @@ export function useRecording() {
       audioMediaRecorder.current.stop();
       audioMediaRecorder.current = null;
     }
+    analysisAudioStream.current?.getTracks().forEach((t) => t.stop());
+    analysisAudioStream.current = null;
+    setAnalysisStreamReady(false);
   }, []);
 
   useEffect(() => {
@@ -235,6 +252,12 @@ export function useRecording() {
     }).then((s) => {
       audioMediaStream.current = s;
       currentMediaStream.current = s;
+
+      const analysisTrack = s.getAudioTracks()[0]?.clone();
+      if (analysisTrack) {
+        analysisAudioStream.current = new MediaStream([analysisTrack]);
+        setAnalysisStreamReady(true);
+      }
 
       s.getAudioTracks().forEach((track) => {
         track.enabled = !isMuted;
@@ -342,6 +365,12 @@ export function useRecording() {
 
         audioMediaStream.current = micStream;
 
+        const analysisTrack = micStream?.getAudioTracks()[0]?.clone();
+        if (analysisTrack) {
+          analysisAudioStream.current = new MediaStream([analysisTrack]);
+          setAnalysisStreamReady(true);
+        }
+
         const combinedStream = new MediaStream([
           ...screenStream?.getVideoTracks() || [],
           ...(micStream?.getAudioTracks() ?? []),
@@ -380,7 +409,76 @@ export function useRecording() {
     audioMediaStream.current?.getAudioTracks().forEach((track) => {
       track.enabled = !isMuted;
     });
-  }, [isMuted]);
+    let t = <NodeJS.Timeout | null>null;
+    if (shouldMonitorMutedAudio(isMuted, currentComponentHasAudioRecording)) {
+      t = setTimeout(() => {
+        setShowMutedWarning(true);
+      }, 5000);
+    } else {
+      setShowMutedWarning(false);
+    }
+    return () => {
+      t && clearTimeout(t);
+    };
+  }, [currentComponentHasAudioRecording, isMuted]);
+
+  useEffect(() => {
+    if (!shouldMonitorMutedAudio(isMuted, currentComponentHasAudioRecording) || !analysisStreamReady || !analysisAudioStream.current) return undefined;
+
+    const stream = analysisAudioStream.current;
+    const audioContext = new AudioContext();
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.2;
+    const source = audioContext.createMediaStreamSource(stream);
+    source.connect(analyser);
+    const domainData = new Float32Array(analyser.fftSize);
+    const speechReleaseDelayMs = 3000;
+
+    let animFrameId = 0;
+    let wasSpeaking = false;
+    let speechCandidateStart: number | null = null;
+    let lastDetectedSpeechAt: number | null = null;
+
+    const clearSpeaking = () => {
+      wasSpeaking = false;
+      speechCandidateStart = null;
+      lastDetectedSpeechAt = null;
+      setIsSpeakingWhileMuted(false);
+    };
+
+    const checkAudio = (timestamp: number) => {
+      analyser.getFloatTimeDomainData(domainData);
+      const rmsLevel = getRmsLevel(domainData);
+      const speaking = isSpeakingAtLevel(rmsLevel, wasSpeaking);
+
+      if (speaking) {
+        speechCandidateStart ??= timestamp;
+        lastDetectedSpeechAt = timestamp;
+
+        if (!wasSpeaking && timestamp - speechCandidateStart >= SPEECH_DETECTION_HOLD_MS) {
+          wasSpeaking = true;
+        }
+      } else {
+        speechCandidateStart = null;
+      }
+
+      if (wasSpeaking && lastDetectedSpeechAt !== null && timestamp - lastDetectedSpeechAt >= speechReleaseDelayMs) {
+        clearSpeaking();
+      } else if (wasSpeaking) {
+        setIsSpeakingWhileMuted(true);
+      }
+
+      animFrameId = requestAnimationFrame(checkAudio);
+    };
+    animFrameId = requestAnimationFrame(checkAudio);
+
+    return () => {
+      cancelAnimationFrame(animFrameId);
+      audioContext.close();
+      clearSpeaking();
+    };
+  }, [currentComponentHasAudioRecording, isMuted, analysisStreamReady]);
 
   return {
     recordVideoRef,
@@ -403,6 +501,8 @@ export function useRecording() {
     screenWithAudioRecording,
     clickToRecord: currentComponentHasClickToRecord,
     isRejected,
+    isSpeakingWhileMuted,
+    showMutedWarning,
   };
 }
 
