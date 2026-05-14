@@ -25,7 +25,7 @@ const participantMetadata: ParticipantMetadata = {
 };
 
 const conditionalLatinSquareConfig: StudyConfig = {
-  $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json',
+  $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.2/src/parser/StudyConfigSchema.json',
   studyMetadata: {
     title: 'Conditional Latin Square Test',
     version: '1.0.0',
@@ -234,6 +234,12 @@ class DelayedLocalStorageEngine extends LocalStorageEngine {
   }
 }
 
+class DeferredInitialWriteLocalStorageEngine extends DelayedLocalStorageEngine {
+  protected override shouldDeferInitialParticipantDataPersistence() {
+    return true;
+  }
+}
+
 describe.each([
   { TestEngine: LocalStorageEngine },
   // { TestEngine: SupabaseStorageEngine }, // Uncomment to test with Supabase
@@ -278,6 +284,35 @@ describe.each([
     expect(storedHashes[configComplexHash]).toEqual(configSimple2);
   });
 
+  test('saveConfig skips storage writes when the config hash is unchanged', async () => {
+    await storageEngine.saveConfig(configSimple);
+
+    const pushSpy = vi.spyOn(
+      storageEngine as unknown as {
+        _pushToStorage: StorageEngine['_pushToStorage'];
+      },
+      '_pushToStorage',
+    );
+    const deleteSpy = vi.spyOn(
+      storageEngine as unknown as {
+        _deleteFromStorage: StorageEngine['_deleteFromStorage'];
+      },
+      '_deleteFromStorage',
+    );
+    const setHashSpy = vi.spyOn(
+      storageEngine as unknown as {
+        _setCurrentConfigHash: StorageEngine['_setCurrentConfigHash'];
+      },
+      '_setCurrentConfigHash',
+    );
+
+    await storageEngine.saveConfig(configSimple);
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    expect(deleteSpy).not.toHaveBeenCalled();
+    expect(setHashSpy).not.toHaveBeenCalled();
+  });
+
   test('getCurrentParticipantId returns the current participant ID', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;
@@ -289,6 +324,14 @@ describe.each([
   test('getCurrentParticipantId returns value even if no participant session is initialized', async () => {
     const currentParticipantId = await storageEngine.getCurrentParticipantId();
     expect(currentParticipantId).toBeDefined();
+  });
+
+  test('peekCurrentParticipantId returns persisted IDs without creating a new one', async () => {
+    expect(await storageEngine.peekCurrentParticipantId(studyId)).toBeUndefined();
+
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    expect(await storageEngine.peekCurrentParticipantId(studyId)).toBe(participantSession.participantId);
   });
 
   // clearCurrentParticipantId tested in rejectParticipant test
@@ -316,6 +359,46 @@ describe.each([
     expect(participantData!.metadata).toEqual(participantMetadata);
     expect(participantData!.rejected).toBe(false);
     expect(participantData!.participantTags).toEqual([]);
+  });
+
+  test('initializeParticipantSession reads modes only once for a new participant', async () => {
+    const getModesSpy = vi.spyOn(storageEngine, 'getModes');
+
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    expect(getModesSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('initializeParticipantSession starts deferred initial participant writes immediately in the background', async () => {
+    const deferredStorageEngine = new DeferredInitialWriteLocalStorageEngine(true);
+    await deferredStorageEngine.connect();
+    await deferredStorageEngine.initializeStudyDb(studyId);
+    await deferredStorageEngine.setSequenceArray(sequenceArray);
+    deferredStorageEngine.holdNextParticipantDataWrite();
+
+    const participantSessionPromise = deferredStorageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    await deferredStorageEngine.waitForHeldParticipantDataWrite();
+
+    const participantSession = await participantSessionPromise;
+
+    const observerEngine = new LocalStorageEngine(true);
+    await observerEngine.connect();
+    await observerEngine.initializeStudyDb(studyId);
+
+    expect(await observerEngine.getParticipantData(participantSession.participantId)).toBeNull();
+
+    deferredStorageEngine.releaseHeldParticipantDataWrite();
+    await deferredStorageEngine.flushPendingParticipantData();
+
+    const persistedParticipantData = await observerEngine.getParticipantData(participantSession.participantId);
+    expect(persistedParticipantData).toBeDefined();
+    expect(persistedParticipantData?.participantId).toBe(participantSession.participantId);
+
+    // @ts-expect-error using protected method for testing
+    await deferredStorageEngine._testingReset(studyId);
+    // @ts-expect-error using protected method for testing
+    await observerEngine._testingReset(studyId);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {
@@ -443,6 +526,51 @@ describe.each([
     expect(sequenceAssignment).toBeDefined();
     expect(sequenceAssignment!.conditions).toBeUndefined();
     expect(Object.hasOwn(sequenceAssignment!, 'conditions')).toBe(false);
+  });
+
+  test('updateParticipantMetadata updates participant metadata', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const updatedMetadata = {
+      ...participantMetadata,
+      ip: '8.8.8.8',
+    };
+
+    await storageEngine.updateParticipantMetadata(updatedMetadata);
+
+    expect(storageEngine.getCurrentParticipantDataSnapshot()!.metadata).toEqual(updatedMetadata);
+
+    await storageEngine.flushPendingParticipantData();
+
+    const participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData).toBeDefined();
+    expect(participantData!.metadata).toEqual(updatedMetadata);
+  });
+
+  test('updateParticipantMetadata stays local when data collection is disabled', async () => {
+    await storageEngine.getModes(studyId);
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
+
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const updatedMetadata = {
+      ...participantMetadata,
+      ip: '8.8.8.8',
+    };
+
+    const pushSpy = vi.spyOn(
+      storageEngine as unknown as {
+        _pushToStorage: StorageEngine['_pushToStorage'];
+      },
+      '_pushToStorage',
+    );
+
+    await storageEngine.updateParticipantMetadata(updatedMetadata);
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    expect(storageEngine.getCurrentParticipantDataSnapshot()!.metadata).toEqual(updatedMetadata);
+
+    const participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData).toBeDefined();
+    expect(participantData!.metadata).toEqual(updatedMetadata);
   });
 
   test('getConditionData includes default when participants have no explicit condition', async () => {

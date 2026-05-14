@@ -1,5 +1,5 @@
 import { Flex } from '@mantine/core';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 
 export function RecordingAudioWaveform({
   width = 60,
@@ -22,8 +22,6 @@ export function RecordingAudioWaveform({
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const animationFrameIdRef = useRef<number>(0);
   const mediaStreamRef = useRef<MediaStream | null>(null);
-
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let lastTime = 0;
@@ -110,11 +108,6 @@ export function RecordingAudioWaveform({
         animationFrameIdRef.current = requestAnimationFrame(draw);
       } catch (err) {
         console.error('Error accessing microphone:', err);
-        if (err instanceof Error) {
-          setError(`Error accessing microphone: ${err.message}. Please grant permission.`);
-        } else {
-          setError('An unknown error occurred while accessing the microphone.');
-        }
       }
     };
 
@@ -139,7 +132,6 @@ export function RecordingAudioWaveform({
 
   return (
     <Flex>
-      {error && <p style={{ color: 'red', maxWidth: `${width}px` }}>{error}</p>}
       <canvas ref={canvasRef} />
     </Flex>
   );

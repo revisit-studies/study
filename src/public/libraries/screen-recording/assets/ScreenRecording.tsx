@@ -8,12 +8,12 @@ import { RecordingAudioWaveform } from '../../../../components/interface/Recordi
 
 function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
   const {
-    recordAudio,
+    studyHasAudioRecording,
     recordVideoRef,
     startScreenCapture: startCapture,
     stopScreenCapture: stopCapture,
     isScreenCapturing: screenCapturing,
-    screenRecordingError: error,
+    isAudioCapturing: audioCapturing,
     audioMediaStream,
   } = useRecordingContext();
 
@@ -22,13 +22,13 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
 
   useEffect(() => {
     setAnswer({
-      status: screenCapturing && (recordAudio ? audioCapturingSuccess : true),
+      status: screenCapturing && (studyHasAudioRecording ? audioCapturingSuccess : true),
       provenanceGraph: undefined,
       answers: {
         screenRecordingPermission: screenCapturing,
       },
     });
-  }, [screenCapturing, audioCapturingSuccess, setAnswer, recordAudio]);
+  }, [screenCapturing, audioCapturingSuccess, setAnswer, studyHasAudioRecording]);
 
   useEffect(() => {
     if (!screenCapturing) {
@@ -78,12 +78,12 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
     <Box p="md">
       <Title order={1} size="h2">
         Screen
-        {recordAudio && ' and Audio'}
+        {studyHasAudioRecording && ' and Audio'}
         {' '}
         Recording Permission
       </Title>
 
-      {recordAudio ? (
+      {studyHasAudioRecording ? (
         <>
           {/* Record both screen and audio */}
           <p>
@@ -113,15 +113,14 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
                 muted
                 style={{ width: '400px', border: '1px solid #ccc', marginTop: '1rem' }}
               />
-              {error && <p style={{ color: 'red' }}>{error}</p>}
-              <p><i>Note: Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
+              <p><i>Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
 
             </li>
             <li>
               <strong>Speak</strong>
               {' '}
               into your microphone to check if audio is working.
-              {(recordAudio && screenCapturing) ? <Box h={200} w={400} bd="1px solid #ccc"><RecordingAudioWaveform height={200} width={400} /></Box> : <Box h={200} w={400} bd="1px solid #ccc" />}
+              {audioCapturing ? <Box h={200} w={400} bd="1px solid #ccc"><RecordingAudioWaveform height={200} width={400} /></Box> : <Box h={200} w={400} bd="1px solid #ccc" />}
             </li>
           </ol>
           <strong>Note:</strong>
@@ -158,8 +157,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
             muted
             style={{ width: '400px', border: '1px solid #ccc', marginTop: '1rem' }}
           />
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          <p><i>Note: Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
+          <p><i>Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
 
           <strong>Note:</strong>
           <ul>

@@ -3,6 +3,7 @@ import localforage from 'localforage';
 import { initializeApp } from 'firebase/app';
 import {
   deleteObject,
+  getBlob,
   getDownloadURL,
   getStorage,
   ref,
@@ -94,9 +95,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     let storageObj: StorageObject<T> = {} as StorageObject<T>;
     try {
-      const url = await getDownloadURL(storageRef);
-      const response = await fetch(url);
-      const fullProvStr = await response.text();
+      const blob = await getBlob(storageRef);
+      const fullProvStr = await blob.text();
       storageObj = JSON.parse(fullProvStr);
     } catch {
       console.warn(
