@@ -14,6 +14,13 @@ describe('nextButtonTimeout', () => {
     )).toBe('Custom timeout warning: advancing in 4 seconds without saving this component.');
   });
 
+  test('formats the unit placeholder even when the message omits the numeric placeholder', () => {
+    expect(formatAutoAdvanceWarningMessage(
+      'Custom timeout warning: the component will advance in one {unit}.',
+      1,
+    )).toBe('Custom timeout warning: the component will advance in one second.');
+  });
+
   test('shows the default warning as soon as a shorter auto-advance timer enters the default warning window', () => {
     expect(getAutoAdvanceWarning({
       timer: 1000,

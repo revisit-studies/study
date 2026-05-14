@@ -2,7 +2,7 @@ export const DEFAULT_AUTO_ADVANCE_WARNING_TIME = 30000;
 export const DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE = 'You will be automatically advanced to the next component. Responses on this component will not be saved.';
 
 export function formatAutoAdvanceWarningMessage(message: string, secondsRemaining: number) {
-  if (message.includes('{seconds}')) {
+  if (message.includes('{seconds}') || message.includes('{unit}')) {
     return message
       .replaceAll('{seconds}', String(secondsRemaining))
       .replaceAll('{unit}', secondsRemaining === 1 ? 'second' : 'seconds');
