@@ -4,6 +4,7 @@ import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { useIsAnalysis } from './useIsAnalysis';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { parseTrialOrder } from '../../utils/parseTrialOrder';
+import { removeCurrentTrialFromSearch } from '../../utils/navigationSearch';
 import { useStudyConfig } from './useStudyConfig';
 import { getSequenceFlatMap, findFuncBlock } from '../../utils/getSequenceFlatMap';
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store';
@@ -22,25 +23,9 @@ export function usePreviousStep() {
   // Status of the previous button. If true, the previous button should be disabled
   const isPreviousDisabled = typeof currentStep !== 'number' || currentStep <= 0;
 
-  const buildSearch = useCallback((targetTrialOrder?: string) => {
-    if (!isAnalysis) {
-      return window.location.search;
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const matchingAnswerIdentifier = targetTrialOrder
-      ? Object.entries(answers).find(([, answer]) => answer.trialOrder === targetTrialOrder)?.[0]
-      : undefined;
-
-    if (matchingAnswerIdentifier) {
-      params.set('currentTrial', matchingAnswerIdentifier);
-    } else {
-      params.delete('currentTrial');
-    }
-
-    const search = params.toString();
-    return search ? `?${search}` : '';
-  }, [answers, isAnalysis]);
+  const buildSearch = useCallback(() => (
+    isAnalysis ? removeCurrentTrialFromSearch(window.location.search) : window.location.search
+  ), [isAnalysis]);
 
   const goToPreviousStep = useCallback(() => {
     if (typeof currentStep !== 'number') {
@@ -60,7 +45,7 @@ export function usePreviousStep() {
       // If we're at the first element of a dynamic block, exit the dynamic block
       if (decryptIndex(funcIndex) !== 0) {
         const previousFuncIndex = decryptIndex(funcIndex) - 1;
-        navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(previousFuncIndex)}${buildSearch(`${currentStep}_${previousFuncIndex}`)}`);
+        navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(previousFuncIndex)}${buildSearch()}`);
         return;
       }
     }
@@ -70,7 +55,7 @@ export function usePreviousStep() {
       const isDynamicBlock = findFuncBlock(previousComponentId, studyConfig.sequence);
 
       if (!isDynamicBlock) {
-        navigate(`/${studyId}/${encryptIndex(stepIndex)}${buildSearch(`${stepIndex}`)}`);
+        navigate(`/${studyId}/${encryptIndex(stepIndex)}${buildSearch()}`);
         return;
       }
 
@@ -82,7 +67,7 @@ export function usePreviousStep() {
         }, -1);
 
       if (previousDynamicBlockIndex >= 0) {
-        navigate(`/${studyId}/${encryptIndex(stepIndex)}/${encryptIndex(previousDynamicBlockIndex)}${buildSearch(`${stepIndex}_${previousDynamicBlockIndex}`)}`);
+        navigate(`/${studyId}/${encryptIndex(stepIndex)}/${encryptIndex(previousDynamicBlockIndex)}${buildSearch()}`);
         return;
       }
     }

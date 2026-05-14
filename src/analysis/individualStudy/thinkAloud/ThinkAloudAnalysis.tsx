@@ -22,6 +22,7 @@ import { ThinkAloudFooter } from './ThinkAloudFooter';
 import { useEvent } from '../../../store/hooks/useEvent';
 import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
 import { ReplayContext, useReplay } from '../../../store/hooks/useReplay';
+import { removeCurrentTrialFromSearch } from '../../../utils/navigationSearch';
 import { parseTrialOrder } from '../../../utils/parseTrialOrder';
 
 async function getTranscript(storageEngine: FirebaseStorageEngine, partId: string | undefined, trialName: string | undefined, authEmail: string | null | undefined) {
@@ -143,7 +144,7 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
       return;
     }
 
-    navigate(`/analysis/stats/${studyId}/tagging/${encodeURIComponent(firstTrialIdentifier)}${location.search}`, { replace: true });
+    navigate(`/analysis/stats/${studyId}/tagging/${encodeURIComponent(firstTrialIdentifier)}${removeCurrentTrialFromSearch(location.search)}`, { replace: true });
   }, [currentTrial, location.search, navigate, participant, studyId]);
 
   const setEditedTranscript = useCallback((editedText: EditedText[]) => {

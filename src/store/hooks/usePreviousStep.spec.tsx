@@ -110,7 +110,7 @@ describe('usePreviousStep', () => {
     capturedHook?.goToPreviousStep();
 
     expect(mockDispatch).not.toHaveBeenCalled();
-    expect(mockNavigate).toHaveBeenCalledWith('/study-1/enc-1/enc-0?participantId=p-1&currentTrial=dynamicBlock_1_component_0');
+    expect(mockNavigate).toHaveBeenCalledWith('/study-1/enc-1/enc-0?participantId=p-1');
   });
 
   test('skips unanswered dynamic blocks when moving backward in analysis replay', () => {
@@ -127,6 +127,6 @@ describe('usePreviousStep', () => {
 
     capturedHook?.goToPreviousStep();
 
-    expect(mockNavigate).toHaveBeenCalledWith('/study-1/enc-0?participantId=p-1&currentTrial=intro_0');
+    expect(mockNavigate).toHaveBeenCalledWith('/study-1/enc-0?participantId=p-1');
   });
 });

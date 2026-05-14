@@ -7,6 +7,7 @@ import {
   useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../store/store';
 import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
+import { removeCurrentTrialFromSearch } from '../utils/navigationSearch';
 import { parseTrialOrder } from '../utils/parseTrialOrder';
 import { JumpFunctionParameters, JumpFunctionReturnVal } from '../store/types';
 import { findFuncBlock } from '../utils/getSequenceFlatMap';
@@ -95,7 +96,7 @@ export function useCurrentComponent(): string {
 
   useEffect(() => {
     if (!funcIndex && nextFunc && typeof currentStep === 'number') {
-      navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(currentTrialStep === currentStep && currentTrialFuncIndex !== null ? currentTrialFuncIndex : 0)}${window.location.search}`);
+      navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(currentTrialStep === currentStep && currentTrialFuncIndex !== null ? currentTrialFuncIndex : 0)}${removeCurrentTrialFromSearch(window.location.search)}`);
     }
   }, [currentStep, currentTrialFuncIndex, currentTrialStep, funcIndex, navigate, nextFunc, studyId]);
 
@@ -106,12 +107,12 @@ export function useCurrentComponent(): string {
 
     const decryptedFuncIndex = decryptIndex(funcIndex);
     if (currentTrialFuncIndex === null) {
-      navigate(`/${studyId}/${encryptIndex(currentStep)}${window.location.search}`);
+      navigate(`/${studyId}/${encryptIndex(currentStep)}${removeCurrentTrialFromSearch(window.location.search)}`);
       return;
     }
 
     if (decryptedFuncIndex !== currentTrialFuncIndex) {
-      navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(currentTrialFuncIndex)}${window.location.search}`);
+      navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(currentTrialFuncIndex)}${removeCurrentTrialFromSearch(window.location.search)}`);
     }
   }, [currentStep, currentTrialFuncIndex, currentTrialStep, funcIndex, navigate, studyId]);
 
@@ -158,7 +159,7 @@ export function useCurrentComponent(): string {
           setCompName('__dynamicLoading');
           setIndexWhenSettingComponentName(null);
 
-          navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
+          navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${removeCurrentTrialFromSearch(window.location.search)}`);
         }
       }
     }
