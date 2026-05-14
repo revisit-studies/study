@@ -121,7 +121,6 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
     if (!participantId && visibleParticipants.length > 0) {
       setSearchParams((params) => {
         params.set('participantId', visibleParticipants[0].participantId);
-        params.delete('currentTrial');
         return params;
       });
     }
