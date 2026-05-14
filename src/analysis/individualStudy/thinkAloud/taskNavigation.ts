@@ -1,5 +1,4 @@
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
-import { removeCurrentTrialFromSearch } from '../../../utils/navigationSearch';
 import { parseTrialOrder } from '../../../utils/parseTrialOrder';
 
 export function buildTaskNavigationTarget({
@@ -23,7 +22,7 @@ export function buildTaskNavigationTarget({
   if (!isReplay) {
     return {
       pathname: `/analysis/stats/${studyId}/tagging/${encodeURIComponent(answerIdentifier)}`,
-      search: removeCurrentTrialFromSearch(search),
+      search,
     };
   }
 
@@ -31,6 +30,6 @@ export function buildTaskNavigationTarget({
     pathname: funcIndex === null
       ? `/${studyId}/${encryptIndex(step)}`
       : `/${studyId}/${encryptIndex(step)}/${encryptIndex(funcIndex)}`,
-    search: removeCurrentTrialFromSearch(search),
+    search,
   };
 }

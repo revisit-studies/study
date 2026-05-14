@@ -221,7 +221,6 @@ export function ThinkAloudFooter({
 
     setSearchParams((params) => {
       params.set('participantId', visibleParticipants[index] || '');
-      params.delete('currentTrial');
       return params;
     });
   }, [participantId, setSearchParams, visibleParticipants]);
@@ -454,7 +453,6 @@ export function ThinkAloudFooter({
               onChange={(e: string | null) => {
                 setSearchParams((params) => {
                   params.set('participantId', e || '');
-                  params.delete('currentTrial');
                   return params;
                 });
                 syncChannel.postMessage({

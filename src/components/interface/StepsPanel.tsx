@@ -24,7 +24,6 @@ import type { Sequence, StoredAnswer } from '../../store/types';
 import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
 import { useStudyId } from '../../routes/utils';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
-import { removeCurrentTrialFromSearch } from '../../utils/navigationSearch';
 import { isDynamicBlock } from '../../parser/utils';
 import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
@@ -746,9 +745,9 @@ export function StepsPanel({
                   onClick={() => {
                     if (isComponent && href && !isExcluded) {
                       if (isAnalysis) {
-                        navigate(`/analysis/stats/${studyId}/stats/${encodeURIComponent(String(componentName))}${removeCurrentTrialFromSearch(location.search)}`);
+                        navigate(`/analysis/stats/${studyId}/stats/${encodeURIComponent(String(componentName))}${location.search}`);
                       } else {
-                        navigate(`${href}${removeCurrentTrialFromSearch(location.search)}`);
+                        navigate(`${href}${location.search}`);
                       }
                     } else if (!isComponent) {
                       // Both included and excluded blocks can be collapsed/expanded

@@ -134,7 +134,6 @@ export function AudioProvenanceVis({
     const participantIdListener = (newId: string) => {
       setSearchParams((params) => {
         params.set('participantId', newId || '');
-        params.delete('currentTrial');
         return params;
       });
     };
@@ -147,7 +146,6 @@ export function AudioProvenanceVis({
 
       const params = new URLSearchParams(routerLocation.search);
       params.set('participantId', participantId || '');
-      params.delete('currentTrial');
       const search = params.toString();
 
       if (context === 'provenanceVis') {

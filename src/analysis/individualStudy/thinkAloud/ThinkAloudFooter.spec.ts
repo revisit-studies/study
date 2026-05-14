@@ -7,13 +7,13 @@ import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { buildTaskNavigationTarget } from './taskNavigation';
 
 describe('buildTaskNavigationTarget', () => {
-  test('removes currentTrial when navigating between replay tasks', () => {
+  test('preserves search params when navigating between replay tasks', () => {
     const target = buildTaskNavigationTarget({
       answerIdentifier: 'jupyterlite-task-2_8',
       trialOrder: '8',
       isReplay: true,
       studyId: 'buckaroo',
-      search: '?participantId=66aa582aba2b183e61577d44&currentTrial=jupyterlite-task-1_7',
+      search: '?participantId=66aa582aba2b183e61577d44',
     });
 
     expect(target).toEqual({
@@ -22,13 +22,13 @@ describe('buildTaskNavigationTarget', () => {
     });
   });
 
-  test('removes currentTrial from analysis tagging navigation search', () => {
+  test('preserves search params when navigating to analysis tagging', () => {
     const target = buildTaskNavigationTarget({
       answerIdentifier: 'task_4',
       trialOrder: '4',
       isReplay: false,
       studyId: 'study-1',
-      search: '?participantId=p-1&currentTrial=task_3',
+      search: '?participantId=p-1',
     });
 
     expect(target).toEqual({
