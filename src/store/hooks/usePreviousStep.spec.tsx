@@ -98,11 +98,20 @@ describe('usePreviousStep', () => {
     expect(capturedHook?.isPreviousDisabled).toBe(false);
   });
 
+  test('keeps previous enabled for the first item inside a dynamic block', () => {
+    mockCurrentStep = 0;
+    mockFuncIndex = '1';
+
+    renderToStaticMarkup(<HookHarness />);
+
+    expect(capturedHook?.isPreviousDisabled).toBe(false);
+  });
+
   test('does not delete dynamic replay answers when moving backward in analysis replay', () => {
     mockIsAnalysis = true;
     mockFuncIndex = '1';
     vi.stubGlobal('window', {
-      location: { search: '?participantId=p-1&currentTrial=dynamicBlock_1_component_1' },
+      location: { search: '?participantId=p-1' },
     });
 
     renderToStaticMarkup(<HookHarness />);
@@ -120,7 +129,7 @@ describe('usePreviousStep', () => {
       intro_0: { trialOrder: '0' },
     };
     vi.stubGlobal('window', {
-      location: { search: '?participantId=p-1&currentTrial=end_2' },
+      location: { search: '?participantId=p-1' },
     });
 
     renderToStaticMarkup(<HookHarness />);

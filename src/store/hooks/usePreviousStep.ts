@@ -4,7 +4,6 @@ import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { useIsAnalysis } from './useIsAnalysis';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { parseTrialOrder } from '../../utils/parseTrialOrder';
-import { removeCurrentTrialFromSearch } from '../../utils/navigationSearch';
 import { useStudyConfig } from './useStudyConfig';
 import { getSequenceFlatMap, findFuncBlock } from '../../utils/getSequenceFlatMap';
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store';
@@ -21,11 +20,9 @@ export function usePreviousStep() {
   const answers = useStoreSelector((state) => state.answers);
 
   // Status of the previous button. If true, the previous button should be disabled
-  const isPreviousDisabled = typeof currentStep !== 'number' || currentStep <= 0;
+  const isPreviousDisabled = typeof currentStep !== 'number' || (currentStep <= 0 && (!funcIndex || decryptIndex(funcIndex) <= 0));
 
-  const buildSearch = useCallback(() => (
-    isAnalysis ? removeCurrentTrialFromSearch(window.location.search) : window.location.search
-  ), [isAnalysis]);
+  const buildSearch = useCallback(() => window.location.search, []);
 
   const goToPreviousStep = useCallback(() => {
     if (typeof currentStep !== 'number') {
