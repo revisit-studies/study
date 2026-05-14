@@ -7,6 +7,55 @@ import { isDynamicBlock } from './utils';
 // Mock the fetch function for library loading
 global.fetch = vi.fn();
 
+describe('Component auto-advance config parsing', () => {
+  test('accepts component-level auto-advance timeout options on a base component', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Timeout Config Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-05-14',
+        description: 'Ensures component timeout options are accepted.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        timedQuestion: {
+          type: 'questionnaire',
+          response: [],
+          nextButtonAutoAdvanceTime: 5000,
+          nextButtonAutoAdvanceWarningTime: 3000,
+          nextButtonAutoAdvanceWarningMessage: 'Advancing in {seconds} seconds.',
+        },
+      },
+      components: {
+        question1: {
+          baseComponent: 'timedQuestion',
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['question1'],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const hasAutoAdvanceFieldError = result.errors.some(
+      (error) => error.message?.includes('nextButtonAutoAdvance'),
+    );
+    expect(hasAutoAdvanceFieldError).toBe(false);
+  });
+});
+
 describe('BaseComponent Macro Expansion', () => {
   describe('.co. macro expansion in baseComponent references', () => {
     test('expands .co. to .components. in baseComponent field', async () => {

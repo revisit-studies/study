@@ -1,13 +1,18 @@
 import { Alert, Button, Group } from '@mantine/core';
 import {
-  JSX, useEffect, useMemo, useState,
+  JSX, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { useNextStep } from '../store/hooks/useNextStep';
-import { IndividualComponent, ResponseBlockLocation } from '../parser/types';
+import type { IndividualComponent, ResponseBlockLocation } from '../parser/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { PreviousButton } from './PreviousButton';
+import {
+  DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE,
+  DEFAULT_AUTO_ADVANCE_WARNING_TIME,
+  getAutoAdvanceWarning,
+} from './nextButtonTimeout';
 
 type Props = {
   label?: string;
@@ -30,8 +35,18 @@ export function NextButton({
 
   const nextButtonDisableTime = useMemo(() => config?.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime, [config, studyConfig]);
   const nextButtonEnableTime = useMemo(() => config?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0, [config, studyConfig]);
+  const nextButtonAutoAdvanceTime = useMemo(() => config?.nextButtonAutoAdvanceTime, [config]);
+  const nextButtonAutoAdvanceWarningTime = useMemo(
+    () => config?.nextButtonAutoAdvanceWarningTime ?? DEFAULT_AUTO_ADVANCE_WARNING_TIME,
+    [config],
+  );
+  const nextButtonAutoAdvanceWarningMessage = useMemo(
+    () => config?.nextButtonAutoAdvanceWarningMessage ?? DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE,
+    [config],
+  );
 
   const [timer, setTimer] = useState<number | undefined>(undefined);
+  const autoAdvanceTriggered = useRef(false);
   // Use Date.now() to keep time even if tab is hidden
   useEffect(() => {
     const start = Date.now();
@@ -53,6 +68,15 @@ export function NextButton({
     }
   }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
 
+  useEffect(() => {
+    if (timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || autoAdvanceTriggered.current) {
+      return;
+    }
+
+    autoAdvanceTriggered.current = true;
+    goToNextStep(false);
+  }, [goToNextStep, nextButtonAutoAdvanceTime, timer]);
+
   const buttonTimerSatisfied = useMemo(
     () => {
       if (timer === undefined) {
@@ -64,6 +88,13 @@ export function NextButton({
     },
     [nextButtonDisableTime, nextButtonEnableTime, timer],
   );
+
+  const autoAdvanceWarning = useMemo(() => getAutoAdvanceWarning({
+    timer,
+    autoAdvanceTime: nextButtonAutoAdvanceTime,
+    warningTime: nextButtonAutoAdvanceWarningTime,
+    warningMessage: nextButtonAutoAdvanceWarningMessage,
+  }), [nextButtonAutoAdvanceTime, nextButtonAutoAdvanceWarningMessage, nextButtonAutoAdvanceWarningTime, timer]);
 
   const nextOnEnter = useMemo(() => config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter, [config, studyConfig]);
 
@@ -134,6 +165,11 @@ export function NextButton({
                   </Group>
                 </Alert>
               ))}
+          {autoAdvanceWarning && (
+            <Alert mt="md" title="Automatically advancing soon" color="yellow" icon={<IconAlertTriangle />}>
+              {autoAdvanceWarning.message}
+            </Alert>
+          )}
         </>
 
       )}

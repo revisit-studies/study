@@ -1,0 +1,51 @@
+import { describe, expect, test } from 'vitest';
+import {
+  DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE,
+  DEFAULT_AUTO_ADVANCE_WARNING_TIME,
+  formatAutoAdvanceWarningMessage,
+  getAutoAdvanceWarning,
+} from './nextButtonTimeout';
+
+describe('nextButtonTimeout', () => {
+  test('formats warning messages with the remaining seconds placeholder', () => {
+    expect(formatAutoAdvanceWarningMessage(
+      'Custom timeout warning: advancing in {seconds} seconds without saving this component.',
+      4,
+    )).toBe('Custom timeout warning: advancing in 4 seconds without saving this component.');
+  });
+
+  test('shows the default warning as soon as a shorter auto-advance timer enters the default warning window', () => {
+    expect(getAutoAdvanceWarning({
+      timer: 1000,
+      autoAdvanceTime: 25000,
+    })).toEqual({
+      remainingTime: 24000,
+      message: `${DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE} 24 seconds remaining.`,
+    });
+  });
+
+  test('suppresses the warning outside the configured warning window', () => {
+    expect(getAutoAdvanceWarning({
+      timer: 500,
+      autoAdvanceTime: 5000,
+      warningTime: 1000,
+      warningMessage: 'Advancing in {seconds} seconds.',
+    })).toBeNull();
+  });
+
+  test('uses the configured warning window', () => {
+    expect(getAutoAdvanceWarning({
+      timer: 4000,
+      autoAdvanceTime: 5000,
+      warningTime: 1000,
+      warningMessage: 'Advancing in {seconds} seconds.',
+    })).toEqual({
+      remainingTime: 1000,
+      message: 'Advancing in 1 seconds.',
+    });
+  });
+
+  test('retains the documented default warning lead time', () => {
+    expect(DEFAULT_AUTO_ADVANCE_WARNING_TIME).toBe(30000);
+  });
+});
