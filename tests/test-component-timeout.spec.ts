@@ -14,7 +14,7 @@ test('shows the timeout warning and auto-advances to the next component', async 
   await nextClick(page);
 
   await expect(page.getByText('Do not answer this question. It should automatically advance.')).toBeVisible();
-  await expect(page.getByText(/Custom timeout warning: advancing in \d+ seconds without saving this component\./)).toBeVisible({ timeout: 2500 });
+  await expect(page.getByText(/Custom timeout warning: advancing in \d+ second(?:s)? without saving this component\./)).toBeVisible({ timeout: 2500 });
 
   await waitForStudyEndMessage(page);
   await expect(page.getByText('Timeout auto-advance test complete.')).toBeVisible();

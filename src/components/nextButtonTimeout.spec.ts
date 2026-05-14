@@ -9,7 +9,7 @@ import {
 describe('nextButtonTimeout', () => {
   test('formats warning messages with the remaining seconds placeholder', () => {
     expect(formatAutoAdvanceWarningMessage(
-      'Custom timeout warning: advancing in {seconds} seconds without saving this component.',
+      'Custom timeout warning: advancing in {seconds} {unit} without saving this component.',
       4,
     )).toBe('Custom timeout warning: advancing in 4 seconds without saving this component.');
   });
@@ -29,19 +29,19 @@ describe('nextButtonTimeout', () => {
       timer: 500,
       autoAdvanceTime: 5000,
       warningTime: 1000,
-      warningMessage: 'Advancing in {seconds} seconds.',
+      warningMessage: 'Advancing in {seconds} {unit}.',
     })).toBeNull();
   });
 
   test('uses the configured warning window', () => {
     expect(getAutoAdvanceWarning({
-      timer: 4000,
+      timer: 3000,
       autoAdvanceTime: 5000,
-      warningTime: 1000,
-      warningMessage: 'Advancing in {seconds} seconds.',
+      warningTime: 2500,
+      warningMessage: 'Advancing in {seconds} {unit}.',
     })).toEqual({
-      remainingTime: 1000,
-      message: 'Advancing in 1 seconds.',
+      remainingTime: 2000,
+      message: 'Advancing in 2 seconds.',
     });
   });
 

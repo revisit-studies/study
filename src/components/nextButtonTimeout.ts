@@ -3,7 +3,9 @@ export const DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE = 'You will be automatically a
 
 export function formatAutoAdvanceWarningMessage(message: string, secondsRemaining: number) {
   if (message.includes('{seconds}')) {
-    return message.replaceAll('{seconds}', String(secondsRemaining));
+    return message
+      .replaceAll('{seconds}', String(secondsRemaining))
+      .replaceAll('{unit}', secondsRemaining === 1 ? 'second' : 'seconds');
   }
 
   return `${message} ${secondsRemaining} second${secondsRemaining === 1 ? '' : 's'} remaining.`;

@@ -35,7 +35,7 @@
       ],
       "nextButtonAutoAdvanceTime": 2500,
       "nextButtonAutoAdvanceWarningTime": 1500,
-      "nextButtonAutoAdvanceWarningMessage": "Custom timeout warning: advancing in {seconds} seconds without saving this component."
+      "nextButtonAutoAdvanceWarningMessage": "Custom timeout warning: advancing in {seconds} {unit} without saving this component."
     }
   },
   "components": {

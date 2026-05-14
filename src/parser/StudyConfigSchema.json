@@ -89,7 +89,7 @@
             "type": "number"
           },
           "nextButtonAutoAdvanceWarningMessage": {
-            "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining seconds.",
+            "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
             "type": "string"
           },
           "nextButtonAutoAdvanceWarningTime": {
@@ -1038,7 +1038,7 @@
           "type": "number"
         },
         "nextButtonAutoAdvanceWarningMessage": {
-          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining seconds.",
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
           "type": "string"
         },
         "nextButtonAutoAdvanceWarningTime": {
@@ -1313,7 +1313,7 @@
           "type": "number"
         },
         "nextButtonAutoAdvanceWarningMessage": {
-          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining seconds.",
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
           "type": "string"
         },
         "nextButtonAutoAdvanceWarningTime": {
@@ -1794,7 +1794,7 @@
           "type": "number"
         },
         "nextButtonAutoAdvanceWarningMessage": {
-          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining seconds.",
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
           "type": "string"
         },
         "nextButtonAutoAdvanceWarningTime": {
@@ -2364,7 +2364,7 @@
           "type": "number"
         },
         "nextButtonAutoAdvanceWarningMessage": {
-          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining seconds.",
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
           "type": "string"
         },
         "nextButtonAutoAdvanceWarningTime": {
@@ -2786,7 +2786,7 @@
           "type": "number"
         },
         "nextButtonAutoAdvanceWarningMessage": {
-          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining seconds.",
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
           "type": "string"
         },
         "nextButtonAutoAdvanceWarningTime": {
@@ -3924,7 +3924,7 @@
           "type": "number"
         },
         "nextButtonAutoAdvanceWarningMessage": {
-          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining seconds.",
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
           "type": "string"
         },
         "nextButtonAutoAdvanceWarningTime": {
@@ -4091,7 +4091,7 @@
           "type": "number"
         },
         "nextButtonAutoAdvanceWarningMessage": {
-          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining seconds.",
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
           "type": "string"
         },
         "nextButtonAutoAdvanceWarningTime": {
@@ -4266,7 +4266,7 @@
           "type": "number"
         },
         "nextButtonAutoAdvanceWarningMessage": {
-          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining seconds.",
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
           "type": "string"
         },
         "nextButtonAutoAdvanceWarningTime": {
@@ -4437,7 +4437,7 @@
           "type": "number"
         },
         "nextButtonAutoAdvanceWarningMessage": {
-          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining seconds.",
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
           "type": "string"
         },
         "nextButtonAutoAdvanceWarningTime": {

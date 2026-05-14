@@ -1033,7 +1033,7 @@ export interface BaseIndividualComponent {
   nextButtonAutoAdvanceTime?: number;
   /** The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000. */
   nextButtonAutoAdvanceWarningTime?: number;
-  /** The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining seconds. */
+  /** The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`. */
   nextButtonAutoAdvanceWarningMessage?: string;
   /** Whether to show the previous button. If present, will override the previous button setting in the uiConfig. */
   previousButton?: boolean;

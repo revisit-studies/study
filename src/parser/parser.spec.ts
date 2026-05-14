@@ -33,7 +33,7 @@ describe('Component auto-advance config parsing', () => {
           response: [],
           nextButtonAutoAdvanceTime: 5000,
           nextButtonAutoAdvanceWarningTime: 3000,
-          nextButtonAutoAdvanceWarningMessage: 'Advancing in {seconds} seconds.',
+          nextButtonAutoAdvanceWarningMessage: 'Advancing in {seconds} {unit}.',
         },
       },
       components: {
