@@ -99,12 +99,6 @@ function makeStoredAnswer(identifier: string, endTime: number): StoredAnswer {
     incorrectAnswers: {},
     startTime: endTime - 10,
     endTime,
-    provenanceGraph: {
-      aboveStimulus: undefined,
-      belowStimulus: undefined,
-      stimulus: undefined,
-      sidebar: undefined,
-    },
     windowEvents: [],
     timedOut: false,
     helpButtonClickedCount: 0,
@@ -781,12 +775,6 @@ describe.each([
         incorrectAnswers: {},
         startTime: 10,
         endTime: 20,
-        provenanceGraph: {
-          sidebar: undefined,
-          aboveStimulus: undefined,
-          belowStimulus: undefined,
-          stimulus: undefined,
-        },
         windowEvents: [],
         timedOut: false,
         helpButtonClickedCount: 0,
@@ -809,6 +797,47 @@ describe.each([
 
     const participantData = await storageEngine.getParticipantData(participantSession.participantId);
     expect(participantData?.answers).toEqual(secondAnswers);
+  });
+
+  test('saveAnswers strips inline provenance and stores it as a task asset', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const identifier = 'intro_0';
+    const provenanceGraph = {
+      root: 'root',
+      nodes: {
+        root: {
+          id: 'root',
+          createdOn: 10,
+          children: [],
+        },
+      },
+    };
+    const answerWithProvenance = {
+      ...makeStoredAnswer(identifier, 100),
+      provenanceGraph: {
+        aboveStimulus: undefined,
+        belowStimulus: undefined,
+        sidebar: undefined,
+        stimulus: provenanceGraph,
+      },
+    };
+
+    await storageEngine.saveAnswers({
+      [identifier]: answerWithProvenance,
+    });
+    await storageEngine.flushPendingParticipantData();
+
+    const participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData).toBeDefined();
+    expect('provenanceGraph' in participantData!.answers[identifier]).toBe(false);
+
+    const storedProvenance = await storageEngine.getProvenance(identifier, participantSession.participantId);
+    expect(storedProvenance).toEqual({
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      sidebar: undefined,
+      stimulus: provenanceGraph,
+    });
   });
 
   test('saveAnswers coalesces to the latest answer and finalizeParticipant persists completion after delayed writes', async () => {

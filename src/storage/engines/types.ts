@@ -2,7 +2,7 @@ import localforage from 'localforage';
 import throttle from 'lodash.throttle';
 import { v4 as uuidv4 } from 'uuid';
 import { StudyConfig } from '../../parser/types';
-import { ParticipantMetadata, Sequence } from '../../store/types';
+import { ParticipantMetadata, Sequence, StoredProvenance } from '../../store/types';
 import { ParticipantData, ParticipantDataWithStatus } from '../types';
 import { hash, isParticipantData } from './utils/storageEngineHelpers';
 import { shouldPreferCachedParticipantData } from './utils/participantDataRecovery';
@@ -11,6 +11,10 @@ import { parseConditionParam } from '../../utils/handleConditionLogic';
 import {
   ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
 } from '../../analysis/individualStudy/thinkAloud/types';
+import {
+  normalizeStoredProvenance,
+  splitProvenanceFromAnswers,
+} from '../../store/provenance';
 
 export interface StoredUser {
   email: string | null,
@@ -1263,14 +1267,23 @@ export abstract class StorageEngine {
       return;
     }
 
+    const {
+      answers: answersWithoutProvenance,
+      provenanceByIdentifier,
+    } = splitProvenanceFromAnswers(answers);
+    const provenanceUploadPromises = Object.entries(provenanceByIdentifier).map(
+      ([taskName, provenanceGraph]) => this.saveProvenance(provenanceGraph, taskName),
+    );
+
     // Update the local copy of the participant data
     this.participantData = {
       ...this.participantData,
-      answers,
+      answers: answersWithoutProvenance,
     };
 
     await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
     this.scheduleParticipantDataWrite(this.participantData);
+    await Promise.all(provenanceUploadPromises);
   }
 
   // Updates the progress data in the sequence assignment
@@ -1409,6 +1422,70 @@ export abstract class StorageEngine {
       return null;
     }
     return url;
+  }
+
+  private async parseProvenanceStorageObject(provenanceObject: unknown): Promise<StoredProvenance | null> {
+    if (typeof Blob !== 'undefined' && provenanceObject instanceof Blob) {
+      try {
+        return normalizeStoredProvenance(JSON.parse(await provenanceObject.text()));
+      } catch {
+        return null;
+      }
+    }
+
+    return normalizeStoredProvenance(provenanceObject);
+  }
+
+  async getProvenance(
+    task: string,
+    participantId?: string,
+  ) {
+    const targetParticipantId = participantId || this.currentParticipantId;
+    if (!targetParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
+    const provenanceObject = await this._getFromStorage(
+      `provenance/${targetParticipantId}`,
+      task,
+    );
+
+    return this.parseProvenanceStorageObject(provenanceObject);
+  }
+
+  async saveProvenance(
+    provenanceGraph: StoredProvenance | null | undefined,
+    taskName: string,
+  ) {
+    const provenanceToSave = normalizeStoredProvenance(provenanceGraph);
+    if (!provenanceToSave) {
+      return undefined;
+    }
+
+    return this.trackAssetOperation(`provenance/${taskName}`, async () => {
+      if (this.studyId === undefined) {
+        throw new Error('Study ID is not set');
+      }
+      if (!this.currentParticipantId) {
+        throw new Error('Participant not initialized');
+      }
+      const modes = await this.getModes(this.studyId);
+      if (!modes.dataCollectionEnabled) {
+        throw new Error('Data collection is disabled for this study');
+      }
+
+      await this._pushToStorage(
+        `provenance/${this.currentParticipantId}`,
+        taskName,
+        provenanceToSave as unknown as StorageObject<typeof taskName>,
+      );
+
+      try {
+        await this._cacheStorageObject(`provenance/${this.currentParticipantId}`, taskName);
+      } catch (error) {
+        console.warn(`Failed to update cache headers for provenance ${taskName}:`, error);
+      }
+    });
   }
 
   // Gets the transcript download URL (currently only supported by Firebase)
@@ -1576,6 +1653,7 @@ export abstract class StorageEngine {
       await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
       await this._copyDirectory(`${sourceName}/audio`, `${targetName}/audio`);
       await this._copyDirectory(`${sourceName}/screenRecording`, `${targetName}/screenRecording`);
+      await this._copyDirectory(`${sourceName}/provenance`, `${targetName}/provenance`);
       await this._copyDirectory(sourceName, targetName);
       await this._copyRealtimeData(sourceName, targetName);
     }
@@ -1623,6 +1701,7 @@ export abstract class StorageEngine {
         await this._deleteDirectory(`${deletionTarget}/participants`);
         await this._deleteDirectory(`${deletionTarget}/audio`);
         await this._deleteDirectory(`${deletionTarget}/screenRecording`);
+        await this._deleteDirectory(`${deletionTarget}/provenance`);
         await this._deleteDirectory(deletionTarget);
         await this._deleteRealtimeData(deletionTarget);
       }
@@ -1691,6 +1770,10 @@ export abstract class StorageEngine {
       await this._copyDirectory(
         `${snapshotName}/screenRecording`,
         `${originalName}/screenRecording`,
+      );
+      await this._copyDirectory(
+        `${snapshotName}/provenance`,
+        `${originalName}/provenance`,
       );
       await this._copyDirectory(snapshotName, originalName);
       await this._copyRealtimeData(snapshotName, originalName);
