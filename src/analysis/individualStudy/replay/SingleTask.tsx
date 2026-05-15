@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 
 import { useResizeObserver } from '@mantine/hooks';
 import {
-  IconCheck, IconMicrophone, IconProgress, IconX,
+  IconCheck, IconDeviceDesktop, IconMicrophone, IconProgress, IconX,
 } from '@tabler/icons-react';
 import { useNavigateToTrial } from '../../../utils/useNavigateToTrial';
 
@@ -24,6 +24,7 @@ export function SingleTask({
   isCorrect,
   hasCorrect,
   hasAudio,
+  hasScreenRecording,
   scaleStart,
   scaleEnd,
   incomplete,
@@ -39,6 +40,7 @@ export function SingleTask({
   isCorrect: boolean,
   hasCorrect: boolean,
   hasAudio: boolean,
+  hasScreenRecording: boolean,
   scaleStart: number,
   scaleEnd: number,
   incomplete: boolean,
@@ -52,7 +54,7 @@ export function SingleTask({
   const [ref, { width: labelWidth }] = useResizeObserver();
 
   const navigateToTrial = useNavigateToTrial();
-  const iconCount = (incomplete || hasCorrect ? 1 : 0) + (hasAudio ? 1 : 0);
+  const iconCount = (incomplete || hasCorrect ? 1 : 0) + (hasAudio ? 1 : 0) + (hasScreenRecording ? 1 : 0);
   const iconsWidth = iconCount * (ICON_SIZE + ICON_GAP);
 
   return (
@@ -93,6 +95,12 @@ export function SingleTask({
             <Text lineClamp={1} ref={ref} mx={0} style={{ width: 'fit-content', fontWeight: 600 }} size="12px">
               {name}
             </Text>
+            {hasScreenRecording && (
+              <IconDeviceDesktop
+                color="orange"
+                size="14"
+              />
+            )}
             {hasAudio && (
               <IconMicrophone
                 color="orange"

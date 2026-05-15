@@ -123,6 +123,7 @@ describe('SingleTask', () => {
     isCorrect: false,
     hasCorrect: false,
     hasAudio: false,
+    hasScreenRecording: false,
   };
 
   test('renders task name', () => {
