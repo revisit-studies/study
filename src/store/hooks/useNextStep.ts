@@ -44,7 +44,7 @@ export function useNextStep() {
 
   const studyId = useStudyId();
 
-  const dataCollectionEnabled = useMemo(() => modes.dataCollectionEnabled, [modes]);
+  const { dataCollectionEnabled } = modes;
 
   const areResponsesValid = useAreResponsesValid(identifier);
 

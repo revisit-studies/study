@@ -33,17 +33,11 @@ export function NextButton({
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
 
-  const nextButtonDisableTime = useMemo(() => config?.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime, [config, studyConfig]);
-  const nextButtonEnableTime = useMemo(() => config?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0, [config, studyConfig]);
-  const nextButtonAutoAdvanceTime = useMemo(() => config?.nextButtonAutoAdvanceTime, [config]);
-  const nextButtonAutoAdvanceWarningTime = useMemo(
-    () => config?.nextButtonAutoAdvanceWarningTime ?? DEFAULT_AUTO_ADVANCE_WARNING_TIME,
-    [config],
-  );
-  const nextButtonAutoAdvanceWarningMessage = useMemo(
-    () => config?.nextButtonAutoAdvanceWarningMessage ?? DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE,
-    [config],
-  );
+  const nextButtonDisableTime = config?.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime;
+  const nextButtonEnableTime = config?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0;
+  const nextButtonAutoAdvanceTime = config?.nextButtonAutoAdvanceTime;
+  const nextButtonAutoAdvanceWarningTime = config?.nextButtonAutoAdvanceWarningTime ?? DEFAULT_AUTO_ADVANCE_WARNING_TIME;
+  const nextButtonAutoAdvanceWarningMessage = config?.nextButtonAutoAdvanceWarningMessage ?? DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE;
 
   const [timer, setTimer] = useState<number | undefined>(undefined);
   const autoAdvanceTriggered = useRef(false);
@@ -96,7 +90,7 @@ export function NextButton({
     warningMessage: nextButtonAutoAdvanceWarningMessage,
   }), [nextButtonAutoAdvanceTime, nextButtonAutoAdvanceWarningMessage, nextButtonAutoAdvanceWarningTime, timer]);
 
-  const nextOnEnter = useMemo(() => config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter, [config, studyConfig]);
+  const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -107,15 +101,14 @@ export function NextButton({
 
     if (nextOnEnter) {
       window.addEventListener('keydown', handleKeyDown);
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-      };
     }
-    return () => {};
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, nextOnEnter]);
 
-  const nextButtonDisabled = useMemo(() => disabled || isNextDisabled || !buttonTimerSatisfied, [disabled, isNextDisabled, buttonTimerSatisfied]);
-  const previousButtonText = useMemo(() => config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous', [config, studyConfig]);
+  const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
+  const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
 
   return (
     <>
@@ -171,7 +164,6 @@ export function NextButton({
             </Alert>
           )}
         </>
-
       )}
     </>
   );
