@@ -230,20 +230,27 @@ export function AudioProvenanceVis({
 
     let tempNode = provGraph.stimulus.nodes[currentNode];
 
-    while (true) {
+    let searching = true;
+    while (searching) {
       if (playTime < tempNode.createdOn) {
         if (!isRootNode(tempNode)) {
           const parentNode = tempNode.parent;
 
           tempNode = provGraph.stimulus.nodes[parentNode];
-        } else break;
+        } else {
+          searching = false;
+        }
       } else if (tempNode.children.length > 0) {
         const child = tempNode.children[0];
 
         if (playTime > provGraph.stimulus.nodes[child].createdOn) {
           tempNode = provGraph.stimulus.nodes[child];
-        } else break;
-      } else break;
+        } else {
+          searching = false;
+        }
+      } else {
+        searching = false;
+      }
     }
 
     if (tempNode.id !== currentNode) {

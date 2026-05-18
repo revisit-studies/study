@@ -153,7 +153,7 @@ function calculateCorrectnessStats(
   visibleParticipants: ParticipantDataWithStatus[],
   componentName?: string,
   studyConfig?: StudyConfig,
-  allConfigs: Record<string, StudyConfig> = {},
+  allConfigs?: Record<string, StudyConfig>,
   responseId?: string,
 ): { correctness: number; correctCount: number; totalQuestionCount: number } {
   // Filter out rejected participants and filter by component if provided
@@ -168,7 +168,7 @@ function calculateCorrectnessStats(
   participantAnswers.forEach(({ answer, participant }) => {
     if (!answer.correctAnswer || answer.correctAnswer.length === 0) return;
 
-    const participantStudyConfig = getParticipantStudyConfig(participant.participantConfigHash, studyConfig, allConfigs);
+    const participantStudyConfig = getParticipantStudyConfig(participant.participantConfigHash, studyConfig, allConfigs ?? {});
     const component = participantStudyConfig?.components[answer.componentName]
       ? studyComponentToIndividualComponent(
         participantStudyConfig.components[answer.componentName],

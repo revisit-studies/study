@@ -1,9 +1,8 @@
 import {
-  useCallback, useEffect, useMemo, useState,
+  useCallback, useEffect, useMemo, useState, type ComponentProps,
 } from 'react';
 import { Vega, VisualizationSpec, View } from 'react-vega';
 import { initializeTrrack, Registry } from '@trrack/core';
-import { VegaProps } from 'react-vega/lib/Vega';
 import { ValueOf, VegaComponent } from '../parser/types';
 import { getJsonAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
@@ -13,6 +12,7 @@ import { useCurrentIdentifier } from '../routes/utils';
 import { useEvent } from '../store/hooks/useEvent';
 
 type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
+type VegaProps = ComponentProps<typeof Vega>;
 
 export interface VegaProvState {
   event: {
