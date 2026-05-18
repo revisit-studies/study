@@ -6,15 +6,15 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { SequenceAssignment } from '../../storage/engines/types';
-import { makeStorageEngine, makeSequenceAssignment } from '../../tests/utils';
+import { SequenceAssignment } from '../../../../storage/engines/types';
+import { makeStorageEngine, makeSequenceAssignment } from '../../../../tests/utils';
 import {
   getFilteredParticipantProgress,
   groupParticipantProgress,
   LiveMonitorView,
-} from '../individualStudy/LiveMonitor/LiveMonitorView';
-import { ParticipantSection } from '../individualStudy/LiveMonitor/ParticipantSection';
-import { ProgressHeatmap } from '../individualStudy/LiveMonitor/ProgressHeatmap';
+} from '../LiveMonitorView';
+import { ParticipantSection } from '../ParticipantSection';
+import { ProgressHeatmap } from '../ProgressHeatmap';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -52,7 +52,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconChevronRight: () => <span>icon-chevron-right</span>,
 }));
 
-vi.mock('../../storage/engines/FirebaseStorageEngine', () => ({
+vi.mock('../../../../storage/engines/FirebaseStorageEngine', () => ({
   FirebaseStorageEngine: class { },
 }));
 

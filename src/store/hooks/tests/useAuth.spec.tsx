@@ -28,6 +28,11 @@ vi.mock('../../../storage/engines/utils/storageEngineHelpers', () => ({
   isCloudStorageEngine: () => mockIsCloudStorage,
 }));
 
+vi.mock('react-router', () => ({
+  useLocation: () => ({ pathname: '/test-study' }),
+  useMatch: () => ({ params: { studyId: 'test-study' } }),
+}));
+
 // ── lifecycle ─────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
@@ -93,12 +98,11 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     ));
 
-    // storageEngine is null → AuthProvider shows loading overlay, not children.
-    // Verify that useAuth still provides the non-auth user context despite children not rendering.
-    const adminEl = screen.queryByTestId('admin');
-    expect(adminEl).toBeNull();
-    // The loading overlay should be shown instead
-    expect(screen.getByTestId('loading-overlay')).toBeDefined();
+    // When storageEngine is null, determiningStatus stays true but children still render
+    // because allowChildrenWhileDeterminingStatus is true (studyRouteMatch exists).
+    // The user context has isAdmin: false.
+    const adminEl = screen.getByTestId('admin');
+    expect(adminEl.textContent).toBe('not-admin');
   });
 });
 

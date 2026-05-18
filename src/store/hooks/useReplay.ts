@@ -245,6 +245,8 @@ export function useReplay() {
 
   useEffect(() => {
     isMountedRef.current = true;
+    const videoElement = videoRef.current;
+    const audioElement = audioRef.current;
 
     return () => {
       isMountedRef.current = false;
@@ -253,12 +255,12 @@ export function useReplay() {
         timer.current = null;
       }
 
-      videoRef.current?.removeEventListener('play', handlePlay);
-      videoRef.current?.removeEventListener('pause', handlePause);
-      videoRef.current?.removeEventListener('seeked', handleSeeked);
-      audioRef.current?.removeEventListener('play', handlePlay);
-      audioRef.current?.removeEventListener('pause', handlePause);
-      audioRef.current?.removeEventListener('seeked', handleSeeked);
+      videoElement?.removeEventListener('play', handlePlay);
+      videoElement?.removeEventListener('pause', handlePause);
+      videoElement?.removeEventListener('seeked', handleSeeked);
+      audioElement?.removeEventListener('play', handlePlay);
+      audioElement?.removeEventListener('pause', handlePause);
+      audioElement?.removeEventListener('seeked', handleSeeked);
     };
   }, [handlePause, handlePlay, handleSeeked]);
 

@@ -332,11 +332,31 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       sequenceAssignmentDoc,
       'sequenceAssignment',
     );
+    const sequenceAssignmentSnapshot = await getDocs(sequenceAssignmentCollection);
+    const participantSequenceAssignmentSnapshot = sequenceAssignmentSnapshot.docs.find((docSnapshot) => docSnapshot.id === participantId);
+    if (!participantSequenceAssignmentSnapshot) {
+      throw new Error('Failed to retrieve sequence assignment for current participant');
+    }
+
+    const participantSequenceAssignment = participantSequenceAssignmentSnapshot.data() as SequenceAssignment;
+    const claimedSequenceAssignmentSnapshot = sequenceAssignmentSnapshot.docs.find((docSnapshot) => {
+      const docData = docSnapshot.data() as SequenceAssignment;
+      return docData.claimed && docData.timestamp === participantSequenceAssignment.timestamp;
+    });
+
+    if (claimedSequenceAssignmentSnapshot) {
+      const claimedSequenceAssignmentDoc = doc(sequenceAssignmentCollection, claimedSequenceAssignmentSnapshot.id);
+      await updateDoc(claimedSequenceAssignmentDoc, { claimed: false, rejected: true });
+    }
+
     const participantSequenceAssignmentDoc = doc(
       sequenceAssignmentCollection,
       participantId,
     );
-    await updateDoc(participantSequenceAssignmentDoc, { rejected: true });
+    await updateDoc(participantSequenceAssignmentDoc, {
+      rejected: true,
+      timestamp: new Date().getTime(),
+    });
   }
 
   protected async _undoRejectParticipantRealtime(participantId: string) {

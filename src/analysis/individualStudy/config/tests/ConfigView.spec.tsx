@@ -7,10 +7,10 @@ import userEvent from '@testing-library/user-event';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { ConfigInfo } from '../individualStudy/config/utils';
-import { ConfigView } from '../individualStudy/config/ConfigView';
-import { downloadConfigFile, downloadConfigFilesZip } from '../../utils/handleDownloadFiles';
-import { makeParticipant } from '../../tests/utils';
+import { ConfigInfo } from '../utils';
+import { ConfigView } from '../ConfigView';
+import { downloadConfigFile, downloadConfigFilesZip } from '../../../../utils/handleDownloadFiles';
+import { makeParticipant } from '../../../../tests/utils';
 
 // Capture what gets passed to useMantineReactTable so we can test columns / options
 type CapturedTableOptions = Record<string, unknown> & {
@@ -27,7 +27,7 @@ let capturedTableOptions: CapturedTableOptions | null = null;
 
 let mockStorageEngine: { getAllConfigsFromHash: ReturnType<typeof vi.fn> } | undefined;
 
-vi.mock('../../storage/storageEngineHooks', () => ({
+vi.mock('../../../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
@@ -67,12 +67,12 @@ vi.mock('@tabler/icons-react', () => ({
   IconCopy: () => <span>copy</span>,
 }));
 
-vi.mock('../../utils/handleDownloadFiles', () => ({
+vi.mock('../../../../utils/handleDownloadFiles', () => ({
   downloadConfigFile: vi.fn().mockResolvedValue(undefined),
   downloadConfigFilesZip: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../individualStudy/config/ConfigDiffModal', () => ({
+vi.mock('../ConfigDiffModal', () => ({
   ConfigDiffModal: () => <div>diff modal</div>,
 }));
 

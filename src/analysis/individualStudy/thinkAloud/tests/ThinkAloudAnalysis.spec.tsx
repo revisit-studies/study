@@ -8,15 +8,15 @@ import {
 } from 'vitest';
 import * as d3 from 'd3';
 import { useParams, useSearchParams } from 'react-router';
-import { EditedText, Tag, TranscribedAudio } from '../individualStudy/thinkAloud/types';
-import type { ParticipantData } from '../../storage/types';
-import { makeStoredAnswer as makeStoredAnswerBase, makeStorageEngine } from '../../tests/utils';
-import type { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
-import { useAsync } from '../../store/hooks/useAsync';
-import { Pills } from '../individualStudy/thinkAloud/tags/Pills';
-import { AddTagDropdown } from '../individualStudy/thinkAloud/tags/AddTagDropdown';
-import { TagEditor } from '../individualStudy/thinkAloud/tags/TagEditor';
-import { ThinkAloudAnalysis } from '../individualStudy/thinkAloud/ThinkAloudAnalysis';
+import { EditedText, Tag, TranscribedAudio } from '../types';
+import type { ParticipantData } from '../../../../storage/types';
+import { makeStoredAnswer as makeStoredAnswerBase, makeStorageEngine } from '../../../../tests/utils';
+import type { FirebaseStorageEngine } from '../../../../storage/engines/FirebaseStorageEngine';
+import { useAsync } from '../../../../store/hooks/useAsync';
+import { Pills } from '../tags/Pills';
+import { AddTagDropdown } from '../tags/AddTagDropdown';
+import { TagEditor } from '../tags/TagEditor';
+import { ThinkAloudAnalysis } from '../ThinkAloudAnalysis';
 
 // ── mock delegates (declared before vi.mock so hoisted references resolve) ────
 
@@ -180,17 +180,17 @@ vi.mock('react-router', () => ({
   useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
 }));
 
-vi.mock('../../store/hooks/useAsync', () => ({
+vi.mock('../../../../store/hooks/useAsync', () => ({
   useAsync: vi.fn(() => ({
     value: null, status: 'success', execute: vi.fn(), error: null,
   })),
 }));
 
-vi.mock('../../store/hooks/useAuth', () => ({
+vi.mock('../../../../store/hooks/useAuth', () => ({
   useAuth: vi.fn(() => ({ user: { user: { email: 'test@test.com' }, isAdmin: true, determiningStatus: false } })),
 }));
 
-vi.mock('../../store/hooks/useReplay', () => ({
+vi.mock('../../../../store/hooks/useReplay', () => ({
   useReplay: vi.fn(() => ({})),
   ReplayContext: { Provider: ({ children }: { children: ReactNode }) => <div>{children}</div> },
   useReplayContext: vi.fn(() => ({
@@ -198,39 +198,39 @@ vi.mock('../../store/hooks/useReplay', () => ({
   })),
 }));
 
-vi.mock('../../store/hooks/useEvent', () => ({ useEvent: (fn: (...args: never[]) => void) => fn }));
-vi.mock('../../storage/storageEngineHooks', () => ({ useStorageEngine: vi.fn(() => ({ storageEngine: undefined })) }));
-vi.mock('../../storage/engines/FirebaseStorageEngine', () => ({ FirebaseStorageEngine: class { } }));
-vi.mock('../../utils/parseTrialOrder', () => ({ parseTrialOrder: vi.fn(() => ({ step: 0, funcIndex: null })) }));
+vi.mock('../../../../store/hooks/useEvent', () => ({ useEvent: (fn: (...args: never[]) => void) => fn }));
+vi.mock('../../../../storage/storageEngineHooks', () => ({ useStorageEngine: vi.fn(() => ({ storageEngine: undefined })) }));
+vi.mock('../../../../storage/engines/FirebaseStorageEngine', () => ({ FirebaseStorageEngine: class { } }));
+vi.mock('../../../../utils/parseTrialOrder', () => ({ parseTrialOrder: vi.fn(() => ({ step: 0, funcIndex: null })) }));
 vi.mock('lodash.debounce', () => ({ default: (fn: (...args: never[]) => void) => fn }));
-vi.mock('../../components/audioAnalysis/AudioProvenanceVis', () => ({ AudioProvenanceVis: () => <div data-testid="audio-provenance-vis" /> }));
-vi.mock('../../utils/encryptDecryptIndex', () => ({ encryptIndex: (i: number) => String(i) }));
-vi.mock('../../utils/Prefix', () => ({ PREFIX: '/' }));
-vi.mock('../../utils/handleDownloadFiles', () => ({ handleTaskAudio: vi.fn(), handleTaskScreenRecording: vi.fn() }));
-vi.mock('../individualStudy/ParticipantRejectModal', () => ({ ParticipantRejectModal: () => null }));
-vi.mock('../../components/audioAnalysis/provenanceColors', () => ({ buildProvenanceLegendEntries: vi.fn(() => []) }));
-vi.mock('../../utils/syncReplay', () => ({ revisitPageId: 'test-page-id', syncChannel: { postMessage: vi.fn() } }));
+vi.mock('../../../../components/audioAnalysis/AudioProvenanceVis', () => ({ AudioProvenanceVis: () => <div data-testid="audio-provenance-vis" /> }));
+vi.mock('../../../../utils/encryptDecryptIndex', () => ({ encryptIndex: (i: number) => String(i) }));
+vi.mock('../../../../utils/Prefix', () => ({ PREFIX: '/' }));
+vi.mock('../../../../utils/handleDownloadFiles', () => ({ handleTaskAudio: vi.fn(), handleTaskScreenRecording: vi.fn() }));
+vi.mock('../../ParticipantRejectModal', () => ({ ParticipantRejectModal: () => null }));
+vi.mock('../../../../components/audioAnalysis/provenanceColors', () => ({ buildProvenanceLegendEntries: vi.fn(() => []) }));
+vi.mock('../../../../utils/syncReplay', () => ({ revisitPageId: 'test-page-id', syncChannel: { postMessage: vi.fn() } }));
 
-vi.mock('../individualStudy/thinkAloud/ThinkAloudFooter', () => ({ ThinkAloudFooter: (props: Parameters<typeof mockThinkAloudFooter>[0]) => mockThinkAloudFooter(props) }));
-vi.mock('../individualStudy/thinkAloud/TextEditor', () => ({ TextEditor: (props: Parameters<typeof mockTextEditor>[0]) => mockTextEditor(props) }));
-vi.mock('../individualStudy/thinkAloud/TranscriptLine', () => ({ TranscriptLine: (props: Parameters<typeof mockTranscriptLine>[0]) => mockTranscriptLine(props) }));
-vi.mock('../individualStudy/thinkAloud/tags/TagSelector', () => ({ TagSelector: (props: Parameters<typeof mockTagSelector>[0]) => mockTagSelector(props) }));
-vi.mock('../individualStudy/thinkAloud/TranscriptSegmentsVis', () => ({ TranscriptSegmentsVis: () => <div data-testid="transcript-segments" /> }));
+vi.mock('../ThinkAloudFooter', () => ({ ThinkAloudFooter: (props: Parameters<typeof mockThinkAloudFooter>[0]) => mockThinkAloudFooter(props) }));
+vi.mock('../TextEditor', () => ({ TextEditor: (props: Parameters<typeof mockTextEditor>[0]) => mockTextEditor(props) }));
+vi.mock('../TranscriptLine', () => ({ TranscriptLine: (props: Parameters<typeof mockTranscriptLine>[0]) => mockTranscriptLine(props) }));
+vi.mock('../tags/TagSelector', () => ({ TagSelector: (props: Parameters<typeof mockTagSelector>[0]) => mockTagSelector(props) }));
+vi.mock('../TranscriptSegmentsVis', () => ({ TranscriptSegmentsVis: () => <div data-testid="transcript-segments" /> }));
 
 // ── real component references for DOM tests ──────────────────────────────────
 
-let RealThinkAloudFooter: typeof import('../individualStudy/thinkAloud/ThinkAloudFooter')['ThinkAloudFooter'];
-let RealTextEditor: typeof import('../individualStudy/thinkAloud/TextEditor')['TextEditor'];
-let RealTranscriptLine: typeof import('../individualStudy/thinkAloud/TranscriptLine')['TranscriptLine'];
-let RealTranscriptSegmentsVis: typeof import('../individualStudy/thinkAloud/TranscriptSegmentsVis')['TranscriptSegmentsVis'];
-let RealTagSelector: typeof import('../individualStudy/thinkAloud/tags/TagSelector')['TagSelector'];
+let RealThinkAloudFooter: typeof import('../ThinkAloudFooter')['ThinkAloudFooter'];
+let RealTextEditor: typeof import('../TextEditor')['TextEditor'];
+let RealTranscriptLine: typeof import('../TranscriptLine')['TranscriptLine'];
+let RealTranscriptSegmentsVis: typeof import('../TranscriptSegmentsVis')['TranscriptSegmentsVis'];
+let RealTagSelector: typeof import('../tags/TagSelector')['TagSelector'];
 
 beforeAll(async () => {
-  RealThinkAloudFooter = ((await vi.importActual('../individualStudy/thinkAloud/ThinkAloudFooter')) as typeof import('../individualStudy/thinkAloud/ThinkAloudFooter')).ThinkAloudFooter;
-  RealTextEditor = ((await vi.importActual('../individualStudy/thinkAloud/TextEditor')) as typeof import('../individualStudy/thinkAloud/TextEditor')).TextEditor;
-  RealTranscriptLine = ((await vi.importActual('../individualStudy/thinkAloud/TranscriptLine')) as typeof import('../individualStudy/thinkAloud/TranscriptLine')).TranscriptLine;
-  RealTranscriptSegmentsVis = ((await vi.importActual('../individualStudy/thinkAloud/TranscriptSegmentsVis')) as typeof import('../individualStudy/thinkAloud/TranscriptSegmentsVis')).TranscriptSegmentsVis;
-  RealTagSelector = ((await vi.importActual('../individualStudy/thinkAloud/tags/TagSelector')) as typeof import('../individualStudy/thinkAloud/tags/TagSelector')).TagSelector;
+  RealThinkAloudFooter = ((await vi.importActual('../ThinkAloudFooter')) as typeof import('../ThinkAloudFooter')).ThinkAloudFooter;
+  RealTextEditor = ((await vi.importActual('../TextEditor')) as typeof import('../TextEditor')).TextEditor;
+  RealTranscriptLine = ((await vi.importActual('../TranscriptLine')) as typeof import('../TranscriptLine')).TranscriptLine;
+  RealTranscriptSegmentsVis = ((await vi.importActual('../TranscriptSegmentsVis')) as typeof import('../TranscriptSegmentsVis')).TranscriptSegmentsVis;
+  RealTagSelector = ((await vi.importActual('../tags/TagSelector')) as typeof import('../tags/TagSelector')).TagSelector;
 });
 
 // ── shared fixtures ──────────────────────────────────────────────────────────
@@ -731,7 +731,7 @@ describe('ThinkAloudFooter', () => {
 
   test('play/pause toggle calls setIsPlaying', async () => {
     // Access the setIsPlaying mock from the module-scope useReplayContext mock
-    const { useReplayContext } = await import('../../store/hooks/useReplay');
+    const { useReplayContext } = await import('../../../../store/hooks/useReplay');
     const mockSetIsPlaying = vi.fn();
     // The module is fully mocked so the real return type doesn't apply; cast via the mock's own type
     (useReplayContext as ReturnType<typeof vi.fn>).mockReturnValue({

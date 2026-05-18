@@ -3,8 +3,8 @@ import {
   expect,
   test,
 } from 'vitest';
-import { encryptIndex } from '../../../utils/encryptDecryptIndex';
-import { buildTaskNavigationTarget } from './taskNavigation';
+import { encryptIndex } from '../../../../utils/encryptDecryptIndex';
+import { buildTaskNavigationTarget } from '../taskNavigation';
 
 describe('buildTaskNavigationTarget', () => {
   test('preserves search params when navigating between replay tasks', () => {

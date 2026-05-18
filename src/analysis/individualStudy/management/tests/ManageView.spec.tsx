@@ -6,10 +6,10 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { ManageView } from '../individualStudy/management/ManageView';
-import { RevisitModesItem } from '../individualStudy/management/RevisitModesItem';
-import { StageManagementItem } from '../individualStudy/management/StageManagementItem';
-import { DataManagementItem } from '../individualStudy/management/DataManagementItem';
+import { ManageView } from '../ManageView';
+import { RevisitModesItem } from '../RevisitModesItem';
+import { StageManagementItem } from '../StageManagementItem';
+import { DataManagementItem } from '../DataManagementItem';
 
 let mockStorageEngine: {
   getModes: ReturnType<typeof vi.fn>;
@@ -25,7 +25,7 @@ let mockStorageEngine: {
   getAllParticipantsData: ReturnType<typeof vi.fn>;
 } | undefined;
 
-vi.mock('../../storage/storageEngineHooks', () => ({
+vi.mock('../../../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
@@ -87,11 +87,11 @@ vi.mock('@mantine/modals', () => ({
   openConfirmModal: vi.fn(),
 }));
 
-vi.mock('../../utils/notifications', () => ({
+vi.mock('../../../../utils/notifications', () => ({
   showNotification: vi.fn(),
 }));
 
-vi.mock('../../components/downloader/DownloadButtons', () => ({
+vi.mock('../../../../components/downloader/DownloadButtons', () => ({
   DownloadButtons: () => <div>DownloadButtons</div>,
 }));
 
@@ -441,7 +441,7 @@ describe('ManageView', () => {
   });
 
   test('DataManagementItem snapshotAction shows notification on failure', async () => {
-    const { showNotification } = await import('../../utils/notifications');
+    const { showNotification } = await import('../../../../utils/notifications');
     mockStorageEngine!.createSnapshot.mockResolvedValue({
       status: 'ERROR',
       error: { title: 'Test error', message: 'Something went wrong' },

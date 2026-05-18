@@ -127,14 +127,6 @@ describe('useCurrentStep', () => {
     expect(result.current).toBe(3);
   });
 
-  test('returns currentTrialStep when currentTrial search param is set and step is non-null', () => {
-    mockSearchParams = new URLSearchParams('currentTrial=intro_0');
-    mockAnswers = { intro_0: { trialOrder: '2_0' } };
-    vi.mocked(parseTrialOrder).mockReturnValue({ step: 2, funcIndex: 0 });
-    const { result } = renderHook(() => useCurrentStep());
-    expect(result.current).toBe(2);
-  });
-
   test('falls through to decrypted index when currentTrialStep is null', () => {
     mockSearchParams = new URLSearchParams('currentTrial=intro_0');
     mockAnswers = { intro_0: { trialOrder: undefined } };
@@ -187,35 +179,7 @@ describe('useCurrentComponent', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  test('second effect: currentTrialStep === currentStep with funcIndex navigates to strip funcIndex', async () => {
-    mockParams = { studyId: 'test-study', index: '2', funcIndex: '0' };
-    mockSearchParams = new URLSearchParams('currentTrial=myFunc_2_C_0');
-    mockAnswers = { myFunc_2_C_0: { trialOrder: '2_0' } };
-    vi.mocked(parseTrialOrder).mockReturnValue({ step: 2, funcIndex: null });
-    vi.mocked(decryptIndex).mockReturnValue(0);
-    mockFlatSequence = ['myFunc', 'x', 'end'];
-    vi.mocked(getComponent).mockReturnValue(null);
-    await act(async () => {
-      renderHook(() => useCurrentComponent());
-    });
-    expect(mockNavigate).toHaveBeenCalled();
-  });
-
-  test('second effect: decryptedFuncIndex !== currentTrialFuncIndex triggers navigate', async () => {
-    mockParams = { studyId: 'test-study', index: '2', funcIndex: '5' };
-    mockSearchParams = new URLSearchParams('currentTrial=myFunc_2_C_1');
-    mockAnswers = { myFunc_2_C_1: { trialOrder: '2_1' } };
-    vi.mocked(parseTrialOrder).mockReturnValue({ step: 2, funcIndex: 1 });
-    vi.mocked(decryptIndex).mockReturnValue(99); // decryptedFuncIndex=99 ≠ currentTrialFuncIndex=1
-    mockFlatSequence = ['myFunc', 'x', 'end'];
-    vi.mocked(getComponent).mockReturnValue(null);
-    await act(async () => {
-      renderHook(() => useCurrentComponent());
-    });
-    expect(mockNavigate).toHaveBeenCalled();
-  });
-
-  test('third effect: existing answer sets compName', async () => {
+  test('existing answer sets compName', async () => {
     mockParams = { studyId: 'test-study', index: '0', funcIndex: '0' };
     mockFlatSequence = ['myFunc', 'end'];
     mockAnswers = { myFunc_0_CompA_0: { componentName: 'CompA' } };

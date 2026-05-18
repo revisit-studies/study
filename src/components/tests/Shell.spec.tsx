@@ -212,7 +212,11 @@ describe('Shell', () => {
       getSequenceArray: vi.fn().mockResolvedValue(['seq1']), // non-null → no setSequenceArray
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
+      getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
       getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
     };
 
     render(<Shell globalConfig={globalConfig} />);
@@ -230,7 +234,11 @@ describe('Shell', () => {
       setSequenceArray: vi.fn().mockResolvedValue(undefined),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
+      getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
       getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
     };
 
     render(<Shell globalConfig={globalConfig} />);
@@ -253,7 +261,11 @@ describe('Shell', () => {
       }),
       updateParticipantSearchParams: vi.fn().mockResolvedValue(undefined),
       updateStudyCondition: vi.fn().mockResolvedValue(undefined),
+      getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
       getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
     };
 
     render(<Shell globalConfig={globalConfig} />);
@@ -272,7 +284,11 @@ describe('Shell', () => {
         ...baseSession,
         participantConfigHash: 'differentHash', // differs from hash() mock ('abc123')
       }),
+      getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
       getAllConfigsFromHash: vi.fn().mockResolvedValue({ differentHash: mockActiveConfig }),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
     };
 
     render(<Shell globalConfig={globalConfig} />);
@@ -285,6 +301,11 @@ describe('Shell', () => {
 
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockRejectedValue(new Error('db init failed')),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: true }),
+      getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
     };
 
     render(<Shell globalConfig={globalConfig} />);

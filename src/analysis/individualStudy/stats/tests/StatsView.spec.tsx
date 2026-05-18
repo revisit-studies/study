@@ -4,13 +4,13 @@ import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useParams } from 'react-router';
-import { IndividualComponent, StudyConfig } from '../../parser/types';
-import { ParticipantData, ParticipantDataWithStatus } from '../../storage/types';
-import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
-import { createMockStudyConfig } from './testUtils';
-import { StatsView } from '../individualStudy/stats/StatsView';
-import { TrialVisualization } from '../individualStudy/stats/TrialVisualization';
-import { ResponseVisualization } from '../individualStudy/stats/ResponseVisualization';
+import { IndividualComponent, StudyConfig } from '../../../../parser/types';
+import { ParticipantData, ParticipantDataWithStatus } from '../../../../storage/types';
+import { studyComponentToIndividualComponent } from '../../../../utils/handleComponentInheritance';
+import { createMockStudyConfig } from '../../../tests/testUtils';
+import { StatsView } from '../StatsView';
+import { TrialVisualization } from '../TrialVisualization';
+import { ResponseVisualization } from '../ResponseVisualization';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -60,15 +60,15 @@ vi.mock('@tabler/icons-react', () => ({
   IconSquares: () => <span>icon-checkbox</span>,
 }));
 
-vi.mock('../../components/interface/StepsPanel', () => ({
+vi.mock('../../../../components/interface/StepsPanel', () => ({
   StepsPanel: () => <div>StepsPanel</div>,
 }));
 
-vi.mock('../individualStudy/summary/OverviewStats', () => ({
+vi.mock('../../summary/OverviewStats', () => ({
   OverviewStats: () => <div>OverviewStats</div>,
 }));
 
-vi.mock('../individualStudy/summary/utils', () => ({
+vi.mock('../../summary/utils', () => ({
   getOverviewStats: vi.fn(() => ({
     participantCounts: {
       total: 5, completed: 3, inProgress: 1, rejected: 1,
@@ -82,7 +82,7 @@ vi.mock('../individualStudy/summary/utils', () => ({
   })),
 }));
 
-vi.mock('../../utils/handleComponentInheritance', () => ({
+vi.mock('../../../../utils/handleComponentInheritance', () => ({
   studyComponentToIndividualComponent: vi.fn(() => ({
     type: 'questionnaire',
     response: [],

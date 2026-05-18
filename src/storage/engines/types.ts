@@ -1130,10 +1130,12 @@ export abstract class StorageEngine {
 
   // Rejects a participant with the given participantId and reason.
   async rejectParticipant(participantId: string, reason: string) {
-    const participant = await this._getFromStorage(
-      `participants/${participantId}`,
-      'participantData',
-    );
+    const participant = participantId === this.currentParticipantId && this.participantData
+      ? this.participantData
+      : await this._getFromStorage(
+        `participants/${participantId}`,
+        'participantData',
+      );
 
     try {
       // If the user doesn't exist or is already rejected, return
@@ -1544,7 +1546,11 @@ export abstract class StorageEngine {
     deleteData: boolean,
   ): Promise<ActionResponse> {
     const sourceName = `${this.collectionPrefix}${studyId}`;
-    if (!(await this._directoryExists(`${sourceName}/participants`))) {
+    const hasLiveData = this.getEngine() === 'localStorage'
+      ? await this._directoryExists(`${sourceName}/participants`)
+      : (await this.getAllSequenceAssignments(studyId)).length > 0;
+
+    if (!hasLiveData) {
       console.warn(`Source directory ${sourceName} does not exist.`);
 
       return {

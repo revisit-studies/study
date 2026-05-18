@@ -4,12 +4,12 @@ import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useParams } from 'react-router';
-import { StudyConfig } from '../../parser/types';
-import { ParticipantDataWithStatus } from '../../storage/types';
-import { createMockStudyConfig } from './testUtils';
-import { makeParticipant as _makeParticipant } from '../../tests/utils';
-import { TableView } from '../individualStudy/table/TableView';
-import { MetaCell } from '../individualStudy/table/MetaCell';
+import { StudyConfig } from '../../../../parser/types';
+import { ParticipantDataWithStatus } from '../../../../storage/types';
+import { createMockStudyConfig } from '../../../tests/testUtils';
+import { makeParticipant as _makeParticipant } from '../../../../tests/utils';
+import { TableView } from '../TableView';
+import { MetaCell } from '../MetaCell';
 
 // ── capturedTableOptions ─────────────────────────────────────────────────────
 
@@ -50,19 +50,19 @@ vi.mock('@tabler/icons-react', () => ({
   IconCopy: () => <span>copy</span>,
 }));
 
-vi.mock('../individualStudy/replay/AllTasksTimeline', () => ({
+vi.mock('../../replay/AllTasksTimeline', () => ({
   AllTasksTimeline: () => <div>AllTasksTimeline</div>,
 }));
 
-vi.mock('../individualStudy/ParticipantRejectModal', () => ({
+vi.mock('../../ParticipantRejectModal', () => ({
   ParticipantRejectModal: () => <div>ParticipantRejectModal</div>,
 }));
 
-vi.mock('../../utils/getSequenceFlatMap', () => ({
+vi.mock('../../../../utils/getSequenceFlatMap', () => ({
   getSequenceFlatMap: vi.fn(() => ['intro', 'trial1', 'trial2', 'end']),
 }));
 
-vi.mock('../../utils/participantName', () => ({
+vi.mock('../../../../utils/participantName', () => ({
   participantName: () => 'Test User',
 }));
 

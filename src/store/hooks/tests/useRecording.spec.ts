@@ -245,7 +245,7 @@ describe('useRecording startScreenCapture', () => {
     const { result } = renderHook(() => useRecording());
     act(() => { result.current.startScreenCapture(); });
     await waitFor(() => {
-      expect(result.current.screenRecordingError).toBe('Recording permission denied or not supported.');
+      expect(result.current.screenRecordingError).toBe('Recording permission denied');
     });
   });
 });

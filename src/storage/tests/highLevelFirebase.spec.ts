@@ -59,6 +59,13 @@ vi.mock('firebase/storage', () => {
       storageObjects[refObj.path] = text;
       return { ref: refObj };
     }),
+    getBlob: vi.fn(async (refObj: { path: string }) => {
+      const data = storageObjects[refObj.path];
+      if (data !== undefined) {
+        return new Blob([data], { type: 'application/json' });
+      }
+      throw Object.assign(new Error('storage/object-not-found'), { code: 'storage/object-not-found' });
+    }),
     getDownloadURL: vi.fn((refObj: { path: string }) => {
       if (refObj.path in storageObjects) {
         return Promise.resolve(`mock-storage://${refObj.path}`);

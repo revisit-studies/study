@@ -4,14 +4,14 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import * as d3 from 'd3';
-import { StudyConfig } from '../../parser/types';
-import { ParticipantData } from '../../storage/types';
-import type { StoredAnswer } from '../../store/types';
-import { createMockStudyConfig } from './testUtils';
-import { makeStoredAnswer, makeParticipant as _makeParticipant } from '../../tests/utils';
-import { AllTasksTimeline } from '../individualStudy/replay/AllTasksTimeline';
-import { SingleTask } from '../individualStudy/replay/SingleTask';
-import { SingleTaskLabelLines } from '../individualStudy/replay/SingleTaskLabelLines';
+import { StudyConfig } from '../../../../parser/types';
+import { ParticipantData } from '../../../../storage/types';
+import type { StoredAnswer } from '../../../../store/types';
+import { createMockStudyConfig } from '../../../tests/testUtils';
+import { makeStoredAnswer, makeParticipant as _makeParticipant } from '../../../../tests/utils';
+import { AllTasksTimeline } from '../AllTasksTimeline';
+import { SingleTask } from '../SingleTask';
+import { SingleTaskLabelLines } from '../SingleTaskLabelLines';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -39,15 +39,15 @@ vi.mock('@mantine/hooks', () => ({
   useResizeObserver: () => [{ current: null }, { width: 60, height: 20 }],
 }));
 
-vi.mock('../../utils/useNavigateToTrial', () => ({
+vi.mock('../../../../utils/useNavigateToTrial', () => ({
   useNavigateToTrial: () => vi.fn(),
 }));
 
-vi.mock('../../utils/correctAnswer', () => ({
+vi.mock('../../../../utils/correctAnswer', () => ({
   componentAnswersAreCorrect: vi.fn(() => true),
 }));
 
-vi.mock('../../utils/handleConditionLogic', () => ({
+vi.mock('../../../../utils/handleConditionLogic', () => ({
   parseConditionParam: vi.fn(() => []),
 }));
 

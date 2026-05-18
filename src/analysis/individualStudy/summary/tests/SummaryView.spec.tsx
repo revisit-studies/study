@@ -4,17 +4,17 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { cleanup } from '@testing-library/react';
-import { StudyConfig } from '../../parser/types';
-import { ParticipantDataWithStatus } from '../../storage/types';
-import { OverviewData } from '../types';
-import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { useAsync } from '../../store/hooks/useAsync';
-import { makeStorageEngine } from '../../tests/utils';
-import { createMockStudyConfig } from './testUtils';
-import { SummaryView } from '../individualStudy/summary/SummaryView';
-import { OverviewStats } from '../individualStudy/summary/OverviewStats';
-import { ComponentStats } from '../individualStudy/summary/ComponentStats';
-import { ResponseStats } from '../individualStudy/summary/ResponseStats';
+import { StudyConfig } from '../../../../parser/types';
+import { ParticipantDataWithStatus } from '../../../../storage/types';
+import { OverviewData } from '../../../types';
+import { useStorageEngine } from '../../../../storage/storageEngineHooks';
+import { useAsync } from '../../../../store/hooks/useAsync';
+import { makeStorageEngine } from '../../../../tests/utils';
+import { createMockStudyConfig } from '../../../tests/testUtils';
+import { SummaryView } from '../SummaryView';
+import { OverviewStats } from '../OverviewStats';
+import { ComponentStats } from '../ComponentStats';
+import { ResponseStats } from '../ResponseStats';
 
 // ── capturedTableOptions: intercept MRT ─────────────────────────────────────
 
@@ -51,11 +51,11 @@ vi.mock('@tabler/icons-react', () => ({
   IconAlertTriangle: () => <span>alert</span>,
 }));
 
-vi.mock('../../storage/storageEngineHooks', () => ({
+vi.mock('../../../../storage/storageEngineHooks', () => ({
   useStorageEngine: vi.fn(() => ({ storageEngine: undefined })),
 }));
 
-vi.mock('../../store/hooks/useAsync', () => ({
+vi.mock('../../../../store/hooks/useAsync', () => ({
   useAsync: vi.fn(() => ({ value: null, status: 'idle', error: null })),
 }));
 
