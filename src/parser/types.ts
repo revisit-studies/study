@@ -2,8 +2,11 @@ export type { ParticipantData, ParticipantDataWithStatus } from '../storage/type
 export type { StoredAnswer, ParticipantMetadata } from '../store/types';
 
 export type JsonPrimitive = string | number | boolean | null;
-export type JsonValue = JsonPrimitive | { [key: string]: JsonValue } | JsonValue[];
-export type JsonObject = { [key: string]: JsonValue };
+// eslint-disable-next-line no-use-before-define
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+export interface JsonObject {
+  [key: string]: JsonValue;
+}
 export type JsonArray = JsonValue[];
 
 /**
