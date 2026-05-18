@@ -214,4 +214,19 @@ describe('useNextStep', () => {
     expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
     expect(mockNavigate).toHaveBeenCalledTimes(2);
   });
+
+  test('preserves participant query params on next navigation', async () => {
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+    vi.stubGlobal('window', {
+      location: { search: '?participantId=p-1' },
+    });
+
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.();
+    await Promise.resolve();
+
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockNavigate.mock.calls[0][0]).toContain('?participantId=p-1');
+  });
 });

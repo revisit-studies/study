@@ -61,7 +61,7 @@ function getStudyRouteSegments(urlString: string) {
   };
 }
 
-test('syncs dynamic child route index from currentTrial query', async ({ page }) => {
+test('preserves dynamic child route from the pathname', async ({ page }) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'Dynamic Blocks');
 
@@ -100,13 +100,18 @@ test('syncs dynamic child route index from currentTrial query', async ({ page })
 
   const wrongChildUrl = new URL(page.url());
   wrongChildUrl.pathname = `/${studySegment}/${stepSegment}/${firstFuncIndexSegment}`;
-  wrongChildUrl.searchParams.set('currentTrial', 'dynamicBlock_1_HSLColorCodes_1');
   await page.goto(wrongChildUrl.toString());
+
+  await expect.poll(() => new URL(page.url()).pathname).toBe(`/${studySegment}/${stepSegment}/${firstFuncIndexSegment}`);
+
+  const secondChildUrl = new URL(page.url());
+  secondChildUrl.pathname = `/${studySegment}/${stepSegment}/${secondFuncIndexSegment}`;
+  await page.goto(secondChildUrl.toString());
 
   await expect.poll(() => new URL(page.url()).pathname).toBe(`/${studySegment}/${stepSegment}/${secondFuncIndexSegment}`);
 });
 
-test('removes dynamic child route index for non-dynamic currentTrial query', async ({ page }) => {
+test('preserves non-dynamic routes when navigating directly', async ({ page }) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'Dynamic Blocks');
 
@@ -129,11 +134,16 @@ test('removes dynamic child route index for non-dynamic currentTrial query', asy
   }
   const { stepSegment: dynamicStepSegment, funcIndexSegment: dynamicFuncIndexSegment } = dynamicRoute;
 
-  const wrongChildUrl = new URL(page.url());
-  wrongChildUrl.pathname = `/${studySegment}/${dynamicStepSegment}/${dynamicFuncIndexSegment}`;
-  wrongChildUrl.searchParams.set('currentTrial', 'introduction_0');
-  await page.goto(wrongChildUrl.toString());
+  const introUrl = new URL(page.url());
+  introUrl.pathname = `/${studySegment}/${introStepSegment}`;
+  await page.goto(introUrl.toString());
 
   await expect.poll(() => new URL(page.url()).pathname).toBe(`/${studySegment}/${introStepSegment}`);
   await expect(page.getByText(/sample study.*dynamic blocks/i)).toBeVisible();
+
+  const dynamicUrl = new URL(page.url());
+  dynamicUrl.pathname = `/${studySegment}/${dynamicStepSegment}/${dynamicFuncIndexSegment}`;
+  await page.goto(dynamicUrl.toString());
+
+  await expect.poll(() => new URL(page.url()).pathname).toBe(`/${studySegment}/${dynamicStepSegment}/${dynamicFuncIndexSegment}`);
 });
