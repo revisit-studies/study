@@ -280,6 +280,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantSession.participantId,
           false,
           false,
+          undefined,
           participantSession.participantConfigHash !== activeHash,
         );
 
@@ -367,8 +368,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           '',
           false,
           isStorageFailure,
-          false,
           initialAlertModal,
+          false,
         );
 
         if (isCancelled) {

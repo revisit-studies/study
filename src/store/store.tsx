@@ -24,9 +24,10 @@ export async function studyStoreCreator(
   participantId: string,
   completed: boolean,
   storageEngineFailedToConnect: boolean,
-  isStalledConfig: boolean,
   initialAlertModal?: AlertModalState,
+  isStalledConfig?: boolean,
 ) {
+  const resolvedIsStalledConfig = isStalledConfig ?? false;
   const flatSequence = getSequenceFlatMap(sequence);
 
   const emptyAnswers: ParticipantData['answers'] = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
@@ -137,7 +138,7 @@ export async function studyStoreCreator(
     isSubmittingFinal: false,
     clickedPrevious: false,
     storageEngineFailedToConnect,
-    isStalledConfig,
+    isStalledConfig: resolvedIsStalledConfig,
   };
 
   const storeSlice = createSlice({
