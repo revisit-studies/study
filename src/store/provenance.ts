@@ -44,6 +44,16 @@ export function hasStoredProvenance(provenanceGraph: unknown) {
   return normalizeStoredProvenance(provenanceGraph) !== null;
 }
 
+export function getLegacyStoredAnswerProvenance(answer: unknown) {
+  if (!answer || typeof answer !== 'object') {
+    return null;
+  }
+
+  return normalizeStoredProvenance(
+    (answer as LegacyStoredAnswerWithProvenance).provenanceGraph,
+  );
+}
+
 export function stripProvenanceFromStoredAnswer(
   answer: StoredAnswer | LegacyStoredAnswerWithProvenance,
 ): StoredAnswer {
@@ -56,9 +66,7 @@ export function splitProvenanceFromAnswers(answers: Record<string, StoredAnswer>
   const answersWithoutProvenance: Record<string, StoredAnswer> = {};
 
   Object.entries(answers).forEach(([identifier, answer]) => {
-    const provenanceGraph = normalizeStoredProvenance(
-      (answer as LegacyStoredAnswerWithProvenance).provenanceGraph,
-    );
+    const provenanceGraph = getLegacyStoredAnswerProvenance(answer);
 
     if (provenanceGraph) {
       provenanceByIdentifier[identifier] = provenanceGraph;

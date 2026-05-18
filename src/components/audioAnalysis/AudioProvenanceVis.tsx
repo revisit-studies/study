@@ -27,7 +27,7 @@ import { useUpdateProvenance } from './useUpdateProvenance';
 import { useReplayContext } from '../../store/hooks/useReplay';
 import { syncChannel, syncEmitter } from '../../utils/syncReplay';
 import type { StoredProvenance } from '../../store/types';
-import { normalizeStoredProvenance } from '../../store/provenance';
+import { getLegacyStoredAnswerProvenance } from '../../store/provenance';
 
 const margin = {
   left: 20, top: 0, right: 20, bottom: 0,
@@ -65,9 +65,7 @@ export function AudioProvenanceVis({
 
   const { storageEngine } = useStorageEngine();
   const legacyProvenanceGraph = useMemo(
-    () => normalizeStoredProvenance(
-      (answers[taskName] as StoredAnswer & { provenanceGraph?: unknown } | undefined)?.provenanceGraph,
-    ),
+    () => getLegacyStoredAnswerProvenance(answers[taskName]),
     [answers, taskName],
   );
   const [storedProvenanceGraph, setStoredProvenanceGraph] = useState<StoredProvenance | null>(legacyProvenanceGraph);

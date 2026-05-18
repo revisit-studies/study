@@ -36,7 +36,7 @@ import {
   buildProvenanceLegendEntries,
 } from '../../../components/audioAnalysis/provenanceColors';
 import { revisitPageId, syncChannel } from '../../../utils/syncReplay';
-import { normalizeStoredProvenance } from '../../../store/provenance';
+import { getLegacyStoredAnswerProvenance } from '../../../store/provenance';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
@@ -51,9 +51,7 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
 }
 
 function getLegacyProvenance(answer: unknown) {
-  return normalizeStoredProvenance(
-    (answer as { provenanceGraph?: unknown } | undefined)?.provenanceGraph,
-  );
+  return getLegacyStoredAnswerProvenance(answer);
 }
 
 async function getTaskProvenance(
