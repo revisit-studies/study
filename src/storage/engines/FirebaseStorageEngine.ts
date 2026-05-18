@@ -339,9 +339,19 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
 
     const participantSequenceAssignment = participantSequenceAssignmentSnapshot.data() as SequenceAssignment;
+    const toMillis = (value: unknown) => {
+      if (value instanceof Timestamp) {
+        return value.toMillis();
+      }
+      if (typeof value === 'number') {
+        return value;
+      }
+      return Number(value);
+    };
+    const participantTimestamp = toMillis(participantSequenceAssignment.timestamp);
     const claimedSequenceAssignmentSnapshot = sequenceAssignmentSnapshot.docs.find((docSnapshot) => {
       const docData = docSnapshot.data() as SequenceAssignment;
-      return docData.claimed && docData.timestamp === participantSequenceAssignment.timestamp;
+      return docData.claimed && toMillis(docData.timestamp) === participantTimestamp;
     });
 
     if (claimedSequenceAssignmentSnapshot) {

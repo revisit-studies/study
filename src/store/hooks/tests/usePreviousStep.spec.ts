@@ -44,7 +44,7 @@ vi.mock('../useStudyConfig', () => ({
 vi.mock('../../store', () => ({
   useStoreDispatch: () => mockDispatch,
   useStoreActions: () => ({ deleteDynamicBlockAnswers: mockDeleteDynamicBlockAnswers }),
-  useStoreSelector: mockUseStoreSelector,
+  useStoreSelector: (...args: Parameters<typeof mockUseStoreSelector>) => mockUseStoreSelector(...args),
 }));
 
 vi.mock('../../../utils/encryptDecryptIndex', () => ({

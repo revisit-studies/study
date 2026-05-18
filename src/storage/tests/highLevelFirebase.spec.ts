@@ -1,6 +1,7 @@
 import {
   beforeAll, beforeEach, afterAll, afterEach, describe, expect, test, vi,
 } from 'vitest';
+import { Timestamp } from 'firebase/firestore';
 import { type ParticipantMetadata, type StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
@@ -644,9 +645,7 @@ describe.each([
     sequenceAssignment1 = sequenceAssignments.find((assignment) => assignment.participantId === participantId1);
     expect(sequenceAssignment1).toBeDefined();
     expect(sequenceAssignment1!.rejected).toBe(true);
-    // Firebase's _rejectParticipantRealtime does not reverse the claim on p1 when p2 is
-    // rejected. p2's own slot (same timestamp) is what becomes available for reuse, so the
-    // test still exercises correct sequence-reuse behaviour via p2 below.
+    expect(sequenceAssignment1!.claimed).toBe(false);
     expect(sequenceAssignment1!.completed).toBeNull();
 
     await storageEngine.clearCurrentParticipantId();
@@ -705,6 +704,41 @@ describe.each([
     expect(participantIds).toContain(participantId2);
     expect(participantIds).toContain(participantId3);
     expect(participantIds).toContain(participantId4);
+  });
+
+  test('_rejectParticipantRealtime clears the claimed assignment when reused timestamps are stored as Firestore Timestamps', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const { participantId: participantId1 } = participantSession;
+
+    await storageEngine.rejectParticipant(participantId1, 'Participant rejected for testing');
+    await storageEngine.clearCurrentParticipantId();
+
+    const newParticipantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const participantId2 = newParticipantSession.participantId;
+
+    const participant1Path = Object.keys(firestoreData).find((path) => path.endsWith(`/sequenceAssignment/${participantId1}`));
+    const participant2Path = Object.keys(firestoreData).find((path) => path.endsWith(`/sequenceAssignment/${participantId2}`));
+
+    if (!participant1Path || !participant2Path) {
+      throw new Error('Expected both sequence assignment docs to exist');
+    }
+
+    firestoreData[participant1Path].timestamp = new Timestamp(1, 0);
+    firestoreData[participant2Path].timestamp = new Timestamp(1, 0);
+
+    // @ts-expect-error protected
+    await storageEngine._rejectParticipantRealtime(participantId2);
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment1 = sequenceAssignments.find((assignment) => assignment.participantId === participantId1);
+    const sequenceAssignment2 = sequenceAssignments.find((assignment) => assignment.participantId === participantId2);
+
+    expect(sequenceAssignment1).toBeDefined();
+    expect(sequenceAssignment1!.rejected).toBe(true);
+    expect(sequenceAssignment1!.claimed).toBe(false);
+    expect(sequenceAssignment2).toBeDefined();
+    expect(sequenceAssignment2!.rejected).toBe(true);
+    expect(sequenceAssignment2!.claimed).toBe(false);
   });
 
   test('getSequenceArray returns the sequence array', async () => {
