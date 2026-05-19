@@ -294,9 +294,10 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       throw new Error('Failed to retrieve claimed sequence assignment for rejection');
     }
     // Update the claimed sequence assignment to mark it as available again
+    // Also mark as rejected so it doesn't get incorrectly reused
     await this.supabase
       .from('revisit')
-      .update({ data: { ...claimedData.data, claimed: false } })
+      .update({ data: { ...claimedData.data, claimed: false, rejected: true } })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${claimedData.data.participantId}`);
   }

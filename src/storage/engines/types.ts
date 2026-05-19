@@ -1147,16 +1147,28 @@ export abstract class StorageEngine {
         return;
       }
 
-      // set reject flag
-      participant.rejected = {
-        reason,
-        timestamp: new Date().getTime(),
+      // Create a copy with rejected flag for storage write
+      // so that if the write fails, in-memory state is unchanged
+      const rejectedParticipant: ParticipantData = {
+        ...participant,
+        rejected: {
+          reason,
+          timestamp: new Date().getTime(),
+        },
       };
+
+      // Push rejected copy to storage first
       await this._pushToStorage(
         `participants/${participantId}`,
         'participantData',
-        participant,
+        rejectedParticipant,
       );
+
+      // Update in-memory state only after storage write succeeds
+      if (participantId === this.currentParticipantId && this.participantData) {
+        this.participantData = rejectedParticipant;
+      }
+
       await this._rejectParticipantRealtime(participantId);
     } catch (error) {
       console.warn('Error rejecting participant:', error);
