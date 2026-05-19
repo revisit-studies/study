@@ -245,8 +245,6 @@ export function useReplay() {
 
   useEffect(() => {
     isMountedRef.current = true;
-    const videoElement = videoRef.current;
-    const audioElement = audioRef.current;
 
     return () => {
       isMountedRef.current = false;
@@ -255,12 +253,12 @@ export function useReplay() {
         timer.current = null;
       }
 
-      videoElement?.removeEventListener('play', handlePlay);
-      videoElement?.removeEventListener('pause', handlePause);
-      videoElement?.removeEventListener('seeked', handleSeeked);
-      audioElement?.removeEventListener('play', handlePlay);
-      audioElement?.removeEventListener('pause', handlePause);
-      audioElement?.removeEventListener('seeked', handleSeeked);
+      // Remove listeners from replayRef.current, which is where they are attached
+      // by updateReplayRef. This is the element that actually has the listeners,
+      // rather than videoRef/audioRef which may be different or null.
+      replayRef.current?.removeEventListener('play', handlePlay);
+      replayRef.current?.removeEventListener('pause', handlePause);
+      replayRef.current?.removeEventListener('seeked', handleSeeked);
     };
   }, [handlePause, handlePlay, handleSeeked]);
 
