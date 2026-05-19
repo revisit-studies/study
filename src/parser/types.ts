@@ -2,12 +2,13 @@ export type { ParticipantData, ParticipantDataWithStatus } from '../storage/type
 export type { StoredAnswer, ParticipantMetadata } from '../store/types';
 
 export type JsonPrimitive = string | number | boolean | null;
-// eslint-disable-next-line no-use-before-define
-export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+/* eslint-disable no-use-before-define */
 export interface JsonObject {
   [key: string]: JsonValue;
 }
 export type JsonArray = JsonValue[];
+/* eslint-enable no-use-before-define */
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 
 /**
  * The GlobalConfig is used to generate the list of available studies in the UI.
