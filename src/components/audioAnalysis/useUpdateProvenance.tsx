@@ -1,9 +1,10 @@
 // use effect to control the current provenance node based on the changing playtime.
 
 import { useEffect, useMemo } from 'react';
-import { initializeTrrack, isRootNode, Registry } from '@trrack/core';
+import { initializeTrrack, Registry } from '@trrack/core';
 import { TrrackedProvenance } from '../../store/types';
 import { ResponseBlockLocation } from '../../parser/types';
+import { findNodeAtTime } from '../../utils/findNodeAtTime';
 
 export function useUpdateProvenance(location: ResponseBlockLocation, playTime: number, provGraph: TrrackedProvenance | undefined, currentNode: string | undefined, setCurrentNode: (node: string | null, _location: ResponseBlockLocation) => void, saveProvenance?: (prov: unknown) => void) {
   const trrackInstance = useMemo(() => {
@@ -38,34 +39,11 @@ export function useUpdateProvenance(location: ResponseBlockLocation, playTime: n
       return;
     }
 
-    let tempNode = provGraph.nodes[currentNode];
+    const foundNodeId = findNodeAtTime(currentNode, playTime, provGraph.nodes);
 
-    let searching = true;
-    while (searching) {
-      if (playTime < tempNode.createdOn) {
-        if (!isRootNode(tempNode)) {
-          const parentNode = tempNode.parent;
-
-          tempNode = provGraph.nodes[parentNode];
-        } else {
-          searching = false;
-        }
-      } else if (tempNode.children.length > 0) {
-        const child = tempNode.children[0];
-
-        if (playTime > provGraph.nodes[child].createdOn) {
-          tempNode = provGraph.nodes[child];
-        } else {
-          searching = false;
-        }
-      } else {
-        searching = false;
-      }
-    }
-
-    if (tempNode.id !== currentNode) {
-      setCurrentNode(tempNode.id, location);
-      saveProvenance({ prov: trrackInstance.getState(tempNode), location });
+    if (foundNodeId !== currentNode) {
+      setCurrentNode(foundNodeId, location);
+      saveProvenance({ prov: trrackInstance.getState(provGraph.nodes[foundNodeId]), location });
     }
   }, [currentNode, playTime, provGraph, location, setCurrentNode, trrackInstance, saveProvenance]);
 }
