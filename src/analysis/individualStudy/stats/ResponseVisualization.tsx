@@ -7,8 +7,8 @@ import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import {
   IconAdjustmentsHorizontal, IconBubbleText, IconChartGridDots, IconChevronDown, IconCodePlus, IconCopyCheck, IconDots, IconGridDots, IconHtml, IconLetterCase, IconDragDrop, IconNumber123, IconRadio, IconSelect, IconSquares,
 } from '@tabler/icons-react';
-import { useMemo } from 'react';
-import { VegaLite, VisualizationSpec } from 'react-vega';
+import { useMemo, type ComponentProps } from 'react';
+import { VegaEmbed } from 'react-vega';
 import { IndividualComponent, ParticipantData, Response } from '../../../parser/types';
 import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 
@@ -22,6 +22,7 @@ export function ResponseVisualization({
 }) {
   const [opened, { toggle }] = useDisclosure(true);
   const [ref, dms] = useResizeObserver();
+  type VegaEmbedSpec = ComponentProps<typeof VegaEmbed>['spec'];
 
   const correctAnswer = useMemo(() => {
     if (response.type === 'metadata') {
@@ -254,14 +255,16 @@ export function ResponseVisualization({
         <SimpleGrid cols={2} h={360}>
           <ScrollArea mih={200}>
             {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'reactive' && response.type !== 'custom' && response.type !== 'textOnly' && response.type !== 'ranking-sublist' && response.type !== 'ranking-categorical' && response.type !== 'ranking-pairwise') ? (
-              <VegaLite
-                spec={vegaLiteSpec as VisualizationSpec}
-                actions={false}
-                height={270}
-                width={(response.type === 'matrix-checkbox' || response.type === 'matrix-radio' ? 500 : (dms.width / 2) - 60 - (correctAnswer === undefined ? 0 : 60))}
-                padding={0}
-                style={{ justifySelf: 'center' }}
-                renderer="svg"
+              <VegaEmbed
+                spec={vegaLiteSpec as VegaEmbedSpec}
+                options={{ actions: false, renderer: 'svg' }}
+                style={{
+                  justifySelf: 'center',
+                  height: 270,
+                  width: (response.type === 'matrix-checkbox' || response.type === 'matrix-radio'
+                    ? 500
+                    : (dms.width / 2) - 60 - (correctAnswer === undefined ? 0 : 60)),
+                }}
               />
             ) : (
               <Flex direction="column" gap="xs" style={{ overflowX: 'clip' }}>
@@ -288,13 +291,14 @@ export function ResponseVisualization({
           <ScrollArea mih={200}>
             {response.type === 'metadata'
               ? (
-                <VegaLite
-                  spec={vegaLiteSpec as VisualizationSpec}
-                  actions={false}
-                  width={(dms.width / 2) - 60}
-                  height={270}
-                  padding={0}
-                  style={{ justifySelf: 'center' }}
+                <VegaEmbed
+                  spec={vegaLiteSpec as VegaEmbedSpec}
+                  options={{ actions: false, renderer: 'svg' }}
+                  style={{
+                    justifySelf: 'center',
+                    width: (dms.width / 2) - 60,
+                    height: 270,
+                  }}
                 />
               )
               : (

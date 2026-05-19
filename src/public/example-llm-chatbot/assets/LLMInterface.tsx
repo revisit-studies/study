@@ -25,7 +25,7 @@ export default function LLMInterface({
     const trrackInst = initializeTrrack({
       registry: reg,
       initialState: {
-        messages: [],
+        messages: [] as ChatMessage[],
       },
     });
 

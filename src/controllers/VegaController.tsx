@@ -1,8 +1,9 @@
 import {
   useCallback, useEffect, useMemo, useState, type ComponentProps,
 } from 'react';
-import { Vega, VisualizationSpec, View } from 'react-vega';
+import { VegaEmbed } from 'react-vega';
 import { initializeTrrack, Registry } from '@trrack/core';
+import { View } from 'vega';
 import { ValueOf, VegaComponent } from '../parser/types';
 import { getJsonAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
@@ -12,7 +13,9 @@ import { useCurrentIdentifier } from '../routes/utils';
 import { useEvent } from '../store/hooks/useEvent';
 
 type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
-type VegaProps = ComponentProps<typeof Vega>;
+type VegaEmbedSpec = ComponentProps<typeof VegaEmbed>['spec'];
+type SignalListenerHandler = Parameters<View['addSignalListener']>[1];
+type VegaSignal = { name: string };
 
 export interface VegaProvState {
   event: {
@@ -21,11 +24,9 @@ export interface VegaProvState {
   };
 }
 
-const InternalVega = Vega as unknown as React.FC<VegaProps>;
-
 export function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
   const storeDispatch = useStoreDispatch();
-  const [vegaConfig, setVegaConfig] = useState<VisualizationSpec | null>(null);
+  const [vegaConfig, setVegaConfig] = useState<VegaEmbedSpec | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [stimulusStatus, setStimulusStatus] = useState(false);
@@ -111,28 +112,46 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   });
 
   const signalListeners = useMemo(() => {
-    const signals = vegaConfig?.config?.signals;
+    const signals = (vegaConfig && typeof vegaConfig === 'object'
+      ? (vegaConfig as { config?: { signals?: VegaSignal[] } }).config?.signals
+      : undefined);
     if (!signals) return {};
 
-    return signals.reduce((listeners, signal) => {
+    return signals.reduce((listeners: Record<string, SignalListenerHandler>, signal: VegaSignal) => {
       if (signal.name === 'revisitAnswer') {
-        listeners[signal.name] = handleRevisitAnswer;
+        listeners[signal.name] = handleRevisitAnswer as SignalListenerHandler;
       } else {
-        listeners[signal.name] = handleSignalEvt;
+        listeners[signal.name] = handleSignalEvt as SignalListenerHandler;
       }
       return listeners;
-    }, {} as Listeners);
+    }, {} as Record<string, SignalListenerHandler>);
   }, [handleRevisitAnswer, handleSignalEvt, vegaConfig]);
+
+  useEffect(() => {
+    if (!view) {
+      return undefined;
+    }
+
+    (Object.entries(signalListeners) as Array<[string, SignalListenerHandler]>).forEach(([name, listener]) => {
+      view.addSignalListener(name, listener);
+    });
+
+    return () => {
+      (Object.entries(signalListeners) as Array<[string, SignalListenerHandler]>).forEach(([name, listener]) => {
+        view.removeSignalListener(name, listener);
+      });
+    };
+  }, [signalListeners, view]);
 
   useEffect(() => {
     async function fetchVega() {
       setLoading(true);
 
-      let config: VisualizationSpec | undefined;
+      let config: VegaEmbedSpec | undefined;
       if ('path' in currentConfig) {
         config = await getJsonAssetByPath(currentConfig.path);
       } else {
-        config = currentConfig.config as VisualizationSpec;
+        config = currentConfig.config as VegaEmbedSpec;
       }
       if (config !== undefined) {
         setVegaConfig(config);
@@ -162,6 +181,10 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   }
 
   return (
-    <InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={(v) => setView(v)} actions={currentConfig.withActions} />
+    <VegaEmbed
+      spec={structuredClone(vegaConfig) as VegaEmbedSpec}
+      options={{ actions: currentConfig.withActions }}
+      onEmbed={(result) => setView(result.view)}
+    />
   );
 }
