@@ -12,6 +12,8 @@ import { VegaEmbed } from 'react-vega';
 import { IndividualComponent, ParticipantData, Response } from '../../../parser/types';
 import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 
+type VegaEmbedSpec = ComponentProps<typeof VegaEmbed>['spec'];
+
 export function ResponseVisualization({
   response, participantData, trialId, trialConfig,
 }: {
@@ -22,7 +24,6 @@ export function ResponseVisualization({
 }) {
   const [opened, { toggle }] = useDisclosure(true);
   const [ref, dms] = useResizeObserver();
-  type VegaEmbedSpec = ComponentProps<typeof VegaEmbed>['spec'];
 
   const correctAnswer = useMemo(() => {
     if (response.type === 'metadata') {
