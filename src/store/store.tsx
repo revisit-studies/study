@@ -4,7 +4,7 @@ import {
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import {
-  ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData,
+  ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData, IndividualComponent,
 } from '../parser/types';
 import {
   StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
@@ -13,6 +13,29 @@ import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/types';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { randomizeOptions, randomizeQuestionOrder, randomizeForm } from '../utils/handleResponseRandomization';
+
+function withSequenceParameters(
+  componentParameters: Record<string, unknown> = {},
+  sequenceParameters?: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    ...componentParameters,
+    ...(sequenceParameters || {}),
+  };
+}
+
+function getComponentParameters(componentConfig: IndividualComponent): Record<string, unknown> {
+  if (
+    'parameters' in componentConfig
+    && componentConfig.parameters
+    && typeof componentConfig.parameters === 'object'
+    && !Array.isArray(componentConfig.parameters)
+  ) {
+    return componentConfig.parameters;
+  }
+
+  return {};
+}
 
 export async function studyStoreCreator(
   studyId: string,
@@ -27,6 +50,7 @@ export async function studyStoreCreator(
   isStalledConfig: boolean = false,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
+  const sequenceParameters = sequence.parameters || {};
 
   const emptyAnswers: ParticipantData['answers'] = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
     .map((id, idx) => {
@@ -56,8 +80,10 @@ export async function studyStoreCreator(
           windowEvents: [],
           timedOut: false,
           helpButtonClickedCount: 0,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          parameters: Object.hasOwn(componentConfig, 'parameters') ? (componentConfig as any).parameters : {},
+          parameters: withSequenceParameters(
+            getComponentParameters(componentConfig),
+            sequenceParameters,
+          ),
           correctAnswer: Object.hasOwn(componentConfig, 'correctAnswer') ? componentConfig.correctAnswer! : [],
           optionOrders: randomizeOptions(componentConfig),
           questionOrders: randomizeQuestionOrder(componentConfig),
@@ -179,7 +205,10 @@ export async function studyStoreCreator(
           timedOut: false,
           helpButtonClickedCount: 0,
 
-          parameters: payload.parameters || ('parameters' in componentConfig ? componentConfig.parameters : {}) || {},
+          parameters: withSequenceParameters(
+            payload.parameters || getComponentParameters(componentConfig),
+            state.sequence.parameters,
+          ),
           correctAnswer: payload.correctAnswer || componentConfig.correctAnswer || [],
           optionOrders: randomizeOptions(componentConfig),
           questionOrders: randomizeQuestionOrder(componentConfig),

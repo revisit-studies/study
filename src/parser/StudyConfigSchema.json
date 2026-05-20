@@ -490,7 +490,6 @@
     },
     "ComponentBlock": {
       "additionalProperties": false,
-      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```json {  \"order\": \"random\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ``` This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```json [  [\"component2\", \"component3\", \"component1\"],  [\"component1\", \"component3\", \"component2\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component2\", \"component3\", \"component1\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ],  \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\"],  [\"component2\", \"component3\"],  [\"component3\", \"component1\"],  ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.",
       "properties": {
         "components": {
           "description": "The components that are included in the order.",
@@ -506,10 +505,10 @@
                 "$ref": "#/definitions/DynamicBlock"
               },
               {
-                "$ref": "#/definitions/FactorBlock"
+                "$ref": "#/definitions/FactorSequence"
               },
               {
-                "$ref": "#/definitions/FactorBlockReference"
+                "$ref": "#/definitions/FactorSequenceReference"
               }
             ]
           },
@@ -535,13 +534,13 @@
           "type": "number"
         },
         "order": {
-          "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed.",
-          "enum": [
-            "random",
-            "latinSquare",
-            "fixed"
-          ],
-          "type": "string"
+          "$ref": "#/definitions/ComponentOrder",
+          "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed."
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "Parameters associated with the block. Between-subjects factors can use these to keep or remove whole nested blocks during sequence allocation.",
+          "type": "object"
         },
         "skip": {
           "$ref": "#/definitions/SkipConditions",
@@ -587,6 +586,15 @@
         "to"
       ],
       "type": "object"
+    },
+    "ComponentOrder": {
+      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```json {  \"order\": \"random\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ``` This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```json [  [\"component2\", \"component3\", \"component1\"],  [\"component1\", \"component3\", \"component2\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component2\", \"component3\", \"component1\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ],  \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\"],  [\"component2\", \"component3\"],  [\"component3\", \"component1\"],  ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.",
+      "enum": [
+        "random",
+        "latinSquare",
+        "fixed"
+      ],
+      "type": "string"
     },
     "ConfigResponseBlockLocation": {
       "enum": [
@@ -979,153 +987,58 @@
       ],
       "type": "object"
     },
-    "FactorBlock": {
-      "additionalProperties": false,
-      "properties": {
-        "component": {
-          "type": "string"
-        },
-        "factorsToCross": {
-          "items": {
-            "$ref": "#/definitions/Factor"
-          },
-          "type": "array"
-        },
-        "id": {
-          "type": "string"
-        },
-        "action": {
-          "enum": [
-            "nest",
-            "cross",
-            "zip"
-          ],
-          "type": "string"
-        },
-        "order": {
-          "enum": [
-            "random",
-            "latinSquare",
-            "fixed"
-          ],
-          "type": "string"
-        },
-        "parameters": {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        "type": {
-          "const": "factors",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type",
-        "factorsToCross",
-        "id",
-        "action",
-        "component"
-      ],
-      "type": "object"
-    },
-    "FactorBlockDefinition": {
-      "additionalProperties": false,
-      "properties": {
-        "component": {
-          "type": "string"
-        },
-        "factorsToCross": {
-          "items": {
-            "$ref": "#/definitions/Factor"
-          },
-          "type": "array"
-        },
-        "action": {
-          "enum": [
-            "nest",
-            "cross",
-            "zip"
-          ],
-          "type": "string"
-        },
-        "order": {
-          "enum": [
-            "random",
-            "latinSquare",
-            "fixed"
-          ],
-          "type": "string"
-        },
-        "parameters": {
-          "additionalProperties": {},
-          "type": "object"
-        }
-      },
-      "required": [
-        "factorsToCross",
-        "action",
-        "component"
-      ],
-      "type": "object"
-    },
     "Factor": {
       "anyOf": [
         {
-          "$ref": "#/definitions/FactorObj"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         {
-          "$ref": "#/definitions/FactorBlockFactor"
+          "$ref": "#/definitions/FactorDefinition"
         }
       ]
     },
-    "FactorBlockFactor": {
-      "additionalProperties": false,
-      "properties": {
-        "factorBlock": {
-          "type": "string"
-        },
-        "numSamples": {
-          "type": "number"
-        }
-      },
-      "required": [
-        "factorBlock"
+    "FactorAction": {
+      "enum": [
+        "nest",
+        "cross",
+        "zip"
       ],
-      "type": "object"
+      "type": "string"
     },
-    "FactorBlockReference": {
+    "FactorDefinition": {
       "additionalProperties": false,
       "properties": {
-        "factorBlock": {
+        "action": {
+          "$ref": "#/definitions/FactorAction"
+        },
+        "component": {
           "type": "string"
         },
-        "id": {
-          "type": "string"
+        "factorsToCross": {
+          "items": {
+            "$ref": "#/definitions/FactorReference"
+          },
+          "type": "array"
         },
         "order": {
-          "enum": [
-            "random",
-            "latinSquare",
-            "fixed"
-          ],
-          "type": "string"
+          "$ref": "#/definitions/ComponentOrder"
         },
         "parameters": {
           "additionalProperties": {},
           "type": "object"
-        },
-        "type": {
-          "const": "factorBlock",
-          "type": "string"
         }
       },
       "required": [
-        "type",
-        "factorBlock"
+        "factorsToCross",
+        "action",
+        "component"
       ],
       "type": "object"
     },
-    "FactorObj": {
+    "FactorReference": {
       "additionalProperties": false,
       "properties": {
         "factor": {
@@ -1136,6 +1049,72 @@
         }
       },
       "required": [
+        "factor"
+      ],
+      "type": "object"
+    },
+    "FactorSequence": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/FactorAction"
+        },
+        "component": {
+          "type": "string"
+        },
+        "factorsToCross": {
+          "items": {
+            "$ref": "#/definitions/FactorReference"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "string"
+        },
+        "order": {
+          "$ref": "#/definitions/ComponentOrder"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "type": {
+          "const": "factor",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "component",
+        "factorsToCross",
+        "id",
+        "type"
+      ],
+      "type": "object"
+    },
+    "FactorSequenceReference": {
+      "additionalProperties": false,
+      "properties": {
+        "factor": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "order": {
+          "$ref": "#/definitions/ComponentOrder"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "type": {
+          "const": "factor",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
         "factor"
       ],
       "type": "object"
@@ -3415,6 +3394,13 @@
           "$ref": "#/definitions/BaseComponents",
           "description": "The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information."
         },
+        "betweenSubjectsFactors": {
+          "description": "Primitive factor names that should be assigned between participants. Each participant sequence receives one level for each listed factor.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "components": {
           "additionalProperties": {
             "anyOf": [
@@ -3431,19 +3417,9 @@
         },
         "factors": {
           "additionalProperties": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
+            "$ref": "#/definitions/Factor"
           },
-          "description": "The order of the components in the study. This might include some randomness.",
-          "type": "object"
-        },
-        "factorBlocks": {
-          "additionalProperties": {
-            "$ref": "#/definitions/FactorBlockDefinition"
-          },
-          "description": "Reusable factor block definitions that can be referenced from the sequence.",
+          "description": "Primitive factor levels and reusable derived factor definitions that can be referenced from the sequence.",
           "type": "object"
         },
         "importedLibraries": {
@@ -3462,10 +3438,10 @@
               "$ref": "#/definitions/DynamicBlock"
             },
             {
-              "$ref": "#/definitions/FactorBlock"
+              "$ref": "#/definitions/FactorSequence"
             },
             {
-              "$ref": "#/definitions/FactorBlockReference"
+              "$ref": "#/definitions/FactorSequenceReference"
             }
           ]
         },

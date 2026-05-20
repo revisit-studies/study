@@ -1,4 +1,6 @@
-import { describe, expect, test } from 'vitest';
+import {
+  describe, expect, test, vi,
+} from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { QuestionnaireComponent, StudyConfig } from '../parser/types';
 import { generateSequenceArray } from './handleRandomSequences';
@@ -37,7 +39,7 @@ const testRandomizationConfigUrl = new URL('../../public/test-randomization/conf
 const randomizationDistributionTest = existsSync(testRandomizationConfigUrl) ? test : test.skip;
 
 describe('Generating sequences works as expected', () => {
-  test('generateSequenceArray preserves nested ordering for nest factor blocks', () => {
+  test('generateSequenceArray preserves nested ordering for nest factors', () => {
     const nestedFactorConfig: StudyConfig = {
       ...config,
       uiConfig: {
@@ -49,7 +51,7 @@ describe('Generating sequences works as expected', () => {
         n: ['n1', 'n2', 'n3'],
       },
       sequence: {
-        type: 'factors',
+        type: 'factor',
         action: 'nest',
         id: 'nestedFactors',
         factorsToCross: [
@@ -75,7 +77,7 @@ describe('Generating sequences works as expected', () => {
     ]);
   });
 
-  test('generateSequenceArray preserves crossed ordering for cross factor blocks', () => {
+  test('generateSequenceArray preserves crossed ordering for cross factors', () => {
     const crossFactorConfig: StudyConfig = {
       ...config,
       uiConfig: {
@@ -87,7 +89,7 @@ describe('Generating sequences works as expected', () => {
         n: ['n1', 'n2'],
       },
       sequence: {
-        type: 'factors',
+        type: 'factor',
         action: 'cross',
         id: 'crossedFactors',
         factorsToCross: [
@@ -111,7 +113,7 @@ describe('Generating sequences works as expected', () => {
     ]);
   });
 
-  test('generateSequenceArray preserves zipped ordering for zip factor blocks', () => {
+  test('generateSequenceArray preserves zipped ordering for zip factors', () => {
     const zipFactorConfig: StudyConfig = {
       ...config,
       uiConfig: {
@@ -123,7 +125,7 @@ describe('Generating sequences works as expected', () => {
         n: ['n1', 'n2', 'n3'],
       },
       sequence: {
-        type: 'factors',
+        type: 'factor',
         action: 'zip',
         id: 'zippedFactors',
         factorsToCross: [
@@ -145,8 +147,8 @@ describe('Generating sequences works as expected', () => {
     ]);
   });
 
-  test('generateSequenceArray preserves ordering when a factor block is used as a factor', () => {
-    const nestedFactorBlockConfig: StudyConfig = {
+  test('generateSequenceArray preserves ordering when a factor is used as a factor', () => {
+    const nestedFactorConfig: StudyConfig = {
       ...config,
       uiConfig: {
         ...config.uiConfig,
@@ -156,8 +158,6 @@ describe('Generating sequences works as expected', () => {
         data: ['d1', 'd2'],
         visType: ['v1', 'v2', 'v3'],
         task: ['t1', 't2'],
-      },
-      factorBlocks: {
         zipDataVis: {
           action: 'zip',
           order: 'random',
@@ -169,18 +169,18 @@ describe('Generating sequences works as expected', () => {
         },
       },
       sequence: {
-        type: 'factors',
+        type: 'factor',
         action: 'nest',
         id: 'zipThenTask',
         factorsToCross: [
-          { factorBlock: 'zipDataVis' },
+          { factor: 'zipDataVis' },
           { factor: 'task' },
         ],
         component: 'factorComponent',
       },
     };
 
-    const sequenceArray = generateSequenceArray(nestedFactorBlockConfig);
+    const sequenceArray = generateSequenceArray(nestedFactorConfig);
 
     expect(sequenceArray).toHaveLength(1);
     expect(sequenceArray[0].order).toBe('fixed');
@@ -193,7 +193,7 @@ describe('Generating sequences works as expected', () => {
     ]);
   });
 
-  test('generateSequenceArray applies factor block order after combinations are created', () => {
+  test('generateSequenceArray applies factor order after combinations are created', () => {
     const orderedFactorConfig: StudyConfig = {
       ...config,
       uiConfig: {
@@ -205,7 +205,7 @@ describe('Generating sequences works as expected', () => {
         n: ['n1', 'n2'],
       },
       sequence: {
-        type: 'factors',
+        type: 'factor',
         action: 'nest',
         order: 'random',
         id: 'randomizedFactors',
@@ -229,6 +229,310 @@ describe('Generating sequences works as expected', () => {
       '_m2_n1',
       '_m2_n2',
     ]));
+  });
+
+  test('generateSequenceArray applies numSamples to primitive factors before combining', () => {
+    const sampledFactorConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 1,
+      },
+      factors: {
+        m: ['m1', 'm2', 'm3'],
+        n: ['n1', 'n2', 'n3'],
+      },
+      sequence: {
+        type: 'factor',
+        action: 'nest',
+        id: 'sampledFactors',
+        factorsToCross: [
+          { factor: 'm', numSamples: 2 },
+          { factor: 'n', numSamples: 1 },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(sampledFactorConfig);
+
+    expect(sequenceArray).toHaveLength(1);
+    expect(sequenceArray[0].components).toEqual([
+      '_m1_n1',
+      '_m2_n1',
+      'end',
+    ]);
+  });
+
+  test('generateSequenceArray applies numSamples to derived factors before combining', () => {
+    const sampledDerivedFactorConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 1,
+      },
+      factors: {
+        data: ['d1', 'd2'],
+        visType: ['v1', 'v2'],
+        task: ['t1', 't2'],
+        zippedDataVis: {
+          action: 'zip',
+          factorsToCross: [
+            { factor: 'data' },
+            { factor: 'visType' },
+          ],
+          component: 'factorComponent',
+        },
+      },
+      sequence: {
+        type: 'factor',
+        action: 'nest',
+        id: 'sampledDerivedFactors',
+        factorsToCross: [
+          { factor: 'zippedDataVis', numSamples: 1 },
+          { factor: 'task' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(sampledDerivedFactorConfig);
+
+    expect(sequenceArray).toHaveLength(1);
+    expect(sequenceArray[0].components).toEqual([
+      '_d1_v1_t1',
+      '_d1_v1_t2',
+      'end',
+    ]);
+  });
+
+  test('generateSequenceArray repeats and samples factor values for random factor blocks', () => {
+    const okGoogleFactorConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 2,
+      },
+      factors: {
+        ageGroup: ['young', 'old'],
+        learningStrategies: ['monologue', 'scaffolding', 'conceptual'],
+        topics: ['sleep', 'cholesterol', 'alzheimer', 'vitamin', 'sugar', 'flu'],
+        Ok_googleTopicAssignments: {
+          action: 'zip',
+          order: 'random',
+          factorsToCross: [
+            { factor: 'learningStrategies', numSamples: 6 },
+            { factor: 'topics', numSamples: 6 },
+          ],
+          component: 'factorComponent',
+        },
+      },
+      betweenSubjectsFactors: ['ageGroup'],
+      sequence: {
+        type: 'factor',
+        action: 'nest',
+        id: 'Ok_google',
+        factorsToCross: [
+          { factor: 'ageGroup' },
+          { factor: 'Ok_googleTopicAssignments' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    try {
+      const sequenceArray = generateSequenceArray(okGoogleFactorConfig);
+
+      expect(sequenceArray).toHaveLength(2);
+      expect(sequenceArray[0].parameters).toEqual({ ageGroup: 'young' });
+      expect(sequenceArray[0].components).toEqual([
+        '_young_scaffolding_cholesterol',
+        '_young_conceptual_alzheimer',
+        '_young_monologue_vitamin',
+        '_young_scaffolding_sugar',
+        '_young_conceptual_flu',
+        '_young_monologue_sleep',
+        'end',
+      ]);
+      expect(sequenceArray[1].parameters).toEqual({ ageGroup: 'old' });
+      expect(sequenceArray[1].components).toEqual([
+        '_old_scaffolding_cholesterol',
+        '_old_conceptual_alzheimer',
+        '_old_monologue_vitamin',
+        '_old_scaffolding_sugar',
+        '_old_conceptual_flu',
+        '_old_monologue_sleep',
+        'end',
+      ]);
+      expect(sequenceArray[0].components.filter((component) => (
+        typeof component === 'string' && component.includes('monologue')
+      ))).toHaveLength(2);
+      expect(sequenceArray[0].components.filter((component) => (
+        typeof component === 'string' && component.includes('scaffolding')
+      ))).toHaveLength(2);
+      expect(sequenceArray[0].components.filter((component) => (
+        typeof component === 'string' && component.includes('conceptual')
+      ))).toHaveLength(2);
+    } finally {
+      randomSpy.mockRestore();
+    }
+  });
+
+  test('generateSequenceArray assigns one between-subjects value to factor sequences', () => {
+    const betweenSubjectsConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 2,
+      },
+      factors: {
+        data: ['d1', 'd2'],
+        task: ['t1', 't2'],
+      },
+      betweenSubjectsFactors: ['data'],
+      sequence: {
+        type: 'factor',
+        action: 'nest',
+        id: 'betweenSubjectFactors',
+        factorsToCross: [
+          { factor: 'data' },
+          { factor: 'task' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(betweenSubjectsConfig);
+
+    expect(sequenceArray).toHaveLength(2);
+    expect(sequenceArray[0].parameters).toEqual({ data: 'd1' });
+    expect(sequenceArray[0].components).toEqual([
+      '_d1_t1',
+      '_d1_t2',
+      'end',
+    ]);
+    expect(sequenceArray[1].parameters).toEqual({ data: 'd2' });
+    expect(sequenceArray[1].components).toEqual([
+      '_d2_t1',
+      '_d2_t2',
+      'end',
+    ]);
+  });
+
+  test('generateSequenceArray filters pre-expanded between-subjects components', () => {
+    const parsedBetweenSubjectsConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 2,
+      },
+      factors: {
+        data: ['d1', 'd2'],
+      },
+      betweenSubjectsFactors: ['data'],
+      components: {
+        d1Trial: {
+          type: 'react-component',
+          path: 'test/assets/Trial.tsx',
+          response: [],
+          parameters: { data: 'd1' },
+        },
+        d2Trial: {
+          type: 'react-component',
+          path: 'test/assets/Trial.tsx',
+          response: [],
+          parameters: { data: 'd2' },
+        },
+        sharedTrial: {
+          type: 'questionnaire',
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['d1Trial', 'd2Trial', 'sharedTrial'],
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(parsedBetweenSubjectsConfig);
+
+    expect(sequenceArray[0].components).toEqual(['d1Trial', 'sharedTrial', 'end']);
+    expect(sequenceArray[0].parameters).toEqual({ data: 'd1' });
+    expect(sequenceArray[1].components).toEqual(['d2Trial', 'sharedTrial', 'end']);
+    expect(sequenceArray[1].parameters).toEqual({ data: 'd2' });
+  });
+
+  test('generateSequenceArray filters between-subjects components inside nested blocks', () => {
+    const parsedBetweenSubjectsConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 2,
+      },
+      factors: {
+        ageGroup: ['young', 'old'],
+      },
+      betweenSubjectsFactors: ['ageGroup'],
+      components: {
+        youngTutorial: {
+          type: 'markdown',
+          path: 'test/assets/young.md',
+          response: [],
+        },
+        oldTutorial: {
+          type: 'markdown',
+          path: 'test/assets/old.md',
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          {
+            id: 'tutorialByAgeGroup',
+            order: 'fixed',
+            components: [
+              {
+                id: 'youngTutorialBlock',
+                order: 'fixed',
+                parameters: { ageGroup: 'young' },
+                components: ['youngTutorial'],
+              },
+              {
+                id: 'oldTutorialBlock',
+                order: 'fixed',
+                parameters: { ageGroup: 'old' },
+                components: ['oldTutorial'],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(parsedBetweenSubjectsConfig);
+
+    expect(sequenceArray[0].components[0]).toMatchObject({
+      id: 'tutorialByAgeGroup',
+      components: [
+        expect.objectContaining({
+          id: 'youngTutorialBlock',
+          components: ['youngTutorial'],
+        }),
+      ],
+    });
+    expect(sequenceArray[0].parameters).toEqual({ ageGroup: 'young' });
+    expect(sequenceArray[1].components[0]).toMatchObject({
+      id: 'tutorialByAgeGroup',
+      components: [
+        expect.objectContaining({
+          id: 'oldTutorialBlock',
+          components: ['oldTutorial'],
+        }),
+      ],
+    });
+    expect(sequenceArray[1].parameters).toEqual({ ageGroup: 'old' });
   });
 
   test('generateSequenceArray defaults to 1000 sequences when numSequences is omitted', () => {

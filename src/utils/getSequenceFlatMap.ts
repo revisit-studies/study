@@ -1,27 +1,27 @@
 import {
-  DynamicBlock, FactorBlock, StudyConfig,
+  DynamicBlock, FactorSequence, StudyConfig,
 } from '../parser/types';
-import { isDynamicBlock, isFactorBlock, isFactorBlockReference } from '../parser/utils';
+import { isDynamicBlock, isFactorSequence, isFactorSequenceReference } from '../parser/utils';
 import { Sequence } from '../store/types';
 
 export function getSequenceFlatMap<T extends Sequence | StudyConfig['sequence']>(sequence: T): string[] {
-  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorSequence(sequence)) {
     return [sequence.id];
   }
 
-  if (isFactorBlockReference(sequence)) {
-    return [sequence.id ?? sequence.factorBlock];
+  if (isFactorSequenceReference(sequence)) {
+    return [sequence.id ?? sequence.factor];
   }
 
   return sequence.components.flatMap((component) => (typeof component === 'string' ? component : getSequenceFlatMap(component)));
 }
 
 function findAllFuncBlocks(sequence: StudyConfig['sequence']): DynamicBlock[] {
-  return isDynamicBlock(sequence) ? [sequence] : isFactorBlock(sequence) || isFactorBlockReference(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
+  return isDynamicBlock(sequence) ? [sequence] : isFactorSequence(sequence) || isFactorSequenceReference(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
 }
 
-export function findAllFactorBlocks(sequence: StudyConfig['sequence']): FactorBlock[] {
-  return isFactorBlock(sequence) ? [sequence] : isDynamicBlock(sequence) || isFactorBlockReference(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFactorBlocks(component)));
+export function findAllFactorSequences(sequence: StudyConfig['sequence']): FactorSequence[] {
+  return isFactorSequence(sequence) ? [sequence] : isDynamicBlock(sequence) || isFactorSequenceReference(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFactorSequences(component)));
 }
 
 export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): (DynamicBlock | undefined) {
@@ -30,12 +30,12 @@ export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): 
 }
 
 export function getSequenceFlatMapWithInterruptions(sequence: StudyConfig['sequence']): string[] {
-  if (isDynamicBlock(sequence) || isFactorBlock(sequence) || isFactorBlockReference(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorSequence(sequence) || isFactorSequenceReference(sequence)) {
     return [];
   }
 
   return [
-    ...sequence.components.flatMap((component) => (typeof component === 'string' ? component : (isDynamicBlock(component) || isFactorBlock(component) || isFactorBlockReference(component) ? [] : getSequenceFlatMapWithInterruptions(component)))),
+    ...sequence.components.flatMap((component) => (typeof component === 'string' ? component : (isDynamicBlock(component) || isFactorSequence(component) || isFactorSequenceReference(component) ? [] : getSequenceFlatMapWithInterruptions(component)))),
     ...sequence.interruptions?.flatMap((interruption) => interruption.components) || [],
   ];
 }
@@ -118,14 +118,14 @@ export function addPathToComponentBlock(order: StudyConfig['sequence'] | Sequenc
       ...order, orderPath, components: [], skip: [], interruptions: [],
     };
   }
-  if (isFactorBlock(order)) {
+  if (isFactorSequence(order)) {
     return {
       ...order, order: order.order ?? 'fixed', orderPath, components: [], skip: [], interruptions: [],
     };
   }
-  if (isFactorBlockReference(order)) {
+  if (isFactorSequenceReference(order)) {
     return {
-      id: order.id ?? order.factorBlock, order: order.order ?? 'fixed', orderPath, components: [], skip: [], interruptions: [],
+      id: order.id ?? order.factor, order: order.order ?? 'fixed', orderPath, components: [], skip: [], interruptions: [],
     };
   }
   return {

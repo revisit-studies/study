@@ -2,14 +2,14 @@ import Ajv from 'ajv';
 import merge from 'lodash.merge';
 import librarySchema from './LibraryConfigSchema.json';
 import {
-  ComponentBlock, FactorBlock, FactorBlockDefinition, FactorBlockReference, IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
+  ComponentBlock, FactorDefinition, FactorSequence, FactorSequenceReference, IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
 } from './types';
 import {
-  isDynamicBlock, isFactorBlock, isFactorBlockReference, isInheritedComponent,
+  isDynamicBlock, isFactorDefinition, isFactorSequence, isFactorSequenceReference, isInheritedComponent,
 } from './utils';
 import { PREFIX } from '../utils/Prefix';
-import { getFactorBlockCombinations } from '../utils/handleRandomSequences';
-import { findAllFactorBlocks, getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
+import { getFactorCombinations } from '../utils/handleRandomSequences';
+import { findAllFactorSequences, getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 
 const ajv = new Ajv({ allowUnionTypes: true });
 ajv.addSchema(librarySchema);
@@ -55,7 +55,7 @@ function normalizeSkipTargets(skipConditions?: ComponentBlock['skip']): Componen
 }
 
 function namespaceLibrarySequenceComponents(sequence: StudyConfig['sequence'], libraryName: string): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence) || isFactorBlock(sequence) || isFactorBlockReference(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorSequence(sequence) || isFactorSequenceReference(sequence)) {
     return sequence;
   }
   return {
@@ -107,14 +107,14 @@ export function deepFillTemplate<T>(value: T, vars: Record<string, string>): T {
   return value;
 }
 
-function factorBlockFromReference(
-  reference: FactorBlockReference,
-  definition: FactorBlockDefinition,
-): FactorBlock {
+function factorSequenceFromReference(
+  reference: FactorSequenceReference,
+  definition: FactorDefinition,
+): FactorSequence {
   const parameters = reference.parameters ?? definition.parameters;
-  const factorBlock: FactorBlock = {
-    type: 'factors',
-    id: reference.id ?? reference.factorBlock,
+  const factorSequence: FactorSequence = {
+    type: 'factor',
+    id: reference.id ?? reference.factor,
     action: definition.action,
     order: reference.order ?? definition.order,
     factorsToCross: definition.factorsToCross,
@@ -122,63 +122,205 @@ function factorBlockFromReference(
   };
 
   if (parameters !== undefined) {
-    factorBlock.parameters = parameters;
+    factorSequence.parameters = parameters;
   }
 
-  return factorBlock;
+  return factorSequence;
 }
 
-export function resolveFactorBlockReferences(
+export function resolveFactorReferences(
   sequence: StudyConfig['sequence'],
-  factorBlocks: StudyConfig['factorBlocks'] = {},
+  factors: StudyConfig['factors'] = {},
   errors: ParserErrorWarning[] = [],
 ): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorSequence(sequence)) {
     return sequence;
   }
 
-  if (isFactorBlockReference(sequence)) {
-    const factorBlockDefinition = factorBlocks[sequence.factorBlock];
+  if (isFactorSequenceReference(sequence)) {
+    const factor = factors[sequence.factor];
 
-    if (!factorBlockDefinition) {
+    if (!factor) {
       errors.push({
-        message: `Factor block \`${sequence.factorBlock}\` is not defined in factorBlocks`,
+        message: `Factor \`${sequence.factor}\` is not defined in factors`,
         instancePath: '/sequence/',
-        params: { action: 'Add the factor block to factorBlocks or update the reference name' },
+        params: { action: 'Add the factor to factors or update the reference name' },
         category: 'sequence-validation',
       });
 
       return {
-        id: sequence.id ?? sequence.factorBlock,
+        id: sequence.id ?? sequence.factor,
         order: 'fixed',
         components: [],
       };
     }
 
-    return factorBlockFromReference(sequence, factorBlockDefinition);
+    if (!isFactorDefinition(factor)) {
+      errors.push({
+        message: `Factor \`${sequence.factor}\` is a primitive factor and cannot be used as a sequence factor`,
+        instancePath: '/sequence/',
+        params: { action: 'Reference a derived factor definition from the sequence' },
+        category: 'sequence-validation',
+      });
+
+      return {
+        id: sequence.id ?? sequence.factor,
+        order: 'fixed',
+        components: [],
+      };
+    }
+
+    return factorSequenceFromReference(sequence, factor);
   }
 
   return {
     ...sequence,
     components: sequence.components.map((component) => (
       typeof component === 'object'
-        ? resolveFactorBlockReferences(component, factorBlocks, errors)
+        ? resolveFactorReferences(component, factors, errors)
         : component
     )),
   };
 }
 
-function addFactorBlockError(errors: ParserErrorWarning[], message: string) {
+function addFactorError(errors: ParserErrorWarning[], message: string) {
+  if (errors.some((error) => error.instancePath === '/factors/' && error.message === message)) {
+    return;
+  }
+
   errors.push({
     message,
-    instancePath: '/factorBlocks/',
-    params: { action: 'Check that referenced factors and factorBlocks are defined and do not form cycles' },
+    instancePath: '/factors/',
+    params: { action: 'Check that referenced factors are defined and do not form cycles' },
     category: 'sequence-validation',
   });
 }
 
+function hasRandomFactorSampling(
+  definition: FactorDefinition,
+  factors: StudyConfig['factors'] = {},
+  visitedFactors = new Set<string>(),
+): boolean {
+  if (
+    definition.order === 'random'
+    && definition.factorsToCross.some((factorReference) => factorReference.numSamples !== undefined)
+  ) {
+    return true;
+  }
+
+  return definition.factorsToCross.some((factorReference) => {
+    if (visitedFactors.has(factorReference.factor)) {
+      return false;
+    }
+
+    const factor = factors[factorReference.factor];
+    if (!isFactorDefinition(factor)) {
+      return false;
+    }
+
+    const nextVisitedFactors = new Set(visitedFactors);
+    nextVisitedFactors.add(factorReference.factor);
+    return hasRandomFactorSampling(factor, factors, nextVisitedFactors);
+  });
+}
+
+export function validateFactorGraph(
+  factors: StudyConfig['factors'] = {},
+  errors: ParserErrorWarning[] = [],
+) {
+  const visitedFactors = new Set<string>();
+  const visitingFactors = new Set<string>();
+  const reportedCycles = new Set<string>();
+
+  const visit = (factorName: string, path: string[]) => {
+    const factor = factors[factorName];
+
+    if (!isFactorDefinition(factor)) {
+      return;
+    }
+
+    if (visitingFactors.has(factorName)) {
+      const cycleStart = path.indexOf(factorName);
+      const cycle = path.slice(cycleStart);
+      const cycleKey = cycle.join(' -> ');
+
+      if (!reportedCycles.has(cycleKey)) {
+        reportedCycles.add(cycleKey);
+        addFactorError(errors, `Circular factor reference: ${cycleKey}`);
+      }
+      return;
+    }
+
+    if (visitedFactors.has(factorName)) {
+      return;
+    }
+
+    visitingFactors.add(factorName);
+
+    factor.factorsToCross.forEach((factorReference) => {
+      const referencedFactor = factors[factorReference.factor];
+
+      if (!referencedFactor) {
+        addFactorError(
+          errors,
+          `Factor \`${factorReference.factor}\` referenced by factor \`${factorName}\` is not defined in factors`,
+        );
+        return;
+      }
+
+      if (isFactorDefinition(referencedFactor)) {
+        visit(factorReference.factor, [...path, factorReference.factor]);
+      }
+    });
+
+    visitingFactors.delete(factorName);
+    visitedFactors.add(factorName);
+  };
+
+  Object.keys(factors).forEach((factorName) => visit(factorName, [factorName]));
+}
+
+export function validateBetweenSubjectsFactors(
+  config: StudyConfig,
+  warnings: ParserErrorWarning[] = [],
+) {
+  config.betweenSubjectsFactors?.forEach((factorName, index) => {
+    const factor = config.factors?.[factorName];
+    const instancePath = `/betweenSubjectsFactors/${index}`;
+
+    if (!factor) {
+      warnings.push({
+        message: `Between-subjects factor \`${factorName}\` is not defined in factors`,
+        instancePath,
+        params: { action: 'Add the factor to factors or remove it from betweenSubjectsFactors' },
+        category: 'sequence-validation',
+      });
+      return;
+    }
+
+    if (isFactorDefinition(factor)) {
+      warnings.push({
+        message: `Between-subjects factor \`${factorName}\` must be a primitive factor with levels`,
+        instancePath,
+        params: { action: 'Use a primitive factor level array in betweenSubjectsFactors' },
+        category: 'sequence-validation',
+      });
+      return;
+    }
+
+    if (factor.length === 0) {
+      warnings.push({
+        message: `Between-subjects factor \`${factorName}\` has no levels`,
+        instancePath,
+        params: { action: 'Add at least one level to this factor or remove it from betweenSubjectsFactors' },
+        category: 'sequence-validation',
+      });
+    }
+  });
+}
+
 export function createFactorComponents(config: StudyConfig): Record<string, IndividualComponent> {
-  const factorBlocks = findAllFactorBlocks(config.sequence);
+  const factorSequences = findAllFactorSequences(config.sequence);
 
   if (!config.factors || !config.baseComponents) {
     return {};
@@ -186,10 +328,16 @@ export function createFactorComponents(config: StudyConfig): Record<string, Indi
 
   const newComponents: Record<string, IndividualComponent> = {};
 
-  factorBlocks.forEach((block) => {
+  factorSequences.forEach((block) => {
     const baseComponent = config.baseComponents![block.component];
 
-    const allCombs = getFactorBlockCombinations(block, config.factors!, config.factorBlocks);
+    const allCombs = getFactorCombinations(
+      block,
+      config.factors!,
+      undefined,
+      [],
+      { expandPossibleSamples: true, ignoreNumSamples: true },
+    );
 
     allCombs.forEach((c) => {
       const baseParameters = baseComponent && 'parameters' in baseComponent && baseComponent.parameters
@@ -211,20 +359,22 @@ export function createFactorComponents(config: StudyConfig): Record<string, Indi
 export function expandFactorSequences(
   sequence: StudyConfig['sequence'],
   importedLibrariesData: Record<string, LibraryConfig>,
-  factors: Record<string, string[]>,
-  factorBlocks: StudyConfig['factorBlocks'] = {},
+  factors: NonNullable<StudyConfig['factors']>,
   errors: ParserErrorWarning[] = [],
 ): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence) || isFactorBlockReference(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorSequenceReference(sequence)) {
     return sequence;
   }
 
-  if (isFactorBlock(sequence)) {
-    const componentsToCross = getFactorBlockCombinations(
+  if (isFactorSequence(sequence)) {
+    if (hasRandomFactorSampling(sequence, factors)) {
+      return sequence;
+    }
+
+    const componentsToCross = getFactorCombinations(
       sequence,
       factors,
-      factorBlocks,
-      (message) => addFactorBlockError(errors, message),
+      (message) => addFactorError(errors, message),
     );
 
     return {
@@ -239,7 +389,7 @@ export function expandFactorSequences(
     ...sequence,
     components: (sequence.components || []).map((component) => {
       if (typeof component === 'object') {
-        return expandFactorSequences(component, importedLibrariesData, factors, factorBlocks, errors);
+        return expandFactorSequences(component, importedLibrariesData, factors, errors);
       }
 
       return component;
@@ -249,7 +399,7 @@ export function expandFactorSequences(
 
 // Recursively iterate through sequences (sequence.components) and replace any library sequence references with the actual library sequence
 export function expandLibrarySequences(sequence: StudyConfig['sequence'], importedLibrariesData: Record<string, LibraryConfig>, errors: ParserErrorWarning[] = []): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence) || isFactorBlock(sequence) || isFactorBlockReference(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorSequence(sequence) || isFactorSequenceReference(sequence)) {
     return sequence;
   }
   return {

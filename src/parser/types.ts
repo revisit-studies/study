@@ -1738,13 +1738,17 @@ export interface DynamicBlock {
  *
  * The skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.
 */
+export type ComponentOrder = 'random' | 'latinSquare' | 'fixed';
+
 export interface ComponentBlock {
   /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property. */
   id?: string
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
-  order: 'random' | 'latinSquare' | 'fixed';
+  order: ComponentOrder;
   /** The components that are included in the order. */
-  components: (string | ComponentBlock | DynamicBlock | FactorBlock | FactorBlockReference)[];
+  components: (string | ComponentBlock | DynamicBlock | FactorSequence | FactorSequenceReference)[];
+  /** Parameters associated with the block. Between-subjects factors can use these to keep or remove whole nested blocks during sequence allocation. */
+  parameters?: Record<string, unknown>;
   /** The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time. */
   numSamples?: number;
   /** The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.  */
@@ -1755,40 +1759,35 @@ export interface ComponentBlock {
   conditional?: boolean;
 }
 
-export type FactorBlockAction = 'nest' | 'cross' | 'zip';
+export type FactorAction = 'nest' | 'cross' | 'zip';
 
-export interface FactorBlockDefinition {
-  factorsToCross: Factor[];
-  action: FactorBlockAction;
-  order?: ComponentBlock['order'];
+export interface FactorDefinition {
+  factorsToCross: FactorReference[];
+  action: FactorAction;
+  order?: ComponentOrder;
   component: string;
   parameters?: Record<string, unknown>
 }
 
-export interface FactorBlock extends FactorBlockDefinition {
-  type: 'factors',
+export type Factor = string[] | FactorDefinition;
+
+export interface FactorSequence extends FactorDefinition {
+  type: 'factor',
   id: string;
 }
 
-export interface FactorBlockReference {
-  type: 'factorBlock';
-  factorBlock: string;
+export interface FactorSequenceReference {
+  type: 'factor';
+  factor: string;
   id?: string;
-  order?: ComponentBlock['order'];
+  order?: ComponentOrder;
   parameters?: Record<string, unknown>
 }
 
-export interface FactorObj {
+export interface FactorReference {
   factor: string;
   numSamples?: number;
 }
-
-export interface FactorBlockFactor {
-  factorBlock: string;
-  numSamples?: number;
-}
-
-export type Factor = FactorObj | FactorBlockFactor;
 
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
 export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent: string })
@@ -1879,11 +1878,11 @@ export interface StudyConfig {
   baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
-  /** The order of the components in the study. This might include some randomness. */
-  factors?: Record<string, string[]>;
-  /** Reusable factor block definitions that can be referenced from the sequence. */
-  factorBlocks?: Record<string, FactorBlockDefinition>;
-  sequence: ComponentBlock | DynamicBlock | FactorBlock | FactorBlockReference;
+  /** Primitive factor levels and reusable derived factor definitions that can be referenced from the sequence. */
+  factors?: Record<string, Factor>;
+  /** Primitive factor names that should be assigned between participants. Each participant sequence receives one level for each listed factor. */
+  betweenSubjectsFactors?: string[];
+  sequence: ComponentBlock | DynamicBlock | FactorSequence | FactorSequenceReference;
 }
 
 /**  LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.

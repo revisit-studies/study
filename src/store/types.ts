@@ -180,6 +180,7 @@ export interface Sequence {
   orderPath: string;
   order: ComponentBlock['order'] | 'dynamic';
   components: (string | Sequence)[];
+  parameters?: Record<string, unknown>;
   skip: SkipConditions;
   interruptions?: InterruptionBlock[];
   conditional?: boolean;
