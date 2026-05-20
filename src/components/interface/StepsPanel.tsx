@@ -15,8 +15,8 @@ import {
 } from '@mantine/core';
 import {
   IconArrowsShuffle, IconBinaryTree, IconBrain, IconCheck, IconChevronUp, IconDice3, IconDice5, IconInfoCircle,
-  IconArrowForward,
   IconPackageImport,
+  IconUserPlus,
   IconX,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router';
@@ -26,14 +26,9 @@ import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
 import { useStudyId } from '../../routes/utils';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { isDynamicBlock } from '../../parser/utils';
-import { getComponentAnswerStatus } from '../../utils/correctAnswer';
+import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
-import { UnknownAnswerIcon } from './UnknownAnswerIcon';
-import {
-  getDynamicComponentsForBlock,
-  getSkipConditionSummariesForBlock,
-  getSkippedTrialOrders,
-} from './StepsPanel.utils';
+import { getDynamicComponentsForBlock } from './StepsPanel.utils';
 
 function hasRandomization(responses: Response[]) {
   return responses.some((response) => {
@@ -93,14 +88,10 @@ function countComponentsInSequence(sequence: Sequence, participantAnswers: Parti
   return count;
 }
 
-type ExclusionReason = 'excluded' | 'skipped';
-
 type StepItemBase = {
   label: string;
   indentLevel: number;
   path: string; // Unique path from root for stable keying
-  exclusionReason?: ExclusionReason;
-  parentExclusionReason?: ExclusionReason;
 };
 
 type ComponentStepItem = StepItemBase & {
@@ -119,6 +110,7 @@ type BlockStepItem = StepItemBase & {
   type: 'block';
   order: Sequence['order'];
   orderPath?: string; // Order path for blocks
+  parameters?: Sequence['parameters'];
   conditional?: boolean;
   numInterruptions?: number;
   numComponentsInSequence?: number;
@@ -127,7 +119,6 @@ type BlockStepItem = StepItemBase & {
   importedLibraryName?: string;
   childrenRange?: { start: number; end: number }; // Pre-computed indices of children in fullFlatTree
   isExcluded?: boolean; // Block was excluded from participant sequence
-  skipSummaries?: string[];
 };
 
 type StepItem = ComponentStepItem | BlockStepItem;
@@ -266,10 +257,6 @@ export function StepsPanel({
     return map;
   }, [studyConfig.components]);
 
-  const skippedTrialOrders = useMemo(() => (participantSequence
-    ? getSkippedTrialOrders(participantSequence, participantAnswers, studyConfig)
-    : new Set<number>()), [participantAnswers, participantSequence, studyConfig]);
-
   useEffect(() => {
     let newFlatTree: StepItem[] = [];
     if (participantSequence === undefined) {
@@ -303,14 +290,7 @@ export function StepsPanel({
       let idx = 0;
       let dynamicIdx = 0;
 
-      const traverse = (
-        node: string | Sequence,
-        indentLevel: number,
-        parentNode: Sequence,
-        parentPath: string,
-        dynamic = false,
-        parentExclusionReason?: ExclusionReason,
-      ) => {
+      const traverse = (node: string | Sequence, indentLevel: number, parentNode: Sequence, parentPath: string, dynamic = false) => {
         if (typeof node === 'string') {
           // Check to see if the component is from imported library
           const {
@@ -322,16 +302,12 @@ export function StepsPanel({
           // Generate component identifier for participantAnswers lookup
           const componentIdentifier = dynamic ? `${parentNode.id}_${idx}_${node}_${dynamicIdx}` : `${node}_${idx}`;
           const componentPath = `${parentPath}.${node}_${dynamic ? dynamicIdx : idx}`;
-          const isSkipped = !dynamic && skippedTrialOrders.has(idx);
 
           newFlatTree.push({
             type: 'component',
             label,
             indentLevel,
             path: componentPath,
-            isExcluded: isSkipped,
-            exclusionReason: isSkipped ? 'skipped' : undefined,
-            parentExclusionReason,
             isLibraryImport,
             importedLibraryName,
 
@@ -353,7 +329,6 @@ export function StepsPanel({
           return;
         }
 
-        const blockStartIndex = idx;
         const blockInterruptions = (node.interruptions || []).flatMap((intr) => intr.components);
         const blockPath = `${parentPath}.${node.id ?? node.order}`;
 
@@ -379,11 +354,6 @@ export function StepsPanel({
             componentCountCache.set(matchingStudySequence, numComponentsInStudySequence);
           }
         }
-        const isSkippedBlock = numComponentsInSequence > 0
-          && Array.from({ length: numComponentsInSequence }, (_, offset) => blockStartIndex + offset)
-            .every((trialOrder) => skippedTrialOrders.has(trialOrder));
-        const exclusionReason = isSkippedBlock ? 'skipped' : undefined;
-        const skipSummaries = getSkipConditionSummariesForBlock(node);
 
         // Determine label for block - extract sequence name for library sequences
         const blockId = node.id ?? node.order;
@@ -400,20 +370,17 @@ export function StepsPanel({
           label: blockLabel,
           indentLevel,
           path: blockPath,
-          isExcluded: isSkippedBlock,
-          exclusionReason,
-          parentExclusionReason,
 
           // Block Attributes
           order: node.order,
           orderPath: node.orderPath,
+          parameters: node.parameters,
           conditional: node.conditional,
           numInterruptions: node.components.filter((comp) => typeof comp === 'string' && blockInterruptions.includes(comp)).length,
           numComponentsInSequence,
           numComponentsInStudySequence,
           isLibraryImport: isLibraryBlockImport,
           importedLibraryName: blockImportedLibraryName,
-          skipSummaries,
         });
 
         // Reset dynamicIdx when entering a new dynamic block
@@ -426,7 +393,7 @@ export function StepsPanel({
         const blockComponents = [...node.components, ...dynamicComponents];
         if (blockComponents.length > 0) {
           blockComponents.forEach((child) => {
-            traverse(child, indentLevel + 1, node, blockPath, node.order === 'dynamic', exclusionReason);
+            traverse(child, indentLevel + 1, node, blockPath, node.order === 'dynamic');
           });
         }
         if (node.order === 'dynamic') {
@@ -455,7 +422,6 @@ export function StepsPanel({
               component: studyConfig.components[excludedComponent],
               componentName: excludedComponent,
               isExcluded: true,
-              exclusionReason: 'excluded',
             });
           });
 
@@ -488,7 +454,6 @@ export function StepsPanel({
               isLibraryImport: isExcludedBlockImport,
               importedLibraryName: excludedBlockImportedLibraryName,
               isExcluded: true,
-              exclusionReason: 'excluded',
             });
 
             // Recursively add excluded block's children as excluded
@@ -507,13 +472,11 @@ export function StepsPanel({
                     label,
                     indentLevel: excludedIndentLevel,
                     path: childPath,
-                    parentExclusionReason: 'excluded',
                     isLibraryImport,
                     importedLibraryName,
                     component: studyConfig.components[child],
                     componentName: child,
                     isExcluded: true,
-                    exclusionReason: 'excluded',
                   });
                 } else {
                   const childBlockPath = `${excludedParentPath}.${child.id ?? child.order}_excluded`;
@@ -531,7 +494,6 @@ export function StepsPanel({
                     label: childBlockLabel,
                     indentLevel: excludedIndentLevel,
                     path: childBlockPath,
-                    parentExclusionReason: 'excluded',
                     order: child.order,
                     orderPath: child.orderPath,
                     numInterruptions: 0,
@@ -540,7 +502,6 @@ export function StepsPanel({
                     isLibraryImport: isChildBlockImport,
                     importedLibraryName: childBlockImportedLibraryName,
                     isExcluded: true,
-                    exclusionReason: 'excluded',
                   });
 
                   traverseExcluded(child, excludedIndentLevel + 1, childBlockPath);
@@ -588,7 +549,7 @@ export function StepsPanel({
     // Set full and rendered flat tree
     setFullFlatTree(newFlatTree);
     setRenderedFlatTree(newFlatTree);
-  }, [fullOrder, participantAnswers, participantSequence, skippedTrialOrders, studyConfig.components, studyId]);
+  }, [fullOrder, participantAnswers, participantSequence, studyConfig.components, studyId]);
 
   const collapseBlock = useCallback((startIndex: number, startItem: StepItem) => {
     setRenderedFlatTree((prevRenderedFlatTree) => {
@@ -714,18 +675,10 @@ export function StepsPanel({
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const idx = virtualRow.index;
           const item = renderedFlatTree[idx];
-          const {
-            label,
-            indentLevel,
-            isExcluded,
-            exclusionReason,
-            parentExclusionReason,
-          } = item;
+          const { label, indentLevel, isExcluded } = item;
           const comp = item.type === 'component' ? item : undefined;
           const block = item.type === 'block' ? item : undefined;
           const isComponent = !!comp;
-          const isSkipped = exclusionReason === 'skipped';
-          const showExclusionBadge = isExcluded && exclusionReason && exclusionReason !== parentExclusionReason;
           const {
             href,
             isInterruption,
@@ -738,35 +691,39 @@ export function StepsPanel({
           const {
             order,
             orderPath,
+            parameters: blockParameters,
             conditional,
             numInterruptions,
             numComponentsInSequence,
             numComponentsInStudySequence,
             isLibraryImport: isBlockLibraryImport,
             importedLibraryName: blockImportedLibraryName,
-            skipSummaries,
           } = (block ?? {}) as Partial<BlockStepItem>;
           const isLibraryImport = isComponent ? isComponentLibraryImport : isBlockLibraryImport;
           const importedLibraryName = isComponent ? componentImportedLibraryName : blockImportedLibraryName;
+          const betweenSubjectsEntries = !isComponent && blockParameters
+            ? Object.entries(blockParameters)
+            : [];
+          const betweenSubjectsLabel = betweenSubjectsEntries
+            .map(([factorName, factorLevel]) => `${factorName}=${String(factorLevel)}`)
+            .join(', ');
           const resolvedComponent = component
             ? studyComponentToIndividualComponent(component, studyConfig)
             : undefined;
           const correctAnswer = componentAnswer?.correctAnswer?.length
             ? componentAnswer.correctAnswer
             : resolvedComponent?.correctAnswer;
-          const answerStatus = getComponentAnswerStatus(
-            componentAnswer,
-            correctAnswer,
-            resolvedComponent?.response,
-          );
-          const answerStatusIcon = answerStatus === 'correct'
-            ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
-            : answerStatus === 'incorrect'
-              ? <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="red" />
-              : answerStatus === 'unknown'
-                ? <UnknownAnswerIcon size={16} style={{ marginRight: 4, flexShrink: 0 }} />
-                : null;
-          const correctAnswerJSONText = correctAnswer?.length
+          const correct = correctAnswer
+            && componentAnswer
+            && Object.keys(componentAnswer.answer).length > 0
+            && componentAnswersAreCorrect(componentAnswer.answer, correctAnswer, resolvedComponent?.response);
+          const correctIncorrectIcon = correctAnswer && componentAnswer && componentAnswer?.endTime > -1
+            ? (correct
+              ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
+              : <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="red" />
+            )
+            : null;
+          const correctAnswerJSONText = correctAnswer
             ? JSON.stringify(correctAnswer, null, 2)
             : undefined;
           const responseJSONText = resolvedComponent && JSON.stringify(resolvedComponent.response, null, 2);
@@ -814,7 +771,7 @@ export function StepsPanel({
                   active={!isExcluded && href === location.pathname}
                   disabled={isExcluded && isComponent}
                   style={{
-                    opacity: isSkipped ? 0.65 : isExcluded ? 0.5 : 1,
+                    opacity: isExcluded ? 0.5 : 1,
                     cursor: isExcluded && isComponent ? 'not-allowed' : 'pointer',
                   }}
                   rightSection={
@@ -839,14 +796,9 @@ export function StepsPanel({
                           <IconBinaryTree size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
                         </Tooltip>
                       )}
-                      {!isComponent && skipSummaries && skipSummaries.length > 0 && (
-                        <Tooltip
-                          label={skipSummaries.join(' ')}
-                          multiline
-                          position="right"
-                          withArrow
-                        >
-                          <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="purple" />
+                      {betweenSubjectsEntries.length > 0 && (
+                        <Tooltip label={`Between Subjects: ${betweenSubjectsLabel}`} position="right" withArrow>
+                          <IconUserPlus size={16} style={{ marginRight: 4, flexShrink: 0 }} color="teal" />
                         </Tooltip>
                       )}
                       {(resolvedComponent?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
@@ -859,7 +811,7 @@ export function StepsPanel({
                           <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
                         </Tooltip>
                       )}
-                      {answerStatusIcon}
+                      {correctIncorrectIcon}
                       <Text
                         size="sm"
                         title={orderPath ?? label}
@@ -874,11 +826,6 @@ export function StepsPanel({
                       >
                         {label}
                       </Text>
-                      {isComponent && showExclusionBadge && (
-                        <Badge ml={5} color="gray" variant="light">
-                          {isSkipped ? 'Skipped' : 'Excluded'}
-                        </Badge>
-                      )}
                       {isComponent && label !== 'end' && (
                         <HoverCard.Target>
                           <IconInfoCircle size={16} style={{ marginLeft: '5px', verticalAlign: 'middle' }} opacity={0.5} />
@@ -889,6 +836,20 @@ export function StepsPanel({
                           <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
                         </Tooltip>
                       ) : null}
+                      {betweenSubjectsEntries.map(([factorName, factorLevel]) => (
+                        <Tooltip
+                          key={factorName}
+                          label={`Between-subjects factor: ${factorName} = ${String(factorLevel)}`}
+                          position="right"
+                          withArrow
+                        >
+                          <Badge ml={5} color="teal" variant="light">
+                            {factorName}
+                            =
+                            {String(factorLevel)}
+                          </Badge>
+                        </Tooltip>
+                      ))}
                       {!isComponent && !isExcluded && (
                         <Badge ml={5} variant="light">
                           {(numComponentsInSequence || 0) - (numInterruptions || 0)}
@@ -896,9 +857,9 @@ export function StepsPanel({
                           {numComponentsInStudySequence}
                         </Badge>
                       )}
-                      {!isComponent && showExclusionBadge && (
+                      {!isComponent && isExcluded && (
                         <Badge ml={5} color="gray" variant="light">
-                          {isSkipped ? 'Skipped' : 'Excluded'}
+                          Excluded
                         </Badge>
                       )}
                       {numInterruptions !== undefined && numInterruptions > 0 && (
@@ -944,7 +905,7 @@ export function StepsPanel({
                       {componentAnswer && Object.keys(componentAnswer.answer).length > 0 && (
                         <Box>
                           <Text fw={900} display="inline-block" mr={2}>
-                            {answerStatusIcon}
+                            {correctIncorrectIcon}
                             Participant Answer:
                           </Text>
                           {' '}

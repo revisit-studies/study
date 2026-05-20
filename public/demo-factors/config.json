@@ -24,13 +24,25 @@
       "response": []
     }
   },
-  "components": {},
+  "components": {
+    "Ok_googleTutorialYoung": {
+      "type": "markdown",
+      "path": "demo-factors/assets/ok-google-tutorial-young.md",
+      "response": []
+    },
+    "Ok_googleTutorialOld": {
+      "type": "markdown",
+      "path": "demo-factors/assets/ok-google-tutorial-old.md",
+      "response": []
+    }
+  },
   "factors": {
     "data": ["d1", "d2"],
     "visType": ["v1", "v2", "v3"],
-    "task": ["t1", "t2", "t3"]
-  },
-  "factorBlocks": {
+    "task": ["t1", "t2", "t3"],
+    "ageGroup": ["young", "old"],
+    "learningStrategies": ["monologue", "scaffolding", "conceptual"],
+    "topics": ["sleep", "cholesterol", "alzheimer", "vitamin", "sugar", "flu"],
     "crossBlock": {
       "action": "cross",
       "order": "fixed",
@@ -74,7 +86,7 @@
       "order": "random",
       "factorsToCross": [
         {
-          "factorBlock": "zipBlock"
+          "factor": "zipBlock"
         },
         {
           "factor": "task"
@@ -87,7 +99,7 @@
       "order": "fixed",
       "factorsToCross": [
         {
-          "factorBlock": "zipBlock"
+          "factor": "zipBlock"
         },
         {
           "factor": "task"
@@ -100,7 +112,7 @@
       "order": "fixed",
       "factorsToCross": [
         {
-          "factorBlock": "zipBlock"
+          "factor": "zipBlock"
         },
         {
           "factor": "task"
@@ -113,55 +125,155 @@
       "order": "latinSquare",
       "factorsToCross": [
         {
-          "factorBlock": "crossBlock"
+          "factor": "crossBlock"
         },
         {
           "factor": "task"
         }
       ],
       "component": "factorComponent"
+    },
+    "sampledPrimitiveBlock": {
+      "action": "nest",
+      "order": "fixed",
+      "factorsToCross": [
+        {
+          "factor": "data"
+        },
+        {
+          "factor": "visType",
+          "numSamples": 2
+        },
+        {
+          "factor": "task",
+          "numSamples": 2
+        }
+      ],
+      "component": "factorComponent"
+    },
+    "sampledDerivedBlock": {
+      "action": "nest",
+      "order": "fixed",
+      "factorsToCross": [
+        {
+          "factor": "zipBlock",
+          "numSamples": 1
+        },
+        {
+          "factor": "task",
+          "numSamples": 2
+        }
+      ],
+      "component": "factorComponent"
+    },
+    "Ok_googleTopicAssignments": {
+      "action": "zip",
+      "order": "random",
+      "factorsToCross": [
+        {
+          "factor": "learningStrategies",
+          "numSamples": 6
+        },
+        {
+          "factor": "topics",
+          "numSamples": 6
+        }
+      ],
+      "component": "factorComponent"
+    },
+    "Ok_google": {
+      "action": "nest",
+      "order": "fixed",
+      "factorsToCross": [
+        {
+          "factor": "ageGroup"
+        },
+        {
+          "factor": "Ok_googleTopicAssignments"
+        }
+      ],
+      "component": "factorComponent"
     }
   },
+  "betweenSubjectsFactors": ["ageGroup"],
   "sequence": {
     "order": "fixed",
     "components": [
       {
-        "type": "factorBlock",
-        "factorBlock": "crossBlock"
+        "type": "factor",
+        "factor": "crossBlock"
       },
       {
-        "type": "factorBlock",
-        "factorBlock": "nestBlock"
+        "type": "factor",
+        "factor": "nestBlock"
       },
       {
-        "type": "factorBlock",
-        "factorBlock": "zipBlock"
+        "type": "factor",
+        "factor": "zipBlock"
       },
       {
-        "type": "factorBlock",
-        "factorBlock": "zipThenTaskBlock"
+        "type": "factor",
+        "factor": "zipThenTaskBlock"
       },
       {
-        "type": "factorBlock",
-        "factorBlock": "crossZipWithTaskBlock"
+        "type": "factor",
+        "factor": "crossZipWithTaskBlock"
       },
       {
-        "type": "factorBlock",
-        "factorBlock": "zipZipWithTaskBlock"
+        "type": "factor",
+        "factor": "zipZipWithTaskBlock"
       },
       {
-        "type": "factorBlock",
-        "factorBlock": "nestCrossWithTaskBlock"
+        "type": "factor",
+        "factor": "nestCrossWithTaskBlock"
       },
       {
-        "type": "factorBlock",
-        "factorBlock": "nestBlock",
+        "type": "factor",
+        "factor": "sampledPrimitiveBlock"
+      },
+      {
+        "type": "factor",
+        "factor": "sampledDerivedBlock"
+      },
+      {
+        "id": "Ok_googleTutorialByAgeGroup",
+        "order": "fixed",
+        "components": [
+          {
+            "id": "Ok_googleTutorialYoungBlock",
+            "order": "fixed",
+            "parameters": {
+              "ageGroup": "young"
+            },
+            "components": [
+              "Ok_googleTutorialYoung"
+            ]
+          },
+          {
+            "id": "Ok_googleTutorialOldBlock",
+            "order": "fixed",
+            "parameters": {
+              "ageGroup": "old"
+            },
+            "components": [
+              "Ok_googleTutorialOld"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "factor",
+        "factor": "Ok_google"
+      },
+      {
+        "type": "factor",
+        "factor": "nestBlock",
         "id": "nestBlockFixedReuse",
         "order": "fixed"
       },
       {
-        "type": "factorBlock",
-        "factorBlock": "crossZipWithTaskBlock",
+        "type": "factor",
+        "factor": "crossZipWithTaskBlock",
         "id": "crossZipWithTaskRandomReuse",
         "order": "random"
       }

@@ -3,7 +3,7 @@ import {
 } from 'vitest';
 import { ComponentBlock, StudyConfig } from './types';
 import { parseStudyConfig } from './parser';
-import { isDynamicBlock, isFactorBlock } from './utils';
+import { isDynamicBlock, isFactorSequence } from './utils';
 
 // Mock the fetch function for library loading
 global.fetch = vi.fn();
@@ -13,7 +13,7 @@ function isComponentBlock(value: unknown): value is ComponentBlock {
     && value !== null
     && 'components' in value
     && !isDynamicBlock(value as StudyConfig['sequence'])
-    && !isFactorBlock(value as StudyConfig['sequence']);
+    && !isFactorSequence(value as StudyConfig['sequence']);
 }
 
 describe('BaseComponent Macro Expansion', () => {
@@ -1500,7 +1500,7 @@ describe('Parser Warnings', () => {
     expect(contactEmailWarning).toBeUndefined();
   });
 
-  test('accepts nest order for factor blocks and expands to nested fixed sequence', async () => {
+  test('accepts nest order for factors and expands to nested fixed sequence', async () => {
     const studyConfig = {
       $schema: '',
       studyMetadata: {
@@ -1533,7 +1533,7 @@ describe('Parser Warnings', () => {
         n: ['n1', 'n2', 'n3'],
       },
       sequence: {
-        type: 'factors',
+        type: 'factor',
         action: 'nest',
         id: 'nestedFactors',
         factorsToCross: [
@@ -1564,7 +1564,7 @@ describe('Parser Warnings', () => {
     });
   });
 
-  test('accepts cross action for factor blocks and expands to crossed fixed sequence', async () => {
+  test('accepts cross action for factors and expands to crossed fixed sequence', async () => {
     const studyConfig = {
       $schema: '',
       studyMetadata: {
@@ -1597,7 +1597,7 @@ describe('Parser Warnings', () => {
         n: ['n1', 'n2'],
       },
       sequence: {
-        type: 'factors',
+        type: 'factor',
         action: 'cross',
         id: 'crossedFactors',
         factorsToCross: [
@@ -1627,7 +1627,7 @@ describe('Parser Warnings', () => {
     });
   });
 
-  test('accepts zip action for factor blocks and expands to zipped fixed sequence', async () => {
+  test('accepts zip action for factors and expands to zipped fixed sequence', async () => {
     const studyConfig = {
       $schema: '',
       studyMetadata: {
@@ -1659,7 +1659,7 @@ describe('Parser Warnings', () => {
         n: ['n1', 'n2', 'n3'],
       },
       sequence: {
-        type: 'factors',
+        type: 'factor',
         action: 'zip',
         id: 'zippedFactors',
         factorsToCross: [
@@ -1686,7 +1686,7 @@ describe('Parser Warnings', () => {
     });
   });
 
-  test('accepts reusable top-level factor blocks referenced from the sequence', async () => {
+  test('accepts reusable top-level factors referenced from the sequence', async () => {
     const studyConfig = {
       $schema: '',
       studyMetadata: {
@@ -1716,8 +1716,6 @@ describe('Parser Warnings', () => {
       factors: {
         m: ['m1', 'm2'],
         n: ['n1', 'n2', 'n3'],
-      },
-      factorBlocks: {
         zippedFactors: {
           action: 'zip',
           order: 'random',
@@ -1732,8 +1730,8 @@ describe('Parser Warnings', () => {
         order: 'fixed',
         components: [
           {
-            type: 'factorBlock',
-            factorBlock: 'zippedFactors',
+            type: 'factor',
+            factor: 'zippedFactors',
           },
         ],
       },
@@ -1761,7 +1759,7 @@ describe('Parser Warnings', () => {
     });
   });
 
-  test('accepts a factor block as a factor of another reusable factor block', async () => {
+  test('accepts a derived factor as a factor of another reusable factor', async () => {
     const studyConfig = {
       $schema: '',
       studyMetadata: {
@@ -1792,8 +1790,6 @@ describe('Parser Warnings', () => {
         data: ['d1', 'd2'],
         visType: ['v1', 'v2', 'v3'],
         task: ['t1', 't2'],
-      },
-      factorBlocks: {
         zipDataVis: {
           action: 'zip',
           order: 'random',
@@ -1807,7 +1803,7 @@ describe('Parser Warnings', () => {
           action: 'nest',
           order: 'latinSquare',
           factorsToCross: [
-            { factorBlock: 'zipDataVis' },
+            { factor: 'zipDataVis' },
             { factor: 'task' },
           ],
           component: 'factorComponent',
@@ -1817,8 +1813,8 @@ describe('Parser Warnings', () => {
         order: 'fixed',
         components: [
           {
-            type: 'factorBlock',
-            factorBlock: 'zipThenTask',
+            type: 'factor',
+            factor: 'zipThenTask',
           },
         ],
       },
@@ -1848,7 +1844,104 @@ describe('Parser Warnings', () => {
     });
   });
 
-  test('uses factor values as parameters when factor block and base component omit parameters', async () => {
+  test('reports cycles among reusable factors', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        a: {
+          action: 'nest',
+          factorsToCross: [{ factor: 'b' }],
+          component: 'factorComponent',
+        },
+        b: {
+          action: 'nest',
+          factorsToCross: [{ factor: 'a' }],
+          component: 'factorComponent',
+        },
+      },
+      sequence: {
+        type: 'factor',
+        factor: 'a',
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'Circular factor reference: a -> b -> a',
+      instancePath: '/factors/',
+    }));
+  });
+
+  test('warns when a between-subjects factor is not defined', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      components: {
+        intro: {
+          type: 'questionnaire',
+          response: [],
+        },
+      },
+      factors: {
+        data: ['d1', 'd2'],
+      },
+      betweenSubjectsFactors: ['missingFactor'],
+      sequence: {
+        order: 'fixed',
+        components: ['intro'],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toContainEqual(expect.objectContaining({
+      message: 'Between-subjects factor `missingFactor` is not defined in factors',
+      instancePath: '/betweenSubjectsFactors/0',
+    }));
+  });
+
+  test('uses factor values as parameters when factor and base component omit parameters', async () => {
     const studyConfig = {
       $schema: '',
       studyMetadata: {
@@ -1880,7 +1973,7 @@ describe('Parser Warnings', () => {
         n: ['n1', 'n2'],
       },
       sequence: {
-        type: 'factors',
+        type: 'factor',
         action: 'cross',
         id: 'crossedFactors',
         factorsToCross: [

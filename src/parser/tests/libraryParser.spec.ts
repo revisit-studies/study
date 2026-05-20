@@ -2,32 +2,32 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import {
-  expandFactorSequences, expandLibrarySequences, verifyLibraryUsage, loadLibrariesParseNamespace, resolveFactorBlockReferences,
+  createFactorComponents, expandFactorSequences, expandLibrarySequences, verifyLibraryUsage, loadLibrariesParseNamespace, resolveFactorReferences, validateFactorGraph,
 } from './libraryParser';
 import {
   ComponentBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
 } from './types';
-import { isDynamicBlock } from './utils';
+import { isDynamicBlock, isFactorSequence } from './utils';
 
 // Helper function to check if a value is a ComponentBlock
 function isComponentBlock(value: unknown): value is ComponentBlock {
   return typeof value === 'object' && value !== null && 'components' in value && !isDynamicBlock(value as StudyConfig['sequence']);
 }
 
-describe('Factor Block Expansion', () => {
-  test('resolves reusable top-level factor block references', () => {
+describe('Factor Expansion', () => {
+  test('resolves reusable top-level factor references', () => {
     const sequence: StudyConfig['sequence'] = {
       order: 'fixed',
       components: [
         {
-          type: 'factorBlock',
-          factorBlock: 'sharedFactors',
+          type: 'factor',
+          factor: 'sharedFactors',
           id: 'sharedFactorsFirstUse',
         },
       ],
     };
 
-    const result = resolveFactorBlockReferences(sequence, {
+    const result = resolveFactorReferences(sequence, {
       sharedFactors: {
         action: 'zip',
         factorsToCross: [
@@ -41,7 +41,7 @@ describe('Factor Block Expansion', () => {
     expect(isComponentBlock(result)).toBe(true);
     if (isComponentBlock(result)) {
       expect(result.components[0]).toMatchObject({
-        type: 'factors',
+        type: 'factor',
         id: 'sharedFactorsFirstUse',
         action: 'zip',
         component: 'factorComponent',
@@ -49,14 +49,14 @@ describe('Factor Block Expansion', () => {
     }
   });
 
-  test('expands a factor block used as a factor inside another factor block', () => {
+  test('expands a factor used as a factor inside another factor', () => {
     const sequence: StudyConfig['sequence'] = {
-      type: 'factors',
+      type: 'factor',
       action: 'nest',
       order: 'random',
       id: 'zipThenTask',
       factorsToCross: [
-        { factorBlock: 'zipDataVis' },
+        { factor: 'zipDataVis' },
         { factor: 'task' },
       ],
       component: 'factorComponent',
@@ -69,8 +69,6 @@ describe('Factor Block Expansion', () => {
         data: ['d1', 'd2'],
         visType: ['v1', 'v2', 'v3'],
         task: ['t1', 't2'],
-      },
-      {
         zipDataVis: {
           action: 'zip',
           order: 'random',
@@ -95,9 +93,143 @@ describe('Factor Block Expansion', () => {
     }
   });
 
+  test('preserves factor sequences with random sampled factors for sequence allocation', () => {
+    const sequence: StudyConfig['sequence'] = {
+      type: 'factor',
+      action: 'nest',
+      id: 'Ok_google',
+      factorsToCross: [
+        { factor: 'ageGroup' },
+        { factor: 'Ok_googleTopicAssignments' },
+      ],
+      component: 'factorComponent',
+    };
+
+    const result = expandFactorSequences(
+      sequence,
+      {},
+      {
+        ageGroup: ['young', 'old'],
+        learningStrategies: ['monologue', 'scaffolding', 'conceptual'],
+        topics: ['sleep', 'cholesterol', 'alzheimer', 'vitamin', 'sugar', 'flu'],
+        Ok_googleTopicAssignments: {
+          action: 'zip',
+          order: 'random',
+          factorsToCross: [
+            { factor: 'learningStrategies', numSamples: 6 },
+            { factor: 'topics', numSamples: 6 },
+          ],
+          component: 'factorComponent',
+        },
+      },
+    );
+
+    expect(isFactorSequence(result)).toBe(true);
+    if (isFactorSequence(result)) {
+      expect(result.id).toBe('Ok_google');
+      expect(result.factorsToCross).toEqual([
+        { factor: 'ageGroup' },
+        { factor: 'Ok_googleTopicAssignments' },
+      ]);
+    }
+  });
+
+  test('creates all possible components for random sampled zip factors', () => {
+    const config: StudyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        ageGroup: ['young', 'old'],
+        learningStrategies: ['monologue', 'scaffolding', 'conceptual'],
+        topics: ['sleep', 'cholesterol', 'alzheimer', 'vitamin', 'sugar', 'flu'],
+        Ok_googleTopicAssignments: {
+          action: 'zip',
+          order: 'random',
+          factorsToCross: [
+            { factor: 'learningStrategies', numSamples: 6 },
+            { factor: 'topics', numSamples: 6 },
+          ],
+          component: 'factorComponent',
+        },
+      },
+      sequence: {
+        type: 'factor',
+        action: 'nest',
+        id: 'Ok_google',
+        factorsToCross: [
+          { factor: 'ageGroup' },
+          { factor: 'Ok_googleTopicAssignments' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const components = createFactorComponents(config);
+
+    expect(components._young_conceptual_vitamin).toMatchObject({
+      parameters: {
+        ageGroup: 'young',
+        learningStrategies: 'conceptual',
+        topics: 'vitamin',
+      },
+    });
+    expect(components._old_monologue_flu).toMatchObject({
+      parameters: {
+        ageGroup: 'old',
+        learningStrategies: 'monologue',
+        topics: 'flu',
+      },
+    });
+  });
+
+  test('validates cycles in reusable factor graph', () => {
+    const errors: ParserErrorWarning[] = [];
+
+    validateFactorGraph({
+      a: {
+        action: 'nest',
+        factorsToCross: [{ factor: 'b' }],
+        component: 'factorComponent',
+      },
+      b: {
+        action: 'nest',
+        factorsToCross: [{ factor: 'a' }],
+        component: 'factorComponent',
+      },
+    }, errors);
+
+    expect(errors).toContainEqual(expect.objectContaining({
+      message: 'Circular factor reference: a -> b -> a',
+      instancePath: '/factors/',
+    }));
+  });
+
   test('expands nest action into nested component combinations with fixed sequence ordering', () => {
     const sequence: StudyConfig['sequence'] = {
-      type: 'factors',
+      type: 'factor',
       action: 'nest',
       id: 'nestedFactors',
       factorsToCross: [
@@ -129,7 +261,7 @@ describe('Factor Block Expansion', () => {
 
   test('expands cross action into crossed component combinations with fixed sequence ordering', () => {
     const sequence: StudyConfig['sequence'] = {
-      type: 'factors',
+      type: 'factor',
       action: 'cross',
       id: 'crossedFactors',
       factorsToCross: [
@@ -159,7 +291,7 @@ describe('Factor Block Expansion', () => {
 
   test('expands zip action into zipped component combinations with fixed sequence ordering', () => {
     const sequence: StudyConfig['sequence'] = {
-      type: 'factors',
+      type: 'factor',
       action: 'zip',
       id: 'zippedFactors',
       factorsToCross: [
