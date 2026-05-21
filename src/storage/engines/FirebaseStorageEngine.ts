@@ -404,15 +404,37 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
 
     const participantSequenceAssignment = participantSequenceAssignmentSnapshot.data() as SequenceAssignment;
+    const toMillis = (value: unknown) => {
+      if (value instanceof Timestamp) {
+        return value.toMillis();
+      }
+      if (typeof value === 'number') {
+        return value;
+      }
+      return Number(value);
+    };
+    let restoredTimestamp: number | undefined;
     if (participantSequenceAssignment.claimedParticipantId) {
       const claimedSequenceAssignmentDoc = doc(
         sequenceAssignmentCollection,
         participantSequenceAssignment.claimedParticipantId,
       );
+      const claimedSequenceAssignmentSnapshot = await getDoc(claimedSequenceAssignmentDoc);
+      if (!claimedSequenceAssignmentSnapshot.exists()) {
+        throw new Error('Failed to retrieve claimed sequence assignment for current participant');
+      }
+
+      const claimedSequenceAssignment = claimedSequenceAssignmentSnapshot.data() as SequenceAssignment;
+      restoredTimestamp = toMillis(claimedSequenceAssignment.timestamp);
       await updateDoc(claimedSequenceAssignmentDoc, { claimed: true, rejected: true });
     }
 
-    await updateDoc(participantSequenceAssignmentDoc, { rejected: false });
+    await updateDoc(
+      participantSequenceAssignmentDoc,
+      restoredTimestamp === undefined
+        ? { rejected: false }
+        : { rejected: false, timestamp: restoredTimestamp },
+    );
   }
 
   protected async _claimSequenceAssignment(participantId: string) {

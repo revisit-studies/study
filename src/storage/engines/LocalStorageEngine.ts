@@ -179,6 +179,7 @@ export class LocalStorageEngine extends StorageEngine {
         if (claimedAssignmentData) {
           claimedAssignmentData.claimed = true;
           claimedAssignmentData.rejected = true;
+          participantSequenceAssignment.timestamp = claimedAssignmentData.timestamp;
         }
       }
       await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);

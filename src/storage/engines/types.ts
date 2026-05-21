@@ -1138,6 +1138,7 @@ export abstract class StorageEngine {
         `participants/${participantId}`,
         'participantData',
       );
+    let participantRecordUpdated = false;
 
     try {
       // If the user doesn't exist or is already rejected, return
@@ -1158,21 +1159,33 @@ export abstract class StorageEngine {
           timestamp: new Date().getTime(),
         },
       };
-
       // Push rejected copy to storage first
       await this._pushToStorage(
         `participants/${participantId}`,
         'participantData',
         rejectedParticipant,
       );
+      participantRecordUpdated = true;
 
-      // Update in-memory state only after storage write succeeds
+      await this._rejectParticipantRealtime(participantId);
+
+      // Update in-memory state only after the participant record and
+      // sequence-assignment updates have both succeeded.
       if (participantId === this.currentParticipantId && this.participantData) {
         this.participantData = rejectedParticipant;
       }
-
-      await this._rejectParticipantRealtime(participantId);
     } catch (error) {
+      try {
+        if (participantRecordUpdated && participant && isParticipantData(participant)) {
+          await this._pushToStorage(
+            `participants/${participantId}`,
+            'participantData',
+            participant,
+          );
+        }
+      } catch (rollbackError) {
+        console.warn('Error rolling back rejected participant state:', rollbackError);
+      }
       console.warn('Error rejecting participant:', error);
     }
   }
@@ -1188,10 +1201,13 @@ export abstract class StorageEngine {
 
   // Un-rejects a participant with the given participantId.
   async undoRejectParticipant(participantId: string) {
-    const participant = await this._getFromStorage(
-      `participants/${participantId}`,
-      'participantData',
-    );
+    const participant = participantId === this.currentParticipantId && this.participantData
+      ? this.participantData
+      : await this._getFromStorage(
+        `participants/${participantId}`,
+        'participantData',
+      );
+    let participantRecordUpdated = false;
 
     try {
       // If the user doesn't exist, return
@@ -1199,16 +1215,33 @@ export abstract class StorageEngine {
         return;
       }
 
-      // set reject flag to false
-      participant.rejected = false;
-
+      const restoredParticipant: ParticipantData = {
+        ...participant,
+        rejected: false,
+      };
       await this._pushToStorage(
         `participants/${participantId}`,
         'participantData',
-        participant,
+        restoredParticipant,
       );
+      participantRecordUpdated = true;
       await this._undoRejectParticipantRealtime(participantId);
+
+      if (participantId === this.currentParticipantId && this.participantData) {
+        this.participantData = restoredParticipant;
+      }
     } catch (error) {
+      try {
+        if (participantRecordUpdated && participant && isParticipantData(participant)) {
+          await this._pushToStorage(
+            `participants/${participantId}`,
+            'participantData',
+            participant,
+          );
+        }
+      } catch (rollbackError) {
+        console.warn('Error rolling back participant unrejection state:', rollbackError);
+      }
       console.warn('Error undoing participant rejection:', error);
     }
   }
