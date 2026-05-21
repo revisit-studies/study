@@ -4,7 +4,7 @@ import {
   DEFAULT_AUTO_ADVANCE_WARNING_TIME,
   formatAutoAdvanceWarningMessage,
   getAutoAdvanceWarning,
-} from './nextButtonTimeout';
+} from '../nextButtonTimeout';
 
 describe('nextButtonTimeout', () => {
   test('formats warning messages with the remaining seconds placeholder', () => {

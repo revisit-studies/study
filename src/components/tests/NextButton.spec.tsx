@@ -11,7 +11,9 @@ import { NextButton } from '../NextButton';
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockIsNextDisabled = false;
+let mockIdentifier = 'intro_0';
 const mockGoToNextStep = vi.fn();
+const mockNavigate = vi.fn();
 let mockStudyConfig: {
   uiConfig: {
     nextButtonDisableTime: number | undefined;
@@ -44,11 +46,11 @@ vi.mock('../../store/hooks/useStudyConfig', () => ({
 }));
 
 vi.mock('react-router', () => ({
-  useNavigate: () => vi.fn(),
+  useNavigate: () => mockNavigate,
 }));
 
 vi.mock('../../routes/utils', () => ({
-  useCurrentIdentifier: () => 'intro_0',
+  useCurrentIdentifier: () => mockIdentifier,
 }));
 
 vi.mock('../PreviousButton', () => ({
@@ -84,6 +86,8 @@ vi.mock('@tabler/icons-react', () => ({
 describe('NextButton', () => {
   beforeEach(() => {
     mockIsNextDisabled = false;
+    mockIdentifier = 'intro_0';
+    mockNavigate.mockReset();
     mockStudyConfig = {
       uiConfig: {
         nextButtonDisableTime: undefined,
@@ -98,6 +102,7 @@ describe('NextButton', () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   test('renders Next button with default label', () => {
@@ -236,5 +241,51 @@ describe('NextButton', () => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
     });
     expect(mockGoToNextStep).toHaveBeenCalled();
+  });
+
+  test('resets auto-advance state when the current identifier changes', async () => {
+    const config = {
+      type: 'questionnaire',
+      response: [],
+      nextButtonAutoAdvanceTime: 1000,
+    } as unknown as IndividualComponent;
+
+    vi.useFakeTimers();
+    let rerender!: ReturnType<typeof render>['rerender'];
+
+    await act(async () => {
+      ({ rerender } = render(
+        <NextButton
+          config={config}
+          checkAnswer={null}
+        />,
+      ));
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1100);
+    });
+
+    expect(mockGoToNextStep).toHaveBeenCalledTimes(1);
+    expect(mockGoToNextStep).toHaveBeenLastCalledWith(false);
+
+    mockIdentifier = 'intro_0_followup_1';
+
+    await act(async () => {
+      rerender(
+        <NextButton
+          config={config}
+          checkAnswer={null}
+        />,
+      );
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1100);
+    });
+
+    expect(mockGoToNextStep).toHaveBeenCalledTimes(2);
+    expect(mockGoToNextStep).toHaveBeenLastCalledWith(false);
+    vi.useRealTimers();
   });
 });
