@@ -42,6 +42,18 @@ let mockStoredAnswer: {
 };
 
 let mockAnswers: Record<string, unknown>;
+let mockSequence: {
+  id: string;
+  orderPath: string;
+  order: 'fixed';
+  components: string[];
+  skip: unknown[];
+};
+let mockFlatSequence: string[];
+let mockStudyConfig: {
+  components: Record<string, unknown>;
+};
+let mockTrialValidation: Record<string, unknown>;
 let capturedGoToNextStep: ((collectData?: boolean) => Promise<void>) | undefined;
 
 const mockDispatch = vi.fn((action) => {
@@ -60,35 +72,9 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('../store', () => ({
-  useStoreSelector: (selector: (state: {
-    trialValidation: Record<string, unknown>;
-    sequence: {
-      id: string;
-      orderPath: string;
-      order: 'fixed';
-      components: string[];
-      skip: never[];
-    };
-    answers: Record<string, unknown>;
-    modes: { dataCollectionEnabled: boolean };
-    clickedPrevious: boolean;
-  }) => unknown) => selector({
-    trialValidation: {
-      intro_0: {
-        response: {
-          values: {
-            response: 'saved-answer',
-          },
-        },
-      },
-    },
-    sequence: {
-      id: 'root',
-      orderPath: 'root',
-      order: 'fixed',
-      components: ['intro'],
-      skip: [],
-    },
+  useStoreSelector: (selector: (state: Record<string, unknown>) => unknown) => selector({
+    trialValidation: mockTrialValidation,
+    sequence: mockSequence,
     answers: mockAnswers,
     modes: { dataCollectionEnabled: true },
     clickedPrevious: false,
@@ -102,7 +88,7 @@ vi.mock('../store', () => ({
   }),
   useStoreDispatch: () => mockDispatch,
   useAreResponsesValid: () => true,
-  useFlatSequence: () => ['intro'],
+  useFlatSequence: () => mockFlatSequence,
 }));
 
 vi.mock('../../routes/utils', () => ({
@@ -128,15 +114,16 @@ vi.mock('./useWindowEvents', () => ({
 }));
 
 vi.mock('./useStudyConfig', () => ({
-  useStudyConfig: () => ({
-    components: {
-      intro: {},
-    },
-  }),
+  useStudyConfig: () => mockStudyConfig,
 }));
 
 vi.mock('./useIsAnalysis', () => ({
   useIsAnalysis: () => false,
+}));
+
+vi.mock('../../utils/encryptDecryptIndex', () => ({
+  encryptIndex: (value: number) => String(value),
+  decryptIndex: (value: string) => Number(value),
 }));
 
 vi.mock('../../utils/notifications', () => ({
@@ -161,6 +148,28 @@ describe('useNextStep', () => {
     mockSetRankingAnswers.mockClear();
     mockDispatch.mockClear();
     mockAnswers = {};
+    mockTrialValidation = {
+      intro_0: {
+        response: {
+          values: {
+            response: 'saved-answer',
+          },
+        },
+      },
+    };
+    mockSequence = {
+      id: 'root',
+      orderPath: 'root',
+      order: 'fixed',
+      components: ['intro'],
+      skip: [],
+    };
+    mockFlatSequence = ['intro'];
+    mockStudyConfig = {
+      components: {
+        intro: {},
+      },
+    };
     mockStoredAnswer = {
       answer: {},
       componentName: 'intro',
@@ -237,5 +246,89 @@ describe('useNextStep', () => {
 
     expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(mockNavigate.mock.calls[0][0]).toContain('?participantId=p-1');
+  });
+
+  test('marks timed out auto-advance answers as empty and does not use cleared answers for skip logic', async () => {
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+    mockSequence = {
+      id: 'root',
+      orderPath: 'root',
+      order: 'fixed',
+      components: ['intro', 'followup', 'skip-target'],
+      skip: [{
+        name: 'intro',
+        check: 'response',
+        responseId: 'response',
+        comparison: 'equal',
+        value: 'saved-answer',
+        to: 'skip-target',
+      }],
+    };
+    mockFlatSequence = ['intro', 'followup', 'skip-target'];
+    mockStudyConfig = {
+      components: {
+        intro: {},
+        followup: {},
+        'skip-target': {},
+      },
+    };
+
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.(false);
+    await Promise.resolve();
+
+    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
+      answer: {},
+      timedOut: true,
+    }));
+    expect(mockNavigate).toHaveBeenCalledWith('/study-1/1');
+  });
+
+  test('excludes timed out answers from block skip conditions', async () => {
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+    mockSequence = {
+      id: 'root',
+      orderPath: 'root',
+      order: 'fixed',
+      components: ['intro', 'followup', 'skip-target'],
+      skip: [{
+        check: 'block',
+        condition: 'numIncorrect',
+        value: 1,
+        to: 'skip-target',
+      }],
+    };
+    mockFlatSequence = ['intro', 'followup', 'skip-target'];
+    mockStudyConfig = {
+      components: {
+        intro: {
+          type: 'questionnaire',
+          response: [{
+            id: 'response',
+            type: 'radio',
+            prompt: 'Pick one',
+            options: ['saved-answer', 'other-answer'],
+          }],
+          correctAnswer: [{
+            id: 'response',
+            answer: 'saved-answer',
+          }],
+        },
+        followup: {},
+        'skip-target': {},
+      },
+    };
+
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.(false);
+    await Promise.resolve();
+
+    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
+      answer: {},
+      timedOut: true,
+    }));
+    expect(mockNavigate).toHaveBeenCalledWith('/study-1/1');
   });
 });
