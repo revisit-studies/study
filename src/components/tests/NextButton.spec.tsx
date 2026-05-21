@@ -47,6 +47,10 @@ vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
 }));
 
+vi.mock('../../routes/utils', () => ({
+  useCurrentIdentifier: () => 'intro_0',
+}));
+
 vi.mock('../PreviousButton', () => ({
   PreviousButton: ({ label }: { label?: string }) => (
     <button type="button" data-testid="prev-btn">{label ?? 'Previous'}</button>
@@ -73,11 +77,6 @@ vi.mock('@mantine/core', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconAlertTriangle: () => null,
   IconInfoCircle: () => null,
-}));
-
-vi.mock('../response/customResponseModules', () => ({
-  getCustomResponseModule: vi.fn(() => null),
-  getCustomResponseModuleLoadError: vi.fn(() => null),
 }));
 
 // ── tests ─────────────────────────────────────────────────────────────────────

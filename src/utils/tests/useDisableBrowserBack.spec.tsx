@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router';
 
 import { useStoreDispatch } from '../../store/store';
 import { useDisableBrowserBack } from '../useDisableBrowserBack';
+import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 vi.mock('../../store/store', () => ({
   useStoreActions: vi.fn(() => ({ setAlertModal: vi.fn() })),
@@ -14,6 +15,10 @@ vi.mock('../../store/store', () => ({
 
 vi.mock('../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
+}));
+
+vi.mock('../../store/hooks/useIsAnalysis', () => ({
+  useIsAnalysis: vi.fn(() => false),
 }));
 
 afterEach(() => {
@@ -41,6 +46,17 @@ describe('useDisableBrowserBack', () => {
 
     expect(pushStateSpy).toHaveBeenCalled();
     expect(window.onpopstate).toBeTypeOf('function');
+  });
+
+  test('does not intercept browser back in analysis mode', () => {
+    vi.stubEnv('PROD', true);
+    vi.mocked(useIsAnalysis).mockReturnValueOnce(true);
+    const pushStateSpy = vi.spyOn(window.history, 'pushState').mockImplementation(() => {});
+
+    renderHook(() => useDisableBrowserBack(), { wrapper: Wrapper });
+
+    expect(pushStateSpy).not.toHaveBeenCalled();
+    expect(window.onpopstate).toBeNull();
   });
 
   test('popstate handler dispatches setAlertModal in production mode', () => {
