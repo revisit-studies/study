@@ -158,6 +158,31 @@ describe('rejectParticipant — local storage baseline behavior', () => {
     expect(storageEngine.participantData?.rejected).toBe(false);
   });
 
+  test('rejectParticipant rolls back sequence assignments when realtime rejection fails after mutating them', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    // @ts-expect-error accessing protected method
+    const originalRejectParticipantRealtime = storageEngine._rejectParticipantRealtime.bind(storageEngine);
+    // @ts-expect-error accessing protected method
+    storageEngine._rejectParticipantRealtime = vi.fn(async (participantId: string) => {
+      await originalRejectParticipantRealtime(participantId);
+      throw new Error('Realtime rejection failed after mutation');
+    });
+
+    await storageEngine.rejectParticipant(session.participantId, 'Test rejection');
+
+    // @ts-expect-error accessing protected method
+    storageEngine._rejectParticipantRealtime = originalRejectParticipantRealtime;
+
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const assignment = assignments.find((a) => a.participantId === session.participantId);
+
+    expect(assignment).toBeDefined();
+    expect(assignment!.rejected).toBe(false);
+    // @ts-expect-error accessing protected property
+    expect(storageEngine.participantData?.rejected).toBe(false);
+  });
+
   test('_undoRejectParticipantRealtime restores the reused participant timestamp', async () => {
     vi.useFakeTimers();
     try {

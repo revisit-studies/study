@@ -1,6 +1,6 @@
-/// <reference types="vitest/config" />
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react-swc';
+import { coverageConfigDefaults } from 'vitest/config';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
@@ -28,6 +28,7 @@ export default defineConfig(({ command, mode }) => {
         provider: 'v8',
         all: true,
         exclude: [
+          ...coverageConfigDefaults.exclude,
           'public/**',
           'src/public/**',
           'dist/**',

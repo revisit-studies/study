@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import type { IndividualComponent } from '../../parser/types';
 import { NextButton } from '../NextButton';
 
 // ── mutable state ─────────────────────────────────────────────────────────────

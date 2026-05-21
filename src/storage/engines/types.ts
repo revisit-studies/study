@@ -1175,6 +1175,24 @@ export abstract class StorageEngine {
         this.participantData = rejectedParticipant;
       }
     } catch (error) {
+      let realtimeRollbackError: unknown = null;
+      try {
+        if (participantRecordUpdated) {
+          const originalCurrentParticipantId = this.currentParticipantId;
+          if (!this.currentParticipantId) {
+            this.currentParticipantId = participantId;
+          }
+          try {
+            await this._undoRejectParticipantRealtime(participantId);
+          } finally {
+            this.currentParticipantId = originalCurrentParticipantId;
+          }
+        }
+      } catch (rollbackError) {
+        realtimeRollbackError = rollbackError;
+        console.warn('Error rolling back rejected participant realtime state:', rollbackError);
+      }
+
       try {
         if (participantRecordUpdated && participant && isParticipantData(participant)) {
           await this._pushToStorage(
@@ -1185,6 +1203,9 @@ export abstract class StorageEngine {
         }
       } catch (rollbackError) {
         console.warn('Error rolling back rejected participant state:', rollbackError);
+      }
+      if (realtimeRollbackError) {
+        console.warn('Participant rejection rollback completed with realtime inconsistencies.');
       }
       console.warn('Error rejecting participant:', error);
     }

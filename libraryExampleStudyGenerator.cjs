@@ -9,7 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
+const { generateLibraryDocs } = require('./libraryDocGenerator.cjs');
 
 // Create example study config template
 const createExampleConfig = (libraryName) => ({
@@ -47,7 +47,7 @@ const createExampleConfig = (libraryName) => ({
 const getLibraries = (libsPath) => fs.readdirSync(libsPath)
   .filter(library => !library.startsWith('.') && !library.endsWith('.DS_Store'));
 
-const generateLibraryExamples = (base, execFn) => {
+const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => {
   const librariesPath = path.join(base, 'public', 'libraries');
   const publicPath = path.join(base, 'public');
 
@@ -90,26 +90,19 @@ const generateLibraryExamples = (base, execFn) => {
   // eslint-disable-next-line no-console
   console.log('Library example generation complete');
 
-  // Run libraryDocGenerator.cjs after example generation
-  // To generate the library.md files which will be placed in the assets/ folder of each example study for the introduction component
+  // Generate library.md files in the same base directory so example-study assets
+  // are written to the requested target tree, not the caller's current working directory.
   // eslint-disable-next-line no-console
   console.log('Generating library documentation...');
-  execFn('node libraryDocGenerator.cjs', (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error running libraryDocGenerator.cjs: ${error}`);
-      return;
-    }
-    if (stderr) {
-      console.error(`libraryDocGenerator.cjs stderr: ${stderr}`);
-      return;
-    }
-    // eslint-disable-next-line no-console
-    console.log(stdout);
-  });
+  try {
+    generateDocsFn(base);
+  } catch (error) {
+    console.error(`Error running libraryDocGenerator.cjs: ${error}`);
+  }
 };
 
 if (require.main === module) {
-  generateLibraryExamples(__dirname, exec);
+  generateLibraryExamples(__dirname);
 }
 
 module.exports = { createExampleConfig, getLibraries, generateLibraryExamples };

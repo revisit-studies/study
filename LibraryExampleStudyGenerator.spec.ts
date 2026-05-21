@@ -57,8 +57,8 @@ describe('libraryExampleStudyGenerator', () => {
     const librariesPath = path.join(base, 'public', 'libraries', libraryName);
     fs.mkdirSync(librariesPath, { recursive: true });
 
-    const execFn = vi.fn();
-    generateLibraryExamples(base, execFn);
+    const generateDocsFn = vi.fn();
+    generateLibraryExamples(base, generateDocsFn);
 
     const examplePath = path.join(base, 'public', `library-${libraryName}`);
     const configPath = path.join(examplePath, 'config.json');
@@ -67,55 +67,22 @@ describe('libraryExampleStudyGenerator', () => {
     expect(fs.existsSync(examplePath)).toBe(true);
     expect(fs.existsSync(assetsPath)).toBe(true);
     expect(fs.existsSync(configPath)).toBe(true);
-    expect(execFn).toHaveBeenCalledTimes(1);
-    expect(execFn).toHaveBeenCalledWith('node libraryDocGenerator.cjs', expect.any(Function));
+    expect(generateDocsFn).toHaveBeenCalledTimes(1);
+    expect(generateDocsFn).toHaveBeenCalledWith(base);
   });
 
-  it('logs an error when doc generator execution returns an error', () => {
+  it('logs an error when doc generation throws', () => {
     const base = fs.mkdtempSync(path.join(os.tmpdir(), 'lib-example-error-'));
     tempDirs.push(base);
     fs.mkdirSync(path.join(base, 'public', 'libraries', 'alpha'), { recursive: true });
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    const execFn = (
-      _command: string,
-      callback: (error: Error | null, stdout: string, stderr: string) => void,
-    ) => callback(new Error('test Error'), '', '');
+    const generateDocsFn = vi.fn(() => {
+      throw new Error('test Error');
+    });
 
-    generateLibraryExamples(base, execFn);
+    generateLibraryExamples(base, generateDocsFn);
 
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Error running libraryDocGenerator.cjs: Error: test Error'));
     errorSpy.mockRestore();
-  });
-
-  it('logs stderr when doc generator execution writes to stderr', () => {
-    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'lib-example-stderr-'));
-    tempDirs.push(base);
-    fs.mkdirSync(path.join(base, 'public', 'libraries', 'alpha'), { recursive: true });
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    const execFn = (
-      _command: string,
-      callback: (error: Error | null, stdout: string, stderr: string) => void,
-    ) => callback(null, '', 'warning output');
-
-    generateLibraryExamples(base, execFn);
-
-    expect(errorSpy).toHaveBeenCalledWith('libraryDocGenerator.cjs stderr: warning output');
-    errorSpy.mockRestore();
-  });
-
-  it('logs stdout when doc generator execution succeeds', () => {
-    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'lib-example-stdout-'));
-    tempDirs.push(base);
-    fs.mkdirSync(path.join(base, 'public', 'libraries', 'alpha'), { recursive: true });
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    const execFn = (
-      _command: string,
-      callback: (error: Error | null, stdout: string, stderr: string) => void,
-    ) => callback(null, 'generated docs', '');
-
-    generateLibraryExamples(base, execFn);
-
-    expect(logSpy).toHaveBeenCalledWith('generated docs');
-    logSpy.mockRestore();
   });
 });

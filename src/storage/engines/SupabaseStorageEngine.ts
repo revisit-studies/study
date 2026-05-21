@@ -265,7 +265,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     // Get the sequence assignment for the participant
     const { data, error } = await this.supabase
       .from('revisit')
-      .select('data')
+      .select('data, createdAt')
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', sequenceAssignmentPath)
       .single();
@@ -314,7 +314,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .single();
 
     if (claimedError || !claimedData) {
-      throw new Error('Failed to retrieve claimed sequence assignment for rejection');
+      return;
     }
     await this.supabase
       .from('revisit')
@@ -346,13 +346,15 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
 
     const claimedParticipantId = data.data.claimedParticipantId as string | undefined;
-    let restoredTimestamp = data.data.timestamp as number | undefined;
+    let restoredTimestamp = data.data.withServerTimestamp
+      ? new Date(data.createdAt).getTime()
+      : data.data.timestamp as number | undefined;
 
     if (claimedParticipantId) {
       const claimedSequenceAssignmentPath = `sequenceAssignment_${claimedParticipantId}`;
       const { data: claimedData, error: claimedError } = await this.supabase
         .from('revisit')
-        .select('data')
+        .select('data, createdAt')
         .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
         .eq('docId', claimedSequenceAssignmentPath)
         .single();
@@ -361,7 +363,9 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         throw new Error('Failed to retrieve claimed sequence assignment for unrejection');
       }
 
-      restoredTimestamp = claimedData.data.timestamp as number | undefined;
+      restoredTimestamp = claimedData.data.withServerTimestamp
+        ? new Date(claimedData.createdAt).getTime()
+        : claimedData.data.timestamp as number | undefined;
 
       await this.supabase
         .from('revisit')
