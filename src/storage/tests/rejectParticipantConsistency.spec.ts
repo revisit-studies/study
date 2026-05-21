@@ -131,6 +131,73 @@ describe('rejectParticipant — local storage baseline behavior', () => {
     expect(storageEngine.participantData?.rejected).toBe(false);
   });
 
+  test('rejectParticipant does NOT corrupt in-memory participantData when realtime rejection fails', async () => {
+    /**
+     * This catches the case where participantData is updated in memory
+     * before _rejectParticipantRealtime succeeds. If the realtime write fails,
+     * the current session should remain unrejected in memory.
+     */
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    // @ts-expect-error accessing protected property
+    const originalRejected = storageEngine.participantData.rejected;
+
+    // @ts-expect-error accessing protected method
+    const originalRejectParticipantRealtime = storageEngine._rejectParticipantRealtime;
+    // @ts-expect-error accessing protected method
+    storageEngine._rejectParticipantRealtime = vi.fn().mockRejectedValue(new Error('Realtime rejection failed'));
+
+    await storageEngine.rejectParticipant(session.participantId, 'Test rejection');
+
+    // @ts-expect-error accessing protected method
+    storageEngine._rejectParticipantRealtime = originalRejectParticipantRealtime;
+
+    // @ts-expect-error accessing protected property
+    expect(storageEngine.participantData?.rejected).toEqual(originalRejected);
+    // @ts-expect-error accessing protected property
+    expect(storageEngine.participantData?.rejected).toBe(false);
+  });
+
+  test('_undoRejectParticipantRealtime restores the reused participant timestamp', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:01.000Z'));
+      const session1 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+      vi.setSystemTime(new Date('2026-01-01T00:00:02.000Z'));
+      await storageEngine.rejectParticipant(session1.participantId, 'Test rejection');
+
+      const assignmentsAfterFirstReject = await storageEngine.getAllSequenceAssignments(studyId);
+      const originalAssignment = assignmentsAfterFirstReject.find((a) => a.participantId === session1.participantId);
+      expect(originalAssignment).toBeDefined();
+
+      await storageEngine.clearCurrentParticipantId();
+      vi.setSystemTime(new Date('2026-01-01T00:00:03.000Z'));
+      const session2 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+      const assignmentsAfterReuse = await storageEngine.getAllSequenceAssignments(studyId);
+      const reusedAssignmentBeforeReject = assignmentsAfterReuse.find((a) => a.participantId === session2.participantId);
+      expect(reusedAssignmentBeforeReject?.timestamp).toBe(originalAssignment?.timestamp);
+
+      vi.setSystemTime(new Date('2026-01-01T00:00:04.000Z'));
+      await storageEngine.rejectParticipant(session2.participantId, 'Test rejection');
+
+      // @ts-expect-error protected method
+      storageEngine.currentParticipantId = session2.participantId;
+      // @ts-expect-error protected method
+      await storageEngine._undoRejectParticipantRealtime(session2.participantId);
+
+      const assignmentsAfterUndo = await storageEngine.getAllSequenceAssignments(studyId);
+      const restoredAssignment = assignmentsAfterUndo.find((a) => a.participantId === session2.participantId);
+
+      expect(restoredAssignment).toBeDefined();
+      expect(restoredAssignment!.rejected).toBe(false);
+      expect(restoredAssignment!.timestamp).toBe(originalAssignment!.timestamp);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test('claimed assignment has rejected=true after another participant is rejected', async () => {
     /**
      * When participant B rejects and participant A had the claimed assignment

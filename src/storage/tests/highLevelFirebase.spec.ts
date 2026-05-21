@@ -1000,22 +1000,41 @@ describe.each([
   });
 
   test('_undoRejectParticipantRealtime restores the claimed source assignment for reused slots', async () => {
-    const session1 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-    await storageEngine.rejectParticipant(session1.participantId, 'test');
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:01.000Z'));
+      const session1 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
-    await storageEngine.clearCurrentParticipantId();
-    const session2 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-    await storageEngine.rejectParticipant(session2.participantId, 'test');
+      vi.setSystemTime(new Date('2026-01-01T00:00:02.000Z'));
+      await storageEngine.rejectParticipant(session1.participantId, 'test');
 
-    // @ts-expect-error protected
-    storageEngine.currentParticipantId = session2.participantId;
-    // @ts-expect-error protected
-    await storageEngine._undoRejectParticipantRealtime(session2.participantId);
+      const assignmentsAfterFirstReject = await storageEngine.getAllSequenceAssignments(studyId);
+      const originalAssignment = assignmentsAfterFirstReject.find((a) => a.participantId === session1.participantId);
+      expect(originalAssignment).toBeDefined();
 
-    const all = await storageEngine.getAllSequenceAssignments(studyId);
-    expect(all.find((a) => a.participantId === session2.participantId)?.rejected).toBe(false);
-    expect(all.find((a) => a.participantId === session1.participantId)?.rejected).toBe(true);
-    expect(all.find((a) => a.participantId === session1.participantId)?.claimed).toBe(true);
+      await storageEngine.clearCurrentParticipantId();
+      vi.setSystemTime(new Date('2026-01-01T00:00:03.000Z'));
+      const session2 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      const assignmentsAfterReuse = await storageEngine.getAllSequenceAssignments(studyId);
+      const reusedAssignmentBeforeReject = assignmentsAfterReuse.find((a) => a.participantId === session2.participantId);
+      expect(reusedAssignmentBeforeReject?.timestamp).toBe(originalAssignment?.timestamp);
+
+      vi.setSystemTime(new Date('2026-01-01T00:00:04.000Z'));
+      await storageEngine.rejectParticipant(session2.participantId, 'test');
+
+      // @ts-expect-error protected
+      storageEngine.currentParticipantId = session2.participantId;
+      // @ts-expect-error protected
+      await storageEngine._undoRejectParticipantRealtime(session2.participantId);
+
+      const all = await storageEngine.getAllSequenceAssignments(studyId);
+      expect(all.find((a) => a.participantId === session2.participantId)?.rejected).toBe(false);
+      expect(all.find((a) => a.participantId === session1.participantId)?.rejected).toBe(true);
+      expect(all.find((a) => a.participantId === session1.participantId)?.claimed).toBe(true);
+      expect(all.find((a) => a.participantId === session2.participantId)?.timestamp).toBe(originalAssignment?.timestamp);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   // ── _claimSequenceAssignment ─────────────────────────────────────────────────
