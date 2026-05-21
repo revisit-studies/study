@@ -15,6 +15,7 @@ import {
 } from '@trrack/core';
 import WaveSurferType from 'wavesurfer.js';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { WaveformPeaks } from '../../storage/engines/types';
 import { TaskProvenanceTimeline } from './TaskProvenanceTimeline';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { Timer } from './Timer';
@@ -280,9 +281,10 @@ export function AudioProvenanceVis({
             throw new Error('Participant ID is required to load audio');
           }
 
-          const [audioUrl, screenUrl] = await Promise.all([
-            safe(storageEngine.getAudio(taskName, participantId)),
-            safe(storageEngine.getScreenRecording(taskName, participantId)),
+          const [audioUrl, screenUrl, cachedPeaks] = await Promise.all([
+            safe(storageEngine.getAudioUrl(taskName, participantId)),
+            safe(storageEngine.getScreenRecordingUrl(taskName, participantId)),
+            safe(storageEngine.getWaveformPeaks(taskName, participantId)),
           ]);
 
           const url = screenUrl ?? audioUrl ?? null;
@@ -294,7 +296,21 @@ export function AudioProvenanceVis({
             return;
           }
 
-          await waveSurfer.load(url!, undefined, duration);
+          if (cachedPeaks && audioUrl) {
+            await waveSurfer.load(audioUrl, cachedPeaks.peaks, cachedPeaks.duration);
+          } else if (audioUrl) {
+            waveSurfer.once('ready', () => {
+              const extractedPeaks: WaveformPeaks = {
+                peaks: waveSurfer.exportPeaks({ maxLength: 5000, precision: 100 }),
+                duration: waveSurfer.getDuration(),
+              };
+              storageEngine.saveWaveformPeaks(extractedPeaks, taskName, participantId)
+                .catch((err) => console.warn('Failed to save waveform peaks:', err));
+            });
+
+            await waveSurfer.load(audioUrl, undefined, duration);
+          }
+
           setWaveSurferLoading(false);
 
           audioRef.current = waveSurfer.getMediaElement();

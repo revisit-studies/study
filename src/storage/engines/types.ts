@@ -78,6 +78,11 @@ export interface ConditionData {
 
 const defaultStageColor = '#F05A30';
 
+export interface WaveformPeaks {
+  peaks: number[][]; // one array per channel, values in [-1, 1]
+  duration: number; // seconds required by waveSurfer.load() when peaks are provided
+}
+
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
   T extends 'sequenceArray'
@@ -94,6 +99,8 @@ export type StorageObject<T extends StorageObjectType> =
   ? ParticipantTags
   : T extends 'tags'
   ? Tag[]
+  : T extends 'waveform.peaks.json'
+  ? WaveformPeaks
   : Blob; // Fallback for any random string
 
 interface CloudStorageEngineError {
@@ -964,6 +971,16 @@ export abstract class StorageEngine {
     return await this._getFromStorage(`audio/transcriptAndTags/${tagType}`, 'tags');
   }
 
+  async getWaveformPeaks(taskName: string, participantId: string): Promise<WaveformPeaks | null> {
+    const result = await this._getFromStorage(`audio/${participantId}_${taskName}`, 'waveform.peaks.json');
+    if (!result || !('peaks' in result)) return null;
+    return result as WaveformPeaks;
+  }
+
+  async saveWaveformPeaks(waveformPeaks: WaveformPeaks, taskName: string, participantId: string): Promise<void> {
+    await this._pushToStorage(`audio/${participantId}_${taskName}`, 'waveform.peaks.json', waveformPeaks);
+  }
+
   async getAllParticipantAndTaskTags(authEmail: string, participantId: string) {
     const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags');
 
@@ -1390,7 +1407,7 @@ export abstract class StorageEngine {
     return asset;
   }
 
-  // Gets the audio for a specific task and participantId.
+  // Gets the audio blob URL for a specific task and participantId.
   async getAudio(
     task: string,
     participantId: string,
@@ -1475,13 +1492,21 @@ export abstract class StorageEngine {
     });
   }
 
-  // Gets the screen recording for a specific task and participantId.
+  // Gets the screen recording blob URL for a specific task and participantId.
   async getScreenRecording(
     task: string,
     participantId: string,
   ) {
     const url = await this._getScreenRecordingUrl(task, participantId);
     return this.getAsset(url);
+  }
+
+  // Gets the screen recording URL for a specific task and participantId.
+  getScreenRecordingUrl(
+    task: string,
+    participantId: string,
+  ) {
+    return this._getScreenRecordingUrl(task, participantId);
   }
 
   // Saves the video stream to the storage engine. This method is used to save the screen recorded video data from a MediaRecorder stream.
