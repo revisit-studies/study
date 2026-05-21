@@ -84,6 +84,18 @@
             "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
             "type": "number"
           },
+          "nextButtonAutoAdvanceTime": {
+            "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+            "type": "number"
+          },
+          "nextButtonAutoAdvanceWarningMessage": {
+            "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+            "type": "string"
+          },
+          "nextButtonAutoAdvanceWarningTime": {
+            "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+            "type": "number"
+          },
           "nextButtonEnableTime": {
             "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
             "type": "number"
@@ -948,6 +960,18 @@
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
@@ -1209,6 +1233,18 @@
         },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
           "type": "number"
         },
         "nextButtonEnableTime": {
@@ -1727,6 +1763,18 @@
         },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
           "type": "number"
         },
         "nextButtonEnableTime": {
@@ -2287,6 +2335,18 @@
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
@@ -2695,6 +2755,18 @@
         },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
           "type": "number"
         },
         "nextButtonEnableTime": {
@@ -3503,6 +3575,18 @@
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
@@ -3656,6 +3740,18 @@
         },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
           "type": "number"
         },
         "nextButtonEnableTime": {
@@ -3821,6 +3917,18 @@
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
@@ -3978,6 +4086,18 @@
         },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
           "type": "number"
         },
         "nextButtonEnableTime": {
