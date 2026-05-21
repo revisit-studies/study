@@ -576,7 +576,7 @@ describe.each([
     expect(tagsAfterRemoval2).toEqual([]);
   });
 
-  test('rejectParticipant on participants allows ', async () => {
+  test('rejectParticipant on participants allows sequence reuse', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId: participantId1 } = participantSession;
 
@@ -986,6 +986,25 @@ describe.each([
     await storageEngine._undoRejectParticipantRealtime(session.participantId);
     const all = await storageEngine.getAllSequenceAssignments(studyId);
     expect(all.find((a) => a.participantId === session.participantId)?.rejected).toBe(false);
+  });
+
+  test('_undoRejectParticipantRealtime restores the claimed source assignment for reused slots', async () => {
+    const session1 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    await storageEngine.rejectParticipant(session1.participantId, 'test');
+
+    await storageEngine.clearCurrentParticipantId();
+    const session2 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    await storageEngine.rejectParticipant(session2.participantId, 'test');
+
+    // @ts-expect-error protected
+    storageEngine.currentParticipantId = session2.participantId;
+    // @ts-expect-error protected
+    await storageEngine._undoRejectParticipantRealtime(session2.participantId);
+
+    const all = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(all.find((a) => a.participantId === session2.participantId)?.rejected).toBe(false);
+    expect(all.find((a) => a.participantId === session1.participantId)?.rejected).toBe(true);
+    expect(all.find((a) => a.participantId === session1.participantId)?.claimed).toBe(true);
   });
 
   // ── _claimSequenceAssignment ─────────────────────────────────────────────────

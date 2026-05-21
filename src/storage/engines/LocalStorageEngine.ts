@@ -137,8 +137,11 @@ export class LocalStorageEngine extends StorageEngine {
     const participantSequenceAssignment = sequenceAssignments[participantId];
 
     // If this was a claimed sequence assignment, we need to mark it as available again
-    // Find the sequence assignment that was claimed
-    const claimedAssignmentData = Object.values(sequenceAssignments).find((assignment) => assignment.claimed && assignment.timestamp === participantSequenceAssignment.timestamp);
+    const claimedAssignmentData = participantSequenceAssignment?.claimedParticipantId
+      ? sequenceAssignments[participantSequenceAssignment.claimedParticipantId]
+      : Object.values(sequenceAssignments).find(
+        (assignment) => assignment.claimed && assignment.timestamp === participantSequenceAssignment.timestamp,
+      );
     if (participantSequenceAssignment && claimedAssignmentData) {
       // Mark the claimed assignment as available again
       claimedAssignmentData.claimed = false;
@@ -171,6 +174,13 @@ export class LocalStorageEngine extends StorageEngine {
     const participantSequenceAssignment = sequenceAssignments[participantId];
     if (participantSequenceAssignment) {
       participantSequenceAssignment.rejected = false;
+      if (participantSequenceAssignment.claimedParticipantId) {
+        const claimedAssignmentData = sequenceAssignments[participantSequenceAssignment.claimedParticipantId];
+        if (claimedAssignmentData) {
+          claimedAssignmentData.claimed = true;
+          claimedAssignmentData.rejected = true;
+        }
+      }
       await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
     }
   }

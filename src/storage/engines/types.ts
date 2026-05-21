@@ -29,6 +29,7 @@ export type SequenceAssignment = {
   timestamp: number; // Use Timestamp for Firebase, number for local storage
   rejected: boolean;
   claimed: boolean;
+  claimedParticipantId?: string; // The original rejected participant whose slot this assignment is reusing.
   completed: number | null;
   createdTime: number;
   total: number; // Total number of questions/steps
@@ -806,6 +807,7 @@ export abstract class StorageEngine {
           timestamp: firstRejectTime, // Use the timestamp of the first reject
           rejected: false,
           claimed: false,
+          claimedParticipantId: firstReject.participantId,
           completed: null,
           createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
           total: 0,

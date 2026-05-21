@@ -348,11 +348,17 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       }
       return Number(value);
     };
-    const participantTimestamp = toMillis(participantSequenceAssignment.timestamp);
-    const claimedSequenceAssignmentSnapshot = sequenceAssignmentSnapshot.docs.find((docSnapshot) => {
-      const docData = docSnapshot.data() as SequenceAssignment;
-      return docData.claimed && toMillis(docData.timestamp) === participantTimestamp;
-    });
+    const claimedSequenceAssignmentSnapshot = participantSequenceAssignment.claimedParticipantId
+      ? sequenceAssignmentSnapshot.docs.find(
+        (docSnapshot) => docSnapshot.id === participantSequenceAssignment.claimedParticipantId,
+      )
+      : (() => {
+        const participantTimestamp = toMillis(participantSequenceAssignment.timestamp);
+        return sequenceAssignmentSnapshot.docs.find((docSnapshot) => {
+          const docData = docSnapshot.data() as SequenceAssignment;
+          return docData.claimed && toMillis(docData.timestamp) === participantTimestamp;
+        });
+      })();
 
     if (claimedSequenceAssignmentSnapshot) {
       const claimedSequenceAssignmentDoc = doc(sequenceAssignmentCollection, claimedSequenceAssignmentSnapshot.id);
@@ -392,6 +398,20 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       sequenceAssignmentCollection,
       participantId,
     );
+    const participantSequenceAssignmentSnapshot = await getDoc(participantSequenceAssignmentDoc);
+    if (!participantSequenceAssignmentSnapshot.exists()) {
+      throw new Error('Failed to retrieve sequence assignment for current participant');
+    }
+
+    const participantSequenceAssignment = participantSequenceAssignmentSnapshot.data() as SequenceAssignment;
+    if (participantSequenceAssignment.claimedParticipantId) {
+      const claimedSequenceAssignmentDoc = doc(
+        sequenceAssignmentCollection,
+        participantSequenceAssignment.claimedParticipantId,
+      );
+      await updateDoc(claimedSequenceAssignmentDoc, { claimed: true, rejected: true });
+    }
+
     await updateDoc(participantSequenceAssignmentDoc, { rejected: false });
   }
 

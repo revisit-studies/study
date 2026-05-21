@@ -1,12 +1,8 @@
 /**
- * Shared tests that verify consistent behavior across storage engines
- * for the rejectParticipant flow.
+ * Shared baseline tests for rejectParticipant behavior.
  *
- * These tests catch behavioral drift between engines and in-memory
- * state corruption risks.
- *
- * Run against each engine to verify consistency:
- *   yarn unittest src/storage/tests/rejectParticipantConsistency.spec.ts
+ * These currently exercise the local storage engine and catch
+ * in-memory state corruption risks plus baseline sequence behavior.
  */
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -26,7 +22,7 @@ const participantMetadata: ParticipantMetadata = {
   ip: '122.122.122.122',
 };
 
-describe('rejectParticipant — shared behavior tests', () => {
+describe('rejectParticipant — local storage baseline behavior', () => {
   let storageEngine: StorageEngine;
 
   beforeEach(async () => {
@@ -74,6 +70,30 @@ describe('rejectParticipant — shared behavior tests', () => {
     expect(assignment!.rejected).toBe(false);
   });
 
+  test('_undoRejectParticipantRealtime restores the claimed source assignment for reused slots', async () => {
+    const session1 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    await storageEngine.rejectParticipant(session1.participantId, 'Test rejection');
+    await storageEngine.clearCurrentParticipantId();
+
+    const session2 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    await storageEngine.rejectParticipant(session2.participantId, 'Test rejection');
+
+    // @ts-expect-error protected method
+    storageEngine.currentParticipantId = session2.participantId;
+    // @ts-expect-error protected method
+    await storageEngine._undoRejectParticipantRealtime(session2.participantId);
+
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const assignment1 = assignments.find((a) => a.participantId === session1.participantId);
+    const assignment2 = assignments.find((a) => a.participantId === session2.participantId);
+
+    expect(assignment1).toBeDefined();
+    expect(assignment2).toBeDefined();
+    expect(assignment2!.rejected).toBe(false);
+    expect(assignment1!.rejected).toBe(true);
+    expect(assignment1!.claimed).toBe(true);
+  });
+
   // ── Bug-catching tests ──────────────────────────────────────────────────
 
   test('rejectParticipant does NOT corrupt in-memory participantData when storage write fails', async () => {
@@ -111,21 +131,16 @@ describe('rejectParticipant — shared behavior tests', () => {
     expect(storageEngine.participantData?.rejected).toBe(false);
   });
 
-  test('claimed assignment has rejected=true after another participant is rejected (cross-engine consistency)', async () => {
+  test('claimed assignment has rejected=true after another participant is rejected', async () => {
     /**
-     * This test catches a behavioral inconsistency between storage engines.
-     *
      * When participant B rejects and participant A had the claimed assignment
-     * with the same timestamp, the expected behavior (shared by LocalStorage
-     * and Firebase) is that participant A's assignment should have:
+     * with the same timestamp, participant A's assignment should have:
      *   - claimed: false (available for reuse)
      *   - rejected: true (marked as rejected so it doesn't get reused again)
      *
      * If an engine only sets claimed=false but NOT rejected=true, the claimed
      * assignment could be incorrectly reused. This test asserts the correct
      * behavior: rejected should be true on the claimed assignment.
-     *
-     * Run against each engine to verify consistency.
      */
     // Initialize first participant
     const session1 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
