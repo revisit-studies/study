@@ -13,6 +13,7 @@ const TIMELINE_HEIGHT = 25;
 const LABEL_DISTANCE = 25;
 const LABEL_HEIGHT = 20;
 const TASK_GAP = 1;
+const TASK_MIN_WIDTH = 32;
 const ICON_SIZE = 14;
 const ICON_GAP = 2;
 
@@ -63,7 +64,7 @@ export function SingleTask({
         opacity={1}
         fill={isHover ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}
         x={xScale(scaleStart) + TASK_GAP}
-        width={xScale(scaleEnd) - xScale(scaleStart) - TASK_GAP * 2}
+        width={Math.max(TASK_MIN_WIDTH, xScale(scaleEnd) - xScale(scaleStart) - TASK_GAP * 2)}
         y={height - TIMELINE_HEIGHT}
         height={TIMELINE_HEIGHT}
       />
