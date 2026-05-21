@@ -57,7 +57,8 @@ export function useReplay() {
     playTimeStamp.current = Date.now();
   }, []);
 
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mediaTimeUpdateTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const syntheticReplayTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [searchParams] = useSearchParams();
   const searchParamTimestamp = useMemo(() => searchParams.get('t') || '', [searchParams]);
@@ -128,10 +129,10 @@ export function useReplay() {
 
     const elem = replayRef.current;
     if (elem) {
-      if (timer.current) {
-        clearInterval(timer.current);
+      if (mediaTimeUpdateTimer.current) {
+        clearInterval(mediaTimeUpdateTimer.current);
       }
-      timer.current = setInterval(() => {
+      mediaTimeUpdateTimer.current = setInterval(() => {
         emitterRef.current.emit('timeupdate', elem.currentTime);
       }, 30);
     }
@@ -170,7 +171,10 @@ export function useReplay() {
 
     _setIsPlaying(false);
 
-    timer.current && clearInterval(timer.current);
+    if (mediaTimeUpdateTimer.current) {
+      clearInterval(mediaTimeUpdateTimer.current);
+      mediaTimeUpdateTimer.current = null;
+    }
     const t = replayRef.current?.currentTime || 0;
     emitterRef.current.emit('pause', t);
     timerValue.current = t;
@@ -248,9 +252,13 @@ export function useReplay() {
 
     return () => {
       isMountedRef.current = false;
-      if (timer.current) {
-        clearInterval(timer.current);
-        timer.current = null;
+      if (mediaTimeUpdateTimer.current) {
+        clearInterval(mediaTimeUpdateTimer.current);
+        mediaTimeUpdateTimer.current = null;
+      }
+      if (syntheticReplayTimer.current) {
+        clearInterval(syntheticReplayTimer.current);
+        syntheticReplayTimer.current = null;
       }
 
       // Remove listeners from replayRef.current, which is where they are attached
@@ -280,11 +288,11 @@ export function useReplay() {
     if (!audioRef.current && !videoRef.current) {
       if (isPlaying) {
         let lastTickTime = Date.now();
-        timer.current = setInterval(() => {
+        syntheticReplayTimer.current = setInterval(() => {
           if (!isMountedRef.current) {
-            if (timer.current) {
-              clearInterval(timer.current);
-              timer.current = null;
+            if (syntheticReplayTimer.current) {
+              clearInterval(syntheticReplayTimer.current);
+              syntheticReplayTimer.current = null;
             }
             return;
           }
@@ -299,23 +307,23 @@ export function useReplay() {
           lastTickTime = now;
           emitterRef.current.emit('timeupdate', timerValue.current);
           if (internalDuration.current > 0 && timerValue.current >= internalDuration.current) {
-            if (timer.current) {
-              clearInterval(timer.current);
-              timer.current = null;
+            if (syntheticReplayTimer.current) {
+              clearInterval(syntheticReplayTimer.current);
+              syntheticReplayTimer.current = null;
             }
             setIsPlaying(false);
           }
         }, 30);
-      } else if (timer.current) {
-        clearInterval(timer.current);
-        timer.current = null;
+      } else if (syntheticReplayTimer.current) {
+        clearInterval(syntheticReplayTimer.current);
+        syntheticReplayTimer.current = null;
       }
     }
 
     return () => {
-      if (timer.current) {
-        clearInterval(timer.current);
-        timer.current = null;
+      if (syntheticReplayTimer.current) {
+        clearInterval(syntheticReplayTimer.current);
+        syntheticReplayTimer.current = null;
       }
     };
   }, [isPlaying, setIsPlaying]);

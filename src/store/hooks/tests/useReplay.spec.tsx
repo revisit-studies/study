@@ -276,6 +276,31 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
     });
     expect(result.current.replayRef.current).toBe(audio);
   });
+
+  test('media replay continues emitting timeupdate events after play state changes', () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    const timeUpdateListener = vi.fn();
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.replayEvent.on('timeupdate', timeUpdateListener);
+    });
+    timeUpdateListener.mockClear();
+
+    act(() => {
+      video.dispatchEvent(new Event('play'));
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(result.current.isPlaying).toBe(true);
+    expect(timeUpdateListener).toHaveBeenCalled();
+  });
 });
 
 describe('useReplay — public setIsPlaying with hasEnded=true', () => {
