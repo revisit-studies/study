@@ -1029,6 +1029,12 @@ export interface BaseIndividualComponent {
   nextButtonEnableTime?: number;
   /** The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig. */
   nextButtonDisableTime?: number;
+  /** The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component. */
+  nextButtonAutoAdvanceTime?: number;
+  /** The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000. */
+  nextButtonAutoAdvanceWarningTime?: number;
+  /** The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`. */
+  nextButtonAutoAdvanceWarningMessage?: string;
   /** Whether to show the previous button. If present, will override the previous button setting in the uiConfig. */
   previousButton?: boolean;
   /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
