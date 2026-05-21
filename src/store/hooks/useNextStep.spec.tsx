@@ -284,4 +284,51 @@ describe('useNextStep', () => {
     }));
     expect(mockNavigate).toHaveBeenCalledWith('/study-1/1');
   });
+
+  test('excludes timed out answers from block skip conditions', async () => {
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+    mockSequence = {
+      id: 'root',
+      orderPath: 'root',
+      order: 'fixed',
+      components: ['intro', 'followup', 'skip-target'],
+      skip: [{
+        check: 'block',
+        condition: 'numIncorrect',
+        value: 1,
+        to: 'skip-target',
+      }],
+    };
+    mockFlatSequence = ['intro', 'followup', 'skip-target'];
+    mockStudyConfig = {
+      components: {
+        intro: {
+          type: 'questionnaire',
+          response: [{
+            id: 'response',
+            type: 'radio',
+            prompt: 'Pick one',
+            options: ['saved-answer', 'other-answer'],
+          }],
+          correctAnswer: [{
+            id: 'response',
+            answer: 'saved-answer',
+          }],
+        },
+        followup: {},
+        'skip-target': {},
+      },
+    };
+
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.(false);
+    await Promise.resolve();
+
+    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
+      answer: {},
+      timedOut: true,
+    }));
+    expect(mockNavigate).toHaveBeenCalledWith('/study-1/1');
+  });
 });

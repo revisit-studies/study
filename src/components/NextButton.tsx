@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router';
 import { useNextStep } from '../store/hooks/useNextStep';
 import type { IndividualComponent, ResponseBlockLocation } from '../parser/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
+import { useCurrentIdentifier } from '../routes/utils';
 import { PreviousButton } from './PreviousButton';
 import {
   DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE,
@@ -32,6 +33,7 @@ export function NextButton({
   const { isNextDisabled, goToNextStep } = useNextStep();
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
+  const identifier = useCurrentIdentifier();
 
   const nextButtonDisableTime = config?.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime;
   const nextButtonEnableTime = config?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0;
@@ -41,8 +43,9 @@ export function NextButton({
 
   const [timer, setTimer] = useState<number | undefined>(undefined);
   const autoAdvanceTriggered = useRef(false);
-  // Use Date.now() to keep time even if tab is hidden
+  // Use the current identifier so nested function-sequence items reset their timer state.
   useEffect(() => {
+    autoAdvanceTriggered.current = false;
     const start = Date.now();
     setTimer(0);
     const interval = setInterval(() => {
@@ -51,7 +54,7 @@ export function NextButton({
     return () => {
       clearInterval(interval);
     };
-  }, []);
+  }, [identifier]);
 
   useEffect(() => {
     if (timer === undefined) {

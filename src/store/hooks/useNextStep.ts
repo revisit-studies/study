@@ -134,6 +134,9 @@ export function useNextStep() {
           timedOut: !collectData,
         },
       };
+      const answersForSkipEvaluation = Object.fromEntries(
+        Object.entries(answersWithNewAnswer).filter(([_, responseObj]) => !responseObj.timedOut),
+      ) as typeof answersWithNewAnswer;
 
       // Check if the skip block should be triggered
       if (hasSkipBlock) {
@@ -145,10 +148,10 @@ export function useNextStep() {
         skipConditions.some((condition) => {
           let conditionIsTriggered = false;
 
-          const validationCandidates = Object.fromEntries(Object.entries(answersWithNewAnswer).filter(([key]) => {
+          const validationCandidates = Object.fromEntries(Object.entries(answersForSkipEvaluation).filter(([key]) => {
             const componentIndex = parseInt(key.slice(key.lastIndexOf('_') + 1), 10);
             return componentIndex >= condition.firstIndex && componentIndex <= currentStep;
-          })) as unknown as StoredAnswer;
+          })) as Record<string, StoredAnswer>;
 
           // Slim down the validationCandidates to only include the skip condition's component
           const componentsToCheck = condition.check !== 'block' ? Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name) : Object.entries(validationCandidates);
