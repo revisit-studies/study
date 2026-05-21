@@ -153,8 +153,8 @@ function calculateCorrectnessStats(
   visibleParticipants: ParticipantDataWithStatus[],
   componentName?: string,
   studyConfig?: StudyConfig,
-  allConfigs: Record<string, StudyConfig> = {},
   responseId?: string,
+  allConfigs: Record<string, StudyConfig> = {},
 ): { correctness: number; correctCount: number; totalQuestionCount: number } {
   // Filter out rejected participants and filter by component if provided
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, true);
@@ -270,7 +270,7 @@ export function getOverviewStats(
     avgTime: timeStats.avgTime,
     avgCleanTime: timeStats.avgCleanTime,
     participantsWithInvalidCleanTimeCount: timeStats.participantsWithInvalidCleanTimeCount,
-    correctness: calculateCorrectnessStats(visibleParticipants, componentName, studyConfig, allConfigs).correctness,
+    correctness: calculateCorrectnessStats(visibleParticipants, componentName, studyConfig, undefined, allConfigs).correctness,
   };
 
   return overviewData;
@@ -299,7 +299,7 @@ export function getComponentStats(
     totalQuestionCount: number;
   }> = componentNames.map((name) => {
     const timeStats = calculateTimeStats(visibleParticipants, name);
-    const correctnessStats = calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs);
+    const correctnessStats = calculateCorrectnessStats(visibleParticipants, name, studyConfig, undefined, allConfigs);
 
     return {
       component: name,
@@ -405,7 +405,7 @@ export function getResponseStats(
     if (responses.length === 0) return [];
 
     return responses.map((response) => {
-      const correctnessStats = calculateCorrectnessStats(visibleParticipants, name, studyConfig, allConfigs, response.id);
+      const correctnessStats = calculateCorrectnessStats(visibleParticipants, name, studyConfig, response.id, allConfigs);
       return {
         responseId: response.id,
         component: name,
@@ -435,7 +435,7 @@ export function getResponseStatsForConfigs(
       if (responses.length === 0) return [];
 
       return responses.map((response) => {
-        const correctnessStats = calculateCorrectnessStats(configParticipants, name, studyConfig, allConfigs, response.id);
+        const correctnessStats = calculateCorrectnessStats(configParticipants, name, studyConfig, response.id, allConfigs);
         return {
           responseId: response.id,
           component: name,

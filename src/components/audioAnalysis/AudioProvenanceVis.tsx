@@ -11,7 +11,7 @@ import { useResizeObserver, useThrottledCallback } from '@mantine/hooks';
 import { WaveForm, WaveSurfer } from 'wavesurfer-react';
 import * as d3 from 'd3';
 import {
-  Registry, Trrack, initializeTrrack, isRootNode,
+  Registry, Trrack, initializeTrrack,
 } from '@trrack/core';
 import WaveSurferType from 'wavesurfer.js';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -26,6 +26,7 @@ import { parseTrialOrder } from '../../utils/parseTrialOrder';
 import { useUpdateProvenance } from './useUpdateProvenance';
 import { useReplayContext } from '../../store/hooks/useReplay';
 import { syncChannel, syncEmitter } from '../../utils/syncReplay';
+import { findNodeAtTime } from '../../utils/findNodeAtTime';
 
 const margin = {
   left: 20, top: 0, right: 20, bottom: 0,
@@ -228,26 +229,10 @@ export function AudioProvenanceVis({
       return;
     }
 
-    let tempNode = provGraph.stimulus.nodes[currentNode];
+    const foundNodeId = findNodeAtTime(currentNode, playTime, provGraph.stimulus.nodes);
 
-    while (true) {
-      if (playTime < tempNode.createdOn) {
-        if (!isRootNode(tempNode)) {
-          const parentNode = tempNode.parent;
-
-          tempNode = provGraph.stimulus.nodes[parentNode];
-        } else break;
-      } else if (tempNode.children.length > 0) {
-        const child = tempNode.children[0];
-
-        if (playTime > provGraph.stimulus.nodes[child].createdOn) {
-          tempNode = provGraph.stimulus.nodes[child];
-        } else break;
-      } else break;
-    }
-
-    if (tempNode.id !== currentNode) {
-      _setCurrentNode(tempNode.id);
+    if (foundNodeId !== currentNode) {
+      _setCurrentNode(foundNodeId);
     }
   }, [_setCurrentNode, currentNode, participantId, playTime, taskName, answers]);
 
