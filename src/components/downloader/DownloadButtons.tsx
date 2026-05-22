@@ -2,14 +2,14 @@ import {
   Button, Group, Tooltip,
 } from '@mantine/core';
 import {
-  IconDatabaseExport, IconDeviceDesktopDown, IconMusicDown, IconTableExport,
+  IconDatabaseExport, IconDeviceDesktopDown, IconDownload, IconMusicDown, IconTableExport,
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { DownloadTidy, download } from './DownloadTidy';
 import { ParticipantDataWithStatus } from '../../storage/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { downloadParticipantsAudioZip, downloadParticipantsScreenRecordingZip } from '../../utils/handleDownloadFiles';
+import { downloadParticipantsAudioZip, downloadParticipantsProvenanceZip, downloadParticipantsScreenRecordingZip } from '../../utils/handleDownloadFiles';
 
 type ParticipantDataFetcher = ParticipantDataWithStatus[] | (() => Promise<ParticipantDataWithStatus[]>);
 
@@ -18,6 +18,7 @@ export function DownloadButtons({
 }: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null; hasAudio?: boolean; hasScreenRecording?: boolean; }) {
   const [openDownload, { open, close }] = useDisclosure(false);
   const [participants, setParticipants] = useState<ParticipantDataWithStatus[]>([]);
+  const [loadingProvenance, setLoadingProvenance] = useState(false);
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [loadingScreenRecording, setLoadingScreenRecording] = useState(false);
   const { storageEngine } = useStorageEngine();
@@ -53,6 +54,23 @@ export function DownloadButtons({
       });
     } finally {
       setLoadingAudio(false);
+    }
+  };
+
+  const handleDownloadProvenance = async () => {
+    setLoadingProvenance(true);
+
+    try {
+      const currParticipants = await fetchParticipants();
+      if (!storageEngine) return;
+      await downloadParticipantsProvenanceZip({
+        storageEngine,
+        participants: currParticipants,
+        studyId,
+        fileName,
+      });
+    } finally {
+      setLoadingProvenance(false);
     }
   };
 
@@ -96,6 +114,17 @@ export function DownloadButtons({
             px={4}
           >
             <IconTableExport />
+          </Button>
+        </Tooltip>
+        <Tooltip label={`${tooltipText} provenance as ZIP`}>
+          <Button
+            variant="light"
+            disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
+            onClick={handleDownloadProvenance}
+            px={4}
+            loading={loadingProvenance}
+          >
+            <IconDownload />
           </Button>
         </Tooltip>
         {hasAudio && (

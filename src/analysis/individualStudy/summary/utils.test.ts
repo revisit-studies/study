@@ -99,12 +99,6 @@ function createMockAnswer(overrides: {
     incorrectAnswers: {},
     startTime: overrides.startTime,
     endTime: overrides.endTime,
-    provenanceGraph: {
-      sidebar: undefined,
-      aboveStimulus: undefined,
-      belowStimulus: undefined,
-      stimulus: undefined,
-    },
     windowEvents: [],
     timedOut: false,
     helpButtonClickedCount: 0,

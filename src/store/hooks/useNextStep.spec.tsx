@@ -12,6 +12,7 @@ import { useNextStep } from './useNextStep';
 const mockNavigate = vi.fn();
 const mockShowNotification = vi.fn();
 const mockSaveAnswers = vi.fn();
+const mockSaveProvenance = vi.fn(() => Promise.resolve());
 const mockSaveTrialAnswer = vi.fn((payload) => ({ type: 'saveTrialAnswer', payload }));
 const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers', payload }));
 const mockSetMatrixAnswersCheckbox = vi.fn((payload) => ({ type: 'setMatrixAnswersCheckbox', payload }));
@@ -26,12 +27,6 @@ let mockStoredAnswer: {
   incorrectAnswers: Record<string, string>;
   startTime: number;
   endTime: number;
-  provenanceGraph: {
-    aboveStimulus: undefined;
-    belowStimulus: undefined;
-    stimulus: undefined;
-    sidebar: undefined;
-  };
   windowEvents: never[];
   timedOut: boolean;
   helpButtonClickedCount: number;
@@ -101,6 +96,7 @@ vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({
     storageEngine: {
       saveAnswers: mockSaveAnswers,
+      saveProvenance: mockSaveProvenance,
     },
   }),
 }));
@@ -141,6 +137,7 @@ describe('useNextStep', () => {
     mockNavigate.mockReset();
     mockShowNotification.mockReset();
     mockSaveAnswers.mockReset();
+    mockSaveProvenance.mockClear();
     mockSaveTrialAnswer.mockClear();
     mockSetReactiveAnswers.mockClear();
     mockSetMatrixAnswersCheckbox.mockClear();
@@ -178,12 +175,6 @@ describe('useNextStep', () => {
       incorrectAnswers: {},
       startTime: 0,
       endTime: -1,
-      provenanceGraph: {
-        aboveStimulus: undefined,
-        belowStimulus: undefined,
-        stimulus: undefined,
-        sidebar: undefined,
-      },
       windowEvents: [],
       timedOut: false,
       helpButtonClickedCount: 0,

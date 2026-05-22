@@ -8,7 +8,7 @@ import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils/storageEngineHelpers';
-import { Sequence, StoredAnswer } from '../../store/types';
+import { Sequence, StoredAnswer, TrrackedProvenance } from '../../store/types';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { StorageEngine, StorageObject, StorageObjectType } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
@@ -99,12 +99,6 @@ function makeStoredAnswer(identifier: string, endTime: number): StoredAnswer {
     incorrectAnswers: {},
     startTime: endTime - 10,
     endTime,
-    provenanceGraph: {
-      aboveStimulus: undefined,
-      belowStimulus: undefined,
-      stimulus: undefined,
-      sidebar: undefined,
-    },
     windowEvents: [],
     timedOut: false,
     helpButtonClickedCount: 0,
@@ -781,12 +775,6 @@ describe.each([
         incorrectAnswers: {},
         startTime: 10,
         endTime: 20,
-        provenanceGraph: {
-          sidebar: undefined,
-          aboveStimulus: undefined,
-          belowStimulus: undefined,
-          stimulus: undefined,
-        },
         windowEvents: [],
         timedOut: false,
         helpButtonClickedCount: 0,
@@ -809,6 +797,92 @@ describe.each([
 
     const participantData = await storageEngine.getParticipantData(participantSession.participantId);
     expect(participantData?.answers).toEqual(secondAnswers);
+  });
+
+  test('saveAnswers strips inline provenance and stores it as a task asset', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const identifier = 'intro_0';
+    const provenanceGraph = {
+      root: 'root',
+      current: 'root',
+      nodes: {
+        root: {
+          id: 'root',
+          createdOn: 10,
+          children: [],
+        },
+      },
+    } as unknown as TrrackedProvenance;
+    const answerWithProvenance = {
+      ...makeStoredAnswer(identifier, 100),
+      provenanceGraph: {
+        aboveStimulus: undefined,
+        belowStimulus: undefined,
+        sidebar: undefined,
+        stimulus: provenanceGraph,
+      },
+    };
+
+    await storageEngine.saveAnswers({
+      [identifier]: answerWithProvenance,
+    });
+    await storageEngine.flushPendingParticipantData();
+
+    const participantData = await storageEngine.getParticipantData(participantSession.participantId);
+    expect(participantData).toBeDefined();
+    expect('provenanceGraph' in participantData!.answers[identifier]).toBe(false);
+
+    const storedProvenance = await storageEngine.getProvenance(identifier, participantSession.participantId);
+    expect(storedProvenance).toEqual({
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      sidebar: undefined,
+      stimulus: provenanceGraph,
+    });
+  });
+
+  test('saveProvenance with null/undefined deletes existing provenance asset', async () => {
+    storageEngine = new LocalStorageEngine(true);
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    sequenceArray = await generateSequenceArray(configSimple);
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const identifier = 'intro_0';
+
+    // First, save a provenance asset
+    const provenanceGraph = {
+      root: 'root',
+      current: 'root',
+      nodes: {
+        root: {
+          id: 'root',
+          createdOn: 10,
+          children: [],
+        },
+      },
+    } as unknown as TrrackedProvenance;
+    await storageEngine.saveProvenance({
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      sidebar: undefined,
+      stimulus: provenanceGraph,
+    }, identifier);
+
+    // Verify it was saved
+    let storedProvenance = await storageEngine.getProvenance(identifier, participantSession.participantId);
+    expect(storedProvenance).toEqual({
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      sidebar: undefined,
+      stimulus: provenanceGraph,
+    });
+
+    // Now save with null — should delete the existing asset
+    await storageEngine.saveProvenance(null, identifier);
+
+    // Verify it was deleted
+    storedProvenance = await storageEngine.getProvenance(identifier, participantSession.participantId);
+    expect(storedProvenance).toBeNull();
   });
 
   test('saveAnswers coalesces to the latest answer and finalizeParticipant persists completion after delayed writes', async () => {
