@@ -24,12 +24,6 @@ function makeStoredAnswer(identifier: string, endTime: number): StoredAnswer {
     incorrectAnswers: {},
     startTime: endTime - 10,
     endTime,
-    provenanceGraph: {
-      aboveStimulus: undefined,
-      belowStimulus: undefined,
-      stimulus: undefined,
-      sidebar: undefined,
-    },
     windowEvents: [],
     timedOut: false,
     helpButtonClickedCount: 0,

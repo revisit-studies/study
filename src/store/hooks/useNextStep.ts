@@ -86,7 +86,6 @@ export function useNextStep() {
           answer: answerToPersist,
           startTime,
           endTime,
-          provenanceGraph,
           windowEvents: currentWindowEvents,
           timedOut: !collectData,
         };
@@ -94,13 +93,23 @@ export function useNextStep() {
 
         if (storageEngine) {
           storageEngine.saveAnswers(answersToPersist).catch((error) => {
-            console.error('Failed to save participant answers', error);
+            console.error('Failed to save participant response data', error);
             showNotification({
               title: 'Failed to Save Response',
               message: 'Your response could not be saved. Please check your connection and try again.',
               color: 'red',
             });
           });
+          if (provenanceGraph) {
+            storageEngine.saveProvenance(provenanceGraph, identifier).catch((error) => {
+              console.error('Failed to save participant response data', error);
+              showNotification({
+                title: 'Failed to Save Response',
+                message: 'Your response could not be saved. Please check your connection and try again.',
+                color: 'red',
+              });
+            });
+          }
         }
 
         storeDispatch(
@@ -129,7 +138,6 @@ export function useNextStep() {
           answer: answerToPersist,
           startTime,
           endTime,
-          provenanceGraph,
           windowEvents: currentWindowEvents,
           timedOut: !collectData,
         },
