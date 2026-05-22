@@ -840,6 +840,49 @@ describe.each([
     });
   });
 
+  test('saveProvenance with null/undefined deletes existing provenance asset', async () => {
+    storageEngine = new LocalStorageEngine(true);
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    sequenceArray = await generateSequenceArray(configSimple);
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const identifier = 'intro_0';
+
+    // First, save a provenance asset
+    const provenanceGraph = {
+      root: 'root',
+      nodes: {
+        root: {
+          id: 'root',
+          createdOn: 10,
+          children: [],
+        },
+      },
+    };
+    await storageEngine.saveProvenance({
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      sidebar: undefined,
+      stimulus: provenanceGraph,
+    }, identifier);
+
+    // Verify it was saved
+    let storedProvenance = await storageEngine.getProvenance(identifier, participantSession.participantId);
+    expect(storedProvenance).toEqual({
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      sidebar: undefined,
+      stimulus: provenanceGraph,
+    });
+
+    // Now save with null — should delete the existing asset
+    await storageEngine.saveProvenance(null, identifier);
+
+    // Verify it was deleted
+    storedProvenance = await storageEngine.getProvenance(identifier, participantSession.participantId);
+    expect(storedProvenance).toBeNull();
+  });
+
   test('saveAnswers coalesces to the latest answer and finalizeParticipant persists completion after delayed writes', async () => {
     storageEngine = new DelayedLocalStorageEngine(true);
     await storageEngine.connect();

@@ -1453,12 +1453,24 @@ export abstract class StorageEngine {
     return this.parseProvenanceStorageObject(provenanceObject);
   }
 
+  async deleteProvenance(taskName: string) {
+    if (!this.currentParticipantId || !this.studyId) {
+      return;
+    }
+    try {
+      await this._deleteFromStorage(`provenance/${this.currentParticipantId}`, taskName);
+    } catch (error) {
+      console.warn(`Failed to delete provenance for task ${taskName}:`, error);
+    }
+  }
+
   async saveProvenance(
     provenanceGraph: StoredProvenance | null | undefined,
     taskName: string,
   ) {
     const provenanceToSave = normalizeStoredProvenance(provenanceGraph);
     if (!provenanceToSave) {
+      await this.deleteProvenance(taskName);
       return undefined;
     }
 

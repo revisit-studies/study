@@ -90,18 +90,26 @@ export function useNextStep() {
           timedOut: !collectData,
         };
         const answersToPersist = { ...answers, [identifier]: toSave };
-        const handleResponsePersistenceError = (error: unknown) => {
-          console.error('Failed to save participant response data', error);
-          showNotification({
-            title: 'Failed to Save Response',
-            message: 'Your response could not be saved. Please check your connection and try again.',
-            color: 'red',
-          });
-        };
 
         if (storageEngine) {
-          storageEngine.saveAnswers(answersToPersist).catch(handleResponsePersistenceError);
-          storageEngine.saveProvenance(provenanceGraph, identifier).catch(handleResponsePersistenceError);
+          storageEngine.saveAnswers(answersToPersist).catch((error) => {
+            console.error('Failed to save participant response data', error);
+            showNotification({
+              title: 'Failed to Save Response',
+              message: 'Your response could not be saved. Please check your connection and try again.',
+              color: 'red',
+            });
+          });
+          if (provenanceGraph) {
+            storageEngine.saveProvenance(provenanceGraph, identifier).catch((error) => {
+              console.error('Failed to save participant response data', error);
+              showNotification({
+                title: 'Failed to Save Response',
+                message: 'Your response could not be saved. Please check your connection and try again.',
+                color: 'red',
+              });
+            });
+          }
         }
 
         storeDispatch(
