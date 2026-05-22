@@ -8,7 +8,7 @@ import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils/storageEngineHelpers';
-import { Sequence, StoredAnswer } from '../../store/types';
+import { Sequence, StoredAnswer, TrrackedProvenance } from '../../store/types';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { StorageEngine, StorageObject, StorageObjectType } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
@@ -804,6 +804,7 @@ describe.each([
     const identifier = 'intro_0';
     const provenanceGraph = {
       root: 'root',
+      current: 'root',
       nodes: {
         root: {
           id: 'root',
@@ -811,7 +812,7 @@ describe.each([
           children: [],
         },
       },
-    };
+    } as unknown as TrrackedProvenance;
     const answerWithProvenance = {
       ...makeStoredAnswer(identifier, 100),
       provenanceGraph: {
@@ -851,6 +852,7 @@ describe.each([
     // First, save a provenance asset
     const provenanceGraph = {
       root: 'root',
+      current: 'root',
       nodes: {
         root: {
           id: 'root',
@@ -858,7 +860,7 @@ describe.each([
           children: [],
         },
       },
-    };
+    } as unknown as TrrackedProvenance;
     await storageEngine.saveProvenance({
       aboveStimulus: undefined,
       belowStimulus: undefined,
