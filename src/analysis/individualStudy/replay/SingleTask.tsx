@@ -93,7 +93,7 @@ export function SingleTask({
       >
         <Center style={{ width: 'fit-content' }}>
           <Group wrap="nowrap" gap={2}>
-            <Text lineClamp={1} ref={ref} mx={0} style={{ width: 'fit-content', fontWeight: 600 }} size="12px">
+            <Text lineClamp={1} ref={ref} mx={0} style={{ width: 'fit-content', fontWeight: 600, whiteSpace: 'nowrap' }} size="12px">
               {name}
             </Text>
             {hasScreenRecording && (
