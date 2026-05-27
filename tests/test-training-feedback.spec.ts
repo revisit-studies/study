@@ -37,10 +37,9 @@ async function answerTrainingTrialCorrectly(page: Page) {
   await nextClick(page);
 }
 
-async function answerSimpleDropboxIncorrectly(page: Page) {
+async function selectSimpleDropdownIncorrectly(page: Page) {
   await page.getByPlaceholder('Choose mark').click();
   await page.getByRole('option', { name: 'Bubble', exact: true }).click();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
 }
 
 test('allowFailedTraining=true enables Next after max failed attempts', async ({ page }) => {
@@ -56,10 +55,11 @@ test('allowFailedTraining=true enables Next after max failed attempts', async ({
 
   await expect(nextButton).toBeDisabled();
 
-  await answerSimpleDropboxIncorrectly(page);
-  await answerSimpleDropboxIncorrectly(page);
-  await answerSimpleDropboxIncorrectly(page);
-  await answerSimpleDropboxIncorrectly(page);
+  await selectSimpleDropdownIncorrectly(page);
+  await checkAnswerButton.click();
+  await checkAnswerButton.click();
+  await checkAnswerButton.click();
+  await checkAnswerButton.click();
 
   await expect(page.getByText('You didn\'t answer this question correctly after 4 attempts. You can continue to the next question.')).toBeVisible();
   await expect(page.getByText('The correct answer was: Bar.')).toBeVisible();
