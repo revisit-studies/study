@@ -1029,6 +1029,12 @@ export interface BaseIndividualComponent {
   nextButtonEnableTime?: number;
   /** The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig. */
   nextButtonDisableTime?: number;
+  /** The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component. */
+  nextButtonAutoAdvanceTime?: number;
+  /** The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000. */
+  nextButtonAutoAdvanceWarningTime?: number;
+  /** The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`. */
+  nextButtonAutoAdvanceWarningMessage?: string;
   /** Whether to show the previous button. If present, will override the previous button setting in the uiConfig. */
   previousButton?: boolean;
   /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
@@ -1116,8 +1122,8 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.1/src/public/demo-react-trrack/assets)
- * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.4.1/src/public/example-brush-interactions/assets)
+ * https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.2/src/public/demo-react-trrack/assets)
+ * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.4.2/src/public/example-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -1807,7 +1813,7 @@ export type BaseComponents = Record<string, Partial<IndividualComponent>>;
  * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
  * ```json
  * {
- *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.2/src/parser/StudyConfigSchema.json",
  *   "studyMetadata": {
  *     ...
  *   },
@@ -1854,7 +1860,7 @@ export interface StudyConfig {
  *
  * ```json
  * {
- *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/LibraryConfigSchema.json",
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.2/src/parser/LibraryConfigSchema.json",
  *   "baseComponents": {
  *     // BaseComponents here are defined exactly as is in the StudyConfig
  *   },

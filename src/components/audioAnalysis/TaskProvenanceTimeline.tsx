@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import * as d3 from 'd3';
-import { ParticipantData } from '../../storage/types';
 import { TaskProvenanceNodes } from './TaskProvenanceNodes';
+import type { StoredProvenance } from '../../store/types';
+import { PROVENANCE_LOCATIONS } from '../../store/provenance';
 
 export function TaskProvenanceTimeline({
   xScale,
-  answers,
+  provenanceGraph,
   width,
   height,
   currentNode,
@@ -14,7 +15,7 @@ export function TaskProvenanceTimeline({
   margin,
 }: {
   xScale: d3.ScaleLinear<number, number>;
-  answers: ParticipantData['answers'];
+  provenanceGraph: StoredProvenance;
   width: number;
   height: number;
   currentNode: string | null;
@@ -34,34 +35,22 @@ export function TaskProvenanceTimeline({
   );
 
   const provenanceNodes = useMemo(
-    () => Object.entries(answers)
-      .filter((entry) => (trialName ? trialName === entry[0] : true))
-      .map((entry) => {
-        const [name, answer] = entry;
-
-        const provenanceGraphComponents = Object.keys(answer.provenanceGraph).map(
-          (provenanceArea) => {
-            const graph = answer.provenanceGraph[
-                  provenanceArea as keyof typeof answer.provenanceGraph
-            ];
-            if (graph) {
-              return (
-                <TaskProvenanceNodes
-                  key={name + provenanceArea}
-                  height={height}
-                  currentNode={currentNode}
-                  xScale={newXScale}
-                  provenance={graph}
-                />
-              );
-            }
-            return null;
-          },
+    () => PROVENANCE_LOCATIONS.map((provenanceArea) => {
+      const graph = provenanceGraph[provenanceArea];
+      if (graph) {
+        return (
+          <TaskProvenanceNodes
+            key={`${trialName}-${provenanceArea}`}
+            height={height}
+            currentNode={currentNode}
+            xScale={newXScale}
+            provenance={graph}
+          />
         );
-
-        return provenanceGraphComponents;
-      }),
-    [currentNode, height, answers, trialName, newXScale],
+      }
+      return null;
+    }),
+    [currentNode, height, provenanceGraph, trialName, newXScale],
   );
 
   return (

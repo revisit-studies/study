@@ -44,7 +44,7 @@ export function useNextStep() {
 
   const studyId = useStudyId();
 
-  const dataCollectionEnabled = useMemo(() => modes.dataCollectionEnabled, [modes]);
+  const { dataCollectionEnabled } = modes;
 
   // Status of the next button. If false, the next button should be disabled
   const isAnalysis = useIsAnalysis();
@@ -73,6 +73,7 @@ export function useNextStep() {
       }, {}) as StoredAnswer['answer'] : {};
       const { provenanceGraph } = trialValidationCopy || {};
       const endTime = Date.now();
+      const answerToPersist = collectData ? answer : {};
 
       // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
       const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
@@ -80,10 +81,9 @@ export function useNextStep() {
       if (dataCollectionEnabled && (storedAnswer.endTime === -1 || clickedPrevious)) {
         const toSave = {
           ...storedAnswer,
-          answer: collectData ? answer : {},
+          answer: answerToPersist,
           startTime,
           endTime,
-          provenanceGraph,
           windowEvents: currentWindowEvents,
           timedOut: !collectData,
           responseSubmitAttempted,
@@ -92,13 +92,23 @@ export function useNextStep() {
 
         if (storageEngine) {
           storageEngine.saveAnswers(answersToPersist).catch((error) => {
-            console.error('Failed to save participant answers', error);
+            console.error('Failed to save participant response data', error);
             showNotification({
               title: 'Failed to Save Response',
               message: 'Your response could not be saved. Please check your connection and try again.',
               color: 'red',
             });
           });
+          if (provenanceGraph) {
+            storageEngine.saveProvenance(provenanceGraph, identifier).catch((error) => {
+              console.error('Failed to save participant response data', error);
+              showNotification({
+                title: 'Failed to Save Response',
+                message: 'Your response could not be saved. Please check your connection and try again.',
+                color: 'red',
+              });
+            });
+          }
         }
 
         storeDispatch(
@@ -124,14 +134,17 @@ export function useNextStep() {
       const answersWithNewAnswer = {
         ...answers,
         [identifier]: {
-          answer,
+          answer: answerToPersist,
           startTime,
           endTime,
-          provenanceGraph,
           windowEvents: currentWindowEvents,
           responseSubmitAttempted,
+          timedOut: !collectData,
         },
       };
+      const answersForSkipEvaluation = Object.fromEntries(
+        Object.entries(answersWithNewAnswer).filter(([_, responseObj]) => !responseObj.timedOut),
+      ) as typeof answersWithNewAnswer;
 
       // Check if the skip block should be triggered
       if (hasSkipBlock) {
@@ -143,10 +156,10 @@ export function useNextStep() {
         skipConditions.some((condition) => {
           let conditionIsTriggered = false;
 
-          const validationCandidates = Object.fromEntries(Object.entries(answersWithNewAnswer).filter(([key]) => {
+          const validationCandidates = Object.fromEntries(Object.entries(answersForSkipEvaluation).filter(([key]) => {
             const componentIndex = parseInt(key.slice(key.lastIndexOf('_') + 1), 10);
             return componentIndex >= condition.firstIndex && componentIndex <= currentStep;
-          })) as unknown as StoredAnswer;
+          })) as Record<string, StoredAnswer>;
 
           // Slim down the validationCandidates to only include the skip condition's component
           const componentsToCheck = condition.check !== 'block' ? Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name) : Object.entries(validationCandidates);

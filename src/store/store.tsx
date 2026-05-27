@@ -6,8 +6,8 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import {
   ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData,
 } from '../parser/types';
-import {
-  StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
+import type {
+  AlertModalState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/types';
@@ -26,6 +26,7 @@ export async function studyStoreCreator(
   completed: boolean,
   storageEngineFailedToConnect: boolean,
   isStalledConfig: boolean = false,
+  initialAlertModal?: AlertModalState,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
@@ -48,12 +49,6 @@ export async function studyStoreCreator(
           incorrectAnswers: {},
           startTime: 0,
           endTime: -1,
-          provenanceGraph: {
-            aboveStimulus: undefined,
-            belowStimulus: undefined,
-            stimulus: undefined,
-            sidebar: undefined,
-          },
           windowEvents: [],
           timedOut: false,
           helpButtonClickedCount: 0,
@@ -112,7 +107,7 @@ export async function studyStoreCreator(
     config,
     showStudyBrowser: true,
     showHelpText: false,
-    alertModal: { show: false, message: '', title: '' },
+    alertModal: initialAlertModal ?? { show: false, message: '', title: '' },
     trialValidation: Object.keys(answers).length > 0 ? allValid : emptyValidation,
     responseSubmitAttempted: {},
     stimulusSubmitAttempted: {},
@@ -149,6 +144,9 @@ export async function studyStoreCreator(
       setConfig(state, { payload }: PayloadAction<StudyConfig>) {
         state.config = payload;
       },
+      setMetadata(state, { payload }: PayloadAction<ParticipantMetadata>) {
+        state.metadata = payload;
+      },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       pushToFuncSequence(state, { payload }: PayloadAction<{ component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined }>) {
         if (!state.funcSequence[payload.funcName]) {
@@ -172,12 +170,6 @@ export async function studyStoreCreator(
           trialOrder: `${payload.index}_${payload.funcIndex}`,
           startTime: 0,
           endTime: -1,
-          provenanceGraph: {
-            aboveStimulus: undefined,
-            belowStimulus: undefined,
-            stimulus: undefined,
-            sidebar: undefined,
-          },
           windowEvents: [],
           timedOut: false,
           helpButtonClickedCount: 0,
@@ -207,7 +199,7 @@ export async function studyStoreCreator(
       toggleShowHelpText: (state) => {
         state.showHelpText = !state.showHelpText;
       },
-      setAlertModal: (state, action: PayloadAction<{ show: boolean; message: string; title: string }>) => {
+      setAlertModal: (state, action: PayloadAction<AlertModalState>) => {
         state.alertModal = action.payload;
       },
       setReactiveAnswers: (state, action: PayloadAction<Record<string, ValueOf<StoredAnswer['answer']>>>) => {

@@ -1,5 +1,5 @@
 import {
-  Center, Stack, Text,
+  Box, Title,
 } from '@mantine/core';
 import {
   useEffect,
@@ -57,20 +57,47 @@ export function AudioTest({ setAnswer }: StimulusParams<undefined>) {
   }, [setAnswer]);
 
   return (
-    <Center style={{ height: '70%', width: '100%' }}>
-      <Stack>
-        <Text ta="center">
-          Please allow us to access your microphone. There may be a popup in your browser window asking for access, click accept.
-        </Text>
-        <Text ta="center">
-          Once we can confirm that your microphone is on and we hear you say something, the continue button will become available.
-        </Text>
-        <Text ta="center" style={{ fontWeight: 700 }}>
-          If you are not comfortable or able to speak English during this study, please return the study.
-        </Text>
-        <Center><RecordingAudioWaveform height={200} width={400} /></Center>
-      </Stack>
-    </Center>
+    <Box p="md">
+      <Title order={1} size="h2">
+        Audio Recording Permission
+      </Title>
+
+      <p>
+        This study requires recording of your
+        {' '}
+        <strong>audio</strong>
+        . If you&apos;re not comfortable, you may exit and return the study.
+      </p>
+      <p>Follow the steps below to grant microphone access and confirm that your audio is working.</p>
+
+      <ol>
+        <li>
+          <strong>Please allow us to access your microphone.</strong>
+          {' '}
+          There may be a popup in your browser window asking for access. Click allow to continue.
+        </li>
+        <li>
+          <strong>Speak</strong>
+          {' '}
+          into your microphone to check if audio is working.
+          <Box h={200} w={400} bd="1px solid #ccc" mt="sm">
+            <RecordingAudioWaveform height={200} width={400} />
+          </Box>
+        </li>
+      </ol>
+
+      <strong>Note:</strong>
+      <ul>
+        <li>
+          Once we can confirm that your microphone is on and we hear you say something, the
+          {' '}
+          <b>Continue</b>
+          {' '}
+          button will become available.
+        </li>
+        <li>If you are not comfortable or able to speak English during this study, please return the study.</li>
+      </ul>
+    </Box>
   );
 }
 

@@ -6,7 +6,9 @@ import {
 } from 'react';
 import { Provider } from 'react-redux';
 import { RouteObject, useRoutes, useSearchParams } from 'react-router';
-import { LoadingOverlay, Title } from '@mantine/core';
+import {
+  Button, LoadingOverlay, Stack, Text, Title,
+} from '@mantine/core';
 import {
   GlobalConfig,
   Nullable,
@@ -26,17 +28,94 @@ import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig, resolveConfigKey } from '../utils/fetchConfig';
-import { ParticipantMetadata } from '../store/types';
+import type { AlertModalState, ParticipantMetadata } from '../store/types';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
 import { hash } from '../storage/engines/utils/storageEngineHelpers';
+import type { StorageEngine, REVISIT_MODE } from '../storage/engines/types';
 import {
   filterSequenceByCondition,
   parseConditionParam,
   resolveParticipantConditions,
 } from '../utils/handleConditionLogic';
+
+type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
+
+const GENERIC_STARTUP_ERROR = 'There was a problem loading the study.';
+const RESUME_STARTUP_ERROR = 'This study session could not be resumed.';
+
+export function getScreenOrientationType(screen: Screen) {
+  return screen.orientation?.type ?? '';
+}
+
+export function isStorageStartupFailure(
+  storageEngine: StartupStorageStatus,
+  configuredEngine: string,
+) {
+  return !storageEngine.isConnected() || storageEngine.getEngine() !== configuredEngine;
+}
+
+export function getStartupErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  if (typeof error === 'string' && error.trim().length > 0) {
+    return error;
+  }
+
+  return GENERIC_STARTUP_ERROR;
+}
+
+export function getInitialStartupAlert(
+  error: unknown,
+  developmentModeEnabled: boolean,
+  resumeParticipantId?: string | null,
+): AlertModalState {
+  return {
+    show: true,
+    title: 'Problem loading the study',
+    message: developmentModeEnabled
+      ? getStartupErrorMessage(error)
+      : (resumeParticipantId ? RESUME_STARTUP_ERROR : GENERIC_STARTUP_ERROR),
+  };
+}
+
+function createParticipantMetadata(ip: string = ''): ParticipantMetadata {
+  return {
+    language: navigator.language,
+    userAgent: navigator.userAgent,
+    resolution: {
+      width: window.screen.width,
+      height: window.screen.height,
+      availHeight: window.screen.availHeight,
+      availWidth: window.screen.availWidth,
+      colorDepth: window.screen.colorDepth,
+      orientation: getScreenOrientationType(window.screen),
+      pixelDepth: window.screen.pixelDepth,
+    },
+    ip,
+  };
+}
+
+function createEmptyParticipantMetadata(): ParticipantMetadata {
+  return {
+    language: '',
+    userAgent: '',
+    resolution: {
+      width: 0,
+      height: 0,
+      availHeight: 0,
+      availWidth: 0,
+      colorDepth: 0,
+      orientation: '',
+      pixelDepth: 0,
+    },
+    ip: '',
+  };
+}
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
@@ -53,19 +132,27 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   useEffect(() => {
     if (routeStudyId !== '__revisit-widget') {
-      getStudyConfig(routeStudyId, globalConfig).then((config) => {
+      const loadStudyConfig = async () => {
+        const config = await getStudyConfig(routeStudyId, globalConfig);
         setActiveConfig(config);
-      });
-      return () => { };
+      };
+
+      loadStudyConfig();
+      return undefined;
     }
+
     if (globalConfig && routeStudyId) {
       const messageListener = (event: MessageEvent) => {
         if (event.data.type === 'revisitWidget/CONFIG') {
-          parseStudyConfig(event.data.payload).then(async (config) => {
+          const loadWidgetConfig = async () => {
+            const config = await parseStudyConfig(event.data.payload);
             setActiveConfig(config);
+
             const sequenceArray = await generateSequenceArray(config);
             window.parent.postMessage({ type: 'revisitWidget/SEQUENCE_ARRAY', payload: sequenceArray }, '*');
-          });
+          };
+
+          loadWidgetConfig();
         }
       };
 
@@ -77,11 +164,14 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         window.removeEventListener('message', messageListener);
       };
     }
-    return () => { };
+
+    return undefined;
   }, [globalConfig, routeStudyId]);
 
   const [routes, setRoutes] = useState<RouteObject[]>([]);
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
+  const [isCompletionCheckResolved, setIsCompletionCheckResolved] = useState(false);
+  const [completionCheckError, setCompletionCheckError] = useState<string | null>(null);
   const { storageEngine } = useStorageEngine();
   const [searchParams] = useSearchParams();
 
@@ -89,62 +179,68 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const studyCondition = useMemo(() => parseConditionParam(searchParams.get('condition')), [searchParams]);
 
   useEffect(() => {
-    async function initializeUserStoreRouting() {
-      // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
-      if (!storageEngine || !activeConfig || !canonicalStudyId) return;
+    let isCancelled = false;
+
+    async function fetchParticipantIp() {
+      const ipTimeoutController = new AbortController();
+      const ipTimeoutId = window.setTimeout(() => ipTimeoutController.abort(), 1200);
 
       try {
-        // Make sure that we have a study database and that the study database has a sequence array
-        await storageEngine.initializeStudyDb(canonicalStudyId);
-        await storageEngine.saveConfig(activeConfig);
-
-        const sequenceArray = await storageEngine.getSequenceArray();
-        if (!sequenceArray) {
-          await storageEngine.setSequenceArray(
-            await generateSequenceArray(activeConfig),
-          );
-        }
-
-        const modes = await storageEngine.getModes(canonicalStudyId);
-
-        // Get or generate participant session
-        const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
-          ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
-          || undefined
-          : undefined;
-        const searchParamsObject = Object.fromEntries(searchParams.entries());
-
-        const ipTimeoutController = new AbortController();
-        const ipTimeoutId = window.setTimeout(() => ipTimeoutController.abort(), 1200);
         const ipRes = await fetch('https://api.ipify.org?format=json', {
           signal: ipTimeoutController.signal,
         }).catch(() => '');
-        window.clearTimeout(ipTimeoutId);
-        const ip: { ip: string } = ipRes instanceof Response ? await ipRes.json() : { ip: '' };
 
-        const metadata: ParticipantMetadata = {
-          language: navigator.language,
-          userAgent: navigator.userAgent,
-          resolution: {
-            width: window.screen.width,
-            height: window.screen.height,
-            availHeight: window.screen.availHeight,
-            availWidth: window.screen.availWidth,
-            colorDepth: window.screen.colorDepth,
-            orientation: window.screen.orientation.type,
-            pixelDepth: window.screen.pixelDepth,
-          },
-          ip: ip.ip,
-        };
+        return ipRes instanceof Response ? await ipRes.json() as { ip: string } : { ip: '' };
+      } finally {
+        window.clearTimeout(ipTimeoutId);
+      }
+    }
+
+    async function initializeUserStoreRouting() {
+      // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
+      if (!storageEngine || !activeConfig || !canonicalStudyId) return;
+      setIsCompletionCheckResolved(false);
+      setCompletionCheckError(null);
+
+      let modes: Record<REVISIT_MODE, boolean> | null = null;
+      const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
+        ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) ?? undefined
+        : undefined;
+      try {
+        // Make sure that we have a study database and that the study database has a sequence array
+        await storageEngine.initializeStudyDb(canonicalStudyId);
+
+        const activeHashPromise = hash(JSON.stringify(activeConfig));
+
+        await storageEngine.saveConfig(activeConfig);
+
+        const sequenceArray = await storageEngine.getSequenceArray();
+
+        if (!sequenceArray) {
+          const generatedSequenceArray = await generateSequenceArray(activeConfig);
+
+          await storageEngine.setSequenceArray(generatedSequenceArray);
+        }
+
+        // Get or generate participant session
+        const searchParamsObject = Object.fromEntries(searchParams.entries());
+
+        const [resolvedModes, activeHash] = await Promise.all([
+          storageEngine.getModes(canonicalStudyId),
+          activeHashPromise,
+        ]);
+        modes = resolvedModes;
+
+        const initialMetadata = createParticipantMetadata();
 
         let participantSession = await storageEngine.initializeParticipantSession(
           searchParamsObject,
           activeConfig,
-          metadata,
+          initialMetadata,
           participantId || urlParticipantId,
         );
 
-        if (studyCondition.length > 0 && modes.developmentModeEnabled) {
+        if (studyCondition.length > 0 && resolvedModes.developmentModeEnabled) {
           const updatedSearchParams = {
             ...participantSession.searchParams,
             condition: studyCondition.join(','),
@@ -157,40 +253,104 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             conditions: studyCondition,
           };
         }
-        const activeHash = await hash(JSON.stringify(activeConfig));
-
         let participantConfig = activeConfig;
-
         if (participantSession.participantConfigHash !== activeHash) {
-          participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], canonicalStudyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
+          participantConfig = (await storageEngine.getAllConfigsFromHash(
+            [participantSession.participantConfigHash],
+            canonicalStudyId,
+          ))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
         }
 
-        const effectiveStudyCondition = resolveParticipantConditions({
+        const resolvedCondition = resolveParticipantConditions({
           urlCondition: studyCondition,
           participantConditions: participantSession.conditions,
           participantSearchParamCondition: participantSession.searchParams?.condition,
-          allowUrlOverride: modes.developmentModeEnabled,
+          allowUrlOverride: resolvedModes.developmentModeEnabled,
         });
-        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, effectiveStudyCondition);
-        const participantCompleted = await storageEngine.getParticipantCompletionStatus(participantSession.participantId);
+        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, resolvedCondition);
+
         // Initialize the redux stores
         const newStore = await studyStoreCreator(
           canonicalStudyId,
           participantConfig,
           filteredParticipantSequence,
-          metadata,
+          participantSession.metadata,
           participantSession.answers,
-          modes,
+          resolvedModes,
           participantSession.participantId,
-          participantCompleted,
+          false,
           false,
           participantSession.participantConfigHash !== activeHash,
         );
+
+        if (isCancelled) {
+          return;
+        }
+
         setStore(newStore);
+
+        if (resolvedModes.dataCollectionEnabled) {
+          fetchParticipantIp().then(async (ip) => {
+            if (isCancelled || !ip.ip || participantSession.metadata.ip === ip.ip) {
+              return;
+            }
+
+            const metadataWithIp = createParticipantMetadata(ip.ip);
+            participantSession = {
+              ...participantSession,
+              metadata: metadataWithIp,
+            };
+
+            await storageEngine.updateParticipantMetadata(metadataWithIp);
+
+            if (!isCancelled) {
+              newStore.store.dispatch(newStore.actions.setMetadata(metadataWithIp));
+            }
+          }).catch((error) => {
+            console.error('Error fetching participant IP:', error);
+          });
+        }
+
+        if (!resolvedModes.dataCollectionEnabled) {
+          setIsCompletionCheckResolved(true);
+        } else {
+          storageEngine.getParticipantCompletionStatus(participantSession.participantId).then((participantCompleted) => {
+            if (!isCancelled) {
+              newStore.store.dispatch(newStore.actions.setParticipantCompleted(participantCompleted));
+              setIsCompletionCheckResolved(true);
+            }
+          }).catch((error) => {
+            console.error('Error fetching participant completion status:', error);
+            if (!isCancelled) {
+              setCompletionCheckError('We could not verify whether this study session was already completed. Please reload this page and try again.');
+              // A transient completion-status lookup failure should not block study entry.
+              setIsCompletionCheckResolved(true);
+            }
+          });
+        }
       } catch (error) {
         console.error('Error initializing user store routing:', error);
+        const isStorageFailure = isStorageStartupFailure(
+          storageEngine,
+          import.meta.env.VITE_STORAGE_ENGINE,
+        );
+        const resolvedModes = modes ?? await storageEngine.getModes(canonicalStudyId).catch(() => null);
+        const developmentModeEnabledForAlert = resolvedModes?.developmentModeEnabled ?? false;
+        const fallbackModes = {
+          developmentModeEnabled: resolvedModes?.developmentModeEnabled ?? true,
+          dataSharingEnabled: resolvedModes?.dataSharingEnabled ?? true,
+          dataCollectionEnabled: false,
+        };
+        const resumeParticipantId = participantId
+          || urlParticipantId
+          || await storageEngine.peekCurrentParticipantId(canonicalStudyId).catch(() => undefined);
+        const initialAlertModal = !isStorageFailure
+          ? getInitialStartupAlert(error, developmentModeEnabledForAlert, resumeParticipantId)
+          : undefined;
+
         // Fallback: initialize the store with empty data
-        const generatedSequences = generateSequenceArray(activeConfig);
+        const generatedSequences = await generateSequenceArray(activeConfig);
+
         const matchingSequence = generatedSequences[0];
         const fallbackSequence = filterSequenceByCondition(
           matchingSequence,
@@ -201,27 +361,26 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           canonicalStudyId,
           activeConfig,
           fallbackSequence,
-          {
-            language: '',
-            userAgent: '',
-            resolution: {
-              width: 0,
-              height: 0,
-              availHeight: 0,
-              availWidth: 0,
-              colorDepth: 0,
-              orientation: '',
-              pixelDepth: 0,
-            },
-            ip: '',
-          },
+          createEmptyParticipantMetadata(),
           {},
-          { developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: false },
+          fallbackModes,
           '',
           false,
-          true,
+          isStorageFailure,
+          false,
+          initialAlertModal,
         );
+
+        if (isCancelled) {
+          return;
+        }
+
         setStore(emptyStore);
+        setIsCompletionCheckResolved(true);
+      }
+
+      if (isCancelled) {
+        return;
       }
 
       // Initialize the routing
@@ -255,26 +414,52 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       ]);
     }
     initializeUserStoreRouting();
+    return () => {
+      isCancelled = true;
+    };
   }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
+  const isLoading = isValidStudyId && (routes.length === 0 || store === null || !isCompletionCheckResolved);
 
-  let toRender: ReactNode = null;
+  let content: ReactNode = null;
 
-  // Definitely a 404
   if (!isValidStudyId) {
-    toRender = <ResourceNotFound />;
-  } else if (routes.length === 0) {
-    toRender = <LoadingOverlay visible />;
-  } else {
-    // If routing is null, we didn't match any routes
-    toRender = routing && store ? (
+    content = <ResourceNotFound />;
+  } else if (routing && store) {
+    content = (
       <StudyStoreContext.Provider value={store}>
         <Provider store={store.store}>{routing}</Provider>
       </StudyStoreContext.Provider>
-    ) : (
-      <ResourceNotFound />
     );
+  } else if (!isLoading) {
+    content = <ResourceNotFound />;
   }
-  return toRender;
+
+  return (
+    <>
+      <LoadingOverlay visible={isLoading} />
+      {isLoading && completionCheckError && (
+        <Stack
+          align="center"
+          gap="sm"
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 1001,
+            maxWidth: 420,
+            textAlign: 'center',
+          }}
+        >
+          <Text>{completionCheckError}</Text>
+          <Button onClick={() => window.location.reload()}>
+            Reload
+          </Button>
+        </Stack>
+      )}
+      {content}
+    </>
+  );
 }
