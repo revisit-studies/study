@@ -1,6 +1,8 @@
 import JSZip from 'jszip';
 import { StorageEngine } from '../storage/engines/types';
 import { StudyConfig } from '../parser/types';
+import { getLegacyStoredAnswerProvenance } from '../store/provenance';
+import type { StoredAnswer } from '../store/types';
 
 export async function handleTaskAudio({
   storageEngine,
@@ -84,6 +86,42 @@ async function downloadZip(zip: JSZip, fileName: string) {
     download: fileName,
   }).click();
   URL.revokeObjectURL(url);
+}
+
+async function downloadParticipantsProvenance({
+  storageEngine,
+  participantId,
+  identifier,
+  namePrefix,
+  zip,
+  answer,
+}: {
+  storageEngine: StorageEngine;
+  participantId: string;
+  identifier: string;
+  namePrefix: string;
+  zip?: JSZip;
+  answer?: StoredAnswer;
+}) {
+  const provenanceZip = zip || new JSZip();
+
+  try {
+    const legacyProvenance = answer ? getLegacyStoredAnswerProvenance(answer) : null;
+    const provenance = legacyProvenance || await storageEngine.getProvenance(identifier, participantId);
+
+    if (provenance) {
+      provenanceZip.file(
+        `${namePrefix}_${participantId}_${identifier}_provenance.json`,
+        JSON.stringify(provenance, null, 2),
+      );
+    }
+
+    if (!zip) {
+      downloadZip(provenanceZip, `${namePrefix}_${participantId}_${identifier}_provenance.zip`);
+    }
+  } catch (error) {
+    console.warn(`Failed to fetch provenance for ${identifier}:`, error);
+  }
 }
 
 async function downloadParticipantsAudio({
@@ -215,6 +253,45 @@ export async function downloadParticipantsScreenRecordingZip({
   await Promise.all(screenRecordingPromises);
 
   await downloadZip(zip, `${namePrefix}_screenRecording.zip`);
+}
+
+export async function downloadParticipantsProvenanceZip({
+  storageEngine,
+  participants,
+  studyId,
+  fileName,
+}: {
+  storageEngine: StorageEngine;
+  participants: Array<{
+    participantId: string;
+    answers: Record<string, StoredAnswer>;
+  }>;
+  studyId: string;
+  fileName?: string | null;
+}) {
+  const namePrefix = fileName || studyId;
+  const zip = new JSZip();
+
+  const provenancePromises = participants.flatMap((participant) => {
+    const entries = Object.entries(participant.answers)
+      .filter(([, ans]) => ans.endTime > 0)
+      .sort(([, a], [, b]) => a.startTime - b.startTime);
+
+    return entries.map(async ([identifier, ans]) => {
+      await downloadParticipantsProvenance({
+        storageEngine,
+        participantId: participant.participantId,
+        identifier: ans.identifier || identifier,
+        namePrefix,
+        zip,
+        answer: ans,
+      });
+    });
+  });
+
+  await Promise.all(provenancePromises);
+
+  await downloadZip(zip, `${namePrefix}_provenance.zip`);
 }
 
 export async function downloadConfigFile({
