@@ -725,18 +725,6 @@ export function ResponseBlock({
             <Text c="black" size="sm">
               {summaryMessage}
             </Text>
-            {unresolvedResponseIds.length >= 2 && (
-              <Button
-                ml="auto"
-                size="xs"
-                variant="subtle"
-                color="yellow"
-                disabled={isAnalysis}
-                onClick={scrollToFirstUnresolvedQuestion}
-              >
-                Next question
-              </Button>
-            )}
           </Group>
         </Box>
       )}
