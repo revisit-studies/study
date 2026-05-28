@@ -15,8 +15,6 @@ import { studyComponentToIndividualComponent } from '../../../utils/handleCompon
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
-const TASK_SCROLL_MIN_WIDTH = 120;
-const TASK_SCROLL_MAX_WIDTH = 480;
 
 const margin = {
   left: 20, top: 20, right: 20, bottom: 20,
@@ -31,16 +29,6 @@ const sortedTaskNames = (a: [string, StoredAnswer], b: [string, StoredAnswer]) =
 export function AllTasksTimeline({
   participantData, width, studyId, studyConfig, maxLength,
 }: { participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined }) {
-  const timelineWidth = useMemo(() => {
-    const taskEntries = Object.entries(participantData.answers || {});
-    if (taskEntries.length === 0) {
-      return width;
-    }
-    const timelineMinWidth = taskEntries.length * TASK_SCROLL_MIN_WIDTH + margin.left + margin.right;
-    const timelineMaxWidth = taskEntries.length * TASK_SCROLL_MAX_WIDTH + margin.left + margin.right;
-    return Math.min(Math.max(width, timelineMinWidth), timelineMaxWidth);
-  }, [participantData.answers, width]);
-
   const percentComplete = useMemo(() => {
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0);
 
@@ -52,16 +40,16 @@ export function AllTasksTimeline({
 
     const extent = d3.extent(allStartTimes) as [number, number];
 
-    const scale = d3.scaleLinear([margin.left, (timelineWidth * percentComplete - (percentComplete !== 1 ? 0 : margin.right))]).domain([extent[0], maxLength ? extent[0] + maxLength : extent[1]]).clamp(true);
+    const scale = d3.scaleLinear([margin.left, (width * percentComplete - (percentComplete !== 1 ? 0 : margin.right))]).domain([extent[0], maxLength ? extent[0] + maxLength : extent[1]]).clamp(true);
 
     return scale;
-  }, [maxLength, participantData.answers, percentComplete, timelineWidth]);
+  }, [maxLength, participantData.answers, percentComplete, width]);
 
   const incompleteXScale = useMemo(() => {
-    const scale = d3.scaleLinear([timelineWidth * percentComplete, timelineWidth - margin.right]).domain([0, Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).length]).clamp(true);
+    const scale = d3.scaleLinear([width * percentComplete, width - margin.right]).domain([0, Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).length]).clamp(true);
 
     return scale;
-  }, [participantData.answers, percentComplete, timelineWidth]);
+  }, [participantData.answers, percentComplete, width]);
 
   const maxHeight = useMemo(() => {
     const sortedEntries = Object.entries(participantData.answers || {}).filter((answer) => !!(answer[1].startTime)).sort((a, b) => a[1].startTime - b[1].startTime);
@@ -197,14 +185,14 @@ export function AllTasksTimeline({
       }
 
       return (
-        browsedAwayList.map((browse, i) => <Tooltip withinPortal key={i} label="Browsed away"><rect x={xScale(browse[0])} width={xScale(browse[1]) - xScale(browse[0])} y={maxHeight - 5} height={10} /></Tooltip>)
+        browsedAwayList.map((browse, i) => <Tooltip withinPortal key={i} label="Browsed away"><rect x={xScale(browse[0])} width={Math.max(0, xScale(browse[1]) - xScale(browse[0]))} y={maxHeight - 5} height={10} /></Tooltip>)
       );
     });
   }, [xScale, maxHeight, participantData.answers]);
 
   return (
-    <Stack gap={15} style={{ width: '100%', overflowX: 'auto' }}>
-      <svg style={{ width: timelineWidth, height: maxHeight, overflow: 'visible' }}>
+    <Stack gap={15} style={{ width: '100%' }}>
+      <svg style={{ width, height: maxHeight, overflow: 'visible' }}>
         {tasks.map((t) => t.line)}
         {tasks.map((t) => t.label)}
         {browsedAway}
