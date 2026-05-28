@@ -52,6 +52,8 @@ export function ParticipantRejectModal({
   const currentAndSelectedParticipants = useMemo(() => [...selectedParticipants, currentParticipantData].filter((p) => p !== null) as ParticipantData[], [selectedParticipants, currentParticipantData]);
   const rejectedParticipantsCount = useMemo(() => currentAndSelectedParticipants.filter((p) => p.rejected).length, [currentAndSelectedParticipants]);
   const nonRejectedParticipantsCount = useMemo(() => currentAndSelectedParticipants.filter((p) => !p.rejected).length, [currentAndSelectedParticipants]);
+  const rejectParticipantLabel = `Reject Participant${nonRejectedParticipantsCount === 1 ? '' : 's'}`;
+  const undoRejectParticipantLabel = `Undo Reject Participant${rejectedParticipantsCount === 1 ? '' : 's'}`;
 
   const rejectParticipant = useCallback(async (rejectParticipantId: string, reason: string) => {
     if (storageEngine && studyId) {
@@ -111,16 +113,14 @@ export function ParticipantRejectModal({
           {rejectedParticipantsCount > 0 && (
             <Tooltip label="Only admins can undo rejection" disabled={user.isAdmin}>
               <Button disabled={!user.isAdmin} onClick={() => setModalUndoRejectOpened(true)} color="blue">
-                Undo Reject
-                {!footer ? ` Participant${rejectedParticipantsCount === 1 ? '' : 's'} (${rejectedParticipantsCount})` : ''}
+                {footer ? 'Undo Reject' : `${undoRejectParticipantLabel} (${rejectedParticipantsCount})`}
               </Button>
             </Tooltip>
           )}
           {nonRejectedParticipantsCount > 0 && (
             <Tooltip label="Only admins can reject participants" disabled={user.isAdmin}>
               <Button disabled={!user.isAdmin} onClick={() => setModalRejectOpened(true)} color="red">
-                Reject
-                {!footer ? ` Participant${nonRejectedParticipantsCount === 1 ? '' : 's'} (${nonRejectedParticipantsCount})` : ''}
+                {footer ? 'Reject' : `${rejectParticipantLabel} (${nonRejectedParticipantsCount})`}
               </Button>
             </Tooltip>
           )}
@@ -129,7 +129,9 @@ export function ParticipantRejectModal({
       <Modal
         opened={modalRejectOpened}
         onClose={() => setModalRejectOpened(false)}
-        title={`Reject Participant${nonRejectedParticipantsCount === 1 ? '' : 's'} (${nonRejectedParticipantsCount})`}
+        title={footer
+          ? rejectParticipantLabel
+          : `${rejectParticipantLabel} (${nonRejectedParticipantsCount})`}
       >
         <Alert
           icon={<IconAlertTriangle size={16} />}
@@ -172,7 +174,7 @@ export function ParticipantRejectModal({
             Cancel
           </Button>
           <Button color="red" onClick={handleRejectParticipant}>
-            {`Reject Participant${nonRejectedParticipantsCount === 1 ? '' : 's'}`}
+            {rejectParticipantLabel}
           </Button>
         </Flex>
       </Modal>
@@ -180,11 +182,9 @@ export function ParticipantRejectModal({
       <Modal
         opened={modalUndoRejectOpened}
         onClose={() => setModalUndoRejectOpened(false)}
-        title={(
-          <Text>
-            {`Undo Reject Participant${rejectedParticipantsCount === 1 ? '' : 's'} (${rejectedParticipantsCount})`}
-          </Text>
-        )}
+        title={footer
+          ? undoRejectParticipantLabel
+          : `${undoRejectParticipantLabel} (${rejectedParticipantsCount})`}
       >
         <Alert
           icon={<IconAlertTriangle size={16} />}
@@ -218,7 +218,7 @@ export function ParticipantRejectModal({
             Cancel
           </Button>
           <Button color="blue" onClick={handleUndoRejectParticipant}>
-            {`Undo Reject Participant${rejectedParticipantsCount === 1 ? '' : 's'}`}
+            {undoRejectParticipantLabel}
           </Button>
         </Flex>
       </Modal>
