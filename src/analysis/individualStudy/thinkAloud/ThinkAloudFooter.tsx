@@ -125,6 +125,7 @@ export function ThinkAloudFooter({
     async function fetchAssetsUrl() {
       if (!storageEngine || !participantId || !currentTrial) {
         setAudioUrl(null);
+        setScreenRecordingUrl(null);
         return;
       }
 
@@ -599,7 +600,7 @@ export function ThinkAloudFooter({
             )}
             {screenRecordingUrl && (
               <Tooltip label="Download screen recording">
-                <ActionIcon variant="filled" size={30} onClick={handleDownloadScreenRecording}>
+                <ActionIcon variant="light" size={30} onClick={handleDownloadScreenRecording}>
                   <IconDeviceDesktopDown />
                 </ActionIcon>
               </Tooltip>
