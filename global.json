@@ -51,6 +51,7 @@
     "test-likert-matrix",
     "test-parser-errors",
     "test-randomization",
+    "test-component-timeout",
     "test-skip-logic",
     "test-step-logic"
   ],
@@ -212,6 +213,10 @@
     },
     "test-randomization": {
       "path": "test-randomization/config.json",
+      "test": true
+    },
+    "test-component-timeout": {
+      "path": "test-component-timeout/config.json",
       "test": true
     },
     "test-skip-logic": {

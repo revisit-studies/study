@@ -8,13 +8,15 @@
       "path": "libraries/screen-recording/assets/ScreenRecording.tsx",
       "nextButtonLocation": "belowStimulus",
       "nextButtonText": "Continue",
-      "recordAudio": false,
-      "response": [{
-        "hidden": true,
-        "type": "reactive",
-        "id": "screenRecordingPermission",
-        "prompt": "Screen recording enabled"
-      }]
+      "recordScreen": true,
+      "response": [
+        {
+          "hidden": true,
+          "type": "reactive",
+          "id": "screenRecordingPermission",
+          "prompt": "Screen recording enabled"
+        }
+      ]
     }
   },
   "sequences": {}
