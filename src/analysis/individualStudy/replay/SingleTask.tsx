@@ -14,6 +14,7 @@ const LABEL_DISTANCE = 25;
 const LABEL_HEIGHT = 20;
 const TASK_GAP = 1;
 const TASK_MIN_WIDTH = 32;
+const LABEL_MAX_WIDTH = 160;
 const ICON_SIZE = 14;
 const ICON_GAP = 2;
 
@@ -93,7 +94,7 @@ export function SingleTask({
       >
         <Center style={{ width: 'fit-content' }}>
           <Group wrap="nowrap" gap={2}>
-            <Text lineClamp={1} ref={ref} mx={0} style={{ width: 'fit-content', fontWeight: 600, whiteSpace: 'nowrap' }} size="12px">
+            <Text truncate={!isHover} ref={ref} mx={0} style={{ maxWidth: isHover ? undefined : LABEL_MAX_WIDTH, fontWeight: 600, whiteSpace: 'nowrap' }} size="12px">
               {name}
             </Text>
             {hasScreenRecording && (
