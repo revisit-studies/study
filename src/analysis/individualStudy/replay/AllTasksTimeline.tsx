@@ -3,7 +3,7 @@ import {
 } from 'react';
 import * as d3 from 'd3';
 import {
-  Stack, Tooltip, Text,
+  Center, Stack, Tooltip, Text,
 } from '@mantine/core';
 import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
@@ -191,13 +191,15 @@ export function AllTasksTimeline({
   }, [xScale, maxHeight, participantData.answers]);
 
   return (
-    <Stack gap={15} style={{ width: '100%' }}>
-      <svg style={{ width, height: maxHeight, overflow: 'visible' }}>
-        {tasks.map((t) => t.line)}
-        {tasks.map((t) => t.label)}
-        {browsedAway}
-      </svg>
-    </Stack>
+    <Center>
+      <Stack gap={15} style={{ width: '100%' }}>
+        <svg style={{ width, height: maxHeight, overflow: 'visible' }}>
+          {tasks.map((t) => t.line)}
+          {tasks.map((t) => t.label)}
+          {browsedAway}
+        </svg>
+      </Stack>
+    </Center>
 
   );
 }

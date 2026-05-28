@@ -268,7 +268,6 @@ export function TableView({
     enablePagination: false,
     enableRowVirtualization: true,
     mantinePaperProps: { style: { maxHeight: '100%', display: 'flex', flexDirection: 'column' } },
-    mantineDetailPanelProps: { style: { width: '100%' } }, // make detail panel full width for replay timeline
     layoutMode: 'grid',
     renderDetailPanel: ({ row }) => {
       const r = row.original;
