@@ -21,6 +21,7 @@ export interface ParticipantMetadata {
 }
 
 export type TrrackedProvenance = ProvenanceGraph<any, any>;
+export type StoredProvenance = Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
 
 // timestamp, event type, event data
 type FocusEvent = [number, 'focus', string];
@@ -43,7 +44,7 @@ export type TrialValidation = Record<
     belowStimulus: ValidationStatus;
     sidebar: ValidationStatus;
     stimulus: ValidationStatus;
-    provenanceGraph: Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
+    provenanceGraph: StoredProvenance;
   }
 >;
 
@@ -81,8 +82,6 @@ export interface StoredAnswer {
   startTime: number;
   /** Time that the user ended interaction with the component in epoch milliseconds. */
   endTime: number;
-  /** The entire provenance graph exported from a Trrack instance from a React component. This will only be present if you are using React components and you're utilizing [Trrack](https://apps.vdl.sci.utah.edu/trrack) */
-  provenanceGraph: Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
   /**
    * A list containing the time (in epoch milliseconds), the action (focus, input, keypress, mousedown, mouseup, mousemove, resize, scroll or visibility), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
    *
@@ -186,6 +185,7 @@ export interface Sequence {
 }
 
 export type FormElementProvenance = { form: StoredAnswer['answer'] };
+export type AlertModalState = { show: boolean, message: string, title: string };
 export interface StoreState {
   studyId: string;
   participantId: string;
@@ -194,7 +194,7 @@ export interface StoreState {
   config: StudyConfig;
   showStudyBrowser: boolean;
   showHelpText: boolean;
-  alertModal: { show: boolean, message: string, title: string };
+  alertModal: AlertModalState;
   trialValidation: TrialValidation;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;

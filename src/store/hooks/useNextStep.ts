@@ -20,7 +20,11 @@ import { useStudyConfig } from './useStudyConfig';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
 import { showNotification } from '../../utils/notifications';
-import { areComponentAnswersCorrect, getSkipConditionCorrectAnswers } from './useNextStep.utils';
+import {
+  areComponentAnswersCorrect,
+  getSkipConditionCorrectAnswers,
+  type SkipEvaluationAnswer,
+} from './useNextStep.utils';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
@@ -44,7 +48,7 @@ export function useNextStep() {
 
   const studyId = useStudyId();
 
-  const dataCollectionEnabled = useMemo(() => modes.dataCollectionEnabled, [modes]);
+  const { dataCollectionEnabled } = modes;
 
   const areResponsesValid = useAreResponsesValid(identifier);
 
@@ -75,6 +79,7 @@ export function useNextStep() {
       }, {}) as StoredAnswer['answer'] : {};
       const { provenanceGraph } = trialValidationCopy || {};
       const endTime = Date.now();
+      const answerToPersist = collectData ? answer : {};
 
       // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
       const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
@@ -82,10 +87,9 @@ export function useNextStep() {
       if (dataCollectionEnabled && (storedAnswer.endTime === -1 || clickedPrevious)) {
         const toSave = {
           ...storedAnswer,
-          answer: collectData ? answer : {},
+          answer: answerToPersist,
           startTime,
           endTime,
-          provenanceGraph,
           windowEvents: currentWindowEvents,
           timedOut: !collectData,
         };
@@ -93,13 +97,23 @@ export function useNextStep() {
 
         if (storageEngine) {
           storageEngine.saveAnswers(answersToPersist).catch((error) => {
-            console.error('Failed to save participant answers', error);
+            console.error('Failed to save participant response data', error);
             showNotification({
               title: 'Failed to Save Response',
               message: 'Your response could not be saved. Please check your connection and try again.',
               color: 'red',
             });
           });
+          if (provenanceGraph) {
+            storageEngine.saveProvenance(provenanceGraph, identifier).catch((error) => {
+              console.error('Failed to save participant response data', error);
+              showNotification({
+                title: 'Failed to Save Response',
+                message: 'Your response could not be saved. Please check your connection and try again.',
+                color: 'red',
+              });
+            });
+          }
         }
 
         storeDispatch(
@@ -122,16 +136,22 @@ export function useNextStep() {
       const hasSkipBlock = blocksForStep !== null && (blocksForStep.some((block) => block.currentBlock.skip && block.currentBlock.skip.length > 0));
 
       // Get the answers with the new answer added, since above is dispatching and async, but we need it synchronously
-      const answersWithNewAnswer = {
-        ...answers,
-        [identifier]: {
-          answer,
-          startTime,
-          endTime,
-          provenanceGraph,
-          windowEvents: currentWindowEvents,
-        },
-      };
+      const answersForSkipEvaluation = Object.entries(answers).reduce<Record<string, SkipEvaluationAnswer>>((acc, [key, responseObj]) => {
+        if (!responseObj.timedOut) {
+          acc[key] = {
+            answer: responseObj.answer,
+            timedOut: false,
+          };
+        }
+        return acc;
+      }, {});
+
+      if (collectData) {
+        answersForSkipEvaluation[identifier] = {
+          answer: answerToPersist,
+          timedOut: false,
+        };
+      }
 
       // Check if the skip block should be triggered
       if (hasSkipBlock) {
@@ -143,10 +163,13 @@ export function useNextStep() {
         skipConditions.some((condition) => {
           let conditionIsTriggered = false;
 
-          const validationCandidates = Object.fromEntries(Object.entries(answersWithNewAnswer).filter(([key]) => {
+          const validationCandidates = Object.entries(answersForSkipEvaluation).reduce<Record<string, SkipEvaluationAnswer>>((acc, [key, responseObj]) => {
             const componentIndex = parseInt(key.slice(key.lastIndexOf('_') + 1), 10);
-            return componentIndex >= condition.firstIndex && componentIndex <= currentStep;
-          })) as unknown as StoredAnswer;
+            if (componentIndex >= condition.firstIndex && componentIndex <= currentStep) {
+              acc[key] = responseObj;
+            }
+            return acc;
+          }, {});
 
           // Slim down the validationCandidates to only include the skip condition's component
           const componentsToCheck = condition.check !== 'block' ? Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name) : Object.entries(validationCandidates);

@@ -2,7 +2,7 @@ import localforage from 'localforage';
 import throttle from 'lodash.throttle';
 import { v4 as uuidv4 } from 'uuid';
 import { StudyConfig } from '../../parser/types';
-import { ParticipantMetadata, Sequence } from '../../store/types';
+import { ParticipantMetadata, Sequence, StoredProvenance } from '../../store/types';
 import { ParticipantData, ParticipantDataWithStatus } from '../types';
 import { hash, isParticipantData } from './utils/storageEngineHelpers';
 import { shouldPreferCachedParticipantData } from './utils/participantDataRecovery';
@@ -11,6 +11,10 @@ import { parseConditionParam } from '../../utils/handleConditionLogic';
 import {
   ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
 } from '../../analysis/individualStudy/thinkAloud/types';
+import {
+  normalizeStoredProvenance,
+  splitProvenanceFromAnswers,
+} from '../../store/provenance';
 
 export interface StoredUser {
   email: string | null,
@@ -65,6 +69,11 @@ interface StageData {
   currentStage: StageInfo;
   allStages: StageInfo[];
 }
+
+type ModesAndStageData = {
+  modes: Record<REVISIT_MODE, boolean>;
+  stageData: StageData;
+};
 
 export interface ConditionData {
   allConditions: string[];
@@ -186,6 +195,10 @@ export abstract class StorageEngine {
 
   isCloudEngine() {
     return this.cloudEngine;
+  }
+
+  protected shouldDeferInitialParticipantDataPersistence() {
+    return false;
   }
 
   /*
@@ -369,6 +382,33 @@ export abstract class StorageEngine {
       console.warn('Failed to read cached participant data:', error);
       return null;
     }
+  }
+
+  private async getModesAndStageData(studyId: string): Promise<ModesAndStageData> {
+    const modesDoc = await this.getModes(studyId);
+    const { stage, ...modeValues } = modesDoc;
+
+    if (stage) {
+      return {
+        modes: modeValues as Record<REVISIT_MODE, boolean>,
+        stageData: stage,
+      };
+    }
+
+    const defaultStageData: StageData = {
+      currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
+      allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
+    };
+
+    await this._setModesDocument(studyId, {
+      ...(modeValues as Record<REVISIT_MODE, boolean>),
+      stage: defaultStageData,
+    });
+
+    return {
+      modes: modeValues as Record<REVISIT_MODE, boolean>,
+      stageData: defaultStageData,
+    };
   }
 
   private clearPendingParticipantDataWriteTimer() {
@@ -566,19 +606,8 @@ export abstract class StorageEngine {
   }
 
   async getStageData(studyId: string): Promise<StageData> {
-    const modesDoc = await this.getModes(studyId);
-
-    if (modesDoc && modesDoc.stage) {
-      return modesDoc.stage as StageData;
-    }
-
-    // Set default stage data if it doesn't exist
-    const defaultStageData: StageData = {
-      currentStage: { stageName: 'DEFAULT', color: defaultStageColor },
-      allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
-    };
-    await this.setCurrentStage(studyId, 'DEFAULT', defaultStageColor);
-    return defaultStageData;
+    const { stageData } = await this.getModesAndStageData(studyId);
+    return stageData;
   }
 
   async getConditionData(studyId: string): Promise<ConditionData> {
@@ -665,6 +694,10 @@ export abstract class StorageEngine {
     // Hash the provided config
     const configHash = await hash(JSON.stringify(config));
 
+    if (currentConfigHash === configHash) {
+      return;
+    }
+
     // Push the config to storage and cache it, since it won't change
     await this._pushToStorage(
       `configs/${configHash}`,
@@ -727,6 +760,17 @@ export abstract class StorageEngine {
     return this.currentParticipantId;
   }
 
+  // Returns the current participant ID if it already exists in memory or persistence without creating a new one.
+  async peekCurrentParticipantId(studyId?: string) {
+    const studyIdToUse = studyId || this.studyId;
+    if (studyIdToUse) {
+      const storageKey = `${this.collectionPrefix}${studyIdToUse}/currentParticipantId`;
+      return await this.participantStore.getItem<string>(storageKey) || undefined;
+    }
+
+    return this.currentParticipantId;
+  }
+
   // Clears the current participant ID from persistence and resets the currentParticipantId property.
   async clearCurrentParticipantId() {
     this.currentParticipantId = undefined;
@@ -741,7 +785,7 @@ export abstract class StorageEngine {
   // This function is one of the most critical functions in the storage engine.
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
-  protected async _getSequence(conditions?: string[]) {
+  protected async _getSequence(conditions?: string[], bootstrapData?: ModesAndStageData) {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
@@ -750,8 +794,7 @@ export abstract class StorageEngine {
     }
     let sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
-    const modes = await this.getModes(this.studyId);
-    const stageData = await this.getStageData(this.studyId);
+    const { modes, stageData } = bootstrapData ?? await this.getModesAndStageData(this.studyId);
     const currentStage = stageData.currentStage.stageName;
 
     // Find all rejected documents
@@ -849,29 +892,24 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
+    const cachedParticipant = await this.getCachedParticipantDataSnapshot(this.currentParticipantId);
+    if (cachedParticipant) {
+      this.participantData = cachedParticipant;
+      return cachedParticipant;
+    }
+
     // Check if the participant has already been initialized
     const participant = await this._getFromStorage(
       `participants/${this.currentParticipantId}`,
       'participantData',
     );
-    const cachedParticipant = await this.getCachedParticipantDataSnapshot(this.currentParticipantId);
 
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
 
-    // Get modes
-    const modes = await this.getModes(this.studyId);
-    const stageData = await this.getStageData(this.studyId);
+    const { modes, stageData } = await this.getModesAndStageData(this.studyId);
     const currentStage = stageData.currentStage.stageName;
-
-    if (
-      cachedParticipant
-      && (!isParticipantData(participant) || shouldPreferCachedParticipantData(cachedParticipant, participant))
-    ) {
-      this.participantData = cachedParticipant;
-      return cachedParticipant;
-    }
 
     if (isParticipantData(participant)) {
       // Participant already initialized
@@ -883,7 +921,7 @@ export abstract class StorageEngine {
     const participantConfigHash = await hash(JSON.stringify(config));
     const parsedConditions = parseConditionParam(searchParams.condition);
     const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
-    const { currentRow, creationIndex } = await this._getSequence(conditions);
+    const { currentRow, creationIndex } = await this._getSequence(conditions, { modes, stageData });
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
@@ -900,7 +938,11 @@ export abstract class StorageEngine {
     };
 
     if (modes.dataCollectionEnabled) {
-      await this.persistCurrentParticipantData({ immediate: true });
+      if (this.shouldDeferInitialParticipantDataPersistence()) {
+        this.persistCurrentParticipantData({ immediate: true }).catch(() => undefined);
+      } else {
+        await this.persistCurrentParticipantData({ immediate: true });
+      }
     } else {
       await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
     }
@@ -1035,6 +1077,28 @@ export abstract class StorageEngine {
     this.participantData.searchParams = searchParams;
 
     await this.persistCurrentParticipantData({ immediate: true });
+  }
+
+  async updateParticipantMetadata(metadata: ParticipantMetadata) {
+    await this.verifyStudyDatabase();
+
+    if (!this.participantData) {
+      throw new Error('Participant data not initialized');
+    }
+
+    this.participantData.metadata = metadata;
+
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const modes = await this.getModes(this.studyId);
+    if (!modes.dataCollectionEnabled) {
+      await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
+      return;
+    }
+
+    await this.persistCurrentParticipantData({ immediate: false });
   }
 
   async updateStudyCondition(condition: string | string[]) {
@@ -1203,14 +1267,23 @@ export abstract class StorageEngine {
       return;
     }
 
+    const {
+      answers: answersWithoutProvenance,
+      provenanceByIdentifier,
+    } = splitProvenanceFromAnswers(answers);
+    const provenanceUploadPromises = Object.entries(provenanceByIdentifier).map(
+      ([taskName, provenanceGraph]) => this.saveProvenance(provenanceGraph, taskName),
+    );
+
     // Update the local copy of the participant data
     this.participantData = {
       ...this.participantData,
-      answers,
+      answers: answersWithoutProvenance,
     };
 
     await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
     this.scheduleParticipantDataWrite(this.participantData);
+    await Promise.all(provenanceUploadPromises);
   }
 
   // Updates the progress data in the sequence assignment
@@ -1349,6 +1422,82 @@ export abstract class StorageEngine {
       return null;
     }
     return url;
+  }
+
+  private async parseProvenanceStorageObject(provenanceObject: unknown): Promise<StoredProvenance | null> {
+    if (typeof Blob !== 'undefined' && provenanceObject instanceof Blob) {
+      try {
+        return normalizeStoredProvenance(JSON.parse(await provenanceObject.text()));
+      } catch {
+        return null;
+      }
+    }
+
+    return normalizeStoredProvenance(provenanceObject);
+  }
+
+  async getProvenance(
+    task: string,
+    participantId?: string,
+  ) {
+    const targetParticipantId = participantId || this.currentParticipantId;
+    if (!targetParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
+    const provenanceObject = await this._getFromStorage(
+      `provenance/${targetParticipantId}`,
+      task,
+    );
+
+    return this.parseProvenanceStorageObject(provenanceObject);
+  }
+
+  async deleteProvenance(taskName: string) {
+    if (!this.currentParticipantId || !this.studyId) {
+      return;
+    }
+    try {
+      await this._deleteFromStorage(`provenance/${this.currentParticipantId}`, taskName);
+    } catch (error) {
+      console.warn(`Failed to delete provenance for task ${taskName}:`, error);
+    }
+  }
+
+  async saveProvenance(
+    provenanceGraph: StoredProvenance | null | undefined,
+    taskName: string,
+  ) {
+    const provenanceToSave = normalizeStoredProvenance(provenanceGraph);
+    if (!provenanceToSave) {
+      await this.deleteProvenance(taskName);
+      return undefined;
+    }
+
+    return this.trackAssetOperation(`provenance/${taskName}`, async () => {
+      if (this.studyId === undefined) {
+        throw new Error('Study ID is not set');
+      }
+      if (!this.currentParticipantId) {
+        throw new Error('Participant not initialized');
+      }
+      const modes = await this.getModes(this.studyId);
+      if (!modes.dataCollectionEnabled) {
+        throw new Error('Data collection is disabled for this study');
+      }
+
+      await this._pushToStorage(
+        `provenance/${this.currentParticipantId}`,
+        taskName,
+        provenanceToSave as unknown as StorageObject<typeof taskName>,
+      );
+
+      try {
+        await this._cacheStorageObject(`provenance/${this.currentParticipantId}`, taskName);
+      } catch (error) {
+        console.warn(`Failed to update cache headers for provenance ${taskName}:`, error);
+      }
+    });
   }
 
   // Gets the transcript download URL (currently only supported by Firebase)
@@ -1516,6 +1665,7 @@ export abstract class StorageEngine {
       await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
       await this._copyDirectory(`${sourceName}/audio`, `${targetName}/audio`);
       await this._copyDirectory(`${sourceName}/screenRecording`, `${targetName}/screenRecording`);
+      await this._copyDirectory(`${sourceName}/provenance`, `${targetName}/provenance`);
       await this._copyDirectory(sourceName, targetName);
       await this._copyRealtimeData(sourceName, targetName);
     }
@@ -1563,6 +1713,7 @@ export abstract class StorageEngine {
         await this._deleteDirectory(`${deletionTarget}/participants`);
         await this._deleteDirectory(`${deletionTarget}/audio`);
         await this._deleteDirectory(`${deletionTarget}/screenRecording`);
+        await this._deleteDirectory(`${deletionTarget}/provenance`);
         await this._deleteDirectory(deletionTarget);
         await this._deleteRealtimeData(deletionTarget);
       }
@@ -1632,6 +1783,10 @@ export abstract class StorageEngine {
         `${snapshotName}/screenRecording`,
         `${originalName}/screenRecording`,
       );
+      await this._copyDirectory(
+        `${snapshotName}/provenance`,
+        `${originalName}/provenance`,
+      );
       await this._copyDirectory(snapshotName, originalName);
       await this._copyRealtimeData(snapshotName, originalName);
       successNotifications.push({
@@ -1695,6 +1850,10 @@ export abstract class CloudStorageEngine extends StorageEngine {
   protected cloudEngine = true;
 
   protected userManagementData: UserManagementData = {};
+
+  protected shouldDeferInitialParticipantDataPersistence() {
+    return true;
+  }
 
   /*
   * PRIMITIVE METHODS
