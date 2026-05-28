@@ -83,6 +83,25 @@ export function getInitialStartupAlert(
   };
 }
 
+export function getShellUiState({
+  isValidStudyId,
+  hasRoutes,
+  hasStore,
+  isCompletionCheckResolved,
+  completionCheckError,
+}: {
+  isValidStudyId: boolean;
+  hasRoutes: boolean;
+  hasStore: boolean;
+  isCompletionCheckResolved: boolean;
+  completionCheckError: string | null;
+}) {
+  return {
+    isLoading: isValidStudyId && (!hasRoutes || !hasStore || !isCompletionCheckResolved),
+    showCompletionCheckError: completionCheckError !== null,
+  };
+}
+
 function createParticipantMetadata(ip: string = ''): ParticipantMetadata {
   return {
     language: navigator.language,
@@ -420,7 +439,13 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
-  const isLoading = isValidStudyId && (routes.length === 0 || store === null || !isCompletionCheckResolved);
+  const { isLoading, showCompletionCheckError } = getShellUiState({
+    isValidStudyId,
+    hasRoutes: routes.length > 0,
+    hasStore: store !== null,
+    isCompletionCheckResolved,
+    completionCheckError,
+  });
 
   let content: ReactNode = null;
 
@@ -439,7 +464,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   return (
     <>
       <LoadingOverlay visible={isLoading} />
-      {isLoading && completionCheckError && (
+      {showCompletionCheckError && (
         <Stack
           align="center"
           gap="sm"
