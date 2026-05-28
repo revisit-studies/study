@@ -189,8 +189,7 @@ export function ResponseBlock({
   const hasStimulusIssue = useMemo(
     () => usesStimulusValidation
       && !!stimulusValidation
-      && !stimulusValidation.valid
-      && !!stimulusValidation.reason,
+      && !stimulusValidation.valid,
     [usesStimulusValidation, stimulusValidation],
   );
   // Submit attempt flag, but gated so response errors stay hidden while the stimulus is still invalid
