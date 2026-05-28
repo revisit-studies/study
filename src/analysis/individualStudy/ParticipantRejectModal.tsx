@@ -150,9 +150,12 @@ export function ParticipantRejectModal({
               {' '}
               {rejectedParticipantsCount === 1 ? 'has' : 'have'}
               {' '}
-              already been rejected. Clicking reject participants will now reject the other
+              already been rejected. Clicking reject participant
+              {nonRejectedParticipantsCount === 1 ? '' : 's'}
               {' '}
-              {nonRejectedParticipantsCount}
+              will now reject
+              {' '}
+              {nonRejectedParticipantsCount === 1 ? 'this participant' : 'these participants'}
               .
               <br />
               <br />
