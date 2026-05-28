@@ -1,5 +1,5 @@
 import {
-  Modal, Text, TextInput, Flex, Button, Alert, Tooltip,
+  Modal, Text, TextInput, Flex, Button, Alert, Tooltip, Group,
 } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import {
@@ -106,26 +106,30 @@ export function ParticipantRejectModal({
 
   return (
     <>
-      {rejectedParticipantsCount > 0 && (
-      <Tooltip label="Only admins can undo rejection" disabled={user.isAdmin}>
-        <Button disabled={!user.isAdmin} onClick={() => setModalUndoRejectOpened(true)} color="blue">
-          Undo Reject
-          {!footer ? ` Participants (${rejectedParticipantsCount})` : ''}
-        </Button>
-      </Tooltip>
-      )}
-      {nonRejectedParticipantsCount > 0 && (
-      <Tooltip label="Only admins can reject participants" disabled={user.isAdmin}>
-        <Button disabled={!user.isAdmin} onClick={() => setModalRejectOpened(true)} color="red">
-          Reject
-          {!footer ? ` Participants (${nonRejectedParticipantsCount})` : ''}
-        </Button>
-      </Tooltip>
+      {(rejectedParticipantsCount > 0 || nonRejectedParticipantsCount > 0) && (
+        <Group gap="xs">
+          {rejectedParticipantsCount > 0 && (
+            <Tooltip label="Only admins can undo rejection" disabled={user.isAdmin}>
+              <Button disabled={!user.isAdmin} onClick={() => setModalUndoRejectOpened(true)} color="blue">
+                Undo Reject
+                {!footer ? ` Participant${rejectedParticipantsCount === 1 ? '' : 's'} (${rejectedParticipantsCount})` : ''}
+              </Button>
+            </Tooltip>
+          )}
+          {nonRejectedParticipantsCount > 0 && (
+            <Tooltip label="Only admins can reject participants" disabled={user.isAdmin}>
+              <Button disabled={!user.isAdmin} onClick={() => setModalRejectOpened(true)} color="red">
+                Reject
+                {!footer ? ` Participant${nonRejectedParticipantsCount === 1 ? '' : 's'} (${nonRejectedParticipantsCount})` : ''}
+              </Button>
+            </Tooltip>
+          )}
+        </Group>
       )}
       <Modal
         opened={modalRejectOpened}
         onClose={() => setModalRejectOpened(false)}
-        title={nonRejectedParticipantsCount > 0 ? `Reject Participants (${nonRejectedParticipantsCount})` : 'Reject Participant'}
+        title={`Reject Participant${nonRejectedParticipantsCount === 1 ? '' : 's'} (${nonRejectedParticipantsCount})`}
       >
         <Alert
           icon={<IconAlertTriangle size={16} />}
@@ -134,25 +138,25 @@ export function ParticipantRejectModal({
           mb="md"
         >
           {currentAndSelectedParticipants.length > 0 && rejectedParticipantsCount > 0 && (
-          <>
-            {rejectedParticipantsCount}
-            {' '}
-            of your
-            {' '}
-            {currentAndSelectedParticipants.length}
-            {' '}
-            selected participant
-            {currentAndSelectedParticipants.length === 1 ? '' : 's'}
-            {' '}
-            {rejectedParticipantsCount === 1 ? 'has' : 'have'}
-            {' '}
-            already been rejected. Clicking reject participants will now reject the other
-            {' '}
-            {nonRejectedParticipantsCount}
-            .
-            <br />
-            <br />
-          </>
+            <>
+              {rejectedParticipantsCount}
+              {' '}
+              of your
+              {' '}
+              {currentAndSelectedParticipants.length}
+              {' '}
+              selected participant
+              {currentAndSelectedParticipants.length === 1 ? '' : 's'}
+              {' '}
+              {rejectedParticipantsCount === 1 ? 'has' : 'have'}
+              {' '}
+              already been rejected. Clicking reject participants will now reject the other
+              {' '}
+              {nonRejectedParticipantsCount}
+              .
+              <br />
+              <br />
+            </>
           )}
           When participants are rejected, their sequences will be reassigned to other participants.
         </Alert>
@@ -165,7 +169,7 @@ export function ParticipantRejectModal({
             Cancel
           </Button>
           <Button color="red" onClick={handleRejectParticipant}>
-            {currentAndSelectedParticipants.length > 0 ? 'Reject Participants' : 'Reject Participant'}
+            {`Reject Participant${nonRejectedParticipantsCount === 1 ? '' : 's'}`}
           </Button>
         </Flex>
       </Modal>
@@ -175,9 +179,9 @@ export function ParticipantRejectModal({
         onClose={() => setModalUndoRejectOpened(false)}
         title={(
           <Text>
-            {`Undo Reject Participants (${currentAndSelectedParticipants.length})`}
+            {`Undo Reject Participant${rejectedParticipantsCount === 1 ? '' : 's'} (${rejectedParticipantsCount})`}
           </Text>
-          )}
+        )}
       >
         <Alert
           icon={<IconAlertTriangle size={16} />}
@@ -188,7 +192,12 @@ export function ParticipantRejectModal({
           When you undo participant rejections, you may end up with unbalanced latin squares. This is because the rejected sequence may have been reassigned.
         </Alert>
         {currentAndSelectedParticipants.length > 0 ? (
-          <Text>Are you sure you want to undo the rejection of these participants?</Text>
+          <Text>
+            Are you sure you want to undo the rejection of
+            {' '}
+            {rejectedParticipantsCount === 1 ? 'this participant' : 'these participants'}
+            ?
+          </Text>
         ) : (
           <>
             <Text>
@@ -206,7 +215,7 @@ export function ParticipantRejectModal({
             Cancel
           </Button>
           <Button color="blue" onClick={handleUndoRejectParticipant}>
-            {currentAndSelectedParticipants.length > 0 ? 'Undo Reject Participants' : 'Undo Reject Participant'}
+            {`Undo Reject Participant${rejectedParticipantsCount === 1 ? '' : 's'}`}
           </Button>
         </Flex>
       </Modal>
