@@ -1,5 +1,5 @@
 import {
-  JSX, useMemo,
+  JSX, useMemo, useState,
 } from 'react';
 import * as d3 from 'd3';
 import {
@@ -29,6 +29,8 @@ const sortedTaskNames = (a: [string, StoredAnswer], b: [string, StoredAnswer]) =
 export function AllTasksTimeline({
   participantData, width, studyId, studyConfig, maxLength,
 }: { participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined }) {
+  const [hoveredTaskName, setHoveredTaskName] = useState<string | null>(null);
+
   const percentComplete = useMemo(() => {
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0);
 
@@ -82,7 +84,7 @@ export function AllTasksTimeline({
   }, [participantData.conditions, participantData.searchParams?.condition]);
 
   // Creating labels for the tasks
-  const tasks: { line: JSX.Element, label: JSX.Element }[] = useMemo(() => {
+  const tasks: { name: string, line: JSX.Element, label: JSX.Element }[] = useMemo(() => {
     let currentHeight = 0;
 
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(sortedTaskNames);
@@ -122,6 +124,7 @@ export function AllTasksTimeline({
       const hasScreenRecording = resolvedComponent?.recordScreen ?? studyConfig?.uiConfig?.recordScreen ?? false;
 
       return {
+        name,
         line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} xScale={scale} scaleStart={scaleStart} />,
         label: (
           <Tooltip
@@ -148,14 +151,14 @@ export function AllTasksTimeline({
             )}
           >
             <g>
-              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} />
+              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} isDimmed={hoveredTaskName !== null && hoveredTaskName !== name} onHover={() => setHoveredTaskName(name)} onHoverEnd={() => setHoveredTaskName(null)} />
             </g>
           </Tooltip>),
       };
     });
 
     return allElements;
-  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam]);
+  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam, hoveredTaskName]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {

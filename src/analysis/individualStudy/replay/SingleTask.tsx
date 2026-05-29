@@ -33,6 +33,9 @@ export function SingleTask({
   participantId,
   studyId,
   condition,
+  isDimmed = false,
+  onHover,
+  onHoverEnd,
 }: {
   name: string,
   height: number,
@@ -49,6 +52,9 @@ export function SingleTask({
   participantId: string,
   studyId: string,
   condition?: string
+  isDimmed?: boolean,
+  onHover?: () => void,
+  onHoverEnd?: () => void,
 }) {
   const [isHover, setIsHover] = useState(false);
 
@@ -57,9 +63,21 @@ export function SingleTask({
   const navigateToTrial = useNavigateToTrial();
   const iconCount = (incomplete || hasCorrect ? 1 : 0) + (hasAudio ? 1 : 0) + (hasScreenRecording ? 1 : 0);
   const iconsWidth = iconCount * (ICON_SIZE + ICON_GAP);
+  const labelOpacity = isDimmed ? 0.35 : 1;
 
   return (
-    <g onClick={() => navigateToTrial(trialOrder, participantId, studyId, condition)} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)} style={{ cursor: 'pointer' }}>
+    <g
+      onClick={() => navigateToTrial(trialOrder, participantId, studyId, condition)}
+      onMouseEnter={() => {
+        setIsHover(true);
+        onHover?.();
+      }}
+      onMouseLeave={() => {
+        setIsHover(false);
+        onHoverEnd?.();
+      }}
+      style={{ cursor: 'pointer' }}
+    >
       <rect
         opacity={1}
         fill={isHover ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}
@@ -80,6 +98,7 @@ export function SingleTask({
       <line
         stroke="black"
         strokeWidth={1}
+        opacity={labelOpacity}
         x1={xScale(scaleStart) - LABEL_MARGIN}
         x2={labelWidth + xScale(scaleStart) + LABEL_MARGIN + iconsWidth}
         y1={height - TIMELINE_HEIGHT - LABEL_DISTANCE + LABEL_HEIGHT - labelHeight}
@@ -91,7 +110,7 @@ export function SingleTask({
         y={height - TIMELINE_HEIGHT - LABEL_DISTANCE - labelHeight}
         height={LABEL_HEIGHT}
       >
-        <Center style={{ width: 'fit-content' }}>
+        <Center style={{ width: 'fit-content', opacity: labelOpacity }}>
           <Group wrap="nowrap" gap={2}>
             <Text truncate={!isHover} ref={ref} mx={0} style={{ maxWidth: isHover ? undefined : LABEL_MAX_WIDTH, fontWeight: 600, whiteSpace: 'nowrap' }} size="12px">
               {name}
