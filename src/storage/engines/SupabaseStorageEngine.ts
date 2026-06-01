@@ -336,7 +336,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     // Get the sequence assignment for the participant
     const { data, error } = await this.supabase
       .from('revisit')
-      .select('data')
+      .select('data, createdAt')
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', sequenceAssignmentPath)
       .single();

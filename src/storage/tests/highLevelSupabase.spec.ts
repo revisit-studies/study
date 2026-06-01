@@ -58,9 +58,27 @@ vi.mock('@supabase/supabase-js', () => {
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
     const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' }> = [];
     let isSingle = false;
+    let selectedFields: string | undefined;
+
+    function projectSelectedFields(row: RowData): RowData {
+      if (!selectedFields || selectedFields === '*') {
+        return row;
+      }
+
+      return selectedFields
+        .split(',')
+        .map((field) => field.trim())
+        .filter(Boolean)
+        .reduce<RowData>((projected, field) => {
+          if (Object.hasOwn(row, field)) {
+            projected[field] = row[field];
+          }
+          return projected;
+        }, {});
+    }
 
     const qb = {
-      select(_fields?: string) { op = 'select'; return qb; },
+      select(fields?: string) { op = 'select'; selectedFields = fields; return qb; },
       upsert(row: RowData | RowData[]) { op = 'upsert'; payload = row; return qb; },
       update(obj: Partial<RowData>) { op = 'update'; payload = obj; return qb; },
       delete() { op = 'delete'; return qb; },
@@ -75,15 +93,16 @@ vi.mock('@supabase/supabase-js', () => {
           const rows = getRows();
           if (op === 'select') {
             const matched = applyFilters(rows, filters);
+            const projected = matched.map(projectSelectedFields);
             // Return deep copies so later mutations to revisitRows don't alias into returned data
             if (isSingle) {
-              if (matched.length === 0) {
+              if (projected.length === 0) {
                 resolve({ data: null, error: { message: 'No rows', code: 'PGRST116' } });
               } else {
-                resolve({ data: JSON.parse(JSON.stringify(matched[0])), error: null });
+                resolve({ data: JSON.parse(JSON.stringify(projected[0])), error: null });
               }
             } else {
-              resolve({ data: JSON.parse(JSON.stringify(matched)), error: null });
+              resolve({ data: JSON.parse(JSON.stringify(projected)), error: null });
             }
           } else if (op === 'upsert') {
             const toUpsert = (Array.isArray(payload)
@@ -960,6 +979,14 @@ describe.each([
   });
 
   // ── _rejectParticipantRealtime ───────────────────────────────────────────────
+  test('_rejectParticipantRealtime throws when studyId is not set', async () => {
+    const fresh = new TestEngine(true);
+    await fresh.connect();
+
+    // @ts-expect-error protected
+    await expect(fresh._rejectParticipantRealtime('p1')).rejects.toThrow('Study database not initialized or does not exist');
+  });
+
   test('_rejectParticipantRealtime sets rejected=true on the assignment', async () => {
     // Initialize two participants so the claimed-assignment lookup in
     // _rejectParticipantRealtime can find the original row via data->timestamp.
@@ -977,6 +1004,25 @@ describe.each([
   });
 
   // ── _undoRejectParticipantRealtime ───────────────────────────────────────────
+  test('_undoRejectParticipantRealtime throws when currentParticipantId is not set', async () => {
+    const fresh = new TestEngine(true);
+    await fresh.connect();
+    await fresh.initializeStudyDb(studyId);
+
+    // @ts-expect-error protected
+    await expect(fresh._undoRejectParticipantRealtime('p1')).rejects.toThrow('Participant not initialized');
+  });
+
+  test('_undoRejectParticipantRealtime throws when studyId is not set', async () => {
+    const fresh = new TestEngine(true);
+    await fresh.connect();
+    // @ts-expect-error protected
+    fresh.currentParticipantId = 'p1';
+
+    // @ts-expect-error protected
+    await expect(fresh._undoRejectParticipantRealtime('p1')).rejects.toThrow('Study database not initialized or does not exist');
+  });
+
   test('_undoRejectParticipantRealtime sets rejected=false on the assignment', async () => {
     const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     await storageEngine.rejectParticipant(session.participantId, 'test');
@@ -1027,6 +1073,25 @@ describe.each([
   });
 
   // ── _claimSequenceAssignment ─────────────────────────────────────────────────
+  test('_claimSequenceAssignment throws when currentParticipantId is not set', async () => {
+    const fresh = new TestEngine(true);
+    await fresh.connect();
+    await fresh.initializeStudyDb(studyId);
+
+    // @ts-expect-error protected
+    await expect(fresh._claimSequenceAssignment('p1', {} as SequenceAssignment)).rejects.toThrow('Participant not initialized');
+  });
+
+  test('_claimSequenceAssignment throws when studyId is not set', async () => {
+    const fresh = new TestEngine(true);
+    await fresh.connect();
+    // @ts-expect-error protected
+    fresh.currentParticipantId = 'p1';
+
+    // @ts-expect-error protected
+    await expect(fresh._claimSequenceAssignment('p1', {} as SequenceAssignment)).rejects.toThrow('Study database not initialized or does not exist');
+  });
+
   test('_claimSequenceAssignment sets claimed=true on the assignment', async () => {
     const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const all = await storageEngine.getAllSequenceAssignments(studyId);

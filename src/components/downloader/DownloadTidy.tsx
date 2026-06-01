@@ -240,7 +240,7 @@ function participantDataToRows(
     }).flat()], Array.from(newHeaders)];
 }
 
-async function getTableData(
+export async function getTableData(
   selectedProperties: Property[],
   data: ParticipantDataWithStatus[],
   storageEngine: StorageEngine | undefined,
