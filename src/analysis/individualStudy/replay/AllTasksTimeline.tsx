@@ -54,6 +54,7 @@ export function AllTasksTimeline({
   }, [participantData.answers, percentComplete, width]);
 
   const maxHeight = useMemo(() => {
+    // Sort the entires by start time and filter out entries without start time
     const sortedEntries = Object.entries(participantData.answers || {}).filter((answer) => !!(answer[1].startTime)).sort((a, b) => a[1].startTime - b[1].startTime);
 
     let currentHeight = 0;
@@ -62,8 +63,10 @@ export function AllTasksTimeline({
     sortedEntries.forEach((entry, i) => {
       const [_name, answer] = entry;
 
+      // Check if the previous entry overlaps with the current entry
       const prev = i > 0 ? sortedEntries[i - currentHeight - 1] : null;
 
+      // If the previous entry overlaps with the current entry , increase the height
       if (prev && prev[0].length * (CHARACTER_SIZE + 1) + xScale(prev[1].startTime) > xScale(answer.startTime)) {
         currentHeight += 1;
       } else {
