@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Center, Group, Text } from '@mantine/core';
 import * as d3 from 'd3';
 
@@ -33,6 +32,7 @@ export function SingleTask({
   participantId,
   studyId,
   condition,
+  isHovered = false,
   isDimmed = false,
   onHover,
   onHoverEnd,
@@ -52,12 +52,11 @@ export function SingleTask({
   participantId: string,
   studyId: string,
   condition?: string
+  isHovered?: boolean,
   isDimmed?: boolean,
   onHover?: () => void,
   onHoverEnd?: () => void,
 }) {
-  const [isHover, setIsHover] = useState(false);
-
   const [ref, { width: labelWidth }] = useResizeObserver();
 
   const navigateToTrial = useNavigateToTrial();
@@ -68,19 +67,13 @@ export function SingleTask({
   return (
     <g
       onClick={() => navigateToTrial(trialOrder, participantId, studyId, condition)}
-      onMouseEnter={() => {
-        setIsHover(true);
-        onHover?.();
-      }}
-      onMouseLeave={() => {
-        setIsHover(false);
-        onHoverEnd?.();
-      }}
+      onMouseEnter={onHover}
+      onMouseLeave={onHoverEnd}
       style={{ cursor: 'pointer' }}
     >
       <rect
         opacity={1}
-        fill={isHover ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}
+        fill={isHovered ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}
         x={xScale(scaleStart) + TASK_GAP}
         width={Math.max(0, xScale(scaleEnd) - xScale(scaleStart) - TASK_GAP * 2)}
         y={height - TIMELINE_HEIGHT}
@@ -112,7 +105,7 @@ export function SingleTask({
       >
         <Center style={{ width: 'fit-content', opacity: labelOpacity }}>
           <Group wrap="nowrap" gap={2}>
-            <Text truncate={!isHover} ref={ref} mx={0} style={{ maxWidth: isHover ? undefined : LABEL_MAX_WIDTH, fontWeight: 600, whiteSpace: 'nowrap' }} size="12px">
+            <Text truncate={!isHovered} ref={ref} mx={0} style={{ maxWidth: isHovered ? undefined : LABEL_MAX_WIDTH, fontWeight: 600, whiteSpace: 'nowrap' }} size="12px">
               {name}
             </Text>
             {hasScreenRecording && (

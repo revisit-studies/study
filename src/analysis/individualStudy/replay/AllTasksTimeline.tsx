@@ -154,7 +154,7 @@ export function AllTasksTimeline({
             )}
           >
             <g>
-              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} isDimmed={hoveredTaskName !== null && hoveredTaskName !== name} onHover={() => setHoveredTaskName(name)} onHoverEnd={() => setHoveredTaskName(null)} />
+              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} isHovered={hoveredTaskName === name} isDimmed={hoveredTaskName !== null && hoveredTaskName !== name} onHover={() => setHoveredTaskName(name)} onHoverEnd={() => setHoveredTaskName(null)} />
             </g>
           </Tooltip>),
       };
@@ -196,12 +196,16 @@ export function AllTasksTimeline({
     });
   }, [xScale, maxHeight, participantData.answers]);
 
+  const hoveredTask = tasks.find((task) => task.name === hoveredTaskName);
+  const nonHoveredTasks = tasks.filter((task) => task.name !== hoveredTaskName);
+
   return (
     <Center>
       <Stack gap={15} style={{ width: '100%' }}>
-        <svg style={{ width, height: maxHeight, overflow: 'visible' }}>
+        <svg onMouseLeave={() => setHoveredTaskName(null)} style={{ width, height: maxHeight, overflow: 'visible' }}>
           {tasks.map((t) => t.line)}
-          {tasks.map((t) => t.label)}
+          {nonHoveredTasks.map((t) => t.label)}
+          {hoveredTask?.label}
           {browsedAway}
         </svg>
       </Stack>
