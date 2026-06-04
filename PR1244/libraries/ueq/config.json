@@ -1,0 +1,139 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json",
+  "description": "User Experience Questionnaire (UEQ) is a fast and reliable questionnaire to measure the User Experience of interactive products. This library contains one component with 26 questions. The component is the full UEQ questionnaire with 26 questions.",
+  "reference": "B. Laugwitz, M. Schrepp, and T. Held, Construction and Evaluation of a User Experience Questionnaire, USAB 2008, LNCS 5298, pp. 63–76, 2008.",
+  "doi": "10.1007/978-3-540-89350-9_6",
+  "externalLink": "https://www.ueq-online.org/",
+  "components": {
+    "ueq": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "ueq-response",
+          "prompt": "For each word pair, select a value from 1 (left word) to 7 (right word).",
+          "secondaryText": "1 = left word, 7 = right word",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "matrix-radio",
+          "answerOptions": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          "questionOptions": [
+            {
+              "label": "Annoying - Enjoyable",
+              "value": "annoying-enjoyable"
+            },
+            {
+              "label": "Not understandable - Understandable",
+              "value": "not-understandable-understandable"
+            },
+            {
+              "label": "Creative - Dull",
+              "value": "creative-dull"
+            },
+            {
+              "label": "Easy to learn - Difficult to learn",
+              "value": "easy-to-learn-difficult-to-learn"
+            },
+            {
+              "label": "Valuable - Inferior",
+              "value": "valuable-inferior"
+            },
+            {
+              "label": "Boring - Exciting",
+              "value": "boring-exciting"
+            },
+            {
+              "label": "Not interesting - Interesting",
+              "value": "not-interesting-interesting"
+            },
+            {
+              "label": "Unpredictable - Predictable",
+              "value": "unpredictable-predictable"
+            },
+            {
+              "label": "Fast - Slow",
+              "value": "fast-slow"
+            },
+            {
+              "label": "Inventive - Conventional",
+              "value": "inventive-conventional"
+            },
+            {
+              "label": "Obstructive - Supportive",
+              "value": "obstructive-supportive"
+            },
+            {
+              "label": "Good - Bad",
+              "value": "good-bad"
+            },
+            {
+              "label": "Complicated - Easy",
+              "value": "complicated-easy"
+            },
+            {
+              "label": "Unlikable - Pleasing",
+              "value": "unlikable-pleasing"
+            },
+            {
+              "label": "Usual - Leading edge",
+              "value": "usual-leading-edge"
+            },
+            {
+              "label": "Unpleasant - Pleasant",
+              "value": "unpleasant-pleasant"
+            },
+            {
+              "label": "Secure - Not secure",
+              "value": "secure-not-secure"
+            },
+            {
+              "label": "Motivating - Demotivating",
+              "value": "motivating-demotivating"
+            },
+            {
+              "label": "Meets expectations - Does not meet expectations",
+              "value": "meets-expectations-does-not-meet-expectations"
+            },
+            {
+              "label": "Inefficient - Efficient",
+              "value": "inefficient-efficient"
+            },
+            {
+              "label": "Clear - Confusing",
+              "value": "clear-confusing"
+            },
+            {
+              "label": "Impractical - Practical",
+              "value": "impractical-practical"
+            },
+            {
+              "label": "Organized - Cluttered",
+              "value": "organized-cluttered"
+            },
+            {
+              "label": "Attractive - Unattractive",
+              "value": "attractive-unattractive"
+            },
+            {
+              "label": "Friendly - Unfriendly",
+              "value": "friendly-unfriendly"
+            },
+            {
+              "label": "Conservative - Innovative",
+              "value": "conservative-innovative"
+            }
+          ],
+          "questionOrder": "random"
+        }
+      ]
+    }
+  },
+  "sequences": {}
+}
