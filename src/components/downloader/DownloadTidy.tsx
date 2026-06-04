@@ -49,6 +49,7 @@ const OPTIONAL_COMMON_PROPS = [
   'responseMin',
   'responseMax',
   'configHash',
+  'metaData',
 ] as const;
 
 const REQUIRED_PROPS = [
@@ -109,6 +110,7 @@ function participantDataToRows(
   const newHeaders = new Set<string>();
   const participantConditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
   const conditionValue = participantConditions.length > 0 ? participantConditions.join(',') : 'default';
+  const metaData = JSON.stringify(participant.metadata);
 
   return [[
     {
@@ -119,6 +121,7 @@ function participantDataToRows(
       answer: JSON.stringify(participant.participantTags),
       ...(properties.includes('condition') ? { condition: conditionValue } : {}),
       ...(properties.includes('stage') ? { stage: participant.stage } : {}),
+      ...(properties.includes('metaData') ? { metaData } : {}),
     },
     ...Object.values(participant.answers).map((trialAnswer) => {
       // Get the whole component, including the base component if there is inheritance
@@ -209,6 +212,9 @@ function participantDataToRows(
         if (properties.includes('responseMax')) {
           tidyRow.responseMax = response?.type === 'numerical' ? response.max : undefined;
         }
+        if (properties.includes('metaData')) {
+          tidyRow.metaData = metaData;
+        }
         return tidyRow;
       }).flat();
 
@@ -234,6 +240,7 @@ function participantDataToRows(
         answer: JSON.stringify(windowEventsCount),
         ...(properties.includes('condition') ? { condition: conditionValue } : {}),
         ...(properties.includes('stage') ? { stage: participant.stage } : {}),
+        ...(properties.includes('metaData') ? { metaData } : {}),
       } as TidyRow);
 
       return rows;
