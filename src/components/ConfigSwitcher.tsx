@@ -22,6 +22,9 @@ import { getSequenceConditions } from '../utils/handleConditionLogic';
 import { useStudyRecordings } from '../utils/useStudyRecordings';
 import { useDeviceRules } from '../utils/useDeviceRules';
 import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './interface/DeviceRestrictionString';
+import packageJson from '../../package.json';
+
+const REVISIT_VERSION = packageJson.version;
 
 function StudyCard({
   configName,
@@ -545,6 +548,17 @@ export function ConfigSwitcher({
             )}
           </>
         )}
+        <Text
+          c="dimmed"
+          size="xs"
+          style={{
+            position: 'fixed',
+            right: 12,
+            bottom: 8,
+          }}
+        >
+          {`reVISit v${REVISIT_VERSION}`}
+        </Text>
       </Container>
     </AppShell.Main>
   );
