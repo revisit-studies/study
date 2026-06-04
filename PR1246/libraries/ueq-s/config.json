@@ -2,90 +2,61 @@
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json",
   "description": "The Short Version of the User Experience Questionnaire (UEQ-S) is a short version of the User Experience Questionnaire (UEQ), which is a widely used tool to measure user experience. This library contains one component with 8 questions. The component is the full UEQ-S questionnaire with 8 questions.",
   "reference": "M. Schrepp, A. Hinderks, and J. Thomaschewski, Design and Evaluation of a Short Version of the User Experience Questionnaire (UEQ-S), International Journal of Interactive Multimedia and Artificial Intelligence, vol. 4, no. 6, pp. 103–108, Sep. 2017.",
-  "doi":"10.9781/ijimai.2017.09.001",  
+  "doi": "10.9781/ijimai.2017.09.001",
   "components": {
     "ueq-s": {
       "type": "questionnaire",
       "response": [
         {
-          "id": "obstructive-supportive",
-          "prompt": "",
+          "id": "ueq-s-response",
+          "prompt": "For each word pair, select a value from 1 (left word) to 7 (right word).",
+          "secondaryText": "1 = left word, 7 = right word",
           "required": true,
           "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Obstructive",
-          "rightLabel": "Supportive"
-        },
-        {
-          "id": "complicated-easy",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Complicated",
-          "rightLabel": "Easy"
-        },
-        {
-          "id": "inefficient-efficient",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Inefficient",
-          "rightLabel": "Efficient"
-        },
-        {
-          "id": "clear-confusing",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Clear",
-          "rightLabel": "Confusing"
-        },
-        {
-          "id": "boring-exciting",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Boring",
-          "rightLabel": "Exciting"
-        },
-        {
-          "id": "not-interesting-interesting",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Not interesting",
-          "rightLabel": "Interesting"
-        },
-        {
-          "id": "conventional-inventive",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Conventional",
-          "rightLabel": "Inventive"
-        },
-        {
-          "id": "usual-leading-edge",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Usual",
-          "rightLabel": "Leading edge"
+          "type": "matrix-radio",
+          "answerOptions": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          "questionOptions": [
+            {
+              "label": "Obstructive - Supportive",
+              "value": "obstructive-supportive"
+            },
+            {
+              "label": "Complicated - Easy",
+              "value": "complicated-easy"
+            },
+            {
+              "label": "Inefficient - Efficient",
+              "value": "inefficient-efficient"
+            },
+            {
+              "label": "Clear - Confusing",
+              "value": "clear-confusing"
+            },
+            {
+              "label": "Boring - Exciting",
+              "value": "boring-exciting"
+            },
+            {
+              "label": "Not interesting - Interesting",
+              "value": "not-interesting-interesting"
+            },
+            {
+              "label": "Conventional - Inventive",
+              "value": "conventional-inventive"
+            },
+            {
+              "label": "Usual - Leading edge",
+              "value": "usual-leading-edge"
+            }
+          ]
         }
       ]
     }

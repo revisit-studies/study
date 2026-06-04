@@ -2,272 +2,135 @@
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json",
   "description": "User Experience Questionnaire (UEQ) is a fast and reliable questionnaire to measure the User Experience of interactive products. This library contains one component with 26 questions. The component is the full UEQ questionnaire with 26 questions.",
   "reference": "B. Laugwitz, M. Schrepp, and T. Held, Construction and Evaluation of a User Experience Questionnaire, USAB 2008, LNCS 5298, pp. 63–76, 2008.",
-  "doi":"10.1007/978-3-540-89350-9_6",
+  "doi": "10.1007/978-3-540-89350-9_6",
   "externalLink": "https://www.ueq-online.org/",
   "components": {
     "ueq": {
       "type": "questionnaire",
-      "responseOrder": "random",
       "response": [
         {
-          "id": "annoying-enjoyable",
-          "prompt": "",
+          "id": "ueq-response",
+          "prompt": "For each word pair, select a value from 1 (left word) to 7 (right word).",
+          "secondaryText": "1 = left word, 7 = right word",
           "required": true,
           "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Annoying",
-          "rightLabel": "Enjoyable"
-        },
-        {
-          "id": "not-understandable-understandable",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Not understandable",
-          "rightLabel": "Understandable"
-        },
-        {
-          "id": "creative-dull",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Creative",
-          "rightLabel": "Dull"
-        },
-        {
-          "id": "easy-to-learn-difficult-to-learn",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Easy to learn",
-          "rightLabel": "Difficult to learn"
-        },
-        {
-          "id": "valuable-inferior",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Valuable",
-          "rightLabel": "Inferior"
-        },
-        {
-          "id": "boring-exciting",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Boring",
-          "rightLabel": "Exciting"
-        },
-        {
-          "id": "not-interesting-interesting",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Not interesting",
-          "rightLabel": "Interesting"
-        },
-        {
-          "id": "unpredictable-predictable",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Unpredictable",
-          "rightLabel": "Predictable"
-        },
-        {
-          "id": "fast-slow",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Fast",
-          "rightLabel": "Slow"
-        },
-        {
-          "id": "inventive-conventional",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Inventive",
-          "rightLabel": "Conventional"
-        },
-        {
-          "id": "obstructive-supportive",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Obstructive",
-          "rightLabel": "Supportive"
-        },
-        {
-          "id": "good-bad",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Good",
-          "rightLabel": "Bad"
-        },
-        {
-          "id": "complicated-easy",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Complicated",
-          "rightLabel": "Easy"
-        },
-        {
-          "id": "unlikable-pleasing",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Unlikable",
-          "rightLabel": "Pleasing"
-        },
-        {
-          "id": "usual-leading-edge",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Usual",
-          "rightLabel": "Leading edge"
-        },
-        {
-          "id": "unpleasant-pleasant",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Unpleasant",
-          "rightLabel": "Pleasant"
-        },
-        {
-          "id": "secure-not-secure",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Secure",
-          "rightLabel": "Not secure"
-        },
-        {
-          "id": "motivating-demotivating",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Motivating",
-          "rightLabel": "Demotivating"
-        },
-        {
-          "id": "meets-expectations-does-not-meet-expectations",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Meets expectations",
-          "rightLabel": "Does not meet expectations"
-        },
-        {
-          "id": "inefficient-efficient",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Inefficient",
-          "rightLabel": "Efficient"
-        },
-        {
-          "id": "clear-confusing",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Clear",
-          "rightLabel": "Confusing"
-        },
-        {
-          "id": "impractical-practical",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Impractical",
-          "rightLabel": "Practical"
-        },
-        {
-          "id": "organized-cluttered",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Organized",
-          "rightLabel": "Cluttered"
-        },
-        {
-          "id": "attractive-unattractive",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Attractive",
-          "rightLabel": "Unattractive"
-        },
-        {
-          "id": "friendly-unfriendly",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Friendly",
-          "rightLabel": "Unfriendly"
-        },
-        {
-          "id": "conservative-innovative",
-          "prompt": "",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 7,
-          "leftLabel": "Conservative",
-          "rightLabel": "Innovative"
+          "type": "matrix-radio",
+          "answerOptions": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          "questionOptions": [
+            {
+              "label": "Annoying - Enjoyable",
+              "value": "annoying-enjoyable"
+            },
+            {
+              "label": "Not understandable - Understandable",
+              "value": "not-understandable-understandable"
+            },
+            {
+              "label": "Creative - Dull",
+              "value": "creative-dull"
+            },
+            {
+              "label": "Easy to learn - Difficult to learn",
+              "value": "easy-to-learn-difficult-to-learn"
+            },
+            {
+              "label": "Valuable - Inferior",
+              "value": "valuable-inferior"
+            },
+            {
+              "label": "Boring - Exciting",
+              "value": "boring-exciting"
+            },
+            {
+              "label": "Not interesting - Interesting",
+              "value": "not-interesting-interesting"
+            },
+            {
+              "label": "Unpredictable - Predictable",
+              "value": "unpredictable-predictable"
+            },
+            {
+              "label": "Fast - Slow",
+              "value": "fast-slow"
+            },
+            {
+              "label": "Inventive - Conventional",
+              "value": "inventive-conventional"
+            },
+            {
+              "label": "Obstructive - Supportive",
+              "value": "obstructive-supportive"
+            },
+            {
+              "label": "Good - Bad",
+              "value": "good-bad"
+            },
+            {
+              "label": "Complicated - Easy",
+              "value": "complicated-easy"
+            },
+            {
+              "label": "Unlikable - Pleasing",
+              "value": "unlikable-pleasing"
+            },
+            {
+              "label": "Usual - Leading edge",
+              "value": "usual-leading-edge"
+            },
+            {
+              "label": "Unpleasant - Pleasant",
+              "value": "unpleasant-pleasant"
+            },
+            {
+              "label": "Secure - Not secure",
+              "value": "secure-not-secure"
+            },
+            {
+              "label": "Motivating - Demotivating",
+              "value": "motivating-demotivating"
+            },
+            {
+              "label": "Meets expectations - Does not meet expectations",
+              "value": "meets-expectations-does-not-meet-expectations"
+            },
+            {
+              "label": "Inefficient - Efficient",
+              "value": "inefficient-efficient"
+            },
+            {
+              "label": "Clear - Confusing",
+              "value": "clear-confusing"
+            },
+            {
+              "label": "Impractical - Practical",
+              "value": "impractical-practical"
+            },
+            {
+              "label": "Organized - Cluttered",
+              "value": "organized-cluttered"
+            },
+            {
+              "label": "Attractive - Unattractive",
+              "value": "attractive-unattractive"
+            },
+            {
+              "label": "Friendly - Unfriendly",
+              "value": "friendly-unfriendly"
+            },
+            {
+              "label": "Conservative - Innovative",
+              "value": "conservative-innovative"
+            }
+          ],
+          "questionOrder": "random"
         }
       ]
     }
