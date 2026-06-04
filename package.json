@@ -24,6 +24,9 @@
   "lint-staged": {
     "*.{tsx,jsx,ts,js}": "yarn lint"
   },
+  "resolutions": {
+    "vitest/vite": "7.3.2"
+  },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
