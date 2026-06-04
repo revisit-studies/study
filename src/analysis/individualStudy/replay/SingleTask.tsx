@@ -18,7 +18,7 @@ const ICON_GAP = 2;
 
 export function SingleTask({
   xScale,
-  name,
+  identifier,
   height,
   labelHeight = 0,
   isCorrect,
@@ -37,7 +37,7 @@ export function SingleTask({
   onHover,
   onHoverEnd,
 }: {
-  name: string,
+  identifier: string,
   height: number,
   xScale: d3.ScaleLinear<number, number>,
   labelHeight?: number,
@@ -106,7 +106,7 @@ export function SingleTask({
         <Center style={{ width: 'fit-content', opacity: labelOpacity }}>
           <Group wrap="nowrap" gap={2}>
             <Text truncate={!isHovered} ref={ref} mx={0} style={{ maxWidth: isHovered ? undefined : LABEL_MAX_WIDTH, fontWeight: 600, whiteSpace: 'nowrap' }} size="12px">
-              {name}
+              {identifier}
             </Text>
             {hasScreenRecording && (
               <IconDeviceDesktop

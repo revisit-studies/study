@@ -29,7 +29,7 @@ const sortedTaskNames = (a: [string, StoredAnswer], b: [string, StoredAnswer]) =
 export function AllTasksTimeline({
   participantData, width, studyId, studyConfig, maxLength,
 }: { participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined }) {
-  const [hoveredTaskName, setHoveredTaskName] = useState<string | null>(null);
+  const [hoveredTaskIdentifier, setHoveredTaskIdentifier] = useState<string | null>(null);
 
   const percentComplete = useMemo(() => {
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0);
@@ -87,7 +87,7 @@ export function AllTasksTimeline({
   }, [participantData.conditions, participantData.searchParams?.condition]);
 
   // Creating labels for the tasks
-  const tasks: { name: string, line: JSX.Element, label: JSX.Element }[] = useMemo(() => {
+  const tasks: { identifier: string, line: JSX.Element, label: JSX.Element }[] = useMemo(() => {
     let currentHeight = 0;
 
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(sortedTaskNames);
@@ -99,7 +99,7 @@ export function AllTasksTimeline({
     const allElements = combined.map((entry, i) => {
       const scale = entry[1].startTime === 0 ? incompleteXScale : xScale;
 
-      const [name, answer] = entry;
+      const [identifier, answer] = entry;
 
       const prev = i > 0 ? combined[i - currentHeight - 1] : null;
 
@@ -114,10 +114,7 @@ export function AllTasksTimeline({
         currentHeight = 0;
       }
 
-      const split = name.split('_');
-      const joinExceptLast = split.slice(0, split.length - 1).join('_');
-
-      const component = studyConfig?.components[joinExceptLast];
+      const component = studyConfig?.components[answer.componentName];
       const resolvedComponent = component && studyConfig
         ? studyComponentToIndividualComponent(component, studyConfig)
         : undefined;
@@ -127,11 +124,11 @@ export function AllTasksTimeline({
       const hasScreenRecording = resolvedComponent?.recordScreen ?? studyConfig?.uiConfig?.recordScreen ?? false;
 
       return {
-        name,
-        line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} xScale={scale} scaleStart={scaleStart} />,
+        identifier,
+        line: <SingleTaskLabelLines key={identifier} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} xScale={scale} scaleStart={scaleStart} />,
         label: (
           <Tooltip
-            key={`${name}-tooltip`}
+            key={`${identifier}-tooltip`}
             withinPortal
             position="bottom-start"
             px={4}
@@ -154,22 +151,21 @@ export function AllTasksTimeline({
             )}
           >
             <g>
-              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} isHovered={hoveredTaskName === name} isDimmed={hoveredTaskName !== null && hoveredTaskName !== name} onHover={() => setHoveredTaskName(name)} onHoverEnd={() => setHoveredTaskName(null)} />
+              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} key={identifier} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} identifier={identifier} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} isHovered={hoveredTaskIdentifier === identifier} isDimmed={hoveredTaskIdentifier !== null && hoveredTaskIdentifier !== identifier} onHover={() => setHoveredTaskIdentifier(identifier)} onHoverEnd={() => setHoveredTaskIdentifier(null)} />
             </g>
           </Tooltip>),
       };
     });
 
     return allElements;
-  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam, hoveredTaskName]);
+  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam, hoveredTaskIdentifier]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {
     const sortedEntries = Object.entries(participantData.answers || {}).sort((a, b) => a[1].startTime - b[1].startTime);
 
     return sortedEntries.map((entry) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [name, answer] = entry;
+      const [, answer] = entry;
 
       const browsedAwayList: [number, number][] = [];
       let currentBrowsedAway: [number, number] = [-1, -1];
@@ -196,13 +192,13 @@ export function AllTasksTimeline({
     });
   }, [xScale, maxHeight, participantData.answers]);
 
-  const hoveredTask = tasks.find((task) => task.name === hoveredTaskName);
-  const nonHoveredTasks = tasks.filter((task) => task.name !== hoveredTaskName);
+  const hoveredTask = tasks.find((task) => task.identifier === hoveredTaskIdentifier);
+  const nonHoveredTasks = tasks.filter((task) => task.identifier !== hoveredTaskIdentifier);
 
   return (
     <Center>
       <Stack gap={15} style={{ width: '100%' }}>
-        <svg onMouseLeave={() => setHoveredTaskName(null)} style={{ width, height: maxHeight, overflow: 'visible' }}>
+        <svg onMouseLeave={() => setHoveredTaskIdentifier(null)} style={{ width, height: maxHeight, overflow: 'visible' }}>
           {tasks.map((t) => t.line)}
           {nonHoveredTasks.map((t) => t.label)}
           {hoveredTask?.label}
