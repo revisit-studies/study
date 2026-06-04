@@ -5,6 +5,8 @@ import { StoredAnswer } from '../types';
 import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
+export type SkipEvaluationAnswer = Pick<StoredAnswer, 'answer' | 'timedOut'>;
+
 export function areComponentAnswersCorrect(
   answers: StoredAnswer['answer'],
   componentConfig: IndividualComponent | InheritedComponent,
@@ -24,7 +26,7 @@ export function areComponentAnswersCorrect(
 }
 
 export function getSkipConditionCorrectAnswers(
-  componentsToCheck: Array<[string, { answer: StoredAnswer['answer'] }]>,
+  componentsToCheck: Array<[string, Pick<SkipEvaluationAnswer, 'answer'>]>,
   studyConfig: StudyConfig,
 ) {
   return componentsToCheck.map(([candidateComponentName, responseObj]) => areComponentAnswersCorrect(
