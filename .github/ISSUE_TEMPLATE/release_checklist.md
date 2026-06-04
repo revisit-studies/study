@@ -118,3 +118,9 @@ Check for crashes or bugs
 ## [Replication Studies Repository](https://github.com/revisit-studies/replication-studies)
 - [ ] Update the replication studies repository
 - [ ] Run the replication studies repository and check for bugs
+
+## [ReVISitPy Repository](https://github.com/revisit-studies/revisitpy)
+- [ ] Confirm the downstream update workflow completed successfully
+
+## [ReVISitPy Server Repository](https://github.com/revisit-studies/revisitpy-server)
+- [ ] Confirm the downstream update workflow completed successfully
