@@ -15,6 +15,7 @@ import { NextButton } from './NextButton';
 
 const mockNavigate = vi.fn();
 const mockGoToNextStep = vi.fn();
+const mockOnNext = vi.fn();
 
 let mockIdentifier = 'intro_0';
 
@@ -77,6 +78,7 @@ describe('NextButton', () => {
     mockIdentifier = 'intro_0';
     mockNavigate.mockReset();
     mockGoToNextStep.mockReset();
+    mockOnNext.mockReset();
     vi.useFakeTimers();
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     container = document.createElement('div');
@@ -105,6 +107,7 @@ describe('NextButton', () => {
         <NextButton
           config={config}
           checkAnswer={null}
+          onNext={mockOnNext}
         />,
       );
     });
@@ -123,6 +126,7 @@ describe('NextButton', () => {
         <NextButton
           config={config}
           checkAnswer={null}
+          onNext={mockOnNext}
         />,
       );
     });

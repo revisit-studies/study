@@ -3,7 +3,6 @@ import {
 } from '@mantine/core';
 import { useState, useMemo } from 'react';
 import { ParsedStringOption, RadioResponse } from '../../parser/types';
-import { generateErrorMessage } from './utils';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Radio.module.css';
 import inputClasses from './css/Input.module.css';
@@ -16,6 +15,7 @@ export function RadioInput({
   response,
   disabled,
   answer,
+  error,
   index,
   enumerateQuestions,
   stretch,
@@ -23,7 +23,8 @@ export function RadioInput({
 }: {
   response: RadioResponse;
   disabled: boolean;
-  answer: object;
+  answer: { value?: string; onChange?: (value: string) => void };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
   stretch?: boolean;
@@ -51,8 +52,6 @@ export function RadioInput({
   );
 
   const [otherSelected, setOtherSelected] = useState(false);
-
-  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
   const label = useMemo(() => ((horizontal && labelLocation) ? labelLocation : 'inline'), [labelLocation, horizontal]);
 
   return (
@@ -63,7 +62,7 @@ export function RadioInput({
       key={response.id}
       {...answer}
       error={error}
-      errorProps={{ c: required ? 'red' : 'orange' }}
+      errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       {horizontal && label === 'above' && (leftLabel || rightLabel) && (

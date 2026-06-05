@@ -13,7 +13,7 @@ test('Test vega component with reactive response', async ({ page }) => {
   await expect(page.getByText('Click on the bar with the highest value.')).toBeVisible();
 
   const nextButton = page.getByRole('button', { name: 'Next', exact: true });
-  await expect(nextButton).toBeDisabled();
+  await expect(nextButton).toBeEnabled();
 
   const firstSelectedAnswer = page.locator('[class*="mantine-InputWrapper-root"]').filter({ hasText: 'You selected:' }).locator('li').first();
   const firstChart = page.locator('main .vega-embed:visible canvas.marks').first();

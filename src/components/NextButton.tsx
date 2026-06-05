@@ -21,6 +21,7 @@ type Props = {
   config?: IndividualComponent;
   location?: ResponseBlockLocation;
   checkAnswer: JSX.Element | null;
+  onNext: () => void;
 };
 
 export function NextButton({
@@ -29,6 +30,7 @@ export function NextButton({
   config,
   location,
   checkAnswer,
+  onNext,
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep();
   const studyConfig = useStudyConfig();
@@ -98,7 +100,7 @@ export function NextButton({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter' && !disabled && !isNextDisabled && buttonTimerSatisfied) {
-        goToNextStep();
+        onNext();
       }
     };
 
@@ -108,7 +110,7 @@ export function NextButton({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, nextOnEnter]);
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, onNext, nextOnEnter]);
 
   const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
@@ -126,7 +128,7 @@ export function NextButton({
         <Button
           type="submit"
           disabled={nextButtonDisabled}
-          onClick={() => goToNextStep()}
+          onClick={() => onNext()}
           px={location === 'sidebar' && checkAnswer ? 8 : undefined}
         >
           {label}

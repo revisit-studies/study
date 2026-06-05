@@ -4,7 +4,6 @@ import {
   useStoreSelector,
   useStoreActions,
   useStoreDispatch,
-  useAreResponsesValid,
   useFlatSequence,
 } from '../store';
 import {
@@ -39,6 +38,7 @@ export function useNextStep() {
 
   const { funcIndex } = useParams();
   const identifier = useCurrentIdentifier();
+  const responseSubmitAttempted = useStoreSelector((state) => state.responseSubmitAttempted[identifier] ?? false);
 
   const storeDispatch = useStoreDispatch();
   const {
@@ -50,11 +50,9 @@ export function useNextStep() {
 
   const { dataCollectionEnabled } = modes;
 
-  const areResponsesValid = useAreResponsesValid(identifier);
-
   // Status of the next button. If false, the next button should be disabled
   const isAnalysis = useIsAnalysis();
-  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || !areResponsesValid;
+  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis;
 
   const storedAnswer = useStoredAnswer();
 
@@ -92,6 +90,7 @@ export function useNextStep() {
           endTime,
           windowEvents: currentWindowEvents,
           timedOut: !collectData,
+          responseSubmitAttempted,
         };
         const answersToPersist = { ...answers, [identifier]: toSave };
 
@@ -234,7 +233,7 @@ export function useNextStep() {
         color: 'red',
       });
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, studyConfig, participantSequence, navigate, studyId]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted]);
 
   return {
     isNextDisabled,
