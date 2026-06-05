@@ -27,107 +27,159 @@
           "questionOptions": [
             {
               "label": "Annoying - Enjoyable",
-              "value": "annoying-enjoyable"
+              "value": "annoying-enjoyable",
+              "leftLabel": "Annoying",
+              "rightLabel": "Enjoyable"
             },
             {
               "label": "Not understandable - Understandable",
-              "value": "not-understandable-understandable"
+              "value": "not-understandable-understandable",
+              "leftLabel": "Not understandable",
+              "rightLabel": "Understandable"
             },
             {
               "label": "Creative - Dull",
-              "value": "creative-dull"
+              "value": "creative-dull",
+              "leftLabel": "Creative",
+              "rightLabel": "Dull"
             },
             {
               "label": "Easy to learn - Difficult to learn",
-              "value": "easy-to-learn-difficult-to-learn"
+              "value": "easy-to-learn-difficult-to-learn",
+              "leftLabel": "Easy to learn",
+              "rightLabel": "Difficult to learn"
             },
             {
               "label": "Valuable - Inferior",
-              "value": "valuable-inferior"
+              "value": "valuable-inferior",
+              "leftLabel": "Valuable",
+              "rightLabel": "Inferior"
             },
             {
               "label": "Boring - Exciting",
-              "value": "boring-exciting"
+              "value": "boring-exciting",
+              "leftLabel": "Boring",
+              "rightLabel": "Exciting"
             },
             {
               "label": "Not interesting - Interesting",
-              "value": "not-interesting-interesting"
+              "value": "not-interesting-interesting",
+              "leftLabel": "Not interesting",
+              "rightLabel": "Interesting"
             },
             {
               "label": "Unpredictable - Predictable",
-              "value": "unpredictable-predictable"
+              "value": "unpredictable-predictable",
+              "leftLabel": "Unpredictable",
+              "rightLabel": "Predictable"
             },
             {
               "label": "Fast - Slow",
-              "value": "fast-slow"
+              "value": "fast-slow",
+              "leftLabel": "Fast",
+              "rightLabel": "Slow"
             },
             {
               "label": "Inventive - Conventional",
-              "value": "inventive-conventional"
+              "value": "inventive-conventional",
+              "leftLabel": "Inventive",
+              "rightLabel": "Conventional"
             },
             {
               "label": "Obstructive - Supportive",
-              "value": "obstructive-supportive"
+              "value": "obstructive-supportive",
+              "leftLabel": "Obstructive",
+              "rightLabel": "Supportive"
             },
             {
               "label": "Good - Bad",
-              "value": "good-bad"
+              "value": "good-bad",
+              "leftLabel": "Good",
+              "rightLabel": "Bad"
             },
             {
               "label": "Complicated - Easy",
-              "value": "complicated-easy"
+              "value": "complicated-easy",
+              "leftLabel": "Complicated",
+              "rightLabel": "Easy"
             },
             {
               "label": "Unlikable - Pleasing",
-              "value": "unlikable-pleasing"
+              "value": "unlikable-pleasing",
+              "leftLabel": "Unlikable",
+              "rightLabel": "Pleasing"
             },
             {
               "label": "Usual - Leading edge",
-              "value": "usual-leading-edge"
+              "value": "usual-leading-edge",
+              "leftLabel": "Usual",
+              "rightLabel": "Leading edge"
             },
             {
               "label": "Unpleasant - Pleasant",
-              "value": "unpleasant-pleasant"
+              "value": "unpleasant-pleasant",
+              "leftLabel": "Unpleasant",
+              "rightLabel": "Pleasant"
             },
             {
               "label": "Secure - Not secure",
-              "value": "secure-not-secure"
+              "value": "secure-not-secure",
+              "leftLabel": "Secure",
+              "rightLabel": "Not secure"
             },
             {
               "label": "Motivating - Demotivating",
-              "value": "motivating-demotivating"
+              "value": "motivating-demotivating",
+              "leftLabel": "Motivating",
+              "rightLabel": "Demotivating"
             },
             {
               "label": "Meets expectations - Does not meet expectations",
-              "value": "meets-expectations-does-not-meet-expectations"
+              "value": "meets-expectations-does-not-meet-expectations",
+              "leftLabel": "Meets expectations",
+              "rightLabel": "Does not meet expectations"
             },
             {
               "label": "Inefficient - Efficient",
-              "value": "inefficient-efficient"
+              "value": "inefficient-efficient",
+              "leftLabel": "Inefficient",
+              "rightLabel": "Efficient"
             },
             {
               "label": "Clear - Confusing",
-              "value": "clear-confusing"
+              "value": "clear-confusing",
+              "leftLabel": "Clear",
+              "rightLabel": "Confusing"
             },
             {
               "label": "Impractical - Practical",
-              "value": "impractical-practical"
+              "value": "impractical-practical",
+              "leftLabel": "Impractical",
+              "rightLabel": "Practical"
             },
             {
               "label": "Organized - Cluttered",
-              "value": "organized-cluttered"
+              "value": "organized-cluttered",
+              "leftLabel": "Organized",
+              "rightLabel": "Cluttered"
             },
             {
               "label": "Attractive - Unattractive",
-              "value": "attractive-unattractive"
+              "value": "attractive-unattractive",
+              "leftLabel": "Attractive",
+              "rightLabel": "Unattractive"
             },
             {
               "label": "Friendly - Unfriendly",
-              "value": "friendly-unfriendly"
+              "value": "friendly-unfriendly",
+              "leftLabel": "Friendly",
+              "rightLabel": "Unfriendly"
             },
             {
               "label": "Conservative - Innovative",
-              "value": "conservative-innovative"
+              "value": "conservative-innovative",
+              "leftLabel": "Conservative",
+              "rightLabel": "Innovative"
             }
           ],
           "questionOrder": "random"
