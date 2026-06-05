@@ -25,12 +25,12 @@ import { MetaCell } from './MetaCell';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
-function formatDate(date: Date): string | JSX.Element {
+function formatDate(date: Date): JSX.Element {
   if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
     return <Text size="sm" c="dimmed">None</Text>;
   }
 
-  return date.toLocaleDateString([], { hour: '2-digit', minute: '2-digit' });
+  return <Text size="sm">{date.toLocaleDateString([], { hour: '2-digit', minute: '2-digit' })}</Text>;
 }
 
 export function TableView({
@@ -190,17 +190,15 @@ export function TableView({
         header: 'Duration',
         size: 120,
         Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, Date> }) => (
-          !Number.isNaN(cell.getValue()) ? (
-            <Badge
-              variant="light"
-              size="md"
-              color="gray"
-              leftSection={<IconHourglassEmpty width={18} height={18} style={{ paddingTop: 1 }} />}
-              pb={1}
-            >
-              {`${youtubeReadableDuration(+cell.getValue()) || 'N/A'}`}
-            </Badge>
-          ) : 'Incomplete'
+          <Badge
+            variant="light"
+            size="md"
+            color="gray"
+            leftSection={<IconHourglassEmpty width={18} height={18} style={{ paddingTop: 1 }} />}
+            pb={1}
+          >
+            {youtubeReadableDuration(+cell.getValue()) || 'N/A'}
+          </Badge>
         ),
 
       },

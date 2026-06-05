@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { MatrixQuestionOption } from '../parser/types';
 import { parseStringOption, parseStringOptionValue, parseStringOptions } from './stringOptions';
 
 describe('stringOptions', () => {
@@ -44,6 +45,33 @@ describe('stringOptions', () => {
     ])).toEqual([
       { label: 'A', value: 'A', infoText: 'Info A' },
       { label: 'B', value: 'b-value', infoText: 'Info B' },
+    ]);
+  });
+
+  it('preserves matrix side labels while normalizing option values', () => {
+    const matrixOptions: MatrixQuestionOption[] = [
+      {
+        label: 'Obstructive - Supportive',
+        value: 'obstructive-supportive',
+        leftLabel: 'Obstructive',
+        rightLabel: 'Supportive',
+      },
+      {
+        label: 'Plain fallback label',
+      },
+    ];
+
+    expect(parseStringOptions(matrixOptions)).toEqual([
+      {
+        label: 'Obstructive - Supportive',
+        value: 'obstructive-supportive',
+        leftLabel: 'Obstructive',
+        rightLabel: 'Supportive',
+      },
+      {
+        label: 'Plain fallback label',
+        value: 'Plain fallback label',
+      },
     ]);
   });
 });

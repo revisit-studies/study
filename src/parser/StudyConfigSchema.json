@@ -80,10 +80,6 @@
             "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
             "type": "object"
           },
-          "nextButtonDisableTime": {
-            "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
-            "type": "number"
-          },
           "nextButtonAutoAdvanceTime": {
             "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
             "type": "number"
@@ -94,6 +90,10 @@
           },
           "nextButtonAutoAdvanceWarningTime": {
             "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+            "type": "number"
+          },
+          "nextButtonDisableTime": {
+            "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
             "type": "number"
           },
           "nextButtonEnableTime": {
@@ -1029,10 +1029,6 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
-        "nextButtonDisableTime": {
-          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
-          "type": "number"
-        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -1043,6 +1039,10 @@
         },
         "nextButtonAutoAdvanceWarningTime": {
           "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
+        "nextButtonDisableTime": {
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
@@ -1304,10 +1304,6 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
-        "nextButtonDisableTime": {
-          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
-          "type": "number"
-        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -1318,6 +1314,10 @@
         },
         "nextButtonAutoAdvanceWarningTime": {
           "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
+        "nextButtonDisableTime": {
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
@@ -1785,10 +1785,6 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
-        "nextButtonDisableTime": {
-          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
-          "type": "number"
-        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -1799,6 +1795,10 @@
         },
         "nextButtonAutoAdvanceWarningTime": {
           "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
+        "nextButtonDisableTime": {
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
@@ -1985,11 +1985,11 @@
           "type": "string"
         },
         "questionOptions": {
-          "description": "The question options (rows) are the prompts for each response you'd like to record.",
+          "description": "The question options (rows) are the prompts for each response you'd like to record. Use `leftLabel` and `rightLabel` on object options to display bipolar row labels such as `\"Obstructive - Supportive\"` on either side of the matrix.",
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/StringOption"
+                "$ref": "#/definitions/MatrixQuestionOption"
               },
               {
                 "type": "string"
@@ -2051,9 +2051,39 @@
       ],
       "type": "object"
     },
+    "MatrixQuestionOption": {
+      "additionalProperties": false,
+      "description": "The MatrixQuestionOption interface is used to define the question options for matrix responses. The label is the fallback text displayed to participants, and the value is the key stored in the participant's data. The optional left and right labels allow bipolar rows to label each side of the matrix without changing stored values. When `leftLabel` is specified, it takes precedence over `label` for the left-side row text.",
+      "properties": {
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown.",
+          "type": "string"
+        },
+        "label": {
+          "description": "The label displayed to participants. Markdown is supported.",
+          "type": "string"
+        },
+        "leftLabel": {
+          "description": "The label displayed on the left side of the matrix row. Takes precedence over label when specified. Defaults to label.",
+          "type": "string"
+        },
+        "rightLabel": {
+          "description": "The label displayed on the right side of the matrix row.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data. Defaults to label.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "type": "object"
+    },
     "MatrixRadioResponse": {
       "additionalProperties": false,
-      "description": "The MatrixRadioResponse interface defines a matrix where each row accepts exactly one selected option. `questionOptions` are rendered as rows, and `answerOptions` are rendered as columns. `answerOptions` can be custom labels/values or one of the built-in shortcuts: `satisfaction5`, `satisfaction7`, `likely5`, `likely7`.\n\nExample: ```json {   \"id\": \"multi-satisfaction\",   \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.\",   \"location\": \"aboveStimulus\",   \"type\": \"matrix-radio\",   \"answerOptions\": \"satisfaction5\",   \"questionOptions\": [     \"The tool we created\",     \"The technique we developed\",     \"The authors of the tools\"   ],   \"default\": {     \"The tool we created\": \"Highly Satisfied\",     \"The technique we developed\": \"Satisfied\",     \"The authors of the tools\": \"Neutral\"   },   \"questionOrder\": \"random\" } ```",
+      "description": "The MatrixRadioResponse interface defines a matrix where each row accepts exactly one selected option. `questionOptions` are rendered as rows, and `answerOptions` are rendered as columns. `answerOptions` can be custom labels/values or one of the built-in shortcuts: `satisfaction5`, `satisfaction7`, `likely5`, `likely7`.\n\nExample: ```json {   \"id\": \"multi-satisfaction\",   \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.\",   \"location\": \"aboveStimulus\",   \"type\": \"matrix-radio\",   \"answerOptions\": \"satisfaction5\",   \"questionOptions\": [     \"The tool we created\",     {       \"label\": \"Obstructive - Supportive\",       \"value\": \"obstructive-supportive\",       \"leftLabel\": \"Obstructive\",       \"rightLabel\": \"Supportive\"     },     \"The authors of the tools\"   ],   \"default\": {     \"The tool we created\": \"Highly Satisfied\",     \"obstructive-supportive\": \"Satisfied\",     \"The authors of the tools\": \"Neutral\"   },   \"questionOrder\": \"random\" } ```",
       "properties": {
         "answerOptions": {
           "anyOf": [
@@ -2125,11 +2155,11 @@
           "type": "string"
         },
         "questionOptions": {
-          "description": "The question options (rows) are the prompts for each response you'd like to record.",
+          "description": "The question options (rows) are the prompts for each response you'd like to record. Use `leftLabel` and `rightLabel` on object options to display bipolar row labels such as `\"Obstructive - Supportive\"` on either side of the matrix.",
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/StringOption"
+                "$ref": "#/definitions/MatrixQuestionOption"
               },
               {
                 "type": "string"
@@ -2355,10 +2385,6 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
-        "nextButtonDisableTime": {
-          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
-          "type": "number"
-        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -2369,6 +2395,10 @@
         },
         "nextButtonAutoAdvanceWarningTime": {
           "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
+        "nextButtonDisableTime": {
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
@@ -2777,10 +2807,6 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
-        "nextButtonDisableTime": {
-          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
-          "type": "number"
-        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -2791,6 +2817,10 @@
         },
         "nextButtonAutoAdvanceWarningTime": {
           "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
+        "nextButtonDisableTime": {
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
@@ -3915,10 +3945,6 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
-        "nextButtonDisableTime": {
-          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
-          "type": "number"
-        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -3929,6 +3955,10 @@
         },
         "nextButtonAutoAdvanceWarningTime": {
           "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
+        "nextButtonDisableTime": {
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
@@ -4082,10 +4112,6 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
-        "nextButtonDisableTime": {
-          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
-          "type": "number"
-        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -4096,6 +4122,10 @@
         },
         "nextButtonAutoAdvanceWarningTime": {
           "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
+        "nextButtonDisableTime": {
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
@@ -4257,10 +4287,6 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
-        "nextButtonDisableTime": {
-          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
-          "type": "number"
-        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -4271,6 +4297,10 @@
         },
         "nextButtonAutoAdvanceWarningTime": {
           "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
+        "nextButtonDisableTime": {
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
@@ -4428,10 +4458,6 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
-        "nextButtonDisableTime": {
-          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
-          "type": "number"
-        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -4442,6 +4468,10 @@
         },
         "nextButtonAutoAdvanceWarningTime": {
           "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
+        "nextButtonDisableTime": {
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
