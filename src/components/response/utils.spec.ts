@@ -50,6 +50,12 @@ describe('generateInitFields', () => {
       questionOptions: [
         { label: 'Question without value' },
         { label: 'Question with value', value: 'question-2' },
+        {
+          label: 'Obstructive - Supportive',
+          value: 'obstructive-supportive',
+          leftLabel: 'Obstructive',
+          rightLabel: 'Supportive',
+        },
       ],
     };
 
@@ -59,6 +65,7 @@ describe('generateInitFields', () => {
       'matrix-question-fallback': {
         'Question without value': '',
         'question-2': '',
+        'obstructive-supportive': '',
       },
     });
   });
@@ -470,7 +477,15 @@ describe('generateErrorMessage matrix', () => {
     type: 'matrix-radio',
     required: true,
     answerOptions: ['0', '1'],
-    questionOptions: ['q1', 'q2'],
+    questionOptions: [
+      {
+        label: 'Obstructive - Supportive',
+        value: 'q1',
+        leftLabel: 'Obstructive',
+        rightLabel: 'Supportive',
+      },
+      'q2',
+    ],
   };
 
   it('does not show matrix incomplete message when untouched', () => {
