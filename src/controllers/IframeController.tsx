@@ -76,6 +76,10 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             break;
           case `${PREFIX}/ANSWERS`:
             if (isAnalysis) return;
+            stimulusValidationRef.current = {
+              valid: true,
+              values: data.message,
+            };
             storeDispatch(setReactiveAnswers(data.message));
             storeDispatch(updateResponseBlockValidation({
               location: 'stimulus',
