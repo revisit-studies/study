@@ -102,6 +102,7 @@ Check for crashes or bugs
 - [ ] Verify docs links in the [Study Repository](https://github.com/revisit-studies/study) are up to date and point to the current reVISit documentation pages
 
 ## [Documentation Repository](https://github.com/revisit-studies/reVISit-studies.github.io)
+- [ ] Check that the repo deployed
 - [ ] Review docs
 - [ ] Review [library list](https://revisit.dev/docs/designing-studies/plugin-libraries/)
 - [ ] Check for typos
@@ -110,6 +111,7 @@ Check for crashes or bugs
 - [ ] Check the adoption Google Form for updated published papers
 - [ ] Validate example code
 - [ ] Update screenshots
+- [ ] Remove old bug fix version
 
 ## [Template Repository](https://github.com/revisit-studies/template)
 - [ ] Update the template repository by running the `sync-from-upstream` workflow
