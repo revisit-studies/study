@@ -26,35 +26,51 @@
           "questionOptions": [
             {
               "label": "Obstructive - Supportive",
-              "value": "obstructive-supportive"
+              "value": "obstructive-supportive",
+              "leftLabel": "Obstructive",
+              "rightLabel": "Supportive"
             },
             {
               "label": "Complicated - Easy",
-              "value": "complicated-easy"
+              "value": "complicated-easy",
+              "leftLabel": "Complicated",
+              "rightLabel": "Easy"
             },
             {
               "label": "Inefficient - Efficient",
-              "value": "inefficient-efficient"
+              "value": "inefficient-efficient",
+              "leftLabel": "Inefficient",
+              "rightLabel": "Efficient"
             },
             {
               "label": "Clear - Confusing",
-              "value": "clear-confusing"
+              "value": "clear-confusing",
+              "leftLabel": "Clear",
+              "rightLabel": "Confusing"
             },
             {
               "label": "Boring - Exciting",
-              "value": "boring-exciting"
+              "value": "boring-exciting",
+              "leftLabel": "Boring",
+              "rightLabel": "Exciting"
             },
             {
               "label": "Not interesting - Interesting",
-              "value": "not-interesting-interesting"
+              "value": "not-interesting-interesting",
+              "leftLabel": "Not interesting",
+              "rightLabel": "Interesting"
             },
             {
               "label": "Conventional - Inventive",
-              "value": "conventional-inventive"
+              "value": "conventional-inventive",
+              "leftLabel": "Conventional",
+              "rightLabel": "Inventive"
             },
             {
               "label": "Usual - Leading edge",
-              "value": "usual-leading-edge"
+              "value": "usual-leading-edge",
+              "leftLabel": "Usual",
+              "rightLabel": "Leading edge"
             }
           ]
         }
