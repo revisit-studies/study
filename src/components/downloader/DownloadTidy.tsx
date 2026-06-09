@@ -49,6 +49,7 @@ const OPTIONAL_COMMON_PROPS = [
   'responseMin',
   'responseMax',
   'configHash',
+  'metaData',
 ] as const;
 
 const REQUIRED_PROPS = [
@@ -109,6 +110,7 @@ function participantDataToRows(
   const newHeaders = new Set<string>();
   const participantConditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
   const conditionValue = participantConditions.length > 0 ? participantConditions.join(',') : 'default';
+  const metaData = JSON.stringify(participant.metadata);
 
   return [[
     {
@@ -120,6 +122,15 @@ function participantDataToRows(
       ...(properties.includes('condition') ? { condition: conditionValue } : {}),
       ...(properties.includes('stage') ? { stage: participant.stage } : {}),
     },
+    ...(properties.includes('metaData') ? [{
+      participantId: participant.participantId,
+      trialId: 'metaData',
+      trialOrder: null,
+      responseId: 'metaData',
+      answer: metaData,
+      ...(properties.includes('condition') ? { condition: conditionValue } : {}),
+      ...(properties.includes('stage') ? { stage: participant.stage } : {}),
+    }] : []),
     ...Object.values(participant.answers).map((trialAnswer) => {
       // Get the whole component, including the base component if there is inheritance
       const trialId = trialAnswer.componentName;
@@ -282,7 +293,9 @@ async function getTableData(
     const legacyStudyCondition = (p as { studyCondition?: string | string[] }).studyCondition;
     return parseConditionParam(p.conditions ?? legacyStudyCondition ?? p.searchParams?.condition).length > 0;
   });
-  const header = combinedProperties.filter((p) => p !== 'condition' || hasCondition);
+  const header = combinedProperties
+    .filter((p) => p !== 'condition' || hasCondition)
+    .filter((p) => p !== 'metaData');
   const allData = await Promise.all(data.map(async (participant) => {
     const partDataToRows = await participantDataToRows(participant, combinedProperties, allConfigs[participant.participantConfigHash], transcripts);
 
