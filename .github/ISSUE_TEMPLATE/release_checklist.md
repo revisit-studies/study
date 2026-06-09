@@ -90,7 +90,7 @@ Check for crashes or bugs
 - [ ] Click Go to study and confirm it opens the study
 
 ### Storage
-- [ ] Clear Firebase test data
+- [ ] Clear Firebase test data (`./scripts/clear-out-firebase.sh --include-dev --jobs 8 --execute`)
 
 ### Generated Files
 - [ ] If parser types changed, regenerate the study config schemas using `yarn generate-schemas`
