@@ -4,7 +4,6 @@ import {
 import { useMemo, useState } from 'react';
 import { useMove } from '@mantine/hooks';
 import { SliderResponse } from '../../parser/types';
-import { generateErrorMessage } from './utils';
 import classes from './css/SliderInput.module.css';
 import { InputLabel } from './InputLabel';
 import { generateSliderBreakValues } from './sliderBreaks';
@@ -13,12 +12,14 @@ export function SliderInput({
   response,
   disabled,
   answer,
+  error,
   index,
   enumerateQuestions,
 }: {
   response: SliderResponse;
   disabled: boolean;
-  answer: object;
+  answer: { value?: number; onChange?: (value: number) => void };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -38,7 +39,6 @@ export function SliderInput({
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
   const hasLabels = options.some((opt) => opt.label !== '');
-  const errorMessage = generateErrorMessage(response, answer);
 
   // Numeric label
   const labelValues = useMemo(() => generateSliderBreakValues(min, max, spacing), [min, max, spacing]);
@@ -55,16 +55,16 @@ export function SliderInput({
     // Round to nearest step
     const snappedValue = Math.round((rawValue - min) / stepSize) * stepSize + min;
     setVal(snappedValue);
-    (answer as { onChange?: (value: number) => void })?.onChange?.(snappedValue);
+    answer.onChange?.(snappedValue);
   });
 
   return (
     <Input.Wrapper
       label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
-      error={errorMessage}
+      error={error}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
-      errorProps={{ c: required ? 'red' : 'orange' }}
+      errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
     >
       {/* Vertical slider for SMEQ style */}
       {smeqStyle ? (

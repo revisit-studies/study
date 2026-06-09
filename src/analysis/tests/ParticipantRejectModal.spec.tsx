@@ -58,6 +58,7 @@ vi.mock('@mantine/core', () => ({
   ),
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
 }));
 
@@ -93,7 +94,7 @@ describe('ParticipantRejectModal', () => {
     await act(async () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
-    expect(screen.getByRole('button', { name: /Reject Participants \(1\)/ })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Reject Participant \(1\)/ })).toBeDefined();
   });
 
   test('shows Undo Reject button for rejected participant', async () => {
@@ -101,7 +102,7 @@ describe('ParticipantRejectModal', () => {
     await act(async () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
-    expect(screen.getByRole('button', { name: /Undo Reject Participants \(1\)/ })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Undo Reject Participant \(1\)/ })).toBeDefined();
   });
 
   test('shows both buttons when participants have mixed rejected status', async () => {
@@ -113,7 +114,7 @@ describe('ParticipantRejectModal', () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
     expect(screen.getByRole('button', { name: /Undo Reject/ })).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Reject Participants (1)' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Reject Participant (1)' })).toBeDefined();
   });
 
   test('Reject button is disabled when user is not admin', async () => {
@@ -122,7 +123,7 @@ describe('ParticipantRejectModal', () => {
     await act(async () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
-    const btn = screen.getByRole('button', { name: /Reject Participants \(1\)/ });
+    const btn = screen.getByRole('button', { name: /Reject Participant \(1\)/ });
     expect((btn as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -132,7 +133,7 @@ describe('ParticipantRejectModal', () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /Reject Participants \(1\)/ }));
+      fireEvent.click(screen.getByRole('button', { name: /Reject Participant \(1\)/ }));
     });
     expect(screen.getByText(/When participants are rejected/)).toBeDefined();
   });
@@ -143,10 +144,10 @@ describe('ParticipantRejectModal', () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /Reject Participants \(1\)/ }));
+      fireEvent.click(screen.getByRole('button', { name: /Reject Participant \(1\)/ }));
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Reject Participants' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Reject Participant' }));
     });
     expect(mockStorageEngine!.rejectParticipant).toHaveBeenCalledWith('p1', 'Rejected by admin');
   });
@@ -157,9 +158,9 @@ describe('ParticipantRejectModal', () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /Undo Reject Participants \(1\)/ }));
+      fireEvent.click(screen.getByRole('button', { name: /Undo Reject Participant \(1\)/ }));
     });
-    expect(screen.getByText('Are you sure you want to undo the rejection of these participants?')).toBeDefined();
+    expect(screen.getByText(/Are you sure you want to undo the rejection of\s+this participant\?/)).toBeDefined();
   });
 
   test('calls undoRejectParticipant when undo confirmed', async () => {
@@ -168,10 +169,10 @@ describe('ParticipantRejectModal', () => {
       render(<ParticipantRejectModal selectedParticipants={participants} />);
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /Undo Reject Participants \(1\)/ }));
+      fireEvent.click(screen.getByRole('button', { name: /Undo Reject Participant \(1\)/ }));
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Undo Reject Participants' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Undo Reject Participant' }));
     });
     expect(mockStorageEngine!.undoRejectParticipant).toHaveBeenCalledWith('p1');
   });

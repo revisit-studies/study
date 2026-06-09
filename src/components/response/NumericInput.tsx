@@ -1,6 +1,5 @@
 import { NumberInput } from '@mantine/core';
 import { NumericalResponse } from '../../parser/types';
-import { generateErrorMessage } from './utils';
 import classes from './css/Input.module.css';
 import { InputLabel } from './InputLabel';
 
@@ -8,12 +7,14 @@ export function NumericInput({
   response,
   disabled,
   answer,
+  error,
   index,
   enumerateQuestions,
 }: {
   response: NumericalResponse;
   disabled: boolean;
-  answer: object;
+  answer: { value?: number };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -34,9 +35,9 @@ export function NumericInput({
       radius="md"
       size="md"
       {...answer}
-      error={generateErrorMessage(response, answer)}
+      error={error}
       withErrorStyles={required}
-      errorProps={{ c: required ? 'red' : 'orange' }}
+      errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
       classNames={{ input: classes.fixDisabled }}
     />
   );

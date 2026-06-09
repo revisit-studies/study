@@ -7,6 +7,7 @@ import type { Sequence, StoredAnswer, StoreState } from '../../types';
 import { makeStudyConfig } from '../../../tests/utils';
 import { areComponentAnswersCorrect, getSkipConditionCorrectAnswers } from '../useNextStep.utils';
 import { useNextStep } from '../useNextStep';
+import { findBlockForStep } from '../../../utils/getSequenceFlatMap';
 
 // ── mutable state ────────────────────────────────────────────────────────────
 
@@ -28,8 +29,13 @@ let mockAreResponsesValid = true;
 let mockIsAnalysis = false;
 let mockStoredAnswer = defaultStoredAnswer;
 let mockSaveAnswers = vi.fn();
+let mockSaveProvenance = vi.fn();
 let mockDispatch = vi.fn();
-let mockSaveTrialAnswer = vi.fn();
+let mockSaveTrialAnswer = vi.fn((payload) => ({ type: 'saveTrialAnswer', payload }));
+const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers', payload }));
+const mockSetMatrixAnswersCheckbox = vi.fn((payload) => ({ type: 'setMatrixAnswersCheckbox', payload }));
+const mockSetMatrixAnswersRadio = vi.fn((payload) => ({ type: 'setMatrixAnswersRadio', payload }));
+const mockSetRankingAnswers = vi.fn((payload) => ({ type: 'setRankingAnswers', payload }));
 
 // ── module mocks ─────────────────────────────────────────────────────────────
 
@@ -45,14 +51,15 @@ vi.mock('../../store', () => ({
     answers: mockAnswers,
     modes: mockModes,
     clickedPrevious: false,
+    responseSubmitAttempted: { [mockIdentifier]: true },
   } as StoreState),
   useStoreDispatch: () => mockDispatch,
   useStoreActions: () => ({
     saveTrialAnswer: mockSaveTrialAnswer,
-    setReactiveAnswers: vi.fn(),
-    setMatrixAnswersCheckbox: vi.fn(),
-    setMatrixAnswersRadio: vi.fn(),
-    setRankingAnswers: vi.fn(),
+    setReactiveAnswers: mockSetReactiveAnswers,
+    setMatrixAnswersCheckbox: mockSetMatrixAnswersCheckbox,
+    setMatrixAnswersRadio: mockSetMatrixAnswersRadio,
+    setRankingAnswers: mockSetRankingAnswers,
   }),
   useAreResponsesValid: () => mockAreResponsesValid,
   useFlatSequence: () => mockFlatSequence,
@@ -65,7 +72,12 @@ vi.mock('../../../routes/utils', () => ({
 }));
 
 vi.mock('../../../storage/storageEngineHooks', () => ({
-  useStorageEngine: () => ({ storageEngine: { saveAnswers: mockSaveAnswers } }),
+  useStorageEngine: () => ({
+    storageEngine: {
+      saveAnswers: mockSaveAnswers,
+      saveProvenance: mockSaveProvenance,
+    },
+  }),
 }));
 
 vi.mock('../useStoredAnswer', () => ({
@@ -228,8 +240,13 @@ describe('useNextStep', () => {
     mockIsAnalysis = false;
     mockStoredAnswer = defaultStoredAnswer;
     mockSaveAnswers = vi.fn().mockResolvedValue(undefined);
+    mockSaveProvenance = vi.fn().mockResolvedValue(undefined);
     mockDispatch = vi.fn();
-    mockSaveTrialAnswer = vi.fn();
+    mockSaveTrialAnswer = vi.fn((payload) => ({ type: 'saveTrialAnswer', payload }));
+    mockSetReactiveAnswers.mockClear();
+    mockSetMatrixAnswersCheckbox.mockClear();
+    mockSetMatrixAnswersRadio.mockClear();
+    mockSetRankingAnswers.mockClear();
   });
 
   test('isNextDisabled is false when step is a number, not analysis, and responses are valid', () => {
@@ -249,10 +266,10 @@ describe('useNextStep', () => {
     expect(result.current.isNextDisabled).toBe(true);
   });
 
-  test('isNextDisabled is true when responses are invalid', () => {
+  test('isNextDisabled does not depend on response validity', () => {
     mockAreResponsesValid = false;
     const { result } = renderHook(() => useNextStep());
-    expect(result.current.isNextDisabled).toBe(true);
+    expect(result.current.isNextDisabled).toBe(false);
   });
 
   test('goToNextStep navigates to next step', () => {
@@ -332,7 +349,6 @@ describe('useNextStep', () => {
   });
 
   test('goToNextStep evaluates response skip condition and navigates to skip target', async () => {
-    const { findBlockForStep } = await import('../../../utils/getSequenceFlatMap');
     vi.mocked(findBlockForStep).mockReturnValue([{
       currentBlock: {
         id: 'root',

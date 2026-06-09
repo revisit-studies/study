@@ -111,7 +111,7 @@ describe('SingleTaskLabelLines', () => {
 
 describe('SingleTask', () => {
   const baseProps = {
-    name: 'trial1_0',
+    identifier: 'trial1_0',
     height: 100,
     xScale,
     scaleStart: 0,

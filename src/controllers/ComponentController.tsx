@@ -37,6 +37,8 @@ import { ScreenRecordingReplay } from '../components/screenRecording/ScreenRecor
 import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
 import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
 import { getComponentContainerStyle } from '../utils/componentStyle';
+import { generateStimulusErrorMessage } from '../components/response/stimulusErrors';
+import { getStimulusProvenanceState, getStimulusShowErrorsFromState } from '../components/response/stimulusProvenance';
 
 // current active stimuli presented to the user
 export function ComponentController() {
@@ -44,6 +46,7 @@ export function ComponentController() {
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
+  const currentIdentifier = useCurrentIdentifier();
   const studyId = useStudyId();
 
   const stepConfig = studyConfig.components[currentComponent];
@@ -54,7 +57,8 @@ export function ComponentController() {
 
   const { setAnalysisCanPlayScreenRecording } = useStoreActions();
 
-  const analysisProvState = useStoreSelector((state) => state.analysisProvState.stimulus);
+  const analysisStimulusProvState = useStoreSelector((state) => state.analysisProvState.stimulus);
+  const stimulusValidation = useStoreSelector((state) => state.trialValidation[currentIdentifier]?.stimulus);
 
   const navigate = useNavigate();
 
@@ -64,6 +68,7 @@ export function ComponentController() {
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
+  const currentStimulusSubmitAttempted = useStoreSelector((state) => state.stimulusSubmitAttempted[currentIdentifier]);
   const sequence = useStoreSelector((state) => state.sequence);
   const modes = useStoreSelector((state) => state.modes);
 
@@ -121,7 +126,6 @@ export function ComponentController() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, storageEngine, sequence]);
 
-  const currentIdentifier = useCurrentIdentifier();
   const currentConfig = useMemo(() => {
     const toReturn = currentComponent && currentComponent !== 'end' && !currentComponent.startsWith('__') && studyComponentToIndividualComponent(stepConfig, studyConfig) as IndividualComponent;
     if (typeof toReturn === 'object') {
@@ -138,6 +142,61 @@ export function ComponentController() {
     }
     return toReturn as unknown as IndividualComponent;
   }, [answers, currentComponent, currentIdentifier, stepConfig, studyConfig]);
+  const hasAnalysisStimulusProvenance = useMemo(
+    () => analysisStimulusProvState !== undefined,
+    [analysisStimulusProvState],
+  );
+  const analysisStimulusErrors = useMemo(
+    () => getStimulusShowErrorsFromState(analysisStimulusProvState),
+    [analysisStimulusProvState],
+  );
+  const showStimulusErrors = useMemo(
+    () => (isAnalysis
+      ? (hasAnalysisStimulusProvenance ? analysisStimulusErrors : false)
+      : !!currentStimulusSubmitAttempted),
+    [
+      analysisStimulusErrors,
+      currentStimulusSubmitAttempted,
+      hasAnalysisStimulusProvenance,
+      isAnalysis,
+    ],
+  );
+  const stimulusProvState = useMemo(
+    () => getStimulusProvenanceState(analysisStimulusProvState),
+    [analysisStimulusProvState],
+  );
+  const stimulusMessage = useMemo(
+    () => {
+      if (isAnalysis) {
+        return null;
+      }
+      return currentConfig
+        ? generateStimulusErrorMessage(currentConfig, stimulusValidation, { showStimulusErrors })
+        : null;
+    },
+    [currentConfig, isAnalysis, showStimulusErrors, stimulusValidation],
+  );
+  const hasStimulusIssue = useMemo(
+    () => !!stimulusMessage,
+    [stimulusMessage],
+  );
+  const componentContainerStyle = useMemo(
+    () => (currentConfig ? getComponentContainerStyle(currentConfig.type, currentConfig.style) : {}),
+    [currentConfig],
+  );
+  const stimulusContainerStyle = useMemo(() => {
+    if (!hasStimulusIssue) {
+      return componentContainerStyle;
+    }
+
+    return {
+      ...componentContainerStyle,
+      border: '1px solid var(--mantine-color-red-3)',
+      backgroundColor: 'var(--mantine-color-red-0)',
+      borderRadius: 'var(--mantine-radius-md)',
+      padding: 'var(--mantine-spacing-sm)',
+    };
+  }, [componentContainerStyle, hasStimulusIssue]);
 
   useEffect(() => {
     // Assume that screen recording video exists.
@@ -212,7 +271,6 @@ export function ComponentController() {
   const instruction = currentConfig?.instruction || '';
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
-  const componentContainerStyle = getComponentContainerStyle(currentConfig.type, currentConfig.style);
 
   if (studyHasScreenRecording && isAnalysis && analysisCanPlayScreenRecording) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
 
@@ -228,18 +286,23 @@ export function ComponentController() {
       <Box
         id={currentComponent}
         className={currentConfig.type}
-        style={componentContainerStyle}
+        style={stimulusContainerStyle}
       >
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
           <>
             {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
-            {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
+            {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={stimulusProvState} answers={answers} />}
             {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-            {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-            {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
+            {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={stimulusProvState} answers={answers} />}
+            {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={stimulusProvState as VegaProvState} />}
             {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
           </>
         </Suspense>
+        {hasStimulusIssue && (
+          <Text c="red" size="sm" mt="xs">
+            {stimulusMessage}
+          </Text>
+        )}
       </Box>
 
       {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}

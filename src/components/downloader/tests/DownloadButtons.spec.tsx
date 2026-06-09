@@ -28,6 +28,7 @@ vi.mock('../DownloadTidy', () => ({
 
 vi.mock('../../../utils/handleDownloadFiles', () => ({
   downloadParticipantsAudioZip: vi.fn().mockResolvedValue(undefined),
+  downloadParticipantsProvenanceZip: vi.fn().mockResolvedValue(undefined),
   downloadParticipantsScreenRecordingZip: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -46,6 +47,7 @@ vi.mock('@mantine/core', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconDatabaseExport: () => <span>json-icon</span>,
   IconDeviceDesktopDown: () => <span>screen-icon</span>,
+  IconDownload: () => <span>provenance-icon</span>,
   IconMusicDown: () => <span>audio-icon</span>,
   IconTableExport: () => <span>tidy-icon</span>,
 }));

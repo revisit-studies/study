@@ -86,9 +86,14 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('@mantine/core', () => ({
+  Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
+    <button type="button" onClick={onClick}>{children}</button>
+  ),
   LoadingOverlay: ({ visible }: { visible: boolean }) => (
     visible ? <div data-testid="loading-overlay" /> : null
   ),
+  Stack: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h1>{children}</h1>,
 }));
 

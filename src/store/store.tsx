@@ -7,12 +7,13 @@ import {
   ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData,
 } from '../parser/types';
 import type {
-  AlertModalState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
+  AlertModalState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/types';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { randomizeOptions, randomizeQuestionOrder, randomizeForm } from '../utils/handleResponseRandomization';
+import { getInitialStimulusValidation } from '../components/response/stimulusErrors';
 
 export async function studyStoreCreator(
   studyId: string,
@@ -70,7 +71,7 @@ export async function studyStoreCreator(
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
           sidebar: { valid: false, values: {} },
-          stimulus: { valid: !(componentConfig.response.some((response) => response.type === 'reactive' && response.required !== false)), values: {} },
+          stimulus: getInitialStimulusValidation(componentConfig),
           provenanceGraph: {
             aboveStimulus: undefined,
             belowStimulus: undefined,
@@ -85,10 +86,10 @@ export async function studyStoreCreator(
     {},
     ...flatSequence.map((id, idx) => ({
       [`${id}_${idx}`]: {
-        aboveStimulus: true,
-        belowStimulus: true,
-        sidebar: true,
-        stimulus: true,
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: {} },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
         provenanceGraph: {
           aboveStimulus: undefined,
           belowStimulus: undefined,
@@ -108,6 +109,8 @@ export async function studyStoreCreator(
     showHelpText: false,
     alertModal: initialAlertModal ?? { show: false, message: '', title: '' },
     trialValidation: Object.keys(answers).length > 0 ? allValid : emptyValidation,
+    responseSubmitAttempted: {},
+    stimulusSubmitAttempted: {},
     reactiveAnswers: {},
     metadata,
     analysisProvState: {
@@ -180,7 +183,7 @@ export async function studyStoreCreator(
         state.trialValidation[identifier] = {
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
-          stimulus: { valid: componentConfig.response.every((response) => response.type !== 'reactive'), values: {} },
+          stimulus: getInitialStimulusValidation(componentConfig),
           sidebar: { valid: false, values: {} },
           provenanceGraph: {
             aboveStimulus: undefined,
@@ -289,22 +292,43 @@ export async function studyStoreCreator(
           status: boolean;
           values: object;
           provenanceGraph?: TrrackedProvenance;
+          reason?: ValidationStatus['reason'];
+          message?: ValidationStatus['message'];
         }>,
       ) => {
         if (!state.trialValidation[payload.identifier]) {
           return;
         }
-        const currentValues = state.trialValidation[payload.identifier]?.[payload.location]?.values;
+        const currentValidation = state.trialValidation[payload.identifier]?.[payload.location];
+        const currentValues = currentValidation?.values;
+        const finalReason = payload.status ? undefined : (payload.reason ?? currentValidation?.reason);
+        const finalMessage = payload.status ? undefined : (payload.message ?? currentValidation?.message);
 
         if (Object.keys(payload.values).length > 0) {
-          state.trialValidation[payload.identifier][payload.location] = { valid: payload.status, values: { ...currentValues, ...payload.values } };
+          state.trialValidation[payload.identifier][payload.location] = {
+            valid: payload.status,
+            values: { ...currentValues, ...payload.values },
+            reason: finalReason,
+            message: finalMessage,
+          };
         } else {
-          state.trialValidation[payload.identifier][payload.location] = { valid: payload.status, values: currentValues || {} };
+          state.trialValidation[payload.identifier][payload.location] = {
+            valid: payload.status,
+            values: currentValues || {},
+            reason: finalReason,
+            message: finalMessage,
+          };
         }
 
         if (payload.provenanceGraph) {
           state.trialValidation[payload.identifier].provenanceGraph[payload.location] = payload.provenanceGraph;
         }
+      },
+      setResponseSubmitAttempt(state, { payload }: PayloadAction<{ identifier: string; attempted: boolean }>) {
+        state.responseSubmitAttempted[payload.identifier] = payload.attempted;
+      },
+      setStimulusSubmitAttempt(state, { payload }: PayloadAction<{ identifier: string; attempted: boolean }>) {
+        state.stimulusSubmitAttempted[payload.identifier] = payload.attempted;
       },
       saveTrialAnswer(state, { payload }: PayloadAction<{ identifier: string } & StoredAnswer>) {
         state.answers[payload.identifier] = { ...payload };

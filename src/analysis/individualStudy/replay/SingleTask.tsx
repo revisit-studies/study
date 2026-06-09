@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Center, Group, Text } from '@mantine/core';
 import * as d3 from 'd3';
 
@@ -13,12 +12,13 @@ const TIMELINE_HEIGHT = 25;
 const LABEL_DISTANCE = 25;
 const LABEL_HEIGHT = 20;
 const TASK_GAP = 1;
+const LABEL_MAX_WIDTH = 160;
 const ICON_SIZE = 14;
 const ICON_GAP = 2;
 
 export function SingleTask({
   xScale,
-  name,
+  identifier,
   height,
   labelHeight = 0,
   isCorrect,
@@ -32,8 +32,12 @@ export function SingleTask({
   participantId,
   studyId,
   condition,
+  isHovered = false,
+  isDimmed = false,
+  onHover,
+  onHoverEnd,
 }: {
-  name: string,
+  identifier: string,
   height: number,
   xScale: d3.ScaleLinear<number, number>,
   labelHeight?: number,
@@ -48,22 +52,30 @@ export function SingleTask({
   participantId: string,
   studyId: string,
   condition?: string
+  isHovered?: boolean,
+  isDimmed?: boolean,
+  onHover?: () => void,
+  onHoverEnd?: () => void,
 }) {
-  const [isHover, setIsHover] = useState(false);
-
   const [ref, { width: labelWidth }] = useResizeObserver();
 
   const navigateToTrial = useNavigateToTrial();
   const iconCount = (incomplete || hasCorrect ? 1 : 0) + (hasAudio ? 1 : 0) + (hasScreenRecording ? 1 : 0);
   const iconsWidth = iconCount * (ICON_SIZE + ICON_GAP);
+  const labelOpacity = isDimmed ? 0.35 : 1;
 
   return (
-    <g onClick={() => navigateToTrial(trialOrder, participantId, studyId, condition)} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)} style={{ cursor: 'pointer' }}>
+    <g
+      onClick={() => navigateToTrial(trialOrder, participantId, studyId, condition)}
+      onMouseEnter={onHover}
+      onMouseLeave={onHoverEnd}
+      style={{ cursor: 'pointer' }}
+    >
       <rect
         opacity={1}
-        fill={isHover ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}
+        fill={isHovered ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}
         x={xScale(scaleStart) + TASK_GAP}
-        width={xScale(scaleEnd) - xScale(scaleStart) - TASK_GAP * 2}
+        width={Math.max(0, xScale(scaleEnd) - xScale(scaleStart) - TASK_GAP * 2)}
         y={height - TIMELINE_HEIGHT}
         height={TIMELINE_HEIGHT}
       />
@@ -79,6 +91,7 @@ export function SingleTask({
       <line
         stroke="black"
         strokeWidth={1}
+        opacity={labelOpacity}
         x1={xScale(scaleStart) - LABEL_MARGIN}
         x2={labelWidth + xScale(scaleStart) + LABEL_MARGIN + iconsWidth}
         y1={height - TIMELINE_HEIGHT - LABEL_DISTANCE + LABEL_HEIGHT - labelHeight}
@@ -90,10 +103,10 @@ export function SingleTask({
         y={height - TIMELINE_HEIGHT - LABEL_DISTANCE - labelHeight}
         height={LABEL_HEIGHT}
       >
-        <Center style={{ width: 'fit-content' }}>
+        <Center style={{ width: 'fit-content', opacity: labelOpacity }}>
           <Group wrap="nowrap" gap={2}>
-            <Text lineClamp={1} ref={ref} mx={0} style={{ width: 'fit-content', fontWeight: 600 }} size="12px">
-              {name}
+            <Text truncate={!isHovered} ref={ref} mx={0} style={{ maxWidth: isHovered ? undefined : LABEL_MAX_WIDTH, fontWeight: 600, whiteSpace: 'nowrap' }} size="12px">
+              {identifier}
             </Text>
             {hasScreenRecording && (
               <IconDeviceDesktop

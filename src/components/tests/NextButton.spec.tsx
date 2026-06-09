@@ -229,6 +229,7 @@ describe('NextButton', () => {
   });
 
   test('nextOnEnter: pressing Enter calls goToNextStep', async () => {
+    const onNext = vi.fn();
     mockStudyConfig = {
       uiConfig: {
         ...mockStudyConfig.uiConfig,
@@ -236,12 +237,12 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} />);
+      render(<NextButton checkAnswer={null} onNext={onNext} />);
     });
     await act(async () => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
     });
-    expect(mockGoToNextStep).toHaveBeenCalled();
+    expect(onNext).toHaveBeenCalled();
   });
 
   test('resets auto-advance state when the current identifier changes', async () => {
@@ -259,6 +260,7 @@ describe('NextButton', () => {
         <NextButton
           config={config}
           checkAnswer={null}
+          onNext={vi.fn()}
         />,
       ));
     });
@@ -277,6 +279,7 @@ describe('NextButton', () => {
         <NextButton
           config={config}
           checkAnswer={null}
+          onNext={vi.fn()}
         />,
       );
     });

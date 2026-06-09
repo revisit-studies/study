@@ -113,6 +113,14 @@ vi.mock('../../store/store', () => ({
     analysisProvState: {
       sidebar: { form: {} }, aboveStimulus: { form: {} }, belowStimulus: { form: {} }, stimulus: null,
     },
+    trialValidation: {
+      trial1_0: {
+        stimulus: { valid: true, values: {} },
+      },
+    },
+    stimulusSubmitAttempted: {
+      trial1_0: false,
+    },
     sequence: {
       order: 'fixed', orderPath: '', components: [], skip: [],
     },
@@ -389,7 +397,8 @@ describe('VideoController', () => {
 
   test('dispatches store action when forceCompletion is true', async () => {
     const mockDispatch = vi.fn();
-    vi.mocked(useStoreDispatch).mockReturnValueOnce(mockDispatch);
+    vi.mocked(useStoreDispatch).mockReturnValue(mockDispatch);
+    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('video-data');
     const forceConfig: VideoComponent = {
       type: 'video', path: '/test.mp4', forceCompletion: true, response: [],
     };
@@ -543,6 +552,14 @@ const makeStableState = (overrides: Partial<StoreState> = {}): StoreState => ({
   analysisCanPlayScreenRecording: false,
   analysisProvState: {
     sidebar: { form: {} }, aboveStimulus: { form: {} }, belowStimulus: { form: {} }, stimulus: null,
+  },
+  trialValidation: {
+    trial1_0: {
+      stimulus: { valid: true, values: {} },
+    },
+  },
+  stimulusSubmitAttempted: {
+    trial1_0: false,
   },
   sequence: {
     order: 'fixed', orderPath: '', components: [], skip: [],

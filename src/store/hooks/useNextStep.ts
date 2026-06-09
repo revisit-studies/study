@@ -4,7 +4,6 @@ import {
   useStoreSelector,
   useStoreActions,
   useStoreDispatch,
-  useAreResponsesValid,
   useFlatSequence,
 } from '../store';
 import {
@@ -20,7 +19,11 @@ import { useStudyConfig } from './useStudyConfig';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
 import { showNotification } from '../../utils/notifications';
-import { areComponentAnswersCorrect, getSkipConditionCorrectAnswers } from './useNextStep.utils';
+import {
+  areComponentAnswersCorrect,
+  getSkipConditionCorrectAnswers,
+  type SkipEvaluationAnswer,
+} from './useNextStep.utils';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
@@ -35,6 +38,7 @@ export function useNextStep() {
 
   const { funcIndex } = useParams();
   const identifier = useCurrentIdentifier();
+  const responseSubmitAttempted = useStoreSelector((state) => state.responseSubmitAttempted[identifier] ?? false);
 
   const storeDispatch = useStoreDispatch();
   const {
@@ -46,11 +50,9 @@ export function useNextStep() {
 
   const { dataCollectionEnabled } = modes;
 
-  const areResponsesValid = useAreResponsesValid(identifier);
-
   // Status of the next button. If false, the next button should be disabled
   const isAnalysis = useIsAnalysis();
-  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || !areResponsesValid;
+  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis;
 
   const storedAnswer = useStoredAnswer();
 
@@ -88,6 +90,7 @@ export function useNextStep() {
           endTime,
           windowEvents: currentWindowEvents,
           timedOut: !collectData,
+          responseSubmitAttempted,
         };
         const answersToPersist = { ...answers, [identifier]: toSave };
 
@@ -132,19 +135,22 @@ export function useNextStep() {
       const hasSkipBlock = blocksForStep !== null && (blocksForStep.some((block) => block.currentBlock.skip && block.currentBlock.skip.length > 0));
 
       // Get the answers with the new answer added, since above is dispatching and async, but we need it synchronously
-      const answersWithNewAnswer = {
-        ...answers,
-        [identifier]: {
+      const answersForSkipEvaluation = Object.entries(answers).reduce<Record<string, SkipEvaluationAnswer>>((acc, [key, responseObj]) => {
+        if (!responseObj.timedOut) {
+          acc[key] = {
+            answer: responseObj.answer,
+            timedOut: false,
+          };
+        }
+        return acc;
+      }, {});
+
+      if (collectData) {
+        answersForSkipEvaluation[identifier] = {
           answer: answerToPersist,
-          startTime,
-          endTime,
-          windowEvents: currentWindowEvents,
-          timedOut: !collectData,
-        },
-      };
-      const answersForSkipEvaluation = Object.fromEntries(
-        Object.entries(answersWithNewAnswer).filter(([_, responseObj]) => !responseObj.timedOut),
-      ) as typeof answersWithNewAnswer;
+          timedOut: false,
+        };
+      }
 
       // Check if the skip block should be triggered
       if (hasSkipBlock) {
@@ -156,10 +162,13 @@ export function useNextStep() {
         skipConditions.some((condition) => {
           let conditionIsTriggered = false;
 
-          const validationCandidates = Object.fromEntries(Object.entries(answersForSkipEvaluation).filter(([key]) => {
+          const validationCandidates = Object.entries(answersForSkipEvaluation).reduce<Record<string, SkipEvaluationAnswer>>((acc, [key, responseObj]) => {
             const componentIndex = parseInt(key.slice(key.lastIndexOf('_') + 1), 10);
-            return componentIndex >= condition.firstIndex && componentIndex <= currentStep;
-          })) as Record<string, StoredAnswer>;
+            if (componentIndex >= condition.firstIndex && componentIndex <= currentStep) {
+              acc[key] = responseObj;
+            }
+            return acc;
+          }, {});
 
           // Slim down the validationCandidates to only include the skip condition's component
           const componentsToCheck = condition.check !== 'block' ? Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name) : Object.entries(validationCandidates);
@@ -224,7 +233,7 @@ export function useNextStep() {
         color: 'red',
       });
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, studyConfig, participantSequence, navigate, studyId]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted]);
 
   return {
     isNextDisabled,

@@ -169,33 +169,56 @@ describe('TaskProvenanceTimeline', () => {
   };
 
   test('renders an SVG element', () => {
+    const provenanceGraph = {
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      sidebar: undefined,
+      stimulus: undefined,
+    };
     const html = renderToStaticMarkup(
-      <RealTaskProvenanceTimeline xScale={xScale} answers={{}} width={500} height={50} currentNode={null} trialName="trial_0" startTime={0} margin={margin} />,
+      <RealTaskProvenanceTimeline xScale={xScale} provenanceGraph={provenanceGraph} width={500} height={50} currentNode={null} trialName="trial_0" startTime={0} margin={margin} />,
     );
     expect(html).toContain('<svg');
   });
 
   test('renders a baseline horizontal line', () => {
+    const provenanceGraph = {
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      sidebar: undefined,
+      stimulus: undefined,
+    };
     const html = renderToStaticMarkup(
-      <RealTaskProvenanceTimeline xScale={xScale} answers={{}} width={500} height={50} currentNode={null} trialName="trial_0" startTime={0} margin={margin} />,
+      <RealTaskProvenanceTimeline xScale={xScale} provenanceGraph={provenanceGraph} width={500} height={50} currentNode={null} trialName="trial_0" startTime={0} margin={margin} />,
     );
     expect(html).toContain('<line');
     expect(html).toContain('stroke="black"');
   });
 
   test('skips null provenanceGraph entries gracefully', () => {
-    const answers = { trial_0: makeStoredAnswer({ endTime: 5000, startTime: 0 }) };
+    const provenanceGraph = {
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      sidebar: undefined,
+      stimulus: undefined,
+    };
     const html = renderToStaticMarkup(
-      <RealTaskProvenanceTimeline xScale={xScale} answers={answers} width={500} height={50} currentNode={null} trialName="trial_0" startTime={0} margin={margin} />,
+      <RealTaskProvenanceTimeline xScale={xScale} provenanceGraph={provenanceGraph} width={500} height={50} currentNode={null} trialName="trial_0" startTime={0} margin={margin} />,
     );
     expect(html).toContain('<svg');
   });
 
   test('applies left margin as marginLeft style', () => {
+    const provenanceGraph = {
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      sidebar: undefined,
+      stimulus: undefined,
+    };
     const html = renderToStaticMarkup(
       <RealTaskProvenanceTimeline
         xScale={xScale}
-        answers={{}}
+        provenanceGraph={provenanceGraph}
         width={400}
         height={40}
         currentNode={null}
@@ -372,7 +395,7 @@ describe('AudioProvenanceVis', () => {
 
   test('renders provenance-timeline when startTime > 0', async () => {
     const { getByTestId } = await act(async () => render(
-      <AudioProvenanceVis {...defaultProps} answers={answersWithTask} />,
+      <AudioProvenanceVis {...defaultProps} answers={answersWithStimulus} />,
     ));
     expect(getByTestId('provenance-timeline')).toBeDefined();
   });

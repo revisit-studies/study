@@ -15,10 +15,15 @@ vi.mock('@mantine/core', () => ({
   Button: ({ children, disabled, onClick }: { children?: ReactNode; disabled?: boolean; onClick?: () => void }) => (
     <button type="button" disabled={disabled} onClick={onClick}>{children}</button>
   ),
+  Group: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  Text: ({ children }: { children?: ReactNode }) => <p>{children}</p>,
+  ThemeIcon: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
 }));
 
 vi.mock('react-router', () => ({
   useNavigate: vi.fn(() => vi.fn()),
+  useParams: vi.fn(() => ({})),
+  useSearchParams: vi.fn(() => [new URLSearchParams()]),
 }));
 
 vi.mock('@trrack/core', () => ({
@@ -34,17 +39,27 @@ vi.mock('@trrack/core', () => ({
 vi.mock('lodash.isequal', () => ({ default: vi.fn(() => true) }));
 
 vi.mock('../../../store/store', () => ({
+  useFlatSequence: vi.fn(() => [{ id: 'trial1', component: 'trial1' }]),
   useStoreDispatch: vi.fn(() => vi.fn()),
   useStoreActions: vi.fn(() => ({
     updateResponseBlockValidation: vi.fn((v: unknown) => v),
     saveIncorrectAnswer: vi.fn((v: unknown) => v),
+    setResponseSubmitAttempt: vi.fn((v: unknown) => v),
+    setStimulusSubmitAttempt: vi.fn((v: unknown) => v),
   })),
   useStoreSelector: vi.fn((selector: (s: Record<string, unknown>) => unknown) => selector({
+    answers: {},
     analysisProvState: {},
+    clickedPrevious: false,
+    modes: { dataCollectionEnabled: true },
     reactiveAnswers: {},
     matrixAnswers: {},
     rankingAnswers: {},
-    trialValidation: {},
+    responseSubmitAttempted: { trial1_0: false },
+    sequence: {
+      order: 'fixed', orderPath: '', components: [], skip: [],
+    },
+    trialValidation: { trial1_0: {} },
     completed: false,
   })),
 }));
@@ -71,9 +86,14 @@ vi.mock('../../../store/hooks/useStoredAnswer', () => ({
   })),
 }));
 
+vi.mock('../../../store/hooks/useWindowEvents', () => ({
+  useWindowEvents: vi.fn(() => ({ current: [] })),
+}));
+
 vi.mock('../../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
   useCurrentIdentifier: vi.fn(() => 'trial1_0'),
+  useStudyId: vi.fn(() => 'test-study'),
 }));
 
 vi.mock('../utils', () => ({

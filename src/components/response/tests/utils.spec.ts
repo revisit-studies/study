@@ -7,18 +7,21 @@ import type {
 } from '../../../parser/types';
 import type { CustomResponseValidate } from '../../../store/types';
 import {
-  checkCheckboxResponseForValidation,
-  generateCustomResponseErrorMessage,
-  generateErrorMessage,
   generateInitFields,
   getDefaultFieldValue,
   generateValidation,
   mergeReactiveAnswers,
   normalizeCheckboxDontKnowValue,
-  shouldBypassValidationForStandaloneDontKnow,
   useAnswerField,
-  usesStandaloneDontKnowField,
 } from '../utils';
+import {
+  checkCheckboxResponseForValidation,
+  generateCustomResponseErrorMessage,
+  generateErrorMessage,
+  REQUIRED_ERROR_MESSAGE,
+  shouldBypassValidationForStandaloneDontKnow,
+  usesStandaloneDontKnowField,
+} from '../responseErrors';
 
 describe('generateInitFields', () => {
   const originalWindow = globalThis.window;
@@ -226,7 +229,7 @@ describe('generateValidation custom', () => {
     const validation = generateValidation([response], { [response.id]: customValidate });
     const error = validation[response.id]({}, {});
 
-    expect(error).toBe('Empty input');
+    expect(error).toBe(REQUIRED_ERROR_MESSAGE);
   });
 
   it('treats nested empty string structures as missing required input', () => {
@@ -240,7 +243,7 @@ describe('generateValidation custom', () => {
       tags: ['', ''],
     }, {});
 
-    expect(error).toBe('Empty input');
+    expect(error).toBe(REQUIRED_ERROR_MESSAGE);
   });
 
   it('does not treat 0 or false as empty custom values', () => {
@@ -326,7 +329,7 @@ describe('generateCustomResponseErrorMessage', () => {
       chartType: 'Bar',
       confidence: null,
       rationale: '',
-    }, {}, customValidate)).toBe('Set confidence to at least 70 to continue.');
+    }, {}, customValidate, undefined, { showRequiredErrors: true })).toBe('Set confidence to at least 70 to continue.');
   });
 
   it('shows no feedback once the current value is valid', () => {
@@ -372,7 +375,12 @@ describe('generateErrorMessage checkbox', () => {
       options: ['Option 1', 'Option 2', 'Option 3'],
     };
 
-    const error = generateErrorMessage(checkboxResponse, { value: ['Option 1'] });
+    const error = generateErrorMessage(
+      checkboxResponse,
+      { value: ['Option 1'] },
+      undefined,
+      { showRequiredErrors: true },
+    );
 
     expect(error).toBe('Please select at least 2 options');
   });
@@ -486,9 +494,12 @@ describe('generateErrorMessage matrix', () => {
   });
 
   it('shows matrix incomplete message after at least one answer is selected', () => {
-    const error = generateErrorMessage(matrixResponse, {
-      value: { q1: '0', q2: '' },
-    });
+    const error = generateErrorMessage(
+      matrixResponse,
+      { value: { q1: '0', q2: '' } },
+      undefined,
+      { showRequiredErrors: true },
+    );
 
     expect(error).toBe('Please answer all questions in the matrix to continue.');
   });
@@ -537,7 +548,7 @@ describe('generateErrorMessage dropdown', () => {
     const response: DropdownResponse = {
       id: 'q1', prompt: '', type: 'dropdown', options: [], required: true, maxSelections: 1,
     };
-    const result = generateErrorMessage(response, { value: ['A', 'B'] });
+    const result = generateErrorMessage(response, { value: ['A', 'B'] }, undefined, { showRequiredErrors: true });
     expect(result).toContain('at most 1');
   });
 
@@ -545,7 +556,7 @@ describe('generateErrorMessage dropdown', () => {
     const response: DropdownResponse = {
       id: 'q1', prompt: '', type: 'dropdown', options: [], required: true, minSelections: 3,
     };
-    const result = generateErrorMessage(response, { value: ['A'] });
+    const result = generateErrorMessage(response, { value: ['A'] }, undefined, { showRequiredErrors: true });
     expect(result).toContain('at least 3');
   });
 
@@ -562,21 +573,24 @@ describe('generateErrorMessage numerical', () => {
     const response: NumericalResponse = {
       id: 'q1', prompt: '', type: 'numerical', required: true, min: 1, max: 10,
     };
-    expect(generateErrorMessage(response, { value: 50 })).toContain('between 1 and 10');
+    expect(generateErrorMessage(response, { value: 50 }, undefined, { showRequiredErrors: true }))
+      .toContain('between 1 and 10');
   });
 
   test('returns min error when value is below min only', () => {
     const response: NumericalResponse = {
       id: 'q1', prompt: '', type: 'numerical', required: true, min: 5,
     };
-    expect(generateErrorMessage(response, { value: 2 })).toContain('5 or greater');
+    expect(generateErrorMessage(response, { value: 2 }, undefined, { showRequiredErrors: true }))
+      .toContain('5 or greater');
   });
 
   test('returns max error when value is above max only', () => {
     const response: NumericalResponse = {
       id: 'q1', prompt: '', type: 'numerical', required: true, max: 10,
     };
-    expect(generateErrorMessage(response, { value: 20 })).toContain('10 or less');
+    expect(generateErrorMessage(response, { value: 20 }, undefined, { showRequiredErrors: true }))
+      .toContain('10 or less');
   });
 
   test('returns null when numerical value is in range', () => {
@@ -592,7 +606,8 @@ describe('generateErrorMessage else branch — requiredValue mismatch', () => {
     const response: Response = {
       id: 'q1', prompt: '', type: 'shortText', required: true, requiredValue: 'correct',
     };
-    expect(generateErrorMessage(response, { value: 'wrong' })).toContain('correct');
+    expect(generateErrorMessage(response, { value: 'wrong' }, undefined, { showRequiredErrors: true }))
+      .toContain('correct');
   });
 
   test('returns null when shortText value matches requiredValue', () => {
@@ -820,7 +835,7 @@ describe('generateErrorMessage — answer.checked branch', () => {
       id: 'q1', prompt: '', type: 'checkbox', required: true, requiredValue: ['A', 'B'], options: ['A', 'B'],
     };
     // Pass checked instead of value — should find mismatch
-    const error = generateErrorMessage(response, { checked: ['A'] });
+    const error = generateErrorMessage(response, { checked: ['A'] }, undefined, { showRequiredErrors: true });
     expect(error).toContain('to continue');
   });
 
@@ -829,7 +844,7 @@ describe('generateErrorMessage — answer.checked branch', () => {
       id: 'q1', prompt: '', type: 'checkbox', required: true, requiredValue: ['A', 'B'], options: ['A', 'B'],
     };
     const options = [{ label: 'Option A', value: 'A' }];
-    const error = generateErrorMessage(response, { checked: ['A'] }, options);
+    const error = generateErrorMessage(response, { checked: ['A'] }, options, { showRequiredErrors: true });
     expect(error).toContain('select');
   });
 
