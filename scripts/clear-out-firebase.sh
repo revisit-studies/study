@@ -17,6 +17,7 @@ JOBS="${CLEAR_OUT_FIREBASE_JOBS:-4}"
 DRY_RUN=1
 INCLUDE_SNAPSHOTS=1
 DISCOVER_FIRESTORE=1
+DISCOVER_STORAGE=1
 STUDY_FILTER_SET=0
 ACTIVE_TASKS=0
 PARALLEL_FAILURES=0
@@ -53,6 +54,8 @@ Options:
   --collection COLLECTION    Additional Firestore collection to delete. Can be repeated.
   --discover-firestore      Discover matching top-level Firestore collections when executing. Default.
   --no-discover-firestore   Only delete derived and explicitly supplied Firestore collection names.
+  --discover-storage        Discover matching top-level storage prefixes when executing. Default.
+  --no-discover-storage     Only delete derived storage prefixes.
   --no-snapshots             Skip snapshot storage prefix cleanup.
   --storage-backend BACKEND  gcloud, aws, or none. Default: gcloud
   --s3-endpoint-url URL      Endpoint URL for --storage-backend aws.
@@ -133,6 +136,8 @@ quote_command() {
 }
 
 run_command() {
+  local output_file
+
   if [[ "$DRY_RUN" -eq 1 ]]; then
     printf '[dry-run] '
     quote_command "$@"
@@ -141,10 +146,15 @@ run_command() {
 
   printf '[run] '
   quote_command "$@"
-  if "$@"; then
+
+  output_file="$(mktemp "${TMPDIR:-/tmp}/clear-out-firebase.XXXXXX")"
+  if "$@" >"$output_file" 2>&1; then
+    rm -f "$output_file"
     return 0
   fi
 
+  cat "$output_file" >&2
+  rm -f "$output_file"
   return 1
 }
 
@@ -254,6 +264,14 @@ parse_args() {
         ;;
       --no-discover-firestore)
         DISCOVER_FIRESTORE=0
+        shift
+        ;;
+      --discover-storage)
+        DISCOVER_STORAGE=1
+        shift
+        ;;
+      --no-discover-storage)
+        DISCOVER_STORAGE=0
         shift
         ;;
       --no-snapshots)
@@ -515,6 +533,100 @@ gcloud_storage_url_has_matches() {
   gcloud storage ls "$url" >/dev/null 2>&1
 }
 
+normalize_storage_prefix() {
+  local object_url="$1"
+  local object_path="${object_url#gs://$STORAGE_BUCKET/}"
+
+  printf '%s\n' "${object_path%%/*}"
+}
+
+should_delete_storage_prefix() {
+  local storage_prefix="$1"
+  local prefix
+  local study_id
+  local target
+
+  [[ -n "$storage_prefix" ]] || return 1
+  [[ "$storage_prefix" != "user-management" ]] || return 1
+
+  for prefix in "${PREFIXES[@]}"; do
+    if [[ "$STUDY_FILTER_SET" -eq 1 ]]; then
+      for study_id in "${STUDIES[@]}"; do
+        target="${prefix}${study_id}"
+        if [[ "$storage_prefix" == "$target" ]]; then
+          return 0
+        fi
+        if [[ "$INCLUDE_SNAPSHOTS" -eq 1 && "$storage_prefix" == "$target-snapshot-"* ]]; then
+          return 0
+        fi
+      done
+      continue
+    fi
+
+    if [[ "$storage_prefix" == "$prefix"* ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+discover_gcloud_storage_prefixes() {
+  local prefix
+  local object_url
+  local storage_prefix
+  local discovered_prefixes=()
+
+  for prefix in "${PREFIXES[@]}"; do
+    while IFS= read -r object_url; do
+      storage_prefix="$(normalize_storage_prefix "$object_url")"
+      if should_delete_storage_prefix "$storage_prefix" \
+        && ! array_contains "$storage_prefix" "${discovered_prefixes[@]}"; then
+        discovered_prefixes+=("$storage_prefix")
+        printf '%s\n' "$storage_prefix"
+      fi
+    done < <(gcloud storage ls --recursive "gs://$STORAGE_BUCKET/$prefix*" 2>/dev/null || true)
+  done
+}
+
+build_storage_prefixes() {
+  local prefix
+  local study_id
+  local target
+  local storage_prefix
+  local storage_prefixes=()
+
+  for prefix in "${PREFIXES[@]}"; do
+    for study_id in "${STUDIES[@]}"; do
+      target="${prefix}${study_id}"
+      if ! array_contains "$target" "${storage_prefixes[@]}"; then
+        storage_prefixes+=("$target")
+      fi
+
+      if [[ "$INCLUDE_SNAPSHOTS" -eq 1 && "$STUDY_FILTER_SET" -eq 1 ]]; then
+        storage_prefix="${target}-snapshot-*"
+        if ! array_contains "$storage_prefix" "${storage_prefixes[@]}"; then
+          storage_prefixes+=("$storage_prefix")
+        fi
+      fi
+    done
+  done
+
+  if [[ "$DRY_RUN" -eq 0 && "$DISCOVER_STORAGE" -eq 1 && "$STORAGE_BACKEND" == "gcloud" ]]; then
+    while IFS= read -r storage_prefix; do
+      if ! array_contains "$storage_prefix" "${storage_prefixes[@]}"; then
+        storage_prefixes+=("$storage_prefix")
+      fi
+    done < <(discover_gcloud_storage_prefixes)
+  elif [[ "$DRY_RUN" -eq 1 && "$DISCOVER_STORAGE" -eq 1 && "$STORAGE_BACKEND" == "gcloud" ]]; then
+    printf '[dry-run] skipping live storage prefix discovery\n' >&2
+  elif [[ "$DISCOVER_STORAGE" -eq 1 && "$STORAGE_BACKEND" != "gcloud" ]]; then
+    printf '[skip] storage prefix discovery requires gcloud backend\n' >&2
+  fi
+
+  printf '%s\n' "${storage_prefixes[@]}"
+}
+
 delete_storage_prefix() {
   local prefix="$1"
   local storage_url
@@ -577,7 +689,9 @@ main() {
   local study_id
   local target
   local collection_name
+  local storage_prefix
   local firestore_collections=()
+  local storage_prefixes=()
 
   while IFS= read -r collection_name; do
     firestore_collections+=("$collection_name")
@@ -594,15 +708,14 @@ main() {
   fi
 
   reset_parallel_state
-  for prefix in "${PREFIXES[@]}"; do
-    for study_id in "${STUDIES[@]}"; do
-      target="${prefix}${study_id}"
-      start_task "storage $target" delete_storage_prefix "$target"
+  while IFS= read -r storage_prefix; do
+    storage_prefixes+=("$storage_prefix")
+  done < <(build_storage_prefixes)
 
-      if [[ "$INCLUDE_SNAPSHOTS" -eq 1 ]]; then
-        start_task "storage ${target}-snapshot-*" delete_storage_prefix "${target}-snapshot-*"
-      fi
-    done
+  for storage_prefix in "${storage_prefixes[@]}"; do
+    if [[ -n "$storage_prefix" ]]; then
+      start_task "storage $storage_prefix" delete_storage_prefix "$storage_prefix"
+    fi
   done
   wait_for_all_tasks
 
