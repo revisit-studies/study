@@ -23,8 +23,6 @@ import { useStudyRecordings } from '../utils/useStudyRecordings';
 import { useDeviceRules } from '../utils/useDeviceRules';
 import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './interface/DeviceRestrictionString';
 
-const STUDY_SCHEMA_VERSION_REGEX = /\/study\/(v\d+\.\d+\.\d+)\//;
-
 function StudyCard({
   configName,
   config,
@@ -384,10 +382,6 @@ export function ConfigSwitcher({
     () => configsList.some((configName) => !(configName in studyConfigs)),
     [configsList, studyConfigs],
   );
-  const revisitVersion = useMemo(() => configsList
-    .map((configName) => studyConfigs[configName]?.$schema.match(STUDY_SCHEMA_VERSION_REGEX)?.[1])
-    .filter((version): version is string => version !== undefined)
-    .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0], [configsList, studyConfigs]);
   const isLoadingStudies = isLoadingVisibility || isLoadingStudyConfigs;
   const configsFiltered = useMemo(() => configsList.filter((configName) => studyVisibility[configName] || user.isAdmin), [configsList, studyVisibility, user]);
 
@@ -550,19 +544,6 @@ export function ConfigSwitcher({
               </Text>
             )}
           </>
-        )}
-        {revisitVersion && (
-          <Text
-            c="dimmed"
-            size="xs"
-            style={{
-              position: 'fixed',
-              right: 12,
-              bottom: 8,
-            }}
-          >
-            {`reVISit ${revisitVersion}`}
-          </Text>
         )}
       </Container>
     </AppShell.Main>
