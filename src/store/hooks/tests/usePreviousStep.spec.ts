@@ -7,7 +7,11 @@ import {
   test,
   vi,
 } from 'vitest';
+import { useParams } from 'react-router';
 import { usePreviousStep } from '../usePreviousStep';
+import { useCurrentStep } from '../../../routes/utils';
+import { findFuncBlock, getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
+import { useIsAnalysis } from '../useIsAnalysis';
 import type { StoreState } from '../../types';
 
 // --- module mocks ---
@@ -57,12 +61,11 @@ vi.mock('../../../utils/getSequenceFlatMap', () => ({
   findFuncBlock: vi.fn(() => null),
 }));
 
-// Helper to change what useParams returns mid-test
-const useParamsMock = await import('react-router').then((m) => m.useParams) as ReturnType<typeof vi.fn>;
-const useCurrentStepMock = await import('../../../routes/utils').then((m) => m.useCurrentStep) as ReturnType<typeof vi.fn>;
-const useIsAnalysisMock = await import('../useIsAnalysis').then((m) => m.useIsAnalysis) as ReturnType<typeof vi.fn>;
-const getSequenceFlatMapMock = await import('../../../utils/getSequenceFlatMap').then((m) => m.getSequenceFlatMap) as ReturnType<typeof vi.fn>;
-const findFuncBlockMock = await import('../../../utils/getSequenceFlatMap').then((m) => m.findFuncBlock) as ReturnType<typeof vi.fn>;
+const useParamsMock = vi.mocked(useParams);
+const useCurrentStepMock = vi.mocked(useCurrentStep);
+const useIsAnalysisMock = vi.mocked(useIsAnalysis);
+const getSequenceFlatMapMock = vi.mocked(getSequenceFlatMap);
+const findFuncBlockMock = vi.mocked(findFuncBlock);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -173,7 +176,7 @@ describe('goToPreviousStep', () => {
     useCurrentStepMock.mockReturnValue(2);
     vi.mocked(getSequenceFlatMapMock).mockReturnValue(['intro', 'dynamic-block', 'end']);
     vi.mocked(findFuncBlockMock).mockImplementation((componentId: string) => (
-      componentId === 'dynamic-block' ? ({ id: 'dynamic-block' } as never) : null
+      componentId === 'dynamic-block' ? ({ id: 'dynamic-block' } as never) : undefined
     ));
     mockUseStoreSelector.mockImplementation((selector: (s: StoreState) => unknown) => selector({
       answers: { intro_0: { trialOrder: '0' } },

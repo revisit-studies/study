@@ -6,10 +6,12 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import { openConfirmModal } from '@mantine/modals';
 import { ManageView } from '../ManageView';
 import { RevisitModesItem } from '../RevisitModesItem';
 import { StageManagementItem } from '../StageManagementItem';
 import { DataManagementItem } from '../DataManagementItem';
+import { showNotification } from '../../../../utils/notifications';
 
 let mockStorageEngine: {
   getModes: ReturnType<typeof vi.fn>;
@@ -352,7 +354,6 @@ describe('ManageView', () => {
   });
 
   test('DataManagementItem createSnapshot called via handleCreateSnapshot', async () => {
-    const { openConfirmModal } = await import('@mantine/modals');
     await act(async () => {
       render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });
@@ -425,7 +426,6 @@ describe('ManageView', () => {
   });
 
   test('DataManagementItem restore snapshot modal fires via openConfirmModal', async () => {
-    const { openConfirmModal } = await import('@mantine/modals');
     mockStorageEngine!.getSnapshots.mockResolvedValue({
       'test-study-snapshot-2026T01:00': { name: 'snap-one' },
     });
@@ -441,12 +441,10 @@ describe('ManageView', () => {
   });
 
   test('DataManagementItem snapshotAction shows notification on failure', async () => {
-    const { showNotification } = await import('../../../../utils/notifications');
     mockStorageEngine!.createSnapshot.mockResolvedValue({
       status: 'ERROR',
       error: { title: 'Test error', message: 'Something went wrong' },
     });
-    const { openConfirmModal } = await import('@mantine/modals');
     await act(async () => {
       render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });

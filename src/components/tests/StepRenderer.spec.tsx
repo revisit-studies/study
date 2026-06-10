@@ -4,6 +4,7 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import { StepRenderer } from '../StepRenderer';
+import { shouldConfirmTabClose } from '../../utils/closeTabConfirmation';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -195,7 +196,6 @@ describe('StepRenderer', () => {
   });
 
   test('beforeunload listener added when shouldConfirmClose is true', async () => {
-    const { shouldConfirmTabClose } = await import('../../utils/closeTabConfirmation');
     vi.mocked(shouldConfirmTabClose).mockReturnValue(true);
     const addEventSpy = vi.spyOn(window, 'addEventListener');
     const { unmount } = await act(async () => render(<StepRenderer />));

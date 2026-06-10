@@ -8,7 +8,7 @@ import { ReplayContext, useReplay, useReplayContext } from '../useReplay';
 import { syncEmitter } from '../../../utils/syncReplay';
 
 vi.mock('react-router', () => ({
-  useSearchParams: vi.fn(() => [new URLSearchParams()]),
+  useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
 }));
 
 vi.mock('../../../utils/syncReplay', () => ({
@@ -20,10 +20,13 @@ vi.mock('../../../utils/syncReplay', () => ({
 }));
 
 const useSearchParamsMock = vi.mocked(useSearchParams);
+const makeSearchParamsResult = (params = new URLSearchParams()) => (
+  [params, vi.fn()] as ReturnType<typeof useSearchParams>
+);
 
 beforeEach(() => {
   vi.clearAllMocks();
-  useSearchParamsMock.mockReturnValue([new URLSearchParams()]);
+  useSearchParamsMock.mockReturnValue(makeSearchParamsResult());
 });
 
 afterEach(() => {
@@ -56,21 +59,21 @@ describe('useReplay — initialTimestamp from search params', () => {
   });
 
   test('parses a numeric millisecond t param (divided by 1000 → seconds)', () => {
-    useSearchParamsMock.mockReturnValue([new URLSearchParams({ t: '5000' })]);
+    useSearchParamsMock.mockReturnValue(makeSearchParamsResult(new URLSearchParams({ t: '5000' })));
     const { result } = renderHook(() => useReplay());
     // 5000 ms → 5 seconds; seekTime is set to initialTimestamp on mount
     expect(result.current.seekTime).toBe(5);
   });
 
   test('parses an hms-format t param like 1h2m3s', () => {
-    useSearchParamsMock.mockReturnValue([new URLSearchParams({ t: '1h2m3s' })]);
+    useSearchParamsMock.mockReturnValue(makeSearchParamsResult(new URLSearchParams({ t: '1h2m3s' })));
     const { result } = renderHook(() => useReplay());
     // 1*3600 + 2*60 + 3 = 3723 seconds
     expect(result.current.seekTime).toBe(3723);
   });
 
   test('parses a t param with only minutes and seconds (0m30s)', () => {
-    useSearchParamsMock.mockReturnValue([new URLSearchParams({ t: '0m30s' })]);
+    useSearchParamsMock.mockReturnValue(makeSearchParamsResult(new URLSearchParams({ t: '0m30s' })));
     const { result } = renderHook(() => useReplay());
     expect(result.current.seekTime).toBe(30);
   });

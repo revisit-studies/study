@@ -12,6 +12,7 @@ import type { Sequence, StoredAnswer } from '../types';
 import type { ParticipantData } from '../../storage/types';
 import type { REVISIT_MODE } from '../../storage/engines/types';
 import { makeStoredAnswer } from '../../tests/utils';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -336,8 +337,7 @@ describe('studyStoreCreator', () => {
   });
 
   test('emptyAnswers skips components not in config (return null path)', async () => {
-    const { getSequenceFlatMap: mockGSFM } = await import('../../utils/getSequenceFlatMap');
-    (mockGSFM as ReturnType<typeof vi.fn>).mockReturnValueOnce(['intro', 'dynamicComp', 'end']);
+    vi.mocked(getSequenceFlatMap).mockReturnValueOnce(['intro', 'dynamicComp', 'end']);
     const { store } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     expect(store.getState().answers.intro_0).toBeDefined();
     expect(store.getState().answers.dynamicComp_1).toBeUndefined();

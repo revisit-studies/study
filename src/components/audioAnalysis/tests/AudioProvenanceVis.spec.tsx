@@ -10,7 +10,7 @@ import * as d3 from 'd3';
 import { StoredAnswer, StoredProvenance, TrrackedProvenance } from '../../../store/types';
 import { makeStoredAnswer } from '../../../tests/utils';
 import { AudioProvenanceVis } from '../AudioProvenanceVis';
-import { syncEmitter } from '../../../utils/syncReplay';
+import { syncChannel, syncEmitter } from '../../../utils/syncReplay';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -403,7 +403,6 @@ describe('AudioProvenanceVis', () => {
   });
 
   test('syncChannel.postMessage fires when answers have trialOrder', async () => {
-    const { syncChannel } = await import('../../../utils/syncReplay');
     await act(async () => render(
       <AudioProvenanceVis {...defaultProps} answers={answersWithTask} />,
     ));

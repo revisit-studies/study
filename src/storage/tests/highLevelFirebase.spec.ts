@@ -1,7 +1,8 @@
 import {
   beforeAll, beforeEach, afterAll, afterEach, describe, expect, test, vi,
 } from 'vitest';
-import { Timestamp } from 'firebase/firestore';
+import { signInAnonymously, signOut } from '@firebase/auth';
+import { enableNetwork, Timestamp } from 'firebase/firestore';
 import { type ParticipantMetadata, type StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
@@ -1219,7 +1220,6 @@ describe.each([
   });
 
   test('logout calls signOut', async () => {
-    const { signOut } = await import('@firebase/auth');
     await (storageEngine as FirebaseStorageEngine).logout();
     expect(vi.mocked(signOut)).toHaveBeenCalled();
   });
@@ -1308,7 +1308,6 @@ describe('FirebaseStorageEngine auth/connection unit tests', () => {
   });
 
   test('initializeAnonymousAuth returns false when signInAnonymously throws', async () => {
-    const { signInAnonymously } = await import('@firebase/auth');
     vi.mocked(signInAnonymously).mockRejectedValueOnce(new Error('auth-error'));
     const engine = new FirebaseStorageEngine(true);
     expect(await engine.initializeAnonymousAuth()).toBe(false);
@@ -1323,7 +1322,6 @@ describe('FirebaseStorageEngine auth/connection unit tests', () => {
   });
 
   test('checkAuthReadiness throws and sets connected=false when auth fails', async () => {
-    const { signInAnonymously } = await import('@firebase/auth');
     vi.mocked(signInAnonymously).mockRejectedValueOnce(new Error('fail'));
     const engine = new FirebaseStorageEngine(true);
     await expect(engine.checkAuthReadiness()).rejects.toThrow('FirebaseAuthError');
@@ -1339,7 +1337,6 @@ describe('FirebaseStorageEngine auth/connection unit tests', () => {
   });
 
   test('connect sets connected=false when enableNetwork throws', async () => {
-    const { enableNetwork } = await import('firebase/firestore');
     vi.mocked(enableNetwork).mockRejectedValueOnce(new Error('network'));
     const engine = new FirebaseStorageEngine(true);
     await engine.connect();

@@ -10,6 +10,8 @@ import type {
 } from '../../parser/types';
 import { ConfigSwitcher } from '../ConfigSwitcher';
 import { makeGlobalConfig, makeStorageEngine, makeStudyConfig } from '../../tests/utils';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { getSequenceConditions } from '../../utils/handleConditionLogic';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -199,7 +201,6 @@ describe('ConfigSwitcher', () => {
   });
 
   test('renders study with conditions', async () => {
-    const { getSequenceConditions } = await import('../../utils/handleConditionLogic');
     vi.mocked(getSequenceConditions).mockReturnValueOnce(['condA', 'condB']);
     const { container } = await act(async () => render(
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
@@ -233,7 +234,6 @@ describe('ConfigSwitcher', () => {
   });
 
   test('renders with a mock storageEngine that returns modes', async () => {
-    const { useStorageEngine } = await import('../../storage/storageEngineHooks');
     const mockEngine = {
       getModes: vi.fn().mockResolvedValue({ dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false }),
       getParticipantsStatusCounts: vi.fn().mockResolvedValue({

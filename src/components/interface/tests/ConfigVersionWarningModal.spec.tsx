@@ -7,6 +7,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { ConfigVersionWarningModal } from '../ConfigVersionWarningModal';
+import { getNewParticipant } from '../../../utils/nextParticipant';
 
 let mockedIsStalledConfig = false;
 let mockedIsAnalysis = false;
@@ -103,7 +104,6 @@ describe('ConfigVersionWarningModal — interactive / effect branches', () => {
   });
 
   test('"Next Participant" button calls getNewParticipant', async () => {
-    const { getNewParticipant } = await import('../../../utils/nextParticipant');
     mockedIsStalledConfig = true;
 
     await act(async () => { render(<ConfigVersionWarningModal />); });

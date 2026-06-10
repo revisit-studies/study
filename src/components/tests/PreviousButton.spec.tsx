@@ -5,6 +5,7 @@ import {
 } from 'vitest';
 import { ReactNode } from 'react';
 import { PreviousButton } from '../PreviousButton';
+import { usePreviousStep } from '../../store/hooks/usePreviousStep';
 
 const mockGoToPreviousStep = vi.fn();
 const mockDispatch = vi.fn();
@@ -30,8 +31,6 @@ vi.mock('../../store/store', () => ({
   })),
   useStoreDispatch: vi.fn(() => mockDispatch),
 }));
-
-const { usePreviousStep } = await import('../../store/hooks/usePreviousStep');
 
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.restoreAllMocks());

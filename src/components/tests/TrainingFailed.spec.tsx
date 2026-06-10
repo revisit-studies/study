@@ -4,6 +4,7 @@ import {
 } from 'vitest';
 import { ReactNode } from 'react';
 import { TrainingFailed } from '../TrainingFailed';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 
 const mockReject = vi.fn(() => Promise.resolve());
 
@@ -33,7 +34,6 @@ describe('TrainingFailed', () => {
   });
 
   test('does not throw when storageEngine is undefined', async () => {
-    const { useStorageEngine } = await import('../../storage/storageEngineHooks');
     vi.mocked(useStorageEngine).mockReturnValueOnce({
       storageEngine: undefined,
     } as ReturnType<typeof useStorageEngine>);

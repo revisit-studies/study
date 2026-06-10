@@ -5,6 +5,7 @@ import {
 } from 'vitest';
 import { Login, signIn } from '../Login';
 import { makeStorageEngine } from './utils';
+import { showNotification } from '../utils/notifications';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -139,7 +140,6 @@ describe('signIn', () => {
   });
 
   test('calls showNotification and returns undefined when login throws', async () => {
-    const { showNotification } = await import('../utils/notifications');
     const engine = makeStorageEngine();
     Object.assign(engine, { login: vi.fn().mockRejectedValue(new Error('Auth failed')) });
     const result = await signIn(engine, mockSetLoading);

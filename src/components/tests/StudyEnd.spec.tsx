@@ -7,6 +7,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { StudyEnd } from '../StudyEnd';
+import { download } from '../downloader/DownloadTidy';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -255,8 +256,7 @@ describe('StudyEnd', () => {
   });
 
   test('autoDownload fires when completed and delayCounter <= 0', async () => {
-    const downloadMock = await import('../downloader/DownloadTidy');
-    const downloadSpy = vi.mocked(downloadMock.download);
+    const downloadSpy = vi.mocked(download);
     mockIsAnalysis = true; // analysis mode sets completed=true immediately
     mockStudyConfig = {
       ...mockStudyConfig,

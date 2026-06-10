@@ -7,12 +7,13 @@ import {
   afterEach, beforeAll, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import * as d3 from 'd3';
-import { useParams, useSearchParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { EditedText, Tag, TranscribedAudio } from '../types';
 import type { ParticipantData } from '../../../../storage/types';
 import { makeStoredAnswer as makeStoredAnswerBase, makeStorageEngine } from '../../../../tests/utils';
 import type { FirebaseStorageEngine } from '../../../../storage/engines/FirebaseStorageEngine';
 import { useAsync } from '../../../../store/hooks/useAsync';
+import { useReplayContext } from '../../../../store/hooks/useReplay';
 import { Pills } from '../tags/Pills';
 import { AddTagDropdown } from '../tags/AddTagDropdown';
 import { TagEditor } from '../tags/TagEditor';
@@ -401,8 +402,7 @@ describe('ThinkAloudAnalysis (DOM)', () => {
     });
     vi.mocked(useParams).mockReturnValue({ studyId: 'test-study', trialId: 'trial_0' });
     vi.mocked(useSearchParams).mockReturnValue([new URLSearchParams('participantId=p1'), mockSetSearchParams] as ReturnType<typeof useSearchParams>);
-    const { useNavigate } = vi.mocked(await import('react-router'));
-    useNavigate.mockReturnValue(mockNavigate);
+    vi.mocked(useNavigate).mockReturnValue(mockNavigate);
     vi.mocked(useAsync).mockReturnValue({
       value: null, status: 'success', execute: vi.fn(), error: null,
     });
@@ -510,8 +510,7 @@ describe('ThinkAloudFooter', () => {
     mockNavigate = vi.fn();
     mockSetSearchParams = vi.fn();
     vi.mocked(useSearchParams).mockReturnValue([new URLSearchParams('participantId=p1'), mockSetSearchParams] as ReturnType<typeof useSearchParams>);
-    const { useNavigate } = vi.mocked(await import('react-router'));
-    useNavigate.mockReturnValue(mockNavigate);
+    vi.mocked(useNavigate).mockReturnValue(mockNavigate);
     vi.mocked(useAsync).mockReturnValue({
       value: null, status: 'success', execute: vi.fn(), error: null,
     });
@@ -730,13 +729,10 @@ describe('ThinkAloudFooter', () => {
   });
 
   test('play/pause toggle calls setIsPlaying', async () => {
-    // Access the setIsPlaying mock from the module-scope useReplayContext mock
-    const { useReplayContext } = await import('../../../../store/hooks/useReplay');
     const mockSetIsPlaying = vi.fn();
-    // The module is fully mocked so the real return type doesn't apply; cast via the mock's own type
-    (useReplayContext as ReturnType<typeof vi.fn>).mockReturnValue({
+    vi.mocked(useReplayContext).mockReturnValue({
       isPlaying: false, setIsPlaying: mockSetIsPlaying, speed: 1, setSpeed: vi.fn(), setSeekTime: vi.fn(), hasEnded: false,
-    });
+    } as unknown as ReturnType<typeof useReplayContext>);
     const { getAllByRole } = await act(async () => render(
       <RealThinkAloudFooter {...footerDefaultProps} />,
     ));
