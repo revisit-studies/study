@@ -1,22 +1,16 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
-import isEqual from 'lodash.isequal';
 import {
-  CheckboxResponse, CustomResponse, JsonValue, RadioResponse, Response,
+  CheckboxResponse, JsonValue, RadioResponse, Response,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
 import { parseStringOptionValue } from '../../utils/stringOptions';
 import {
-  checkCheckboxResponseForValidation,
-  checkDropdownResponse,
-  checkMatrixResponse,
-  checkNumericalResponse,
-  isEmptyCustomResponseValue,
   isOtherSelectionIncomplete,
   REQUIRED_ERROR_MESSAGE,
-  shouldBypassValidationForStandaloneDontKnow,
   usesStandaloneDontKnowField,
-} from './responseErrors';
+  validateResponse,
+} from './responseValidation';
 
 type ResponseDefault = JsonValue;
 type ResponseWithDefault = Response & { default?: ResponseDefault };
@@ -157,40 +151,6 @@ export const mergeReactiveAnswers = (
   return mergedValues ?? currentValues;
 };
 
-function validateCustomResponse(
-  response: CustomResponse,
-  value: StoredAnswer['answer'][string],
-  values: StoredAnswer['answer'],
-  customValidate?: CustomResponseValidate,
-  loadError?: string,
-) {
-  if (loadError) {
-    return loadError;
-  }
-
-  if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
-    return null;
-  }
-
-  if (response.required !== false && isEmptyCustomResponseValue(value)) {
-    return REQUIRED_ERROR_MESSAGE;
-  }
-
-  if (response.requiredValue !== undefined && !isEmptyCustomResponseValue(value) && !isEqual(value, response.requiredValue)) {
-    return 'Incorrect input';
-  }
-
-  if (!customValidate) {
-    return null;
-  }
-
-  if (response.required === false && isEmptyCustomResponseValue(value)) {
-    return null;
-  }
-
-  return customValidate(value, values, response);
-}
-
 export const generateValidation = (
   responses: Response[],
   customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
@@ -202,68 +162,28 @@ export const generateValidation = (
       validateObj = {
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
-          if (response.type === 'custom') {
-            return validateCustomResponse(
-              response,
-              value,
-              values,
-              customResponseValidators[response.id],
-              customResponseLoadErrors[response.id],
-            );
+          const result = validateResponse(response, value, values, {
+            customValidate: customResponseValidators[response.id],
+            loadError: customResponseLoadErrors[response.id],
+          });
+
+          if (result.issueType === 'none') {
+            return null;
           }
 
-          if (shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) {
-            return null;
+          if (result.issueType === 'unanswered') {
+            return REQUIRED_ERROR_MESSAGE;
+          }
+
+          if (response.type === 'custom' && customResponseLoadErrors[response.id]) {
+            return result.message ?? null;
           }
 
           if (isOtherSelectionIncomplete(response, value, values)) {
             return REQUIRED_ERROR_MESSAGE;
           }
 
-          if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-            if (response.type === 'matrix-checkbox' || response.type === 'matrix-radio') {
-              return checkMatrixResponse(response, value as Record<string, string>);
-            }
-            if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
-              return Object.keys(value).length > 0 ? null : REQUIRED_ERROR_MESSAGE;
-            }
-            return Object.values(value).every((val) => val !== '') ? null : REQUIRED_ERROR_MESSAGE;
-          }
-          if (Array.isArray(value)) {
-            if (response.requiredValue != null && !Array.isArray(response.requiredValue)) {
-              return 'Incorrect required value. Contact study administrator.';
-            }
-            if (response.requiredValue != null && Array.isArray(response.requiredValue)) {
-              if (response.requiredValue.length !== value.length) {
-                return 'Incorrect input';
-              }
-              const sortedReq = [...response.requiredValue].sort();
-              const sortedVal = [...value].sort();
-
-              return sortedReq.every((val, index) => val === sortedVal[index]) ? null : 'Incorrect input';
-            }
-            if (response.type === 'checkbox') {
-              return checkCheckboxResponseForValidation(response, value as string[], !!values[`${response.id}-dontKnow`]);
-            }
-            if (response.type === 'dropdown') {
-              return checkDropdownResponse(response, value as string[]);
-            }
-            return value.length === 0 ? REQUIRED_ERROR_MESSAGE : null;
-          }
-
-          if (response.required && response.requiredValue != null && value != null) {
-            return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
-          }
-          if (response.required) {
-            if ((value === null || value === undefined || value === '') && !values[`${response.id}-dontKnow`]) {
-              return REQUIRED_ERROR_MESSAGE;
-            }
-            if (response.type === 'numerical') {
-              return checkNumericalResponse(response, value as unknown as number);
-            }
-          }
-
-          return value === null ? REQUIRED_ERROR_MESSAGE : null;
+          return result.blocksProgression ? result.message ?? 'Incorrect input' : null;
         },
       };
     }
