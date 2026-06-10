@@ -17,7 +17,7 @@ import { PREFIX } from '../../../../utils/Prefix';
 const width = 300;
 const height = 300;
 
-export function Scatter({ r, datasetName } : { r: number, datasetName: string }) {
+export function Scatter({ r, datasetName }: { r: number, datasetName: string }) {
   const d3Container = useRef(null);
   const [data, setData] = useState<[number, number][]>([]);
   const [isHover, setIsHover] = useState<boolean>(false);
