@@ -6,6 +6,8 @@ import {
   ComponentBlock, DynamicBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
 } from '../types';
 import { isDynamicBlock } from '../utils';
+import calviConfig from '../../../public/libraries/calvi/config.json';
+import vlatConfig from '../../../public/libraries/vlat/config.json';
 
 function isComponentBlock(value: string | ComponentBlock | DynamicBlock): value is ComponentBlock {
   return typeof value === 'object' && value !== null && 'components' in value && !isDynamicBlock(value);
@@ -1368,6 +1370,40 @@ describe('verifyLibraryUsage', () => {
 });
 
 describe('loadLibrariesParseNamespace', () => {
+  test('loads CALVI and VLAT configs with tag-pinned external image assets', async () => {
+    const libraryConfigs: Record<string, LibraryConfig> = {
+      calvi: calviConfig as LibraryConfig,
+      vlat: vlatConfig as LibraryConfig,
+    };
+
+    global.fetch = vi.fn().mockImplementation((path: URL | RequestInfo) => {
+      const pathString = path.toString();
+      const libraryName = pathString.includes('/calvi/')
+        ? 'calvi'
+        : 'vlat';
+
+      return Promise.resolve({
+        text: async () => JSON.stringify(libraryConfigs[libraryName]),
+      });
+    });
+
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+
+    const result = await loadLibrariesParseNamespace(['calvi', 'vlat'], errors, warnings);
+    const assetBaseUrl = 'https://raw.githubusercontent.com/revisit-studies/library-assets/v1';
+    const calviN1 = result.calvi.components['$calvi.components.N1'] as { path: string };
+    const vlatLine = result.vlat.components['$vlat.components.line-value'] as { path: string };
+
+    expect(errors).toHaveLength(0);
+    expect(result.calvi.sequences?.full).toBeDefined();
+    expect(result.calvi.sequences?.specificBank).toBeDefined();
+    expect(result.calvi.sequences?.fullBank).toBeDefined();
+    expect(result.vlat.sequences?.full).toBeDefined();
+    expect(calviN1.path).toBe(`${assetBaseUrl}/calvi/questions/normal/N1.jpg`);
+    expect(vlatLine.path).toBe(`${assetBaseUrl}/vlat/VLAT1.png`);
+  });
+
   test('loads libraries and namespaces components correctly', async () => {
     const mockLibraryConfig = {
       $schema: '',
