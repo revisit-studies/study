@@ -15,6 +15,10 @@ import {
   normalizeStoredProvenance,
   splitProvenanceFromAnswers,
 } from '../../store/provenance';
+import {
+  SnapshotParticipantCounts,
+  calculateSnapshotParticipantCounts,
+} from './utils/snapshotParticipantCounts';
 
 export interface StoredUser {
   email: string | null,
@@ -125,8 +129,11 @@ export type ActionResponse =
   | ActionResponseSuccess
   | ActionResponseFailed;
 
-// Represents a snapshot name item with an original name and an optional alternate (renamed) name.
-export type SnapshotDocContent = Record<string, { name: string; }>;
+// Represents snapshot metadata keyed by the snapshot storage directory name.
+export type SnapshotDocContent = Record<string, {
+  name: string;
+  participantCounts?: SnapshotParticipantCounts;
+}>;
 
 export type FinalizeParticipantResult = {
   status: 'complete' | 'retry' | 'error';
@@ -306,13 +313,24 @@ export abstract class StorageEngine {
   protected abstract _deleteRealtimeData(path: string): Promise<void>;
 
   // Adds a directory name to the metadata. This is used by createSnapshot
-  protected abstract _addDirectoryNameToSnapshots(directoryName: string, studyId: string): Promise<void>;
+  protected abstract _addDirectoryNameToSnapshots(
+    directoryName: string,
+    studyId: string,
+    participantCounts?: SnapshotParticipantCounts,
+  ): Promise<void>;
 
   // Removes a snapshot from the metadata. This is used by removeSnapshotOrLive
   protected abstract _removeDirectoryNameFromSnapshots(directoryName: string, studyId: string): Promise<void>;
 
   // Updates a snapshot in the metadata. This is used by renameSnapshot
   protected abstract _changeDirectoryNameInSnapshots(oldName: string, newName: string, studyId: string): Promise<void>;
+
+  // Updates participant status count metadata for an existing snapshot.
+  protected abstract _updateSnapshotParticipantCounts(
+    snapshotName: string,
+    studyId: string,
+    participantCounts: SnapshotParticipantCounts,
+  ): Promise<void>;
 
   /*
   * THROTTLED METHODS
@@ -1731,6 +1749,7 @@ export abstract class StorageEngine {
     const formattedDate = `${year}-${month}-${date}T${hours}:${minutes}:${seconds}`;
 
     const targetName = `${this.collectionPrefix}${studyId}-snapshot-${formattedDate}`;
+    const participantCounts = calculateSnapshotParticipantCounts(await this.getAllParticipantsData(studyId));
 
     if (this.getEngine() === 'localStorage') {
       await this._copyDirectory(`${sourceName}/`, `${targetName}/`);
@@ -1743,7 +1762,7 @@ export abstract class StorageEngine {
       await this._copyDirectory(sourceName, targetName);
       await this._copyRealtimeData(sourceName, targetName);
     }
-    await this._addDirectoryNameToSnapshots(targetName, studyId);
+    await this._addDirectoryNameToSnapshots(targetName, studyId, participantCounts);
 
     const createSnapshotSuccessNotifications: RevisitNotification[] = [];
     if (deleteData) {
@@ -1913,6 +1932,14 @@ export abstract class StorageEngine {
         },
       };
     }
+  }
+
+  async updateSnapshotParticipantCounts(
+    studyId: string,
+    snapshotName: string,
+    participantCounts: SnapshotParticipantCounts,
+  ) {
+    await this._updateSnapshotParticipantCounts(snapshotName, studyId, participantCounts);
   }
 }
 

@@ -99,6 +99,8 @@ class TestStorageEngine extends StorageEngine {
 
   protected _changeDirectoryNameInSnapshots = vi.fn(async () => { });
 
+  protected _updateSnapshotParticipantCounts = vi.fn(async () => { });
+
   // Public stubs used by tests
   getAllSequenceAssignments = vi.fn(async () => []);
 

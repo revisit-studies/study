@@ -1,7 +1,9 @@
 import {
   Text, LoadingOverlay, Box, Title, Flex, Modal, TextInput, Button, Tooltip, Space, Table,
 } from '@mantine/core';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  useCallback, useEffect, useRef, useState,
+} from 'react';
 import { IconTrashX, IconRefresh, IconPencil } from '@tabler/icons-react';
 import { openConfirmModal } from '@mantine/modals';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
@@ -9,6 +11,10 @@ import { showNotification, RevisitNotification } from '../../../utils/notificati
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 import { ActionResponse, SnapshotDocContent } from '../../../storage/engines/types';
 import { ParticipantDataWithStatus } from '../../../storage/types';
+import {
+  SnapshotParticipantCounts,
+  calculateSnapshotParticipantCounts,
+} from '../../../storage/engines/utils/snapshotParticipantCounts';
 
 type SnapshotAction =
   | { type: 'create', archive: boolean }
@@ -32,6 +38,8 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
 
   const [loading, setLoading] = useState<boolean>(false);
   const [snapshotListLoading, setSnapshotListLoading] = useState<boolean>(false);
+  const [snapshotCountStatus, setSnapshotCountStatus] = useState<Record<string, 'loading' | 'failed'>>({});
+  const snapshotCountBackfills = useRef(new Set<string>());
 
   const { storageEngine } = useStorageEngine();
 
@@ -49,6 +57,63 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
   useEffect(() => {
     refreshSnapshots();
   }, [refreshSnapshots]);
+
+  useEffect(() => {
+    if (!storageEngine) {
+      return undefined;
+    }
+
+    let isCancelled = false;
+
+    Object.entries(snapshots).forEach(([snapshotKey, snapshotItem]) => {
+      if (snapshotItem.participantCounts || snapshotCountBackfills.current.has(snapshotKey)) {
+        return;
+      }
+
+      snapshotCountBackfills.current.add(snapshotKey);
+      setSnapshotCountStatus((previous) => ({ ...previous, [snapshotKey]: 'loading' }));
+      const strippedFilename = snapshotKey.slice(snapshotKey.indexOf('-') + 1);
+
+      storageEngine.getAllParticipantsData(strippedFilename)
+        .then(async (participants) => {
+          const participantCounts = calculateSnapshotParticipantCounts(participants);
+          await storageEngine.updateSnapshotParticipantCounts(studyId, snapshotKey, participantCounts);
+
+          if (isCancelled) {
+            return;
+          }
+
+          setSnapshots((previousSnapshots) => {
+            if (!previousSnapshots[snapshotKey]) {
+              return previousSnapshots;
+            }
+
+            return {
+              ...previousSnapshots,
+              [snapshotKey]: {
+                ...previousSnapshots[snapshotKey],
+                participantCounts,
+              },
+            };
+          });
+          setSnapshotCountStatus((previous) => {
+            const remaining = { ...previous };
+            delete remaining[snapshotKey];
+            return remaining;
+          });
+        })
+        .catch((error) => {
+          console.error(`Failed to backfill participant counts for snapshot ${snapshotKey}:`, error);
+          if (!isCancelled) {
+            setSnapshotCountStatus((previous) => ({ ...previous, [snapshotKey]: 'failed' }));
+          }
+        });
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [snapshots, storageEngine, studyId]);
 
   if (!storageEngine) {
     return null;
@@ -137,6 +202,22 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
   const fetchParticipants = async (snapshotName: string) => {
     const strippedFilename = snapshotName.slice(snapshotName.indexOf('-') + 1);
     return await storageEngine.getAllParticipantsData(strippedFilename);
+  };
+
+  const renderParticipantCount = (
+    snapshotKey: string,
+    participantCounts: SnapshotParticipantCounts | undefined,
+    countKey: keyof SnapshotParticipantCounts,
+  ) => {
+    if (participantCounts) {
+      return participantCounts[countKey];
+    }
+
+    if (snapshotCountStatus[snapshotKey] === 'failed') {
+      return 'Unavailable';
+    }
+
+    return 'Loading...';
   };
 
   return (
@@ -230,6 +311,9 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
                   <Table.Tr>
                     <Table.Th>Snapshot Name</Table.Th>
                     <Table.Th>Date Created</Table.Th>
+                    <Table.Th>Completed</Table.Th>
+                    <Table.Th>In Progress</Table.Th>
+                    <Table.Th>Rejected</Table.Th>
                     <Table.Th>Actions</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
@@ -239,6 +323,9 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
                       <Table.Tr key={key}>
                         <Table.Td>{snapshotItem.name}</Table.Td>
                         <Table.Td>{getDateFromSnapshotName(key)}</Table.Td>
+                        <Table.Td>{renderParticipantCount(key, snapshotItem.participantCounts, 'completed')}</Table.Td>
+                        <Table.Td>{renderParticipantCount(key, snapshotItem.participantCounts, 'inProgress')}</Table.Td>
+                        <Table.Td>{renderParticipantCount(key, snapshotItem.participantCounts, 'rejected')}</Table.Td>
                         <Table.Td>
                           <Flex>
                             <Tooltip label="Rename">
