@@ -16,6 +16,26 @@ const LABEL_MAX_WIDTH = 160;
 const ICON_SIZE = 14;
 const ICON_GAP = 2;
 
+function taskFill({
+  incomplete,
+  hasCorrect,
+  isCorrect,
+}: {
+  incomplete: boolean,
+  hasCorrect: boolean,
+  isCorrect: boolean,
+}) {
+  if (incomplete) {
+    return '#ffe8cc';
+  }
+
+  if (!hasCorrect) {
+    return '#dee2e6';
+  }
+
+  return isCorrect ? '#40c057' : '#fa5252';
+}
+
 export function SingleTask({
   xScale,
   identifier,
@@ -72,8 +92,10 @@ export function SingleTask({
       style={{ cursor: 'pointer' }}
     >
       <rect
-        opacity={1}
-        fill={isHovered ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}
+        opacity={isDimmed ? 0.45 : 1}
+        fill={taskFill({ incomplete, hasCorrect, isCorrect })}
+        stroke={isHovered ? 'cornflowerblue' : undefined}
+        strokeWidth={isHovered ? 3 : 0}
         x={xScale(scaleStart) + TASK_GAP}
         width={Math.max(0, xScale(scaleEnd) - xScale(scaleStart) - TASK_GAP * 2)}
         y={height - TIMELINE_HEIGHT}
