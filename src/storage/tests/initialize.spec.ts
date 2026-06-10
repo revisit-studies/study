@@ -8,22 +8,24 @@ import { initializeStorageEngine } from '../initialize';
 const mocks = vi.hoisted(() => {
   const mockSupabaseConnect = vi.fn(async () => {});
   const mockSupabaseIsConnected = vi.fn().mockReturnValue(true);
-  const MockSupabase = vi.fn().mockImplementation(() => ({
-    connect: mockSupabaseConnect,
-    isConnected: mockSupabaseIsConnected,
-  }));
+  const MockSupabase = vi.fn(class MockSupabaseStorageEngine {
+    connect = mockSupabaseConnect;
+
+    isConnected = mockSupabaseIsConnected;
+  });
 
   const mockFirebaseConnect = vi.fn(async () => {});
   const mockFirebaseIsConnected = vi.fn().mockReturnValue(true);
-  const MockFirebase = vi.fn().mockImplementation(() => ({
-    connect: mockFirebaseConnect,
-    isConnected: mockFirebaseIsConnected,
-  }));
+  const MockFirebase = vi.fn(class MockFirebaseStorageEngine {
+    connect = mockFirebaseConnect;
+
+    isConnected = mockFirebaseIsConnected;
+  });
 
   const mockLocalConnect = vi.fn(async () => {});
-  const MockLocal = vi.fn().mockImplementation(() => ({
-    connect: mockLocalConnect,
-  }));
+  const MockLocal = vi.fn(class MockLocalStorageEngine {
+    connect = mockLocalConnect;
+  });
 
   return {
     MockSupabase,

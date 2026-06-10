@@ -707,6 +707,18 @@ describe('ComponentController — effect coverage (render-based)', () => {
 // ── VegaController — signal and event coverage ────────────────────────────────
 
 describe('VegaController — signal and event coverage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useIsAnalysis).mockReturnValue(false);
+    vi.mocked(useStoreDispatch).mockReturnValue(vi.fn());
+    mockStoreActions = {
+      setReactiveAnswers: vi.fn(),
+      updateResponseBlockValidation: vi.fn(),
+      setAlertModal: vi.fn(),
+      setAnalysisCanPlayScreenRecording: vi.fn(),
+    };
+  });
+
   test('renders "Failed to load vega config" when inline config is missing', async () => {
     const { container } = render(
       // @ts-expect-error intentionally passing undefined config to test error path

@@ -1,4 +1,6 @@
-import { render, act, cleanup } from '@testing-library/react';
+import {
+  render, act, cleanup, waitFor,
+} from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
@@ -28,13 +30,14 @@ const mockSource = { connect: vi.fn(), disconnect: vi.fn() };
 const mockClose = vi.fn().mockResolvedValue(undefined);
 const mockGetUserMedia = vi.fn();
 
-function makeMockAudioContext() {
-  return {
-    state: 'running' as AudioContextState,
-    createMediaStreamSource: vi.fn(() => mockSource),
-    createAnalyser: vi.fn(() => mockAnalyser),
-    close: mockClose,
-  };
+class MockAudioContext {
+  state: AudioContextState = 'running';
+
+  createMediaStreamSource = vi.fn(() => mockSource);
+
+  createAnalyser = vi.fn(() => mockAnalyser);
+
+  close = mockClose;
 }
 
 vi.mock('@mantine/core', () => ({
@@ -43,8 +46,9 @@ vi.mock('@mantine/core', () => ({
 
 describe('RecordingAudioWaveform', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     mockGetUserMedia.mockResolvedValue({ getTracks: () => [{ stop: vi.fn() }] });
-    vi.stubGlobal('AudioContext', vi.fn(() => makeMockAudioContext()));
+    vi.stubGlobal('AudioContext', vi.fn(MockAudioContext));
     vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
@@ -97,8 +101,9 @@ describe('RecordingAudioWaveform', () => {
 
   test('closes AudioContext on unmount', async () => {
     const { unmount } = await act(async () => render(<RecordingAudioWaveform />));
+    await waitFor(() => expect(mockGetUserMedia).toHaveBeenCalled());
     await act(async () => { unmount(); });
-    expect(mockClose).toHaveBeenCalled();
+    await waitFor(() => expect(mockClose).toHaveBeenCalled());
   });
 
   test('draw callback executes waveform rendering when RAF fires', async () => {
@@ -113,7 +118,7 @@ describe('RecordingAudioWaveform', () => {
     }));
 
     await act(async () => render(<RecordingAudioWaveform width={60} height={36} fps={30} />));
-    expect(mockCtx.stroke).toHaveBeenCalled();
+    await waitFor(() => expect(mockCtx.stroke).toHaveBeenCalled());
   });
 
   test('setupAudio returns early when canvas context is null', async () => {

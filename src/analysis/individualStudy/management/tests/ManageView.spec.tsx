@@ -123,6 +123,7 @@ const makeEngine = () => ({
 
 describe('ManageView', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     mockStorageEngine = makeEngine();
   });
 
