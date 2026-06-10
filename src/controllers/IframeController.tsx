@@ -71,6 +71,12 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             if (currentConfig.parameters) {
               sendMessage('STUDY_DATA', currentConfig.parameters);
             }
+            if (provState) {
+              sendMessage('PROVENANCE', provState);
+            }
+            if (answers) {
+              sendMessage('ANSWERS', answers);
+            }
             break;
           case `${PREFIX}/READY`:
             break;
@@ -111,7 +117,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateResponseBlockValidation, identifier, isAnalysis]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateResponseBlockValidation, identifier, isAnalysis, provState, answers]);
 
   return (
     <iframe
