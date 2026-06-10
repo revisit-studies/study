@@ -78,6 +78,7 @@ vi.mock('@mantine/core', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
+  IconAlertTriangle: () => null,
   IconChartHistogram: () => null,
   IconDotsVertical: () => null,
   IconMail: () => null,
@@ -164,7 +165,12 @@ vi.mock('../../../utils/recordingWarnings', () => ({
 
 describe('AppHeader interactive', () => {
   beforeEach(() => { mockStorageEngineFailedToConnect = false; });
-  afterEach(() => { cleanup(); vi.useRealTimers(); });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
 
   test('covers storageEngineFailedToConnect effect: setTimeout setup and callback', async () => {
     mockStorageEngineFailedToConnect = true;
@@ -185,6 +191,9 @@ describe('AppHeader interactive', () => {
 
 describe('AppHeader', () => {
   beforeEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    mockStorageEngineFailedToConnect = false;
     mockedCurrentComponent = 'componentA';
     mockedRecordingContext = {
       isScreenRecording: false,
@@ -223,8 +232,7 @@ describe('AppHeader', () => {
     const html = renderToStaticMarkup(
       <AppHeader developmentModeEnabled={false} dataCollectionEnabled={false} />,
     );
-    // With no storageEngine connection, shows disconnected state
-    expect(html).toContain('Storage Disconnected');
+    expect(html).toContain('Demo Mode');
     // Dev mode controls should not appear
     expect(html).not.toContain('Study Browser');
   });
@@ -295,5 +303,15 @@ describe('AppHeader', () => {
     const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
 
     expect(html).toContain('Recording permission denied');
+  });
+
+  test('shows default Firebase warning badge on direct study pages', () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
+    vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: 'revisit-utah' }));
+    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+
+    const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
+
+    expect(html).toContain('Default Firebase');
   });
 });

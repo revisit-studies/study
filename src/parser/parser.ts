@@ -8,6 +8,14 @@ import {
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
 import { isDynamicBlock, isInheritedComponent } from './utils';
+import {
+  DEFAULT_CONTACT_EMAIL,
+  DEFAULT_FIREBASE_WARNING_ACTION,
+  DEFAULT_FIREBASE_WARNING_MESSAGE,
+  getCurrentHostname,
+  shouldSuppressDefaultDeploymentWarnings,
+  shouldWarnForDefaultFirebaseConfig,
+} from '../utils/defaultFirebaseConfig';
 
 const ajv1 = new Ajv({ allowUnionTypes: true });
 ajv1.addSchema(globalSchema);
@@ -165,19 +173,22 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     });
   }
 
-  // Warn if the default contact email is left in the config and the study is not hosted on a known ReVISit domain
-  const DEFAULT_CONTACT_EMAIL = 'contact@revisit.dev';
-  const REVISIT_DOMAINS = ['revisit.dev', 'vdl.sci.utah.edu'];
-  const LOCAL_DEVELOPMENT_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]']);
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isRevisitDomain = REVISIT_DOMAINS.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
-  const isLocalDevelopment = LOCAL_DEVELOPMENT_HOSTNAMES.has(hostname);
-  if (studyConfig.uiConfig.contactEmail === DEFAULT_CONTACT_EMAIL && !isRevisitDomain && !isLocalDevelopment) {
+  // Warn if deployment defaults are left in place outside known ReVISit/local hosts.
+  const hostname = getCurrentHostname();
+  if (studyConfig.uiConfig.contactEmail === DEFAULT_CONTACT_EMAIL && !shouldSuppressDefaultDeploymentWarnings(hostname)) {
     warnings.push({
       message: `The contact email is set to the default value \`${DEFAULT_CONTACT_EMAIL}\`. Please update it to your own email address.`,
       instancePath: '/uiConfig/contactEmail',
       params: { action: 'Update the contactEmail field in uiConfig to your own email address' },
       category: 'default-contact-email',
+    });
+  }
+  if (shouldWarnForDefaultFirebaseConfig({ hostname })) {
+    warnings.push({
+      message: DEFAULT_FIREBASE_WARNING_MESSAGE,
+      instancePath: 'environment/VITE_FIREBASE_CONFIG',
+      params: { action: DEFAULT_FIREBASE_WARNING_ACTION },
+      category: 'default-firebase-config',
     });
   }
 

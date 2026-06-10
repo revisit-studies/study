@@ -21,6 +21,7 @@ import {
   IconMicrophone,
   IconMicrophoneOff,
   IconSchema,
+  IconAlertTriangle,
   IconUserPlus,
 } from '@tabler/icons-react';
 import {
@@ -42,6 +43,10 @@ import { hideNotification, showNotification } from '../../utils/notifications';
 import { getMutedInstruction } from '../../utils/recordingWarnings';
 import classes from './AppHeader.module.css';
 import { useDeviceRules } from '../../utils/useDeviceRules';
+import {
+  DEFAULT_FIREBASE_WARNING_MESSAGE,
+  shouldWarnForDefaultFirebaseConfig,
+} from '../../utils/defaultFirebaseConfig';
 
 export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
@@ -110,6 +115,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   } = useDeviceRules(studyConfig.studyRules);
   const hasUnmetDeviceRequirement = developmentModeEnabled
     && (!isBrowserAllowed || !isDeviceAllowed || !isInputAllowed || !isDisplayAllowed);
+  const showDefaultFirebaseWarning = shouldWarnForDefaultFirebaseConfig();
   const isScreenRecordingPermission = currentComponent === '$screen-recording.components.screenRecordingPermission';
   const showAudioStatus = currentComponentHasAudioRecording
     || isAudioRecording
@@ -246,6 +252,11 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
               </Group>
             )}
             {storageEngineFailedToConnect && <Tooltip multiline withArrow arrowSize={6} w={300} label="Failed to connect to the storage engine. Study data will not be saved. Check your connection or restart the app."><Badge size="lg" color="red">Storage Disconnected</Badge></Tooltip>}
+            {showDefaultFirebaseWarning && (
+              <Tooltip multiline withArrow arrowSize={6} w={360} label={DEFAULT_FIREBASE_WARNING_MESSAGE}>
+                <Badge size="lg" color="orange" leftSection={<IconAlertTriangle size={14} />}>Default Firebase</Badge>
+              </Tooltip>
+            )}
             {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
             {hasUnmetDeviceRequirement && developmentModeEnabled && <Tooltip multiline withArrow arrowSize={6} w={420} label="Your device does not meet this study's requirements. You are still able to explore this study while in debug mode."><Badge size="lg" color="red">Device Requirement Not Met</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
