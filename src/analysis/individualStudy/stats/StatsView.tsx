@@ -14,12 +14,12 @@ export function StatsView(
   {
     studyConfig,
     visibleParticipants,
-    allConfigs,
+    allConfigs = {},
     studyId,
   }: {
     studyConfig: StudyConfig;
     visibleParticipants: ParticipantDataWithStatus[];
-    allConfigs: Record<string, StudyConfig>;
+    allConfigs?: Record<string, StudyConfig>;
     studyId?: string;
   },
 ) {
@@ -37,26 +37,26 @@ export function StatsView(
       )}
       <Paper shadow="sm" p="md" mt="md" withBorder>
         {
-        (visibleParticipants.length === 0)
-          ? (
-            <Flex justify="center" align="center" pt="lg" pb="md">
-              <Text>No data available.</Text>
-            </Flex>
-          )
-          : (
-            <Flex direction="row">
-              {/* Trial selection sidebar */}
-              <Box w={340}>
-                <StepsPanel participantAnswers={{}} studyConfig={studyConfig} isAnalysis />
-              </Box>
+          (visibleParticipants.length === 0)
+            ? (
+              <Flex justify="center" align="center" pt="lg" pb="md">
+                <Text>No data available.</Text>
+              </Flex>
+            )
+            : (
+              <Flex direction="row">
+                {/* Trial selection sidebar */}
+                <Box w={340}>
+                  <StepsPanel participantAnswers={{}} studyConfig={studyConfig} isAnalysis />
+                </Box>
 
-              <Divider orientation="vertical" mx="md" />
+                <Divider orientation="vertical" mx="md" />
 
-              {/* Visualization and metadata */}
-              <TrialVisualization participantData={visibleParticipants} studyConfig={studyConfig} trialId={trialId} />
-            </Flex>
-          )
-      }
+                {/* Visualization and metadata */}
+                <TrialVisualization participantData={visibleParticipants} studyConfig={studyConfig} trialId={trialId} />
+              </Flex>
+            )
+        }
       </Paper>
     </>
   );

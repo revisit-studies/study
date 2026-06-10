@@ -332,18 +332,51 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       sequenceAssignmentDoc,
       'sequenceAssignment',
     );
+    const sequenceAssignmentSnapshot = await getDocs(sequenceAssignmentCollection);
+    const participantSequenceAssignmentSnapshot = sequenceAssignmentSnapshot.docs.find((docSnapshot) => docSnapshot.id === participantId);
+    if (!participantSequenceAssignmentSnapshot) {
+      throw new Error('Failed to retrieve sequence assignment for current participant');
+    }
+
+    const participantSequenceAssignment = participantSequenceAssignmentSnapshot.data() as SequenceAssignment;
+    const toMillis = (value: unknown) => {
+      if (value instanceof Timestamp) {
+        return value.toMillis();
+      }
+      if (typeof value === 'number') {
+        return value;
+      }
+      return Number(value);
+    };
+    const claimedSequenceAssignmentSnapshot = participantSequenceAssignment.claimedParticipantId
+      ? sequenceAssignmentSnapshot.docs.find(
+        (docSnapshot) => docSnapshot.id === participantSequenceAssignment.claimedParticipantId,
+      )
+      : (() => {
+        const participantTimestamp = toMillis(participantSequenceAssignment.timestamp);
+        return sequenceAssignmentSnapshot.docs.find((docSnapshot) => {
+          const docData = docSnapshot.data() as SequenceAssignment;
+          return docData.claimed && toMillis(docData.timestamp) === participantTimestamp;
+        });
+      })();
+
+    if (claimedSequenceAssignmentSnapshot) {
+      const claimedSequenceAssignmentDoc = doc(sequenceAssignmentCollection, claimedSequenceAssignmentSnapshot.id);
+      await updateDoc(claimedSequenceAssignmentDoc, { claimed: false, rejected: true });
+    }
+
     const participantSequenceAssignmentDoc = doc(
       sequenceAssignmentCollection,
       participantId,
     );
-    await updateDoc(participantSequenceAssignmentDoc, { rejected: true });
+    await updateDoc(participantSequenceAssignmentDoc, {
+      rejected: true,
+      timestamp: new Date().getTime(),
+    });
   }
 
   protected async _undoRejectParticipantRealtime(participantId: string) {
     await this.verifyStudyDatabase();
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
     if (!this.studyId) {
       throw new Error('Study ID is not set');
     }
@@ -362,7 +395,43 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       sequenceAssignmentCollection,
       participantId,
     );
-    await updateDoc(participantSequenceAssignmentDoc, { rejected: false });
+    const participantSequenceAssignmentSnapshot = await getDoc(participantSequenceAssignmentDoc);
+    if (!participantSequenceAssignmentSnapshot.exists()) {
+      throw new Error('Failed to retrieve sequence assignment for current participant');
+    }
+
+    const participantSequenceAssignment = participantSequenceAssignmentSnapshot.data() as SequenceAssignment;
+    const toMillis = (value: unknown) => {
+      if (value instanceof Timestamp) {
+        return value.toMillis();
+      }
+      if (typeof value === 'number') {
+        return value;
+      }
+      return Number(value);
+    };
+    let restoredTimestamp: number | undefined;
+    if (participantSequenceAssignment.claimedParticipantId) {
+      const claimedSequenceAssignmentDoc = doc(
+        sequenceAssignmentCollection,
+        participantSequenceAssignment.claimedParticipantId,
+      );
+      const claimedSequenceAssignmentSnapshot = await getDoc(claimedSequenceAssignmentDoc);
+      if (!claimedSequenceAssignmentSnapshot.exists()) {
+        throw new Error('Failed to retrieve claimed sequence assignment for current participant');
+      }
+
+      const claimedSequenceAssignment = claimedSequenceAssignmentSnapshot.data() as SequenceAssignment;
+      restoredTimestamp = toMillis(claimedSequenceAssignment.timestamp);
+      await updateDoc(claimedSequenceAssignmentDoc, { claimed: true, rejected: true });
+    }
+
+    await updateDoc(
+      participantSequenceAssignmentDoc,
+      restoredTimestamp === undefined
+        ? { rejected: false }
+        : { rejected: false, timestamp: restoredTimestamp },
+    );
   }
 
   protected async _claimSequenceAssignment(participantId: string) {

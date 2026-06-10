@@ -33,6 +33,7 @@ export type SequenceAssignment = {
   timestamp: number; // Use Timestamp for Firebase, number for local storage
   rejected: boolean;
   claimed: boolean;
+  claimedParticipantId?: string; // The original rejected participant whose slot this assignment is reusing.
   completed: number | null;
   createdTime: number;
   total: number; // Total number of questions/steps
@@ -810,6 +811,7 @@ export abstract class StorageEngine {
           timestamp: firstRejectTime, // Use the timestamp of the first reject
           rejected: false,
           claimed: false,
+          claimedParticipantId: firstReject.participantId,
           completed: null,
           createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
           total: 0,
@@ -1134,10 +1136,13 @@ export abstract class StorageEngine {
 
   // Rejects a participant with the given participantId and reason.
   async rejectParticipant(participantId: string, reason: string) {
-    const participant = await this._getFromStorage(
-      `participants/${participantId}`,
-      'participantData',
-    );
+    const participant = participantId === this.currentParticipantId && this.participantData
+      ? this.participantData
+      : await this._getFromStorage(
+        `participants/${participantId}`,
+        'participantData',
+      );
+    let participantRecordUpdated = false;
 
     try {
       // If the user doesn't exist or is already rejected, return
@@ -1149,18 +1154,63 @@ export abstract class StorageEngine {
         return;
       }
 
-      // set reject flag
-      participant.rejected = {
-        reason,
-        timestamp: new Date().getTime(),
+      // Create a copy with rejected flag for storage write
+      // so that if the write fails, in-memory state is unchanged
+      const rejectedParticipant: ParticipantData = {
+        ...participant,
+        rejected: {
+          reason,
+          timestamp: new Date().getTime(),
+        },
       };
+      // Push rejected copy to storage first
       await this._pushToStorage(
         `participants/${participantId}`,
         'participantData',
-        participant,
+        rejectedParticipant,
       );
+      participantRecordUpdated = true;
+
       await this._rejectParticipantRealtime(participantId);
+
+      // Update in-memory state only after the participant record and
+      // sequence-assignment updates have both succeeded.
+      if (participantId === this.currentParticipantId && this.participantData) {
+        this.participantData = rejectedParticipant;
+      }
     } catch (error) {
+      let realtimeRollbackError: unknown = null;
+      try {
+        if (participantRecordUpdated) {
+          const originalCurrentParticipantId = this.currentParticipantId;
+          if (!this.currentParticipantId) {
+            this.currentParticipantId = participantId;
+          }
+          try {
+            await this._undoRejectParticipantRealtime(participantId);
+          } finally {
+            this.currentParticipantId = originalCurrentParticipantId;
+          }
+        }
+      } catch (rollbackError) {
+        realtimeRollbackError = rollbackError;
+        console.warn('Error rolling back rejected participant realtime state:', rollbackError);
+      }
+
+      try {
+        if (participantRecordUpdated && participant && isParticipantData(participant)) {
+          await this._pushToStorage(
+            `participants/${participantId}`,
+            'participantData',
+            participant,
+          );
+        }
+      } catch (rollbackError) {
+        console.warn('Error rolling back rejected participant state:', rollbackError);
+      }
+      if (realtimeRollbackError) {
+        console.warn('Participant rejection rollback completed with realtime inconsistencies.');
+      }
       console.warn('Error rejecting participant:', error);
     }
   }
@@ -1176,10 +1226,13 @@ export abstract class StorageEngine {
 
   // Un-rejects a participant with the given participantId.
   async undoRejectParticipant(participantId: string) {
-    const participant = await this._getFromStorage(
-      `participants/${participantId}`,
-      'participantData',
-    );
+    const participant = participantId === this.currentParticipantId && this.participantData
+      ? this.participantData
+      : await this._getFromStorage(
+        `participants/${participantId}`,
+        'participantData',
+      );
+    let participantRecordUpdated = false;
 
     try {
       // If the user doesn't exist, return
@@ -1187,16 +1240,33 @@ export abstract class StorageEngine {
         return;
       }
 
-      // set reject flag to false
-      participant.rejected = false;
-
+      const restoredParticipant: ParticipantData = {
+        ...participant,
+        rejected: false,
+      };
       await this._pushToStorage(
         `participants/${participantId}`,
         'participantData',
-        participant,
+        restoredParticipant,
       );
+      participantRecordUpdated = true;
       await this._undoRejectParticipantRealtime(participantId);
+
+      if (participantId === this.currentParticipantId && this.participantData) {
+        this.participantData = restoredParticipant;
+      }
     } catch (error) {
+      try {
+        if (participantRecordUpdated && participant && isParticipantData(participant)) {
+          await this._pushToStorage(
+            `participants/${participantId}`,
+            'participantData',
+            participant,
+          );
+        }
+      } catch (rollbackError) {
+        console.warn('Error rolling back participant unrejection state:', rollbackError);
+      }
       console.warn('Error undoing participant rejection:', error);
     }
   }
@@ -1633,7 +1703,11 @@ export abstract class StorageEngine {
     deleteData: boolean,
   ): Promise<ActionResponse> {
     const sourceName = `${this.collectionPrefix}${studyId}`;
-    if (!(await this._directoryExists(`${sourceName}/participants`))) {
+    const hasLiveData = this.getEngine() === 'localStorage'
+      ? await this._directoryExists(`${sourceName}/participants`)
+      : (await this.getAllSequenceAssignments(studyId)).length > 0;
+
+    if (!hasLiveData) {
       console.warn(`Source directory ${sourceName} does not exist.`);
 
       return {
