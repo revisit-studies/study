@@ -15,7 +15,7 @@ import {
 } from '@mantine/core';
 import {
   IconArrowsShuffle, IconBinaryTree, IconBrain, IconCheck, IconChevronUp, IconDice3, IconDice5, IconInfoCircle,
-  IconGitBranch,
+  IconArrowsSplit,
   IconPackageImport,
   IconX,
 } from '@tabler/icons-react';
@@ -821,21 +821,12 @@ export function StepsPanel({
                       )}
                       {!isComponent && skipSummaries && skipSummaries.length > 0 && (
                         <Tooltip
-                          label={(
-                            <Box>
-                              {skipSummaries.map((summary) => (
-                                <Text key={summary} size="xs">
-                                  {summary}
-                                </Text>
-                              ))}
-                            </Box>
-                          )}
+                          label={skipSummaries.join(' ')}
                           multiline
-                          w={320}
                           position="right"
                           withArrow
                         >
-                          <IconGitBranch size={16} style={{ marginRight: 4, flexShrink: 0 }} color="teal" />
+                          <IconArrowsSplit size={16} style={{ marginRight: 4, flexShrink: 0 }} color="teal" />
                         </Tooltip>
                       )}
                       {(resolvedComponent?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
