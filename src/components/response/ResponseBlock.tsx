@@ -60,6 +60,34 @@ function findMatchingStrings(arr1: string[], arr2: string[]): string[] {
   return matches;
 }
 
+function collectResponseValuesFromTrialValidation(
+  validationForStep?: Partial<Record<ResponseBlockLocation, ValidationStatus>>,
+): StoredAnswer['answer'] {
+  if (!validationForStep) {
+    return {};
+  }
+
+  return Object.values(validationForStep).reduce((acc, curr) => {
+    if (curr && Object.hasOwn(curr, 'values')) {
+      return { ...acc, ...curr.values };
+    }
+    return acc;
+  }, {} as StoredAnswer['answer']);
+}
+
+function collectResponseValuesFromAnalysisState(
+  analysisProvState: Partial<Record<ResponseBlockLocation, FormElementProvenance>>,
+  status?: StoredAnswer,
+): StoredAnswer['answer'] {
+  return (['aboveStimulus', 'belowStimulus', 'sidebar'] as ResponseBlockLocation[]).reduce((acc, responseLocation) => {
+    const locationProv = analysisProvState[responseLocation];
+    return {
+      ...acc,
+      ...(locationProv?.form || {}),
+    };
+  }, { ...(status?.answer || {}) } as StoredAnswer['answer']);
+}
+
 export function ResponseBlock({
   config,
   location,
@@ -231,26 +259,14 @@ export function ResponseBlock({
     [customResponseModules],
   );
   const combinedLiveValues = useMemo(() => {
-    const validationForStep = trialValidation[identifier];
-    if (!validationForStep) {
-      return {};
-    }
-
-    return Object.values(validationForStep).reduce((acc, curr) => {
-      if (Object.hasOwn(curr, 'values')) {
-        return { ...acc, ...(curr as ValidationStatus).values };
-      }
-      return acc;
-    }, {}) as StoredAnswer['answer'];
+    const validationForStep = trialValidation[identifier] as Partial<Record<ResponseBlockLocation, ValidationStatus>> | undefined;
+    return collectResponseValuesFromTrialValidation(validationForStep);
   }, [identifier, trialValidation]);
   const combinedAnalysisValues = useMemo(
-    () => ['aboveStimulus', 'belowStimulus', 'sidebar'].reduce((acc, responseLocation) => {
-      const locationProv = analysisProvState[responseLocation as ResponseBlockLocation] as FormElementProvenance | undefined;
-      return {
-        ...acc,
-        ...(locationProv?.form || {}),
-      };
-    }, { ...(status?.answer || {}) } as StoredAnswer['answer']),
+    () => collectResponseValuesFromAnalysisState(
+      analysisProvState as Partial<Record<ResponseBlockLocation, FormElementProvenance>>,
+      status,
+    ),
     [analysisProvState, status],
   );
   const combinedValues = useMemo(
@@ -498,13 +514,8 @@ export function ResponseBlock({
     const newAttemptsUsed = attemptsUsed + 1;
     setAttemptsUsed(newAttemptsUsed);
 
-    const trialValidationCopy = structuredClone(trialValidation[identifier]);
-    const allAnswers = (trialValidationCopy ? Object.values(trialValidationCopy).reduce((acc, curr) => {
-      if (Object.hasOwn(curr, 'values')) {
-        return { ...acc, ...(curr as ValidationStatus).values };
-      }
-      return acc;
-    }, {}) : {}) as StoredAnswer['answer'];
+    const trialValidationCopy = structuredClone(trialValidation[identifier]) as Partial<Record<ResponseBlockLocation, ValidationStatus>> | undefined;
+    const allAnswers = collectResponseValuesFromTrialValidation(trialValidationCopy);
 
     const correctAnswers = Object.fromEntries(
       (config?.correctAnswer ?? []).map((configCorrectAnswer) => {

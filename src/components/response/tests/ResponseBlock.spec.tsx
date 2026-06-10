@@ -2,13 +2,33 @@ import { ReactNode } from 'react';
 import { render, act, fireEvent } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  describe, expect, test, vi,
+  beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import type { IndividualComponent } from '../../../parser/types';
 import { ResponseBlock } from '../ResponseBlock';
 import { makeStoredAnswer } from '../../../tests/utils';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
+
+const baseStoreState = vi.hoisted(() => ({
+  answers: {},
+  analysisProvState: {},
+  clickedPrevious: false,
+  modes: { dataCollectionEnabled: true },
+  reactiveAnswers: {},
+  matrixAnswers: {},
+  rankingAnswers: {},
+  responseSubmitAttempted: { trial1_0: false },
+  sequence: {
+    order: 'fixed', orderPath: '', components: [], skip: [],
+  },
+  trialValidation: { trial1_0: {} },
+  completed: false,
+}));
+
+const mockStoreState = vi.hoisted(() => ({
+  current: structuredClone(baseStoreState),
+}));
 
 vi.mock('@mantine/core', () => ({
   Box: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
@@ -47,21 +67,7 @@ vi.mock('../../../store/store', () => ({
     setResponseSubmitAttempt: vi.fn((v: unknown) => v),
     setStimulusSubmitAttempt: vi.fn((v: unknown) => v),
   })),
-  useStoreSelector: vi.fn((selector: (s: Record<string, unknown>) => unknown) => selector({
-    answers: {},
-    analysisProvState: {},
-    clickedPrevious: false,
-    modes: { dataCollectionEnabled: true },
-    reactiveAnswers: {},
-    matrixAnswers: {},
-    rankingAnswers: {},
-    responseSubmitAttempted: { trial1_0: false },
-    sequence: {
-      order: 'fixed', orderPath: '', components: [], skip: [],
-    },
-    trialValidation: { trial1_0: {} },
-    completed: false,
-  })),
+  useStoreSelector: vi.fn((selector: (s: Record<string, unknown>) => unknown) => selector(mockStoreState.current)),
 }));
 
 vi.mock('../../../store/hooks/useStudyConfig', () => ({
@@ -152,6 +158,15 @@ const baseConfig: IndividualComponent = {
 // ── ResponseBlock ─────────────────────────────────────────────────────────────
 
 describe('ResponseBlock', () => {
+  beforeEach(() => {
+    mockStoreState.current = structuredClone(baseStoreState);
+    Object.defineProperty(globalThis, 'CSS', {
+      value: { escape: (value: string) => value },
+      configurable: true,
+    });
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
+  });
+
   test('renders without error', () => {
     const html = renderToStaticMarkup(
       <ResponseBlock config={baseConfig} location="belowStimulus" />,
@@ -223,6 +238,50 @@ describe('ResponseBlock', () => {
       <ResponseBlock config={configWithFeedback} location="belowStimulus" />,
     );
     expect(html).toContain('Check Answer');
+  });
+
+  test('keeps Next disabled when correct-answer feedback requires checking', () => {
+    const configWithFeedback = {
+      ...baseConfig,
+      provideFeedback: true,
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    } as IndividualComponent;
+    const { container } = render(
+      <ResponseBlock config={configWithFeedback} location="belowStimulus" />,
+    );
+
+    const nextBtn = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Next',
+    );
+
+    expect(nextBtn).toHaveProperty('disabled', true);
+  });
+
+  test('shows response issue summary after submit attempt when responses are unresolved', () => {
+    mockStoreState.current = {
+      ...structuredClone(baseStoreState),
+      responseSubmitAttempted: { trial1_0: true },
+      trialValidation: {
+        trial1_0: {
+          belowStimulus: { valid: false, values: { q1: '' } },
+        },
+      },
+    };
+    const unresolvedConfig = {
+      ...baseConfig,
+      response: [
+        {
+          type: 'shortText', id: 'q1', prompt: 'Question 1',
+        },
+      ],
+    } as IndividualComponent;
+
+    const { container } = render(
+      <ResponseBlock config={unresolvedConfig} location="belowStimulus" />,
+    );
+
+    expect(container.textContent).toContain('Please review');
+    expect(container.textContent).toContain('1 unanswered question');
   });
 
   test('does not add required=true for textOnly responses', () => {
