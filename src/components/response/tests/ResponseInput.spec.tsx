@@ -26,7 +26,6 @@ import { MatrixInput } from '../MatrixInput';
 import { RankingInput } from '../RankingInput';
 import { ResponseSwitcher } from '../ResponseSwitcher';
 import { FeedbackAlert } from '../FeedbackAlert';
-import { usesStandaloneDontKnowField } from '../utils';
 import type {
   ButtonsResponse,
   CheckboxResponse,
@@ -1222,7 +1221,6 @@ describe('ResponseSwitcher', () => {
   });
 
   test('shows "I don\'t know" checkbox when usesStandaloneDontKnow', () => {
-    vi.mocked(usesStandaloneDontKnowField).mockReturnValueOnce(true);
     const html = renderToStaticMarkup(
       <ResponseSwitcher
         {...makeSwitcherProps({

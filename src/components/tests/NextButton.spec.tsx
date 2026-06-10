@@ -107,18 +107,18 @@ describe('NextButton', () => {
   });
 
   test('renders Next button with default label', () => {
-    const html = renderToStaticMarkup(<NextButton checkAnswer={null} />);
+    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
     expect(html).toContain('Next');
   });
 
   test('renders button with custom label', () => {
-    const html = renderToStaticMarkup(<NextButton label="Continue" checkAnswer={null} />);
+    const html = renderToStaticMarkup(<NextButton label="Continue" checkAnswer={null} onNext={vi.fn()} />);
     expect(html).toContain('Continue');
   });
 
   test('does not render PreviousButton when config.previousButton is false', () => {
     const html = renderToStaticMarkup(
-      <NextButton config={{ type: 'questionnaire', response: [], previousButton: false }} checkAnswer={null} />,
+      <NextButton config={{ type: 'questionnaire', response: [], previousButton: false }} checkAnswer={null} onNext={vi.fn()} />,
     );
     expect(html).not.toContain('data-testid="prev-btn"');
   });
@@ -130,6 +130,7 @@ describe('NextButton', () => {
           type: 'questionnaire', response: [], previousButton: true, previousButtonText: 'Back',
         }}
         checkAnswer={null}
+        onNext={vi.fn()}
       />,
     );
     expect(html).toContain('data-testid="prev-btn"');
@@ -137,19 +138,19 @@ describe('NextButton', () => {
   });
 
   test('button is disabled when disabled prop is true', () => {
-    const html = renderToStaticMarkup(<NextButton disabled checkAnswer={null} />);
+    const html = renderToStaticMarkup(<NextButton disabled checkAnswer={null} onNext={vi.fn()} />);
     expect(html).toContain('disabled');
   });
 
   test('button is disabled when isNextDisabled is true', () => {
     mockIsNextDisabled = true;
-    const html = renderToStaticMarkup(<NextButton checkAnswer={null} />);
+    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
     expect(html).toContain('disabled');
   });
 
   test('renders checkAnswer element when provided', () => {
     const html = renderToStaticMarkup(
-      <NextButton checkAnswer={<div data-testid="check">Check Answer</div>} />,
+      <NextButton checkAnswer={<div data-testid="check">Check Answer</div>} onNext={vi.fn()} />,
     );
     expect(html).toContain('Check Answer');
   });
@@ -162,7 +163,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} />);
+      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
     });
     expect(screen.getByRole('alert')).toBeDefined();
     expect(screen.getByText('Please wait')).toBeDefined();
@@ -170,7 +171,7 @@ describe('NextButton', () => {
 
   test('does not show "Please wait" alert when no enable time is configured', async () => {
     await act(async () => {
-      render(<NextButton checkAnswer={null} />);
+      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
     });
     expect(screen.queryByRole('alert')).toBeNull();
   });
@@ -184,7 +185,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} />);
+      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
     });
     expect(screen.getByText('Next button disables soon')).toBeDefined();
   });
@@ -199,7 +200,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} />);
+      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
     });
     // Advance past disableTime (100ms) and into the <10000ms window
     await act(async () => {
@@ -219,7 +220,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} />);
+      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
     });
     await act(async () => {
       vi.advanceTimersByTime(9500);

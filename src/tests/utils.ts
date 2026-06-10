@@ -150,12 +150,6 @@ export function makeStoredAnswer(overrides: Partial<StoredAnswer> = {}): StoredA
     incorrectAnswers: {},
     startTime: 0,
     endTime: -1,
-    provenanceGraph: {
-      sidebar: undefined,
-      aboveStimulus: undefined,
-      belowStimulus: undefined,
-      stimulus: undefined,
-    },
     windowEvents: [],
     timedOut: false,
     helpButtonClickedCount: 0,

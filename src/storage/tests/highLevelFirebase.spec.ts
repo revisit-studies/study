@@ -969,21 +969,10 @@ describe.each([
   });
 
   // ── _undoRejectParticipantRealtime ───────────────────────────────────────────
-  test('_undoRejectParticipantRealtime throws when currentParticipantId is not set', async () => {
-    const fresh = new FirebaseStorageEngine(true);
-    authState.currentUser = { email: null, uid: 'uid' };
-    await fresh.connect();
-    await fresh.initializeStudyDb(studyId);
-    // @ts-expect-error protected
-    await expect(fresh._undoRejectParticipantRealtime('p1')).rejects.toThrow('Participant not initialized');
-  });
-
   test('_undoRejectParticipantRealtime throws when studyId is not set', async () => {
     const fresh = new FirebaseStorageEngine(true);
     authState.currentUser = { email: null, uid: 'uid' };
     await fresh.connect();
-    // @ts-expect-error protected
-    fresh.currentParticipantId = 'p1';
     // @ts-expect-error protected
     await expect(fresh._undoRejectParticipantRealtime('p1')).rejects.toThrow('Study ID is not set');
   });
@@ -991,8 +980,6 @@ describe.each([
   test('_undoRejectParticipantRealtime sets rejected=false on the assignment', async () => {
     const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     await storageEngine.rejectParticipant(session.participantId, 'test');
-    // @ts-expect-error protected
-    storageEngine.currentParticipantId = session.participantId;
     // @ts-expect-error protected
     await storageEngine._undoRejectParticipantRealtime(session.participantId);
     const all = await storageEngine.getAllSequenceAssignments(studyId);

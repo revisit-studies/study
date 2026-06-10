@@ -7,7 +7,7 @@ import {
   afterEach, beforeAll, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import * as d3 from 'd3';
-import { TrrackedProvenance } from '../../../store/types';
+import { StoredAnswer, StoredProvenance, TrrackedProvenance } from '../../../store/types';
 import { makeStoredAnswer } from '../../../tests/utils';
 import { AudioProvenanceVis } from '../AudioProvenanceVis';
 import { syncEmitter } from '../../../utils/syncReplay';
@@ -367,17 +367,19 @@ const stimulusGraph: TrrackedProvenance = {
   nodes: { 'root-id': makeNode('root-id', undefined, 500) },
 } as TrrackedProvenance;
 
-const answersWithStimulus = {
-  trial_0: makeStoredAnswer({
-    startTime: 1000,
-    endTime: 6000,
+const answersWithStimulus: Record<string, StoredAnswer & { provenanceGraph: StoredProvenance }> = {
+  trial_0: {
+    ...makeStoredAnswer({
+      startTime: 1000,
+      endTime: 6000,
+    }),
     provenanceGraph: {
       aboveStimulus: undefined,
       belowStimulus: undefined,
       sidebar: undefined,
       stimulus: stimulusGraph,
     },
-  }),
+  },
 };
 
 describe('AudioProvenanceVis', () => {

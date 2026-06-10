@@ -396,7 +396,12 @@ describe('generateErrorMessage checkbox', () => {
       withDontKnow: true,
     };
 
-    const error = generateErrorMessage(checkboxResponse, { value: [], dontKnowChecked: true });
+    const error = generateErrorMessage(
+      checkboxResponse,
+      { value: [] },
+      undefined,
+      { values: { 'checkbox-response-dontKnow': true } },
+    );
 
     expect(error).toBeNull();
   });
@@ -468,7 +473,8 @@ describe('generateErrorMessage requiredValue with dont-know', () => {
 
     const error = generateErrorMessage(numericalResponse, {
       value: '',
-      dontKnowChecked: true,
+    }, undefined, {
+      values: { 'required-value-response-dontKnow': true },
     });
 
     expect(error).toBeNull();

@@ -98,6 +98,7 @@ const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => 
     generateDocsFn(base);
   } catch (error) {
     console.error(`Error running libraryDocGenerator.cjs: ${error}`);
+    throw error;
   }
 };
 

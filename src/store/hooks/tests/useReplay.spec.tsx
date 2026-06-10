@@ -3,6 +3,7 @@ import React from 'react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import { useSearchParams } from 'react-router';
 import { ReplayContext, useReplay, useReplayContext } from '../useReplay';
 import { syncEmitter } from '../../../utils/syncReplay';
 
@@ -18,7 +19,7 @@ vi.mock('../../../utils/syncReplay', () => ({
   },
 }));
 
-const useSearchParamsMock = await import('react-router').then((m) => m.useSearchParams) as ReturnType<typeof vi.fn>;
+const useSearchParamsMock = vi.mocked(useSearchParams);
 
 beforeEach(() => {
   vi.clearAllMocks();

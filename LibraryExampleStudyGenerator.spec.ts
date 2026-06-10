@@ -71,7 +71,7 @@ describe('libraryExampleStudyGenerator', () => {
     expect(generateDocsFn).toHaveBeenCalledWith(base);
   });
 
-  it('logs an error when doc generation throws', () => {
+  it('throws when doc generation fails', () => {
     const base = fs.mkdtempSync(path.join(os.tmpdir(), 'lib-example-error-'));
     tempDirs.push(base);
     fs.mkdirSync(path.join(base, 'public', 'libraries', 'alpha'), { recursive: true });
@@ -80,7 +80,7 @@ describe('libraryExampleStudyGenerator', () => {
       throw new Error('test Error');
     });
 
-    generateLibraryExamples(base, generateDocsFn);
+    expect(() => generateLibraryExamples(base, generateDocsFn)).toThrow('test Error');
 
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Error running libraryDocGenerator.cjs: Error: test Error'));
     errorSpy.mockRestore();

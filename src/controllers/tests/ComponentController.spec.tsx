@@ -115,7 +115,16 @@ vi.mock('../../store/store', () => ({
     },
     trialValidation: {
       trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: {} },
+        sidebar: { valid: true, values: {} },
         stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
       },
     },
     stimulusSubmitAttempted: {
