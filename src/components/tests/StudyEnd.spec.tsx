@@ -23,6 +23,15 @@ function createDeferred<T>() {
 }
 
 let mockIsAnalysis = false;
+type FinalizeParticipantResult = { status: 'complete' | 'retry' | 'error' };
+type MockStorageEngine = {
+  finalizeParticipant?: () => Promise<FinalizeParticipantResult>;
+  getModes: () => Promise<{ dataCollectionEnabled: boolean }>;
+  getCurrentParticipantId: () => Promise<string>;
+  getParticipantData: () => Promise<unknown>;
+  getCurrentParticipantDataSnapshot: () => unknown;
+};
+
 let mockStudyConfig: {
   studyMetadata: { title: string };
   uiConfig: {
@@ -44,7 +53,7 @@ let mockStudyConfig: {
     urlParticipantIdParam: undefined,
   },
 };
-let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | undefined;
+let mockStorageEngine: MockStorageEngine | undefined;
 let mockDataCollectionEnabled = false;
 const mockFinalizeLoopHandlers: { onComplete?: () => void; onUnexpectedError?: (error: unknown) => void } = {};
 

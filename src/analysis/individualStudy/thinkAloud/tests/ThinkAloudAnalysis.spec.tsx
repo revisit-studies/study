@@ -8,6 +8,7 @@ import {
 } from 'vitest';
 import * as d3 from 'd3';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
+import type { NavigateFunction } from 'react-router';
 import { EditedText, Tag, TranscribedAudio } from '../types';
 import type { ParticipantData } from '../../../../storage/types';
 import { makeStoredAnswer as makeStoredAnswerBase, makeStorageEngine } from '../../../../tests/utils';
@@ -69,6 +70,8 @@ const mockTagSelector = vi.fn(({ onSelectTags, editTagCallback, tags }: { onSele
     )}
   </div>
 ));
+
+const createMockNavigate = (): NavigateFunction => vi.fn() as unknown as NavigateFunction;
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -392,11 +395,11 @@ const mockStorageEngineWithMethods = {
 } as unknown as FirebaseStorageEngine;
 
 describe('ThinkAloudAnalysis (DOM)', () => {
-  let mockNavigate: ReturnType<typeof vi.fn>;
+  let mockNavigate: NavigateFunction;
   let mockSetSearchParams: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
-    mockNavigate = vi.fn();
+    mockNavigate = createMockNavigate();
     mockSetSearchParams = vi.fn((updater: (params: URLSearchParams) => void) => {
       if (typeof updater === 'function') updater(new URLSearchParams('participantId=p1'));
     });
@@ -504,10 +507,10 @@ const mockFooterStorageEngine = {
 
 describe('ThinkAloudFooter', () => {
   let mockSetSearchParams: ReturnType<typeof vi.fn>;
-  let mockNavigate: ReturnType<typeof vi.fn>;
+  let mockNavigate: NavigateFunction;
 
   beforeEach(async () => {
-    mockNavigate = vi.fn();
+    mockNavigate = createMockNavigate();
     mockSetSearchParams = vi.fn();
     vi.mocked(useSearchParams).mockReturnValue([new URLSearchParams('participantId=p1'), mockSetSearchParams] as ReturnType<typeof useSearchParams>);
     vi.mocked(useNavigate).mockReturnValue(mockNavigate);
