@@ -1511,6 +1511,16 @@ describe('Parser Warnings', () => {
     expect(result.warnings.some((warning) => warning.category === 'default-firebase-config')).toBe(true);
   });
 
+  test('adds default-firebase-config warning when storageBucket identifies the default Firebase project', async () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
+    vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ storageBucket: 'revisit-utah.appspot.com' }));
+    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+
+    expect(result.warnings.some((warning) => warning.category === 'default-firebase-config')).toBe(true);
+  });
+
   test('does not add default-firebase-config warning for a custom Firebase project', async () => {
     vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
     vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: 'research-owned-project' }));
@@ -1548,5 +1558,42 @@ describe('Parser Warnings', () => {
     const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
 
     expect(result.warnings.some((warning) => warning.category === 'default-firebase-config')).toBe(false);
+  });
+
+  test('adds default-supabase-config warning when Supabase URL is a revisit.dev domain on a custom host', async () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'supabase');
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://supabase.revisit.dev');
+    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+
+    const defaultSupabaseWarning = result.warnings.find(
+      (warning) => warning.category === 'default-supabase-config',
+    );
+
+    expect(defaultSupabaseWarning).toBeDefined();
+    expect(defaultSupabaseWarning?.instancePath).toBe('environment/VITE_SUPABASE_URL');
+    expect(defaultSupabaseWarning?.message).toContain('default Supabase project');
+    expect(defaultSupabaseWarning?.message).toContain('backend controlled by the study designer');
+  });
+
+  test('does not add default-supabase-config warning for a custom Supabase URL', async () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'supabase');
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://research-project.supabase.co');
+    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+
+    expect(result.warnings.some((warning) => warning.category === 'default-supabase-config')).toBe(false);
+  });
+
+  test('does not add default-supabase-config warning on local or ReVISit-controlled hosts', async () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'supabase');
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://supabase.revisit.dev');
+    vi.stubGlobal('window', { location: { hostname: 'revisit.dev' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+
+    expect(result.warnings.some((warning) => warning.category === 'default-supabase-config')).toBe(false);
   });
 });

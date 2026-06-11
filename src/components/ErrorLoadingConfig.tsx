@@ -27,6 +27,7 @@ export function ErrorLoadingConfig({
     'disabled-sidebar',
     'default-contact-email',
     'default-firebase-config',
+    'default-supabase-config',
   ];
 
   // Format category labels by capitalizing each word and replacing hyphens with spaces

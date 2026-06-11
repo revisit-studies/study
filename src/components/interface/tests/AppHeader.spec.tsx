@@ -78,7 +78,6 @@ vi.mock('@mantine/core', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconAlertTriangle: () => null,
   IconChartHistogram: () => null,
   IconDotsVertical: () => null,
   IconMail: () => null,
@@ -313,5 +312,15 @@ describe('AppHeader', () => {
     const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
 
     expect(html).toContain('Default Firebase');
+  });
+
+  test('shows default Supabase warning badge on direct study pages', () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'supabase');
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://supabase.revisit.dev');
+    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+
+    const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
+
+    expect(html).toContain('Default Supabase');
   });
 });

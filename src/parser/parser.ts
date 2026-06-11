@@ -12,9 +12,12 @@ import {
   DEFAULT_CONTACT_EMAIL,
   DEFAULT_FIREBASE_WARNING_ACTION,
   DEFAULT_FIREBASE_WARNING_MESSAGE,
+  DEFAULT_SUPABASE_WARNING_ACTION,
+  DEFAULT_SUPABASE_WARNING_MESSAGE,
   getCurrentHostname,
   shouldSuppressDefaultDeploymentWarnings,
   shouldWarnForDefaultFirebaseConfig,
+  shouldWarnForDefaultSupabaseConfig,
 } from '../utils/defaultFirebaseConfig';
 
 const ajv1 = new Ajv({ allowUnionTypes: true });
@@ -189,6 +192,14 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
       instancePath: 'environment/VITE_FIREBASE_CONFIG',
       params: { action: DEFAULT_FIREBASE_WARNING_ACTION },
       category: 'default-firebase-config',
+    });
+  }
+  if (shouldWarnForDefaultSupabaseConfig({ hostname })) {
+    warnings.push({
+      message: DEFAULT_SUPABASE_WARNING_MESSAGE,
+      instancePath: 'environment/VITE_SUPABASE_URL',
+      params: { action: DEFAULT_SUPABASE_WARNING_ACTION },
+      category: 'default-supabase-config',
     });
   }
 

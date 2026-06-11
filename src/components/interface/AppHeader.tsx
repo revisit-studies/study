@@ -21,7 +21,6 @@ import {
   IconMicrophone,
   IconMicrophoneOff,
   IconSchema,
-  IconAlertTriangle,
   IconUserPlus,
 } from '@tabler/icons-react';
 import {
@@ -45,7 +44,9 @@ import classes from './AppHeader.module.css';
 import { useDeviceRules } from '../../utils/useDeviceRules';
 import {
   DEFAULT_FIREBASE_WARNING_MESSAGE,
+  DEFAULT_SUPABASE_WARNING_MESSAGE,
   shouldWarnForDefaultFirebaseConfig,
+  shouldWarnForDefaultSupabaseConfig,
 } from '../../utils/defaultFirebaseConfig';
 
 export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
@@ -116,6 +117,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   const hasUnmetDeviceRequirement = developmentModeEnabled
     && (!isBrowserAllowed || !isDeviceAllowed || !isInputAllowed || !isDisplayAllowed);
   const showDefaultFirebaseWarning = shouldWarnForDefaultFirebaseConfig();
+  const showDefaultSupabaseWarning = shouldWarnForDefaultSupabaseConfig();
   const isScreenRecordingPermission = currentComponent === '$screen-recording.components.screenRecordingPermission';
   const showAudioStatus = currentComponentHasAudioRecording
     || isAudioRecording
@@ -254,7 +256,12 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
             {storageEngineFailedToConnect && <Tooltip multiline withArrow arrowSize={6} w={300} label="Failed to connect to the storage engine. Study data will not be saved. Check your connection or restart the app."><Badge size="lg" color="red">Storage Disconnected</Badge></Tooltip>}
             {showDefaultFirebaseWarning && (
               <Tooltip multiline withArrow arrowSize={6} w={360} label={DEFAULT_FIREBASE_WARNING_MESSAGE}>
-                <Badge size="lg" color="orange" leftSection={<IconAlertTriangle size={14} />}>Default Firebase</Badge>
+                <Badge size="lg" color="orange">Default Firebase</Badge>
+              </Tooltip>
+            )}
+            {showDefaultSupabaseWarning && (
+              <Tooltip multiline withArrow arrowSize={6} w={360} label={DEFAULT_SUPABASE_WARNING_MESSAGE}>
+                <Badge size="lg" color="orange">Default Supabase</Badge>
               </Tooltip>
             )}
             {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
