@@ -2,6 +2,7 @@ import localforage from 'localforage';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
 } from './types';
+import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
 export class LocalStorageEngine extends StorageEngine {
   private studyDatabase = localforage.createInstance({
@@ -328,12 +329,18 @@ export class LocalStorageEngine extends StorageEngine {
     await this._deleteDirectory(path);
   }
 
-  protected async _addDirectoryNameToSnapshots(directoryName: string, studyId: string) {
+  protected async _addDirectoryNameToSnapshots(
+    directoryName: string,
+    studyId: string,
+    participantCounts?: SnapshotParticipantCounts,
+  ) {
     await this.verifyStudyDatabase();
     const metadataKey = `${this.collectionPrefix}${studyId}/snapshots`;
     const metadata = await this.studyDatabase.getItem<SnapshotDocContent>(metadataKey) || {};
     if (!metadata[directoryName]) {
-      metadata[directoryName] = { name: directoryName };
+      metadata[directoryName] = participantCounts
+        ? { name: directoryName, participantCounts }
+        : { name: directoryName };
       await this.studyDatabase.setItem(metadataKey, metadata);
     }
   }
@@ -353,10 +360,26 @@ export class LocalStorageEngine extends StorageEngine {
     const snapshotsKey = `${this.collectionPrefix}${studyId}/snapshots`;
     const snapshots = await this.studyDatabase.getItem<SnapshotDocContent>(snapshotsKey) || {};
     if (snapshots[key]) {
-      snapshots[key] = { name: newName };
+      snapshots[key] = { ...snapshots[key], name: newName };
       await this.studyDatabase.setItem(snapshotsKey, snapshots);
     } else {
       throw new Error(`Snapshot with name ${key} does not exist`);
+    }
+  }
+
+  protected async _updateSnapshotParticipantCounts(
+    snapshotName: string,
+    studyId: string,
+    participantCounts: SnapshotParticipantCounts,
+  ) {
+    await this.verifyStudyDatabase();
+    const snapshotsKey = `${this.collectionPrefix}${studyId}/snapshots`;
+    const snapshots = await this.studyDatabase.getItem<SnapshotDocContent>(snapshotsKey) || {};
+    if (snapshots[snapshotName]) {
+      snapshots[snapshotName] = { ...snapshots[snapshotName], participantCounts };
+      await this.studyDatabase.setItem(snapshotsKey, snapshots);
+    } else {
+      throw new Error(`Snapshot with name ${snapshotName} does not exist`);
     }
   }
 }

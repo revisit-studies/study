@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  render, act, cleanup, screen, fireEvent,
+  render, act, cleanup, screen, fireEvent, waitFor,
 } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -25,6 +25,7 @@ let mockStorageEngine: {
   restoreSnapshot: ReturnType<typeof vi.fn>;
   removeSnapshotOrLive: ReturnType<typeof vi.fn>;
   getAllParticipantsData: ReturnType<typeof vi.fn>;
+  updateSnapshotParticipantCounts: ReturnType<typeof vi.fn>;
 } | undefined;
 
 vi.mock('../../../../storage/storageEngineHooks', () => ({
@@ -119,6 +120,7 @@ const makeEngine = () => ({
   restoreSnapshot: vi.fn().mockResolvedValue(successResponse),
   removeSnapshotOrLive: vi.fn().mockResolvedValue(successResponse),
   getAllParticipantsData: vi.fn().mockResolvedValue([]),
+  updateSnapshotParticipantCounts: vi.fn().mockResolvedValue(undefined),
 });
 
 describe('ManageView', () => {
@@ -334,13 +336,154 @@ describe('ManageView', () => {
 
   test('DataManagementItem renders snapshot table rows when snapshots exist', async () => {
     mockStorageEngine!.getSnapshots.mockResolvedValue({
-      'test-study-snapshot-2026T01:00': { name: 'my-snapshot' },
+      'test-study-snapshot-2026T01:00': {
+        name: 'my-snapshot',
+        participantCounts: { completed: 4, inProgress: 2, rejected: 1 },
+      },
     });
     await act(async () => {
       render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
     });
     expect(screen.getByText('my-snapshot')).toBeDefined();
+    expect(screen.getByText('Completed')).toBeDefined();
+    expect(screen.getByText('In Progress')).toBeDefined();
+    expect(screen.getByText('Rejected')).toBeDefined();
+    expect(screen.getByText('4')).toBeDefined();
+    expect(screen.getByText('2')).toBeDefined();
+    expect(screen.getByText('1')).toBeDefined();
     expect(screen.getByText('DownloadButtons')).toBeDefined();
+  });
+
+  test('DataManagementItem sorts snapshots by newest creation date first', async () => {
+    mockStorageEngine!.getSnapshots.mockResolvedValue({
+      'test-study-snapshot-2026-06-09T01:00:00': {
+        name: 'older-snapshot',
+        participantCounts: { completed: 1, inProgress: 0, rejected: 0 },
+      },
+      'test-study-snapshot-2026-06-10T01:00:00': {
+        name: 'newer-snapshot',
+        participantCounts: { completed: 2, inProgress: 0, rejected: 0 },
+      },
+    });
+
+    await act(async () => {
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
+    });
+
+    expect(screen.getAllByText(/-snapshot$/).map((element) => element.textContent)).toEqual([
+      'newer-snapshot',
+      'older-snapshot',
+    ]);
+  });
+
+  test('DataManagementItem backfills missing snapshot participant counts', async () => {
+    mockStorageEngine!.getSnapshots.mockResolvedValue({
+      'dev-test-study-snapshot-2026T01:00': { name: 'my-snapshot' },
+    });
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue([
+      { completed: true, rejected: false },
+      { completed: true, rejected: { reason: 'quality', timestamp: 1 } },
+      { completed: false, rejected: false },
+      { completed: false, rejected: false },
+      { completed: false, rejected: { reason: 'duplicate', timestamp: 2 } },
+    ]);
+
+    await act(async () => {
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
+    });
+
+    await waitFor(() => {
+      expect(mockStorageEngine!.updateSnapshotParticipantCounts).toHaveBeenCalledWith(
+        'test-study',
+        'dev-test-study-snapshot-2026T01:00',
+        { completed: 1, inProgress: 2, rejected: 2 },
+      );
+    });
+    expect(mockStorageEngine!.getAllParticipantsData).toHaveBeenCalledWith('test-study-snapshot-2026T01:00');
+    expect(screen.getByText('1')).toBeDefined();
+    expect(screen.getAllByText('2').length).toBe(2);
+  });
+
+  test('DataManagementItem backfills missing snapshot participant counts one at a time', async () => {
+    let resolveFirstBackfill: (participants: unknown[]) => void = () => { };
+    const firstBackfill = new Promise((resolve) => {
+      resolveFirstBackfill = resolve;
+    });
+    let resolveFirstUpdate: () => void = () => { };
+    const firstUpdate = new Promise<void>((resolve) => {
+      resolveFirstUpdate = resolve;
+    });
+    mockStorageEngine!.getSnapshots.mockResolvedValue({
+      'dev-test-study-snapshot-2026T01:00': { name: 'first-snapshot' },
+      'dev-test-study-snapshot-2026T02:00': { name: 'second-snapshot' },
+    });
+    mockStorageEngine!.getAllParticipantsData.mockImplementation((snapshotStudyId: string) => {
+      if (snapshotStudyId === 'test-study-snapshot-2026T01:00') {
+        return firstBackfill;
+      }
+
+      return Promise.resolve([{ completed: false, rejected: false }]);
+    });
+    mockStorageEngine!.updateSnapshotParticipantCounts.mockImplementation((_, snapshotName: string) => {
+      if (snapshotName === 'dev-test-study-snapshot-2026T01:00') {
+        return firstUpdate;
+      }
+
+      return Promise.resolve();
+    });
+
+    await act(async () => {
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
+    });
+
+    await waitFor(() => {
+      expect(mockStorageEngine!.getAllParticipantsData).toHaveBeenCalledTimes(1);
+    });
+    expect(mockStorageEngine!.getAllParticipantsData).toHaveBeenCalledWith('test-study-snapshot-2026T01:00');
+    expect(mockStorageEngine!.updateSnapshotParticipantCounts).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveFirstBackfill([{ completed: true, rejected: false }]);
+      await firstBackfill;
+    });
+
+    await waitFor(() => {
+      expect(mockStorageEngine!.updateSnapshotParticipantCounts).toHaveBeenCalledTimes(1);
+    });
+    expect(mockStorageEngine!.getAllParticipantsData).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveFirstUpdate();
+      await firstUpdate;
+    });
+
+    await waitFor(() => {
+      expect(mockStorageEngine!.getAllParticipantsData).toHaveBeenCalledTimes(2);
+    });
+    expect(mockStorageEngine!.getAllParticipantsData).toHaveBeenCalledWith('test-study-snapshot-2026T02:00');
+  });
+
+  test('DataManagementItem keeps snapshot actions available when count backfill fails', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    mockStorageEngine!.getSnapshots.mockResolvedValue({
+      'dev-test-study-snapshot-2026T01:00': { name: 'snap-one' },
+    });
+    mockStorageEngine!.getAllParticipantsData.mockRejectedValue(new Error('snapshot unavailable'));
+
+    await act(async () => {
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Unavailable').length).toBe(3);
+    });
+    expect(screen.getByRole('button', { name: 'Rename snapshot snap-one' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Restore snapshot snap-one' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Delete snapshot snap-one' })).toBeDefined();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to backfill participant counts for snapshot dev-test-study-snapshot-2026T01:00:',
+      expect.any(Error),
+    );
   });
 
   test('DataManagementItem getDateFromSnapshotName returns null for key without snapshot pattern', async () => {

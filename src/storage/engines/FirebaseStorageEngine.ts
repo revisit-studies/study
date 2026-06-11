@@ -46,6 +46,7 @@ import {
   cleanupModes,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
+import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -739,12 +740,19 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   // Function to add collection name to metadata
-  protected async _addDirectoryNameToSnapshots(directoryName: string) {
+  protected async _addDirectoryNameToSnapshots(
+    directoryName: string,
+    studyId: string,
+    participantCounts?: SnapshotParticipantCounts,
+  ) {
     try {
-      const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'snapshots');
+      const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'snapshots');
+      const snapshotMetadata = participantCounts
+        ? { name: directoryName, participantCounts }
+        : { name: directoryName };
       await setDoc(
         snapshotDoc,
-        { [directoryName]: { name: directoryName } } as SnapshotDocContent,
+        { [directoryName]: snapshotMetadata } as SnapshotDocContent,
         { merge: true },
       );
     } catch (error) {
@@ -753,9 +761,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _removeDirectoryNameFromSnapshots(directoryName: string) {
+  protected async _removeDirectoryNameFromSnapshots(directoryName: string, studyId: string) {
     try {
-      const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'snapshots');
+      const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'snapshots');
       const snapshotData = await getDoc(snapshotDoc);
 
       if (snapshotData.exists()) {
@@ -775,11 +783,37 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _changeDirectoryNameInSnapshots(oldName: string, newName: string) {
-    const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${this.studyId}`, 'snapshots');
+  protected async _changeDirectoryNameInSnapshots(oldName: string, newName: string, studyId: string) {
+    const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'snapshots');
+    const snapshotData = await getDoc(snapshotDoc);
+    const existingMetadata = snapshotData.exists()
+      ? (snapshotData.data() as SnapshotDocContent)[oldName] ?? { name: oldName }
+      : { name: oldName };
     await setDoc(
       snapshotDoc,
-      { [oldName]: { name: newName } },
+      { [oldName]: { ...existingMetadata, name: newName } },
+      { merge: true },
+    );
+  }
+
+  protected async _updateSnapshotParticipantCounts(
+    snapshotName: string,
+    studyId: string,
+    participantCounts: SnapshotParticipantCounts,
+  ) {
+    const snapshotDoc = doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'snapshots');
+    const snapshotData = await getDoc(snapshotDoc);
+    const existingMetadata = snapshotData.exists()
+      ? (snapshotData.data() as SnapshotDocContent)[snapshotName]
+      : undefined;
+
+    if (!existingMetadata) {
+      throw new Error(`Snapshot with name ${snapshotName} does not exist`);
+    }
+
+    await setDoc(
+      snapshotDoc,
+      { [snapshotName]: { ...existingMetadata, participantCounts } },
       { merge: true },
     );
   }
