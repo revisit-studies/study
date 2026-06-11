@@ -75,6 +75,8 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
   const [snapshotListLoading, setSnapshotListLoading] = useState<boolean>(false);
   const [snapshotCountStatus, setSnapshotCountStatus] = useState<Record<string, 'loading' | 'failed'>>({});
   const snapshotCountBackfills = useRef(new Set<string>());
+  const snapshotCountBackfillQueue = useRef(Promise.resolve());
+  const snapshotCountBackfillGeneration = useRef(0);
 
   const { storageEngine } = useStorageEngine();
 
@@ -93,12 +95,22 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
     refreshSnapshots();
   }, [refreshSnapshots]);
 
+  useEffect(() => () => {
+    snapshotCountBackfillGeneration.current += 1;
+  }, []);
+
+  useEffect(() => {
+    snapshotCountBackfillGeneration.current += 1;
+    snapshotCountBackfills.current.clear();
+    setSnapshotCountStatus({});
+  }, [storageEngine, studyId]);
+
   useEffect(() => {
     if (!storageEngine) {
       return undefined;
     }
 
-    let isCancelled = false;
+    const backfillGeneration = snapshotCountBackfillGeneration.current;
 
     Object.entries(snapshots).forEach(([snapshotKey, snapshotItem]) => {
       if (snapshotItem.participantCounts || snapshotCountBackfills.current.has(snapshotKey)) {
@@ -108,12 +120,23 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
       snapshotCountBackfills.current.add(snapshotKey);
       setSnapshotCountStatus((previous) => ({ ...previous, [snapshotKey]: 'loading' }));
 
-      storageEngine.getAllParticipantsData(getSnapshotStudyId(snapshotKey))
-        .then(async (participants) => {
+      snapshotCountBackfillQueue.current = snapshotCountBackfillQueue.current
+        .catch(() => undefined)
+        .then(async () => {
+          if (snapshotCountBackfillGeneration.current !== backfillGeneration) {
+            return;
+          }
+
+          const participants = await storageEngine.getAllParticipantsData(getSnapshotStudyId(snapshotKey));
           const participantCounts = calculateSnapshotParticipantCounts(participants);
+
+          if (snapshotCountBackfillGeneration.current !== backfillGeneration) {
+            return;
+          }
+
           await storageEngine.updateSnapshotParticipantCounts(studyId, snapshotKey, participantCounts);
 
-          if (isCancelled) {
+          if (snapshotCountBackfillGeneration.current !== backfillGeneration) {
             return;
           }
 
@@ -138,16 +161,15 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
         })
         .catch((error) => {
           console.error(`Failed to backfill participant counts for snapshot ${snapshotKey}:`, error);
-          snapshotCountBackfills.current.delete(snapshotKey);
-          if (!isCancelled) {
-            setSnapshotCountStatus((previous) => ({ ...previous, [snapshotKey]: 'failed' }));
+          if (snapshotCountBackfillGeneration.current !== backfillGeneration) {
+            return;
           }
+          snapshotCountBackfills.current.delete(snapshotKey);
+          setSnapshotCountStatus((previous) => ({ ...previous, [snapshotKey]: 'failed' }));
         });
     });
 
-    return () => {
-      isCancelled = true;
-    };
+    return undefined;
   }, [snapshots, storageEngine, studyId]);
 
   if (!storageEngine) {
