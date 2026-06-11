@@ -51,6 +51,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
           <Title order={5}>Data Collection</Title>
           <Switch
             size="sm"
+            aria-label="Data Collection"
             checked={dataCollectionEnabled}
             onChange={(event) => handleSwitch('dataCollectionEnabled', event.currentTarget.checked)}
             mt="3px"
@@ -64,6 +65,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
           <Title order={5}>Development Mode</Title>
           <Switch
             size="sm"
+            aria-label="Development Mode"
             checked={developmentModeEnabled}
             onChange={(event) => handleSwitch('developmentModeEnabled', event.currentTarget.checked)}
             mt="3px"
@@ -77,6 +79,7 @@ export function RevisitModesItem({ studyId }: { studyId: string }) {
           <Title order={5}>Share Data and Make Analytics Interface Public</Title>
           <Switch
             size="sm"
+            aria-label="Share Data and Make Analytics Interface Public"
             checked={dataSharingEnabled}
             onChange={(event) => handleSwitch('dataSharingEnabled', event.currentTarget.checked)}
             mt="3px"

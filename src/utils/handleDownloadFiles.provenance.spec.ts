@@ -75,6 +75,12 @@ describe('provenance downloads', () => {
         appendChild,
       },
     });
+    if (!URL.createObjectURL) {
+      URL.createObjectURL = vi.fn();
+    }
+    if (!URL.revokeObjectURL) {
+      URL.revokeObjectURL = vi.fn();
+    }
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:zip');
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
 
