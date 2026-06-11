@@ -8,7 +8,7 @@
       "The reVISit Community",
       "You :)"
     ],
-    "date": "2026-02-23",
+    "date": "2026-06-08",
     "description": "This tutorial will teach you how to create a reVISit study and use all of the features that reVISit has to offer.",
     "organizations": [
       "University of Utah",
@@ -318,7 +318,7 @@
     },
     "reactExamplePenguins": {
       "type": "react-component",
-      "instruction": "Consider only cars that have a miles per gallon value greater than 30 AND weigh more than 2000 pounds. Which country or region produces the most and the least of these cars?",
+      "instruction": "How many Gentoo penguins weigh less than 4.5k grams (g)?",
       "path": "tutorial/assets/ReactExample.tsx",
       "response": [
         {

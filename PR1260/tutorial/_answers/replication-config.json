@@ -6,7 +6,7 @@
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2026-02-23",
+    "date": "2026-06-08",
     "description": "This is a reVISit variation study of JND(Just Noticeable Difference) Scatter Plot experiment.",
     "organizations": [
       "University of Utah",
@@ -15,7 +15,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "ScatterJND-study/assets/help.md",
+    "helpTextPath": "tutorial/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -99,19 +99,14 @@
   "sequence": {
     "order": "fixed",
     "components": [
+      "practice T1 A:0.3 B:0.7",
+      "practice T2 A:0.9 B:0.6",
+      "practice T3 A:0.6 B:0.3",
       {
-        "order": "fixed",
-        "components": [
-          "practice T1 A:0.3 B:0.7",
-          "practice T2 A:0.9 B:0.6",
-          "practice T3 A:0.6 B:0.3",
-          {
-            "order": "dynamic",
-            "id": "steppedSequence",
-            "functionPath": "tutorial/assets/replication/JNDDynamic.tsx",
-            "parameters": {}
-          }
-        ]
+        "order": "dynamic",
+        "id": "steppedSequence",
+        "functionPath": "tutorial/assets/replication/JNDDynamic.tsx",
+        "parameters": {}
       }
     ]
   }
