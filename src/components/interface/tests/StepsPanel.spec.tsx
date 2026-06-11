@@ -38,6 +38,7 @@ vi.mock('react-router', () => ({
 
 vi.mock('../../../utils/getSequenceFlatMap', () => ({
   addPathToComponentBlock: (seq: Sequence) => seq,
+  getSequenceFlatMap: vi.fn(() => []),
 }));
 
 vi.mock('../../../utils/encryptDecryptIndex', () => ({
@@ -77,6 +78,7 @@ vi.mock('@mantine/core', () => ({
 
 vi.mock('@tabler/icons-react', () => ({
   IconArrowsShuffle: () => null,
+  IconArrowsSplit: () => null,
   IconBinaryTree: () => null,
   IconBrain: () => null,
   IconCheck: () => null,
