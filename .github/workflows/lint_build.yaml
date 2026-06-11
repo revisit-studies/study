@@ -11,4 +11,20 @@ on:
 
 jobs:
   lint:
-    uses: revisit-studies/.github/.github/workflows/lint.yaml@main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'yarn'
+
+      - name: Install yarn packages (from cache if available)
+        run: yarn install --immutable
+
+      - name: Run linter
+        run: yarn lint
+
+      - name: Build application
+        run: yarn build
