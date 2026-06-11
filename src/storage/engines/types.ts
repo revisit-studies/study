@@ -972,7 +972,7 @@ export abstract class StorageEngine {
 
   // Gets all participant IDs for the given studyId
   async getAllParticipantIds(studyId?: string) {
-    const studyIdToUse = this.studyId || studyId;
+    const studyIdToUse = studyId ?? this.studyId;
     if (studyIdToUse === undefined) {
       throw new Error('Study ID is not set');
     }

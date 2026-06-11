@@ -23,6 +23,41 @@ type SnapshotAction =
   | { type: 'deleteSnapshot', snapshot: string }
   | { type: 'deleteLive' };
 
+function getSnapshotStudyId(snapshotKey: string) {
+  return snapshotKey.slice(snapshotKey.indexOf('-') + 1);
+}
+
+function getSnapshotDateKey(snapshotName: string): string | null {
+  const regex = /-snapshot-(.+)$/;
+  const match = snapshotName.match(regex);
+
+  return match?.[1] ?? null;
+}
+
+function getDateFromSnapshotName(snapshotName: string): string | null {
+  return getSnapshotDateKey(snapshotName)?.replace('T', ' ') ?? null;
+}
+
+function compareSnapshotsByDate(
+  [leftKey]: [string, SnapshotDocContent[string]],
+  [rightKey]: [string, SnapshotDocContent[string]],
+) {
+  const leftDate = getSnapshotDateKey(leftKey);
+  const rightDate = getSnapshotDateKey(rightKey);
+
+  if (!leftDate && !rightDate) {
+    return leftKey.localeCompare(rightKey);
+  }
+  if (!leftDate) {
+    return 1;
+  }
+  if (!rightDate) {
+    return -1;
+  }
+
+  return rightDate.localeCompare(leftDate);
+}
+
 export function DataManagementItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<ParticipantDataWithStatus[]> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
   const [modalDeleteSnapshotOpened, setModalDeleteSnapshotOpened] = useState<boolean>(false);
@@ -72,9 +107,8 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
 
       snapshotCountBackfills.current.add(snapshotKey);
       setSnapshotCountStatus((previous) => ({ ...previous, [snapshotKey]: 'loading' }));
-      const strippedFilename = snapshotKey.slice(snapshotKey.indexOf('-') + 1);
 
-      storageEngine.getAllParticipantsData(strippedFilename)
+      storageEngine.getAllParticipantsData(getSnapshotStudyId(snapshotKey))
         .then(async (participants) => {
           const participantCounts = calculateSnapshotParticipantCounts(participants);
           await storageEngine.updateSnapshotParticipantCounts(studyId, snapshotKey, participantCounts);
@@ -104,6 +138,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
         })
         .catch((error) => {
           console.error(`Failed to backfill participant counts for snapshot ${snapshotKey}:`, error);
+          snapshotCountBackfills.current.delete(snapshotKey);
           if (!isCancelled) {
             setSnapshotCountStatus((previous) => ({ ...previous, [snapshotKey]: 'failed' }));
           }
@@ -188,21 +223,9 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
     onConfirm: () => handleRestoreSnapshot(snapshot),
   });
 
-  const getDateFromSnapshotName = (snapshotName: string): string | null => {
-    const regex = /-snapshot-(.+)$/;
-    const match = snapshotName.match(regex);
-
-    if (match && match[1]) {
-      const dateStuff = match[1];
-      return dateStuff.replace('T', ' ');
-    }
-    return null;
-  };
-
-  const fetchParticipants = async (snapshotName: string) => {
-    const strippedFilename = snapshotName.slice(snapshotName.indexOf('-') + 1);
-    return await storageEngine.getAllParticipantsData(strippedFilename);
-  };
+  const fetchParticipants = async (snapshotName: string) => (
+    await storageEngine.getAllParticipantsData(getSnapshotStudyId(snapshotName))
+  );
 
   const renderParticipantCount = (
     snapshotKey: string,
@@ -318,7 +341,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {Object.entries(snapshots).map(
+                  {Object.entries(snapshots).sort(compareSnapshotsByDate).map(
                     ([key, snapshotItem]) => (
                       <Table.Tr key={key}>
                         <Table.Td>{snapshotItem.name}</Table.Td>

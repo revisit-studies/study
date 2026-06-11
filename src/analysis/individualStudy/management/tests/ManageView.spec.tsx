@@ -354,6 +354,28 @@ describe('ManageView', () => {
     expect(screen.getByText('DownloadButtons')).toBeDefined();
   });
 
+  test('DataManagementItem sorts snapshots by newest creation date first', async () => {
+    mockStorageEngine!.getSnapshots.mockResolvedValue({
+      'test-study-snapshot-2026-06-09T01:00:00': {
+        name: 'older-snapshot',
+        participantCounts: { completed: 1, inProgress: 0, rejected: 0 },
+      },
+      'test-study-snapshot-2026-06-10T01:00:00': {
+        name: 'newer-snapshot',
+        participantCounts: { completed: 2, inProgress: 0, rejected: 0 },
+      },
+    });
+
+    await act(async () => {
+      render(<DataManagementItem studyId="test-study" refresh={async () => []} />);
+    });
+
+    expect(screen.getAllByText(/-snapshot$/).map((element) => element.textContent)).toEqual([
+      'newer-snapshot',
+      'older-snapshot',
+    ]);
+  });
+
   test('DataManagementItem backfills missing snapshot participant counts', async () => {
     mockStorageEngine!.getSnapshots.mockResolvedValue({
       'dev-test-study-snapshot-2026T01:00': { name: 'my-snapshot' },
