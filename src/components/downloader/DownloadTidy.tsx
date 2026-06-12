@@ -251,6 +251,10 @@ function participantDataToRows(
     }).flat()], Array.from(newHeaders)];
 }
 
+function hasStoredStudyConfig(config: StudyConfig | null | undefined): config is StudyConfig {
+  return config ? Object.keys(config).length > 0 : false;
+}
+
 export async function getTableData(
   selectedProperties: Property[],
   data: ParticipantDataWithStatus[],
@@ -266,7 +270,7 @@ export async function getTableData(
 
   const allConfigHashes = [...new Set(data.map((part) => part.participantConfigHash))];
   const allConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
-  const participantsMissingConfig = data.filter((participant) => !allConfigs[participant.participantConfigHash]);
+  const participantsMissingConfig = data.filter((participant) => !hasStoredStudyConfig(allConfigs[participant.participantConfigHash]));
 
   const transcripts: Record<string, string | null> = {};
   const transcriptAvailable = storageEngine.getEngine() === 'firebase' && !!hasAudio;
@@ -298,7 +302,13 @@ export async function getTableData(
     .filter((p) => p !== 'condition' || hasCondition)
     .filter((p) => p !== 'metaData');
   const allData = await Promise.all(data.map(async (participant) => {
-    const partDataToRows = await participantDataToRows(participant, combinedProperties, allConfigs[participant.participantConfigHash], transcripts);
+    const participantConfig = allConfigs[participant.participantConfigHash];
+    const partDataToRows = await participantDataToRows(
+      participant,
+      combinedProperties,
+      hasStoredStudyConfig(participantConfig) ? participantConfig : undefined,
+      transcripts,
+    );
 
     return partDataToRows;
   }));

@@ -159,6 +159,7 @@ describe('getTableData', () => {
     });
     const storageEngine = makeStorageEngine({
       'hash-1': configSimple,
+      'missing-hash': {} as StudyConfig,
     });
     const selectedProperties = [
       'answer',
