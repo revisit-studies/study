@@ -418,6 +418,33 @@ describe('getTableData', () => {
     expect(answerRow?.responseMax).toBeUndefined();
   });
 
+  test('keeps participant-derived rows when a stored config is missing components', async () => {
+    const storageEngine = makeStorageEngine({
+      'hash-1': {
+        studyMetadata: configSimple.studyMetadata,
+      } as StudyConfig,
+    });
+
+    const tableData = await getTableData(
+      ['answer', 'description', 'instruction', 'responsePrompt'],
+      [makeParticipant()],
+      storageEngine,
+      'test-study',
+    );
+
+    const answerRow = tableData.rows.find((row) => row.responseId === 'response');
+    expect(tableData.missingConfigCount).toBe(0);
+    expect(answerRow).toEqual(expect.objectContaining({
+      participantId: 'p1',
+      trialId: 'testComponent',
+      responseId: 'response',
+      answer: 'participant answer',
+    }));
+    expect(answerRow?.description).toBeUndefined();
+    expect(answerRow?.instruction).toBeUndefined();
+    expect(answerRow?.responsePrompt).toBeUndefined();
+  });
+
   test('does not fetch transcripts when audio is unavailable or storage is not firebase', async () => {
     const getTranscription = vi.fn();
     const storageEngine = makeStorageEngine({

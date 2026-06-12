@@ -135,7 +135,7 @@ function participantDataToRows(
       // Get the whole component, including the base component if there is inheritance
       const trialId = trialAnswer.componentName;
       const { trialOrder } = trialAnswer;
-      const trialConfig = studyConfig?.components[trialId];
+      const trialConfig = studyConfig?.components?.[trialId];
       const completeComponent = trialConfig && studyConfig ? studyComponentToIndividualComponent(trialConfig, studyConfig) : undefined;
 
       const duration = trialAnswer.endTime === -1 ? undefined : trialAnswer.endTime - trialAnswer.startTime;
