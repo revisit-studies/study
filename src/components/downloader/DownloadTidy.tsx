@@ -103,7 +103,7 @@ export function download(graph: string, filename: string) {
 function participantDataToRows(
   participant: ParticipantDataWithStatus,
   properties: Property[],
-  studyConfig: StudyConfig,
+  studyConfig?: StudyConfig,
   transcripts?: Record<string, string | null>,
 ): [TidyRow[], string[]] {
   const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (Object.entries(participant.answers).length)) * 100).toFixed(2);
@@ -135,8 +135,8 @@ function participantDataToRows(
       // Get the whole component, including the base component if there is inheritance
       const trialId = trialAnswer.componentName;
       const { trialOrder } = trialAnswer;
-      const trialConfig = studyConfig.components[trialId];
-      const completeComponent = studyComponentToIndividualComponent(trialConfig, studyConfig);
+      const trialConfig = studyConfig?.components[trialId];
+      const completeComponent = trialConfig && studyConfig ? studyComponentToIndividualComponent(trialConfig, studyConfig) : undefined;
 
       const duration = trialAnswer.endTime === -1 ? undefined : trialAnswer.endTime - trialAnswer.startTime;
       const cleanedDuration = getCleanedDuration(trialAnswer);
@@ -155,7 +155,7 @@ function participantDataToRows(
           newHeaders.add(`parameters_${_key}`);
         });
 
-        const response = completeComponent.response.find((resp) => resp.id === key);
+        const response = completeComponent?.response.find((resp) => resp.id === key);
         if (properties.includes('condition')) {
           tidyRow.condition = conditionValue;
         }
@@ -178,10 +178,10 @@ function participantDataToRows(
           tidyRow.percentComplete = percentComplete;
         }
         if (properties.includes('description')) {
-          tidyRow.description = completeComponent.description;
+          tidyRow.description = completeComponent?.description;
         }
         if (properties.includes('instruction')) {
-          tidyRow.instruction = completeComponent.instruction;
+          tidyRow.instruction = completeComponent?.instruction;
         }
         if (properties.includes('responsePrompt')) {
           tidyRow.responsePrompt = response?.prompt;
@@ -194,7 +194,7 @@ function participantDataToRows(
           tidyRow.transcript = transcripts?.[`${participant.participantId}_${identifier}`] ?? undefined;
         }
         if (properties.includes('correctAnswer')) {
-          const configCorrectAnswer = completeComponent.correctAnswer?.find((ans) => ans.id === key)?.answer;
+          const configCorrectAnswer = completeComponent?.correctAnswer?.find((ans) => ans.id === key)?.answer;
           const answerCorrectAnswer = trialAnswer.correctAnswer.find((ans) => ans.id === key)?.answer;
           const correctAnswer = answerCorrectAnswer || configCorrectAnswer;
           tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
@@ -212,7 +212,7 @@ function participantDataToRows(
           tidyRow.cleanedDuration = cleanedDuration;
         }
         if (properties.includes('meta')) {
-          tidyRow.meta = JSON.stringify(completeComponent.meta, null, 2);
+          tidyRow.meta = completeComponent?.meta ? JSON.stringify(completeComponent.meta, null, 2) : undefined;
         }
         if (properties.includes('responseMin')) {
           tidyRow.responseMin = response?.type === 'numerical' ? response.min : undefined;
@@ -251,7 +251,7 @@ function participantDataToRows(
     }).flat()], Array.from(newHeaders)];
 }
 
-async function getTableData(
+export async function getTableData(
   selectedProperties: Property[],
   data: ParticipantDataWithStatus[],
   storageEngine: StorageEngine | undefined,
@@ -259,13 +259,14 @@ async function getTableData(
   hasAudio?: boolean,
 ) {
   if (!storageEngine) {
-    return { header: [], rows: [] };
+    return { header: [], rows: [], missingConfigCount: 0 };
   }
 
   const combinedProperties = [...REQUIRED_PROPS, ...selectedProperties];
 
   const allConfigHashes = [...new Set(data.map((part) => part.participantConfigHash))];
   const allConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
+  const participantsMissingConfig = data.filter((participant) => !allConfigs[participant.participantConfigHash]);
 
   const transcripts: Record<string, string | null> = {};
   const transcriptAvailable = storageEngine.getEngine() === 'firebase' && !!hasAudio;
@@ -307,7 +308,11 @@ async function getTableData(
 
   const flatRows = rows.flat().sort((a, b) => (a !== b ? a.participantId.localeCompare(b.participantId) : a.trialOrder - b.trialOrder));
 
-  return { header: [...header, ...newHeaders], rows: flatRows };
+  return {
+    header: [...header, ...newHeaders],
+    rows: flatRows,
+    missingConfigCount: participantsMissingConfig.length,
+  };
 }
 
 export function DownloadTidy({
@@ -351,6 +356,7 @@ export function DownloadTidy({
   const transcriptAvailable = isFirebase && !!hasAudio;
   const selectedParticipantCount = data.length;
   const warnLargeTranscriptDownload = selectedProperties.includes('transcript') && selectedParticipantCount > 50;
+  const missingConfigCount = tableData?.missingConfigCount ?? 0;
 
   const downloadTidy = useCallback(async (skipWarning = false) => {
     if (!tableData) {
@@ -451,6 +457,34 @@ export function DownloadTidy({
           {selectedParticipantCount}
           {' '}
           selected participants, so it may take a while.
+        </Alert>
+      )}
+      {missingConfigCount > 0 && (
+        <Alert
+          color="orange"
+          icon={<IconAlertTriangle />}
+          mb="sm"
+          styles={{
+            icon: {
+              alignSelf: 'center',
+            },
+          }}
+        >
+          <Flex direction="column">
+            <Text size="sm">
+              Stored study configs could not be loaded for
+              {' '}
+              {missingConfigCount}
+              {' '}
+              selected
+              {' '}
+              {missingConfigCount === 1 ? 'participant' : 'participants'}
+              . Config-derived columns, such as description and instruction, may be blank for those rows.
+            </Text>
+            <Text size="sm">
+              To restore the current config, reload the study page. However, historical configs that differ from the current config must be restored from a storage snapshot or backup.
+            </Text>
+          </Flex>
         </Alert>
       )}
       {isDownloading && (
