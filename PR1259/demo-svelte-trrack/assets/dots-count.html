@@ -121,7 +121,9 @@
             updateRevisit();
 
             Revisit.onProvenanceReceive((provenanceState) => {
-                component.$set({ dots: provenanceState.dots });
+                if (Array.isArray(provenanceState?.dots)) {
+                    component.$set({ dots: provenanceState.dots });
+                }
             });
         } catch (error) {
             document.getElementById('load-error').hidden = false;
