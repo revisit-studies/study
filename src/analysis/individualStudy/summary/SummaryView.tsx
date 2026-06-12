@@ -10,18 +10,18 @@ import { getOverviewStats } from './utils';
 export function SummaryView({
   visibleParticipants,
   studyConfig,
-  allConfigs,
+  allConfigs = {},
   studyId,
-  showStoredCountMismatch,
-  includedParticipants,
+  showStoredCountMismatch = false,
+  includedParticipants = ['completed', 'inProgress', 'rejected'],
   currentConfigLabel,
 }: {
   visibleParticipants: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
-  allConfigs: Record<string, StudyConfig>;
+  allConfigs?: Record<string, StudyConfig>;
   studyId?: string;
-  showStoredCountMismatch: boolean;
-  includedParticipants: string[];
+  showStoredCountMismatch?: boolean;
+  includedParticipants?: string[];
   currentConfigLabel?: string;
 }) {
   const overviewData = useMemo(

@@ -12,6 +12,7 @@ import { getNextSyntheticReplayTime } from './replayTimer';
 export function useReplay() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isMountedRef = useRef(true);
 
   // isMasterplayer is true for the window where play button is clicked.
   // This is set to false when the video / provenance is initiated via different tab/window
@@ -56,7 +57,8 @@ export function useReplay() {
     playTimeStamp.current = Date.now();
   }, []);
 
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mediaTimeUpdateTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const syntheticReplayTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [searchParams] = useSearchParams();
   const searchParamTimestamp = useMemo(() => searchParams.get('t') || '', [searchParams]);
@@ -107,6 +109,10 @@ export function useReplay() {
   }, [speed]);
 
   const handlePlay = useCallback(() => {
+    if (!isMountedRef.current) {
+      return;
+    }
+
     _setIsPlaying(true);
 
     const t = replayRef.current?.currentTime || 0;
@@ -123,7 +129,10 @@ export function useReplay() {
 
     const elem = replayRef.current;
     if (elem) {
-      timer.current = setInterval(() => {
+      if (mediaTimeUpdateTimer.current) {
+        clearInterval(mediaTimeUpdateTimer.current);
+      }
+      mediaTimeUpdateTimer.current = setInterval(() => {
         emitterRef.current.emit('timeupdate', elem.currentTime);
       }, 30);
     }
@@ -156,9 +165,16 @@ export function useReplay() {
   }, []);
 
   const handlePause = useCallback(() => {
+    if (!isMountedRef.current) {
+      return;
+    }
+
     _setIsPlaying(false);
 
-    timer.current && clearInterval(timer.current);
+    if (mediaTimeUpdateTimer.current) {
+      clearInterval(mediaTimeUpdateTimer.current);
+      mediaTimeUpdateTimer.current = null;
+    }
     const t = replayRef.current?.currentTime || 0;
     emitterRef.current.emit('pause', t);
     timerValue.current = t;
@@ -214,6 +230,10 @@ export function useReplay() {
 
   // this should be the only way to start video/audio
   const setIsPlaying = useCallback((playing: boolean, isRemoteTriggered = false) => {
+    if (!isMountedRef.current) {
+      return;
+    }
+
     setIsMasterPlayer(!isRemoteTriggered);
     if (hasEnded) {
       setHasEnded(false);
@@ -226,6 +246,29 @@ export function useReplay() {
       replayRef.current?.pause();
     }
   }, [hasEnded, setSeekTime]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      if (mediaTimeUpdateTimer.current) {
+        clearInterval(mediaTimeUpdateTimer.current);
+        mediaTimeUpdateTimer.current = null;
+      }
+      if (syntheticReplayTimer.current) {
+        clearInterval(syntheticReplayTimer.current);
+        syntheticReplayTimer.current = null;
+      }
+
+      // Remove listeners from replayRef.current, which is where they are attached
+      // by updateReplayRef. This is the element that actually has the listeners,
+      // rather than videoRef/audioRef which may be different or null.
+      replayRef.current?.removeEventListener('play', handlePlay);
+      replayRef.current?.removeEventListener('pause', handlePause);
+      replayRef.current?.removeEventListener('seeked', handleSeeked);
+    };
+  }, [handlePause, handlePlay, handleSeeked]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -245,7 +288,15 @@ export function useReplay() {
     if (!audioRef.current && !videoRef.current) {
       if (isPlaying) {
         let lastTickTime = Date.now();
-        timer.current = setInterval(() => {
+        syntheticReplayTimer.current = setInterval(() => {
+          if (!isMountedRef.current) {
+            if (syntheticReplayTimer.current) {
+              clearInterval(syntheticReplayTimer.current);
+              syntheticReplayTimer.current = null;
+            }
+            return;
+          }
+
           const now = Date.now();
           timerValue.current = getNextSyntheticReplayTime(
             timerValue.current,
@@ -255,14 +306,26 @@ export function useReplay() {
           );
           lastTickTime = now;
           emitterRef.current.emit('timeupdate', timerValue.current);
-          if (timerValue.current >= internalDuration.current) {
+          if (internalDuration.current > 0 && timerValue.current >= internalDuration.current) {
+            if (syntheticReplayTimer.current) {
+              clearInterval(syntheticReplayTimer.current);
+              syntheticReplayTimer.current = null;
+            }
             setIsPlaying(false);
           }
         }, 30);
-      } else {
-        timer.current && clearInterval(timer.current);
+      } else if (syntheticReplayTimer.current) {
+        clearInterval(syntheticReplayTimer.current);
+        syntheticReplayTimer.current = null;
       }
     }
+
+    return () => {
+      if (syntheticReplayTimer.current) {
+        clearInterval(syntheticReplayTimer.current);
+        syntheticReplayTimer.current = null;
+      }
+    };
   }, [isPlaying, setIsPlaying]);
 
   useEffect(() => {

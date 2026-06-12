@@ -2,17 +2,26 @@ import { Grid } from '@mantine/core';
 import {
   useMemo, useCallback,
 } from 'react';
-import { Registry, initializeTrrack } from '@trrack/core';
+import { Registry, Trrack, initializeTrrack } from '@trrack/core';
 import ChatInterface from './ChatInterface';
 import ImageDisplay from './ImageDisplay';
 import { StimulusParams } from '../../../store/types';
 import { ChatMessage, ChatProvenanceState } from './types';
 
+type ChatTrrackState = {
+  messages: ChatMessage[];
+};
+
 export default function LLMInterface({
   setAnswer, provenanceState,
 }: StimulusParams<ChatProvenanceState>) {
   // Setup provenance tracking (Trrack)
-  const { actions, trrack } = useMemo(() => {
+  const { actions, trrack } = useMemo<{
+    actions: {
+      updateMessages: (messages: ChatMessage[]) => { payload: ChatMessage[]; type: string };
+    };
+    trrack: Trrack<ChatTrrackState, string>;
+  }>(() => {
     const reg = Registry.create();
 
     // Register an "updateMessages" action to update chat history state
@@ -25,7 +34,7 @@ export default function LLMInterface({
     const trrackInst = initializeTrrack({
       registry: reg,
       initialState: {
-        messages: [],
+        messages: [] as ChatMessage[],
       },
     });
 

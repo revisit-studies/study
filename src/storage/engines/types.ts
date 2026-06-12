@@ -15,6 +15,10 @@ import {
   normalizeStoredProvenance,
   splitProvenanceFromAnswers,
 } from '../../store/provenance';
+import {
+  SnapshotParticipantCounts,
+  calculateSnapshotParticipantCounts,
+} from './utils/snapshotParticipantCounts';
 
 export interface StoredUser {
   email: string | null,
@@ -33,6 +37,7 @@ export type SequenceAssignment = {
   timestamp: number; // Use Timestamp for Firebase, number for local storage
   rejected: boolean;
   claimed: boolean;
+  claimedParticipantId?: string; // The original rejected participant whose slot this assignment is reusing.
   completed: number | null;
   createdTime: number;
   total: number; // Total number of questions/steps
@@ -124,8 +129,11 @@ export type ActionResponse =
   | ActionResponseSuccess
   | ActionResponseFailed;
 
-// Represents a snapshot name item with an original name and an optional alternate (renamed) name.
-export type SnapshotDocContent = Record<string, { name: string; }>;
+// Represents snapshot metadata keyed by the snapshot storage directory name.
+export type SnapshotDocContent = Record<string, {
+  name: string;
+  participantCounts?: SnapshotParticipantCounts;
+}>;
 
 export type FinalizeParticipantResult = {
   status: 'complete' | 'retry' | 'error';
@@ -305,13 +313,24 @@ export abstract class StorageEngine {
   protected abstract _deleteRealtimeData(path: string): Promise<void>;
 
   // Adds a directory name to the metadata. This is used by createSnapshot
-  protected abstract _addDirectoryNameToSnapshots(directoryName: string, studyId: string): Promise<void>;
+  protected abstract _addDirectoryNameToSnapshots(
+    directoryName: string,
+    studyId: string,
+    participantCounts?: SnapshotParticipantCounts,
+  ): Promise<void>;
 
   // Removes a snapshot from the metadata. This is used by removeSnapshotOrLive
   protected abstract _removeDirectoryNameFromSnapshots(directoryName: string, studyId: string): Promise<void>;
 
   // Updates a snapshot in the metadata. This is used by renameSnapshot
   protected abstract _changeDirectoryNameInSnapshots(oldName: string, newName: string, studyId: string): Promise<void>;
+
+  // Updates participant status count metadata for an existing snapshot.
+  protected abstract _updateSnapshotParticipantCounts(
+    snapshotName: string,
+    studyId: string,
+    participantCounts: SnapshotParticipantCounts,
+  ): Promise<void>;
 
   /*
   * THROTTLED METHODS
@@ -810,6 +829,7 @@ export abstract class StorageEngine {
           timestamp: firstRejectTime, // Use the timestamp of the first reject
           rejected: false,
           claimed: false,
+          claimedParticipantId: firstReject.participantId,
           completed: null,
           createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
           total: 0,
@@ -952,7 +972,7 @@ export abstract class StorageEngine {
 
   // Gets all participant IDs for the given studyId
   async getAllParticipantIds(studyId?: string) {
-    const studyIdToUse = this.studyId || studyId;
+    const studyIdToUse = studyId ?? this.studyId;
     if (studyIdToUse === undefined) {
       throw new Error('Study ID is not set');
     }
@@ -1134,10 +1154,13 @@ export abstract class StorageEngine {
 
   // Rejects a participant with the given participantId and reason.
   async rejectParticipant(participantId: string, reason: string) {
-    const participant = await this._getFromStorage(
-      `participants/${participantId}`,
-      'participantData',
-    );
+    const participant = participantId === this.currentParticipantId && this.participantData
+      ? this.participantData
+      : await this._getFromStorage(
+        `participants/${participantId}`,
+        'participantData',
+      );
+    let participantRecordUpdated = false;
 
     try {
       // If the user doesn't exist or is already rejected, return
@@ -1149,18 +1172,63 @@ export abstract class StorageEngine {
         return;
       }
 
-      // set reject flag
-      participant.rejected = {
-        reason,
-        timestamp: new Date().getTime(),
+      // Create a copy with rejected flag for storage write
+      // so that if the write fails, in-memory state is unchanged
+      const rejectedParticipant: ParticipantData = {
+        ...participant,
+        rejected: {
+          reason,
+          timestamp: new Date().getTime(),
+        },
       };
+      // Push rejected copy to storage first
       await this._pushToStorage(
         `participants/${participantId}`,
         'participantData',
-        participant,
+        rejectedParticipant,
       );
+      participantRecordUpdated = true;
+
       await this._rejectParticipantRealtime(participantId);
+
+      // Update in-memory state only after the participant record and
+      // sequence-assignment updates have both succeeded.
+      if (participantId === this.currentParticipantId && this.participantData) {
+        this.participantData = rejectedParticipant;
+      }
     } catch (error) {
+      let realtimeRollbackError: unknown = null;
+      try {
+        if (participantRecordUpdated) {
+          const originalCurrentParticipantId = this.currentParticipantId;
+          if (!this.currentParticipantId) {
+            this.currentParticipantId = participantId;
+          }
+          try {
+            await this._undoRejectParticipantRealtime(participantId);
+          } finally {
+            this.currentParticipantId = originalCurrentParticipantId;
+          }
+        }
+      } catch (rollbackError) {
+        realtimeRollbackError = rollbackError;
+        console.warn('Error rolling back rejected participant realtime state:', rollbackError);
+      }
+
+      try {
+        if (participantRecordUpdated && participant && isParticipantData(participant)) {
+          await this._pushToStorage(
+            `participants/${participantId}`,
+            'participantData',
+            participant,
+          );
+        }
+      } catch (rollbackError) {
+        console.warn('Error rolling back rejected participant state:', rollbackError);
+      }
+      if (realtimeRollbackError) {
+        console.warn('Participant rejection rollback completed with realtime inconsistencies.');
+      }
       console.warn('Error rejecting participant:', error);
     }
   }
@@ -1176,10 +1244,13 @@ export abstract class StorageEngine {
 
   // Un-rejects a participant with the given participantId.
   async undoRejectParticipant(participantId: string) {
-    const participant = await this._getFromStorage(
-      `participants/${participantId}`,
-      'participantData',
-    );
+    const participant = participantId === this.currentParticipantId && this.participantData
+      ? this.participantData
+      : await this._getFromStorage(
+        `participants/${participantId}`,
+        'participantData',
+      );
+    let participantRecordUpdated = false;
 
     try {
       // If the user doesn't exist, return
@@ -1187,16 +1258,33 @@ export abstract class StorageEngine {
         return;
       }
 
-      // set reject flag to false
-      participant.rejected = false;
-
+      const restoredParticipant: ParticipantData = {
+        ...participant,
+        rejected: false,
+      };
       await this._pushToStorage(
         `participants/${participantId}`,
         'participantData',
-        participant,
+        restoredParticipant,
       );
+      participantRecordUpdated = true;
       await this._undoRejectParticipantRealtime(participantId);
+
+      if (participantId === this.currentParticipantId && this.participantData) {
+        this.participantData = restoredParticipant;
+      }
     } catch (error) {
+      try {
+        if (participantRecordUpdated && participant && isParticipantData(participant)) {
+          await this._pushToStorage(
+            `participants/${participantId}`,
+            'participantData',
+            participant,
+          );
+        }
+      } catch (rollbackError) {
+        console.warn('Error rolling back participant unrejection state:', rollbackError);
+      }
       console.warn('Error undoing participant rejection:', error);
     }
   }
@@ -1633,7 +1721,11 @@ export abstract class StorageEngine {
     deleteData: boolean,
   ): Promise<ActionResponse> {
     const sourceName = `${this.collectionPrefix}${studyId}`;
-    if (!(await this._directoryExists(`${sourceName}/participants`))) {
+    const hasLiveData = this.getEngine() === 'localStorage'
+      ? await this._directoryExists(`${sourceName}/participants`)
+      : (await this.getAllSequenceAssignments(studyId)).length > 0;
+
+    if (!hasLiveData) {
       console.warn(`Source directory ${sourceName} does not exist.`);
 
       return {
@@ -1657,6 +1749,7 @@ export abstract class StorageEngine {
     const formattedDate = `${year}-${month}-${date}T${hours}:${minutes}:${seconds}`;
 
     const targetName = `${this.collectionPrefix}${studyId}-snapshot-${formattedDate}`;
+    const participantCounts = calculateSnapshotParticipantCounts(await this.getAllParticipantsData(studyId));
 
     if (this.getEngine() === 'localStorage') {
       await this._copyDirectory(`${sourceName}/`, `${targetName}/`);
@@ -1669,7 +1762,7 @@ export abstract class StorageEngine {
       await this._copyDirectory(sourceName, targetName);
       await this._copyRealtimeData(sourceName, targetName);
     }
-    await this._addDirectoryNameToSnapshots(targetName, studyId);
+    await this._addDirectoryNameToSnapshots(targetName, studyId, participantCounts);
 
     const createSnapshotSuccessNotifications: RevisitNotification[] = [];
     if (deleteData) {
@@ -1839,6 +1932,14 @@ export abstract class StorageEngine {
         },
       };
     }
+  }
+
+  async updateSnapshotParticipantCounts(
+    studyId: string,
+    snapshotName: string,
+    participantCounts: SnapshotParticipantCounts,
+  ) {
+    await this._updateSnapshotParticipantCounts(snapshotName, studyId, participantCounts);
   }
 }
 
