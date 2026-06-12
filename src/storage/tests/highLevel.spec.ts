@@ -304,6 +304,25 @@ describe.each([
     expect(setHashSpy).not.toHaveBeenCalled();
   });
 
+  test('saveConfig restores missing config storage when the hash pointer is unchanged', async () => {
+    const configHash = await hash(JSON.stringify(configSimple));
+    await storageEngine.saveConfig(configSimple);
+
+    await (
+      storageEngine as unknown as {
+        _deleteFromStorage: StorageEngine['_deleteFromStorage'];
+      }
+    )._deleteFromStorage(`configs/${configHash}`, 'config');
+
+    let storedHashes = await storageEngine.getAllConfigsFromHash([configHash], studyId);
+    expect(storedHashes[configHash]).toBeNull();
+
+    await storageEngine.saveConfig(configSimple);
+
+    storedHashes = await storageEngine.getAllConfigsFromHash([configHash], studyId);
+    expect(storedHashes[configHash]).toEqual(configSimple);
+  });
+
   test('getCurrentParticipantId returns the current participant ID', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;
