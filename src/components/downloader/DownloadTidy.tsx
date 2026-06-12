@@ -306,7 +306,15 @@ export async function getTableData(
   const rows = allData.map((partData) => partData[0]);
   const newHeaders = new Set(allData.map((partData) => partData[1]).flat());
 
-  const flatRows = rows.flat().sort((a, b) => (a !== b ? a.participantId.localeCompare(b.participantId) : a.trialOrder - b.trialOrder));
+  // Sort rows by participantId and trialOrder
+  const flatRows = rows.flat().sort((a, b) => {
+    const participantIdCompare = a.participantId.localeCompare(b.participantId);
+    if (participantIdCompare) {
+      return participantIdCompare;
+    }
+
+    return Number(a.trialOrder ?? -1) - Number(b.trialOrder ?? -1);
+  });
 
   return {
     header: [...header, ...newHeaders],
@@ -479,7 +487,8 @@ export function DownloadTidy({
               selected
               {' '}
               {missingConfigCount === 1 ? 'participant' : 'participants'}
-              . Config-derived columns, such as description and instruction, may be blank for those rows.
+              {'. '}
+              Config-derived columns, such as description and instruction, may be blank for those rows.
             </Text>
             <Text size="sm">
               To restore the current config, reload the study page. However, historical configs that differ from the current config must be restored from a storage snapshot or backup.
