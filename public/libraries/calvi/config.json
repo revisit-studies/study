@@ -7,7 +7,7 @@
     "N1": {
       "description": "Visitors at Movie Theaters in 2001",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N1.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N1.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -48,7 +48,7 @@
     "N2": {
       "description": "Traffic Accidents Trend",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N2.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N2.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -89,7 +89,7 @@
     "N3": {
       "description": "Customers at Three Bike Shops",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N3.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N3.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -130,7 +130,7 @@
     "N4": {
       "description": "Advertising Expense Breakdown",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N4.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N4.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -171,7 +171,7 @@
     "N5": {
       "description": "Perfume Brand Market Share",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N5.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N5.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -212,7 +212,7 @@
     "N6": {
       "description": "Monthly Number of New Clients",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N6.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N6.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -253,7 +253,7 @@
     "N7": {
       "description": "Restaurant Openings in 2000",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N7.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N7.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -290,7 +290,7 @@
     "N8": {
       "description": "Beers Consumed in 2005",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N8.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N8.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -327,7 +327,7 @@
     "N9": {
       "description": "Store C\u2019s Sales vs Store B",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N9.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N9.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -368,7 +368,7 @@
     "N10": {
       "description": "SAT Score vs. Income",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N10.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N10.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -405,7 +405,7 @@
     "N11": {
       "description": "Sleep vs. Time Outdoors",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N11.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N11.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -446,7 +446,7 @@
     "N12": {
       "description": "Grocery Store Market Share",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N12.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N12.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -487,7 +487,7 @@
     "N13": {
       "description": "Education Level of Residents",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N13.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N13.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -528,7 +528,7 @@
     "N14": {
       "description": "Lego ownership by state",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N14.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N14.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -569,7 +569,7 @@
     "N15": {
       "description": "Restaurant R popularity worldwide",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/normal/N15.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/normal/N15.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -610,7 +610,7 @@
     "T1": {
       "description": "Sunny Days in Summer vs Winter",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T1.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T1.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -647,7 +647,7 @@
     "T2": {
       "description": "Windy Days in Summer vs Winter",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T2.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T2.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -684,7 +684,7 @@
     "T3": {
       "description": "Concert Ticket Sales",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T3.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T3.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -725,7 +725,7 @@
     "T4": {
       "description": "Water Bottle Price Comparison",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T4.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T4.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -766,7 +766,7 @@
     "T5": {
       "description": "Visitors at Train Stations",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T5.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T5.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -807,7 +807,7 @@
     "T6": {
       "description": "Bacteria Trend 1970\u20132020",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T6.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T6.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -848,7 +848,7 @@
     "T8": {
       "description": "Visitors at Amusement Parks",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T8.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T8.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -889,7 +889,7 @@
     "T9": {
       "description": "Brand C Sales vs B",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T9.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T9.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -930,7 +930,7 @@
     "T10": {
       "description": "Species Prevalence by State",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T10.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T10.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -967,7 +967,7 @@
     "T11": {
       "description": "Risk of Bacteria Z in WY vs ND",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T11.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T11.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1004,7 +1004,7 @@
     "T12": {
       "description": "Tree Planting Trend 1960\u20131980",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T12.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T12.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1041,7 +1041,7 @@
     "T13": {
       "description": "Bookstore Trend 2000\u20132020",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T13.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T13.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1078,7 +1078,7 @@
     "T14": {
       "description": "Movie Release Trend",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T14.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T14.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1119,7 +1119,7 @@
     "T15": {
       "description": "Sales Trend for Item X (Apr to Jul)",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T15.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T15.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1156,7 +1156,7 @@
     "T16": {
       "description": "Apple Harvest Trend",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T16.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T16.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1193,7 +1193,7 @@
     "T17": {
       "description": "Sunlight vs Growth for Plant P",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T17.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T17.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1234,7 +1234,7 @@
     "T18": {
       "description": "Vacation Days vs Satisfaction",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T18.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T18.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1275,7 +1275,7 @@
     "T19": {
       "description": "Weight vs Survival Rate for Z",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T19.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T19.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1316,7 +1316,7 @@
     "T20": {
       "description": "Prevalence of Plant Y Globally",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T20.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T20.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1357,7 +1357,7 @@
     "T21": {
       "description": "Bar chart of rainfall over 14 days",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T21.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T21.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1398,7 +1398,7 @@
     "T22": {
       "description": "Line chart of airport visitors from 2000 to 2005",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T22.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T22.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1435,7 +1435,7 @@
     "T23": {
       "description": "Area chart of monthly shirt sales in 2021",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T23.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T23.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1472,7 +1472,7 @@
     "T25": {
       "description": "Market share of shampoo brands",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T25.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T25.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1513,7 +1513,7 @@
     "T26": {
       "description": "Votes for candidates",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T26.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T26.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1554,7 +1554,7 @@
     "T27": {
       "description": "GDP growth trend",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T27.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T27.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1591,7 +1591,7 @@
     "T28": {
       "description": "Cell phone brand market share",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T28.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T28.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1628,7 +1628,7 @@
     "T29": {
       "description": "Household car ownership",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T29.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T29.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1665,7 +1665,7 @@
     "T30": {
       "description": "Precipitation comparison",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T30.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T30.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1702,7 +1702,7 @@
     "T34": {
       "description": "Board game sales trend analysis",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T34.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T34.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1743,7 +1743,7 @@
     "T35": {
       "description": "Vegetable planting trends by three farms",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T35.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T35.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1784,7 +1784,7 @@
     "T36": {
       "description": "Car counts in parking lots",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T36.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T36.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1821,7 +1821,7 @@
     "T37": {
       "description": "Hiring trend in company Z",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T37.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T37.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1862,7 +1862,7 @@
     "T38": {
       "description": "Work hours and happiness correlation",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T38.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T38.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1899,7 +1899,7 @@
     "T39": {
       "description": "Work hours and salary correlation",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T39.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T39.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1936,7 +1936,7 @@
     "T40": {
       "description": "Weight analysis of species C",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T40.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T40.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -1973,7 +1973,7 @@
     "T42": {
       "description": "Infection rates per 1,000",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T42.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T42.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -2014,7 +2014,7 @@
     "T43": {
       "description": "Sales trend for gift shop A",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T43.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T43.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -2055,7 +2055,7 @@
     "T44": {
       "description": "Book price trend in City Z",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T44.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T44.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -2096,7 +2096,7 @@
     "T45": {
       "description": "Ice cream brand voting across states",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T45.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T45.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -2137,7 +2137,7 @@
     "T46": {
       "description": "Water sales vs temperature",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T46.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T46.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -2174,7 +2174,7 @@
     "T47": {
       "description": "Reading preferences by time of day",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T47.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T47.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -2211,7 +2211,7 @@
     "T48": {
       "description": "Voting on hiking trails",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T48.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T48.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -2252,7 +2252,7 @@
     "T49": {
       "description": "Average mall customers in Town X",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T49.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T49.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -2293,7 +2293,7 @@
     "T50": {
       "description": "Average new buildings in City Z",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T50.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T50.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [
@@ -2334,7 +2334,7 @@
     "T52": {
       "description": "Monthly sales trend for store B",
       "type": "image",
-      "path": "libraries/calvi/assets/questions/trick/T52.jpg",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/calvi/questions/trick/T52.jpg",
       "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "response": [

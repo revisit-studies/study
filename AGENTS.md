@@ -27,6 +27,9 @@ The study configurations are defined in JSON files with schemas. These configs s
 Imported Libraries
 We provide several libraries to facilitate the development of user studies, such as vlat, mini-vlat, nasa-tlx, color-blindness, and more. These libraries are components and sequences that are defined in public/libraries/. Each library has its own folder containing the necessary code and assets. Use only libraries that exist under public/libraries/ (no ad-hoc local component imports in study configs). You can import these libraries into your study configs to enhance the functionality and user experience of your studies by adding the libraries to the top level `importedLibraries` field in the study config, and then referencing the components in the `baseComponent` field or in sequences and the sequences in the `sequences` field. When referencing the components and sequences use the following syntax `"$libraryName.components.componentName"` and `"$libraryName.sequences.sequenceName"` respectively.
 
+Large Media Assets
+Large bundled-library media should not be committed directly to this repository. Put heavyweight shared library assets in the public `revisit-studies/library-assets` repository, tag the asset release, and reference files from study/library configs with tag-pinned raw GitHub URLs such as `https://raw.githubusercontent.com/revisit-studies/library-assets/v1/...`.
+
 Storage Engines
 ReVISit supports multiple storage backends for storing study data, including Firebase and Supabase. This allows researchers to choose the backend that best fits their needs in terms of scalability, ease of use, and integration with other tools. The storage engines are abstracted in the codebase, allowing for easy addition of new storage solutions in the future. The storage engine implementations can be found in src/storage/ directory.
 

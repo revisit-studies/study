@@ -316,6 +316,16 @@ describe('ImageController', () => {
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/found.png', response: [] }} />);
     await waitFor(() => expect(container.querySelector('img')).toBeTruthy());
   });
+
+  test('checks absolute image URLs without prefixing them', async () => {
+    const remotePath = 'https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT1.png';
+    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('image-data');
+
+    const { container } = render(<ImageController currentConfig={{ type: 'image', path: remotePath, response: [] }} />);
+
+    await waitFor(() => expect(getStaticAssetByPath).toHaveBeenCalledWith(remotePath));
+    expect(container.querySelector('img')?.getAttribute('src')).toBe(remotePath);
+  });
 });
 
 // ── MarkdownController ────────────────────────────────────────────────────────
