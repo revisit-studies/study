@@ -14,9 +14,9 @@ import {
   shouldSuppressDefaultDeploymentWarnings,
   shouldWarnForDefaultFirebaseConfig,
   shouldWarnForDefaultSupabaseConfig,
-} from '../defaultFirebaseConfig';
+} from '../defaultStorageConfig';
 
-describe('defaultFirebaseConfig', () => {
+describe('defaultStorageConfig', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });

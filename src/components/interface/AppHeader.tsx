@@ -47,7 +47,7 @@ import {
   DEFAULT_SUPABASE_WARNING_MESSAGE,
   shouldWarnForDefaultFirebaseConfig,
   shouldWarnForDefaultSupabaseConfig,
-} from '../../utils/defaultFirebaseConfig';
+} from '../../utils/defaultStorageConfig';
 
 export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);

@@ -18,7 +18,7 @@ import {
   shouldSuppressDefaultDeploymentWarnings,
   shouldWarnForDefaultFirebaseConfig,
   shouldWarnForDefaultSupabaseConfig,
-} from '../utils/defaultFirebaseConfig';
+} from '../utils/defaultStorageConfig';
 
 const ajv1 = new Ajv({ allowUnionTypes: true });
 ajv1.addSchema(globalSchema);
