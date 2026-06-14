@@ -713,8 +713,12 @@ export abstract class StorageEngine {
     // Hash the provided config
     const configHash = await hash(JSON.stringify(config));
 
+    // Skip saving config if the active config is already saved in storage
     if (currentConfigHash === configHash) {
-      return;
+      const storedConfig = await this._getFromStorage(`configs/${configHash}`, 'config');
+      if (storedConfig && Object.keys(storedConfig).length > 0) {
+        return;
+      }
     }
 
     // Push the config to storage and cache it, since it won't change
@@ -736,7 +740,9 @@ export abstract class StorageEngine {
       }
     }
 
-    await this._setCurrentConfigHash(configHash);
+    if (currentConfigHash !== configHash) {
+      await this._setCurrentConfigHash(configHash);
+    }
   }
 
   // Gets all configs from the storage engine based on the provided temporary hashes and studyId.
